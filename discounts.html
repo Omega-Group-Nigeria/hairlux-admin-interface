@@ -840,42 +840,33 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">New Influencer</h5>
+                    <h5 class="modal-title">Promote User to Influencer</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="form-infl-create" novalidate>
-                    <div class="modal-body">
-                        <div id="infl-create-alert" class="alert d-none mb-3" role="alert"></div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" class="form-control" placeholder="e.g. Amara Okafor" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Phone <span class="text-danger">*</span></label>
-                                <input type="tel" name="phone" class="form-control" placeholder="+2348012345678" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Email</label>
-                                <input type="email" name="email" class="form-control" placeholder="amara@example.com">
-                            </div>
-                            <div class="col-md-6 d-flex align-items-end">
-                                <div class="form-check form-switch mb-2">
-                                    <input class="form-check-input" type="checkbox" id="infl-create-isActive" checked>
-                                    <label class="form-check-label" for="infl-create-isActive">Active</label>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Notes</label>
-                                <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Fashion influencer, 50k Instagram followers"></textarea>
-                            </div>
+                <div class="modal-body">
+                    <div id="infl-create-alert" class="alert d-none mb-3" role="alert"></div>
+                    <!-- Step 1: email search -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Search user by email</label>
+                        <div class="input-group">
+                            <input type="email" id="infl-promote-email" class="form-control" placeholder="user@example.com">
+                            <button class="btn btn-outline-secondary" type="button" id="btn-infl-search-user">Search</button>
                         </div>
+                        <div class="text-secondary small mt-1">Enter the email address of the existing user account to promote.</div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="btn-infl-create-save">Create Influencer</button>
+                    <!-- Step 2: results -->
+                    <div id="infl-search-results" class="d-none"></div>
+                    <!-- Step 3: notes (shown after a user is selected) -->
+                    <div id="infl-notes-section" class="d-none mt-3">
+                        <input type="hidden" id="infl-promote-user-id">
+                        <label class="form-label">Notes <span class="text-secondary fw-normal">(optional)</span></label>
+                        <textarea id="infl-promote-notes" class="form-control" rows="2" placeholder="e.g. Fashion influencer, 50k Instagram followers"></textarea>
                     </div>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary d-none" id="btn-infl-promote-confirm">Promote to Influencer</button>
+                </div>
             </div>
         </div>
     </div>
@@ -929,7 +920,7 @@
             <div class="modal-content">
                 <div class="modal-body">
                     <div class="modal-title mb-2">Delete Influencer</div>
-                    <p class="text-secondary mb-0">Delete <strong id="infl-delete-name"></strong>? Their discount codes will be unlinked but not deleted.</p>
+                    <p class="text-secondary mb-0">Remove influencer status from <strong id="infl-delete-name"></strong>? Their discount codes will be deactivated.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
@@ -974,7 +965,7 @@
             if (user) {
                 var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
                 var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
-                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                var role     = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
                 document.getElementById("navbar-user-avatar").textContent  = initials;
                 document.getElementById("navbar-user-name").textContent    = fullName;
                 document.getElementById("navbar-user-role").textContent    = role;
@@ -1317,29 +1308,74 @@
             });
 
             // Create influencer form
-            document.getElementById("form-infl-create").addEventListener("submit", async function (e) {
-                e.preventDefault();
+            // ── Promote-user search flow ─────────────────────────────────────────
+            document.getElementById("modal-infl-create").addEventListener("show.bs.modal", function () {
+                document.getElementById("infl-promote-email").value = "";
+                document.getElementById("infl-search-results").className = "d-none";
+                document.getElementById("infl-search-results").innerHTML = "";
+                document.getElementById("infl-notes-section").className = "d-none mt-3";
+                document.getElementById("infl-promote-notes").value = "";
+                document.getElementById("btn-infl-promote-confirm").classList.add("d-none");
+                document.getElementById("infl-create-alert").className = "alert d-none";
+            });
+            document.getElementById("btn-infl-search-user").addEventListener("click", async function () {
+                var email   = document.getElementById("infl-promote-email").value.trim();
                 var alertEl = document.getElementById("infl-create-alert");
-                var btn     = document.getElementById("btn-infl-create-save");
+                var resBox  = document.getElementById("infl-search-results");
                 alertEl.className = "alert d-none";
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Creating…';
+                if (!email) { alertEl.className = "alert alert-warning"; alertEl.textContent = "Please enter an email address."; return; }
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span>';
                 try {
-                    var fd      = new FormData(this);
-                    var payload = { name: fd.get("name").trim(), phone: fd.get("phone").trim(), isActive: document.getElementById("infl-create-isActive").checked };
-                    var email   = fd.get("email").trim(); if (email) payload.email = email;
-                    var notes   = fd.get("notes").trim(); if (notes) payload.notes = notes;
-                    await Influencers.create(payload);
+                    var users = await Influencers.searchUsers(email);
+                    var list  = Array.isArray(users) ? users : (users.users || users.items || []);
+                    if (!list.length) {
+                        resBox.className = "";
+                        resBox.innerHTML = '<div class="text-secondary py-2">No users found matching <em>' + email + '</em>.</div>';
+                        document.getElementById("infl-notes-section").className = "d-none mt-3";
+                        document.getElementById("btn-infl-promote-confirm").classList.add("d-none");
+                    } else {
+                        var rows = list.map(function (u) {
+                            var inf = u.influencer;
+                            var badge = inf ? (inf.isActive !== false ? '<span class="badge bg-success-lt ms-1">Already influencer</span>' : '<span class="badge bg-secondary-lt ms-1">Inactive influencer</span>') : '';
+                            var disabled = inf && inf.isActive !== false ? 'disabled title="Already an active influencer"' : '';
+                            return '<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" data-user-id="' + u.id + '">' +
+                                '<div><div class="fw-semibold">' + (u.firstName || '') + ' ' + (u.lastName || '') + badge + '</div>' +
+                                '<div class="text-secondary small">' + u.email + (u.phone ? ' · ' + u.phone : '') + '</div></div>' +
+                                '<button class="btn btn-sm btn-primary btn-infl-select-user" ' + disabled + ' data-user-id="' + u.id + '">Select</button></div>';
+                        }).join('');
+                        resBox.className = "";
+                        resBox.innerHTML = '<div class="list-group mb-0">' + rows + '</div>';
+                    }
+                } catch (err) {
+                    alertEl.className = "alert alert-danger"; alertEl.textContent = err.message || "Search failed.";
+                } finally { this.disabled = false; this.textContent = "Search"; }
+            });
+            document.getElementById("infl-search-results").addEventListener("click", function (e) {
+                var btn = e.target.closest(".btn-infl-select-user");
+                if (!btn || btn.disabled) return;
+                document.querySelectorAll("#infl-search-results .list-group-item").forEach(function (el) { el.classList.remove("active"); });
+                btn.closest(".list-group-item").classList.add("active");
+                document.getElementById("infl-promote-user-id").value = btn.dataset.userId;
+                document.getElementById("infl-notes-section").className = "mt-3";
+                document.getElementById("btn-infl-promote-confirm").classList.remove("d-none");
+            });
+            document.getElementById("btn-infl-promote-confirm").addEventListener("click", async function () {
+                var userId  = document.getElementById("infl-promote-user-id").value;
+                var notes   = document.getElementById("infl-promote-notes").value.trim();
+                var alertEl = document.getElementById("infl-create-alert");
+                alertEl.className = "alert d-none";
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Promoting…';
+                try {
+                    await Influencers.promoteUser(userId, notes ? { notes: notes } : {});
                     alertEl.className = "alert alert-success";
-                    alertEl.textContent = "Influencer created.";
-                    this.reset();
-                    document.getElementById("infl-create-isActive").checked = true;
+                    alertEl.textContent = "User promoted to influencer!";
                     loadInfluencerStats(); loadInfluencersList(); loadInfluencersDropdown();
                     setTimeout(function () { bootstrap.Modal.getInstance(document.getElementById("modal-infl-create")).hide(); }, 1200);
                 } catch (err) {
-                    alertEl.className = "alert alert-danger";
-                    alertEl.textContent = err.message || "Failed to create.";
-                } finally { btn.disabled = false; btn.textContent = "Create Influencer"; }
+                    alertEl.className = "alert alert-danger"; alertEl.textContent = err.message || "Failed to promote.";
+                } finally { this.disabled = false; this.textContent = "Promote to Influencer"; }
             });
 
             // Edit influencer form
@@ -1352,10 +1388,9 @@
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
                 try {
-                    var fd      = new FormData(this);
-                    var payload = { name: fd.get("name").trim(), phone: fd.get("phone").trim(), isActive: document.getElementById("infl-edit-isActive").checked };
-                    payload.email = fd.get("email").trim() || null;
-                    payload.notes = fd.get("notes").trim() || null;
+                    var payload = { isActive: document.getElementById("infl-edit-isActive").checked };
+                    var notes   = document.getElementById("infl-edit-notes-input").value.trim();
+                    payload.notes = notes || null;
                     await Influencers.update(id, payload);
                     alertEl.className = "alert alert-success";
                     alertEl.textContent = "Influencer updated.";
@@ -1392,9 +1427,11 @@
                 var items  = result.data || result.influencers || (Array.isArray(result) ? result : []);
                 sel.innerHTML = '<option value="">\u2014 Select an influencer \u2014</option>';
                 items.forEach(function (inf) {
-                    var label = inf.name + (inf.phone ? " \u00b7 " + inf.phone : "");
+                    var u     = inf.user || {};
+                    var name  = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '—';
+                    var label = name + (u.phone ? ' \u00b7 ' + u.phone : '');
                     sel.insertAdjacentHTML("beforeend",
-                        '<option value="' + inf.id + '">' + label + '</option>');
+                        '<option value="' + (inf.userId || inf.id) + '">' + label + '</option>');
                 });
             } catch (err) {
                 sel.innerHTML = '<option value="">Failed to load \u2014 ' + err.message + '</option>';
@@ -1404,19 +1441,21 @@
         // ── Load stats ────────────────────────────────────────────────────────────
         async function loadStats() {
             try {
+                // Fetch all discount codes + influencer count in parallel.
+                // isActive filter is ignored by the API meta.total, so we derive counts client-side.
                 var results = await Promise.all([
-                    Discounts.getAll({ limit: 1, page: 1 }),
-                    Discounts.getAll({ limit: 1, page: 1, isActive: "true" }),
-                    Discounts.getAll({ limit: 1, page: 1, isActive: "false" }),
+                    Discounts.getAll({ limit: 100, page: 1 }),
                     Discounts.getAllInfluencer({ limit: 1, page: 1 })
                 ]);
-                var getTotal = function (r) {
-                    return (r.meta || r.pagination || {}).total ?? 0;
-                };
-                document.getElementById("stat-total").textContent      = getTotal(results[0]);
-                document.getElementById("stat-active").textContent     = getTotal(results[1]);
-                document.getElementById("stat-inactive").textContent   = getTotal(results[2]);
-                document.getElementById("stat-influencer").textContent = getTotal(results[3]);
+                var items    = results[0].data || results[0].discounts || (Array.isArray(results[0]) ? results[0] : []);
+                var total    = (results[0].meta || results[0].pagination || {}).total ?? items.length;
+                var active   = items.filter(function (d) { return d.isActive !== false; }).length;
+                var inactive = items.filter(function (d) { return d.isActive === false; }).length;
+                var infTotal = (results[1].meta || results[1].pagination || {}).total ?? 0;
+                document.getElementById("stat-total").textContent      = total;
+                document.getElementById("stat-active").textContent     = active;
+                document.getElementById("stat-inactive").textContent   = inactive;
+                document.getElementById("stat-influencer").textContent = infTotal;
             } catch (e) { console.warn("Stats:", e); }
         }
 
@@ -1753,15 +1792,16 @@
         // ── Influencer management: load stats ─────────────────────────────────────
         async function loadInfluencerStats() {
             try {
-                var results = await Promise.all([
-                    Influencers.getAll({ limit: 1, page: 1 }),
-                    Influencers.getAll({ limit: 1, page: 1, isActive: "true" }),
-                    Influencers.getAll({ limit: 1, page: 1, isActive: "false" })
-                ]);
-                var getTotal = function (r) { return (r.meta || r.pagination || {}).total ?? 0; };
-                document.getElementById("infl-stat-total").textContent    = getTotal(results[0]);
-                document.getElementById("infl-stat-active").textContent   = getTotal(results[1]);
-                document.getElementById("infl-stat-inactive").textContent = getTotal(results[2]);
+                // Single call — derive active/inactive counts from the returned data
+                // rather than making 3 separate requests (the API ignores isActive in meta.total)
+                var result = await Influencers.getAll({ limit: 100, page: 1 });
+                var items  = result.data || result.influencers || (Array.isArray(result) ? result : []);
+                var total  = (result.meta || result.pagination || {}).total ?? items.length;
+                var active   = items.filter(function (inf) { return inf.isActive !== false; }).length;
+                var inactive = items.filter(function (inf) { return inf.isActive === false; }).length;
+                document.getElementById("infl-stat-total").textContent    = total;
+                document.getElementById("infl-stat-active").textContent   = active;
+                document.getElementById("infl-stat-inactive").textContent = inactive;
             } catch (e) { console.warn("Influencer stats:", e); }
         }
 
@@ -1801,20 +1841,22 @@
             };
             tbody.innerHTML = rows.map(function (inf, i) {
                 var codes = (inf._count && inf._count.discountCodes != null) ? inf._count.discountCodes : (inf.discountCodes ? inf.discountCodes.length : '—');
+                var u    = inf.user || {};
+                var displayName = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '—';
                 return '<tr>' +
                     '<td class="text-secondary small">' + ((inflMgmtState.page - 1) * inflMgmtState.limit + i + 1) + '</td>' +
-                    '<td><div class="fw-semibold">' + (inf.name || '—') + '</div>' +
+                    '<td><div class="fw-semibold">' + displayName + '</div>' +
                     (inf.notes ? '<div class="text-secondary small text-truncate" style="max-width:160px" title="' + inf.notes.replace(/"/g, '&quot;') + '">' + inf.notes + '</div>' : '') +
                     '</td>' +
-                    '<td>' + (inf.phone || '<span class="text-secondary">—</span>') + '</td>' +
-                    '<td>' + (inf.email ? '<a href="mailto:' + inf.email + '" class="text-secondary">' + inf.email + '</a>' : '<span class="text-secondary">—</span>') + '</td>' +
+                    '<td>' + (u.phone || '<span class="text-secondary">—</span>') + '</td>' +
+                    '<td>' + (u.email ? '<a href="mailto:' + u.email + '" class="text-secondary">' + u.email + '</a>' : '<span class="text-secondary">—</span>') + '</td>' +
                     '<td><span class="badge bg-blue-lt">' + codes + '</span></td>' +
                     '<td>' + badge(inf.isActive) + '</td>' +
                     '<td class="text-secondary small">' + fmtDate(inf.createdAt) + '</td>' +
                     '<td><div class="d-flex gap-1">' +
                     '<button class="btn btn-sm btn-outline-secondary infl-btn-view" data-id="' + inf.id + '" title="View"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg></button>' +
                     (RBAC.can('influencers:update') ? '<button class="btn btn-sm btn-outline-primary infl-btn-edit" data-id="' + inf.id + '" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg></button>' : '') +
-                    (RBAC.can('influencers:delete') ? '<button class="btn btn-sm btn-outline-danger infl-btn-delete" data-id="' + inf.id + '" data-name="' + (inf.name || '').replace(/"/g, '&quot;') + '" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button>' : '') +
+                    (RBAC.can('influencers:delete') ? '<button class="btn btn-sm btn-outline-danger infl-btn-delete" data-id="' + inf.id + '" data-name="' + displayName.replace(/"/g, '&quot;') + '" title="Remove"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button>' : '') +
                     '</div></td></tr>';
             }).join("");
         }
@@ -1838,12 +1880,14 @@
                 };
                 var badge = function (v) { return v ? '<span class="badge bg-success-lt">Active</span>' : '<span class="badge bg-secondary-lt">Inactive</span>'; };
 
-                var initials = (inf.name || 'IN').split(' ').map(function (w) { return w[0]; }).join('').toUpperCase().slice(0, 2);
+                var u = inf.user || {};
+                var displayName = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '—';
+                var initials = displayName.split(' ').map(function (w) { return w[0]; }).join('').toUpperCase().slice(0, 2) || 'IN';
                 var html = '<div class="row g-3 mb-4">';
                 html += '<div class="col-12 d-flex align-items-center gap-3">';
                 html += '<div class="avatar avatar-lg bg-purple-lt text-purple fw-bold">' + initials + '</div>';
-                html += '<div><h4 class="mb-0">' + (inf.name || '—') + '</h4>';
-                html += '<div class="text-secondary">' + (inf.phone ? '<span class="me-3">' + inf.phone + '</span>' : '') + (inf.email ? '<a href="mailto:' + inf.email + '">' + inf.email + '</a>' : '') + '</div></div>';
+                html += '<div><h4 class="mb-0">' + displayName + '</h4>';
+                html += '<div class="text-secondary">' + (u.phone ? '<span class="me-3">' + u.phone + '</span>' : '') + (u.email ? '<a href="mailto:' + u.email + '">' + u.email + '</a>' : '') + '</div></div>';
                 html += '<div class="ms-auto">' + badge(inf.isActive) + '</div></div>';
                 if (inf.notes) html += '<div class="col-12"><div class="text-secondary small">' + inf.notes + '</div></div>';
 
@@ -1885,18 +1929,18 @@
             modal.show();
             try {
                 var inf = await Influencers.getOne(id);
+                var u = inf.user || {};
+                var displayName = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '—';
                 formBody.innerHTML =
-                    '<div class="col-md-6"><label class="form-label">Name <span class="text-danger">*</span></label>' +
-                    '<input type="text" name="name" class="form-control" value="' + (inf.name || '').replace(/"/g, '&quot;') + '" required></div>' +
-                    '<div class="col-md-6"><label class="form-label">Phone <span class="text-danger">*</span></label>' +
-                    '<input type="tel" name="phone" class="form-control" value="' + (inf.phone || '') + '" required></div>' +
-                    '<div class="col-md-6"><label class="form-label">Email</label>' +
-                    '<input type="email" name="email" class="form-control" value="' + (inf.email || '') + '"></div>' +
-                    '<div class="col-md-6 d-flex align-items-end"><div class="form-check form-switch mb-2">' +
-                    '<input class="form-check-input" type="checkbox" id="infl-edit-isActive"' + (inf.isActive ? ' checked' : '') + '>' +
+                    '<div class="col-12"><div class="card card-sm bg-muted-lt"><div class="card-body">' +
+                    '<div class="fw-semibold">' + displayName + '</div>' +
+                    '<div class="text-secondary small">' + (u.email || '') + (u.phone ? ' · ' + u.phone : '') + '</div>' +
+                    '</div></div></div>' +
+                    '<div class="col-12 d-flex align-items-center gap-3"><div class="form-check form-switch mb-0">' +
+                    '<input class="form-check-input" type="checkbox" id="infl-edit-isActive"' + (inf.isActive !== false ? ' checked' : '') + '>' +
                     '<label class="form-check-label" for="infl-edit-isActive">Active</label></div></div>' +
                     '<div class="col-12"><label class="form-label">Notes</label>' +
-                    '<textarea name="notes" class="form-control" rows="2">' + (inf.notes || '') + '</textarea></div>';
+                    '<textarea id="infl-edit-notes-input" class="form-control" rows="2">' + (inf.notes || '') + '</textarea></div>';
             } catch (err) {
                 formBody.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
             }

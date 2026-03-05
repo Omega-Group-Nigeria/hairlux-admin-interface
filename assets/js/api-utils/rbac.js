@@ -130,7 +130,7 @@ const RBAC = (() => {
     const _NAV_MAP = {
         'index.html':     { type: 'require',    perm:  'analytics:read' },
         'bookings.html':  { type: 'require',    perm:  'bookings:read' },
-        'payments.html':  { type: 'require',    perm:  'wallet:read' },
+        'payments.html':  { type: 'require',    perm:  'users:view_wallet' },
         'users.html':     { type: 'require',    perm:  'users:read' },
         'services.html':  { type: 'requireAny', perms: ['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories'] },
         'referrals.html': { type: 'require',    perm:  'referrals:read' },

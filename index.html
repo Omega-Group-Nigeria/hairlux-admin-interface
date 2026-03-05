@@ -455,7 +455,7 @@
                     : (address.street ? [address.street, address.city, address.state].filter(Boolean).join(', ') : (b.location || '\u2014'));
                 var bookingType = b.bookingType || '';
                 var typeLabel = bookingType === 'HOME_SERVICE'
-                    ? '<span class="badge bg-azure-lt">Home Service</span>'
+                    ? '<span class="badge bg-azure-lt">Mobile Service</span>'
                     : bookingType === 'WALK_IN' ? '<span class="badge bg-teal-lt">Walk-in</span>' : (bookingType || '\u2014');
                 var svcRows = services.length
                     ? services.map(function (s) {
@@ -565,7 +565,7 @@
             if (user) {
                 const initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
                 const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
-                const role     = (user.role || "Administrator").replace(/_/g, " ");
+                const role     = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
                 const email    = user.email || "";
 
                 document.getElementById("navbar-user-avatar").textContent  = initials;

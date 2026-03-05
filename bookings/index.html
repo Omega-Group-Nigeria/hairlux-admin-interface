@@ -359,7 +359,7 @@
             if (user) {
                 var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
                 var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
-                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                var role     = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
                 document.getElementById("navbar-user-avatar").textContent  = initials;
                 document.getElementById("navbar-user-name").textContent    = fullName;
                 document.getElementById("navbar-user-role").textContent    = role;
@@ -438,7 +438,7 @@
 
             // Booking type badge
             var typeBadge = bookingType === "HOME_SERVICE"
-                ? '<span class="badge bg-azure-lt text-azure">Home Service</span>'
+                ? '<span class="badge bg-azure-lt text-azure">Mobile Service</span>'
                 : (bookingType === "WALK_IN"
                     ? '<span class="badge bg-teal-lt text-teal">Walk-in</span>'
                     : '<span class="badge bg-secondary-lt">' + (bookingType || "—") + '</span>');
@@ -515,10 +515,11 @@
                     : '') +
 
                 // Guest info
-                ((b.guestName || b.guestPhone)
+                ((b.guestName || b.guestPhone || b.guestEmail)
                     ? '<div class="detail-section"><div class="row g-3">' +
                       (b.guestName ? '<div class="col-md-6"><div class="detail-label">Guest Name</div><div>' + b.guestName + '</div></div>' : '') +
                       (b.guestPhone ? '<div class="col-md-6"><div class="detail-label">Guest Phone</div><div>' + b.guestPhone + '</div></div>' : '') +
+                      (b.guestEmail ? '<div class="col-md-6"><div class="detail-label">Guest Email</div><div>' + b.guestEmail + '</div></div>' : '') +
                       '</div></div>'
                     : '') +
 

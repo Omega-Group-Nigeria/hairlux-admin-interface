@@ -555,7 +555,7 @@
             if (user) {
                 var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
                 var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
-                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                var role     = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
                 document.getElementById("navbar-user-avatar").textContent  = initials;
                 document.getElementById("navbar-user-name").textContent    = fullName;
                 document.getElementById("navbar-user-role").textContent    = role;
@@ -700,7 +700,7 @@
                     limit:  state.limit,
                     status: state.status,
                     search: state.search,
-                    role:   state.role,
+                    role:   'USER',
                 });
                 var rows = result.data || [];
                 var meta = result.meta || {};
@@ -718,8 +718,8 @@
         // ── Render table ──────────────────────────────────────────────────────────
         function renderTable(rows) {
             var tbody = document.getElementById("users-tbody");
-            // Exclude SUPER_ADMIN from the list
-            rows = rows.filter(function (u) { return u.role !== "SUPER_ADMIN"; });
+            // Show only regular user accounts
+            rows = rows.filter(function (u) { return u.role === "USER"; });
             if (!rows.length) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No users found.</td></tr>';
                 return;

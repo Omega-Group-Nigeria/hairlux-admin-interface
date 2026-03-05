@@ -637,7 +637,7 @@
             if (user) {
                 var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
                 var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
-                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                var role     = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
                 document.getElementById("navbar-user-avatar").textContent  = initials;
                 document.getElementById("navbar-user-name").textContent    = fullName;
                 document.getElementById("navbar-user-role").textContent    = role;
@@ -997,7 +997,7 @@
                     : (address.street ? [address.street, address.city, address.state].filter(Boolean).join(", ") : (b.location || "\u2014"));
                 var bookingType = b.bookingType || "";
                 var typeLabel = bookingType === "HOME_SERVICE"
-                    ? '<span class="badge bg-azure-lt">Home Service</span>'
+                    ? '<span class="badge bg-azure-lt">Mobile Service</span>'
                     : bookingType === "WALK_IN" ? '<span class="badge bg-teal-lt">Walk-in</span>' : (bookingType || "\u2014");
 
                 var svcRows = services.length
@@ -1037,6 +1037,7 @@
                         '<div class="col-12"><div class="mb-1 text-secondary small">Service Address</div><div>' + location + '</div></div>' : '') +
                     (b.guestName ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Name</div><div>' + b.guestName + '</div></div>' : '') +
                     (b.guestPhone ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Phone</div><div>' + b.guestPhone + '</div></div>' : '') +
+                    (b.guestEmail ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Email</div><div>' + b.guestEmail + '</div></div>' : '') +
                     (b.notes ? '<div class="col-12"><div class="mb-1 text-secondary small">Notes</div><div class="text-secondary">' + b.notes + '</div></div>' : '') +
                     '<div class="col-12"><div class="mb-1 text-secondary small">Booking ID</div><div class="text-secondary small font-monospace">' + id + '</div></div>' +
                     '</div>';

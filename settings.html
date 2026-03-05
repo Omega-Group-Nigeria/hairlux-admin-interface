@@ -886,7 +886,9 @@
             var initials = ((user.firstName || '')[0] || '') + ((user.lastName || '')[0] || '');
             initials = initials.toUpperCase() || 'A';
             var fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Admin';
-            var role     = (user.role || '').replace(/_/g, ' ');
+            // Prefer the custom role name (e.g. "ACCOUNTANT") over the base role string ("ADMIN")
+            var roleDisplayName = (user.adminRole && user.adminRole.name) || user.role || '';
+            var role     = roleDisplayName.replace(/_/g, ' ');
             var email    = user.email || '';
             function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
             set('navbar-user-avatar',  initials);
@@ -901,7 +903,7 @@
             set('profile-fullname',    fullName);
             var roleBadge = document.getElementById('profile-role-badge');
             if (roleBadge) {
-                var color = Roles.getRoleColor(user.role) || 'secondary';
+                var color = Roles.getRoleColor(roleDisplayName) || 'secondary';
                 roleBadge.innerHTML = '<span class="badge bg-' + color + '-lt">' + role + '</span>';
             }
             var sinceEl = document.getElementById('profile-since');
