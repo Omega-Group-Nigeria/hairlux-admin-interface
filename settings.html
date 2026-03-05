@@ -1,0 +1,1550 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Profile &amp; Settings</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <!-- STYLES -->
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        /* Section switching */
+        .settings-section { display: none; }
+        .settings-section.active { display: block; }
+
+        /* Sidebar nav */
+        .settings-nav .nav-link {
+            color: var(--tblr-body-color);
+            border-radius: var(--tblr-border-radius);
+            padding: .5rem .75rem;
+        }
+        .settings-nav .nav-link:hover { background: var(--tblr-bg-surface-secondary); }
+        .settings-nav .nav-link.active {
+            background: var(--tblr-bg-surface-secondary);
+            color: var(--tblr-primary);
+            font-weight: 500;
+        }
+        .settings-nav .nav-link .icon { opacity: .6; }
+        .settings-nav .nav-link.active .icon { opacity: 1; }
+
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Logo -->
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <!-- Right-side controls -->
+                <div class="navbar-nav flex-row order-md-last">
+                    <!-- Dark / Light toggle -->
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- User menu -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small" id="dropdown-user-email">admin@hairlux.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html#profile" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                    <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                </svg>
+                                Profile
+                            </a>
+                            <a href="./settings.html#security" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./index.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M11 15l1 0" />
+                                        <path d="M12 15l0 3" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Bookings</span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./bookings.html">Overview</a>
+                                <a class="dropdown-item" href="./bookings/index.html">Verify Booking</a>
+                                <a class="dropdown-item" href="./bookings/calendar.html">Calendar</a>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./payments.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                        <path d="M3 10l18 0" />
+                                        <path d="M7 15l.01 0" />
+                                        <path d="M11 15l2 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Payments</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./users.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Users</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./services.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+                                        <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+                                        <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+                                        <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Services</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./referrals.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M15 5v2" />
+                                        <path d="M15 11v2" />
+                                        <path d="M15 17v2" />
+                                        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Referrals</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./discounts.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>
+                                </span>
+                                <span class="nav-link-title">Discounts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./careers.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                        <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Careers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Account</div>
+                            <h2 class="page-title">Profile &amp; Settings</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Global alert banner -->
+                    <div id="global-alert" class="alert mb-3 d-none" role="alert">
+                        <div class="d-flex align-items-center">
+                            <div id="global-alert-icon" class="me-2"></div>
+                            <div id="global-alert-msg"></div>
+                            <button type="button" class="btn-close ms-auto" onclick="dismissAlert()"></button>
+                        </div>
+                    </div>
+
+                    <!-- ======= SPLIT CARD (sidebar + sections) ======= -->
+                    <div class="card">
+                        <div class="row g-0">
+
+                            <!-- ── LEFT SIDEBAR ──────────────────────────────── -->
+                            <div class="col-12 col-md-3 border-end">
+                                <div class="p-3 p-md-4">
+                                    <!-- Mini profile -->
+                                    <div class="text-center mb-4">
+                                        <div class="avatar avatar-xl mx-auto mb-2"
+                                            style="background:var(--tblr-primary);color:#fff;font-size:1.4rem;font-weight:700;display:flex;align-items:center;justify-content:center;border-radius:50%;width:64px;height:64px;">
+                                            <span id="sidebar-avatar">?</span>
+                                        </div>
+                                        <div class="fw-semibold" id="sidebar-name">Loading…</div>
+                                        <div class="text-secondary small text-truncate" id="sidebar-email"></div>
+                                    </div>
+
+                                    <!-- Nav -->
+                                    <nav class="settings-nav nav flex-column gap-1">
+                                        <a href="#profile" class="nav-link d-flex align-items-center gap-2"
+                                            data-section="profile">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+                                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+                                            </svg>
+                                            My Profile
+                                        </a>
+                                        <a href="#security" class="nav-link d-flex align-items-center gap-2"
+                                            data-section="security">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"/>
+                                                <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/>
+                                                <path d="M8 11v-4a4 4 0 1 1 8 0v4"/>
+                                            </svg>
+                                            Security
+                                        </a>
+                                        <a href="#admin-management" class="nav-link d-flex align-items-center gap-2 d-none"
+                                            id="nav-admin-management" data-section="admin-management">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/>
+                                                <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                                <path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/>
+                                            </svg>
+                                            Admin Management
+                                        </a>
+                                    </nav>
+                                </div>
+                            </div>
+
+                            <!-- ── RIGHT CONTENT ─────────────────────────────── -->
+                            <div class="col-12 col-md-9">
+                                <div class="p-3 p-md-4">
+
+                                    <!-- ═══ SECTION: MY PROFILE ═══════════════════ -->
+                                    <div class="settings-section" id="section-profile">
+                                        <!-- Profile header -->
+                                        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                                            <div class="avatar avatar-xl"
+                                                style="background:var(--tblr-primary);color:#fff;font-size:1.5rem;font-weight:700;display:flex;align-items:center;justify-content:center;border-radius:50%;width:72px;height:72px;flex-shrink:0;">
+                                                <span id="profile-avatar-lg">?</span>
+                                            </div>
+                                            <div>
+                                                <div class="h3 mb-0" id="profile-fullname">Loading…</div>
+                                                <div id="profile-role-badge" class="mt-1"></div>
+                                                <div class="text-secondary small mt-1" id="profile-since"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Profile form -->
+                                        <form id="form-profile" autocomplete="off">
+                                            <div class="row g-3">
+                                                <div class="col-12 col-sm-6">
+                                                    <label class="form-label required">First Name</label>
+                                                    <input type="text" class="form-control" id="input-firstName"
+                                                        placeholder="John" required />
+                                                </div>
+                                                <div class="col-12 col-sm-6">
+                                                    <label class="form-label required">Last Name</label>
+                                                    <input type="text" class="form-control" id="input-lastName"
+                                                        placeholder="Doe" required />
+                                                </div>
+                                                <div class="col-12 col-sm-6">
+                                                    <label class="form-label">Email</label>
+                                                    <input type="email" class="form-control" id="input-email"
+                                                        placeholder="you@example.com" disabled />
+                                                    <div class="form-hint">Email cannot be changed here.</div>
+                                                </div>
+                                                <div class="col-12 col-sm-6">
+                                                    <label class="form-label">Phone</label>
+                                                    <input type="tel" class="form-control" id="input-phone"
+                                                        placeholder="+2348012345678" />
+                                                </div>
+                                                <div class="col-12 d-flex gap-2 pt-1">
+                                                    <button type="submit" class="btn btn-primary" id="btn-save-profile">
+                                                        <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                            id="spinner-profile" role="status"></span>
+                                                        Save Changes
+                                                    </button>
+                                                    <button type="button" class="btn btn-link link-secondary"
+                                                        id="btn-reset-profile">Reset</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    <!-- ═══ SECTION: SECURITY ══════════════════════ -->
+                                    <div class="settings-section" id="section-security">
+                                        <h3 class="mb-1">Change Password</h3>
+                                        <p class="text-secondary small mb-4">
+                                            Use a strong password with uppercase, lowercase, and numbers (min 8 chars).
+                                        </p>
+                                        <form id="form-password" autocomplete="off">
+                                            <div class="row g-3" style="max-width:480px;">
+                                                <div class="col-12">
+                                                    <label class="form-label required">Current Password</label>
+                                                    <div class="input-group">
+                                                        <input type="password" class="form-control"
+                                                            id="input-currentPassword" required />
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                            onclick="togglePwd('input-currentPassword',this)" title="Show/hide">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" class="icon icon-1">
+                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
+                                                                <path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label required">New Password</label>
+                                                    <div class="input-group">
+                                                        <input type="password" class="form-control"
+                                                            id="input-newPassword" required minlength="8" />
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                            onclick="togglePwd('input-newPassword',this)" title="Show/hide">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" class="icon icon-1">
+                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
+                                                                <path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label required">Confirm New Password</label>
+                                                    <div class="input-group">
+                                                        <input type="password" class="form-control"
+                                                            id="input-confirmPassword" required minlength="8" />
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                            onclick="togglePwd('input-confirmPassword',this)" title="Show/hide">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round" class="icon icon-1">
+                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
+                                                                <path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 pt-1">
+                                                    <button type="submit" class="btn btn-primary" id="btn-save-password">
+                                                        <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                            id="spinner-password" role="status"></span>
+                                                        Update Password
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    <!-- ═══ SECTION: ADMIN MANAGEMENT ════════════ -->
+                                    <div class="settings-section" id="section-admin-management">
+
+                                        <!-- Header -->
+                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-4 pb-3 border-bottom">
+                                            <div>
+                                                <h3 class="mb-0">Admin Management</h3>
+                                                <p class="text-secondary small mt-1 mb-0">
+                                                    Manage admin accounts, assign roles, and customise per-role permissions. Super Admin only.
+                                                </p>
+                                            </div>
+                                            <button type="button" class="btn btn-primary btn-sm flex-shrink-0"
+                                                id="btn-open-create-admin">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon me-1">
+                                                    <path d="M12 5l0 14"/><path d="M5 12l14 0"/>
+                                                </svg>
+                                                New Admin
+                                            </button>
+                                        </div>
+
+                                        <!-- Section alert -->
+                                        <div id="admin-alert" class="alert d-none mb-3" role="alert">
+                                            <span id="admin-alert-icon"></span>
+                                            <span id="admin-alert-msg" class="ms-2"></span>
+                                        </div>
+
+                                        <!-- Tabs nav -->
+                                        <ul class="nav nav-tabs mb-4" id="admin-tab-nav">
+                                            <li class="nav-item">
+                                                <a href="#" class="nav-link active d-flex align-items-center gap-2"
+                                                    data-admin-tab="accounts">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon">
+                                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/>
+                                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+                                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/>
+                                                    </svg>
+                                                    Admin Accounts
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="#" class="nav-link d-flex align-items-center gap-2"
+                                                    data-admin-tab="permissions">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon">
+                                                        <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/>
+                                                    </svg>
+                                                    Roles &amp; Permissions
+                                                </a>
+                                            </li>
+                                        </ul>
+
+                                        <!-- ─── TAB: ADMIN ACCOUNTS ──────────────────── -->
+                                        <div id="admin-tab-accounts" class="admin-tab-pane">
+
+                                            <!-- Stats pills -->
+                                            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                                <span class="badge bg-secondary-lt px-3 py-2 fs-6">
+                                                    <span id="stat-admin-total">—</span> total
+                                                </span>
+                                                <span class="badge bg-danger-lt px-3 py-2">
+                                                    <span id="stat-admin-super">—</span> super admin
+                                                </span>
+                                                <span id="stat-roles-breakdown" class="d-contents"></span>
+                                                <button type="button"
+                                                    class="btn btn-sm btn-ghost-secondary ms-auto d-flex align-items-center gap-1"
+                                                    id="btn-refresh-admins">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon">
+                                                        <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/>
+                                                        <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+                                                    </svg>
+                                                    Refresh
+                                                </button>
+                                            </div>
+
+                                            <!-- Admins table -->
+                                            <div class="table-responsive">
+                                                <table class="table table-vcenter table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Name</th>
+                                                            <th>Email</th>
+                                                            <th>Role</th>
+                                                            <th>Status</th>
+                                                            <th>Joined</th>
+                                                            <th class="w-1"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="admin-users-tbody">
+                                                        <tr>
+                                                            <td colspan="6" class="text-center text-secondary py-4">
+                                                                Loading…
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                        </div><!-- /admin-tab-accounts -->
+
+                                        <!-- ─── TAB: ROLES & PERMISSIONS ─────────────── -->
+                                        <div id="admin-tab-permissions" class="admin-tab-pane d-none">
+
+                                            <!-- Role selector toolbar -->
+                                            <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                                <span class="text-secondary small fw-medium">Editing permissions for:</span>
+                                                <!-- Role selector — populated by JS -->
+                                                <div class="d-flex flex-wrap gap-1" id="perm-role-selector"></div>
+                                                <div class="ms-auto d-flex gap-2">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-ghost-danger"
+                                                        id="btn-delete-role">Delete Role</button>
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-primary"
+                                                        id="btn-save-perms">
+                                                        <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                            id="spinner-save-perms"></span>
+                                                        Save Permissions
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Super admin locked notice -->
+                                            <div class="alert alert-info small mb-3 py-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon me-1">
+                                                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/>
+                                                    <path d="M12 8v4"/><path d="M12 16h.01"/>
+                                                </svg>
+                                                <strong>Super Admin</strong> always has every permission and cannot be modified.
+                                                Changes here are stored in this browser session.
+                                            </div>
+
+                                            <!-- Permission matrix (rendered by JS) -->
+                                            <div id="perm-matrix"></div>
+
+                                        </div><!-- /admin-tab-permissions -->
+
+                                    </div>
+                                    <!-- ═══ END SECTION: ADMIN MANAGEMENT ════════ -->
+
+                                </div><!-- /p-3 -->
+                            </div><!-- /col-md-9 -->
+
+                        </div><!-- /row g-0 -->
+                    </div><!-- /card -->
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">
+                            &copy; 2026 Hairlux Admin Panel
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- ===== MODAL: CREATE ADMIN ===== -->
+    <div class="modal modal-blur fade" id="modal-create-admin" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" class="icon me-2">
+                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
+                            <path d="M16 19h6"/><path d="M19 16v6"/>
+                            <path d="M6 21v-2a4 4 0 0 1 4 -4h4"/>
+                        </svg>
+                        New Admin Account
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <!-- Modal-level alert -->
+                <div id="modal-create-admin-alert" class="alert d-none mx-3 mt-3 mb-0 py-2" role="alert">
+                    <span id="modal-create-admin-alert-msg"></span>
+                </div>
+                <div class="modal-body">
+                    <form id="form-create-admin" autocomplete="off">
+                        <div class="row g-3">
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label required">First Name</label>
+                                <input type="text" class="form-control" id="ca-firstName"
+                                    placeholder="John" required />
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label required">Last Name</label>
+                                <input type="text" class="form-control" id="ca-lastName"
+                                    placeholder="Doe" required />
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label required">Email</label>
+                                <input type="email" class="form-control" id="ca-email"
+                                    placeholder="admin@hairlux.com" required />
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="ca-phone"
+                                    placeholder="+2348012345678" />
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label required">Role</label>
+                                <select class="form-select" id="ca-role" required>
+                                    <!-- options populated by JS from custom roles -->
+                                </select>
+                                <div class="form-hint">Super Admin can only be assigned by system.</div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label required">Password</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="ca-password"
+                                        required minlength="8" placeholder="Min 8 characters" />
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        onclick="togglePwd('ca-password',this)" title="Show/hide">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                            class="icon icon-1">
+                                            <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
+                                            <path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="form-create-admin" class="btn btn-primary" id="btn-create-admin">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-create-admin"></span>
+                        Create Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: CREATE ADMIN ===== -->
+
+    <!-- ===== MODAL: CHANGE ROLE ===== -->
+    <div class="modal modal-blur fade" id="modal-change-role" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Change Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="role-change-user-id" />
+                    <p class="mb-2 text-secondary small">
+                        Changing role for: <strong id="role-change-user-name">—</strong>
+                    </p>
+                    <label class="form-label required">New Role</label>
+                    <select class="form-select" id="role-change-select">
+                        <!-- options populated by JS from custom roles -->
+                    </select>
+                    <div class="form-hint mt-1">Super Admin role cannot be assigned here.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-role-change">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-role-change"></span>
+                        Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: CHANGE ROLE ===== -->
+
+    <!-- ===== MODAL: CREATE ROLE ===== -->
+    <div class="modal modal-blur fade" id="modal-create-role" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" class="icon me-2">
+                            <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/>
+                        </svg>
+                        New Role
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div id="modal-create-role-alert" class="alert d-none mx-3 mt-3 mb-0 py-2" role="alert">
+                    <span id="modal-create-role-alert-msg"></span>
+                </div>
+                <div class="modal-body">
+                    <form id="form-create-role" autocomplete="off">
+                        <div class="mb-3">
+                            <label class="form-label required">Role Name</label>
+                            <input type="text" class="form-control" id="cr-name"
+                                placeholder="e.g. MANAGER" required />
+                        </div>
+                        <div>
+                            <label class="form-label">Description <span class="text-muted">(optional)</span></label>
+                            <textarea class="form-control" id="cr-description" rows="2"
+                                placeholder="Brief description of what this role can do…"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="form-create-role" class="btn btn-primary" id="btn-submit-create-role">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-create-role"></span>
+                        Create Role
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: CREATE ROLE ===== -->
+
+    <!-- ===== MODAL: TOGGLE ADMIN STATUS ===== -->
+    <div class="modal modal-blur fade" id="modal-toggle-status" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="toggle-status-title">Deactivate Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="toggle-status-user-id" />
+                    <input type="hidden" id="toggle-status-new-status" />
+                    <p class="text-secondary mb-0" id="toggle-status-body">
+                        Are you sure you want to deactivate this account?
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-toggle-status">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-toggle-status"></span>
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: TOGGLE ADMIN STATUS ===== -->
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/users.js"></script>
+    <script src="assets/js/api-utils/roles.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+
+    <script>
+        // ── Auth guard ────────────────────────────────────────────────────────
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        var _isSuperAdmin = RBAC.isSuperAdmin();
+
+        // ── State ─────────────────────────────────────────────────────────────
+        let _profile = null;
+
+        // ── Alert helpers ─────────────────────────────────────────────────────
+        function showAlert(type, msg) {
+            const el  = document.getElementById('global-alert');
+            const ico = document.getElementById('global-alert-icon');
+            const txt = document.getElementById('global-alert-msg');
+            el.className = 'alert alert-' + type + ' mb-3';
+            ico.innerHTML = type === 'success'
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M5 12l5 5l10 -10"/></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>';
+            txt.textContent = msg;
+            el.classList.remove('d-none');
+            clearTimeout(el._timer);
+            el._timer = setTimeout(function() { el.classList.add('d-none'); }, 5000);
+        }
+        function dismissAlert() { document.getElementById('global-alert').classList.add('d-none'); }
+        function setSpinner(id, on) { var el = document.getElementById(id); if (el) el.classList.toggle('d-none', !on); }
+
+        // ── Section navigation ────────────────────────────────────────────────
+        function switchSection(sectionId) {
+            document.querySelectorAll('.settings-section').forEach(function(el){ el.classList.remove('active'); });
+            document.querySelectorAll('.settings-nav .nav-link').forEach(function(el){ el.classList.remove('active'); });
+            var sec = document.getElementById('section-' + sectionId);
+            if (sec) sec.classList.add('active');
+            var link = document.querySelector('.settings-nav .nav-link[data-section="' + sectionId + '"]');
+            if (link) link.classList.add('active');
+            history.replaceState(null, '', '#' + sectionId);
+        }
+        function routeOnLoad() {
+            var hash = (location.hash || '#profile').replace('#', '');
+            var valid = ['profile', 'security', 'admin-management'];
+            switchSection(valid.indexOf(hash) !== -1 ? hash : 'profile');
+        }
+
+        // ── Populate user info in navbar + sidebar + profile header ───────────
+        function populateUserInfo(user) {
+            if (!user) return;
+            var initials = ((user.firstName || '')[0] || '') + ((user.lastName || '')[0] || '');
+            initials = initials.toUpperCase() || 'A';
+            var fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Admin';
+            var role     = (user.role || '').replace(/_/g, ' ');
+            var email    = user.email || '';
+            function set(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+            set('navbar-user-avatar',  initials);
+            set('navbar-user-name',    fullName);
+            set('navbar-user-role',    role);
+            set('dropdown-user-name',  fullName);
+            set('dropdown-user-email', email);
+            set('sidebar-avatar',      initials);
+            set('sidebar-name',        fullName);
+            set('sidebar-email',       email);
+            set('profile-avatar-lg',   initials);
+            set('profile-fullname',    fullName);
+            var roleBadge = document.getElementById('profile-role-badge');
+            if (roleBadge) {
+                var color = Roles.getRoleColor(user.role) || 'secondary';
+                roleBadge.innerHTML = '<span class="badge bg-' + color + '-lt">' + role + '</span>';
+            }
+            var sinceEl = document.getElementById('profile-since');
+            if (sinceEl && user.createdAt) {
+                var since = new Date(user.createdAt).toLocaleDateString('en-NG', { day:'2-digit', month:'long', year:'numeric' });
+                sinceEl.textContent = 'Member since ' + since;
+            }
+        }
+
+        // ── GET /user/profile ─────────────────────────────────────────────────
+        async function loadProfile() {
+            try {
+                var res  = await Auth.fetch('/user/profile');
+                var raw  = await res.json().catch(function(){ return {}; });
+                _profile = raw.data || raw;
+                populateUserInfo(_profile);
+                fillProfileForm(_profile);
+            } catch(err) {
+                showAlert('danger', 'Failed to load profile: ' + err.message);
+            }
+        }
+        function fillProfileForm(u) {
+            if (!u) return;
+            function setVal(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; }
+            setVal('input-firstName', u.firstName);
+            setVal('input-lastName',  u.lastName);
+            setVal('input-email',     u.email);
+            setVal('input-phone',     u.phone);
+        }
+
+        // ── PUT /user/profile ─────────────────────────────────────────────────
+        document.getElementById('form-profile').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            setSpinner('spinner-profile', true);
+            this.querySelector('#btn-save-profile').disabled = true;
+            try {
+                var body = {
+                    firstName: document.getElementById('input-firstName').value.trim(),
+                    lastName:  document.getElementById('input-lastName').value.trim(),
+                    phone:     document.getElementById('input-phone').value.trim() || undefined,
+                };
+                var res = await Auth.fetch('/user/profile', { method:'PUT', body: JSON.stringify(body) });
+                var raw = await res.json().catch(function(){ return {}; });
+                if (!res.ok) throw new Error(raw.message || 'Update failed (' + res.status + ')');
+                _profile = raw.data || _profile;
+                populateUserInfo(_profile);
+                localStorage.setItem('hairlux_user', JSON.stringify(_profile));
+                showAlert('success', 'Profile updated successfully.');
+            } catch(err) {
+                showAlert('danger', err.message);
+            } finally {
+                setSpinner('spinner-profile', false);
+                document.getElementById('btn-save-profile').disabled = false;
+            }
+        });
+        document.getElementById('btn-reset-profile').addEventListener('click', function() {
+            fillProfileForm(_profile); dismissAlert();
+        });
+
+        // ── PUT /user/password ────────────────────────────────────────────────
+        document.getElementById('form-password').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var newPwd  = document.getElementById('input-newPassword').value;
+            var confPwd = document.getElementById('input-confirmPassword').value;
+            if (newPwd !== confPwd) { showAlert('danger', 'New passwords do not match.'); return; }
+            setSpinner('spinner-password', true);
+            document.getElementById('btn-save-password').disabled = true;
+            try {
+                var body = {
+                    currentPassword: document.getElementById('input-currentPassword').value,
+                    newPassword: newPwd,
+                };
+                var res = await Auth.fetch('/user/password', { method:'PUT', body: JSON.stringify(body) });
+                var raw = await res.json().catch(function(){ return {}; });
+                if (!res.ok) throw new Error(raw.message || 'Password change failed (' + res.status + ')');
+                showAlert('success', 'Password changed successfully.');
+                document.getElementById('form-password').reset();
+            } catch(err) {
+                showAlert('danger', err.message);
+            } finally {
+                setSpinner('spinner-password', false);
+                document.getElementById('btn-save-password').disabled = false;
+            }
+        });
+
+        // ── Password visibility toggle ────────────────────────────────────────
+        function togglePwd(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (!input) return;
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.innerHTML = show
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M3 3l18 18"/><path d="M10.584 10.587a2 2 0 0 0 2.828 2.83"/><path d="M9.363 5.365a9.466 9.466 0 0 1 2.637-.365c3.6 0 6.6 2 9 6c-.818 1.374-1.698 2.545-2.636 3.5"/><path d="M20.297 17.32c-1.477 1.146-3.046 1.68-4.297 1.68"/><path d="M3 12c.816-1.374 1.696-2.545 2.636-3.5"/></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/></svg>';
+        }
+
+        // ── Admin Management ─────────────────────────────────────────────────
+        var _adminUsers  = [];
+        var _rolesCache  = []; // populated by Roles.fetchRoles()
+        var _permRole    = null; // UUID of the currently viewed role in Permissions tab
+
+        function _esc(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function showAdminAlert(type, msg) {
+            var el  = document.getElementById('admin-alert');
+            var ico = document.getElementById('admin-alert-icon');
+            var txt = document.getElementById('admin-alert-msg');
+            el.className = 'alert alert-' + type + ' mb-3';
+            ico.innerHTML = type === 'success'
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M5 12l5 5l10 -10"/></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>';
+            txt.textContent = msg;
+            el.classList.remove('d-none');
+            clearTimeout(el._timer);
+            el._timer = setTimeout(function() { el.classList.add('d-none'); }, 6000);
+        }
+
+        function updateAdminStats(users) {
+            var superCount = users.filter(function(u){ return u.role === 'SUPER_ADMIN'; }).length;
+            var el = document.getElementById('stat-admin-total'); if (el) el.textContent = users.length;
+            var se = document.getElementById('stat-admin-super'); if (se) se.textContent = superCount;
+            // Dynamic per-role pill breakdown
+            var breakdown = document.getElementById('stat-roles-breakdown');
+            if (breakdown) {
+                breakdown.innerHTML = _rolesCache.map(function(r) {
+                    var count = users.filter(function(u){ return u.role === r.name; }).length;
+                    return '<span class="badge bg-' + r.color + '-lt px-3 py-2"><span>' + count + '</span> ' + _esc(r.name) + '</span>';
+                }).join('');
+            }
+        }
+
+        // ── Populate role <select> elements (Create Admin + Change Role modals) ──
+        async function populateRoleSelects() {
+            var caEl = document.getElementById('ca-role');
+            var rrEl = document.getElementById('role-change-select');
+            try {
+                var roles = await Roles.fetchRoles();
+                _rolesCache = roles;
+                if (!roles.length) {
+                    var placeholder = '<option value="" disabled selected>No roles yet — create one first</option>';
+                    if (caEl) caEl.innerHTML = placeholder;
+                    if (rrEl) rrEl.innerHTML = placeholder;
+                    return;
+                }
+                // Both selects use role.id (UUID) → sent as adminRoleId to API
+                var options = roles.map(function(r) {
+                    return '<option value="' + _esc(r.id) + '">' + _esc(r.name) + '</option>';
+                }).join('');
+                if (caEl) caEl.innerHTML = options;
+                if (rrEl) rrEl.innerHTML = options;
+            } catch(err) {
+                var errOpt = '<option value="" disabled selected>Failed to load roles</option>';
+                if (caEl) caEl.innerHTML = errOpt;
+                if (rrEl) rrEl.innerHTML = errOpt;
+            }
+        }
+
+        // ── Render role selector buttons in the Permissions tab ──────────────
+        async function renderPermRoleSelector() {
+            var sel = document.getElementById('perm-role-selector');
+            if (!sel) return;
+            // Ensure roles are loaded
+            if (!_rolesCache.length) {
+                try { _rolesCache = await Roles.fetchRoles(); } catch(e) {}
+            }
+            var roles = _rolesCache;
+            // Keep _permRole (UUID) valid
+            if (_permRole && !roles.find(function(r){ return r.id === _permRole; }))
+                _permRole = roles.length ? roles[0].id : null;
+            if (!_permRole && roles.length) _permRole = roles[0].id;
+
+            var addBtn = '<button type="button" class="btn btn-sm btn-outline-secondary" id="btn-open-create-role">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" ' +
+                'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">' +
+                '<path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>New Role</button>';
+
+            if (!roles.length) {
+                sel.innerHTML = '<span class="text-secondary small fst-italic me-2">No roles defined.</span>' + addBtn;
+                var deleteBtn = document.getElementById('btn-delete-role');
+                var saveBtn   = document.getElementById('btn-save-perms');
+                if (deleteBtn) deleteBtn.classList.add('d-none');
+                if (saveBtn)   saveBtn.classList.add('d-none');
+            } else {
+                sel.innerHTML = roles.map(function(r) {
+                    var active = (r.id === _permRole) ? ' active' : '';
+                    return '<button type="button" class="btn btn-sm btn-outline-' + _esc(r.color) + active +
+                        '" data-perm-role="' + _esc(r.id) + '">' + _esc(r.name) + '</button>';
+                }).join('') + addBtn;
+                var deleteBtn = document.getElementById('btn-delete-role');
+                var saveBtn   = document.getElementById('btn-save-perms');
+                if (deleteBtn) deleteBtn.classList.remove('d-none');
+                if (saveBtn)   saveBtn.classList.remove('d-none');
+            }
+
+            // Attach click handler (innerHTML replaced old listeners)
+            sel.onclick = function(e) {
+                var roleBtn = e.target.closest('[data-perm-role]');
+                if (roleBtn) {
+                    _permRole = roleBtn.dataset.permRole;
+                    renderPermRoleSelector();
+                    return;
+                }
+                var newRoleBtn = e.target.closest('#btn-open-create-role');
+                if (newRoleBtn) {
+                    var form = document.getElementById('form-create-role');
+                    if (form) form.reset();
+                    var alertEl = document.getElementById('modal-create-role-alert');
+                    if (alertEl) alertEl.classList.add('d-none');
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-create-role')).show();
+                }
+            };
+            renderPermMatrix();
+        }
+
+        function renderAdminTable(users) {
+            var tbody = document.getElementById('admin-users-tbody');
+            if (!tbody) return;
+            if (!users.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No admin users found.</td></tr>';
+                return;
+            }
+            var currentUserId = Auth.getUser() ? Auth.getUser().id : null;
+            tbody.innerHTML = users.map(function(u) {
+                var name       = _esc([u.firstName, u.lastName].filter(Boolean).join(' ') || '—');
+                var email      = _esc(u.email || '—');
+                var roleBadge  = Roles.roleBadge(u.role);
+                var status     = u.status || (u.isActive ? 'ACTIVE' : 'INACTIVE');
+                var isActive   = (status === 'ACTIVE');
+                var statusBadge = '<span class="badge bg-' + (isActive ? 'success' : 'secondary') + '-lt">' + (isActive ? 'Active' : 'Inactive') + '</span>';
+                var joined     = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-NG', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+                var isSuperAdmin = (u.role === 'SUPER_ADMIN');
+                var isSelf     = (u.id === currentUserId);
+                var dropItems  = '';
+                if (!isSuperAdmin && !isSelf) {
+                    dropItems += '<a class="dropdown-item" href="#" data-action="change-role" data-uid="' + _esc(u.id) + '" data-uname="' + name + '" data-role="' + _esc(u.role) + '">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/></svg>Change Role</a>';
+                    var toggleLabel  = isActive ? 'Deactivate' : 'Activate';
+                    var toggleStatus = isActive ? 'INACTIVE' : 'ACTIVE';
+                    dropItems += '<a class="dropdown-item ' + (isActive ? 'text-danger' : 'text-success') + '" href="#" data-action="toggle-status" data-uid="' + _esc(u.id) + '" data-uname="' + name + '" data-new-status="' + toggleStatus + '">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>' + (isActive ? '<path d="M9 12l2 2l4 -4"/>' : '<path d="M10 14l4 -4"/><path d="M14 14l-4 -4"/>') + '</svg>' + toggleLabel + '</a>';
+                } else {
+                    dropItems += '<span class="dropdown-item text-secondary disabled small">No actions available</span>';
+                }
+                return '<tr>' +
+                    '<td class="fw-medium">' + name + '</td>' +
+                    '<td class="text-secondary small">' + email + '</td>' +
+                    '<td>' + roleBadge + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td class="text-secondary">' + joined + '</td>' +
+                    '<td><div class="dropdown">' +
+                        '<button class="btn btn-sm btn-ghost-secondary" data-bs-toggle="dropdown" data-bs-boundary="window" aria-expanded="false">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></svg>' +
+                        '</button>' +
+                        '<div class="dropdown-menu dropdown-menu-end">' + dropItems + '</div>' +
+                    '</div></td>' +
+                    '</tr>';
+            }).join('');
+
+            // Re-init each dropdown with Popper fixed strategy so it escapes the
+            // table-responsive overflow:auto clipping context and renders over the table.
+            tbody.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function(el) {
+                bootstrap.Dropdown.getOrCreateInstance(el, {
+                    popperConfig: { strategy: 'fixed' }
+                });
+            });
+
+            // Event delegation for action links
+            tbody.onclick = function(e) {
+                var el = e.target.closest('[data-action]');
+                if (!el) return;
+                e.preventDefault();
+                var action = el.dataset.action;
+                var uid    = el.dataset.uid;
+                var uname  = el.dataset.uname;
+                if (action === 'change-role') {
+                    document.getElementById('role-change-user-id').value = uid;
+                    document.getElementById('role-change-user-name').textContent = uname;
+                    var sel = document.getElementById('role-change-select');
+                    // Pre-select the user's current role by matching name → UUID
+                    if (sel) {
+                        var currentRoleName = el.dataset.role;
+                        var matchedRole = _rolesCache.find(function(r){ return r.name === currentRoleName; });
+                        if (matchedRole) sel.value = matchedRole.id;
+                    }
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-change-role')).show();
+                } else if (action === 'toggle-status') {
+                    var newStatus   = el.dataset.newStatus;
+                    var activating  = (newStatus === 'ACTIVE');
+                    document.getElementById('toggle-status-user-id').value  = uid;
+                    document.getElementById('toggle-status-new-status').value = newStatus;
+                    document.getElementById('toggle-status-title').textContent = activating ? 'Activate Account' : 'Deactivate Account';
+                    document.getElementById('toggle-status-body').textContent  = 'Are you sure you want to ' + (activating ? 'activate' : 'deactivate') + ' ' + uname + '\u2019s account?';
+                    var confirmBtn = document.getElementById('btn-confirm-toggle-status');
+                    if (confirmBtn) confirmBtn.className = 'btn ' + (activating ? 'btn-success' : 'btn-danger');
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-toggle-status')).show();
+                }
+            };
+        }
+
+        async function loadAdminUsers() {
+            var tbody = document.getElementById('admin-users-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading…</td></tr>';
+            try {
+                // Refresh roles cache so stats and selects are up to date
+                if (!_rolesCache.length) await populateRoleSelects();
+                _adminUsers = await Roles.getAdminUsers();
+                updateAdminStats(_adminUsers);
+                renderAdminTable(_adminUsers);
+            } catch(err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+            }
+        }
+
+        // ── Permission matrix ─────────────────────────────────────────────────
+        async function renderPermMatrix() {
+            var container = document.getElementById('perm-matrix');
+            if (!container) return;
+            if (!_permRole) {
+                container.innerHTML =
+                    '<div class="text-center py-5">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" ' +
+                    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" ' +
+                    'class="icon mb-3 text-secondary" style="opacity:.4">' +
+                    '<path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/>' +
+                    '</svg>' +
+                    '<p class="text-secondary mb-3">No roles defined yet.<br>Create your first role to start configuring permissions.</p>' +
+                    '<button type="button" class="btn btn-primary btn-sm" id="btn-empty-create-role">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
+                    'stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">' +
+                    '<path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>Create First Role</button>' +
+                    '</div>';
+                var emptyBtn = document.getElementById('btn-empty-create-role');
+                if (emptyBtn) {
+                    emptyBtn.onclick = function() {
+                        var form = document.getElementById('form-create-role');
+                        if (form) form.reset();
+                        var alertEl = document.getElementById('modal-create-role-alert');
+                        if (alertEl) alertEl.classList.add('d-none');
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-create-role')).show();
+                    };
+                }
+                return;
+            }
+            // Show spinner while fetching from API
+            container.innerHTML = '<div class="py-5 text-center text-secondary"><div class="spinner-border spinner-border-sm"></div></div>';
+            try {
+                var results = await Promise.all([
+                    Roles.fetchPermissionCatalogue(),
+                    Roles.fetchRole(_permRole),
+                ]);
+                var catalogue = results[0];
+                var roleData  = results[1];
+                var perms     = roleData.permissions || [];
+                var roleColor = Roles.getRoleColor(roleData.name);
+                var roleLabel = Roles.getRoleLabel(roleData.name);
+                var html = '<div class="table-responsive">' +
+                    '<table class="table table-sm table-bordered mb-0">' +
+                    '<thead><tr>' +
+                    '<th style="width:58%">Permission</th>' +
+                    '<th class="text-center" style="width:21%"><span class="badge bg-danger-lt">Super Admin</span></th>' +
+                    '<th class="text-center" style="width:21%"><span class="badge bg-' + roleColor + '-lt">' + _esc(roleLabel) + '</span></th>' +
+                    '</tr></thead><tbody>';
+                catalogue.groups.forEach(function(group) {
+                    html += '<tr>' +
+                        '<td colspan="3" class="fw-semibold text-secondary small py-1 ps-2" style="background:var(--tblr-bg-surface-secondary)">' + _esc(group.group) + '</td>' +
+                        '</tr>';
+                    group.permissions.forEach(function(perm) {
+                        var hasIt = perms.indexOf(perm.key) !== -1;
+                        html += '<tr>' +
+                            '<td class="ps-4 small">' + _esc(perm.label) +
+                                ' <code class="text-secondary ms-1" style="font-size:.7em">' + _esc(perm.key) + '</code></td>' +
+                            '<td class="text-center"><input type="checkbox" class="form-check-input" checked disabled title="Super Admin always has this" /></td>' +
+                            '<td class="text-center"><input type="checkbox" class="form-check-input" data-perm-key="' + _esc(perm.key) + '"' + (hasIt ? ' checked' : '') + ' /></td>' +
+                            '</tr>';
+                    });
+                });
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+            } catch(err) {
+                container.innerHTML = '<div class="text-center text-danger py-4">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2">' +
+                    '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>' +
+                    _esc(err.message) + '</div>';
+            }
+        }
+
+        // ── DOMContentLoaded ─────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async function() {
+            RBAC.fetchMe().then(function() {
+                RBAC.applyNavVisibility();
+                // Refresh _isSuperAdmin after server re-hydration and re-apply section visibility
+                _isSuperAdmin = RBAC.isSuperAdmin();
+                var navLink = document.getElementById('nav-admin-management');
+                if (navLink) navLink.classList.toggle('d-none', !_isSuperAdmin);
+            });
+            populateUserInfo(Auth.getUser());
+            loadProfile();
+            await populateRoleSelects();
+
+            // Settings sidebar nav
+            document.querySelectorAll('.settings-nav .nav-link').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var section = this.dataset.section;
+                    switchSection(section);
+                    if (section === 'admin-management') {
+                        populateRoleSelects().then(function() { renderPermRoleSelector(); });
+                        loadAdminUsers();
+                    }
+                });
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', function(e) {
+                e.preventDefault(); Auth.logout();
+            });
+
+            // Admin inner tabs
+            var adminTabNav = document.getElementById('admin-tab-nav');
+            if (adminTabNav) {
+                adminTabNav.addEventListener('click', function(e) {
+                    var a = e.target.closest('[data-admin-tab]');
+                    if (!a) return;
+                    e.preventDefault();
+                    document.querySelectorAll('[data-admin-tab]').forEach(function(l) { l.classList.remove('active'); });
+                    a.classList.add('active');
+                    document.querySelectorAll('.admin-tab-pane').forEach(function(p) { p.classList.add('d-none'); });
+                    var pane = document.getElementById('admin-tab-' + a.dataset.adminTab);
+                    if (pane) pane.classList.remove('d-none');
+                });
+            }
+
+            // Open create admin modal
+            var btnOpenCreate = document.getElementById('btn-open-create-admin');
+            if (btnOpenCreate) {
+                btnOpenCreate.addEventListener('click', function() {
+                    var form = document.getElementById('form-create-admin');
+                    if (form) form.reset();
+                    var alertEl = document.getElementById('modal-create-admin-alert');
+                    if (alertEl) alertEl.classList.add('d-none');
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-create-admin')).show();
+                });
+            }
+
+            // Create admin form submit
+            var formCreateAdmin = document.getElementById('form-create-admin');
+            if (formCreateAdmin) {
+                formCreateAdmin.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    var btn      = document.getElementById('btn-create-admin');
+                    var spinner  = document.getElementById('spinner-create-admin');
+                    var alertEl  = document.getElementById('modal-create-admin-alert');
+                    var alertMsg = document.getElementById('modal-create-admin-alert-msg');
+                    btn.disabled = true;
+                    if (spinner) spinner.classList.remove('d-none');
+                    if (alertEl) alertEl.classList.add('d-none');
+                    try {
+                        var data = {
+                            firstName:   document.getElementById('ca-firstName').value.trim(),
+                            lastName:    document.getElementById('ca-lastName').value.trim(),
+                            email:       document.getElementById('ca-email').value.trim(),
+                            password:    document.getElementById('ca-password').value,
+                            adminRoleId: document.getElementById('ca-role').value,
+                        };
+                        var phone = document.getElementById('ca-phone').value.trim();
+                        if (phone) data.phone = phone;
+                        await Roles.createAdmin(data);
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-create-admin')).hide();
+                        this.reset();
+                        showAdminAlert('success', 'Admin account created successfully.');
+                        loadAdminUsers();
+                    } catch(err) {
+                        if (alertEl && alertMsg) {
+                            alertEl.className = 'alert alert-danger mx-3 mt-3 mb-0 py-2';
+                            alertMsg.textContent = err.message;
+                            alertEl.classList.remove('d-none');
+                        }
+                    } finally {
+                        btn.disabled = false;
+                        if (spinner) spinner.classList.add('d-none');
+                    }
+                });
+            }
+
+            // Refresh admin list
+            var btnRefresh = document.getElementById('btn-refresh-admins');
+            if (btnRefresh) btnRefresh.addEventListener('click', loadAdminUsers);
+
+            // Confirm role change
+            var btnConfirmRole = document.getElementById('btn-confirm-role-change');
+            if (btnConfirmRole) {
+                btnConfirmRole.addEventListener('click', async function() {
+                    var userId      = document.getElementById('role-change-user-id').value;
+                    var adminRoleId = document.getElementById('role-change-select').value;
+                    var spinner = document.getElementById('spinner-role-change');
+                    var btn = this;
+                    btn.disabled = true;
+                    if (spinner) spinner.classList.remove('d-none');
+                    try {
+                        await Roles.updateRole(userId, adminRoleId);
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-change-role')).hide();
+                        // Refresh to pick up updated role name from API
+                        await loadAdminUsers();
+                        showAdminAlert('success', 'Role updated successfully.');
+                    } catch(err) {
+                        showAdminAlert('danger', err.message);
+                    } finally {
+                        btn.disabled = false;
+                        if (spinner) spinner.classList.add('d-none');
+                    }
+                });
+            }
+
+            // Confirm status toggle
+            var btnConfirmStatus = document.getElementById('btn-confirm-toggle-status');
+            if (btnConfirmStatus) {
+                btnConfirmStatus.addEventListener('click', async function() {
+                    var userId    = document.getElementById('toggle-status-user-id').value;
+                    var newStatus = document.getElementById('toggle-status-new-status').value;
+                    var spinner   = document.getElementById('spinner-toggle-status');
+                    var btn = this;
+                    btn.disabled = true;
+                    if (spinner) spinner.classList.remove('d-none');
+                    try {
+                        await Roles.updateStatus(userId, newStatus);
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-toggle-status')).hide();
+                        var u = _adminUsers.find(function(x) { return x.id === userId; });
+                        if (u) u.status = newStatus;
+                        renderAdminTable(_adminUsers);
+                        showAdminAlert('success', 'Status updated to ' + newStatus.toLowerCase() + ' successfully.');
+                    } catch(err) {
+                        showAdminAlert('danger', err.message);
+                    } finally {
+                        btn.disabled = false;
+                        if (spinner) spinner.classList.add('d-none');
+                    }
+                });
+            }
+
+            // Create role form
+            var formCreateRole = document.getElementById('form-create-role');
+            if (formCreateRole) {
+                formCreateRole.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    var name        = document.getElementById('cr-name').value.trim();
+                    var description = (document.getElementById('cr-description').value || '').trim();
+                    var alertEl     = document.getElementById('modal-create-role-alert');
+                    var alertMsg  = document.getElementById('modal-create-role-alert-msg');
+                    var submitBtn = document.getElementById('btn-submit-create-role');
+                    var spinner   = document.getElementById('spinner-create-role');
+                    if (alertEl) alertEl.classList.add('d-none');
+                    if (submitBtn) submitBtn.disabled = true;
+                    if (spinner)   spinner.classList.remove('d-none');
+                    try {
+                        var newRole = await Roles.createRole(name, description);
+                        _permRole = newRole.id;
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-create-role')).hide();
+                        await populateRoleSelects(); // refreshes _rolesCache
+                        await renderPermRoleSelector();
+                        updateAdminStats(_adminUsers);
+                        showAdminAlert('success', 'Role "' + newRole.name + '" created. Set its permissions below.');
+                    } catch(err) {
+                        if (alertEl && alertMsg) {
+                            alertEl.className = 'alert alert-danger mx-3 mt-3 mb-0 py-2';
+                            alertMsg.textContent = err.message;
+                            alertEl.classList.remove('d-none');
+                        }
+                    } finally {
+                        if (submitBtn) submitBtn.disabled = false;
+                        if (spinner)   spinner.classList.add('d-none');
+                    }
+                });
+            }
+
+            // Delete role button
+            var btnDeleteRole = document.getElementById('btn-delete-role');
+            if (btnDeleteRole) {
+                btnDeleteRole.addEventListener('click', async function() {
+                    if (!_permRole) return;
+                    var roleToDelete = _rolesCache.find(function(r){ return r.id === _permRole; });
+                    var label = roleToDelete ? roleToDelete.name : _permRole;
+                    if (!confirm('Delete role "' + label + '"? This is blocked server-side if users are still assigned to it.')) return;
+                    var btn = this;
+                    btn.disabled = true;
+                    try {
+                        await Roles.deleteRole(_permRole);
+                        _permRole = null;
+                        await populateRoleSelects(); // refreshes _rolesCache
+                        await renderPermRoleSelector();
+                        updateAdminStats(_adminUsers);
+                        showAdminAlert('success', 'Role "' + label + '" deleted.');
+                    } catch(err) {
+                        showAdminAlert('danger', err.message);
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            }
+
+            // Save permissions
+            var btnSavePerms = document.getElementById('btn-save-perms');
+            if (btnSavePerms) {
+                btnSavePerms.addEventListener('click', async function() {
+                    if (!_permRole) return;
+                    var spinner = document.getElementById('spinner-save-perms');
+                    var btn = this;
+                    btn.disabled = true;
+                    if (spinner) spinner.classList.remove('d-none');
+                    try {
+                        var newPerms = [];
+                        document.querySelectorAll('#perm-matrix input[type="checkbox"]:not([disabled])').forEach(function(cb) {
+                            if (cb.checked) newPerms.push(cb.dataset.permKey);
+                        });
+                        await Roles.setPermissions(_permRole, newPerms);
+                        var savedRole = _rolesCache.find(function(r){ return r.id === _permRole; });
+                        showAdminAlert('success', (savedRole ? savedRole.name : 'Role') + ' permissions saved.');
+                    } catch(err) {
+                        showAdminAlert('danger', err.message);
+                    } finally {
+                        if (spinner) spinner.classList.add('d-none');
+                        btn.disabled = false;
+                    }
+                });
+            }
+
+            // Show admin nav link only for SUPER_ADMIN
+            if (RBAC.isSuperAdmin()) {
+                var navLink = document.getElementById('nav-admin-management');
+                if (navLink) navLink.classList.remove('d-none');
+            }
+
+            routeOnLoad();
+
+            // Auto-load when landing directly on admin-management
+            var hash = (location.hash || '').replace('#', '');
+            if (hash === 'admin-management') {
+                populateRoleSelects().then(function() { renderPermRoleSelector(); });
+                loadAdminUsers();
+            }
+        });
+    </script>
+</body>
+
+</html>

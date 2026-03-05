@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Payments</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <!-- STYLES -->
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .wallet-row { cursor: pointer; }
+        .wallet-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
+        #wallets-table td, #transactions-table td { vertical-align: middle; }
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+    </style>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> -->
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Logo -->
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <!-- Right-side controls -->
+                <div class="navbar-nav flex-row order-md-last">
+                    <!-- Dark / Light toggle -->
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-2">
+                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
+                            aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
+                            <div class="dropdown-header">Notifications</div>
+                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
+                        </div>
+                    </div>
+
+                    <!-- User menu -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small" id="dropdown-user-email">admin@hairlux.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./index.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M11 15l1 0" />
+                                        <path d="M12 15l0 3" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Bookings</span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./bookings.html">Overview</a>
+                                <a class="dropdown-item" href="./bookings/index.html">Verify Booking</a>
+                                <a class="dropdown-item" href="./bookings/calendar.html">Calendar</a>
+                            </div>
+                        </li>
+                        
+                        <li class="nav-item active">
+                            <a class="nav-link" href="./payments.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                        <path d="M3 10l18 0" />
+                                        <path d="M7 15l.01 0" />
+                                        <path d="M11 15l2 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Payments</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./users.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Users</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./services.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+                                        <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+                                        <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+                                        <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Services</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./referrals.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M15 5v2" />
+                                        <path d="M15 11v2" />
+                                        <path d="M15 17v2" />
+                                        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Referrals</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./discounts.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>
+                                </span>
+                                <span class="nav-link-title">Discounts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./careers.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                        <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Careers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Finance</div>
+                            <h2 class="page-title">Payments &amp; Wallets</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- STATS CARDS — GET /admin/wallets/stats -->
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Total Deposits</div>
+                                        <span class="badge bg-success-lt">All time</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-total-deposits">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Total Wallet Balance</div>
+                                        <span class="badge bg-primary-lt">All wallets</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-total-balance">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Total Debits</div>
+                                        <span class="badge bg-warning-lt">Payment for services</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-total-debits">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Failed Transactions</div>
+                                        <span class="badge bg-danger-lt">Errors</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-failed-tx">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MAIN CARD with Wallets / Transactions tabs -->
+                    <div class="card">
+                        <!-- Tab nav -->
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0" id="tab-card-title">All Transactions</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                            <ul class="nav nav-tabs card-header-tabs" id="main-tabs">
+                                <li class="nav-item">
+                                    <a href="#" class="nav-link active" data-tab="transactions">All Transactions</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="#" class="nav-link" data-tab="wallets">Wallets</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- ── WALLETS TAB ── -->
+                        <div id="tab-wallets" class="d-none">
+                            <!-- Wallet filter bar -->
+                            <div class="card-body border-bottom py-5">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-12 col-md-5 col-lg-4">
+                                        <label class="form-label text-secondary small mb-1">Search</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                            </span>
+                                            <input type="text" id="wallet-search" class="form-control"
+                                                placeholder="Name or email…">
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-2 col-lg-2">
+                                        <label class="form-label text-secondary small mb-1">Per page</label>
+                                        <select id="wallet-limit" class="form-select form-select-sm">
+                                            <option value="10">10</option>
+                                            <option value="20" selected>20</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-auto">
+                                        <button type="button" class="btn btn-sm btn-secondary w-100"
+                                            id="btn-wallet-clear">Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Wallets table -->
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover table-nowrap card-table"
+                                        id="wallets-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-1 text-secondary">#</th>
+                                                <th>User</th>
+                                                <th>Email</th>
+                                                <th>Balance</th>
+                                                <th>Transactions</th>
+                                                <th>Last Activity</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="wallets-tbody">
+                                            <tr>
+                                                <td colspan="7" class="text-center py-5">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- Wallets pagination -->
+                            <div class="card-footer d-flex align-items-center">
+                                <p class="m-0 text-secondary small" id="wallets-pagination-info">—</p>
+                                <ul class="pagination m-0 ms-auto" id="wallets-pagination-btns"></ul>
+                            </div>
+                        </div>
+
+                        <!-- ── TRANSACTIONS TAB ── -->
+                        <div id="tab-transactions">
+                            <!-- Transactions filter bar -->
+                            <div class="card-body border-bottom py-5">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-6 col-md-3 col-lg-2">
+                                        <label class="form-label text-secondary small mb-1">Type</label>
+                                        <select id="tx-type" class="form-select form-select-sm">
+                                            <option value="">All types</option>
+                                            <option value="DEPOSIT">Deposit</option>
+                                            <option value="DEBIT">Debit</option>
+                                            <option value="BOOKING_PAYMENT">Booking Payment</option>
+                                            <option value="REFUND">Refund</option>
+                                            <option value="WITHDRAWAL">Withdrawal</option>
+                                            <option value="ADJUSTMENT">Adjustment</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-2 col-lg-2">
+                                        <label class="form-label text-secondary small mb-1">Status</label>
+                                        <select id="tx-status" class="form-select form-select-sm">
+                                            <option value="">All</option>
+                                            <option value="SUCCESS">Success</option>
+                                            <option value="COMPLETED">Completed</option>
+                                            <option value="PENDING">Pending</option>
+                                            <option value="FAILED">Failed</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-2 col-lg-2">
+                                        <label class="form-label text-secondary small mb-1">From</label>
+                                        <input type="date" id="tx-start" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-6 col-md-2 col-lg-2">
+                                        <label class="form-label text-secondary small mb-1">To</label>
+                                        <input type="date" id="tx-end" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-6 col-md-2 col-lg-2">
+                                        <label class="form-label text-secondary small mb-1">Per page</label>
+                                        <select id="tx-limit" class="form-select form-select-sm">
+                                            <option value="10">10</option>
+                                            <option value="20" selected>20</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-auto">
+                                        <button type="button" class="btn btn-sm btn-secondary w-100"
+                                            id="btn-tx-clear">Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Transactions table -->
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover table-nowrap card-table"
+                                        id="transactions-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-1 text-secondary">#</th>
+                                                <th>Reference</th>
+                                                <th>Type</th>
+                                                <th>Amount</th>
+                                                <th>User</th>
+                                                <th>Date</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="transactions-tbody">
+                                            <tr>
+                                                <td colspan="7" class="text-center py-5">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- Transactions pagination -->
+                            <div class="card-footer d-flex align-items-center">
+                                <p class="m-0 text-secondary small" id="tx-pagination-info">—</p>
+                                <ul class="pagination m-0 ms-auto" id="tx-pagination-btns"></ul>
+                            </div>
+                        </div>
+
+                    </div><!-- end .card -->
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">
+                            &copy; 2026 Hairlux Admin Panel
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/api-utils/auth.js"></script>    <script src="assets/js/api-utils/rbac.js"></script>    <script src="assets/js/api-utils/users.js"></script>
+    <script src="assets/js/api-utils/wallets.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+
+    <!-- TRANSACTION DETAIL OFFCANVAS -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-tx-detail"
+        aria-labelledby="offcanvasTxLabel" style="width:460px;max-width:100vw">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title" id="offcanvasTxLabel">Transaction Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0" id="offcanvas-tx-body"></div>
+    </div>
+
+    <!-- WALLET DETAIL MODAL -->
+    <div class="modal modal-blur fade" id="modal-wallet-detail" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Wallet Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-wallet-body">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('wallet:read');
+        // ── Page state ────────────────────────────────────────────────────────────
+        var activeTab = "transactions";
+
+        var walletsState = { page: 1, limit: 20, search: "", totalPages: 1 };
+        var txState      = { page: 1, limit: 20, type: "", status: "", startDate: "", endDate: "", totalPages: 1 };
+
+        document.addEventListener("DOMContentLoaded", function () {            // ── RBAC: re-hydrate from server, apply guard + nav ────────────
+            RBAC.fetchMe().then(function() {
+                RBAC.applyPageGuard('wallet:read');
+                RBAC.applyNavVisibility();
+            });
+            // ── User info ─────────────────────────────────────────────────────────
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent  = initials;
+                document.getElementById("navbar-user-name").textContent    = fullName;
+                document.getElementById("navbar-user-role").textContent    = role;
+                document.getElementById("dropdown-user-name").textContent  = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) {
+                e.preventDefault(); Auth.logout();
+            });
+
+            // ── Load stats ────────────────────────────────────────────────────────
+            loadStats();
+
+            // ── Load transactions (first tab) ───────────────────────────────────────────
+            loadTransactions();
+
+            // ── Tab switcher ──────────────────────────────────────────────────────
+            document.getElementById("main-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-tab]");
+                if (!tab) return;
+                document.querySelectorAll("#main-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                activeTab = tab.dataset.tab;
+
+                if (activeTab === "wallets") {
+                    document.getElementById("tab-wallets").classList.remove("d-none");
+                    document.getElementById("tab-transactions").classList.add("d-none");
+                    document.getElementById("tab-card-title").textContent = "Wallets";
+                    loadWallets();
+                } else {
+                    document.getElementById("tab-wallets").classList.add("d-none");
+                    document.getElementById("tab-transactions").classList.remove("d-none");
+                    document.getElementById("tab-card-title").textContent = "All Transactions";
+                    loadTransactions();
+                }
+            });
+
+            // ── Refresh ───────────────────────────────────────────────────────────
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                loadStats();
+                if (activeTab === "wallets") loadWallets();
+                else loadTransactions();
+            });
+
+            // ── Wallet search (debounced) ─────────────────────────────────────────
+            var walletSearchTimer;
+            document.getElementById("wallet-search").addEventListener("input", function () {
+                clearTimeout(walletSearchTimer);
+                var val = this.value.trim();
+                walletSearchTimer = setTimeout(function () {
+                    walletsState.search = val; walletsState.page = 1; loadWallets();
+                }, 400);
+            });
+
+            // ── Wallet per-page ───────────────────────────────────────────────────
+            document.getElementById("wallet-limit").addEventListener("change", function () {
+                walletsState.limit = parseInt(this.value, 10); walletsState.page = 1; loadWallets();
+            });
+
+            // ── Wallet clear ──────────────────────────────────────────────────────
+            document.getElementById("btn-wallet-clear").addEventListener("click", function () {
+                document.getElementById("wallet-search").value = "";
+                document.getElementById("wallet-limit").value  = "20";
+                walletsState.search = ""; walletsState.limit = 20; walletsState.page = 1;
+                loadWallets();
+            });
+
+            // ── Wallet table row click ────────────────────────────────────────────
+            document.getElementById("wallets-tbody").addEventListener("click", function (e) {
+                var row = e.target.closest(".wallet-row");
+                if (row) openWalletDetail(row.dataset.userId);
+            });
+
+            // ── Wallets pagination ────────────────────────────────────────────────
+            document.getElementById("wallets-pagination-btns").addEventListener("click", function (e) {
+                e.preventDefault();
+                var a = e.target.closest("a[data-page]");
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > walletsState.totalPages) return;
+                walletsState.page = p; loadWallets();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // ── Transaction filters ───────────────────────────────────────────────
+            document.getElementById("tx-type").addEventListener("change", function () {
+                txState.type = this.value; txState.page = 1; loadTransactions();
+            });
+            document.getElementById("tx-status").addEventListener("change", function () {
+                txState.status = this.value; txState.page = 1; loadTransactions();
+            });
+            document.getElementById("tx-start").addEventListener("change", function () {
+                txState.startDate = this.value; txState.page = 1; loadTransactions();
+            });
+            document.getElementById("tx-end").addEventListener("change", function () {
+                txState.endDate = this.value; txState.page = 1; loadTransactions();
+            });
+            document.getElementById("tx-limit").addEventListener("change", function () {
+                txState.limit = parseInt(this.value, 10); txState.page = 1; loadTransactions();
+            });
+
+            // ── Transactions clear ────────────────────────────────────────────────
+            document.getElementById("btn-tx-clear").addEventListener("click", function () {
+                document.getElementById("tx-type").value   = "";
+                document.getElementById("tx-status").value = "";
+                document.getElementById("tx-start").value  = "";
+                document.getElementById("tx-end").value    = "";
+                document.getElementById("tx-limit").value  = "20";
+                txState.type = ""; txState.status = ""; txState.startDate = "";
+                txState.endDate = ""; txState.limit = 20; txState.page = 1;
+                loadTransactions();
+            });
+
+            // ── Transactions pagination ───────────────────────────────────────────
+            document.getElementById("tx-pagination-btns").addEventListener("click", function (e) {
+                e.preventDefault();
+                var a = e.target.closest("a[data-page]");
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > txState.totalPages) return;
+                txState.page = p; loadTransactions();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+        });
+
+        // ── Load stats ────────────────────────────────────────────────────────────
+        async function loadStats() {
+            try {
+                var data = await Wallets.getStats();
+                // Shape: { totalBalance, transactions: { byType: { DEPOSIT:{totalAmount,count}, DEBIT:{totalAmount,count} }, failed, pending } }
+                var byType = (data.transactions && data.transactions.byType) || {};
+                document.getElementById("stat-total-deposits").textContent = Wallets.formatMoney((byType.DEPOSIT && byType.DEPOSIT.totalAmount) || 0);
+                document.getElementById("stat-total-balance").textContent  = Wallets.formatMoney(data.totalBalance);
+                document.getElementById("stat-total-debits").textContent   = Wallets.formatMoney((byType.DEBIT && byType.DEBIT.totalAmount) || 0);
+                document.getElementById("stat-failed-tx").textContent      = (data.transactions && data.transactions.failed) ?? 0;
+            } catch (e) { console.warn("Wallet stats:", e); }
+        }
+
+        // ── Load wallets table (GET /admin/users — includes walletBalance + transactionCount) ──
+        async function loadWallets() {
+            var tbody = document.getElementById("wallets-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var result = await Users.getAll({
+                    search: walletsState.search,
+                    page:   walletsState.page,
+                    limit:  walletsState.limit,
+                });
+                var rows  = result.data || [];
+                var meta  = result.meta || {};
+                walletsState.totalPages = meta.totalPages || 1;
+                var count = meta.total ?? rows.length;
+                document.getElementById("results-label").textContent = count + " user" + (count !== 1 ? "s" : "") + " found";
+                renderWalletsTable(rows, meta);
+                renderPagination("wallets", meta);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.message || "Failed to load users.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        function renderWalletsTable(rows, meta) {
+            var tbody = document.getElementById("wallets-tbody");
+            // Exclude admin-level accounts from wallet view
+            rows = rows.filter(function (u) {
+                return u.role !== "SUPER_ADMIN" && u.role !== "ADMIN";
+            });
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No users found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (u, i) {
+                var name  = [u.firstName, u.lastName].filter(Boolean).join(" ") || "—";
+                var email = u.email || "—";
+                var bal   = u.walletBalance !== undefined ? Wallets.formatMoney(u.walletBalance) : '<span class="text-secondary">—</span>';
+                var txCnt = u.transactionCount !== undefined ? u.transactionCount : "—";
+                var last  = u.updatedAt ? Wallets.formatDateTime(u.updatedAt) : "—";
+                return '<tr class="wallet-row" data-user-id="' + u.id + '">' +
+                    '<td class="text-secondary small">' + ((walletsState.page - 1) * walletsState.limit + i + 1) + '</td>' +
+                    '<td><div class="fw-semibold">' + name + '</div></td>' +
+                    '<td class="text-secondary">' + email + '</td>' +
+                    '<td class="fw-semibold text-success">' + bal + '</td>' +
+                    '<td>' + txCnt + '</td>' +
+                    '<td class="text-secondary small">' + last + '</td>' +
+                    '<td><button class="btn btn-sm btn-outline-secondary" onclick="openWalletDetail(\'' + u.id + '\')" title="View wallet">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
+                    '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
+                    '</svg></button></td>' +
+                    '</tr>';
+            }).join("");
+        }
+
+        // ── Load transactions table ───────────────────────────────────────────────
+        async function loadTransactions() {
+            var tbody = document.getElementById("transactions-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var result = await Wallets.getAllTransactions({
+                    type:      txState.type,
+                    status:    txState.status,
+                    startDate: txState.startDate,
+                    endDate:   txState.endDate,
+                    page:      txState.page,
+                    limit:     txState.limit,
+                });
+                var rows  = result.data || [];
+                var meta  = result.meta || {};
+                txState.totalPages = meta.totalPages || 1;
+                var count = meta.total ?? rows.length;
+                document.getElementById("results-label").textContent = count + " transaction" + (count !== 1 ? "s" : "") + " found";
+                renderTransactionsTable(rows);
+                renderPagination("tx", meta);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.message || "Failed to load transactions.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        var _txMap = {};
+
+        function renderTransactionsTable(rows) {
+            _txMap = {};
+            var tbody = document.getElementById("transactions-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No transactions found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (t, i) {
+                _txMap[t.id] = t;
+                var user = (t.wallet && t.wallet.user) || t.user || {};
+                var name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "—";
+                var email = user.email ? '<div class="text-secondary small">' + user.email + '</div>' : "";
+                var ref = t.reference
+                    ? '<span class="font-monospace small text-secondary" title="' + t.reference + '">' + t.reference.slice(0, 22) + (t.reference.length > 22 ? "…" : "") + '</span>'
+                    : '—';
+                return '<tr>' +
+                    '<td class="text-secondary small">' + ((txState.page - 1) * txState.limit + i + 1) + '</td>' +
+                    '<td>' + ref + '</td>' +
+                    '<td>' + Wallets.typeBadge(t.type) + '</td>' +
+                    '<td class="fw-semibold">' + Wallets.formatMoney(t.amount) + '</td>' +
+                    '<td><div class="fw-semibold">' + name + '</div>' + email + '</td>' +
+                    '<td class="text-secondary small">' + Wallets.formatDateTime(t.createdAt) + '</td>' +
+                    '<td><button class="btn btn-sm btn-ghost-secondary px-2" onclick="openTxDetail(\'' + t.id + '\')" title="View details">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
+                    '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
+                    '</svg></button></td>' +
+                    '</tr>';
+            }).join("");
+        }
+
+        // ── Open transaction detail offcanvas ─────────────────────────────────────
+        function openTxDetail(id) {
+            var t = _txMap[id];
+            if (!t) return;
+            var user       = (t.wallet && t.wallet.user) || t.user || {};
+            var userName   = [user.firstName, user.lastName].filter(Boolean).join(" ") || "—";
+            var walletId   = (t.wallet && t.wallet.id) || "—";
+            var hasPaystack = t.paystackReference && t.paystackReference !== t.reference;
+
+            document.getElementById("offcanvas-tx-body").innerHTML =
+                // Amount + badges
+                '<div class="px-4 pt-4 pb-3 border-bottom">' +
+                '<div class="d-flex align-items-center gap-2 mb-1">' +
+                Wallets.typeBadge(t.type) + Wallets.statusBadge(t.status) +
+                '</div>' +
+                '<div class="h2 mb-0 fw-bold">' + Wallets.formatMoney(t.amount) + '</div>' +
+                (t.description ? '<div class="text-secondary mt-1">' + t.description + '</div>' : '') +
+                '</div>' +
+
+                // User
+                '<div class="px-4 py-3 border-bottom">' +
+                '<div class="subheader mb-2">User</div>' +
+                '<dl class="row g-1 small mb-0">' +
+                '<dt class="col-5 text-secondary fw-normal">Name</dt>' +
+                '<dd class="col-7 mb-0 fw-semibold">' + userName + '</dd>' +
+                (user.email ? '<dt class="col-5 text-secondary fw-normal">Email</dt><dd class="col-7 mb-0">' + user.email + '</dd>' : '') +
+                (user.id    ? '<dt class="col-5 text-secondary fw-normal">User ID</dt><dd class="col-7 mb-0 font-monospace text-truncate" title="' + user.id + '">' + user.id + '</dd>' : '') +
+                '</dl></div>' +
+
+                // References
+                '<div class="px-4 py-3 border-bottom">' +
+                '<div class="subheader mb-2">References</div>' +
+                '<dl class="row g-1 small mb-0">' +
+                '<dt class="col-5 text-secondary fw-normal">Reference</dt>' +
+                '<dd class="col-7 mb-0 font-monospace text-break">' + (t.reference || "—") + '</dd>' +
+                '<dt class="col-5 text-secondary fw-normal">Paystack Ref</dt>' +
+                '<dd class="col-7 mb-0 font-monospace text-break">' + (t.paystackReference || '<span class="text-secondary">—</span>') + '</dd>' +
+                '<dt class="col-5 text-secondary fw-normal">Wallet ID</dt>' +
+                '<dd class="col-7 mb-0 font-monospace text-break">' + walletId + '</dd>' +
+                '<dt class="col-5 text-secondary fw-normal">Transaction ID</dt>' +
+                '<dd class="col-7 mb-0 font-monospace text-break">' + t.id + '</dd>' +
+                '</dl></div>' +
+
+                // Timestamps
+                '<div class="px-4 py-3">' +
+                '<div class="subheader mb-2">Timestamps</div>' +
+                '<dl class="row g-1 small mb-0">' +
+                '<dt class="col-5 text-secondary fw-normal">Created</dt>' +
+                '<dd class="col-7 mb-0">' + Wallets.formatDateTime(t.createdAt) + '</dd>' +
+                '<dt class="col-5 text-secondary fw-normal">Updated</dt>' +
+                '<dd class="col-7 mb-0">' + Wallets.formatDateTime(t.updatedAt) + '</dd>' +
+                '</dl></div>';
+
+            new bootstrap.Offcanvas(document.getElementById("offcanvas-tx-detail")).show();
+        }
+
+        // ── Pagination renderer ───────────────────────────────────────────────────
+        function renderPagination(prefix, meta) {
+            var total  = meta.total  || 0;
+            var page   = meta.page   || (prefix === "wallets" ? walletsState.page : txState.page);
+            var limit  = meta.limit  || (prefix === "wallets" ? walletsState.limit : txState.limit);
+            var pages  = meta.totalPages || 1;
+            var from   = total ? (page - 1) * limit + 1 : 0;
+            var to     = Math.min(page * limit, total);
+            document.getElementById(prefix + "-pagination-info").textContent =
+                total ? "Showing " + from + "–" + to + " of " + total : "No results";
+            var ul = document.getElementById(prefix + "-pagination-btns");
+            ul.innerHTML = "";
+            ul.insertAdjacentHTML("beforeend",
+                '<li class="page-item ' + (page <= 1 ? "disabled" : "") + '">' +
+                '<a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
+            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+            for (var p = start; p <= end; p++) {
+                ul.insertAdjacentHTML("beforeend",
+                    '<li class="page-item ' + (p === page ? "active" : "") + '">' +
+                    '<a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            ul.insertAdjacentHTML("beforeend",
+                '<li class="page-item ' + (page >= pages ? "disabled" : "") + '">' +
+                '<a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
+        }
+
+        // ── Open wallet detail modal (GET /admin/users/:id) ──────────────────────
+        async function openWalletDetail(userId) {
+            if (!userId || userId === "undefined") return;
+            var body  = document.getElementById("modal-wallet-body");
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-wallet-detail"));
+            modal.show();
+            try {
+                var u        = await Users.getOne(userId);
+                // API returns { user:{...}, wallet:{id,balance,...}, transactions:[...], stats:{...} }
+                var profile  = u.user || u;
+                var wallet   = u.wallet || {};
+                var txRows   = u.transactions || [];
+                var stats    = u.stats || {};
+
+                var name = [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "Unknown User";
+                var initials = ((profile.firstName || " ")[0] + (profile.lastName || " ")[0]).toUpperCase();
+
+                var walletBalance = wallet.balance ?? stats.walletBalance ?? 0;
+
+                var txHtml = txRows.length
+                    ? txRows.map(function (t) {
+                        return '<tr>' +
+                            '<td>' + Wallets.typeBadge(t.type) + '</td>' +
+                            '<td class="fw-semibold">' + Wallets.formatMoney(t.amount) + '</td>' +
+                            '<td>' + Wallets.statusBadge(t.status) + '</td>' +
+                            '<td class="text-secondary small">' + Wallets.formatDateTime(t.createdAt) + '</td>' +
+                            '<td class="text-secondary small font-monospace">' +
+                            (t.reference ? t.reference.slice(0, 14) + "…" : "—") + '</td>' +
+                            '</tr>';
+                    }).join("")
+                    : '<tr><td colspan="5" class="text-center text-secondary py-3">No transactions yet.</td></tr>';
+
+                body.innerHTML =
+                    '<div class="d-flex align-items-center gap-3 mb-4">' +
+                    '<span class="avatar avatar-lg rounded-circle bg-blue-lt">' + initials + '</span>' +
+                    '<div>' +
+                    '<div class="fw-bold fs-5">' + name + '</div>' +
+                    '<div class="text-secondary small">' + (profile.email || "") + '</div>' +
+                    (profile.phone ? '<div class="text-secondary small">' + profile.phone + '</div>' : '') +
+                    '</div></div>' +
+
+                    '<div class="card mb-4 border-success">' +
+                    '<div class="card-body">' +
+                    '<div class="text-secondary small mb-1">Wallet Balance</div>' +
+                    '<div class="h2 text-success mb-2">' + Wallets.formatMoney(walletBalance) + '</div>' +
+                    '<div class="row g-2 text-center">' +
+                    '<div class="col-6"><div class="text-secondary small">Total Bookings</div>' +
+                    '<div class="fw-semibold">' + (stats.totalBookings ?? '—') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Recent Transactions</div>' +
+                    '<div class="fw-semibold">' + txRows.length + '</div></div>' +
+                    '</div>' +
+                    '</div></div>' +
+
+                    '<h4 class="mb-3">Recent Transactions</h4>' +
+                    '<div class="table-responsive">' +
+                    '<table class="table table-vcenter table-sm table-nowrap">' +
+                    '<thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Date</th><th>Reference</th></tr></thead>' +
+                    '<tbody>' + txHtml + '</tbody>' +
+                    '</table></div>';
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Referrals</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <!-- STYLES -->
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .referral-row { cursor: pointer; }
+        .referral-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
+        #referrals-table td { vertical-align: middle; }
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        .referral-badge { font-family: monospace; letter-spacing: .04em; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Logo -->
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <!-- <span class="fw-bold fs-3">Hairlux</span> -->
+                     <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <!-- Right-side controls -->
+                <div class="navbar-nav flex-row order-md-last">
+                    <!-- Dark / Light toggle -->
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-2">
+                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
+                            aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
+                            <div class="dropdown-header">Notifications</div>
+                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
+                        </div>
+                    </div>
+
+                    <!-- User menu -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small" id="dropdown-user-email">admin@hairlux.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./index.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M11 15l1 0" />
+                                        <path d="M12 15l0 3" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Bookings</span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./bookings.html">Overview</a>
+                                <a class="dropdown-item" href="./bookings/index.html">Verify Booking</a>
+                                <a class="dropdown-item" href="./bookings/calendar.html">Calendar</a>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./payments.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                        <path d="M3 10l18 0" />
+                                        <path d="M7 15l.01 0" />
+                                        <path d="M11 15l2 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Payments</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./users.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Users</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./services.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+                                        <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+                                        <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+                                        <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Services</span>
+                            </a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="./referrals.html">
+                                <span class="nav-link-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                        <path d="M15 5v2" /><path d="M15 11v2" /><path d="M15 17v2" />
+                                        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Referrals</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./discounts.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>
+                                </span>
+                                <span class="nav-link-title">Discounts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./careers.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                        <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Careers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Management</div>
+                            <h2 class="page-title">Referral Program</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-settings"
+                                data-bs-toggle="modal" data-bs-target="#modal-settings">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                Program Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- STATS CARDS — GET /admin/referrals/stats -->
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Total Referrals</div>
+                                        <span class="badge bg-primary-lt">All time</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Rewarded</div>
+                                        <span class="badge bg-success-lt">Completed</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-rewarded">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Rewards Paid</div>
+                                        <span class="badge bg-warning-lt">Total</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-rewards">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Pending</div>
+                                        <span class="badge bg-secondary-lt">Awaiting</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-pending">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- REFERRALS TABLE CARD -->
+                    <div class="card">
+                        <!-- Card header: title + result count -->
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Referrals</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                            <!-- Status filter tabs -->
+                            <ul class="nav nav-tabs card-header-tabs" id="status-tabs">
+                                <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="PENDING">Pending</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="REWARDED">Rewarded</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="FAILED">Failed</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Filter bar -->
+                        <div class="card-body border-bottom py-4">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-4 col-lg-4">
+                                    <label class="form-label text-secondary small mb-1">Search</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                        </span>
+                                        <input type="text" id="filter-search" class="form-control"
+                                            placeholder="Name, email or code…">
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-2 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">Per page</label>
+                                    <select id="filter-limit" class="form-select form-select-sm">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-secondary w-100"
+                                        id="btn-clear">Clear filters</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover table-nowrap card-table"
+                                    id="referrals-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="w-1 text-secondary">#</th>
+                                            <th>Referrer</th>
+                                            <th>Code</th>
+                                            <th>Referred User</th>
+                                            <th>Date</th>
+                                            <th>Reward Amount</th>
+                                            <th>Status</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="referrals-tbody">
+                                        <tr>
+                                            <td colspan="8" class="text-center py-5">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="card-footer d-flex align-items-center">
+                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">
+                            &copy; 2026 Hairlux Admin Panel
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/referrals.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- REFERRAL DETAIL MODAL -->
+    <div class="modal modal-blur fade" id="modal-detail" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Referral Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-detail-body">
+                    <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROGRAM SETTINGS MODAL -->
+    <div class="modal modal-blur fade" id="modal-settings" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Program Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-settings" novalidate>
+                    <div class="modal-body">
+                        <div id="settings-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div id="settings-form-body">
+                            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary me-auto"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-settings">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('referrals:read');
+
+        // ── Page state ──────────────────────────────────────────────────────────
+        var state = { page: 1, limit: 20, status: "", search: "", totalPages: 1 };
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // ── RBAC: re-hydrate from server, then apply nav visibility ──────
+            RBAC.fetchMe().then(function() {
+                RBAC.applyPageGuard('referrals:read');
+                RBAC.applyNavVisibility();
+                // Hide Program Settings button if no permission
+                if (!RBAC.can('referrals:manage_settings')) {
+                    var btn = document.getElementById('btn-settings');
+                    if (btn) btn.style.display = 'none';
+                }
+            });
+
+            // ── User info ───────────────────────────────────────────────────
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent  = initials;
+                document.getElementById("navbar-user-name").textContent    = fullName;
+                document.getElementById("navbar-user-role").textContent    = role;
+                document.getElementById("dropdown-user-name").textContent  = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) {
+                e.preventDefault(); Auth.logout();
+            });
+
+            // ── Initial loads ───────────────────────────────────────────────
+            loadStats();
+            loadReferrals();
+
+            // ── Status tabs ─────────────────────────────────────────────────
+            document.getElementById("status-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-status]");
+                if (!tab) return;
+                document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                state.status = tab.dataset.status;
+                state.page = 1;
+                loadReferrals();
+            });
+
+            // ── Search (debounced) ──────────────────────────────────────────
+            var searchTimer;
+            document.getElementById("filter-search").addEventListener("input", function () {
+                clearTimeout(searchTimer);
+                var val = this.value.trim();
+                searchTimer = setTimeout(function () {
+                    state.search = val; state.page = 1; loadReferrals();
+                }, 400);
+            });
+
+            // ── Per-page ────────────────────────────────────────────────────
+            document.getElementById("filter-limit").addEventListener("change", function () {
+                state.limit = parseInt(this.value, 10); state.page = 1; loadReferrals();
+            });
+
+            // ── Clear filters ───────────────────────────────────────────────
+            document.getElementById("btn-clear").addEventListener("click", function () {
+                document.getElementById("filter-search").value = "";
+                document.getElementById("filter-limit").value  = "20";
+                document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
+                state.page = 1; state.limit = 20; state.status = ""; state.search = "";
+                loadReferrals();
+            });
+
+            // ── Refresh button ──────────────────────────────────────────────
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                loadStats(); loadReferrals();
+            });
+
+            // ── Pagination clicks ───────────────────────────────────────────
+            document.getElementById("pagination-btns").addEventListener("click", function (e) {
+                e.preventDefault();
+                var a = e.target.closest("a[data-page]");
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > state.totalPages) return;
+                state.page = p;
+                loadReferrals();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // ── Table row / action button clicks ────────────────────────────
+            document.getElementById("referrals-tbody").addEventListener("click", function (e) {
+                var viewBtn = e.target.closest(".btn-view");
+                if (viewBtn) { e.stopPropagation(); openDetail(viewBtn.dataset.userId); return; }
+                var row = e.target.closest(".referral-row");
+                if (row) openDetail(row.dataset.userId);
+            });
+
+            // ── Settings modal: load on show ────────────────────────────────
+            var settingsModalEl = document.getElementById("modal-settings");
+            settingsModalEl.addEventListener("show.bs.modal", loadSettingsModal);
+
+            // ── Settings form submit ────────────────────────────────────────
+            document.getElementById("form-settings").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("settings-alert");
+                var btn = document.getElementById("btn-save-settings");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving\u2026';
+                try {
+                    var payload = collectSettingsPayload();
+                    await Referrals.updateSettings(payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Settings saved successfully.";
+                    setTimeout(function () {
+                        bootstrap.Modal.getInstance(settingsModalEl).hide();
+                    }, 1200);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save settings.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Settings";
+                }
+            });
+        });
+
+        // ── Load stats ──────────────────────────────────────────────────────────
+        // Response: { total, rewarded, failed, pending, totalRewarded }
+        async function loadStats() {
+            try {
+                var data = await Referrals.getStats();
+                document.getElementById("stat-total").textContent    = data.total    ?? "\u2014";
+                document.getElementById("stat-rewarded").textContent = data.rewarded ?? "\u2014";
+                document.getElementById("stat-rewards").textContent  = Referrals.formatMoney(data.totalRewarded ?? 0);
+                document.getElementById("stat-pending").textContent  = data.pending  ?? "\u2014";
+            } catch (e) { console.warn("Stats:", e); }
+        }
+
+        // ── Load referrals table ────────────────────────────────────────────────
+        async function loadReferrals() {
+            var tbody = document.getElementById("referrals-tbody");
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("results-label").textContent = "Loading\u2026";
+            try {
+                var result = await Referrals.getAll({
+                    page: state.page, limit: state.limit,
+                    status: state.status, search: state.search
+                });
+                var rows = result.data || result.referrals || (Array.isArray(result) ? result : []);
+                var meta = result.meta || result.pagination || {};
+                state.totalPages = meta.totalPages || meta.pages || 1;
+                var count = meta.total ?? rows.length;
+                document.getElementById("results-label").textContent = count + " referral" + (count !== 1 ? "s" : "") + " found";
+                renderTable(rows);
+                renderPagination(meta);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + (err.message || "Failed to load referrals.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        // ── Render table ────────────────────────────────────────────────────────
+        // Each row: { id, referrerId, referredId, code, status, rewardAmount, createdAt,
+        //             referrer:{id,firstName,lastName,email}, referred:{id,firstName,lastName,email,createdAt} }
+        function renderTable(rows) {
+            var tbody = document.getElementById("referrals-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No referrals found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (r, i) {
+                var referrer      = r.referrer || {};
+                var referrerName  = referrer.firstName
+                    ? referrer.firstName + " " + referrer.lastName : "\u2014";
+                var referrerEmail = referrer.email
+                    ? '<div class="text-secondary small">' + referrer.email + '</div>' : "";
+                var code     = r.code || "\u2014";
+                var referred = r.referred || {};
+                var referredName  = referred.firstName
+                    ? referred.firstName + " " + referred.lastName : "\u2014";
+                var referredEmail = referred.email
+                    ? '<div class="text-secondary small">' + referred.email + '</div>' : "";
+                var referredHtml  = referredName !== "\u2014"
+                    ? '<div class="fw-semibold">' + referredName + '</div>' + referredEmail
+                    : '<span class="text-secondary">\u2014</span>';
+                var date   = Referrals.formatDate(r.createdAt);
+                var reward = Referrals.formatMoney(r.rewardAmount ?? 0);
+                var status = r.status || "PENDING";
+                var userId = r.referrerId || referrer.id || "";
+                return '<tr class="referral-row" data-user-id="' + userId + '">' +
+                    '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
+                    '<td><div class="fw-semibold">' + referrerName + '</div>' + referrerEmail + '</td>' +
+                    '<td><code class="text-primary">' + code + '</code></td>' +
+                    '<td>' + referredHtml + '</td>' +
+                    '<td class="text-secondary small">' + date + '</td>' +
+                    '<td class="fw-semibold">' + reward + '</td>' +
+                    '<td>' + Referrals.rewardBadge(status) + '</td>' +
+                    '<td><button class="btn btn-sm btn-outline-secondary btn-view" data-user-id="' + userId + '" title="View referrals">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
+                    '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>' +
+                    '<path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
+                    '</svg></button></td></tr>';
+            }).join("");
+        }
+
+        // ── Render pagination ───────────────────────────────────────────────────
+        function renderPagination(meta) {
+            var total = meta.total || 0, page = meta.page || state.page;
+            var limit = meta.limit || state.limit, pages = meta.totalPages || meta.pages || 1;
+            var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
+            document.getElementById("pagination-info").textContent = total
+                ? "Showing " + from + "\u2013" + to + " of " + total : "No results";
+            var ul = document.getElementById("pagination-btns");
+            ul.innerHTML = '';
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">\u00ab</a></li>');
+            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+            for (var p = start; p <= end; p++) {
+                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">\u00bb</a></li>');
+        }
+
+        // ── Open detail modal (user referral list) ──────────────────────────────
+        // Response: { referralCode:{code,totalUses,totalEarned,...}, referrals:[...], referredBy:{...}|null }
+        async function openDetail(userId) {
+            if (!userId) return;
+            var body = document.getElementById("modal-detail-body");
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-detail"));
+            modal.show();
+            try {
+                var data = await Referrals.getByUser(userId);
+                var rc         = data.referralCode || {};
+                var referrals  = data.referrals || [];
+                var referredBy = data.referredBy || null;
+
+                // Mini stats from referralCode object
+                var totalUses   = rc.totalUses   ?? referrals.length;
+                var totalEarned = Referrals.formatMoney(rc.totalEarned ?? 0);
+                var rewarded    = referrals.filter(function (r) { return r.status === "REWARDED"; }).length;
+
+                var html = '<div class="row g-3 mb-4">';
+                html += '<div class="col-12 d-flex align-items-center gap-3">';
+                html += '<div><h4 class="mb-0">Referral Code: <code class="text-primary">' + (rc.code || "\u2014") + '</code></h4>';
+                html += '<div class="text-secondary small">User ID: ' + userId + '</div></div>';
+                html += '</div>';
+                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center">' +
+                    '<div class="h3 mb-0">' + totalUses + '</div><div class="text-secondary small">Total Uses</div>' +
+                    '</div></div></div>';
+                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center">' +
+                    '<div class="h3 mb-0">' + rewarded + '</div><div class="text-secondary small">Rewarded</div>' +
+                    '</div></div></div>';
+                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center">' +
+                    '<div class="h3 mb-0">' + totalEarned + '</div><div class="text-secondary small">Total Earned</div>' +
+                    '</div></div></div>';
+                html += '</div>';
+
+                // Referred users table
+                // Each entry: { id, referrerId, referredId, code, status, rewardAmount, createdAt,
+                //               referred:{id,firstName,lastName,email,createdAt} }
+                if (referrals.length) {
+                    html += '<h6 class="mb-2">People Referred</h6>';
+                    html += '<div class="table-responsive"><table class="table table-sm table-vcenter">';
+                    html += '<thead><tr><th>Referred User</th><th>Date</th><th>Status</th><th>Reward</th></tr></thead><tbody>';
+                    referrals.forEach(function (ref) {
+                        var ru     = ref.referred || {};
+                        var ruName = ru.firstName ? ru.firstName + " " + ru.lastName : (ru.email || "\u2014");
+                        var date   = Referrals.formatDate(ref.createdAt);
+                        var reward = Referrals.formatMoney(ref.rewardAmount ?? 0);
+                        html += '<tr>' +
+                            '<td><div class="fw-semibold">' + ruName + '</div>' +
+                            (ru.email ? '<div class="text-secondary small">' + ru.email + '</div>' : '') + '</td>' +
+                            '<td class="text-secondary small">' + date + '</td>' +
+                            '<td>' + Referrals.rewardBadge(ref.status || "PENDING") + '</td>' +
+                            '<td>' + reward + '</td></tr>';
+                    });
+                    html += '</tbody></table></div>';
+                } else {
+                    html += '<div class="text-secondary text-center py-3">No referrals made yet.</div>';
+                }
+
+                // Referred-by section (who referred this user, optional)
+                if (referredBy) {
+                    var rb     = referredBy.referrer || {};
+                    var rbName = rb.firstName ? rb.firstName + " " + rb.lastName : "\u2014";
+                    html += '<hr class="my-3">';
+                    html += '<h6 class="mb-2">Referred By</h6>';
+                    html += '<div class="d-flex align-items-center gap-2 flex-wrap">';
+                    html += '<span class="fw-semibold">' + rbName + '</span>';
+                    if (rb.email) html += '<span class="text-secondary small">' + rb.email + '</span>';
+                    html += '<span class="ms-auto">' + Referrals.rewardBadge(referredBy.status || "PENDING") + '</span>';
+                    html += '<span class="fw-semibold ms-2">' + Referrals.formatMoney(referredBy.rewardAmount ?? 0) + '</span>';
+                    html += '</div>';
+                    html += '<div class="text-secondary small mt-1">Code used: <code>' + (referredBy.code || "\u2014") +
+                        '</code> &bull; ' + Referrals.formatDate(referredBy.createdAt) + '</div>';
+                }
+
+                body.innerHTML = html;
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+
+        // ── Settings modal helpers ──────────────────────────────────────────────
+        async function loadSettingsModal() {
+            var formBody = document.getElementById("settings-form-body");
+            var alertEl  = document.getElementById("settings-alert");
+            alertEl.className = "alert d-none";
+            formBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            try {
+                var settings = await Referrals.getSettings();
+                formBody.innerHTML = buildSettingsForm(settings);
+            } catch (err) {
+                formBody.innerHTML = '<div class="alert alert-danger">' + (err.message || "Failed to load settings.") + '</div>';
+            }
+        }
+
+        // Settings response: { id, isActive, rewardType:"FIXED"|"PERCENTAGE", rewardValue, minDepositAmount, createdAt, updatedAt }
+        function buildSettingsForm(s) {
+            if (!s) s = {};
+            var isActive         = s.isActive !== false;
+            var rewardType       = s.rewardType       || "FIXED";
+            var rewardValue      = s.rewardValue      ?? "";
+            var minDepositAmount = s.minDepositAmount ?? "";
+
+            return '<div class="row g-3">' +
+                // Program Active toggle
+                '<div class="col-12">' +
+                '<div class="form-check form-switch">' +
+                '<input class="form-check-input" type="checkbox" id="setting-isActive" name="isActive"' + (isActive ? ' checked' : '') + '>' +
+                '<label class="form-check-label fw-semibold" for="setting-isActive">Program Active</label>' +
+                '<div class="text-secondary small">Enable or disable the referral program for all users.</div>' +
+                '</div></div>' +
+                // Reward Type
+                '<div class="col-md-6">' +
+                '<label class="form-label">Reward Type</label>' +
+                '<select name="rewardType" id="setting-rewardType" class="form-select">' +
+                '<option value="FIXED"' + (rewardType === "FIXED" ? ' selected' : '') + '>Fixed Amount (&#x20A6;)</option>' +
+                '<option value="PERCENTAGE"' + (rewardType === "PERCENTAGE" ? ' selected' : '') + '>Percentage (%)</option>' +
+                '</select>' +
+                '<div class="text-secondary small">FIXED pays a flat naira amount; PERCENTAGE gives a % of the deposit.</div></div>' +
+                // Reward Value
+                '<div class="col-md-6">' +
+                '<label class="form-label">Reward Value</label>' +
+                '<input type="number" name="rewardValue" id="setting-rewardValue" class="form-control" min="0.01" step="0.01" value="' + rewardValue + '" placeholder="e.g. 500">' +
+                '<div class="text-secondary small">Flat amount (&#x20A6;) or percentage rewarded to the referrer.</div></div>' +
+                // Min Deposit Amount
+                '<div class="col-md-6">' +
+                '<label class="form-label">Minimum Deposit Amount (&#x20A6;)</label>' +
+                '<input type="number" name="minDepositAmount" class="form-control" min="0" step="0.01" value="' + minDepositAmount + '" placeholder="e.g. 1000">' +
+                '<div class="text-secondary small">Minimum deposit the referred user must make to unlock the reward.</div></div>' +
+                '</div>';
+        }
+
+        function collectSettingsPayload() {
+            var form    = document.getElementById("form-settings");
+            var fd      = new FormData(form);
+            var payload = {};
+            payload.isActive   = document.getElementById("setting-isActive").checked;
+            payload.rewardType = fd.get("rewardType") || "FIXED";
+            var rv = fd.get("rewardValue");
+            if (rv !== null && rv !== "") payload.rewardValue = parseFloat(rv);
+            var mda = fd.get("minDepositAmount");
+            if (mda !== null && mda !== "") payload.minDepositAmount = parseFloat(mda);
+            return payload;
+        }
+    </script>
+</body>
+
+</html>

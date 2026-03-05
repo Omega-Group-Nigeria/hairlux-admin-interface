@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Bookings</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <!-- STYLES -->
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .booking-row { cursor: pointer; }
+        .booking-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
+        #bookings-table td { vertical-align: middle; }
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        .hours-table th, .hours-table td { vertical-align: middle; }
+        .hours-time { max-width: 120px; }
+        .exception-time { max-width: 140px; }
+        .exception-card { border: 1px solid var(--tblr-border-color); border-radius: 6px; padding: .75rem; }
+        /* Booking table */
+        .res-code { font-family: var(--tblr-font-monospace, monospace); font-size: .8rem; font-weight: 600; letter-spacing: .02em; }
+        .svc-list { list-style: none; padding: 0; margin: 0; }
+        .svc-list li { display: flex; justify-content: space-between; align-items: center;
+            padding: 2px 0; border-bottom: 1px solid var(--tblr-border-color-translucent); }
+        .svc-list li:last-child { border-bottom: none; }
+        .svc-list li .svc-name { font-size: .82rem; }
+        .svc-list li .svc-meta { font-size: .75rem; color: var(--tblr-secondary); white-space: nowrap; margin-left: 8px; }
+        #bookings-table { table-layout: auto; }
+        #bookings-table td.td-services { min-width: 200px; white-space: normal; }
+        /* Calendar */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .cal-day-header { text-align: center; font-size: .75rem; font-weight: 600; padding: 4px 0; color: var(--tblr-secondary); text-transform: uppercase; }
+        .cal-day { min-height: 80px; border: 1px solid var(--tblr-border-color); border-radius: 4px; padding: 4px; font-size: .75rem; }
+        .cal-day.other-month { opacity: .35; }
+        .cal-day.today { border-color: var(--tblr-primary); }
+        .cal-day-num { font-weight: 600; margin-bottom: 2px; }
+        .cal-event { border-radius: 3px; padding: 1px 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .7rem; cursor: pointer; }
+        .cal-event-PENDING { background: var(--tblr-warning-lt); color: var(--tblr-warning); }
+        .cal-event-CONFIRMED { background: var(--tblr-primary-lt); color: var(--tblr-primary); }
+        .cal-event-IN_PROGRESS { background: #fff3cd; color: #d97706; }
+        .cal-event-COMPLETED { background: var(--tblr-success-lt); color: var(--tblr-success); }
+        .cal-event-CANCELLED { background: var(--tblr-danger-lt); color: var(--tblr-danger); }
+        /* Reservation badge */
+        .badge-used { background: var(--tblr-secondary-lt); color: var(--tblr-secondary); }
+        .badge-valid { background: var(--tblr-success-lt); color: var(--tblr-success); }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Logo -->
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <!-- <span class="fw-bold fs-3">Hairlux</span> -->
+                     <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <!-- Right-side controls -->
+                <div class="navbar-nav flex-row order-md-last">
+                    <!-- Dark / Light toggle -->
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-2">
+                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
+                            aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
+                            <div class="dropdown-header">Notifications</div>
+                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
+                        </div>
+                    </div>
+
+                    <!-- User menu -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small" id="dropdown-user-email">admin@hairlux.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./index.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown active">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M11 15l1 0" />
+                                        <path d="M12 15l0 3" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Bookings</span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item active" href="./bookings.html">Overview</a>
+                                <a class="dropdown-item" href="./bookings/index.html">Verify Booking</a>
+                                <a class="dropdown-item" href="./bookings/calendar.html">Calendar</a>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./payments.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                        <path d="M3 10l18 0" />
+                                        <path d="M7 15l.01 0" />
+                                        <path d="M11 15l2 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Payments</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./users.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Users</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./services.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+                                        <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+                                        <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+                                        <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Services</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./referrals.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M15 5v2" />
+                                        <path d="M15 11v2" />
+                                        <path d="M15 17v2" />
+                                        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Referrals</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./discounts.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>
+                                </span>
+                                <span class="nav-link-title">Discounts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./careers.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                        <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Careers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Management</div>
+                            <h2 class="page-title">Bookings</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex flex-wrap gap-2 align-items-center">
+                            <!-- Stats date range dropdown -->
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-outline-secondary dropdown-toggle" id="btn-stat-range" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" />
+                                    </svg>
+                                    <span id="stat-range-label">Stats: All time</span>
+                                </button>
+                                <div class="dropdown-menu p-3" style="min-width:300px">
+                                    <div class="mb-2 fw-semibold small">Filter stats by date range</div>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <input type="date" id="stat-start" class="form-control form-control-sm" placeholder="From">
+                                        <span class="text-secondary">–</span>
+                                        <input type="date" id="stat-end" class="form-control form-control-sm" placeholder="To">
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-primary flex-fill" id="btn-stat-apply">Apply</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-stat-clear">All time</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="btn-business-hours"
+                                data-bs-toggle="modal" data-bs-target="#modal-business-hours">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 7v5l3 3" />
+                                    <path d="M12 3a9 9 0 1 0 9 9" />
+                                </svg>
+                                Business Hours
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- STATS CARDS — GET /admin/bookings/stats -->
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Total Bookings</div>
+                                        <span class="badge bg-primary-lt" id="stat-period-label">All time</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Total Revenue</div>
+                                        <span class="badge bg-success-lt" id="stat-period-label-2">All time</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-revenue">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Pending</div>
+                                        <span class="badge bg-warning-lt">Needs action</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-pending">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Completed</div>
+                                        <span class="badge bg-success-lt" id="stat-period-label-3">All time</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-completed">—</div>
+                                    <div class="text-secondary small mt-1">Avg: <span id="stat-avg">—</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOOKINGS TABLE CARD -->
+                    <div class="card">
+                        <!-- Card header: title + result count -->
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Bookings</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                            <!-- Status filter tabs -->
+                            <ul class="nav nav-tabs card-header-tabs" id="status-tabs">
+                                <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="PENDING">Pending</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="CONFIRMED">Confirmed</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="IN_PROGRESS">In Progress</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="COMPLETED">Completed</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="CANCELLED">Cancelled</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Filter bar -->
+                        <div class="card-body border-bottom py-4">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-4 col-lg-3">
+                                    <label class="form-label text-secondary small mb-1">Search</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                        </span>
+                                        <input type="text" id="filter-search" class="form-control"
+                                            placeholder="Name or email…">
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">From</label>
+                                    <input type="date" id="filter-start" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">To</label>
+                                    <input type="date" id="filter-end" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-2 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">Per page</label>
+                                    <select id="filter-limit" class="form-select form-select-sm">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-secondary w-100"
+                                        id="btn-clear">Clear filters</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover card-table"
+                                    id="bookings-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="w-1 text-secondary">#</th>
+                                            <th>Reservation</th>
+                                            <th>Services</th>
+                                            <th>Date &amp; Time</th>
+                                            <th class="w-1">Type</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bookings-tbody">
+                                        <tr>
+                                            <td colspan="8" class="text-center py-5">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="card-footer d-flex align-items-center">
+                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">
+                            &copy; 2026 Hairlux Admin Panel
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/bookings.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- BUSINESS HOURS MODAL -->
+    <div class="modal modal-blur fade" id="modal-business-hours" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Business Hours</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="business-hours-alert" class="alert d-none mb-3" role="alert"></div>
+
+                    <ul class="nav nav-tabs" id="business-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tab-hours-btn" data-bs-toggle="tab"
+                                data-bs-target="#tab-hours" type="button" role="tab">Weekly Hours</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-exceptions-btn" data-bs-toggle="tab"
+                                data-bs-target="#tab-exceptions" type="button" role="tab">Exceptions</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content pt-3">
+                        <div class="tab-pane fade show active" id="tab-hours" role="tabpanel">
+                            <form id="form-business-hours">
+                                <div class="table-responsive">
+                                    <table class="table table-sm hours-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Day</th>
+                                                <th class="w-1">Open</th>
+                                                <th>Open Time</th>
+                                                <th>Close Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="hours-table-body">
+                                            <tr>
+                                                <td colspan="4" class="text-center text-secondary py-4">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary" id="btn-save-hours">Save Hours</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="tab-pane fade" id="tab-exceptions" role="tabpanel">
+                            <form id="form-exception" class="border rounded p-3 mb-3">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label required">Date</label>
+                                        <input type="date" name="date" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Closed?</label>
+                                        <div class="form-check form-switch mt-1">
+                                            <input class="form-check-input" type="checkbox" id="exception-closed" checked>
+                                            <label class="form-check-label" for="exception-closed">Closed for the day</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Open Time</label>
+                                        <input type="time" name="openTime" class="form-control exception-time">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Close Time</label>
+                                        <input type="time" name="closeTime" class="form-control exception-time">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label">Reason</label>
+                                        <input type="text" name="reason" class="form-control" placeholder="Holiday, maintenance, special hours">
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <button type="submit" class="btn btn-success" id="btn-create-exception">Add Exception</button>
+                                    </div>
+                                </div>
+                                <div id="exception-alert" class="alert d-none mt-3 mb-0" role="alert"></div>
+                            </form>
+
+                            <div id="exceptions-list" class="d-grid gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOKING DETAIL OFFCANVAS -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-detail" data-bs-scroll="true" style="width:520px;max-width:100vw;">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title">Booking Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body" id="offcanvas-detail-body">
+            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+        </div>
+        <div class="border-top p-3 d-flex gap-2 flex-wrap align-items-center" id="offcanvas-detail-actions"></div>
+    </div>
+
+
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('bookings:read');
+
+        // ── Page state ──────────────────────────────────────────────────────────
+        var state = { page: 1, limit: 20, status: "", search: "", startDate: "", endDate: "", totalPages: 1 };
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // ── RBAC: re-hydrate from server, apply guard + nav ────────────
+            RBAC.fetchMe().then(function() {
+                RBAC.applyPageGuard('bookings:read');
+                RBAC.applyNavVisibility();
+            });
+
+            // ── User info ───────────────────────────────────────────────────
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent  = initials;
+                document.getElementById("navbar-user-name").textContent    = fullName;
+                document.getElementById("navbar-user-role").textContent    = role;
+                document.getElementById("dropdown-user-name").textContent  = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) {
+                e.preventDefault(); Auth.logout();
+            });
+
+            // ── Initial loads ───────────────────────────────────────────────
+            loadStats();
+            loadBookings();
+
+            // ── Status tabs ─────────────────────────────────────────────────
+            document.getElementById("status-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-status]");
+                if (!tab) return;
+                document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                state.status = tab.dataset.status;
+                state.page = 1;
+                loadBookings();
+            });
+
+            // ── Search (debounced) ──────────────────────────────────────────
+            var searchTimer;
+            document.getElementById("filter-search").addEventListener("input", function () {
+                clearTimeout(searchTimer);
+                var val = this.value.trim();
+                searchTimer = setTimeout(function () {
+                    state.search = val; state.page = 1; loadBookings();
+                }, 400);
+            });
+
+            // ── Date filters ────────────────────────────────────────────────
+            document.getElementById("filter-start").addEventListener("change", function () {
+                state.startDate = this.value; state.page = 1; loadBookings();
+            });
+            document.getElementById("filter-end").addEventListener("change", function () {
+                state.endDate = this.value; state.page = 1; loadBookings();
+            });
+
+            // ── Per-page ────────────────────────────────────────────────────
+            document.getElementById("filter-limit").addEventListener("change", function () {
+                state.limit = parseInt(this.value, 10); state.page = 1; loadBookings();
+            });
+
+            // ── Clear filters ───────────────────────────────────────────────
+            document.getElementById("btn-clear").addEventListener("click", function () {
+                document.getElementById("filter-search").value = "";
+                document.getElementById("filter-start").value  = "";
+                document.getElementById("filter-end").value    = "";
+                document.getElementById("filter-limit").value  = "20";
+                document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
+                state.page = 1; state.limit = 20; state.status = "";
+                state.search = ""; state.startDate = ""; state.endDate = "";
+                loadBookings();
+            });
+
+            // ── Stats date range inputs ──────────────────────────────────────
+            document.getElementById("btn-stat-apply").addEventListener("click", function () {
+                // close dropdown
+                var dd = bootstrap.Dropdown.getOrCreateInstance(document.getElementById("btn-stat-range"));
+                dd.hide();
+                loadStats();
+            });
+            document.getElementById("btn-stat-clear").addEventListener("click", function () {
+                document.getElementById("stat-start").value = "";
+                document.getElementById("stat-end").value   = "";
+                var dd = bootstrap.Dropdown.getOrCreateInstance(document.getElementById("btn-stat-range"));
+                dd.hide();
+                loadStats();
+            });
+
+            // ── Refresh button ──────────────────────────────────────────────
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                loadStats(); loadBookings();
+            });
+
+            // ── Pagination clicks ───────────────────────────────────────────
+            document.getElementById("pagination-btns").addEventListener("click", function (e) {
+                e.preventDefault();
+                var a = e.target.closest("a[data-page]");
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > state.totalPages) return;
+                state.page = p;
+                loadBookings();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // ── Table row / action button clicks ────────────────────────────
+            document.getElementById("bookings-tbody").addEventListener("click", function (e) {
+                var viewBtn = e.target.closest(".btn-view");
+                if (viewBtn) { e.stopPropagation(); openDetail(viewBtn.dataset.id); return; }
+                var row = e.target.closest(".booking-row");
+                if (row) openDetail(row.dataset.id);
+            });
+
+
+
+            // ── Business hours modal: load on show ───────────────────────────
+            document.getElementById("modal-business-hours").addEventListener("show.bs.modal", function () {
+                loadBusinessHours();
+                loadBusinessExceptions();
+            });
+
+            // ── Business hours form: save ────────────────────────────────────
+            document.getElementById("form-business-hours").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("business-hours-alert");
+                var btn = document.getElementById("btn-save-hours");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving\u2026';
+                try {
+                    var rows = document.querySelectorAll("#hours-table-body tr[data-day]");
+                    var hours = Array.from(rows).map(function (row) {
+                        var day       = row.dataset.day;
+                        var isOpen    = row.querySelector(".toggle-open").checked;
+                        var openTime  = row.querySelector(".open-time").value;
+                        var closeTime = row.querySelector(".close-time").value;
+                        return { dayOfWeek: parseInt(day, 10), isOpen: isOpen, openTime: openTime || null, closeTime: closeTime || null };
+                    });
+                    await Bookings.setBusinessHours(hours);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Business hours saved.";
+                    setTimeout(function () { alertEl.className = "alert d-none"; }, 2500);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save hours.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Hours";
+                }
+            });
+
+            // ── Exception form: add ──────────────────────────────────────────
+            document.getElementById("form-exception").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("exception-alert");
+                var btn     = document.getElementById("btn-create-exception");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Adding\u2026';
+                try {
+                    var fd       = new FormData(this);
+                    var isClosed = document.getElementById("exception-closed").checked;
+                    var payload  = {
+                        date:      fd.get("date"),
+                        isClosed:  isClosed,
+                        openTime:  isClosed ? null : (fd.get("openTime") || null),
+                        closeTime: isClosed ? null : (fd.get("closeTime") || null),
+                        reason:    fd.get("reason") || null,
+                    };
+                    await Bookings.createBusinessException(payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Exception added.";
+                    this.reset();
+                    document.getElementById("exception-closed").checked = true;
+                    loadBusinessExceptions();
+                    setTimeout(function () { alertEl.className = "alert d-none"; }, 2000);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to add exception.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Add Exception";
+                }
+            });
+
+            // ── Delete exception (event delegation) ──────────────────────────
+            document.getElementById("exceptions-list").addEventListener("click", async function (e) {
+                var btn = e.target.closest(".btn-delete-exception");
+                if (!btn) return;
+                if (!confirm("Delete this exception?")) return;
+                btn.disabled = true;
+                try {
+                    await Bookings.deleteBusinessException(btn.dataset.id);
+                    loadBusinessExceptions();
+                } catch (err) {
+                    alert(err.message || "Failed to delete.");
+                    btn.disabled = false;
+                }
+            });
+
+        });
+
+        // ── Load stats ──────────────────────────────────────────────────────────
+        async function loadStats() {
+            try {
+                var start = document.getElementById("stat-start").value;
+                var end   = document.getElementById("stat-end").value;
+                // Update period badge labels
+                var _MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                function _fmtStatDate(iso) {
+                    if (!iso) return "…";
+                    var p = iso.split("-");
+                    return String(parseInt(p[2], 10)).padStart(2, '0') + " " + (_MONTHS[parseInt(p[1], 10) - 1] || p[1]);
+                }
+                var periodLabel = (start || end)
+                    ? (_fmtStatDate(start) + " – " + _fmtStatDate(end))
+                    : "All time";
+                ["stat-period-label", "stat-period-label-2", "stat-period-label-3"].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.textContent = periodLabel;
+                });
+                // Update dropdown button label
+                var rangeBtn = document.getElementById("stat-range-label");
+                if (rangeBtn) rangeBtn.textContent = (start || end) ? ("Stats: " + _fmtStatDate(start) + " – " + _fmtStatDate(end)) : "Stats: All time";
+                var data  = await Bookings.getStats(start || undefined, end || undefined);
+                document.getElementById("stat-total").textContent     = (data.overview && data.overview.totalBookings != null) ? data.overview.totalBookings : (data.total ?? data.totalBookings ?? "\u2014");
+                document.getElementById("stat-revenue").textContent   = Bookings.formatMoney((data.overview && data.overview.totalRevenue != null) ? data.overview.totalRevenue : (data.revenue ?? data.totalRevenue ?? 0));
+                document.getElementById("stat-pending").textContent   = (data.byStatus && data.byStatus.pending != null) ? data.byStatus.pending : (data.pending ?? "\u2014");
+                document.getElementById("stat-completed").textContent = (data.byStatus && data.byStatus.completed != null) ? data.byStatus.completed : (data.completed ?? "\u2014");
+                var avg = data.overview && data.overview.averageBookingValue != null ? data.overview.averageBookingValue : null;
+                document.getElementById("stat-avg").textContent = avg != null ? Bookings.formatMoney(avg) : "\u2014";
+            } catch (e) { console.warn("Stats:", e); }
+        }
+
+        // ── Load bookings table ─────────────────────────────────────────────────
+        async function loadBookings() {
+            var tbody = document.getElementById("bookings-tbody");
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("results-label").textContent = "Loading\u2026";
+            try {
+                var result = await Bookings.getAll({
+                    page: state.page, limit: state.limit,
+                    status: state.status, search: state.search,
+                    startDate: state.startDate, endDate: state.endDate
+                });
+                var rows = result.data || (Array.isArray(result) ? result : []);
+                var meta = result.meta || result.pagination || {};
+                state.totalPages = meta.totalPages || meta.pages || 1;
+                var count = meta.total ?? rows.length;
+                document.getElementById("results-label").textContent = count + " booking" + (count !== 1 ? "s" : "") + " found";
+                renderTable(rows);
+                renderPagination(meta);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + (err.message || "Failed to load bookings.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        // ── Render table ────────────────────────────────────────────────────────
+        function renderTable(rows) {
+            var tbody = document.getElementById("bookings-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No bookings found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (b, i) {
+                var customer  = b.user || b.customer || {};
+                var custName  = customer.firstName
+                    ? customer.firstName + " " + customer.lastName
+                    : (b.guestName || customer.name || "\u2014");
+                var custSub   = customer.email
+                    ? '<div class="text-secondary small mt-1">' + customer.email + '</div>'
+                    : (b.guestPhone ? '<div class="text-secondary small mt-1">' + b.guestPhone + '</div>' : "");
+
+                // Reservation code cell
+                var resCode  = b.reservationCode || "\u2014";
+                var resUsed  = b.reservationUsed;
+                var resBadge = resUsed
+                    ? '<span class="badge bg-secondary-lt ms-1" style="font-size:.65rem">used</span>'
+                    : "";
+                var resCell  = '<div class="res-code">' + resCode + resBadge + '</div>' +
+                               '<div class="text-secondary small mt-1">' + custName + '</div>' + custSub;
+
+                // Services stacked list
+                var services = b.services || (b.service ? [b.service] : []);
+                var svcCell  = services.length
+                    ? '<ul class="svc-list">' + services.map(function (s) {
+                        var dur = s.duration ? Math.round(s.duration / 60) + 'h' + (s.duration % 60 ? (s.duration % 60) + 'm' : '') : null;
+                        // Fix duration display: show in minutes if < 60
+                        if (s.duration && s.duration < 60) dur = s.duration + 'min';
+                        else if (s.duration) {
+                            var h = Math.floor(s.duration / 60), m = s.duration % 60;
+                            dur = h + 'h' + (m ? m + 'm' : '');
+                        }
+                        return '<li>' +
+                            '<span class="svc-name">' + (s.name || s.serviceName || "Service") + '</span>' +
+                            '<span class="svc-meta">' +
+                            (s.price != null ? Bookings.formatMoney(s.price) : "") +
+                            (dur ? ' &middot; ' + dur : "") +
+                            '</span></li>';
+                    }).join("") + '</ul>'
+                    : '<span class="text-secondary">\u2014</span>';
+
+                // Booking type badge
+                var bookingType = b.bookingType || "";
+                var typeCell = bookingType === "HOME_SERVICE"
+                    ? '<span class="badge bg-azure-lt">Home</span>'
+                    : bookingType === "WALK_IN"
+                        ? '<span class="badge bg-teal-lt">Walk-in</span>'
+                        : '<span class="text-secondary small">\u2014</span>';
+
+                var dateTime = Bookings.formatDateTime(b.bookingDate || b.date, b.bookingTime || b.time);
+                var amount   = Bookings.formatMoney(b.totalAmount ?? b.amount ?? b.price ?? 0);
+                var status   = b.status || "PENDING";
+                var id       = b.id || "";
+
+                return '<tr class="booking-row" data-id="' + id + '">' +
+                    '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
+                    '<td>' + resCell + '</td>' +
+                    '<td class="td-services">' + svcCell + '</td>' +
+                    '<td class="text-secondary small text-nowrap">' + dateTime + '</td>' +
+                    '<td>' + typeCell + '</td>' +
+                    '<td class="fw-semibold text-nowrap">' + amount + '</td>' +
+                    '<td>' + Bookings.statusBadge(status) + '</td>' +
+                    '<td><button class="btn btn-sm btn-outline-secondary btn-view" data-id="' + id + '" title="View">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
+                    '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>' +
+                    '<path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
+                    '</svg></button></td></tr>';
+            }).join("");
+        }
+
+        // ── Render pagination ───────────────────────────────────────────────────
+        function renderPagination(meta) {
+            var total = meta.total || 0, page = meta.page || state.page;
+            var limit = meta.limit || state.limit, pages = meta.totalPages || meta.pages || 1;
+            var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
+            document.getElementById("pagination-info").textContent = total
+                ? "Showing " + from + "\u2013" + to + " of " + total : "No results";
+            var ul = document.getElementById("pagination-btns");
+            ul.innerHTML = '';
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">\u00ab</a></li>');
+            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+            for (var p = start; p <= end; p++) {
+                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">\u00bb</a></li>');
+        }
+
+        // ── Open detail offcanvas ─────────────────────────────────────────────────
+        async function openDetail(id) {
+            if (!id) return;
+            var body    = document.getElementById("offcanvas-detail-body");
+            var actions = document.getElementById("offcanvas-detail-actions");
+            body.innerHTML    = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            actions.innerHTML = "";
+            var oc = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("offcanvas-detail"));
+            oc.show();
+            try {
+                var b        = await Bookings.getOne(id);
+                var customer = b.user || b.customer || {};
+                var custName = customer.firstName
+                    ? customer.firstName + " " + customer.lastName : (customer.name || "\u2014");
+                var services = b.services || (b.service ? [b.service] : []);
+                var address  = b.address || {};
+                var location = address.addressLine
+                    ? [address.addressLine, address.city, address.state, address.country].filter(Boolean).join(", ")
+                    : (address.street ? [address.street, address.city, address.state].filter(Boolean).join(", ") : (b.location || "\u2014"));
+                var bookingType = b.bookingType || "";
+                var typeLabel = bookingType === "HOME_SERVICE"
+                    ? '<span class="badge bg-azure-lt">Home Service</span>'
+                    : bookingType === "WALK_IN" ? '<span class="badge bg-teal-lt">Walk-in</span>' : (bookingType || "\u2014");
+
+                var svcRows = services.length
+                    ? services.map(function(s) {
+                        return '<div class="d-flex justify-content-between py-1 border-bottom">' +
+                            '<span>' + (s.name || s.serviceName || "Service") + '</span>' +
+                            '<span class="text-secondary">' + Bookings.formatMoney(s.price ?? 0) +
+                            (s.duration ? '<small class="ms-2">' + s.duration + 'min</small>' : '') + '</span>' +
+                            '</div>';
+                    }).join('')
+                    : '<div class="text-secondary">\u2014</div>';
+
+                var resCode  = b.reservationCode || "\u2014";
+                var resBadge = b.reservationUsed
+                    ? '<span class="badge badge-used ms-2">Used</span>'
+                    : '<span class="badge badge-valid ms-2">Valid</span>';
+
+                body.innerHTML =
+                    '<div class="row g-3">' +
+                    '<div class="col-md-6"><div class="mb-1 text-secondary small">Customer</div>' +
+                    '<div class="fw-semibold">' + custName + '</div>' +
+                    (customer.email ? '<div class="text-secondary small">' + customer.email + '</div>' : '') +
+                    (customer.phone ? '<div class="text-secondary small">' + customer.phone + '</div>' : '') + '</div>' +
+                    '<div class="col-md-6"><div class="mb-1 text-secondary small">Booking Type</div>' +
+                    '<div>' + typeLabel + '</div></div>' +
+                    '<div class="col-md-6"><div class="mb-1 text-secondary small">Date &amp; Time</div>' +
+                    '<div>' + Bookings.formatDateTime(b.bookingDate || b.date, b.bookingTime || b.time) + '</div></div>' +
+                    '<div class="col-md-6"><div class="mb-1 text-secondary small">Amount Paid</div>' +
+                    '<div class="fw-semibold">' + Bookings.formatMoney(b.totalAmount ?? b.amount ?? 0) + '</div>' +
+                    (b.paymentMethod ? '<div class="text-secondary small">' + b.paymentMethod.replace(/_/g, " ") + '</div>' : '') + '</div>' +
+                    '<div class="col-md-6"><div class="mb-1 text-secondary small">Status</div>' + Bookings.statusBadge(b.status) + '</div>' +
+                    '<div class="col-md-6"><div class="mb-1 text-secondary small">Reservation Code</div>' +
+                    '<div class="font-monospace fw-semibold">' + resCode + resBadge + '</div></div>' +
+                    '<div class="col-12"><div class="mb-1 text-secondary small">Services</div>' +
+                    '<div class="border rounded p-2">' + svcRows + '</div></div>' +
+                    (bookingType === "HOME_SERVICE" ?
+                        '<div class="col-12"><div class="mb-1 text-secondary small">Service Address</div><div>' + location + '</div></div>' : '') +
+                    (b.guestName ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Name</div><div>' + b.guestName + '</div></div>' : '') +
+                    (b.guestPhone ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Phone</div><div>' + b.guestPhone + '</div></div>' : '') +
+                    (b.notes ? '<div class="col-12"><div class="mb-1 text-secondary small">Notes</div><div class="text-secondary">' + b.notes + '</div></div>' : '') +
+                    '<div class="col-12"><div class="mb-1 text-secondary small">Booking ID</div><div class="text-secondary small font-monospace">' + id + '</div></div>' +
+                    '</div>';
+
+                actions.innerHTML = buildDetailActions(b);
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+
+        // ── Build action buttons ────────────────────────────────────────────────
+        function buildDetailActions(b) {
+            var html = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="offcanvas">Close</button>';
+            var bookingType  = b.bookingType || "";
+            var safeId   = (b.id || "").replace(/'/g, "\\'");
+            var safeCode = (b.reservationCode || "").replace(/'/g, "\\'");
+            if (bookingType === "WALK_IN") {
+                if (!b.reservationUsed && RBAC.can('bookings:verify_reservation')) {
+                    html += '<button class="btn btn-success" onclick="handleDetailAction(\'' + safeId + '\',\'checkin\',null,\'' + safeCode + '\')">\u2714\ufe0f Mark as Used / Check In</button>';
+                } else if (b.reservationUsed) {
+                    html += '<span class="text-secondary small">Reservation already used.</span>';
+                }
+            } else if (RBAC.can('bookings:update_status')) {
+                var transitions = { PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
+                var nexts = transitions[b.status] || [];
+                nexts.forEach(function (s) {
+                    var col = { CONFIRMED: "primary", IN_PROGRESS: "warning", COMPLETED: "success", CANCELLED: "danger" }[s] || "secondary";
+                    html += '<button class="btn btn-' + col + '" onclick="handleDetailAction(\'' + safeId + '\',\'status\',\'' + s + '\',null)">' + s.replace(/_/g, " ") + '</button>';
+                });
+            }
+            return html;
+        }
+
+        // ── Handle offcanvas action ──────────────────────────────────────────────
+        async function handleDetailAction(id, action, status, code) {
+            var actions = document.getElementById("offcanvas-detail-actions");
+            if (action === "checkin") {
+                if (!confirm('Mark booking "' + code + '" as used / checked in?')) return;
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Processing\u2026';
+                try {
+                    await Bookings.useReservation(code);
+                    loadBookings(); loadStats();
+                    openDetail(id);
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || "Failed.") + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            } else if (action === "status") {
+                if (!confirm('Change booking status to "' + status.replace(/_/g, " ") + '"?')) return;
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating\u2026';
+                try {
+                    await Bookings.updateStatus(id, status);
+                    loadBookings(); loadStats();
+                    openDetail(id);
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || "Failed.") + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+        }
+
+        // ── Business hours ────────────────────────────────────────────────────
+        var DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+        async function loadBusinessHours() {
+            var tbody = document.getElementById("hours-table-body");
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>';
+            try {
+                var data  = await Bookings.getBusinessHours();
+                var hours = data.hours || data || [];
+                if (!Array.isArray(hours) || !hours.length) {
+                    hours = [0,1,2,3,4,5,6].map(function (d) {
+                        return { dayOfWeek: d, isOpen: d >= 1 && d <= 5, openTime: "09:00", closeTime: "18:00" };
+                    });
+                }
+                tbody.innerHTML = hours.map(function (h) {
+                    var day = h.dayOfWeek ?? h.day ?? 0;
+                    return '<tr data-day="' + day + '">' +
+                        '<td>' + (DAY_LABELS[day] || "Day " + day) + '</td>' +
+                        '<td><div class="form-check form-switch mb-0">' +
+                        '<input class="form-check-input toggle-open" type="checkbox"' + (h.isOpen ? ' checked' : '') + '></div></td>' +
+                        '<td><input type="time" class="form-control form-control-sm hours-time open-time" value="' + (h.openTime || "") + '"></td>' +
+                        '<td><input type="time" class="form-control form-control-sm hours-time close-time" value="' + (h.closeTime || "") + '"></td>' +
+                        '</tr>';
+                }).join("");
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center py-3">' + (err.message || "Failed to load hours.") + '</td></tr>';
+            }
+        }
+
+        async function loadBusinessExceptions() {
+            var list = document.getElementById("exceptions-list");
+            list.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>';
+            try {
+                var data       = await Bookings.getBusinessExceptions();
+                var exceptions = data.exceptions || data || [];
+                if (!Array.isArray(exceptions) || !exceptions.length) {
+                    list.innerHTML = '<div class="text-secondary small text-center py-2">No exceptions set.</div>';
+                    return;
+                }
+                list.innerHTML = exceptions.map(function (ex) {
+                    var detail = ex.isClosed
+                        ? '<span class="badge bg-danger-lt">Closed</span>'
+                        : '<span class="text-secondary small">' + (ex.openTime || "") + ' \u2013 ' + (ex.closeTime || "") + '</span>';
+                    return '<div class="exception-card d-flex align-items-center gap-3">' +
+                        '<div class="fw-semibold">' + (ex.date || "") + '</div>' +
+                        '<div>' + detail + '</div>' +
+                        (ex.reason ? '<div class="text-secondary small flex-fill">' + ex.reason + '</div>' : '<div class="flex-fill"></div>') +
+                        '<button class="btn btn-sm btn-outline-danger btn-delete-exception" data-id="' + ex.id + '">Delete</button>' +
+                        '</div>';
+                }).join("");
+            } catch (err) {
+                list.innerHTML = '<div class="text-danger small py-2">' + (err.message || "Failed to load exceptions.") + '</div>';
+            }
+        }
+    </script>
+</body>
+
+</html>

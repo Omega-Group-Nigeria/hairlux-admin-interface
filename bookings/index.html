@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Verify Booking</title>
+    <link rel="icon" href="../favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon" />
+    <!-- STYLES -->
+    <link href="../assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="../assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="../assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="../assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="../assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="../assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="../assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        .res-code-display { font-family: var(--tblr-font-monospace, monospace); font-size: 1.25rem; font-weight: 700; letter-spacing: .04em; }
+        .detail-section { border-top: 1px solid var(--tblr-border-color); padding-top: 1rem; margin-top: 1rem; }
+        .detail-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--tblr-secondary); margin-bottom: .25rem; }
+        .svc-table th, .svc-table td { vertical-align: middle; font-size: .875rem; }
+        .action-bar { border-top: 1px solid var(--tblr-border-color); padding-top: 1rem; margin-top: 1rem; }
+        .badge-used { background: var(--tblr-secondary-lt); color: var(--tblr-secondary); }
+        .badge-valid { background: var(--tblr-success-lt); color: var(--tblr-success); }
+        #result-card { transition: opacity .2s; }
+    </style>
+</head>
+
+<body>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/tabler-theme.min.js"></script>
+    <script src="../assets/js/api-utils/auth.js"></script>
+    <script src="../assets/js/api-utils/rbac.js"></script>
+    <script src="../assets/js/api-utils/bookings.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Logo -->
+                <a href="../index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="../assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <!-- Right-side controls -->
+                <div class="navbar-nav flex-row order-md-last">
+                    <!-- Dark / Light toggle -->
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-2">
+                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
+                            aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
+                            <div class="dropdown-header">Notifications</div>
+                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
+                        </div>
+                    </div>
+
+                    <!-- User menu -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small" id="dropdown-user-email">admin@hairlux.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="../settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="../index.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown active">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M11 15l1 0" />
+                                        <path d="M12 15l0 3" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Bookings</span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="../bookings.html">Overview</a>
+                                <a class="dropdown-item active" href="./index.html">Verify Booking</a>
+                                <a class="dropdown-item" href="./calendar.html">Calendar</a>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../payments.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                        <path d="M3 10l18 0" />
+                                        <path d="M7 15l.01 0" />
+                                        <path d="M11 15l2 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Payments</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../users.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Users</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../services.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+                                        <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+                                        <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+                                        <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Services</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../referrals.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M15 5v2" />
+                                        <path d="M15 11v2" />
+                                        <path d="M15 17v2" />
+                                        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Referrals</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../discounts.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>
+                                </span>
+                                <span class="nav-link-title">Discounts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="../careers.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                        <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Careers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Bookings</div>
+                            <h2 class="page-title">Verify Booking</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <a href="../bookings.html" class="btn btn-outline-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M15 6l-6 6l6 6" />
+                                </svg>
+                                Back to Overview
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="row justify-content-start">
+                        <div class="col-lg-8 col-xl-12">
+
+                            <!-- LOOKUP FORM -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h3 class="card-title">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="icon me-2 text-primary">
+                                            <path d="M4 7v-1a2 2 0 0 1 2 -2h2" /><path d="M4 17v1a2 2 0 0 0 2 2h2" />
+                                            <path d="M16 4h2a2 2 0 0 1 2 2v1" /><path d="M16 20h2a2 2 0 0 0 2 -2v-1" />
+                                            <path d="M5 12l14 0" />
+                                        </svg>
+                                        Reservation Lookup
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-secondary mb-3">Enter a reservation code to look up and verify a booking. Use this to check in customers or update booking status.</p>
+                                    <form id="form-lookup" class="d-flex gap-2">
+                                        <input type="text" id="code-input" class="form-control form-control-lg"
+                                            placeholder="e.g. HLX-A3K9" autocomplete="off" required
+                                            style="font-family: var(--tblr-font-monospace,monospace); text-transform: uppercase; letter-spacing: .05em;"
+                                            onkeypress="this.value = this.value.toUpperCase();">
+                                        <button type="submit" class="btn btn-primary btn-lg px-4" id="btn-lookup">
+                                            <span id="btn-lookup-text">Look Up</span>
+                                            <span id="btn-lookup-spinner" class="spinner-border spinner-inline ms-1 d-none" role="status"></span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- RESULT AREA -->
+                            <div id="result-area"></div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center flex-row-reverse">
+                        <div class="col-lg-auto ms-lg-auto">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">Hairlux Admin &copy; 2025</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="../assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('bookings:verify_reservation');
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // ── RBAC: re-hydrate from server, apply guard + nav ────────────
+            RBAC.fetchMe().then(function() {
+                RBAC.applyPageGuard('bookings:verify_reservation');
+                RBAC.applyNavVisibility();
+            });
+
+            // ── Populate user info ──────────────────────────────────────────
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent  = initials;
+                document.getElementById("navbar-user-name").textContent    = fullName;
+                document.getElementById("navbar-user-role").textContent    = role;
+                document.getElementById("dropdown-user-name").textContent  = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) {
+                e.preventDefault(); Auth.logout();
+            });
+
+            // ── Auto-fill code from URL param ────────────────────────────
+            var urlParams = new URLSearchParams(window.location.search);
+            var urlCode = urlParams.get("code");
+            if (urlCode) {
+                document.getElementById("code-input").value = urlCode.toUpperCase();
+                document.getElementById("form-lookup").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+            }
+
+            // ── Auto-uppercase code input ─────────────────────────────────
+            document.getElementById("code-input").addEventListener("input", function () {
+                var pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            });
+
+            // ── Lookup form submit ──────────────────────────────────────────
+            document.getElementById("form-lookup").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var code    = document.getElementById("code-input").value.trim().toUpperCase();
+                var btn     = document.getElementById("btn-lookup");
+                var btnText = document.getElementById("btn-lookup-text");
+                var spinner = document.getElementById("btn-lookup-spinner");
+                var area    = document.getElementById("result-area");
+
+                btn.disabled = true;
+                btnText.textContent = "Looking up…";
+                spinner.classList.remove("d-none");
+                area.innerHTML = '<div class="card"><div class="card-body text-center py-5"><div class="spinner-border text-primary" role="status"></div><div class="text-secondary mt-2">Fetching reservation…</div></div></div>';
+
+                try {
+                    var data = await Bookings.getByReservationCode(code);
+                    renderResult(data);
+                } catch (err) {
+                    area.innerHTML = '<div class="alert alert-danger"><strong>Not found.</strong> ' + (err.message || "Could not retrieve reservation.") + '</div>';
+                } finally {
+                    btn.disabled = false;
+                    btnText.textContent = "Look Up";
+                    spinner.classList.add("d-none");
+                }
+            });
+        });
+
+        // ── Render full reservation details ────────────────────────────────────
+        function renderResult(b) {
+            var area     = document.getElementById("result-area");
+            var customer = b.user || {};
+            var custName = customer.firstName
+                ? customer.firstName + " " + customer.lastName
+                : (customer.name || b.guestName || "—");
+            var services = b.services || (b.service ? [b.service] : []);
+            var address  = b.address || {};
+            var addrStr  = address.addressLine
+                ? [address.addressLine, address.city, address.state, address.country].filter(Boolean).join(", ")
+                : (address.street ? [address.street, address.city, address.state].filter(Boolean).join(", ") : null);
+
+            var bookingType = b.bookingType || "";
+            var isValid     = b.isValid;
+            var isUsed      = b.reservationUsed;
+
+            // Validity badge
+            var validityBadge = isUsed
+                ? '<span class="badge badge-used ms-2 fs-6">Already Used</span>'
+                : (isValid
+                    ? '<span class="badge badge-valid ms-2 fs-6">Valid</span>'
+                    : '<span class="badge bg-warning-lt text-warning ms-2 fs-6">Invalid</span>');
+
+            // Booking type badge
+            var typeBadge = bookingType === "HOME_SERVICE"
+                ? '<span class="badge bg-azure-lt text-azure">Home Service</span>'
+                : (bookingType === "WALK_IN"
+                    ? '<span class="badge bg-teal-lt text-teal">Walk-in</span>'
+                    : '<span class="badge bg-secondary-lt">' + (bookingType || "—") + '</span>');
+
+            // Services table rows
+            var svcRows = services.length
+                ? services.map(function (s) {
+                    var h = s.duration ? Math.floor(s.duration / 60) : 0;
+                    var m = s.duration ? s.duration % 60 : 0;
+                    var dur = s.duration
+                        ? (h > 0 ? h + 'h' : '') + (m > 0 ? m + 'min' : '')
+                        : "—";
+                    return '<tr>' +
+                        '<td>' + (s.name || s.serviceName || "Service") + '</td>' +
+                        '<td class="text-secondary">' + dur + '</td>' +
+                        '<td class="fw-semibold text-end">' + Bookings.formatMoney(s.price ?? 0) + '</td>' +
+                        '</tr>';
+                }).join("")
+                : '<tr><td colspan="3" class="text-secondary text-center">No services</td></tr>';
+
+            // Action buttons based on booking type
+            var actionHtml = buildActionButtons(b);
+
+            area.innerHTML =
+                '<div class="card" id="result-card">' +
+                '<div class="card-header">' +
+                '<div class="d-flex align-items-center gap-3 flex-wrap">' +
+                '<div class="res-code-display">' + (b.reservationCode || "—") + validityBadge + '</div>' +
+                '<div class="ms-auto">' + Bookings.statusBadge(b.status || "PENDING") + '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="card-body">' +
+
+                // Customer + Booking Type row
+                '<div class="row g-3 mb-3">' +
+                '<div class="col-md-6">' +
+                '<div class="detail-label">Customer</div>' +
+                '<div class="fw-semibold">' + custName + '</div>' +
+                (customer.email ? '<div class="text-secondary small">' + customer.email + '</div>' : '') +
+                (customer.phone ? '<div class="text-secondary small">' + customer.phone + '</div>' : '') +
+                (b.guestPhone && !customer.phone ? '<div class="text-secondary small">Guest: ' + b.guestPhone + '</div>' : '') +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<div class="detail-label">Booking Type</div>' +
+                '<div>' + typeBadge + '</div>' +
+                '</div>' +
+                '</div>' +
+
+                // Date + Amount row
+                '<div class="row g-3 mb-3">' +
+                '<div class="col-md-6">' +
+                '<div class="detail-label">Date &amp; Time</div>' +
+                '<div>' + Bookings.formatDateTime(b.bookingDate || b.date, b.bookingTime || b.time) + '</div>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<div class="detail-label">Total Amount</div>' +
+                '<div class="fw-semibold fs-4">' + Bookings.formatMoney(b.totalAmount ?? b.amount ?? 0) + '</div>' +
+                (b.paymentMethod ? '<div class="text-secondary small">' + b.paymentMethod.replace(/_/g, " ") + '</div>' : '') +
+                '</div>' +
+                '</div>' +
+
+                // Services table
+                '<div class="detail-section">' +
+                '<div class="detail-label mb-2">Services</div>' +
+                '<table class="table table-sm svc-table">' +
+                '<thead><tr><th>Service</th><th>Duration</th><th class="text-end">Price</th></tr></thead>' +
+                '<tbody>' + svcRows + '</tbody>' +
+                '</table>' +
+                '</div>' +
+
+                // Address (HOME_SERVICE only)
+                (bookingType === "HOME_SERVICE" && addrStr
+                    ? '<div class="detail-section"><div class="detail-label mb-1">Service Address</div><div class="text-secondary">' + addrStr + '</div></div>'
+                    : '') +
+
+                // Guest info
+                ((b.guestName || b.guestPhone)
+                    ? '<div class="detail-section"><div class="row g-3">' +
+                      (b.guestName ? '<div class="col-md-6"><div class="detail-label">Guest Name</div><div>' + b.guestName + '</div></div>' : '') +
+                      (b.guestPhone ? '<div class="col-md-6"><div class="detail-label">Guest Phone</div><div>' + b.guestPhone + '</div></div>' : '') +
+                      '</div></div>'
+                    : '') +
+
+                // Notes
+                (b.notes ? '<div class="detail-section"><div class="detail-label mb-1">Notes</div><div class="text-secondary">' + b.notes + '</div></div>' : '') +
+
+                // Booking ID + timestamps
+                '<div class="detail-section">' +
+                '<div class="row g-2 text-secondary small">' +
+                '<div class="col-md-6"><span class="fw-semibold">Booking ID:</span> <span class="font-monospace">' + (b.id || "—") + '</span></div>' +
+                (b.createdAt ? '<div class="col-md-6"><span class="fw-semibold">Created:</span> ' + new Date(b.createdAt).toLocaleString() + '</div>' : '') +
+                (b.updatedAt ? '<div class="col-md-6"><span class="fw-semibold">Last updated:</span> ' + new Date(b.updatedAt).toLocaleString() + '</div>' : '') +
+                '</div>' +
+                '</div>' +
+
+                // Action bar
+                '<div class="action-bar" id="action-bar">' +
+                '<div class="detail-label mb-2">Actions</div>' +
+                '<div id="action-buttons">' + actionHtml + '</div>' +
+                '<div id="action-alert" class="alert d-none mt-2" role="alert"></div>' +
+                '</div>' +
+
+                '</div>' + // card-body
+                '</div>';  // card
+        }
+
+        // ── Build action buttons based on bookingType ──────────────────────────
+        function buildActionButtons(b) {
+            var bookingType = b.bookingType || "";
+            var status      = b.status || "PENDING";
+            var isUsed      = b.reservationUsed;
+            var id          = b.id;
+            var code        = b.reservationCode;
+
+            if (bookingType === "WALK_IN") {
+                // WALK_IN → Mark as Used via PATCH /admin/bookings/reservation/{code}/use
+                if (isUsed) {
+                    return '<span class="text-secondary"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>This reservation has already been used.</span>';
+                }
+                return '<button class="btn btn-success" id="btn-mark-used" onclick="markAsUsed(\'' + code + '\')">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>' +
+                    'Mark as Used / Check In' +
+                    '</button>';
+            } else if (bookingType === "HOME_SERVICE") {
+                // HOME_SERVICE → status transitions via PUT /admin/bookings/{id}/status
+                var transitions = {
+                    PENDING:     [["CONFIRMED", "btn-primary"], ["CANCELLED", "btn-danger"]],
+                    CONFIRMED:   [["IN_PROGRESS", "btn-warning"], ["CANCELLED", "btn-danger"]],
+                    IN_PROGRESS: [["COMPLETED", "btn-success"], ["CANCELLED", "btn-danger"]],
+                };
+                var steps = transitions[status] || [];
+                if (!steps.length) {
+                    return '<span class="text-secondary">No further actions available for status <strong>' + status.replace(/_/g, " ") + '</strong>.</span>';
+                }
+                return steps.map(function (pair) {
+                    var newStatus = pair[0], btnClass = pair[1];
+                    return '<button class="btn ' + btnClass + ' me-2" onclick="updateStatus(\'' + id + '\',\'' + newStatus + '\')">' +
+                        newStatus.replace(/_/g, " ") +
+                        '</button>';
+                }).join("");
+            } else {
+                return '<span class="text-secondary small">No actions available.</span>';
+            }
+        }
+
+        // ── Mark as Used (WALK_IN) ─────────────────────────────────────────────
+        async function markAsUsed(code) {
+            if (!code) return;
+            if (!confirm('Mark reservation "' + code + '" as used?\nThis sets the booking to IN_PROGRESS and is irreversible.')) return;
+            var btn   = document.getElementById("btn-mark-used");
+            var alert = document.getElementById("action-alert");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Marking…';
+            alert.className = "alert d-none";
+            try {
+                await Bookings.useReservation(code);
+                alert.className = "alert alert-success";
+                alert.innerHTML = '<strong>Success!</strong> Reservation marked as used. Booking is now IN_PROGRESS.';
+                document.getElementById("action-buttons").innerHTML =
+                    '<span class="text-success"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>Reservation successfully marked as used.</span>';
+                // Refresh the result in place
+                setTimeout(function () {
+                    var codeInput = document.getElementById("code-input");
+                    if (codeInput && codeInput.value) {
+                        document.getElementById("form-lookup").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+                    }
+                }, 1500);
+            } catch (err) {
+                alert.className = "alert alert-danger";
+                alert.textContent = err.message || "Failed to mark reservation as used.";
+                btn.disabled = false;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>Mark as Used / Check In';
+            }
+        }
+
+        // ── Update Status (HOME_SERVICE) ────────────────────────────────────────
+        async function updateStatus(bookingId, newStatus) {
+            if (!bookingId || !newStatus) return;
+            if (!confirm('Change booking status to "' + newStatus.replace(/_/g, " ") + '"?')) return;
+            var alert = document.getElementById("action-alert");
+            var btns  = document.querySelectorAll("#action-buttons .btn");
+            btns.forEach(function (b) { b.disabled = true; });
+            alert.className = "alert d-none";
+            try {
+                await Bookings.updateStatus(bookingId, newStatus);
+                alert.className = "alert alert-success";
+                alert.innerHTML = '<strong>Status updated</strong> to <strong>' + newStatus.replace(/_/g, " ") + '</strong>.';
+                // Refresh result
+                setTimeout(function () {
+                    var codeInput = document.getElementById("code-input");
+                    if (codeInput && codeInput.value) {
+                        document.getElementById("form-lookup").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+                    }
+                }, 1200);
+            } catch (err) {
+                alert.className = "alert alert-danger";
+                alert.textContent = err.message || "Failed to update status.";
+                btns.forEach(function (b) { b.disabled = false; });
+            }
+        }
+    </script>
+</body>
+
+</html>

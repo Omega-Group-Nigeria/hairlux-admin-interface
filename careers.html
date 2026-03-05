@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Careers</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <!-- STYLES -->
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <!-- Quill rich text editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        /* ── Two-column layout ─────────────────────────────────── */
+        .jobs-workspace {
+            display: flex;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: var(--tblr-border-radius);
+            overflow: hidden;
+            min-height: 78vh;
+            background: var(--tblr-bg-surface);
+        }
+        .jobs-list-col {
+            width: 380px;
+            min-width: 320px;
+            flex-shrink: 0;
+            border-right: 1px solid var(--tblr-border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .jobs-form-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .jobs-list-scroll {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* ── Job row in list ───────────────────────────────────── */
+        .job-row {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--tblr-border-color);
+            cursor: pointer;
+            transition: background 0.12s;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+        }
+        .job-row:last-child { border-bottom: none; }
+        .job-row:hover { background: var(--tblr-bg-surface-secondary); }
+        .job-row.active { background: var(--tblr-active-bg, color-mix(in srgb, var(--tblr-primary) 8%, transparent)); border-left: 3px solid var(--tblr-primary); padding-left: calc(1rem - 3px); }
+        .job-row-title { font-weight: 600; font-size: 0.875rem; line-height: 1.3; }
+        .job-row-meta { font-size: 0.75rem; color: var(--tblr-secondary); margin-top: 0.2rem; }
+        .job-row-badges { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+        .job-status-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+        }
+        .job-status-dot.published { background: var(--tblr-success); }
+        .job-status-dot.draft     { background: var(--tblr-secondary); }
+        .job-row-actions { margin-left: auto; display: flex; gap: 0.25rem; flex-shrink: 0; }
+
+        /* ── Empty state ───────────────────────────────────────── */
+        .jobs-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--tblr-secondary);
+            gap: 0.5rem;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        /* ── Form panel ────────────────────────────────────────── */
+        .form-panel {
+            padding: 1.5rem 2rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .form-panel-footer {
+            padding: 1rem 2rem;
+            border-top: 1px solid var(--tblr-border-color);
+            background: var(--tblr-bg-surface);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ── Responsibilities list ─────────────────────────────── */
+        .resp-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+        }
+        .resp-item input { flex: 1; }
+
+        /* ── Quill overrides ───────────────────────────────────── */
+        .ql-container { min-height: 200px; font-family: inherit; font-size: 0.875rem; }
+        .ql-toolbar { border-color: var(--tblr-border-color) !important; border-radius: var(--tblr-border-radius) var(--tblr-border-radius) 0 0; }
+        .ql-container.ql-snow { border-color: var(--tblr-border-color) !important; border-radius: 0 0 var(--tblr-border-radius) var(--tblr-border-radius); }
+
+        /* ── Stats row ─────────────────────────────────────────── */
+        .stat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 100px;
+            background: var(--tblr-bg-surface-secondary);
+            font-size: 0.8rem;
+            border: 1px solid var(--tblr-border-color);
+        }
+        .stat-pill strong { font-size: 1rem; }
+
+        /* ── Misc ──────────────────────────────────────────────── */
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        .search-list-bar { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--tblr-border-color); background: var(--tblr-bg-surface-secondary); }
+        .type-filter-tabs { display: flex; gap: 0; overflow-x: auto; }
+        .type-filter-tabs .tab-btn { background: none; border: none; padding: 0.45rem 0.65rem; font-size: 0.75rem; color: var(--tblr-secondary); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+        .type-filter-tabs .tab-btn.active { color: var(--tblr-primary); border-bottom-color: var(--tblr-primary); font-weight: 600; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Logo -->
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <!-- Right-side controls -->
+                <div class="navbar-nav flex-row order-md-last">
+                    <!-- Dark / Light toggle -->
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-2">
+                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
+                            aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
+                            <div class="dropdown-header">Notifications</div>
+                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
+                        </div>
+                    </div>
+
+                    <!-- User menu -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small" id="dropdown-user-email">admin@hairlux.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./index.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M11 15l1 0" />
+                                        <path d="M12 15l0 3" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Bookings</span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./bookings.html">Overview</a>
+                                <a class="dropdown-item" href="./bookings/index.html">Verify Booking</a>
+                                <a class="dropdown-item" href="./bookings/calendar.html">Calendar</a>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./payments.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                        <path d="M3 10l18 0" />
+                                        <path d="M7 15l.01 0" />
+                                        <path d="M11 15l2 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Payments</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./users.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Users</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./services.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+                                        <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+                                        <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+                                        <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Services</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./referrals.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M15 5v2" />
+                                        <path d="M15 11v2" />
+                                        <path d="M15 17v2" />
+                                        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Referrals</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./discounts.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>
+                                </span>
+                                <span class="nav-link-title">Discounts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="./careers.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                        <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Careers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Content</div>
+                            <h2 class="page-title">Careers</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-new-job">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Job Posting
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- STATS ROW -->
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                        <div class="stat-pill">
+                            <strong id="stat-total">—</strong>
+                            <span class="text-secondary">total</span>
+                        </div>
+                        <div class="stat-pill">
+                            <span class="job-status-dot published d-inline-block"></span>
+                            <strong id="stat-published">—</strong>
+                            <span class="text-secondary">published</span>
+                        </div>
+                        <div class="stat-pill">
+                            <span class="job-status-dot draft d-inline-block"></span>
+                            <strong id="stat-drafts">—</strong>
+                            <span class="text-secondary">drafts</span>
+                        </div>
+                    </div>
+
+                    <!-- MAIN WORKSPACE -->
+                    <div class="jobs-workspace">
+
+                        <!-- LEFT: Job list -->
+                        <div class="jobs-list-col">
+                            <!-- Search bar -->
+                            <div class="search-list-bar">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="icon"><circle cx="10" cy="10" r="7"/><path d="m21 21-6-6"/></svg>
+                                    </span>
+                                    <input type="text" id="search-jobs" class="form-control" placeholder="Search postings…">
+                                </div>
+                            </div>
+                            <!-- Type filter tabs -->
+                            <div class="type-filter-tabs px-1 border-bottom" style="font-size:0.75rem;">
+                                <button class="tab-btn active" data-type="">All</button>
+                                <button class="tab-btn" data-type="FULL_TIME">Full-time</button>
+                                <button class="tab-btn" data-type="PART_TIME">Part-time</button>
+                                <button class="tab-btn" data-type="CONTRACT">Contract</button>
+                                <button class="tab-btn" data-type="FREELANCE">Freelance</button>
+                            </div>
+                            <!-- Jobs list -->
+                            <div class="jobs-list-scroll" id="jobs-list">
+                                <div class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Form / empty state -->
+                        <div class="jobs-form-col" id="job-form-col">
+                            <!-- Empty state (shown when nothing selected) -->
+                            <div class="jobs-empty" id="form-empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon mb-2 text-muted">
+                                    <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                    <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                </svg>
+                                <div class="fw-semibold">No job selected</div>
+                                <div class="text-secondary small">Select a posting from the list to edit it, or create a new one</div>
+                                <button class="btn btn-primary btn-sm mt-2" id="btn-new-job-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon me-1"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                                    New Job Posting
+                                </button>
+                            </div>
+
+                            <!-- Editor form (hidden until new/edit) -->
+                            <div id="job-editor" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+                                <!-- Form header -->
+                                <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom">
+                                    <div>
+                                        <div class="fw-semibold" id="editor-title-label">New Job Posting</div>
+                                        <div class="text-secondary small" id="editor-subtitle-label">Fill in the details below</div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-link text-secondary" id="btn-cancel-editor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="icon"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+                                        Close
+                                    </button>
+                                </div>
+
+                                <!-- Scrollable form body -->
+                                <div class="form-panel" id="form-panel-body">
+                                    <input type="hidden" id="job-id">
+
+                                    <!-- Row 1: Title -->
+                                    <div class="mb-3">
+                                        <label class="form-label" for="job-title">Job Title <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="job-title" placeholder="e.g. Senior Hair Stylist">
+                                    </div>
+
+                                    <!-- Row 2: Type + Location -->
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="job-type">Employment Type <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="job-type">
+                                                <option value="">— Select type —</option>
+                                                <option value="FULL_TIME">Full Time</option>
+                                                <option value="PART_TIME">Part Time</option>
+                                                <option value="CONTRACT">Contract</option>
+                                                <option value="FREELANCE">Freelance</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="job-location">Location <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="job-location" placeholder="e.g. Lagos, Nigeria">
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 3: Closing date + status -->
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="job-closing-date">Closing Date <span class="text-secondary small">(optional)</span></label>
+                                            <input type="date" class="form-control" id="job-closing-date">
+                                        </div>
+                                        <div class="col-md-6 d-flex flex-column justify-content-end">
+                                            <label class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" id="job-is-active">
+                                                <span class="form-check-label">Publish immediately</span>
+                                            </label>
+                                            <div class="text-secondary small mt-1">Off = save as draft</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 4: Description (Quill) -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Description <span class="text-danger">*</span></label>
+                                        <div id="quill-editor"></div>
+                                        <div class="form-text">Supports rich formatting — bold, lists, headings, links, etc.</div>
+                                    </div>
+
+                                    <!-- Row 5: Responsibilities -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Responsibilities</label>
+                                        <div id="resp-list"></div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="btn-add-resp">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round" class="icon me-1"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                                            Add item
+                                        </button>
+                                    </div>
+
+                                    <!-- Error alert -->
+                                    <div class="alert alert-danger d-none" id="form-error" role="alert"></div>
+                                </div>
+
+                                <!-- Sticky footer -->
+                                <div class="form-panel-footer" id="form-panel-footer">
+                                    <button type="button" class="btn btn-primary" id="btn-save-job">
+                                        <span class="spinner-border spinner-inline me-1 d-none" id="save-spinner" role="status"></span>
+                                        Save
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btn-cancel-editor-2">Cancel</button>
+                                    <!-- Delete button (only shown in edit mode) -->
+                                    <button type="button" class="btn btn-outline-danger ms-auto d-none" id="btn-delete-job">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="icon me-1">
+                                            <path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/>
+                                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/>
+                                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/>
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- END RIGHT -->
+
+                    </div>
+                    <!-- END WORKSPACE -->
+
+                </div>
+            </div>
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">
+                            &copy; 2026 Hairlux Admin Panel
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/jobs.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <!-- Quill rich text editor -->
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+    <!-- DELETE CONFIRM MODAL -->
+    <div class="modal modal-blur fade" id="modal-delete-confirm" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete Job Posting</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to permanently delete <strong id="delete-job-title"></strong>? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-delete">
+                        <span class="spinner-border spinner-inline me-1 d-none" id="delete-spinner" role="status"></span>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    var bootstrap = window.tabler.bootstrap;
+
+    Auth.requireAuth();
+    RBAC.loadFromStorage();
+    RBAC.applyPageGuard('jobs:read');
+
+    /* ================================================================
+       Careers page — Jobs management
+       ================================================================ */
+
+    // ── State ──────────────────────────────────────────────────────
+    let _allJobs   = [];
+    let _editingId = null;    // null = creating new
+    let _quill     = null;
+    let _activeType = '';
+    let _searchQuery = '';
+    let _deleteTargetId = null;
+
+    // ── Init ───────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        RBAC.fetchMe().then(function() {
+            RBAC.applyPageGuard('jobs:read');
+            RBAC.applyNavVisibility();
+            if (!RBAC.can('jobs:create')) {
+                ['btn-new-job', 'btn-new-job-2'].forEach(function(id) {
+                    var b = document.getElementById(id); if (b) b.style.display = 'none';
+                });
+            }
+        });
+        _initNavbar();
+        _initQuill();
+        _bindEvents();
+        loadJobs();
+    });
+
+    function _initNavbar() {
+        const u = Auth.getUser();
+        if (!u) return;
+        const name = ((u.firstName || '') + ' ' + (u.lastName || '')).trim() || 'Admin';
+        document.querySelectorAll('#navbar-user-name, #dropdown-user-name').forEach(el => el.textContent = name);
+        document.getElementById('navbar-user-avatar').textContent = name[0].toUpperCase();
+        const emailEl = document.getElementById('dropdown-user-email');
+        if (emailEl) emailEl.textContent = u.email || '';
+        document.getElementById('navbar-user-role').textContent = u.role || 'Administrator';
+        document.getElementById('logout-btn').addEventListener('click', e => {
+            e.preventDefault();
+            Auth.logout();
+        });
+    }
+
+    function _initQuill() {
+        _quill = new Quill('#quill-editor', {
+            theme: 'snow',
+            placeholder: 'Describe the role, requirements, benefits…',
+            modules: {
+                toolbar: [
+                    [{ heading: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['link'],
+                    ['clean'],
+                ],
+            },
+        });
+    }
+
+    function _bindEvents() {
+        // Refresh
+        document.getElementById('btn-refresh').addEventListener('click', () => loadJobs());
+
+        // New job buttons
+        document.getElementById('btn-new-job').addEventListener('click', () => openEditor(null));
+        document.getElementById('btn-new-job-2').addEventListener('click', () => openEditor(null));
+
+        // Cancel editor
+        document.getElementById('btn-cancel-editor').addEventListener('click', closeEditor);
+        document.getElementById('btn-cancel-editor-2').addEventListener('click', closeEditor);
+
+        // Save
+        document.getElementById('btn-save-job').addEventListener('click', submitForm);
+
+        // Delete
+        document.getElementById('btn-delete-job').addEventListener('click', () => {
+            if (!_editingId) return;
+            const job = _allJobs.find(j => j.id === _editingId);
+            document.getElementById('delete-job-title').textContent = job ? job.title : '';
+            _deleteTargetId = _editingId;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-delete-confirm')).show();
+        });
+
+        document.getElementById('btn-confirm-delete').addEventListener('click', confirmDelete);
+
+        // Add responsibility
+        document.getElementById('btn-add-resp').addEventListener('click', () => addRespItem(''));
+
+        // Search
+        let searchTimer;
+        document.getElementById('search-jobs').addEventListener('input', e => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                _searchQuery = e.target.value.toLowerCase().trim();
+                renderJobList();
+            }, 200);
+        });
+
+        // Type filter tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                _activeType = btn.dataset.type;
+                renderJobList();
+            });
+        });
+    }
+
+    // ── Load jobs from API ─────────────────────────────────────────
+    async function loadJobs() {
+        document.getElementById('jobs-list').innerHTML =
+            '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+        try {
+            const data = await Jobs.getAll({ limit: 100 });
+            _allJobs = Array.isArray(data) ? data : (data.data || []);
+            updateStats();
+            renderJobList();
+        } catch (err) {
+            document.getElementById('jobs-list').innerHTML =
+                `<div class="jobs-empty"><div class="text-danger small">${err.message}</div></div>`;
+        }
+    }
+
+    // ── Stats ──────────────────────────────────────────────────────
+    function updateStats() {
+        const total     = _allJobs.length;
+        const published = _allJobs.filter(j => j.isActive).length;
+        const drafts    = total - published;
+        document.getElementById('stat-total').textContent     = total;
+        document.getElementById('stat-published').textContent = published;
+        document.getElementById('stat-drafts').textContent    = drafts;
+    }
+
+    // ── Render job list ────────────────────────────────────────────
+    function renderJobList() {
+        const container = document.getElementById('jobs-list');
+        let jobs = _allJobs.slice();
+
+        // Filter by type
+        if (_activeType) jobs = jobs.filter(j => j.type === _activeType);
+
+        // Filter by search
+        if (_searchQuery) {
+            jobs = jobs.filter(j =>
+                (j.title || '').toLowerCase().includes(_searchQuery) ||
+                (j.location || '').toLowerCase().includes(_searchQuery)
+            );
+        }
+
+        if (!jobs.length) {
+            container.innerHTML = '<div class="jobs-empty"><div class="text-secondary small">No matching job postings</div></div>';
+            return;
+        }
+
+        container.innerHTML = jobs.map(job => `
+            <div class="job-row${_editingId === job.id ? ' active' : ''}" data-id="${job.id}">
+                <span class="job-status-dot ${job.isActive ? 'published' : 'draft'}" title="${job.isActive ? 'Published' : 'Draft'}"></span>
+                <div class="flex-fill min-w-0">
+                    <div class="job-row-title text-truncate">${_esc(job.title)}</div>
+                    <div class="job-row-meta">${_esc(job.location || '—')}</div>
+                    <div class="job-row-badges">
+                        ${Jobs.typeBadge(job.type)}
+                        ${job.closingDate ? `<span class="badge bg-secondary-lt">Closes ${Jobs.formatDate(job.closingDate)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="job-row-actions">
+                    ${RBAC.can('jobs:toggle') ? `<button class="btn btn-sm btn-ghost-secondary p-1 btn-toggle-pub" data-id="${job.id}"
+                        title="${job.isActive ? 'Unpublish' : 'Publish'}">
+                        ${job.isActive
+                            ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.584 10.587a2 2 0 0 0 2.828 2.83"/><path d="M9.363 5.365a9.466 9.466 0 0 1 2.637-.365c4 0 7.333 2.333 10 7c-.778 1.361 -1.612 2.524 -2.503 3.488m-2.14 1.861c-1.631 1.1 -3.415 1.651 -5.357 1.651c-4 0 -7.333 -2.333 -10 -7c1.369 -2.395 2.913 -4.175 4.632 -5.341"/></svg>`
+                            : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>`
+                        }
+                    </button>` : ''}
+                </div>
+            </div>
+        `).join('');
+
+        // Click on row → open editor
+        container.querySelectorAll('.job-row').forEach(row => {
+            row.addEventListener('click', e => {
+                if (e.target.closest('.btn-toggle-pub')) return; // handled separately
+                const id = row.dataset.id;
+                const job = _allJobs.find(j => j.id === id);
+                if (job) openEditor(job);
+            });
+        });
+
+        // Toggle publish button
+        container.querySelectorAll('.btn-toggle-pub').forEach(btn => {
+            btn.addEventListener('click', async e => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                btn.disabled = true;
+                try {
+                    const updated = await Jobs.toggle(id);
+                    const idx = _allJobs.findIndex(j => j.id === id);
+                    if (idx !== -1) _allJobs[idx].isActive = updated.isActive ?? !_allJobs[idx].isActive;
+                    updateStats();
+                    renderJobList();
+                    // If currently editing this job, update the toggle in form
+                    if (_editingId === id) {
+                        document.getElementById('job-is-active').checked = _allJobs[idx].isActive;
+                    }
+                } catch (err) {
+                    alert(err.message);
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+        });
+    }
+
+    // ── Open editor ────────────────────────────────────────────────
+    function openEditor(job) {
+        _editingId = job ? job.id : null;
+
+        // Update header labels
+        document.getElementById('editor-title-label').textContent  = job ? 'Edit Job Posting' : 'New Job Posting';
+        document.getElementById('editor-subtitle-label').textContent = job
+            ? `Editing "${job.title}"`
+            : 'Fill in the details for the new role';
+
+        // Populate fields
+        document.getElementById('job-id').value           = job ? job.id : '';
+        document.getElementById('job-title').value        = job ? (job.title || '') : '';
+        document.getElementById('job-type').value         = job ? (job.type  || '') : '';
+        document.getElementById('job-location').value     = job ? (job.location || '') : '';
+        document.getElementById('job-closing-date').value = job && job.closingDate
+            ? job.closingDate.slice(0, 10) : '';
+        document.getElementById('job-is-active').checked  = job ? !!job.isActive : false;
+
+        // Quill content
+        if (_quill) {
+            if (job && job.description) {
+                _quill.root.innerHTML = job.description;
+            } else {
+                _quill.setContents([]);
+                _quill.root.innerHTML = '';
+            }
+        }
+
+        // Responsibilities
+        const respList = document.getElementById('resp-list');
+        respList.innerHTML = '';
+        const resps = (job && Array.isArray(job.responsibilities)) ? job.responsibilities : [];
+        if (resps.length) {
+            resps.forEach(r => addRespItem(r));
+        } else {
+            addRespItem('');
+        }
+
+        // Delete button visibility
+        const btnDel = document.getElementById('btn-delete-job');
+        if (job && RBAC.can('jobs:delete')) { btnDel.classList.remove('d-none'); }
+        else                                { btnDel.classList.add('d-none'); }
+
+        // Clear errors
+        const errEl = document.getElementById('form-error');
+        errEl.classList.add('d-none');
+        errEl.textContent = '';
+
+        // Show editor, hide empty state
+        document.getElementById('form-empty-state').style.display  = 'none';
+        const editorEl = document.getElementById('job-editor');
+        editorEl.style.display = 'flex';
+
+        // Highlight active row in list
+        renderJobList();
+    }
+
+    function closeEditor() {
+        _editingId = null;
+        document.getElementById('form-empty-state').style.display  = '';
+        document.getElementById('job-editor').style.display = 'none';
+        // Remove active highlight
+        document.querySelectorAll('.job-row.active').forEach(r => r.classList.remove('active'));
+    }
+
+    // ── Add responsibility item ────────────────────────────────────
+    function addRespItem(value) {
+        const list = document.getElementById('resp-list');
+        const div  = document.createElement('div');
+        div.className = 'resp-item';
+        div.innerHTML = `
+            <input type="text" class="form-control form-control-sm resp-input" placeholder="e.g. Perform hair styling services" value="${_esc(value)}">
+            <button type="button" class="btn btn-sm btn-ghost-danger p-1 btn-remove-resp" title="Remove">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6l-12 12"/><path d="M6 6l12 12"/>
+                </svg>
+            </button>`;
+        div.querySelector('.btn-remove-resp').addEventListener('click', () => div.remove());
+        list.appendChild(div);
+    }
+
+    // ── Submit form ────────────────────────────────────────────────
+    async function submitForm() {
+        const title    = document.getElementById('job-title').value.trim();
+        const type     = document.getElementById('job-type').value;
+        const location = document.getElementById('job-location').value.trim();
+        const closing  = document.getElementById('job-closing-date').value;
+        const isActive = document.getElementById('job-is-active').checked;
+        const descHtml = _quill ? _quill.root.innerHTML.trim() : '';
+        const descText = _quill ? _quill.getText().trim() : '';
+
+        const resps = Array.from(document.querySelectorAll('.resp-input'))
+            .map(i => i.value.trim())
+            .filter(Boolean);
+
+        // Validate
+        const errEl = document.getElementById('form-error');
+        errEl.classList.add('d-none');
+
+        if (!title)       { _showError('Job title is required.'); return; }
+        if (!type)        { _showError('Employment type is required.'); return; }
+        if (!location)    { _showError('Location is required.'); return; }
+        if (!descText)    { _showError('Description is required.'); return; }
+
+        const payload = {
+            title,
+            type,
+            location,
+            description: descHtml,
+            responsibilities: resps,
+            isActive,
+            closingDate: closing || null,
+        };
+
+        const spinner = document.getElementById('save-spinner');
+        const saveBtn = document.getElementById('btn-save-job');
+        spinner.classList.remove('d-none');
+        saveBtn.disabled = true;
+
+        try {
+            if (_editingId) {
+                // Update existing
+                const updated = await Jobs.update(_editingId, payload);
+                const idx = _allJobs.findIndex(j => j.id === _editingId);
+                if (idx !== -1) _allJobs[idx] = { ..._allJobs[idx], ...updated, ...payload };
+            } else {
+                // Create new
+                const created = await Jobs.create(payload);
+                _allJobs.unshift(created);
+                _editingId = created.id;
+                document.getElementById('job-id').value = created.id;
+                document.getElementById('editor-title-label').textContent  = 'Edit Job Posting';
+                document.getElementById('editor-subtitle-label').textContent = `Editing "${created.title}"`;
+                document.getElementById('btn-delete-job').classList.remove('d-none');
+            }
+            updateStats();
+            renderJobList();
+        } catch (err) {
+            _showError(err.message || 'Something went wrong.');
+        } finally {
+            spinner.classList.add('d-none');
+            saveBtn.disabled = false;
+        }
+    }
+
+    // ── Confirm delete ─────────────────────────────────────────────
+    async function confirmDelete() {
+        if (!_deleteTargetId) return;
+        const spinner = document.getElementById('delete-spinner');
+        const btn     = document.getElementById('btn-confirm-delete');
+        spinner.classList.remove('d-none');
+        btn.disabled = true;
+        try {
+            await Jobs.remove(_deleteTargetId);
+            _allJobs = _allJobs.filter(j => j.id !== _deleteTargetId);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-delete-confirm')).hide();
+            closeEditor();
+            updateStats();
+            renderJobList();
+            _deleteTargetId = null;
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            spinner.classList.add('d-none');
+            btn.disabled = false;
+        }
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────
+    function _showError(msg) {
+        const el = document.getElementById('form-error');
+        el.textContent = msg;
+        el.classList.remove('d-none');
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function _esc(str) {
+        return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    </script>
+</body>
+
+</html>

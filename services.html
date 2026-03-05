@@ -1,0 +1,1253 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Services</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <!-- STYLES -->
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="assets/styles/dropzone.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .service-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--tblr-bg-surface-secondary); flex-shrink: 0; }
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        /* ── Dropzone container ── */
+        #dz-service-image { border: 2px dashed var(--tblr-border-color); border-radius: 8px; min-height: 130px; cursor: pointer; transition: border-color .2s, background .2s; padding: 0; overflow: hidden; }
+        #dz-service-image .dz-message { margin: 2.2rem 0; text-align: center; color: var(--tblr-secondary); pointer-events: none; }
+        #dz-service-image.dz-drag-hover { border-color: var(--tblr-primary); background: var(--tblr-primary-lt); }
+        #dz-service-image.dz-started .dz-message { display: none; }
+
+        /* ── Preview wrapper ── */
+        #dz-service-image .dz-preview { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 0; border-top: 1px solid var(--tblr-border-color); background: var(--tblr-bg-surface); min-height: unset; width: 100%; float: none; }
+        #dz-service-image .dz-preview:first-of-type { border-top: none; }
+
+        /* ── Thumbnail ── */
+        #dz-service-image .dz-preview .dz-image { width: 60px; height: 60px; flex-shrink: 0; border-radius: 6px; overflow: hidden; background: var(--tblr-bg-surface-secondary); }
+        #dz-service-image .dz-preview .dz-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+
+        /* ── File details ── */
+        #dz-service-image .dz-preview .dz-details { position: static; opacity: 1; background: none; padding: 0; flex: 1; min-width: 0; font-size: 0.8125rem; }
+        #dz-service-image .dz-preview .dz-details .dz-filename { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tblr-body-color); font-weight: 500; }
+        #dz-service-image .dz-preview .dz-details .dz-filename span { border: none; background: none; }
+        #dz-service-image .dz-preview .dz-details .dz-filename:hover span { border: none; background: none; }
+        #dz-service-image .dz-preview .dz-details .dz-size { color: var(--tblr-secondary); font-size: 0.75rem; margin-bottom: 2px; }
+        #dz-service-image .dz-preview .dz-details .dz-size span { background: none; }
+        #dz-service-image .dz-preview .dz-details .dz-size strong { font-weight: normal; }
+
+        /* ── Progress bar (hidden since autoProcess=false) ── */
+        #dz-service-image .dz-preview .dz-progress { display: none; }
+
+        /* ── Success / error marks ── */
+        #dz-service-image .dz-preview .dz-success-mark,
+        #dz-service-image .dz-preview .dz-error-mark { display: none !important; }
+
+        /* ── Remove link → clean button top-right ── */
+        #dz-service-image .dz-preview .dz-remove { position: absolute; top: 8px; right: 10px; font-size: 0.7rem; color: var(--tblr-secondary); text-decoration: none; border: 1px solid var(--tblr-border-color); border-radius: 4px; padding: 1px 6px; background: var(--tblr-bg-surface); transition: background .15s, color .15s; }
+        #dz-service-image .dz-preview .dz-remove:hover { background: var(--tblr-danger); color: #fff; border-color: var(--tblr-danger); }
+        #current-service-img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; display: none; }
+        .cat-row td { vertical-align: middle; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Logo -->
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <!-- Right-side controls -->
+                <div class="navbar-nav flex-row order-md-last">
+                    <!-- Dark / Light toggle -->
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-2">
+                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
+                            aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
+                            <div class="dropdown-header">Notifications</div>
+                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
+                        </div>
+                    </div>
+
+                    <!-- User menu -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small" id="dropdown-user-email">admin@hairlux.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./index.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M11 15l1 0" />
+                                        <path d="M12 15l0 3" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Bookings</span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./bookings.html">Overview</a>
+                                <a class="dropdown-item" href="./bookings/index.html">Verify Booking</a>
+                                <a class="dropdown-item" href="./bookings/calendar.html">Calendar</a>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./payments.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                        <path d="M3 10l18 0" />
+                                        <path d="M7 15l.01 0" />
+                                        <path d="M11 15l2 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Payments</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./users.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Users</span>
+                            </a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="./services.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+                                        <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+                                        <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+                                        <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Services</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./referrals.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M15 5v2" />
+                                        <path d="M15 11v2" />
+                                        <path d="M15 17v2" />
+                                        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Referrals</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./discounts.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>
+                                </span>
+                                <span class="nav-link-title">Discounts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./careers.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                        <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Careers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Catalog</div>
+                            <h2 class="page-title">Services</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="btn-categories">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M4 4h6v6h-6z" /><path d="M14 4h6v6h-6z" /><path d="M4 14h6v6h-6z" /><path d="M14 14h6v6h-6z" />
+                                </svg>
+                                Categories
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-add-service">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" /><path d="M5 12l14 0" />
+                                </svg>
+                                Add Service
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- STATS CARDS -->
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Total Services</div>
+                                        <span class="badge bg-primary-lt">All</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Active Services</div>
+                                        <span class="badge bg-success-lt">Live</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-active">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Inactive Services</div>
+                                        <span class="badge bg-secondary-lt">Hidden</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-inactive">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Categories</div>
+                                        <span class="badge bg-info-lt">Groups</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-categories">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SERVICES TABLE CARD -->
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Services</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                            <ul class="nav nav-tabs card-header-tabs" id="status-tabs">
+                                <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="ACTIVE">Active</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="INACTIVE">Inactive</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Filter bar -->
+                        <div class="card-body border-bottom py-5">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-4 col-lg-3">
+                                    <label class="form-label text-secondary small mb-1">Search</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                        </span>
+                                        <input type="text" id="filter-search" class="form-control"
+                                            placeholder="Service name…">
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">Category</label>
+                                    <select id="filter-category" class="form-select form-select-sm">
+                                        <option value="">All categories</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-secondary" id="btn-clear">Clear filters</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover table-nowrap card-table" id="services-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="w-1"></th>
+                                            <th>Name</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Duration</th>
+                                            <th>Status</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="services-tbody">
+                                        <tr>
+                                            <td colspan="7" class="text-center py-5">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card-footer text-secondary small" id="pagination-info">—</div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">
+                            &copy; 2026 Hairlux Admin Panel
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/services.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
+
+    <!-- ===== SERVICE DETAIL OFFCANVAS ===== -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-service-detail"
+        aria-labelledby="offcanvasServiceLabel" style="width:480px;max-width:100vw">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title" id="offcanvasServiceLabel">Service Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0" id="offcanvas-service-body">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CREATE / EDIT SERVICE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-service" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-service-title">Add Service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="modal-service-error"></div>
+
+                    <!-- Current image (edit mode) -->
+                    <div class="mb-3" id="current-img-wrapper" style="display:none">
+                        <label class="form-label text-secondary small mb-1">Current Image</label>
+                        <img id="current-service-img" src="" alt="Current service image"
+                             style="max-width:100%;max-height:180px;object-fit:contain;border-radius:6px;border:1px solid var(--tblr-border-color);display:block" />
+                    </div>
+
+                    <!-- Dropzone -->
+                    <div class="mb-3">
+                        <label class="form-label small mb-1">
+                            Service Image
+                            <span class="text-danger" id="img-required-mark">*</span>
+                            <span class="text-secondary ms-1" id="img-optional-hint" style="display:none">(leave empty to keep current)</span>
+                        </label>
+                        <div id="dz-service-image">
+                            <div class="dz-message">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon text-secondary mb-2" style="display:block;margin:0 auto">
+                                    <path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/>
+                                    <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4"/>
+                                    <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/>
+                                </svg>
+                                <strong>Drop image here</strong> or click to upload<br>
+                                <small class="text-secondary">JPG, PNG, WebP — max 5 MB</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fields row 1 -->
+                    <div class="mb-3">
+                        <label class="form-label" for="service-name">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="service-name" placeholder="e.g. Box Braids">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="service-description">Description</label>
+                        <textarea class="form-control" id="service-description" rows="3"
+                            placeholder="Short description of this service…"></textarea>
+                    </div>
+
+                    <!-- Fields row 2 -->
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="service-category">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="service-category">
+                                <option value="">Select…</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="service-price">Price (₦) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="service-price" min="0" step="100"
+                                placeholder="e.g. 25000">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="service-duration">Duration (mins) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="service-duration" min="1"
+                                placeholder="e.g. 180">
+                        </div>
+                    </div>
+
+                    <!-- Status (edit mode only) -->
+                    <div class="mt-3" id="service-status-row" style="display:none">
+                        <label class="form-label" for="service-status">Status</label>
+                        <select class="form-select" id="service-status">
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-service">Create Service</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MANAGE CATEGORIES MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-categories" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Categories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Add new category -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Add New Category</h5>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label small text-secondary mb-1">Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" id="new-cat-name"
+                                        placeholder="e.g. Hair Services">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small text-secondary mb-1">Description</label>
+                                    <input type="text" class="form-control form-control-sm" id="new-cat-desc"
+                                        placeholder="Optional description">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-sm btn-primary w-100" id="btn-add-category">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categories table -->
+                    <div class="table-responsive">
+                        <table class="table table-vcenter table-nowrap">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th class="text-center w-1">Services</th>
+                                    <th class="w-1">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categories-tbody">
+                                <tr><td colspan="4" class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CONFIRM MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-confirm" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirm-title">Confirm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirm-msg" class="mb-0 text-secondary"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-action">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Expose bootstrap from tabler's bundle (tabler exports it as tabler.bootstrap, not window.bootstrap)
+        var bootstrap = window.tabler.bootstrap;
+
+        // Prevent Dropzone from auto-attaching to any form
+        Dropzone.autoDiscover = false;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard(['services:create','services:update','services:toggle_status','services:delete','services:manage_categories']);
+
+        // ── Page state ────────────────────────────────────────────────────────────
+        var state = { status: "", search: "", categoryId: "" };
+        var _categories  = [];
+        var _editId      = null;    // null = create, UUID = edit
+        var _imageFile   = null;    // file staged in dropzone
+        var _serviceDz   = null;    // Dropzone instance
+        var _pendingOp   = null;    // { type, id, newStatus?, name }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // ── RBAC: re-hydrate from server, apply guard + hide unauthorized UI ─
+            RBAC.fetchMe().then(function() {
+                RBAC.applyPageGuard(['services:create','services:update','services:toggle_status','services:delete','services:manage_categories']);
+                RBAC.applyNavVisibility();
+                if (!RBAC.can('services:create'))           { var b = document.getElementById('btn-add-service');  if (b) b.style.display = 'none'; }
+                if (!RBAC.can('services:manage_categories')) { var b = document.getElementById('btn-categories');   if (b) b.style.display = 'none'; }
+            });
+
+            // ── Navbar user info ──────────────────────────────────────────────────
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent  = initials;
+                document.getElementById("navbar-user-name").textContent    = fullName;
+                document.getElementById("navbar-user-role").textContent    = role;
+                document.getElementById("dropdown-user-name").textContent  = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) {
+                e.preventDefault(); Auth.logout();
+            });
+
+            // ── Initial load ──────────────────────────────────────────────────────
+            loadCategoriesAndStats();
+            loadServices();
+
+            // ── Status tabs ───────────────────────────────────────────────────────
+            document.getElementById("status-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-status]");
+                if (!tab) return;
+                document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                state.status = tab.dataset.status;
+                loadServices();
+            });
+
+            // ── Search (debounced) ────────────────────────────────────────────────
+            var searchTimer;
+            document.getElementById("filter-search").addEventListener("input", function () {
+                clearTimeout(searchTimer);
+                var val = this.value.trim();
+                searchTimer = setTimeout(function () { state.search = val; loadServices(); }, 400);
+            });
+
+            // ── Category filter ───────────────────────────────────────────────────
+            document.getElementById("filter-category").addEventListener("change", function () {
+                state.categoryId = this.value; loadServices();
+            });
+
+            // ── Clear filters ─────────────────────────────────────────────────────
+            document.getElementById("btn-clear").addEventListener("click", function () {
+                document.getElementById("filter-search").value = "";
+                document.getElementById("filter-category").value = "";
+                document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
+                state.status = ""; state.search = ""; state.categoryId = "";
+                loadServices();
+            });
+
+            // ── Refresh ───────────────────────────────────────────────────────────
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                loadCategoriesAndStats(); loadServices();
+            });
+
+            // ── Add Service button ────────────────────────────────────────────────
+            document.getElementById("btn-add-service").addEventListener("click", function () {
+                openServiceModal(null);
+            });
+
+            // ── Categories button ─────────────────────────────────────────────────
+            document.getElementById("btn-categories").addEventListener("click", function () {
+                openCategoriesModal();
+            });
+
+            // ── Table action delegation ───────────────────────────────────────────
+            document.getElementById("services-tbody").addEventListener("click", function (e) {
+                var viewBtn   = e.target.closest(".btn-view");
+                var editBtn   = e.target.closest(".btn-edit");
+                var toggleBtn = e.target.closest(".btn-toggle");
+                var deleteBtn = e.target.closest(".btn-delete");
+                if (viewBtn)   { openServiceDetail(viewBtn.dataset.id); return; }
+                if (editBtn)   { openServiceModal(editBtn.dataset.id);  return; }
+                if (toggleBtn) { confirmToggleStatus(toggleBtn.dataset.id, toggleBtn.dataset.status, toggleBtn.dataset.name); return; }
+                if (deleteBtn) { confirmDelete("service", deleteBtn.dataset.id, deleteBtn.dataset.name); return; }
+            });
+
+            // ── Save service button ───────────────────────────────────────────────
+            document.getElementById("btn-save-service").addEventListener("click", function () {
+                saveService();
+            });
+
+            // ── Confirm action button ─────────────────────────────────────────────
+            document.getElementById("btn-confirm-action").addEventListener("click", function () {
+                executeConfirmedOp();
+            });
+
+            // ── Categories modal: Add category ────────────────────────────────────
+            document.getElementById("btn-add-category").addEventListener("click", function () {
+                addCategory();
+            });
+
+            // ── Categories table inline actions ───────────────────────────────────
+            document.getElementById("categories-tbody").addEventListener("click", function (e) {
+                var editBtn   = e.target.closest(".btn-cat-edit");
+                var saveBtn   = e.target.closest(".btn-cat-save");
+                var cancelBtn = e.target.closest(".btn-cat-cancel");
+                var deleteBtn = e.target.closest(".btn-cat-delete");
+                if (editBtn)   { editCategoryInline(editBtn.dataset.id, editBtn.dataset.name, editBtn.dataset.desc); return; }
+                if (saveBtn)   { saveCategoryInline(saveBtn.dataset.id); return; }
+                if (cancelBtn) { loadCategoriesTable(); return; }
+                if (deleteBtn) { confirmDelete("category", deleteBtn.dataset.id, deleteBtn.dataset.name); return; }
+            });
+        });
+
+        // ─── helpers ─────────────────────────────────────────────────────────────
+        function esc(s) {
+            return String(s == null ? "" : s)
+                .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+        }
+        function escAttr(s) {
+            return String(s == null ? "" : s).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+        }
+
+        // ─── Load categories + update filter & stats ──────────────────────────────
+        async function loadCategoriesAndStats() {
+            try {
+                _categories = await Services.getCategories();
+                var sel = document.getElementById("filter-category");
+                var prev = sel.value;
+                sel.innerHTML = '<option value="">All categories</option>' +
+                    _categories.map(function (c) {
+                        return '<option value="' + c.id + '">' + esc(c.name) + '</option>';
+                    }).join("");
+                if (prev) sel.value = prev;
+                document.getElementById("stat-categories").textContent = _categories.length;
+            } catch (e) { console.warn("loadCategories:", e); }
+            loadServiceStats();
+        }
+
+        async function loadServiceStats() {
+            try {
+                var results = await Promise.allSettled([
+                    Services.getAll({}),
+                    Services.getAll({ status: "ACTIVE" }),
+                    Services.getAll({ status: "INACTIVE" }),
+                ]);
+                if (results[0].status === "fulfilled") document.getElementById("stat-total").textContent    = results[0].value.length;
+                if (results[1].status === "fulfilled") document.getElementById("stat-active").textContent   = results[1].value.length;
+                if (results[2].status === "fulfilled") document.getElementById("stat-inactive").textContent = results[2].value.length;
+            } catch (e) { console.warn("loadServiceStats:", e); }
+        }
+
+        // ─── Load + render services table ─────────────────────────────────────────
+        async function loadServices() {
+            var tbody = document.getElementById("services-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var rows = await Services.getAll({
+                    status:     state.status,
+                    search:     state.search,
+                    categoryId: state.categoryId,
+                });
+                var count = rows.length;
+                document.getElementById("results-label").textContent = count + " service" + (count !== 1 ? "s" : "");
+                document.getElementById("pagination-info").textContent = count + " service" + (count !== 1 ? "s" : "") + " found";
+                renderTable(rows);
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || "Failed to load services.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        function renderTable(rows) {
+            var tbody = document.getElementById("services-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No services found.</td></tr>';
+                return;
+            }
+            // SVG icons (inlined for performance)
+            var eyeIcon    = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>';
+            var editIcon   = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
+            var trashIcon  = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>';
+            var pauseIcon  = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M6 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z"/><path d="M14 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z"/></svg>';
+            var playIcon   = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 4v16l13 -8z"/></svg>';
+            var imgDefault = '<span class="avatar avatar-sm bg-secondary-lt text-secondary" style="width:48px;height:48px;border-radius:6px;font-size:10px">IMG</span>';
+
+            tbody.innerHTML = rows.map(function (s) {
+                var catName  = (s.category && s.category.name) || "—";
+                var isActive = s.status === "ACTIVE";
+                var thumb    = s.imageUrl
+                    ? '<img src="' + esc(s.imageUrl) + '" class="service-thumb" alt="" loading="lazy">'
+                    : imgDefault;
+                return '<tr>' +
+                    '<td style="width:56px;padding-right:0">' + thumb + '</td>' +
+                    '<td>' +
+                        '<div class="fw-semibold">' + esc(s.name) + '</div>' +
+                        '<div class="text-secondary small text-truncate" style="max-width:260px">' + esc(s.description || "") + '</div>' +
+                    '</td>' +
+                    '<td><span class="badge bg-primary-lt text-primary">' + esc(catName) + '</span></td>' +
+                    '<td class="fw-semibold text-success">' + Services.formatMoney(s.price) + '</td>' +
+                    '<td class="text-secondary">' + Services.formatDuration(s.duration) + '</td>' +
+                    '<td>' + Services.statusBadge(s.status) + '</td>' +
+                    '<td>' +
+                        '<div class="d-flex gap-1">' +
+                            '<button class="btn btn-sm btn-ghost-secondary btn-view" data-id="' + s.id + '" title="View details">' + eyeIcon + '</button>' +
+                            (RBAC.can('services:update') ? '<button class="btn btn-sm btn-ghost-primary btn-edit" data-id="' + s.id + '" title="Edit service">' + editIcon + '</button>' : '') +
+                            (RBAC.can('services:toggle_status') ? '<button class="btn btn-sm ' + (isActive ? "btn-ghost-warning" : "btn-ghost-success") + ' btn-toggle" data-id="' + s.id + '" data-status="' + s.status + '" data-name="' + escAttr(s.name) + '" title="' + (isActive ? "Deactivate" : "Activate") + '">' + (isActive ? pauseIcon : playIcon) + '</button>' : '') +
+                            (RBAC.can('services:delete') ? '<button class="btn btn-sm btn-ghost-danger btn-delete" data-id="' + s.id + '" data-name="' + escAttr(s.name) + '" title="Delete service">' + trashIcon + '</button>' : '') +
+                        '</div>' +
+                    '</td>' +
+                '</tr>';
+            }).join("");
+        }
+
+        // ─── Service detail offcanvas ─────────────────────────────────────────────
+        async function openServiceDetail(id) {
+            var body = document.getElementById("offcanvas-service-body");
+            body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
+            new bootstrap.Offcanvas(document.getElementById("offcanvas-service-detail")).show();
+            try {
+                var s       = await Services.getOne(id);
+                var catName = (s.category && s.category.name) || "—";
+                var isActive = s.status === "ACTIVE";
+                var editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
+                body.innerHTML =
+                    // Hero image
+                    (s.imageUrl
+                        ? '<img src="' + esc(s.imageUrl) + '" alt="" class="w-100" style="max-height:220px;object-fit:cover">'
+                        : '<div class="bg-secondary-lt d-flex align-items-center justify-content-center" style="height:180px"><span class="text-secondary">No image</span></div>') +
+
+                    // Name + status + category
+                    '<div class="px-4 pt-3 pb-3 border-bottom">' +
+                        '<div class="d-flex align-items-start justify-content-between gap-2 mb-1">' +
+                            '<h4 class="fw-bold mb-0">' + esc(s.name) + '</h4>' +
+                            Services.statusBadge(s.status) +
+                        '</div>' +
+                        '<span class="badge bg-primary-lt text-primary mb-2">' + esc(catName) + '</span>' +
+                        '<p class="text-secondary small mb-0">' + esc(s.description || "No description.") + '</p>' +
+                    '</div>' +
+
+                    // Price + duration
+                    '<div class="px-4 py-3 border-bottom">' +
+                        '<div class="row g-0 text-center">' +
+                            '<div class="col-6 border-end">' +
+                                '<div class="small text-secondary mb-1">Price</div>' +
+                                '<div class="fw-bold fs-3 text-success">' + Services.formatMoney(s.price) + '</div>' +
+                            '</div>' +
+                            '<div class="col-6">' +
+                                '<div class="small text-secondary mb-1">Duration</div>' +
+                                '<div class="fw-bold fs-3">' + Services.formatDuration(s.duration) + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+
+                    // Metadata
+                    '<div class="px-4 py-3 border-bottom">' +
+                        '<div class="subheader mb-2">Details</div>' +
+                        '<dl class="row g-1 small mb-0">' +
+                            '<dt class="col-5 text-secondary fw-normal">Service ID</dt>' +
+                            '<dd class="col-7 font-monospace small text-truncate mb-1" title="' + esc(s.id) + '">' + esc(s.id) + '</dd>' +
+                            '<dt class="col-5 text-secondary fw-normal">Created</dt>' +
+                            '<dd class="col-7 mb-1">' + Services.formatDate(s.createdAt) + '</dd>' +
+                            '<dt class="col-5 text-secondary fw-normal">Updated</dt>' +
+                            '<dd class="col-7 mb-0">' + Services.formatDate(s.updatedAt) + '</dd>' +
+                        '</dl>' +
+                    '</div>' +
+
+                    // Actions
+                    '<div class="px-4 py-3 d-flex gap-2">' +
+                        '<button class="btn btn-outline-primary flex-fill" onclick="openServiceModal(\'' + s.id + '\')">' +
+                            editIcon + 'Edit' +
+                        '</button>' +
+                        '<button class="btn ' + (isActive ? "btn-outline-warning" : "btn-outline-success") + ' flex-fill"' +
+                            ' onclick="confirmToggleStatus(\'' + s.id + '\',\'' + s.status + '\',\'' + escAttr(s.name) + '\')">' +
+                            (isActive ? 'Deactivate' : 'Activate') +
+                        '</button>' +
+                    '</div>';
+            } catch (e) {
+                body.innerHTML = '<div class="alert alert-danger m-3">' + esc(e.message) + '</div>';
+            }
+        }
+
+        // ─── Create / Edit service modal ──────────────────────────────────────────
+        async function openServiceModal(id) {
+            _editId = id || null;
+            var isEdit = !!id;
+
+            // Reset UI
+            document.getElementById("form-service") && document.getElementById("form-service").reset();
+            document.getElementById("service-name").value        = "";
+            document.getElementById("service-description").value = "";
+            document.getElementById("service-price").value       = "";
+            document.getElementById("service-duration").value    = "";
+            document.getElementById("service-status").value      = "ACTIVE";
+            document.getElementById("modal-service-title").textContent = isEdit ? "Edit Service" : "Add Service";
+            document.getElementById("btn-save-service").textContent    = isEdit ? "Save Changes" : "Create Service";
+            document.getElementById("btn-save-service").disabled       = false;
+            document.getElementById("service-status-row").style.display  = isEdit ? "block" : "none";
+            document.getElementById("current-img-wrapper").style.display  = "none";
+            document.getElementById("current-service-img").src = "";
+            document.getElementById("img-required-mark").style.display   = isEdit ? "none"  : "inline";
+            document.getElementById("img-optional-hint").style.display   = isEdit ? "inline" : "none";
+            document.getElementById("modal-service-error").classList.add("d-none");
+
+            // Re-init Dropzone — clear files first so destroy() has nothing to cancel,
+            // which prevents the "Upload canceled." error event from firing.
+            if (_serviceDz) {
+                _serviceDz.files = [];
+                try { _serviceDz.destroy(); } catch (_) {}
+                _serviceDz = null;
+            }
+            _imageFile = null;
+            _serviceDz = new Dropzone("#dz-service-image", {
+                url:              "#",
+                autoProcessQueue: false,
+                maxFiles:         1,
+                acceptedFiles:    "image/jpeg,image/png,image/webp,image/gif",
+                addRemoveLinks:   true,
+                maxFilesize:      5,
+                dictDefaultMessage: "",
+                init: function () {
+                    var dz = this;
+                    dz.on("addedfile", function (file) {
+                        _imageFile = file;
+                        while (dz.files.length > 1) dz.removeFile(dz.files[0]);
+                    });
+                    dz.on("removedfile", function () { _imageFile = null; });
+                    dz.on("error", function (file, msg) {
+                        dz.removeFile(file);
+                        var errEl = document.getElementById("modal-service-error");
+                        errEl.textContent = typeof msg === "string" ? msg : (msg.error || "File error");
+                        errEl.classList.remove("d-none");
+                    });
+                },
+            });
+
+            // Populate category select
+            document.getElementById("service-category").innerHTML =
+                '<option value="">Select category…</option>' +
+                _categories.map(function (c) {
+                    return '<option value="' + c.id + '">' + esc(c.name) + '</option>';
+                }).join("");
+
+            // If edit mode, load service data
+            if (isEdit) {
+                var btn = document.getElementById("btn-save-service");
+                btn.disabled    = true;
+                btn.innerHTML   = '<span class="spinner-border spinner-inline me-1"></span>Loading…';
+                try {
+                    var s = await Services.getOne(id);
+                    document.getElementById("service-name").value        = s.name        || "";
+                    document.getElementById("service-description").value = s.description || "";
+                    document.getElementById("service-category").value    = s.categoryId  || "";
+                    document.getElementById("service-price").value       = s.price       || "";
+                    document.getElementById("service-duration").value    = s.duration    || "";
+                    document.getElementById("service-status").value      = s.status      || "ACTIVE";
+                    if (s.imageUrl) {
+                        var imgEl = document.getElementById("current-service-img");
+                        imgEl.src = s.imageUrl;
+                        document.getElementById("current-img-wrapper").style.display = "block";
+                    }
+                } catch (e) {
+                    var errEl = document.getElementById("modal-service-error");
+                    errEl.textContent = e.message;
+                    errEl.classList.remove("d-none");
+                } finally {
+                    btn.disabled  = false;
+                    btn.textContent = "Save Changes";
+                }
+            }
+
+            new bootstrap.Modal(document.getElementById("modal-service")).show();
+        }
+
+        async function saveService() {
+            var errEl = document.getElementById("modal-service-error");
+            errEl.classList.add("d-none");
+
+            var name        = document.getElementById("service-name").value.trim();
+            var description = document.getElementById("service-description").value.trim();
+            var categoryId  = document.getElementById("service-category").value;
+            var price       = parseFloat(document.getElementById("service-price").value);
+            var duration    = parseInt(document.getElementById("service-duration").value, 10);
+
+            if (!name || !categoryId || isNaN(price) || isNaN(duration)) {
+                errEl.textContent = "Please fill in all required fields.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (!_editId && !_imageFile) {
+                errEl.textContent = "Please upload a service image.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+
+            var fd = new FormData();
+            fd.append("name",        name);
+            fd.append("description", description);
+            fd.append("categoryId",  categoryId);
+            fd.append("price",       price);
+            fd.append("duration",    duration);
+            if (_imageFile) fd.append("image", _imageFile);
+            if (_editId) fd.append("status", document.getElementById("service-status").value);
+
+            var btn = document.getElementById("btn-save-service");
+            btn.disabled  = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
+
+            try {
+                if (_editId) {
+                    await Services.update(_editId, fd);
+                } else {
+                    await Services.create(fd);
+                }
+                bootstrap.Modal.getInstance(document.getElementById("modal-service")).hide();
+                loadCategoriesAndStats();
+                loadServices();
+            } catch (e) {
+                errEl.textContent = e.message || "Failed to save service.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = _editId ? "Save Changes" : "Create Service";
+            }
+        }
+
+        // ─── Toggle status confirm ────────────────────────────────────────────────
+        function confirmToggleStatus(id, currentStatus, name) {
+            var newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+            var action    = currentStatus === "ACTIVE" ? "Deactivate" : "Activate";
+            _pendingOp    = { type: "toggle", id: id, newStatus: newStatus };
+            document.getElementById("confirm-title").textContent = action + " Service";
+            document.getElementById("confirm-msg").textContent   = action + ' the service "' + name + '"?';
+            var btn = document.getElementById("btn-confirm-action");
+            btn.className   = "btn " + (newStatus === "INACTIVE" ? "btn-warning" : "btn-success");
+            btn.textContent = action;
+            new bootstrap.Modal(document.getElementById("modal-confirm")).show();
+        }
+
+        // ─── Delete confirm ───────────────────────────────────────────────────────
+        function confirmDelete(type, id, name) {
+            _pendingOp = { type: type, id: id, name: name };
+            var label  = type === "service" ? "Service" : "Category";
+            document.getElementById("confirm-title").textContent = "Delete " + label;
+            document.getElementById("confirm-msg").textContent   =
+                'Permanently delete "' + name + '"?' +
+                (type === "category" ? " This fails if services are still assigned to it." : "");
+            var btn = document.getElementById("btn-confirm-action");
+            btn.className   = "btn btn-danger";
+            btn.textContent = "Delete";
+            new bootstrap.Modal(document.getElementById("modal-confirm")).show();
+        }
+
+        async function executeConfirmedOp() {
+            if (!_pendingOp) return;
+            var btn = document.getElementById("btn-confirm-action");
+            btn.disabled  = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline"></span>';
+            try {
+                if (_pendingOp.type === "toggle") {
+                    await Services.updateStatus(_pendingOp.id, _pendingOp.newStatus);
+                } else if (_pendingOp.type === "service") {
+                    await Services.remove(_pendingOp.id);
+                } else if (_pendingOp.type === "category") {
+                    await Services.deleteCategory(_pendingOp.id);
+                    loadCategoriesTable();
+                }
+                bootstrap.Modal.getInstance(document.getElementById("modal-confirm")).hide();
+                loadCategoriesAndStats();
+                loadServices();
+            } catch (e) {
+                alert(e.message || "Operation failed.");
+            } finally {
+                btn.disabled    = false;
+                btn.textContent = "Confirm";
+                _pendingOp      = null;
+            }
+        }
+
+        // ─── Manage Categories modal ──────────────────────────────────────────────
+        async function openCategoriesModal() {
+            new bootstrap.Modal(document.getElementById("modal-categories")).show();
+            loadCategoriesTable();
+        }
+
+        async function loadCategoriesTable() {
+            var tbody = document.getElementById("categories-tbody");
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                _categories = await Services.getCategories();
+                if (!_categories.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">No categories yet.</td></tr>';
+                    return;
+                }
+                var editIcon  = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
+                var trashIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>';
+                tbody.innerHTML = _categories.map(function (c) {
+                    return '<tr class="cat-row" data-id="' + c.id + '">' +
+                        '<td class="fw-semibold">' + esc(c.name) + '</td>' +
+                        '<td class="text-secondary small">' + esc(c.description || '—') + '</td>' +
+                        '<td class="text-center">' + (c.serviceCount || 0) + '</td>' +
+                        '<td>' +
+                            '<div class="d-flex gap-1">' +
+                                '<button class="btn btn-sm btn-ghost-primary btn-cat-edit" data-id="' + c.id + '" data-name="' + escAttr(c.name) + '" data-desc="' + escAttr(c.description || "") + '" title="Edit">' + editIcon + '</button>' +
+                                '<button class="btn btn-sm btn-ghost-danger btn-cat-delete" data-id="' + c.id + '" data-name="' + escAttr(c.name) + '" title="Delete">' + trashIcon + '</button>' +
+                            '</div>' +
+                        '</td>' +
+                    '</tr>';
+                }).join("");
+                // Also refresh category filter dropdown
+                var sel = document.getElementById("filter-category");
+                var prev = sel.value;
+                sel.innerHTML = '<option value="">All categories</option>' +
+                    _categories.map(function (c) { return '<option value="' + c.id + '">' + esc(c.name) + '</option>'; }).join("");
+                if (prev) sel.value = prev;
+                document.getElementById("stat-categories").textContent = _categories.length;
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
+            }
+        }
+
+        function editCategoryInline(id, name, desc) {
+            var row = document.querySelector('#categories-tbody tr[data-id="' + id + '"]');
+            if (!row) return;
+            row.innerHTML =
+                '<td><input class="form-control form-control-sm" id="edit-cat-name" value="' + escAttr(name) + '" placeholder="Name"></td>' +
+                '<td><input class="form-control form-control-sm" id="edit-cat-desc" value="' + escAttr(desc) + '" placeholder="Description (optional)"></td>' +
+                '<td></td>' +
+                '<td>' +
+                    '<div class="d-flex gap-1">' +
+                        '<button class="btn btn-sm btn-success btn-cat-save" data-id="' + id + '">Save</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-cat-cancel">Cancel</button>' +
+                    '</div>' +
+                '</td>';
+            document.getElementById("edit-cat-name").focus();
+        }
+
+        async function saveCategoryInline(id) {
+            var nameEl = document.getElementById("edit-cat-name");
+            var descEl = document.getElementById("edit-cat-desc");
+            if (!nameEl) return;
+            var name = nameEl.value.trim();
+            var desc = descEl ? descEl.value.trim() : "";
+            if (!name) { nameEl.classList.add("is-invalid"); return; }
+            try {
+                await Services.updateCategory(id, { name: name, description: desc });
+                await loadCategoriesTable();
+            } catch (e) { alert(e.message || "Failed to update category."); }
+        }
+
+        async function addCategory() {
+            var nameEl = document.getElementById("new-cat-name");
+            var descEl = document.getElementById("new-cat-desc");
+            var name   = nameEl.value.trim();
+            var desc   = descEl.value.trim();
+            if (!name) { nameEl.classList.add("is-invalid"); return; }
+            nameEl.classList.remove("is-invalid");
+            var btn = document.getElementById("btn-add-category");
+            btn.disabled  = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline"></span>';
+            try {
+                await Services.createCategory({ name: name, description: desc });
+                nameEl.value = "";
+                descEl.value = "";
+                await loadCategoriesTable();
+            } catch (e) { alert(e.message || "Failed to add category."); }
+            finally {
+                btn.disabled    = false;
+                btn.textContent = "Add";
+            }
+        }
+    </script>
+</body>
+</html>

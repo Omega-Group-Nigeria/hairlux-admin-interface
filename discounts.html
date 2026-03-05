@@ -1,0 +1,1931 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Discounts</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .discount-row { cursor: pointer; }
+        .discount-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
+        .influencer-row { cursor: pointer; }
+        .influencer-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
+        table td { vertical-align: middle; }
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        code.code-badge { font-family: monospace; letter-spacing: .06em; font-size: .85em; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Logo -->
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <!-- <span class="fw-bold fs-3">Hairlux</span> -->
+                     <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <!-- Right-side controls -->
+                <div class="navbar-nav flex-row order-md-last">
+                    <!-- Dark / Light toggle -->
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-2">
+                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
+                            aria-label="Notifications">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
+                            <div class="dropdown-header">Notifications</div>
+                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
+                        </div>
+                    </div>
+
+                    <!-- User menu -->
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small" id="dropdown-user-email">admin@hairlux.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="./index.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                        <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                        <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
+                                        <path d="M11 15l1 0" />
+                                        <path d="M12 15l0 3" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Bookings</span>
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./bookings.html">Overview</a>
+                                <a class="dropdown-item" href="./bookings/index.html">Verify Booking</a>
+                                <a class="dropdown-item" href="./bookings/calendar.html">Calendar</a>
+                            </div>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./payments.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                        <path d="M3 10l18 0" />
+                                        <path d="M7 15l.01 0" />
+                                        <path d="M11 15l2 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Payments</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./users.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Users</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./services.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+                                        <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+                                        <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+                                        <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Services</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./referrals.html">
+                                <span class="nav-link-icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                        <path d="M15 5v2" /><path d="M15 11v2" /><path d="M15 17v2" />
+                                        <path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Referrals</span>
+                            </a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="./discounts.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>
+                                </span>
+                                <span class="nav-link-title">Discounts</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./careers.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" />
+                                        <path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Careers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Management</div>
+                            <h2 class="page-title">Discount Codes</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
+                                Refresh
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-influencer-settings" data-bs-toggle="modal" data-bs-target="#modal-influencer-settings">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><circle cx="12" cy="12" r="3" /></svg>
+                                Influencer Settings
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-create" data-bs-toggle="modal" data-bs-target="#modal-create">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
+                                New Discount Code
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- SECTION TABS -->
+                    <ul class="nav nav-tabs mb-3" id="section-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-section="discounts">Discount Codes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="influencer">Influencer Codes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="influencers-mgmt">Influencers</a>
+                        </li>
+                    </ul>
+
+                    <!-- ========== DISCOUNTS SECTION ========== -->
+                    <div id="section-discounts">
+
+                    <!-- STATS CARDS -->
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Total Codes</div>
+                                        <span class="badge bg-primary-lt">All time</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Active Codes</div>
+                                        <span class="badge bg-success-lt">Live</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-active">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Influencer Codes</div>
+                                        <span class="badge bg-info-lt">Assigned</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-influencer">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="subheader flex-fill">Inactive Codes</div>
+                                        <span class="badge bg-secondary-lt">Disabled</span>
+                                    </div>
+                                    <div class="h1 mb-0" id="stat-inactive">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DISCOUNTS TABLE CARD -->
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Discount Codes</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                            <ul class="nav nav-tabs card-header-tabs" id="active-tabs">
+                                <li class="nav-item"><a href="#" class="nav-link active" data-active="">All</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-active="true">Active</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-active="false">Inactive</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="card-body border-bottom py-4">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-secondary small mb-1">Search</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                        </span>
+                                        <input type="text" id="filter-search" class="form-control" placeholder="Code or name…">
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label text-secondary small mb-1">Per page</label>
+                                    <select id="filter-limit" class="form-select form-select-sm">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-secondary w-100" id="btn-clear">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover table-nowrap card-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="w-1 text-secondary">#</th>
+                                            <th>Code</th>
+                                            <th>Name</th>
+                                            <th>Discount</th>
+                                            <th>Uses</th>
+                                            <th>Max Uses</th>
+                                            <th>Expires</th>
+                                            <th>Status</th>
+                                            <th>Created</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="discounts-tbody">
+                                        <tr><td colspan="10" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card-footer d-flex align-items-center">
+                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
+                        </div>
+                    </div>
+
+                    </div><!-- end #section-discounts -->
+
+                    <!-- ========== INFLUENCER SECTION ========== -->
+                    <div id="section-influencer" class="d-none">
+                        <div class="card">
+                            <div class="card-header d-block pb-0">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h3 class="card-title mb-0">Influencer Codes</h3>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <span class="text-secondary small" id="inf-results-label">Loading…</span>
+                                        <button type="button" class="btn btn-sm btn-primary" id="btn-create-influencer" data-bs-toggle="modal" data-bs-target="#modal-create-influencer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
+                                            Assign Code
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body border-bottom py-4">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label text-secondary small mb-1">Search</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                            </span>
+                                            <input type="text" id="inf-filter-search" class="form-control" placeholder="Code or influencer…">
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <label class="form-label text-secondary small mb-1">Per page</label>
+                                        <select id="inf-filter-limit" class="form-select form-select-sm">
+                                            <option value="10">10</option>
+                                            <option value="20" selected>20</option>
+                                            <option value="50">50</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-auto">
+                                        <button type="button" class="btn btn-sm btn-secondary w-100" id="inf-btn-clear">Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover table-nowrap card-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-1 text-secondary">#</th>
+                                                <th>Code</th>
+                                                <th>Influencer</th>
+                                                <th>Discount</th>
+                                                <th>Total Uses</th>
+                                                <th>Total Earned</th>
+                                                <th>Status</th>
+                                                <th>Created</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="influencer-tbody">
+                                            <tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="card-footer d-flex align-items-center">
+                                <p class="m-0 text-secondary small" id="inf-pagination-info">—</p>
+                                <ul class="pagination m-0 ms-auto" id="inf-pagination-btns"></ul>
+                            </div>
+                        </div>
+                    </div><!-- end #section-influencer -->
+
+                    <!-- ========== INFLUENCERS MANAGEMENT SECTION ========== -->
+                    <div id="section-influencers-mgmt" class="d-none">
+
+                        <!-- Mini stats -->
+                        <div class="row row-deck row-cards mb-4">
+                            <div class="col-sm-4">
+                                <div class="card card-sm">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <span class="avatar bg-primary-lt">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        </span>
+                                        <div>
+                                            <div class="subheader">Total Influencers</div>
+                                            <div class="h3 mb-0" id="infl-stat-total">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="card card-sm">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <span class="avatar bg-success-lt">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10"/></svg>
+                                        </span>
+                                        <div>
+                                            <div class="subheader">Active</div>
+                                            <div class="h3 mb-0" id="infl-stat-active">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="card card-sm">
+                                    <div class="card-body d-flex align-items-center gap-3">
+                                        <span class="avatar bg-secondary-lt">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"/></svg>
+                                        </span>
+                                        <div>
+                                            <div class="subheader">Inactive</div>
+                                            <div class="h3 mb-0" id="infl-stat-inactive">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table card -->
+                        <div class="card">
+                            <div class="card-header d-block pb-0">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h3 class="card-title mb-0">All Influencers</h3>
+                                    <div class="d-flex gap-2">
+                                        <span class="text-secondary small align-self-center" id="infl-results-label">Loading…</span>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-infl-create">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                                            New Influencer
+                                        </button>
+                                    </div>
+                                </div>
+                                <ul class="nav nav-tabs card-header-tabs" id="infl-active-tabs">
+                                    <li class="nav-item"><a href="#" class="nav-link active" data-active="">All</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-active="true">Active</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-active="false">Inactive</a></li>
+                                </ul>
+                            </div>
+                            <div class="card-body border-bottom py-3">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-12 col-md-4">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-6 -6"/></svg></span>
+                                            <input type="text" id="infl-filter-search" class="form-control" placeholder="Name, phone or email…">
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select id="infl-filter-limit" class="form-select form-select-sm">
+                                            <option value="10">10 / page</option>
+                                            <option value="20" selected>20 / page</option>
+                                            <option value="50">50 / page</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="button" class="btn btn-sm btn-secondary" id="infl-btn-clear">Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover table-nowrap card-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-1 text-secondary">#</th>
+                                                <th>Name</th>
+                                                <th>Phone</th>
+                                                <th>Email</th>
+                                                <th>Codes</th>
+                                                <th>Status</th>
+                                                <th>Created</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="infl-mgmt-tbody">
+                                            <tr><td colspan="8" class="text-center py-5 text-secondary">Switch to this tab to load influencers.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex align-items-center">
+                                <p class="m-0 text-secondary small" id="infl-pagination-info">—</p>
+                                <ul class="pagination m-0 ms-auto" id="infl-pagination-btns"></ul>
+                            </div>
+                        </div>
+
+                    </div><!-- end #section-influencers-mgmt -->
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">
+                            &copy; 2026 Hairlux Admin Panel
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/influencers.js"></script>
+    <script src="assets/js/api-utils/discounts.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- ===== CREATE DISCOUNT MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-create" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Discount Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-create" novalidate>
+                    <div class="modal-body">
+                        <div id="create-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Code <span class="text-danger">*</span></label>
+                                <input type="text" name="code" class="form-control" placeholder="e.g. SUMMER20" required>
+                                <div class="form-text">Unique code customers will enter.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" placeholder="e.g. Summer Sale" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Discount % <span class="text-danger">*</span></label>
+                                <input type="number" name="percentage" class="form-control" min="1" max="100" step="0.01" placeholder="e.g. 20" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Max Uses</label>
+                                <input type="number" name="maxUses" class="form-control" min="1" placeholder="Leave blank for unlimited">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Expires At</label>
+                                <input type="datetime-local" name="expiresAt" class="form-control">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="isActive" id="create-isActive" checked>
+                                    <label class="form-check-label" for="create-isActive">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-create">Create Code</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== EDIT DISCOUNT MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-edit" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Discount Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-edit" novalidate>
+                    <input type="hidden" id="edit-id">
+                    <div class="modal-body">
+                        <div id="edit-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div class="row g-3" id="edit-form-body">
+                            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-edit">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DETAIL MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-detail" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Discount Code Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-detail-body">
+                    <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DELETE CONFIRM MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-delete" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-title mb-2">Delete Discount Code</div>
+                    <p class="text-secondary mb-0">Are you sure you want to delete <strong id="delete-code-name"></strong>? This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-delete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CREATE INFLUENCER CODE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-create-influencer" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Influencer Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-create-influencer" novalidate>
+                    <div class="modal-body">
+                        <div id="inf-create-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Code <span class="text-danger">*</span></label>
+                                <input type="text" name="code" class="form-control" placeholder="e.g. ALICE10" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Discount % <span class="text-danger">*</span></label>
+                                <input type="number" name="percentage" class="form-control" min="1" max="100" step="0.01" placeholder="e.g. 10" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Influencer <span class="text-danger">*</span></label>
+                                <select name="influencerUserId" id="inf-user-select" class="form-select" required>
+                                    <option value="">Loading influencers…</option>
+                                </select>
+                                <div class="form-text">Select the influencer this code is assigned to.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-influencer">Assign Code</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== INFLUENCER DETAIL MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-influencer-detail" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Influencer Code Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="inf-detail-body">
+                    <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DELETE INFLUENCER CONFIRM MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-delete-influencer" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-title mb-2">Delete Influencer Code</div>
+                    <p class="text-secondary mb-0">Are you sure you want to delete influencer code <strong id="delete-inf-code-name"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-delete-influencer">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== INFLUENCER SETTINGS MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-influencer-settings" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Influencer Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-influencer-settings" novalidate>
+                    <div class="modal-body">
+                        <div id="inf-settings-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div id="inf-settings-body">
+                            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-inf-settings">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== INFLUENCER MANAGEMENT: CREATE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-infl-create" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Influencer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-infl-create" novalidate>
+                    <div class="modal-body">
+                        <div id="infl-create-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" placeholder="e.g. Amara Okafor" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone <span class="text-danger">*</span></label>
+                                <input type="tel" name="phone" class="form-control" placeholder="+2348012345678" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" placeholder="amara@example.com">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="infl-create-isActive" checked>
+                                    <label class="form-check-label" for="infl-create-isActive">Active</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Fashion influencer, 50k Instagram followers"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-infl-create-save">Create Influencer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== INFLUENCER MANAGEMENT: EDIT MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-infl-edit" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Influencer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-infl-edit" novalidate>
+                    <input type="hidden" id="infl-edit-id">
+                    <div class="modal-body">
+                        <div id="infl-edit-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div class="row g-3" id="infl-edit-form-body">
+                            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-infl-edit-save">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== INFLUENCER MANAGEMENT: DETAIL MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-infl-detail" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Influencer Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="infl-detail-body">
+                    <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== INFLUENCER MANAGEMENT: DELETE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-infl-delete" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-title mb-2">Delete Influencer</div>
+                    <p class="text-secondary mb-0">Delete <strong id="infl-delete-name"></strong>? Their discount codes will be unlinked but not deleted.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-infl-confirm-delete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('discounts:read');
+
+        // ── State ─────────────────────────────────────────────────────────────────
+        var state    = { page: 1, limit: 20, isActive: "", search: "", totalPages: 1 };
+        var infState = { page: 1, limit: 20, search: "", totalPages: 1 };
+        var inflMgmtState = { page: 1, limit: 20, isActive: "", search: "", totalPages: 1 };
+        var pendingDeleteId    = null;
+        var pendingDeleteInfId = null;
+        var pendingInflDeleteId = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // ── RBAC: re-hydrate from server, apply guard + hide unauthorized UI ──
+            RBAC.fetchMe().then(function() {
+                RBAC.applyPageGuard('discounts:read');
+                RBAC.applyNavVisibility();
+                if (!RBAC.can('discounts:create')) { var b = document.getElementById('btn-create'); if (b) b.style.display = 'none'; }
+                if (!RBAC.can('discounts:manage_settings')) { var b = document.getElementById('btn-influencer-settings'); if (b) b.style.display = 'none'; }
+                if (!RBAC.can('discounts:manage_influencer')) {
+                    document.querySelectorAll('#section-tabs .nav-item a[data-section="influencer"]').forEach(function(el) { el.closest('.nav-item').style.display = 'none'; });
+                }
+                if (!RBAC.can('influencers:read')) {
+                    document.querySelectorAll('#section-tabs .nav-item a[data-section="influencers-mgmt"]').forEach(function(el) { el.closest('.nav-item').style.display = 'none'; });
+                }
+            });
+
+            // ── Navbar user ──────────────────────────────────────────────────
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                var role     = (user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent  = initials;
+                document.getElementById("navbar-user-name").textContent    = fullName;
+                document.getElementById("navbar-user-role").textContent    = role;
+                document.getElementById("dropdown-user-name").textContent  = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) {
+                e.preventDefault(); Auth.logout();
+            });
+
+            // ── Initial load ─────────────────────────────────────────────────
+            loadStats();
+            loadDiscounts();
+
+            // ── Section tabs ─────────────────────────────────────────────────
+            document.getElementById("section-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-section]");
+                if (!tab) return;
+                document.querySelectorAll("#section-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                var section = tab.dataset.section;
+                document.getElementById("section-discounts").classList.toggle("d-none", section !== "discounts");
+                document.getElementById("section-influencer").classList.toggle("d-none", section !== "influencer");
+                document.getElementById("section-influencers-mgmt").classList.toggle("d-none", section !== "influencers-mgmt");
+                if (section === "influencer") loadInfluencerCodes();
+                if (section === "influencers-mgmt") { loadInfluencerStats(); loadInfluencersList(); }
+            });
+
+            // ── Active filter tabs ───────────────────────────────────────────
+            document.getElementById("active-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-active]");
+                if (!tab) return;
+                document.querySelectorAll("#active-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                state.isActive = tab.dataset.active;
+                state.page = 1;
+                loadDiscounts();
+            });
+
+            // ── Search (discounts) ────────────────────────────────────────────
+            var searchTimer;
+            document.getElementById("filter-search").addEventListener("input", function () {
+                clearTimeout(searchTimer);
+                var val = this.value.trim();
+                searchTimer = setTimeout(function () {
+                    state.search = val; state.page = 1; loadDiscounts();
+                }, 400);
+            });
+            document.getElementById("filter-limit").addEventListener("change", function () {
+                state.limit = parseInt(this.value, 10); state.page = 1; loadDiscounts();
+            });
+            document.getElementById("btn-clear").addEventListener("click", function () {
+                document.getElementById("filter-search").value = "";
+                document.getElementById("filter-limit").value  = "20";
+                document.querySelectorAll("#active-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                document.querySelector("#active-tabs .nav-link[data-active='']").classList.add("active");
+                state = { page: 1, limit: 20, isActive: "", search: "", totalPages: 1 };
+                loadDiscounts();
+            });
+
+            // ── Search (influencer) ───────────────────────────────────────────
+            var infSearchTimer;
+            document.getElementById("inf-filter-search").addEventListener("input", function () {
+                clearTimeout(infSearchTimer);
+                var val = this.value.trim();
+                infSearchTimer = setTimeout(function () {
+                    infState.search = val; infState.page = 1; loadInfluencerCodes();
+                }, 400);
+            });
+            document.getElementById("inf-filter-limit").addEventListener("change", function () {
+                infState.limit = parseInt(this.value, 10); infState.page = 1; loadInfluencerCodes();
+            });
+            document.getElementById("inf-btn-clear").addEventListener("click", function () {
+                document.getElementById("inf-filter-search").value = "";
+                document.getElementById("inf-filter-limit").value  = "20";
+                infState = { page: 1, limit: 20, search: "", totalPages: 1 };
+                loadInfluencerCodes();
+            });
+
+            // ── Refresh ───────────────────────────────────────────────────────
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                loadStats(); loadDiscounts();
+            });
+
+            // ── Pagination: discounts ─────────────────────────────────────────
+            document.getElementById("pagination-btns").addEventListener("click", function (e) {
+                e.preventDefault();
+                var a = e.target.closest("a[data-page]");
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > state.totalPages) return;
+                state.page = p;
+                loadDiscounts();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // ── Pagination: influencer ────────────────────────────────────────
+            document.getElementById("inf-pagination-btns").addEventListener("click", function (e) {
+                e.preventDefault();
+                var a = e.target.closest("a[data-page]");
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > infState.totalPages) return;
+                infState.page = p;
+                loadInfluencerCodes();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // ── Table actions: discounts ──────────────────────────────────────
+            document.getElementById("discounts-tbody").addEventListener("click", function (e) {
+                var editBtn   = e.target.closest(".btn-edit");
+                var deleteBtn = e.target.closest(".btn-delete");
+                var viewBtn   = e.target.closest(".btn-view");
+                if (editBtn)   { e.stopPropagation(); openEditModal(editBtn.dataset.id); return; }
+                if (deleteBtn) { e.stopPropagation(); openDeleteConfirm(deleteBtn.dataset.id, deleteBtn.dataset.code); return; }
+                if (viewBtn)   { e.stopPropagation(); openDetailModal(viewBtn.dataset.id); return; }
+            });
+
+            // ── Table actions: influencer ─────────────────────────────────────
+            document.getElementById("influencer-tbody").addEventListener("click", function (e) {
+                var viewBtn   = e.target.closest(".btn-view-inf");
+                var deleteBtn = e.target.closest(".btn-delete-inf");
+                if (viewBtn)   { e.stopPropagation(); openInfluencerDetailModal(viewBtn.dataset.id); return; }
+                if (deleteBtn) { e.stopPropagation(); openDeleteInfluencerConfirm(deleteBtn.dataset.id, deleteBtn.dataset.code); return; }
+            });
+
+            // ── Create form submit ────────────────────────────────────────────
+            document.getElementById("form-create").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("create-alert");
+                var btn     = document.getElementById("btn-save-create");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Creating…';
+                try {
+                    var payload = buildCreatePayload(new FormData(this));
+                    await Discounts.create(payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Discount code created successfully.";
+                    this.reset();
+                    document.getElementById("create-isActive").checked = true;
+                    loadStats(); loadDiscounts();
+                    setTimeout(function () {
+                        bootstrap.Modal.getInstance(document.getElementById("modal-create")).hide();
+                    }, 1200);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to create discount code.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Create Code";
+                }
+            });
+
+            // ── Edit form submit ──────────────────────────────────────────────
+            document.getElementById("form-edit").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var id      = document.getElementById("edit-id").value;
+                var alertEl = document.getElementById("edit-alert");
+                var btn     = document.getElementById("btn-save-edit");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var payload = buildEditPayload(new FormData(this));
+                    await Discounts.update(id, payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Discount code updated.";
+                    loadStats(); loadDiscounts();
+                    setTimeout(function () {
+                        bootstrap.Modal.getInstance(document.getElementById("modal-edit")).hide();
+                    }, 1200);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to update.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Changes";
+                }
+            });
+
+            // ── Delete confirm ────────────────────────────────────────────────
+            document.getElementById("btn-confirm-delete").addEventListener("click", async function () {
+                if (!pendingDeleteId) return;
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Deleting…';
+                try {
+                    await Discounts.remove(pendingDeleteId);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-delete")).hide();
+                    loadStats(); loadDiscounts();
+                } catch (err) {
+                    alert(err.message || "Failed to delete.");
+                } finally {
+                    this.disabled = false;
+                    this.textContent = "Delete";
+                    pendingDeleteId = null;
+                }
+            });
+
+            // ── Populate influencer dropdown on modal open ────────────────────
+            document.getElementById("modal-create-influencer").addEventListener("show.bs.modal", loadInfluencersDropdown);
+
+            // ── Create influencer code ────────────────────────────────────────
+            document.getElementById("form-create-influencer").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("inf-create-alert");
+                var btn     = document.getElementById("btn-save-influencer");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Assigning…';
+                try {
+                    var fd      = new FormData(this);
+                    var payload = {
+                        code: fd.get("code").trim(),
+                        percentage: parseFloat(fd.get("percentage")),
+                        influencerUserId: document.getElementById("inf-user-select").value
+                    };
+                    await Discounts.createInfluencer(payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Influencer code assigned.";
+                    this.reset();
+                    loadInfluencerCodes();
+                    setTimeout(function () {
+                        bootstrap.Modal.getInstance(document.getElementById("modal-create-influencer")).hide();
+                    }, 1200);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to assign code.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Assign Code";
+                }
+            });
+
+            // ── Delete influencer confirm ─────────────────────────────────────
+            document.getElementById("btn-confirm-delete-influencer").addEventListener("click", async function () {
+                if (!pendingDeleteInfId) return;
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Deleting…';
+                try {
+                    await Discounts.removeInfluencer(pendingDeleteInfId);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-delete-influencer")).hide();
+                    loadInfluencerCodes();
+                } catch (err) {
+                    alert(err.message || "Failed to delete.");
+                } finally {
+                    this.disabled = false;
+                    this.textContent = "Delete";
+                    pendingDeleteInfId = null;
+                }
+            });
+
+            // ── Influencer settings modal: load on show ───────────────────────
+            document.getElementById("modal-influencer-settings").addEventListener("show.bs.modal", loadInfluencerSettings);
+
+            // ── Influencer settings form submit ───────────────────────────────
+            document.getElementById("form-influencer-settings").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("inf-settings-alert");
+                var btn     = document.getElementById("btn-save-inf-settings");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var payload = collectInfluencerSettingsPayload();
+                    await Discounts.updateInfluencerSettings(payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Settings saved.";
+                    setTimeout(function () {
+                        bootstrap.Modal.getInstance(document.getElementById("modal-influencer-settings")).hide();
+                    }, 1200);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save settings.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Settings";
+                }
+            });
+
+            // ── Influencer management section ─────────────────────────────────
+
+            // Active filter tabs
+            document.getElementById("infl-active-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-active]");
+                if (!tab) return;
+                document.querySelectorAll("#infl-active-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                inflMgmtState.isActive = tab.dataset.active;
+                inflMgmtState.page = 1;
+                loadInfluencersList();
+            });
+
+            // Search
+            var inflSearchTimer;
+            document.getElementById("infl-filter-search").addEventListener("input", function () {
+                clearTimeout(inflSearchTimer);
+                var val = this.value.trim();
+                inflSearchTimer = setTimeout(function () {
+                    inflMgmtState.search = val; inflMgmtState.page = 1; loadInfluencersList();
+                }, 400);
+            });
+
+            document.getElementById("infl-filter-limit").addEventListener("change", function () {
+                inflMgmtState.limit = parseInt(this.value, 10); inflMgmtState.page = 1; loadInfluencersList();
+            });
+
+            document.getElementById("infl-btn-clear").addEventListener("click", function () {
+                document.getElementById("infl-filter-search").value = "";
+                document.getElementById("infl-filter-limit").value = "20";
+                document.querySelectorAll("#infl-active-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                document.querySelector("#infl-active-tabs .nav-link[data-active='']").classList.add("active");
+                inflMgmtState = { page: 1, limit: 20, isActive: "", search: "", totalPages: 1 };
+                loadInfluencersList();
+            });
+
+            // Table action buttons
+            document.getElementById("infl-mgmt-tbody").addEventListener("click", function (e) {
+                var viewBtn   = e.target.closest(".infl-btn-view");
+                var editBtn   = e.target.closest(".infl-btn-edit");
+                var deleteBtn = e.target.closest(".infl-btn-delete");
+                if (viewBtn)   { e.stopPropagation(); openInfluencerDetail(viewBtn.dataset.id); return; }
+                if (editBtn)   { e.stopPropagation(); openInfluencerEdit(editBtn.dataset.id); return; }
+                if (deleteBtn) { e.stopPropagation(); openInfluencerDeleteConfirm(deleteBtn.dataset.id, deleteBtn.dataset.name); return; }
+            });
+
+            // Pagination
+            document.getElementById("infl-pagination-btns").addEventListener("click", function (e) {
+                e.preventDefault();
+                var a = e.target.closest("a[data-page]");
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > inflMgmtState.totalPages) return;
+                inflMgmtState.page = p;
+                loadInfluencersList();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // Create influencer form
+            document.getElementById("form-infl-create").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("infl-create-alert");
+                var btn     = document.getElementById("btn-infl-create-save");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Creating…';
+                try {
+                    var fd      = new FormData(this);
+                    var payload = { name: fd.get("name").trim(), phone: fd.get("phone").trim(), isActive: document.getElementById("infl-create-isActive").checked };
+                    var email   = fd.get("email").trim(); if (email) payload.email = email;
+                    var notes   = fd.get("notes").trim(); if (notes) payload.notes = notes;
+                    await Influencers.create(payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Influencer created.";
+                    this.reset();
+                    document.getElementById("infl-create-isActive").checked = true;
+                    loadInfluencerStats(); loadInfluencersList(); loadInfluencersDropdown();
+                    setTimeout(function () { bootstrap.Modal.getInstance(document.getElementById("modal-infl-create")).hide(); }, 1200);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to create.";
+                } finally { btn.disabled = false; btn.textContent = "Create Influencer"; }
+            });
+
+            // Edit influencer form
+            document.getElementById("form-infl-edit").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var id      = document.getElementById("infl-edit-id").value;
+                var alertEl = document.getElementById("infl-edit-alert");
+                var btn     = document.getElementById("btn-infl-edit-save");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var fd      = new FormData(this);
+                    var payload = { name: fd.get("name").trim(), phone: fd.get("phone").trim(), isActive: document.getElementById("infl-edit-isActive").checked };
+                    payload.email = fd.get("email").trim() || null;
+                    payload.notes = fd.get("notes").trim() || null;
+                    await Influencers.update(id, payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Influencer updated.";
+                    loadInfluencerStats(); loadInfluencersList(); loadInfluencersDropdown();
+                    setTimeout(function () { bootstrap.Modal.getInstance(document.getElementById("modal-infl-edit")).hide(); }, 1200);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to update.";
+                } finally { btn.disabled = false; btn.textContent = "Save Changes"; }
+            });
+
+            // Delete influencer confirm
+            document.getElementById("btn-infl-confirm-delete").addEventListener("click", async function () {
+                if (!pendingInflDeleteId) return;
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Deleting…';
+                try {
+                    await Influencers.remove(pendingInflDeleteId);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-infl-delete")).hide();
+                    loadInfluencerStats(); loadInfluencersList(); loadInfluencersDropdown();
+                } catch (err) {
+                    alert(err.message || "Failed to delete.");
+                } finally { this.disabled = false; this.textContent = "Delete"; pendingInflDeleteId = null; }
+            });
+
+        });
+
+        // ── Populate influencer dropdown ──────────────────────────────────────────
+        async function loadInfluencersDropdown() {
+            var sel = document.getElementById("inf-user-select");
+            sel.innerHTML = '<option value="">Loading\u2026</option>';
+            try {
+                var result = await Influencers.getAll({ limit: 100, page: 1, isActive: "true" });
+                var items  = result.data || result.influencers || (Array.isArray(result) ? result : []);
+                sel.innerHTML = '<option value="">\u2014 Select an influencer \u2014</option>';
+                items.forEach(function (inf) {
+                    var label = inf.name + (inf.phone ? " \u00b7 " + inf.phone : "");
+                    sel.insertAdjacentHTML("beforeend",
+                        '<option value="' + inf.id + '">' + label + '</option>');
+                });
+            } catch (err) {
+                sel.innerHTML = '<option value="">Failed to load \u2014 ' + err.message + '</option>';
+            }
+        }
+
+        // ── Load stats ────────────────────────────────────────────────────────────
+        async function loadStats() {
+            try {
+                var results = await Promise.all([
+                    Discounts.getAll({ limit: 1, page: 1 }),
+                    Discounts.getAll({ limit: 1, page: 1, isActive: "true" }),
+                    Discounts.getAll({ limit: 1, page: 1, isActive: "false" }),
+                    Discounts.getAllInfluencer({ limit: 1, page: 1 })
+                ]);
+                var getTotal = function (r) {
+                    return (r.meta || r.pagination || {}).total ?? 0;
+                };
+                document.getElementById("stat-total").textContent      = getTotal(results[0]);
+                document.getElementById("stat-active").textContent     = getTotal(results[1]);
+                document.getElementById("stat-inactive").textContent   = getTotal(results[2]);
+                document.getElementById("stat-influencer").textContent = getTotal(results[3]);
+            } catch (e) { console.warn("Stats:", e); }
+        }
+
+        // ── Load discounts table ──────────────────────────────────────────────────
+        async function loadDiscounts() {
+            var tbody = document.getElementById("discounts-tbody");
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var params = { page: state.page, limit: state.limit, search: state.search };
+                if (state.isActive !== "") params.isActive = state.isActive;
+                var result = await Discounts.getAll(params);
+                var rows   = result.data || result.discounts || (Array.isArray(result) ? result : []);
+                var meta   = result.meta || result.pagination || {};
+                state.totalPages = meta.totalPages || meta.pages || 1;
+                var count = meta.total != null ? meta.total : rows.length;
+                document.getElementById("results-label").textContent = count + " code" + (count !== 1 ? "s" : "") + " found";
+                renderDiscountsTable(rows);
+                renderPagination(meta, "pagination-info", "pagination-btns", state);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">' + (err.message || "Failed to load.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        // ── Render discounts table ────────────────────────────────────────────────
+        function renderDiscountsTable(rows) {
+            var tbody = document.getElementById("discounts-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-secondary py-5">No discount codes found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (d, i) {
+                var expires = d.expiresAt ? Discounts.formatDate(d.expiresAt) : '<span class="text-secondary">Never</span>';
+                var maxUses = d.maxUses   ? d.maxUses : '<span class="text-secondary">∞</span>';
+                return '<tr>' +
+                    '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
+                    '<td><code class="text-primary fw-semibold">' + (d.code || "—") + '</code></td>' +
+                    '<td>' + (d.name || "—") + '</td>' +
+                    '<td><span class="badge bg-blue-lt">' + (d.percentage || 0) + '%</span></td>' +
+                    '<td class="text-secondary">' + (d.usedCount ?? d.usageCount ?? d.uses ?? 0) + '</td>' +
+                    '<td class="text-secondary">' + maxUses + '</td>' +
+                    '<td class="text-secondary small">' + expires + '</td>' +
+                    '<td>' + Discounts.statusBadge(d.isActive) + '</td>' +
+                    '<td class="text-secondary small">' + Discounts.formatDate(d.createdAt) + '</td>' +
+                    '<td><div class="d-flex gap-1">' +
+                    '<button class="btn btn-sm btn-outline-secondary btn-view" data-id="' + d.id + '" title="View"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg></button>' +
+                    (RBAC.can('discounts:update') ? '<button class="btn btn-sm btn-outline-primary btn-edit" data-id="' + d.id + '" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg></button>' : '') +
+                    (RBAC.can('discounts:delete') ? '<button class="btn btn-sm btn-outline-danger btn-delete" data-id="' + d.id + '" data-code="' + (d.code || "") + '" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button>' : '') +
+                    '</div></td></tr>';
+            }).join("");
+        }
+
+        // ── Load influencer codes ─────────────────────────────────────────────────
+        async function loadInfluencerCodes() {
+            var tbody = document.getElementById("influencer-tbody");
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("inf-results-label").textContent = "Loading…";
+            try {
+                var params = { page: infState.page, limit: infState.limit, search: infState.search };
+                var result = await Discounts.getAllInfluencer(params);
+                var rows   = result.data || result.discounts || result.codes || (Array.isArray(result) ? result : []);
+                var meta   = result.meta || result.pagination || {};
+                infState.totalPages = meta.totalPages || meta.pages || 1;
+                var count = meta.total != null ? meta.total : rows.length;
+                document.getElementById("inf-results-label").textContent = count + " code" + (count !== 1 ? "s" : "") + " found";
+                renderInfluencerTable(rows);
+                renderPagination(meta, "inf-pagination-info", "inf-pagination-btns", infState);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + (err.message || "Failed to load.") + '</td></tr>';
+            }
+        }
+
+        // ── Render influencer table ───────────────────────────────────────────────
+        function renderInfluencerTable(rows) {
+            var tbody = document.getElementById("influencer-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No influencer codes found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (d, i) {
+                var influencer = d.influencer || d.user || {};
+                var infName    = influencer.name ||
+                    (influencer.firstName ? influencer.firstName + " " + influencer.lastName : (influencer.email || "—"));
+                var infEmail   = influencer.email ? '<div class="text-secondary small">' + influencer.email + '</div>' : "";
+                var totalUses  = (d.stats && d.stats.totalUsages != null) ? d.stats.totalUsages
+                    : ((d._count && d._count.usages != null) ? d._count.usages : (d.totalUses || 0));
+                var totalEarned = (d.stats && d.stats.totalRewardsPaid != null) ? d.stats.totalRewardsPaid : (d.totalEarned || 0);
+                return '<tr>' +
+                    '<td class="text-secondary small">' + ((infState.page - 1) * infState.limit + i + 1) + '</td>' +
+                    '<td><code class="text-primary fw-semibold">' + (d.code || "—") + '</code></td>' +
+                    '<td><div class="fw-semibold">' + infName + '</div>' + infEmail + '</td>' +
+                    '<td><span class="badge bg-blue-lt">' + (d.percentage || 0) + '%</span></td>' +
+                    '<td class="text-secondary">' + totalUses + '</td>' +
+                    '<td class="fw-semibold">' + Discounts.formatMoney(totalEarned) + '</td>' +
+                    '<td>' + Discounts.statusBadge(d.isActive) + '</td>' +
+                    '<td class="text-secondary small">' + Discounts.formatDate(d.createdAt) + '</td>' +
+                    '<td><div class="d-flex gap-1">' +
+                    '<button class="btn btn-sm btn-outline-secondary btn-view-inf" data-id="' + d.id + '" title="View"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg></button>' +
+                    (RBAC.can('discounts:manage_influencer') ? '<button class="btn btn-sm btn-outline-danger btn-delete-inf" data-id="' + d.id + '" data-code="' + (d.code || "") + '" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button>' : '') +
+                    '</div></td></tr>';
+            }).join("");
+        }
+
+        // ── Open edit modal ───────────────────────────────────────────────────────
+        async function openEditModal(id) {
+            document.getElementById("edit-id").value = id;
+            document.getElementById("edit-alert").className = "alert d-none";
+            var formBody = document.getElementById("edit-form-body");
+            formBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-edit"));
+            modal.show();
+            try {
+                var d = await Discounts.getOne(id);
+                formBody.innerHTML = buildEditForm(d);
+            } catch (err) {
+                formBody.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+
+        function buildEditForm(d) {
+            return '<div class="col-md-6">' +
+                '<label class="form-label">Code</label>' +
+                '<input type="text" name="code" class="form-control" value="' + (d.code || "") + '" required>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<label class="form-label">Name</label>' +
+                '<input type="text" name="name" class="form-control" value="' + (d.name || "") + '" required>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<label class="form-label">Discount %</label>' +
+                '<input type="number" name="percentage" class="form-control" min="1" max="100" step="0.01" value="' + (d.percentage || "") + '" required>' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<label class="form-label">Max Uses</label>' +
+                '<input type="number" name="maxUses" class="form-control" min="1" value="' + (d.maxUses || "") + '" placeholder="Unlimited">' +
+                '</div>' +
+                '<div class="col-md-6">' +
+                '<label class="form-label">Expires At</label>' +
+                '<input type="datetime-local" name="expiresAt" class="form-control" value="' + Discounts.formatDateInput(d.expiresAt) + '">' +
+                '</div>' +
+                '<div class="col-md-6 d-flex align-items-end">' +
+                '<div class="form-check form-switch mb-2">' +
+                '<input class="form-check-input" type="checkbox" name="isActive" id="edit-isActive"' + (d.isActive ? ' checked' : '') + '>' +
+                '<label class="form-check-label" for="edit-isActive">Active</label>' +
+                '</div></div>';
+        }
+
+        // ── Open detail modal ─────────────────────────────────────────────────────
+        async function openDetailModal(id) {
+            var body  = document.getElementById("modal-detail-body");
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-detail"));
+            modal.show();
+            try {
+                var d = await Discounts.getOne(id);
+                var html = '<div class="row g-3">';
+                html += '<div class="col-sm-6"><div class="subheader mb-1">Code</div><code class="text-primary fs-4 fw-bold">' + (d.code || "—") + '</code></div>';
+                html += '<div class="col-sm-6"><div class="subheader mb-1">Name</div><div class="fw-semibold">' + (d.name || "—") + '</div></div>';
+                html += '<div class="col-sm-4"><div class="subheader mb-1">Discount</div><span class="badge bg-blue-lt fs-5">' + (d.percentage || 0) + '%</span></div>';
+                html += '<div class="col-sm-4"><div class="subheader mb-1">Uses / Max</div>' + (d.usedCount ?? d.usageCount ?? 0) + ' / ' + (d.maxUses || '∞') + '</div>';
+                html += '<div class="col-sm-4"><div class="subheader mb-1">Status</div>' + Discounts.statusBadge(d.isActive) + '</div>';
+                html += '<div class="col-sm-6"><div class="subheader mb-1">Expires</div>' + (d.expiresAt ? Discounts.formatDate(d.expiresAt) : 'Never') + '</div>';
+                html += '<div class="col-sm-6"><div class="subheader mb-1">Created</div>' + Discounts.formatDate(d.createdAt) + '</div>';
+                html += '</div>';
+                body.innerHTML = html;
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+
+        // ── Open influencer detail modal ──────────────────────────────────────────
+        async function openInfluencerDetailModal(id) {
+            var body  = document.getElementById("inf-detail-body");
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-influencer-detail"));
+            modal.show();
+            try {
+                var d          = await Discounts.getOneInfluencer(id);
+                var influencer = d.influencer || d.user || {};
+                var history    = d.usages || d.usageHistory || d.history || [];
+                var stats      = d.stats || {};
+                var infName    = influencer.name ||
+                    (influencer.firstName ? influencer.firstName + " " + influencer.lastName : (influencer.email || "—"));
+                var totalUses   = stats.totalUsages   ?? d.usedCount   ?? d.totalUses   ?? 0;
+                var totalEarned = stats.totalRewardsPaid ?? d.totalEarned ?? 0;
+                var totalDiscount = stats.totalDiscountGiven ?? 0;
+
+                var html = '<div class="row g-3 mb-4">';
+                html += '<div class="col-12"><h4 class="mb-0">Code: <code class="text-primary">' + (d.code || "—") + '</code></h4>';
+                html += '<div class="text-secondary">Influencer: <strong>' + infName + '</strong>' + (influencer.email ? ' · ' + influencer.email : '') + '</div></div>';
+                html += '<div class="col-sm-3"><div class="card card-sm"><div class="card-body text-center"><div class="h3 mb-0">' + (d.percentage || 0) + '%</div><div class="text-secondary small">Discount</div></div></div></div>';
+                html += '<div class="col-sm-3"><div class="card card-sm"><div class="card-body text-center"><div class="h3 mb-0">' + totalUses + '</div><div class="text-secondary small">Total Uses</div></div></div></div>';
+                html += '<div class="col-sm-3"><div class="card card-sm"><div class="card-body text-center"><div class="h3 mb-0">' + Discounts.formatMoney(totalEarned) + '</div><div class="text-secondary small">Rewards Paid</div></div></div></div>';
+                html += '<div class="col-sm-3"><div class="card card-sm"><div class="card-body text-center"><div class="h3 mb-0">' + Discounts.statusBadge(d.isActive) + '</div><div class="text-secondary small">Status</div></div></div></div>';
+                html += '</div>';
+
+                if (history.length) {
+                    html += '<h6 class="mb-2">Usage History</h6>';
+                    html += '<div class="table-responsive"><table class="table table-sm table-vcenter">';
+                    html += '<thead><tr><th>User</th><th>Booking</th><th>Discount Given</th><th>Reward</th><th>Date</th></tr></thead><tbody>';
+                    history.forEach(function (h) {
+                        var u = h.user || {};
+                        var uName = u.firstName ? u.firstName + " " + u.lastName : (u.email || "—");
+                        var booking = h.booking || {};
+                        var reward  = h.influencerReward || {};
+                        var rewardBadge = (reward.status === 'PAID' || reward.status === 'REWARDED')
+                            ? '<span class="badge bg-success-lt">Rewarded</span>'
+                            : (reward.status === 'PENDING' ? '<span class="badge bg-warning-lt">Pending</span>'
+                            : (reward.rewardAmount ? '<span class="badge bg-warning-lt">Pending</span>' : '<span class="text-secondary">—</span>'));
+                        var rewardAmt = reward.rewardAmount ? Discounts.formatMoney(reward.rewardAmount) : '—';
+                        html += '<tr><td><div class="fw-semibold">' + uName + '</div>' +
+                            (u.email ? '<div class="text-secondary small">' + u.email + '</div>' : '') + '</td>' +
+                            '<td class="text-secondary small">' + (booking.status || '—') + '</td>' +
+                            '<td>' + Discounts.formatMoney(h.discountAmount || 0) + '</td>' +
+                            '<td>' + rewardBadge + ' ' + rewardAmt + '</td>' +
+                            '<td class="text-secondary small">' + Discounts.formatDate(h.createdAt) + '</td></tr>';
+                    });
+                    html += '</tbody></table></div>';
+                } else {
+                    html += '<div class="text-secondary text-center py-3">No usage history yet.</div>';
+                }
+                body.innerHTML = html;
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+
+        // ── Open delete confirm ───────────────────────────────────────────────────
+        function openDeleteConfirm(id, code) {
+            pendingDeleteId = id;
+            document.getElementById("delete-code-name").textContent = code || "this code";
+            new bootstrap.Modal(document.getElementById("modal-delete")).show();
+        }
+
+        function openDeleteInfluencerConfirm(id, code) {
+            pendingDeleteInfId = id;
+            document.getElementById("delete-inf-code-name").textContent = code || "this code";
+            new bootstrap.Modal(document.getElementById("modal-delete-influencer")).show();
+        }
+
+        // ── Load influencer settings ──────────────────────────────────────────────
+        async function loadInfluencerSettings() {
+            var body    = document.getElementById("inf-settings-body");
+            var alertEl = document.getElementById("inf-settings-alert");
+            alertEl.className = "alert d-none";
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            try {
+                var s    = await Discounts.getInfluencerSettings();
+                body.innerHTML = buildInfluencerSettingsForm(s);
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + (err.message || "Failed to load settings.") + '</div>';
+            }
+        }
+
+        function buildInfluencerSettingsForm(s) {
+            if (!s) s = {};
+            var isActive      = s.isActive !== false;
+            var rewardType    = s.rewardType || "PERCENTAGE";
+            var rewardValue   = s.rewardValue != null ? s.rewardValue : "";
+            var minPurchase   = s.minPurchaseAmount != null ? s.minPurchaseAmount : "";
+
+            return '<div class="row g-3">' +
+                '<div class="col-12"><div class="form-check form-switch">' +
+                '<input class="form-check-input" type="checkbox" id="inf-setting-isActive" name="isActive"' + (isActive ? ' checked' : '') + '>' +
+                '<label class="form-check-label fw-semibold" for="inf-setting-isActive">Program Active</label>' +
+                '<div class="text-secondary small">Enable or disable the influencer discount program.</div>' +
+                '</div></div>' +
+                '<div class="col-md-6"><label class="form-label">Reward Type</label>' +
+                '<select name="rewardType" class="form-select">' +
+                '<option value="PERCENTAGE"' + (rewardType === "PERCENTAGE" ? ' selected' : '') + '>Percentage (%)</option>' +
+                '<option value="FIXED"' + (rewardType === "FIXED" ? ' selected' : '') + '>Fixed Amount (₦)</option>' +
+                '</select></div>' +
+                '<div class="col-md-6"><label class="form-label">Reward Value</label>' +
+                '<input type="number" name="rewardValue" class="form-control" min="0.01" step="0.01" value="' + rewardValue + '" placeholder="e.g. 10">' +
+                '</div>' +
+                '<div class="col-12"><div class="alert alert-info py-2 px-3 mb-0" role="alert">' +
+                '<div class="d-flex align-items-start gap-2">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-1"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>' +
+                '<div><strong class="d-block small">How Percentage rewards work</strong>' +
+                '<span class="small">The reward is calculated on the <strong>discount amount given to the customer</strong>, not the total booking value. ' +
+                'Example: a ₦15,000 booking with a 20% code gives the customer ₦3,000 off. With <em>PERCENTAGE: 50</em>, the influencer earns 50% × ₦3,000 = <strong>₦1,500</strong>. ' +
+                'The reward is always capped so it cannot exceed the discount amount itself. ' +
+                'The <em>minimum purchase</em> check below uses the paid booking total — it does not affect the reward calculation.</span></div>' +
+                '</div></div></div>' +
+                '<div class="col-md-6"><label class="form-label">Min Purchase Amount (₦)</label>' +
+                '<input type="number" name="minPurchaseAmount" class="form-control" min="0" step="0.01" value="' + minPurchase + '" placeholder="e.g. 1000">' +
+                '<div class="text-secondary small">Minimum booking total for the reward to apply.</div>' +
+                '</div></div>';
+        }
+
+        function collectInfluencerSettingsPayload() {
+            var fd      = new FormData(document.getElementById("form-influencer-settings"));
+            var payload = {};
+            payload.isActive    = document.getElementById("inf-setting-isActive").checked;
+            payload.rewardType  = fd.get("rewardType") || "PERCENTAGE";
+            var rv  = fd.get("rewardValue");
+            if (rv  !== null && rv  !== "") payload.rewardValue = parseFloat(rv);
+            var mpa = fd.get("minPurchaseAmount");
+            if (mpa !== null && mpa !== "") payload.minPurchaseAmount = parseFloat(mpa);
+            return payload;
+        }
+
+        // ── Build create payload ──────────────────────────────────────────────────
+        function buildCreatePayload(fd) {
+            var payload = {
+                code:       fd.get("code").trim(),
+                name:       fd.get("name").trim(),
+                percentage: parseFloat(fd.get("percentage")),
+                isActive:   document.getElementById("create-isActive").checked
+            };
+            var mu = fd.get("maxUses");
+            if (mu) payload.maxUses = parseInt(mu, 10);
+            var exp = fd.get("expiresAt");
+            if (exp) payload.expiresAt = new Date(exp).toISOString();
+            return payload;
+        }
+
+        // ── Build edit payload ────────────────────────────────────────────────────
+        function buildEditPayload(fd) {
+            var payload = {
+                code:       fd.get("code").trim(),
+                name:       fd.get("name").trim(),
+                percentage: parseFloat(fd.get("percentage")),
+                isActive:   document.getElementById("edit-isActive").checked
+            };
+            var mu = fd.get("maxUses");
+            payload.maxUses = mu ? parseInt(mu, 10) : null;
+            var exp = fd.get("expiresAt");
+            payload.expiresAt = exp ? new Date(exp).toISOString() : null;
+            return payload;
+        }
+
+        // ── Influencer management: load stats ─────────────────────────────────────
+        async function loadInfluencerStats() {
+            try {
+                var results = await Promise.all([
+                    Influencers.getAll({ limit: 1, page: 1 }),
+                    Influencers.getAll({ limit: 1, page: 1, isActive: "true" }),
+                    Influencers.getAll({ limit: 1, page: 1, isActive: "false" })
+                ]);
+                var getTotal = function (r) { return (r.meta || r.pagination || {}).total ?? 0; };
+                document.getElementById("infl-stat-total").textContent    = getTotal(results[0]);
+                document.getElementById("infl-stat-active").textContent   = getTotal(results[1]);
+                document.getElementById("infl-stat-inactive").textContent = getTotal(results[2]);
+            } catch (e) { console.warn("Influencer stats:", e); }
+        }
+
+        // ── Influencer management: load list ──────────────────────────────────────
+        async function loadInfluencersList() {
+            var tbody = document.getElementById("infl-mgmt-tbody");
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("infl-results-label").textContent = "Loading…";
+            try {
+                var params = { page: inflMgmtState.page, limit: inflMgmtState.limit, search: inflMgmtState.search };
+                if (inflMgmtState.isActive !== "") params.isActive = inflMgmtState.isActive;
+                var result = await Influencers.getAll(params);
+                var rows   = result.data || result.influencers || (Array.isArray(result) ? result : []);
+                var meta   = result.meta || result.pagination || {};
+                inflMgmtState.totalPages = meta.totalPages || meta.pages || 1;
+                var count = meta.total != null ? meta.total : rows.length;
+                document.getElementById("infl-results-label").textContent = count + " influencer" + (count !== 1 ? "s" : "");
+                renderInfluencersTable(rows);
+                renderPagination(meta, "infl-pagination-info", "infl-pagination-btns", inflMgmtState);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + (err.message || "Failed to load.") + '</td></tr>';
+                document.getElementById("infl-results-label").textContent = "Error";
+            }
+        }
+
+        function renderInfluencersTable(rows) {
+            var tbody = document.getElementById("infl-mgmt-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No influencers found.</td></tr>';
+                return;
+            }
+            var badge = function (v) { return v ? '<span class="badge bg-success-lt">Active</span>' : '<span class="badge bg-secondary-lt">Inactive</span>'; };
+            var fmtDate = function (d) {
+                if (!d) return '—';
+                var dt = new Date(d); var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+            };
+            tbody.innerHTML = rows.map(function (inf, i) {
+                var codes = (inf._count && inf._count.discountCodes != null) ? inf._count.discountCodes : (inf.discountCodes ? inf.discountCodes.length : '—');
+                return '<tr>' +
+                    '<td class="text-secondary small">' + ((inflMgmtState.page - 1) * inflMgmtState.limit + i + 1) + '</td>' +
+                    '<td><div class="fw-semibold">' + (inf.name || '—') + '</div>' +
+                    (inf.notes ? '<div class="text-secondary small text-truncate" style="max-width:160px" title="' + inf.notes.replace(/"/g, '&quot;') + '">' + inf.notes + '</div>' : '') +
+                    '</td>' +
+                    '<td>' + (inf.phone || '<span class="text-secondary">—</span>') + '</td>' +
+                    '<td>' + (inf.email ? '<a href="mailto:' + inf.email + '" class="text-secondary">' + inf.email + '</a>' : '<span class="text-secondary">—</span>') + '</td>' +
+                    '<td><span class="badge bg-blue-lt">' + codes + '</span></td>' +
+                    '<td>' + badge(inf.isActive) + '</td>' +
+                    '<td class="text-secondary small">' + fmtDate(inf.createdAt) + '</td>' +
+                    '<td><div class="d-flex gap-1">' +
+                    '<button class="btn btn-sm btn-outline-secondary infl-btn-view" data-id="' + inf.id + '" title="View"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg></button>' +
+                    (RBAC.can('influencers:update') ? '<button class="btn btn-sm btn-outline-primary infl-btn-edit" data-id="' + inf.id + '" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg></button>' : '') +
+                    (RBAC.can('influencers:delete') ? '<button class="btn btn-sm btn-outline-danger infl-btn-delete" data-id="' + inf.id + '" data-name="' + (inf.name || '').replace(/"/g, '&quot;') + '" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button>' : '') +
+                    '</div></td></tr>';
+            }).join("");
+        }
+
+        // ── Influencer management: open detail modal ──────────────────────────────
+        async function openInfluencerDetail(id) {
+            var body  = document.getElementById("infl-detail-body");
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-infl-detail"));
+            modal.show();
+            try {
+                var inf     = await Influencers.getOne(id);
+                var codes   = inf.discountCodes || [];
+                var rewards = inf.influencerRewards || [];
+                var count   = inf._count || {};
+                var fmtMoney = function (n) { return '₦' + parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+                var fmtDate  = function (d) {
+                    if (!d) return '—'; var dt = new Date(d);
+                    var m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return dt.getDate() + ' ' + m[dt.getMonth()] + ' ' + dt.getFullYear();
+                };
+                var badge = function (v) { return v ? '<span class="badge bg-success-lt">Active</span>' : '<span class="badge bg-secondary-lt">Inactive</span>'; };
+
+                var initials = (inf.name || 'IN').split(' ').map(function (w) { return w[0]; }).join('').toUpperCase().slice(0, 2);
+                var html = '<div class="row g-3 mb-4">';
+                html += '<div class="col-12 d-flex align-items-center gap-3">';
+                html += '<div class="avatar avatar-lg bg-purple-lt text-purple fw-bold">' + initials + '</div>';
+                html += '<div><h4 class="mb-0">' + (inf.name || '—') + '</h4>';
+                html += '<div class="text-secondary">' + (inf.phone ? '<span class="me-3">' + inf.phone + '</span>' : '') + (inf.email ? '<a href="mailto:' + inf.email + '">' + inf.email + '</a>' : '') + '</div></div>';
+                html += '<div class="ms-auto">' + badge(inf.isActive) + '</div></div>';
+                if (inf.notes) html += '<div class="col-12"><div class="text-secondary small">' + inf.notes + '</div></div>';
+
+                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center"><div class="h3 mb-0">' + (count.discountCodes ?? codes.length) + '</div><div class="text-secondary small">Discount Codes</div></div></div></div>';
+                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center"><div class="h3 mb-0">' + (count.influencerRewards ?? rewards.length) + '</div><div class="text-secondary small">Total Uses</div></div></div></div>';
+                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center"><div class="h3 mb-0">' + fmtMoney(inf.totalEarned) + '</div><div class="text-secondary small">Total Earned</div></div></div></div>';
+                html += '</div>';
+
+                if (codes.length) {
+                    html += '<h6 class="mb-2">Discount Codes</h6><div class="table-responsive mb-4"><table class="table table-sm table-vcenter"><thead><tr><th>Code</th><th>Name</th><th>Discount</th><th>Uses</th><th>Expires</th><th>Status</th></tr></thead><tbody>';
+                    codes.forEach(function (c) {
+                        html += '<tr><td><code class="text-primary">' + c.code + '</code></td><td>' + (c.name || '—') + '</td><td><span class="badge bg-blue-lt">' + c.percentage + '%</span></td><td>' + (c.usedCount || 0) + '</td><td class="text-secondary small">' + (c.expiresAt ? fmtDate(c.expiresAt) : 'Never') + '</td><td>' + badge(c.isActive) + '</td></tr>';
+                    });
+                    html += '</tbody></table></div>';
+                }
+
+                if (rewards.length) {
+                    html += '<h6 class="mb-2">Recent Rewards</h6><div class="table-responsive"><table class="table table-sm table-vcenter"><thead><tr><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+                    rewards.slice(0, 10).forEach(function (r) {
+                        var sb = (r.status === 'PAID' || r.status === 'REWARDED') ? '<span class="badge bg-success-lt">Rewarded</span>' : '<span class="badge bg-warning-lt">Pending</span>';
+                        html += '<tr><td class="fw-semibold">' + fmtMoney(r.rewardAmount) + '</td><td>' + sb + '</td><td class="text-secondary small">' + fmtDate(r.createdAt) + '</td></tr>';
+                    });
+                    html += '</tbody></table></div>';
+                }
+
+                body.innerHTML = html;
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+
+        // ── Influencer management: open edit modal ────────────────────────────────
+        async function openInfluencerEdit(id) {
+            document.getElementById("infl-edit-id").value = id;
+            document.getElementById("infl-edit-alert").className = "alert d-none";
+            var formBody = document.getElementById("infl-edit-form-body");
+            formBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-infl-edit"));
+            modal.show();
+            try {
+                var inf = await Influencers.getOne(id);
+                formBody.innerHTML =
+                    '<div class="col-md-6"><label class="form-label">Name <span class="text-danger">*</span></label>' +
+                    '<input type="text" name="name" class="form-control" value="' + (inf.name || '').replace(/"/g, '&quot;') + '" required></div>' +
+                    '<div class="col-md-6"><label class="form-label">Phone <span class="text-danger">*</span></label>' +
+                    '<input type="tel" name="phone" class="form-control" value="' + (inf.phone || '') + '" required></div>' +
+                    '<div class="col-md-6"><label class="form-label">Email</label>' +
+                    '<input type="email" name="email" class="form-control" value="' + (inf.email || '') + '"></div>' +
+                    '<div class="col-md-6 d-flex align-items-end"><div class="form-check form-switch mb-2">' +
+                    '<input class="form-check-input" type="checkbox" id="infl-edit-isActive"' + (inf.isActive ? ' checked' : '') + '>' +
+                    '<label class="form-check-label" for="infl-edit-isActive">Active</label></div></div>' +
+                    '<div class="col-12"><label class="form-label">Notes</label>' +
+                    '<textarea name="notes" class="form-control" rows="2">' + (inf.notes || '') + '</textarea></div>';
+            } catch (err) {
+                formBody.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+
+        // ── Influencer management: open delete confirm ────────────────────────────
+        function openInfluencerDeleteConfirm(id, name) {
+            pendingInflDeleteId = id;
+            document.getElementById("infl-delete-name").textContent = name || "this influencer";
+            new bootstrap.Modal(document.getElementById("modal-infl-delete")).show();
+        }
+
+        // ── Render pagination ─────────────────────────────────────────────────────
+        function renderPagination(meta, infoId, btnsId, st) {
+            var total = meta.total || 0, page = meta.page || st.page;
+            var limit = meta.limit || st.limit, pages = meta.totalPages || meta.pages || 1;
+            var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
+            document.getElementById(infoId).textContent = total
+                ? "Showing " + from + "–" + to + " of " + total : "No results";
+            var ul = document.getElementById(btnsId);
+            ul.innerHTML = "";
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? "disabled" : "") + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
+            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+            for (var p = start; p <= end; p++) {
+                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? "active" : "") + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? "disabled" : "") + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
+        }
+    </script>
+</body>
+
+</html>
