@@ -5,7 +5,7 @@
  */
 
 // API base URL (no trailing slash)
-window.API_BASE = "http://localhost:3000";
+window.API_BASE = "https://hairlux-api.up.railway.app";
 // window.API_BASE = "https://api.hairlux.com"; // production
 
 // Optional: set token directly instead of reading from localStorage
