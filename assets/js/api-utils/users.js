@@ -69,11 +69,11 @@ const Users = (() => {
         return raw.data || {};
     }
 
-    async function updateStatus(id, isActive) {
+    async function updateStatus(id, status) {
         const res = await Auth.fetch("/admin/users/" + id + "/status", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ isActive: isActive }),
+            body: JSON.stringify({ status: status }),
         });
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || "Failed to update status");

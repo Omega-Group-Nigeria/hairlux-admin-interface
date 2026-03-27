@@ -16,6 +16,7 @@
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
     <link href="assets/styles/dropzone.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css" />
     <style>
@@ -102,22 +103,7 @@
                         </a>
                     </div>
 
-                    <!-- Notifications -->
-                    <div class="nav-item dropdown me-2">
-                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
-                            aria-label="Notifications">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="icon icon-1">
-                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
-                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
-                            </svg>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
-                            <div class="dropdown-header">Notifications</div>
-                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
-                        </div>
-                    </div>
+                    
 
                     <!-- User menu -->
                     <div class="nav-item dropdown">
@@ -278,6 +264,14 @@
                                 <span class="nav-link-title">Careers</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./staff.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+                                </span>
+                                <span class="nav-link-title">Staff</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -429,7 +423,8 @@
                                             <th class="w-1"></th>
                                             <th>Name</th>
                                             <th>Category</th>
-                                            <th>Price</th>
+                                            <th>Pricing</th>
+                                            <th>Availability</th>
                                             <th>Duration</th>
                                             <th>Status</th>
                                             <th class="w-1">Actions</th>
@@ -437,7 +432,7 @@
                                     </thead>
                                     <tbody id="services-tbody">
                                         <tr>
-                                            <td colspan="7" class="text-center py-5">
+                                            <td colspan="8" class="text-center py-5">
                                                 <div class="spinner-border text-primary" role="status"></div>
                                             </td>
                                         </tr>
@@ -540,23 +535,47 @@
                             placeholder="Short description of this service…"></textarea>
                     </div>
 
-                    <!-- Fields row 2 -->
+                    <!-- Booking type availability (first) -->
                     <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Booking Type Availability <span class="text-danger">*</span></label>
+                            <div class="card card-sm">
+                                <div class="card-body py-2">
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="service-walkin-available" checked>
+                                        <label class="form-check-label" for="service-walkin-available">Walk-in available</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="service-home-available" checked>
+                                        <label class="form-check-label" for="service-home-available">Home service available</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="service-duration">Duration (mins) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="service-duration" min="1"
+                                placeholder="e.g. 180">
+                        </div>
+                    </div>
+
+                    <!-- Category + conditional pricing -->
+                    <div class="row g-3 mt-0">
                         <div class="col-md-4">
                             <label class="form-label" for="service-category">Category <span class="text-danger">*</span></label>
                             <select class="form-select" id="service-category">
                                 <option value="">Select…</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="service-price">Price (₦) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="service-price" min="0" step="100"
+                        <div class="col-md-4" id="service-walkin-price-group">
+                            <label class="form-label" for="service-walkin-price">Walk-in Price (₦) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="service-walkin-price" min="0" step="100"
                                 placeholder="e.g. 25000">
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="service-duration">Duration (mins) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="service-duration" min="1"
-                                placeholder="e.g. 180">
+                        <div class="col-md-4" id="service-home-price-group">
+                            <label class="form-label" for="service-home-price">Home Service Price (₦) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="service-home-price" min="0" step="100"
+                                placeholder="e.g. 30000">
                         </div>
                     </div>
 
@@ -668,6 +687,8 @@
         var state = { status: "", search: "", categoryId: "" };
         var _categories  = [];
         var _editId      = null;    // null = create, UUID = edit
+        var _editOriginalStatus = "ACTIVE";
+        var _openDetailServiceId = null;
         var _imageFile   = null;    // file staged in dropzone
         var _serviceDz   = null;    // Dropzone instance
         var _pendingOp   = null;    // { type, id, newStatus?, name }
@@ -745,6 +766,15 @@
                 openServiceModal(null);
             });
 
+            // ── Service modal toggles -> show relevant price inputs ─────────────
+            document.getElementById("service-walkin-available").addEventListener("change", syncPriceFieldVisibility);
+            document.getElementById("service-home-available").addEventListener("change", syncPriceFieldVisibility);
+
+            // ── Track offcanvas close to avoid stale refresh target ──────────────
+            document.getElementById("offcanvas-service-detail").addEventListener("hidden.bs.offcanvas", function () {
+                _openDetailServiceId = null;
+            });
+
             // ── Categories button ─────────────────────────────────────────────────
             document.getElementById("btn-categories").addEventListener("click", function () {
                 openCategoriesModal();
@@ -798,6 +828,34 @@
         function escAttr(s) {
             return String(s == null ? "" : s).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
         }
+        function appendBooleanField(fd, key, value) {
+            // Some backends coerce Boolean("false") to true in multipart transforms.
+            // Sending empty string for false avoids that class-transformer pitfall.
+            fd.append(key, value ? "true" : "");
+        }
+        function syncPriceFieldVisibility() {
+            var walkInEnabled = document.getElementById("service-walkin-available").checked;
+            var homeEnabled   = document.getElementById("service-home-available").checked;
+
+            var walkInGroup = document.getElementById("service-walkin-price-group");
+            var homeGroup   = document.getElementById("service-home-price-group");
+            var walkInInput = document.getElementById("service-walkin-price");
+            var homeInput   = document.getElementById("service-home-price");
+
+            walkInGroup.classList.toggle("d-none", !walkInEnabled);
+            homeGroup.classList.toggle("d-none", !homeEnabled);
+
+            walkInInput.disabled = !walkInEnabled;
+            homeInput.disabled   = !homeEnabled;
+        }
+        function renderAvailabilityBadges(s) {
+            var walkIn = s.isWalkInAvailable !== false;
+            var home   = s.isHomeServiceAvailable !== false;
+            return [
+                '<span class="badge ' + (walkIn ? 'bg-success-lt text-success' : 'bg-secondary-lt text-secondary') + '">Walk-in ' + (walkIn ? 'On' : 'Off') + '</span>',
+                '<span class="badge ' + (home ? 'bg-info-lt text-info' : 'bg-secondary-lt text-secondary') + '">Home ' + (home ? 'On' : 'Off') + '</span>'
+            ].join(' ');
+        }
 
         // ─── Load categories + update filter & stats ──────────────────────────────
         async function loadCategoriesAndStats() {
@@ -831,7 +889,7 @@
         // ─── Load + render services table ─────────────────────────────────────────
         async function loadServices() {
             var tbody = document.getElementById("services-tbody");
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
             document.getElementById("results-label").textContent = "Loading…";
             try {
                 var rows = await Services.getAll({
@@ -844,7 +902,7 @@
                 document.getElementById("pagination-info").textContent = count + " service" + (count !== 1 ? "s" : "") + " found";
                 renderTable(rows);
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || "Failed to load services.") + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || "Failed to load services.") + '</td></tr>';
                 document.getElementById("results-label").textContent = "Error";
             }
         }
@@ -852,7 +910,7 @@
         function renderTable(rows) {
             var tbody = document.getElementById("services-tbody");
             if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No services found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No services found.</td></tr>';
                 return;
             }
             // SVG icons (inlined for performance)
@@ -876,7 +934,11 @@
                         '<div class="text-secondary small text-truncate" style="max-width:260px">' + esc(s.description || "") + '</div>' +
                     '</td>' +
                     '<td><span class="badge bg-primary-lt text-primary">' + esc(catName) + '</span></td>' +
-                    '<td class="fw-semibold text-success">' + Services.formatMoney(s.price) + '</td>' +
+                    '<td class="small">' +
+                        '<div><span class="text-secondary">Walk-in:</span> <span class="fw-semibold text-success">' + Services.formatMoney(s.walkInPrice) + '</span></div>' +
+                        '<div><span class="text-secondary">Home:</span> <span class="fw-semibold text-info">' + Services.formatMoney(s.homeServicePrice) + '</span></div>' +
+                    '</td>' +
+                    '<td class="small">' + renderAvailabilityBadges(s) + '</td>' +
                     '<td class="text-secondary">' + Services.formatDuration(s.duration) + '</td>' +
                     '<td>' + Services.statusBadge(s.status) + '</td>' +
                     '<td>' +
@@ -893,6 +955,7 @@
 
         // ─── Service detail offcanvas ─────────────────────────────────────────────
         async function openServiceDetail(id) {
+            _openDetailServiceId = id;
             var body = document.getElementById("offcanvas-service-body");
             body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
             new bootstrap.Offcanvas(document.getElementById("offcanvas-service-detail")).show();
@@ -917,18 +980,23 @@
                         '<p class="text-secondary small mb-0">' + esc(s.description || "No description.") + '</p>' +
                     '</div>' +
 
-                    // Price + duration
+                    // Pricing + duration + availability
                     '<div class="px-4 py-3 border-bottom">' +
                         '<div class="row g-0 text-center">' +
-                            '<div class="col-6 border-end">' +
-                                '<div class="small text-secondary mb-1">Price</div>' +
-                                '<div class="fw-bold fs-3 text-success">' + Services.formatMoney(s.price) + '</div>' +
+                            '<div class="col-4 border-end">' +
+                                '<div class="small text-secondary mb-1">Walk-in Price</div>' +
+                                '<div class="fw-bold fs-4 text-success">' + Services.formatMoney(s.walkInPrice) + '</div>' +
                             '</div>' +
-                            '<div class="col-6">' +
+                            '<div class="col-4 border-end">' +
+                                '<div class="small text-secondary mb-1">Home Price</div>' +
+                                '<div class="fw-bold fs-4 text-info">' + Services.formatMoney(s.homeServicePrice) + '</div>' +
+                            '</div>' +
+                            '<div class="col-4">' +
                                 '<div class="small text-secondary mb-1">Duration</div>' +
-                                '<div class="fw-bold fs-3">' + Services.formatDuration(s.duration) + '</div>' +
+                                '<div class="fw-bold fs-4">' + Services.formatDuration(s.duration) + '</div>' +
                             '</div>' +
                         '</div>' +
+                        '<div class="mt-3 text-center">' + renderAvailabilityBadges(s) + '</div>' +
                     '</div>' +
 
                     // Metadata
@@ -962,14 +1030,19 @@
         // ─── Create / Edit service modal ──────────────────────────────────────────
         async function openServiceModal(id) {
             _editId = id || null;
+            _editOriginalStatus = "ACTIVE";
             var isEdit = !!id;
 
             // Reset UI
             document.getElementById("form-service") && document.getElementById("form-service").reset();
             document.getElementById("service-name").value        = "";
             document.getElementById("service-description").value = "";
-            document.getElementById("service-price").value       = "";
+            document.getElementById("service-walkin-price").value = "";
+            document.getElementById("service-home-price").value   = "";
             document.getElementById("service-duration").value    = "";
+            document.getElementById("service-walkin-available").checked = true;
+            document.getElementById("service-home-available").checked   = true;
+            syncPriceFieldVisibility();
             document.getElementById("service-status").value      = "ACTIVE";
             document.getElementById("modal-service-title").textContent = isEdit ? "Edit Service" : "Add Service";
             document.getElementById("btn-save-service").textContent    = isEdit ? "Save Changes" : "Create Service";
@@ -1030,9 +1103,14 @@
                     document.getElementById("service-name").value        = s.name        || "";
                     document.getElementById("service-description").value = s.description || "";
                     document.getElementById("service-category").value    = s.categoryId  || "";
-                    document.getElementById("service-price").value       = s.price       || "";
+                    document.getElementById("service-walkin-price").value = s.walkInPrice ?? "";
+                    document.getElementById("service-home-price").value   = s.homeServicePrice ?? "";
+                    document.getElementById("service-walkin-available").checked = s.isWalkInAvailable !== false;
+                    document.getElementById("service-home-available").checked   = s.isHomeServiceAvailable !== false;
+                    syncPriceFieldVisibility();
                     document.getElementById("service-duration").value    = s.duration    || "";
                     document.getElementById("service-status").value      = s.status      || "ACTIVE";
+                    _editOriginalStatus = s.status || "ACTIVE";
                     if (s.imageUrl) {
                         var imgEl = document.getElementById("current-service-img");
                         imgEl.src = s.imageUrl;
@@ -1058,11 +1136,30 @@
             var name        = document.getElementById("service-name").value.trim();
             var description = document.getElementById("service-description").value.trim();
             var categoryId  = document.getElementById("service-category").value;
-            var price       = parseFloat(document.getElementById("service-price").value);
+            var walkInPrice = parseFloat(document.getElementById("service-walkin-price").value);
+            var homeServicePrice = parseFloat(document.getElementById("service-home-price").value);
+            var isWalkInAvailable = document.getElementById("service-walkin-available").checked;
+            var isHomeServiceAvailable = document.getElementById("service-home-available").checked;
             var duration    = parseInt(document.getElementById("service-duration").value, 10);
+            var selectedStatus = document.getElementById("service-status").value;
 
-            if (!name || !categoryId || isNaN(price) || isNaN(duration)) {
+            if (!name || !categoryId || isNaN(duration)) {
                 errEl.textContent = "Please fill in all required fields.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (!isWalkInAvailable && !isHomeServiceAvailable) {
+                errEl.textContent = "At least one booking type must be available.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (isWalkInAvailable && isNaN(walkInPrice)) {
+                errEl.textContent = "Please provide Walk-in price.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (isHomeServiceAvailable && isNaN(homeServicePrice)) {
+                errEl.textContent = "Please provide Home service price.";
                 errEl.classList.remove("d-none");
                 return;
             }
@@ -1076,10 +1173,12 @@
             fd.append("name",        name);
             fd.append("description", description);
             fd.append("categoryId",  categoryId);
-            fd.append("price",       price);
+            if (isWalkInAvailable) fd.append("walkInPrice", walkInPrice);
+            if (isHomeServiceAvailable) fd.append("homeServicePrice", homeServicePrice);
+            appendBooleanField(fd, "isWalkInAvailable", isWalkInAvailable);
+            appendBooleanField(fd, "isHomeServiceAvailable", isHomeServiceAvailable);
             fd.append("duration",    duration);
             if (_imageFile) fd.append("image", _imageFile);
-            if (_editId) fd.append("status", document.getElementById("service-status").value);
 
             var btn = document.getElementById("btn-save-service");
             btn.disabled  = true;
@@ -1088,12 +1187,18 @@
             try {
                 if (_editId) {
                     await Services.update(_editId, fd);
+                    if (selectedStatus !== _editOriginalStatus) {
+                        await Services.updateStatus(_editId, selectedStatus);
+                    }
                 } else {
                     await Services.create(fd);
                 }
                 bootstrap.Modal.getInstance(document.getElementById("modal-service")).hide();
                 loadCategoriesAndStats();
                 loadServices();
+                if (_openDetailServiceId && _editId === _openDetailServiceId) {
+                    await openServiceDetail(_openDetailServiceId);
+                }
             } catch (e) {
                 errEl.textContent = e.message || "Failed to save service.";
                 errEl.classList.remove("d-none");

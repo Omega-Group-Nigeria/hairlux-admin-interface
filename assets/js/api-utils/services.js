@@ -8,7 +8,7 @@
  *
  * Endpoints used:
  *   Public (no auth):
- *     GET  /services                       list all services (filters: categoryId, search, status)
+ *     GET  /services                       list all services (filters: categoryId, search, status, bookingType)
  *     GET  /services/categories            list all categories
  *     GET  /services/:id                   get single service
  *
@@ -107,7 +107,7 @@ const Services = (() => {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     /**
-     * GET /services?categoryId=&search=&status=
+     * GET /services?categoryId=&search=&status=&bookingType=
      * Returns array of service objects.
      */
     async function getAll(params = {}) {
@@ -115,6 +115,7 @@ const Services = (() => {
         if (params.categoryId) q.set("categoryId", params.categoryId);
         if (params.search)     q.set("search",     params.search);
         if (params.status)     q.set("status",     params.status);
+        if (params.bookingType) q.set("bookingType", params.bookingType);
         const qs   = q.toString();
         const data = await apiFetch("/services" + (qs ? "?" + qs : ""));
         return Array.isArray(data) ? data : (data.services || []);
@@ -128,8 +129,11 @@ const Services = (() => {
     }
 
     /**
-     * POST /admin/services  (multipart/form-data)
-     * Required fields: image (File), categoryId, name, description, price (number), duration (number)
+    * POST /admin/services  (multipart/form-data)
+    * Required fields:
+    * image (File), categoryId, name, description,
+    * walkInPrice (number), homeServicePrice (number),
+    * isWalkInAvailable (boolean), isHomeServiceAvailable (boolean), duration (number)
      * @param {FormData} formData
      */
     async function create(formData) {

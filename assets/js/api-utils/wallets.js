@@ -6,8 +6,12 @@ const Wallets = (() => {
 
     // ── API calls ─────────────────────────────────────────────────────────────
 
-    async function getStats() {
-        const res = await Auth.fetch("/admin/wallets/stats");
+    async function getStats(params = {}) {
+        const q = new URLSearchParams();
+        if (params.startDate) q.set("startDate", params.startDate);
+        if (params.endDate)   q.set("endDate",   params.endDate);
+        
+        const res = await Auth.fetch("/admin/wallets/stats?" + q.toString());
         const raw = await res.json();
         if (!res.ok) throw new Error(raw.message || "Failed to load wallet stats");
         return raw.data || raw;

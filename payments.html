@@ -16,6 +16,7 @@
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
         .wallet-row { cursor: pointer; }
@@ -68,22 +69,7 @@
                         </a>
                     </div>
 
-                    <!-- Notifications -->
-                    <div class="nav-item dropdown me-2">
-                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
-                            aria-label="Notifications">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="icon icon-1">
-                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
-                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
-                            </svg>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
-                            <div class="dropdown-header">Notifications</div>
-                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
-                        </div>
-                    </div>
+                    
 
                     <!-- User menu -->
                     <div class="nav-item dropdown">
@@ -245,6 +231,14 @@
                                 <span class="nav-link-title">Careers</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./staff.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>
+                                </span>
+                                <span class="nav-link-title">Staff</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -261,7 +255,28 @@
                             <div class="page-pretitle">Finance</div>
                             <h2 class="page-title">Payments &amp; Wallets</h2>
                         </div>
-                        <div class="col-auto ms-auto">
+                        <div class="col-auto ms-auto d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-outline-secondary dropdown-toggle" id="btn-stat-range" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" />
+                                    </svg>
+                                    <span id="stat-range-label">Stats: All time</span>
+                                </button>
+                                <div class="dropdown-menu p-3" style="min-width:300px">
+                                    <div class="mb-2 fw-semibold small">Filter stats by date range</div>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <input type="date" id="stat-start" class="form-control form-control-sm" placeholder="From">
+                                        <span class="text-secondary">–</span>
+                                        <input type="date" id="stat-end" class="form-control form-control-sm" placeholder="To">
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-primary flex-fill" id="btn-stat-apply">Apply</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-stat-clear">All time</button>
+                                    </div>
+                                </div>
+                            </div>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -288,7 +303,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-2">
                                         <div class="subheader flex-fill">Total Deposits</div>
-                                        <span class="badge bg-success-lt">All time</span>
+                                        <span class="badge bg-success-lt text-wrap text-end" id="stat-period-label">All time</span>
                                     </div>
                                     <div class="h1 mb-0" id="stat-total-deposits">—</div>
                                 </div>
@@ -299,7 +314,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-2">
                                         <div class="subheader flex-fill">Total Wallet Balance</div>
-                                        <span class="badge bg-primary-lt">All wallets</span>
+                                        <span class="badge bg-primary-lt text-wrap text-end" id="stat-period-label-2">All wallets</span>
                                     </div>
                                     <div class="h1 mb-0" id="stat-total-balance">—</div>
                                 </div>
@@ -310,7 +325,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-2">
                                         <div class="subheader flex-fill">Total Debits</div>
-                                        <span class="badge bg-warning-lt">Payment for services</span>
+                                        <span class="badge bg-warning-lt text-wrap text-end" id="stat-period-label-3">Payment for services</span>
                                     </div>
                                     <div class="h1 mb-0" id="stat-total-debits">—</div>
                                 </div>
@@ -321,7 +336,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-2">
                                         <div class="subheader flex-fill">Failed Transactions</div>
-                                        <span class="badge bg-danger-lt">Errors</span>
+                                        <span class="badge bg-danger-lt text-wrap text-end" id="stat-period-label-4">Errors</span>
                                     </div>
                                     <div class="h1 mb-0" id="stat-failed-tx">—</div>
                                 </div>
@@ -585,6 +600,20 @@
             // ── Load stats ────────────────────────────────────────────────────────
             loadStats();
 
+            // ── Stats date range inputs ──────────────────────────────────────
+            document.getElementById("btn-stat-apply").addEventListener("click", function () {
+                var dd = bootstrap.Dropdown.getOrCreateInstance(document.getElementById("btn-stat-range"));
+                dd.hide();
+                loadStats();
+            });
+            document.getElementById("btn-stat-clear").addEventListener("click", function () {
+                document.getElementById("stat-start").value = "";
+                document.getElementById("stat-end").value   = "";
+                var dd = bootstrap.Dropdown.getOrCreateInstance(document.getElementById("btn-stat-range"));
+                dd.hide();
+                loadStats();
+            });
+
             // ── Load transactions (first tab) ───────────────────────────────────────────
             loadTransactions();
 
@@ -701,7 +730,38 @@
         // ── Load stats ────────────────────────────────────────────────────────────
         async function loadStats() {
             try {
-                var data = await Wallets.getStats();
+                // Read from dropdown inputs
+                var start = document.getElementById("stat-start").value;
+                var end   = document.getElementById("stat-end").value;
+
+                var params = {};
+                if (start) params.startDate = start;
+                if (end)   params.endDate   = end;
+
+                // Format date label
+                var _MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                function _fmt(iso) {
+                    if (!iso) return "";
+                    var parts = iso.split("-"); // YYYY-MM-DD
+                    if (parts.length !== 3) return iso;
+                    return parseInt(parts[2], 10) + " " + _MONTHS[parseInt(parts[1], 10) - 1] + " " + parts[0].slice(2);
+                }
+
+                var labelText = (start || end)
+                    ? ((start ? _fmt(start) : "Start") + " \u2013 " + (end ? _fmt(end) : "End"))
+                    : "All time";
+
+                // Update dropdown button text
+                var rangeBtn = document.getElementById("stat-range-label");
+                if (rangeBtn) rangeBtn.textContent = "Stats: " + labelText;
+
+                // Update badges
+                ["stat-period-label", "stat-period-label-2", "stat-period-label-3", "stat-period-label-4"].forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.textContent = labelText;
+                });
+
+                var data = await Wallets.getStats(params);
                 // Shape: { totalBalance, transactions: { byType: { DEPOSIT:{totalAmount,count}, DEBIT:{totalAmount,count} }, failed, pending } }
                 var byType = (data.transactions && data.transactions.byType) || {};
                 document.getElementById("stat-total-deposits").textContent = Wallets.formatMoney((byType.DEPOSIT && byType.DEPOSIT.totalAmount) || 0);
