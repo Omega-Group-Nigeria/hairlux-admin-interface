@@ -204,8 +204,8 @@
                                 <span class="nav-link-title">Services</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="./referrals.html">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                                 <span class="nav-link-icon d-md-none d-lg-inline-block">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -218,6 +218,10 @@
                                 </span>
                                 <span class="nav-link-title">Referrals</span>
                             </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./referrals.html">Regular Referrals</a>
+                                <a class="dropdown-item" href="./referral-campaigns.html">Referral Campaigns</a>
+                            </div>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="./discounts.html">
@@ -458,10 +462,9 @@
                 var custName = customer.firstName
                     ? customer.firstName + ' ' + customer.lastName : (customer.name || '\u2014');
                 var services = b.services || (b.service ? [b.service] : []);
-                var address  = b.address || {};
-                var location = address.addressLine
-                    ? [address.addressLine, address.city, address.state, address.country].filter(Boolean).join(', ')
-                    : (address.street ? [address.street, address.city, address.state].filter(Boolean).join(', ') : (b.location || '\u2014'));
+                var address  = Bookings.normalizeAddress(b.address || {});
+                var location = Bookings.formatAddress(address, b.location || '\u2014');
+                var mapsUrl  = Bookings.getGoogleMapsPlaceUrl(address);
                 var bookingType = b.bookingType || '';
                 var typeLabel = bookingType === 'HOME_SERVICE'
                     ? '<span class="badge bg-azure-lt">Mobile Service</span>'
@@ -496,7 +499,14 @@
                     '<div class="col-12"><div class="mb-1 text-secondary small">Services</div>' +
                     '<div class="border rounded p-2">' + svcRows + '</div></div>' +
                     (bookingType === 'HOME_SERVICE' ?
-                        '<div class="col-12"><div class="mb-1 text-secondary small">Service Address</div><div>' + location + '</div></div>' : '') +
+                        '<div class="col-12"><div class="mb-1 text-secondary small">Service Address</div>' +
+                        '<div>' + location + '</div>' +
+                        (address.placeId
+                                                        ? '<div class="text-secondary small mt-3">Place ID: <span class="font-monospace d-inline-block text-truncate" style="max-width: 240px; vertical-align: bottom;">' + address.placeId + '</span></div>' +
+                              '<div><a href="' + mapsUrl + '" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></div>'
+                            : '') +
+                        '</div>'
+                        : '') +
                     (b.guestName ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Name</div><div>' + b.guestName + '</div></div>' : '') +
                     (b.guestPhone ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Phone</div><div>' + b.guestPhone + '</div></div>' : '') +
                     (b.notes ? '<div class="col-12"><div class="mb-1 text-secondary small">Notes</div><div class="text-secondary">' + b.notes + '</div></div>' : '') +

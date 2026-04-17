@@ -9,6 +9,114 @@
 
 const Bookings = (() => {
 
+  function normalizeAddress(address) {
+    if (!address || typeof address !== "object") return {};
+
+    const sourceComponents = address.addressComponents && typeof address.addressComponents === "object"
+      ? address.addressComponents
+      : {};
+
+    const streetAddress = address.streetAddress || sourceComponents.streetAddress || "";
+    const city = address.city || sourceComponents.city || "";
+    const state = address.state || sourceComponents.state || "";
+    const country = address.country || sourceComponents.country || "";
+    const fullAddress = address.fullAddress || [streetAddress, city, state, country].filter(Boolean).join(", ");
+
+    return {
+      ...address,
+      streetAddress,
+      city,
+      state,
+      country,
+      fullAddress,
+      placeId: address.placeId || "",
+      addressComponents: {
+        streetAddress,
+        city,
+        state,
+        country,
+      },
+    };
+  }
+
+  function normalizeBooking(booking) {
+    if (!booking || typeof booking !== "object") return booking;
+    return {
+      ...booking,
+      address: normalizeAddress(booking.address || {}),
+    };
+  }
+
+  function normalizeBookingCollection(payload) {
+    if (Array.isArray(payload)) {
+      return payload.map(normalizeBooking);
+    }
+    if (!payload || typeof payload !== "object") {
+      return payload;
+    }
+    if (Array.isArray(payload.data)) {
+      return {
+        ...payload,
+        data: payload.data.map(normalizeBooking),
+      };
+    }
+    if (Array.isArray(payload.bookings)) {
+      return {
+        ...payload,
+        bookings: payload.bookings.map(normalizeBooking),
+      };
+    }
+    return payload;
+  }
+
+  function normalizeCalendarPayload(payload) {
+    if (!payload || typeof payload !== "object") return payload;
+
+    if (payload.bookings && typeof payload.bookings === "object") {
+      const normalizedBookings = {};
+      Object.keys(payload.bookings).forEach((key) => {
+        const value = payload.bookings[key];
+        normalizedBookings[key] = Array.isArray(value) ? value.map(normalizeBooking) : value;
+      });
+      return { ...payload, bookings: normalizedBookings };
+    }
+
+    const normalized = {};
+    let hasArrayValues = false;
+    Object.keys(payload).forEach((key) => {
+      const value = payload[key];
+      if (Array.isArray(value)) {
+        hasArrayValues = true;
+        normalized[key] = value.map(normalizeBooking);
+      } else {
+        normalized[key] = value;
+      }
+    });
+
+    return hasArrayValues ? normalized : payload;
+  }
+
+  function formatAddress(address, fallback = "—") {
+    const normalized = normalizeAddress(address);
+    return normalized.fullAddress
+      || [normalized.streetAddress, normalized.city, normalized.state, normalized.country].filter(Boolean).join(", ")
+      || fallback;
+  }
+
+  function getGoogleMapsPlaceUrl(address, fallbackQuery = "Service location") {
+    const normalized = normalizeAddress(address);
+    if (!normalized.placeId) return "";
+
+    const query = normalized.fullAddress
+      || [normalized.streetAddress, normalized.city, normalized.state, normalized.country].filter(Boolean).join(", ")
+      || fallbackQuery;
+
+    return "https://www.google.com/maps/search/?api=1&query="
+      + encodeURIComponent(query)
+      + "&query_place_id="
+      + encodeURIComponent(normalized.placeId);
+  }
+
   function getBase() {
     return (window.API_BASE || "").replace(/\/$/, "");
   }
@@ -35,7 +143,8 @@ const Bookings = (() => {
     const res = await Auth.fetch(url);
     const raw = await res.json().catch(() => ({}));
     // unwrap: { data: [...], meta: {...} } or wrapped in { data: { data, meta } }
-    return raw.data && raw.data.data ? raw.data : raw;
+    const payload = raw.data && raw.data.data ? raw.data : raw;
+    return normalizeBookingCollection(payload);
   }
 
   // ─── POST /admin/bookings ─────────────────────────────────────────────────────
@@ -50,7 +159,7 @@ const Bookings = (() => {
     });
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Failed to create booking (${res.status})`);
-    return raw.data || raw;
+    return normalizeBooking(raw.data || raw);
   }
 
   // ─── GET /admin/bookings/calendar ─────────────────────────────────────────────
@@ -62,7 +171,7 @@ const Bookings = (() => {
     const res = await Auth.fetch(`/admin/bookings/calendar?month=${month}&year=${year}`);
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Failed to load calendar (${res.status})`);
-    return raw.data || raw;
+    return normalizeCalendarPayload(raw.data || raw);
   }
 
   // ─── GET /admin/bookings/stats ────────────────────────────────────────────────
@@ -85,7 +194,7 @@ const Bookings = (() => {
     const res = await Auth.fetch(`/admin/bookings/reservation/${encodeURIComponent(code)}`);
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Reservation not found (${res.status})`);
-    return raw.data || raw;
+    return normalizeBooking(raw.data || raw);
   }
 
   // ─── PATCH /admin/bookings/reservation/:code/use ──────────────────────────────
@@ -98,14 +207,14 @@ const Bookings = (() => {
     });
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Failed to mark reservation used (${res.status})`);
-    return raw.data || raw;
+    return normalizeBooking(raw.data || raw);
   }
 
   // ─── GET /admin/bookings/:id ──────────────────────────────────────────────────
   async function getOne(id) {
     const res = await Auth.fetch(`/admin/bookings/${id}`);
     const raw = await res.json().catch(() => ({}));
-    return raw.data || raw;
+    return normalizeBooking(raw.data || raw);
   }
 
   // ─── PUT /admin/bookings/:id/status ──────────────────────────────────────────
@@ -223,5 +332,8 @@ const Bookings = (() => {
     formatMoney,
     formatDateTime,
     shortId,
+    normalizeAddress,
+    formatAddress,
+    getGoogleMapsPlaceUrl,
   };
 })();

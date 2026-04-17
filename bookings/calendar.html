@@ -86,21 +86,6 @@
                             </svg>
                         </a>
                     </div>
-                    <div class="nav-item dropdown me-2">
-                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1"
-                            aria-label="Notifications">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="icon icon-1">
-                                <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
-                                <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
-                            </svg>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end" style="min-width:280px">
-                            <div class="dropdown-header">Notifications</div>
-                            <div class="dropdown-item text-secondary small text-center py-3">No new notifications</div>
-                        </div>
-                    </div>
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
                             aria-label="Open user menu">
@@ -224,8 +209,8 @@
                                 <span class="nav-link-title">Services</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="../referrals.html">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                                 <span class="nav-link-icon d-md-none d-lg-inline-block">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -238,6 +223,10 @@
                                 </span>
                                 <span class="nav-link-title">Referrals</span>
                             </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="../referrals.html">Regular Referrals</a>
+                                <a class="dropdown-item" href="../referral-campaigns.html">Referral Campaigns</a>
+                            </div>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="../discounts.html">
@@ -538,10 +527,9 @@
                 var custName = customer.firstName
                     ? customer.firstName + " " + customer.lastName : (customer.name || b.guestName || "\u2014");
                 var services = b.services || (b.service ? [b.service] : []);
-                var address  = b.address || {};
-                var addrStr  = address.addressLine
-                    ? [address.addressLine, address.city, address.state].filter(Boolean).join(", ")
-                    : (address.street ? [address.street, address.city, address.state].filter(Boolean).join(", ") : null);
+                var address  = Bookings.normalizeAddress(b.address || {});
+                var addrStr  = Bookings.formatAddress(address, "");
+                var mapsUrl  = Bookings.getGoogleMapsPlaceUrl(address);
                 var bookingType = b.bookingType || "";
                 var typeBadge = bookingType === "HOME_SERVICE"
                     ? '<span class="badge bg-azure-lt">Mobile Service</span>'
@@ -582,7 +570,14 @@
                     '<div class="font-monospace fw-semibold">' + escHtml(resCode) + resBadge + '</div></div>' +
                     '<div class="col-12"><div class="detail-label mb-1">Services</div>' +
                     '<div class="border rounded p-2">' + svcRows + '</div></div>' +
-                    (addrStr ? '<div class="col-12"><div class="detail-label">Service Address</div><div class="text-secondary">' + escHtml(addrStr) + '</div></div>' : '') +
+                                        (addrStr
+                                                ? '<div class="col-12"><div class="detail-label">Service Address</div><div class="text-secondary">' + escHtml(addrStr) + '</div>' +
+                                                    (address.placeId
+                                                            ? '<div class="text-secondary small mt-3">Place ID: <span class="font-monospace d-inline-block text-truncate" style="max-width: 240px; vertical-align: bottom;">' + escHtml(address.placeId) + '</span></div>' +
+                                                                '<div><a href="' + escHtml(mapsUrl) + '" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></div>'
+                                                            : '') +
+                                                    '</div>'
+                                                : '') +
                     (b.guestName ? '<div class="col-md-6"><div class="detail-label">Guest Name</div><div>' + escHtml(b.guestName) + '</div></div>' : '') +
                     (b.guestPhone ? '<div class="col-md-6"><div class="detail-label">Guest Phone</div><div>' + escHtml(b.guestPhone) + '</div></div>' : '') +
                     (b.guestEmail ? '<div class="col-md-6"><div class="detail-label">Guest Email</div><div>' + escHtml(b.guestEmail) + '</div></div>' : '') +

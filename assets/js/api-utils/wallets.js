@@ -4,6 +4,18 @@
  */
 const Wallets = (() => {
 
+    function normalizePaymentMethod(value) {
+        return String(value || "").toUpperCase();
+    }
+
+    function normalizeTransaction(tx) {
+        if (!tx || typeof tx !== "object") return tx;
+        return {
+            ...tx,
+            paymentMethod: normalizePaymentMethod(tx.paymentMethod),
+        };
+    }
+
     // ── API calls ─────────────────────────────────────────────────────────────
 
     async function getStats(params = {}) {
@@ -30,10 +42,10 @@ const Wallets = (() => {
         const raw = await res.json();
         if (!res.ok) throw new Error(raw.message || "Failed to load transactions");
         const payload = raw.data || raw;
-        if (Array.isArray(payload)) return { data: payload, meta: {} };
+        if (Array.isArray(payload)) return { data: payload.map(normalizeTransaction), meta: {} };
         // API returns { transactions: [...], pagination: {...} }
         return {
-            data: payload.transactions || payload.data || [],
+            data: (payload.transactions || payload.data || []).map(normalizeTransaction),
             meta: payload.pagination  || payload.meta  || {},
         };
     }
@@ -57,6 +69,13 @@ const Wallets = (() => {
         FAILED:    "danger",
     };
 
+    const PAYMENT_METHOD_COLORS = {
+        WALLET: "secondary",
+        REFERRAL: "info",
+        PAYSTACK: "primary",
+        MONNIFY: "teal",
+    };
+
     function typeBadge(type) {
         const color = TX_TYPE_COLORS[type] || "secondary";
         const label = (type || "").replace(/_/g, " ");
@@ -66,6 +85,13 @@ const Wallets = (() => {
     function statusBadge(status) {
         const color = TX_STATUS_COLORS[status] || "secondary";
         return '<span class="badge bg-' + color + '-lt">' + (status || "—") + '</span>';
+    }
+
+    function paymentMethodBadge(paymentMethod) {
+        const method = normalizePaymentMethod(paymentMethod);
+        if (!method) return '<span class="text-secondary">—</span>';
+        const color = PAYMENT_METHOD_COLORS[method] || "secondary";
+        return '<span class="badge bg-' + color + '-lt">' + method.replace(/_/g, " ") + '</span>';
     }
 
     function formatMoney(n) {
@@ -83,6 +109,6 @@ const Wallets = (() => {
 
     return {
         getStats, getAllTransactions,
-        typeBadge, statusBadge, formatMoney, formatDateTime,
+        typeBadge, statusBadge, paymentMethodBadge, formatMoney, formatDateTime,
     };
 })();

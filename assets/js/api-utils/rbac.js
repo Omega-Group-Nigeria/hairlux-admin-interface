@@ -134,6 +134,7 @@ const RBAC = (() => {
         'users.html':     { type: 'require',    perm:  'users:read' },
         'services.html':  { type: 'requireAny', perms: ['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories'] },
         'referrals.html': { type: 'require',    perm:  'referrals:read' },
+        'referral-campaigns.html': { type: 'require', perm: 'referrals:read' },
         'discounts.html': { type: 'require',    perm:  'discounts:read' },
         'careers.html':   { type: 'require',    perm:  'jobs:read' },
     };

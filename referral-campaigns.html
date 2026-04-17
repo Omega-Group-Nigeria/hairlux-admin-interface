@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Referrals</title>
+    <title>Hairlux Admin — Referral Campaigns</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
@@ -19,11 +19,12 @@
     <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
-        .referral-row { cursor: pointer; }
-        .referral-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
-        #referrals-table td { vertical-align: middle; }
+        .campaign-row { cursor: pointer; }
+        .campaign-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
+        #campaigns-table td { vertical-align: middle; }
         .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
-        .referral-badge { font-family: monospace; letter-spacing: .04em; }
+        .campaign-code { font-family: var(--tblr-font-monospace, monospace); letter-spacing: .04em; }
+        .usage-pill { font-size: .75rem; }
     </style>
 </head>
 
@@ -212,8 +213,8 @@
                                 <span class="nav-link-title">Referrals</span>
                             </a>
                             <div class="dropdown-menu">
-                                <a class="dropdown-item active" href="./referrals.html">Regular Referrals</a>
-                                <a class="dropdown-item" href="./referral-campaigns.html">Referral Campaigns</a>
+                                <a class="dropdown-item" href="./referrals.html">Regular Referrals</a>
+                                <a class="dropdown-item active" href="./referral-campaigns.html">Referral Campaigns</a>
                             </div>
                         </li>
                         <li class="nav-item">
@@ -257,11 +258,11 @@
                     <div class="row g-2 align-items-center">
                         <div class="col">
                             <div class="page-pretitle">Management</div>
-                            <h2 class="page-title">Referral Program</h2>
+                            <h2 class="page-title">Referral Campaigns</h2>
                         </div>
                         <div class="col-auto ms-auto d-flex gap-2">
-                            <a href="./referral-campaigns.html" class="btn btn-outline-secondary">
-                                Referral Campaigns
+                            <a href="./referrals.html" class="btn btn-outline-secondary">
+                                Regular Referrals
                             </a>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -272,15 +273,15 @@
                                 </svg>
                                 Refresh
                             </button>
-                            <button type="button" class="btn btn-primary" id="btn-settings"
-                                data-bs-toggle="modal" data-bs-target="#modal-settings">
+                            <button type="button" class="btn btn-primary" id="btn-create-campaign"
+                                data-bs-toggle="modal" data-bs-target="#modal-campaign-editor">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon me-1">
-                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
-                                    <circle cx="12" cy="12" r="3" />
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
                                 </svg>
-                                Program Settings
+                                New Campaign Code
                             </button>
                         </div>
                     </div>
@@ -292,16 +293,18 @@
             <div class="page-body">
                 <div class="container-xl">
 
-                    <!-- STATS CARDS — GET /admin/referrals/stats -->
+                    <div id="campaign-page-alert" class="alert d-none mb-3" role="alert"></div>
+
+                    <!-- STATS CARDS — Campaign code summary -->
                     <div class="row row-deck row-cards mb-4">
                         <div class="col-sm-6 col-xl-3">
                             <div class="card">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="subheader flex-fill">Total Referrals</div>
-                                        <span class="badge bg-primary-lt">All time</span>
+                                        <div class="subheader flex-fill">Total Campaigns</div>
+                                        <span class="badge bg-primary-lt">Filtered</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                    <div class="h1 mb-0" id="stat-total-campaigns">—</div>
                                 </div>
                             </div>
                         </div>
@@ -309,10 +312,10 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="subheader flex-fill">Rewarded</div>
-                                        <span class="badge bg-success-lt">Completed</span>
+                                        <div class="subheader flex-fill">Active on Page</div>
+                                        <span class="badge bg-success-lt">Enabled</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-rewarded">—</div>
+                                    <div class="h1 mb-0" id="stat-active-campaigns">—</div>
                                 </div>
                             </div>
                         </div>
@@ -320,10 +323,10 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="subheader flex-fill">Rewards Paid</div>
-                                        <span class="badge bg-warning-lt">Total</span>
+                                        <div class="subheader flex-fill">Inactive on Page</div>
+                                        <span class="badge bg-secondary-lt">Disabled</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-rewards">—</div>
+                                    <div class="h1 mb-0" id="stat-inactive-campaigns">—</div>
                                 </div>
                             </div>
                         </div>
@@ -331,29 +334,28 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-2">
-                                        <div class="subheader flex-fill">Pending</div>
-                                        <span class="badge bg-secondary-lt">Awaiting</span>
+                                        <div class="subheader flex-fill">Uses on Page</div>
+                                        <span class="badge bg-warning-lt">Current rows</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-pending">—</div>
+                                    <div class="h1 mb-0" id="stat-total-uses">—</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- REFERRALS TABLE CARD -->
+                    <!-- CAMPAIGN CODES TABLE CARD -->
                     <div class="card">
                         <!-- Card header: title + result count -->
                         <div class="card-header d-block pb-0">
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <h3 class="card-title mb-0">All Referrals</h3>
+                                <h3 class="card-title mb-0">All Campaign Codes</h3>
                                 <span class="text-secondary small" id="results-label">Loading…</span>
                             </div>
                             <!-- Status filter tabs -->
                             <ul class="nav nav-tabs card-header-tabs" id="status-tabs">
-                                <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="PENDING">Pending</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="REWARDED">Rewarded</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="FAILED">Failed</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link active" data-active="">All</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-active="true">Active</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-active="false">Inactive</a></li>
                             </ul>
                         </div>
 
@@ -369,8 +371,8 @@
                                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                 class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
                                         </span>
-                                        <input type="text" id="filter-search" class="form-control"
-                                            placeholder="Name, email or code…">
+                                        <input type="text" id="filter-code" class="form-control"
+                                            placeholder="Code search…">
                                     </div>
                                 </div>
                                 <div class="col-6 col-md-2 col-lg-2">
@@ -392,20 +394,21 @@
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-vcenter table-hover table-nowrap card-table"
-                                    id="referrals-table">
+                                    id="campaigns-table">
                                     <thead>
                                         <tr>
                                             <th class="w-1 text-secondary">#</th>
-                                            <th>Referrer</th>
                                             <th>Code</th>
-                                            <th>Referred User</th>
-                                            <th>Date</th>
-                                            <th>Reward Amount</th>
+                                            <th>Campaign</th>
+                                            <th>Signup Bonus</th>
+                                            <th>Validity</th>
+                                            <th>Usage</th>
                                             <th>Status</th>
+                                            <th>Updated</th>
                                             <th class="w-1">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="referrals-tbody">
+                                    <tbody id="campaigns-tbody">
                                         <tr>
                                             <td colspan="8" class="text-center py-5">
                                                 <div class="spinner-border text-primary" role="status"></div>
@@ -448,15 +451,15 @@
     <script src="assets/js/api-utils/referrals.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
-    <!-- REFERRAL DETAIL MODAL -->
-    <div class="modal modal-blur fade" id="modal-detail" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-xl" role="document">
+    <!-- CAMPAIGN DETAIL MODAL -->
+    <div class="modal modal-blur fade" id="modal-campaign-detail" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Referral Details</h5>
+                    <h5 class="modal-title">Campaign Code Details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="modal-detail-body">
+                <div class="modal-body" id="modal-campaign-detail-body">
                     <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
                 </div>
                 <div class="modal-footer">
@@ -466,34 +469,65 @@
         </div>
     </div>
 
-    <!-- PROGRAM SETTINGS MODAL -->
-    <div class="modal modal-blur fade" id="modal-settings" tabindex="-1" role="dialog">
+    <!-- CREATE / EDIT CAMPAIGN MODAL -->
+    <div class="modal modal-blur fade" id="modal-campaign-editor" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Program Settings</h5>
+                    <h5 class="modal-title" id="campaign-editor-title">Create Campaign Code</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="form-settings" novalidate>
+                <form id="form-campaign" novalidate>
                     <div class="modal-body">
-                        <div id="settings-alert" class="alert d-none mb-3" role="alert"></div>
-                        <div id="settings-form-body">
-                            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                        <div id="campaign-editor-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Code</label>
+                                <input type="text" id="campaign-code" class="form-control" placeholder="e.g. LAUNCH100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Campaign Name</label>
+                                <input type="text" id="campaign-name" class="form-control" placeholder="Launch Bonus Campaign" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description</label>
+                                <textarea id="campaign-description" class="form-control" rows="2" placeholder="Optional description"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Signup Bonus Amount (₦)</label>
+                                <input type="number" id="campaign-signup-bonus" class="form-control" min="0.01" max="1000000" step="0.01" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Start Date &amp; Time</label>
+                                <input type="datetime-local" id="campaign-starts-at" class="form-control" step="60" autocomplete="off">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">End Date &amp; Time</label>
+                                <input type="datetime-local" id="campaign-expires-at" class="form-control" step="60" autocomplete="off">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Max Uses</label>
+                                <input type="number" id="campaign-max-uses" class="form-control" min="1" step="1" placeholder="Optional">
+
+                                <div class="text-secondary small">Infinity if you leave empty</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label d-block">Status</label>
+                                <label class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="campaign-is-active" checked>
+                                    <span class="form-check-label">Active</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-link link-secondary me-auto"
-                            data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="btn-save-settings">Save Settings</button>
+                        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-campaign">Save Campaign</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-
-
-
-
 
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -502,84 +536,202 @@
         RBAC.loadFromStorage();
         RBAC.applyPageGuard('referrals:read');
 
-        // ── Page state ──────────────────────────────────────────────────────────
-        var state = { page: 1, limit: 20, status: "", search: "", totalPages: 1 };
+        var state = {
+            page: 1,
+            limit: 20,
+            isActive: "",
+            code: "",
+            totalPages: 1,
+            rows: [],
+        };
+        var currentEditId = null;
+        var pageAlertTimer = null;
+
+        function escHtml(str) {
+            return String(str || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function isoToDateTimeLocal(iso) {
+            if (!iso) return "";
+            var d = new Date(iso);
+            if (isNaN(d.getTime())) return "";
+            var year = String(d.getFullYear());
+            var month = String(d.getMonth() + 1).padStart(2, "0");
+            var day = String(d.getDate()).padStart(2, "0");
+            var hour = String(d.getHours()).padStart(2, "0");
+            var minute = String(d.getMinutes()).padStart(2, "0");
+            return year + "-" + month + "-" + day + "T" + hour + ":" + minute;
+        }
+
+        function dateTimeLocalToIso(value) {
+            var raw = String(value || "").trim();
+            if (!raw) return null;
+
+            // Accept either YYYY-MM-DD or YYYY-MM-DDTHH:mm[:ss].
+            // When time is omitted, default to 00:00:00.
+            var match = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+            if (!match) return null;
+
+            var year = Number(match[1]);
+            var month = Number(match[2]);
+            var day = Number(match[3]);
+            var hour = match[4] != null ? Number(match[4]) : 0;
+            var minute = match[5] != null ? Number(match[5]) : 0;
+            var second = match[6] != null ? Number(match[6]) : 0;
+
+            if (month < 1 || month > 12) return null;
+            if (day < 1 || day > 31) return null;
+            if (hour < 0 || hour > 23) return null;
+            if (minute < 0 || minute > 59) return null;
+            if (second < 0 || second > 59) return null;
+
+            var date = new Date(year, month - 1, day, hour, minute, second, 0);
+            if (isNaN(date.getTime())) return null;
+            if (
+                date.getFullYear() !== year ||
+                date.getMonth() !== month - 1 ||
+                date.getDate() !== day ||
+                date.getHours() !== hour ||
+                date.getMinutes() !== minute ||
+                date.getSeconds() !== second
+            ) {
+                return null;
+            }
+
+            return date.toISOString();
+        }
+
+        function showDateTimePickerOnFocus(inputId) {
+            var input = document.getElementById(inputId);
+            if (!input || typeof input.showPicker !== "function") return;
+
+            input.addEventListener("focus", function () {
+                try {
+                    input.showPicker();
+                } catch (_err) {
+                    // Ignore browsers that block showPicker outside user gestures.
+                }
+            });
+        }
+
+        function setEditorAlert(type, message) {
+            var el = document.getElementById("campaign-editor-alert");
+            if (!message) {
+                el.className = "alert d-none mb-3";
+                el.textContent = "";
+                return;
+            }
+            el.className = "alert alert-" + type + " mb-3";
+            el.textContent = message;
+        }
+
+        function setPageAlert(type, message) {
+            var el = document.getElementById("campaign-page-alert");
+            if (!message) {
+                el.className = "alert d-none mb-3";
+                el.textContent = "";
+                return;
+            }
+            el.className = "alert alert-" + type + " mb-3";
+            el.textContent = message;
+        }
+
+        function flashPageAlert(type, message) {
+            if (pageAlertTimer) {
+                clearTimeout(pageAlertTimer);
+                pageAlertTimer = null;
+            }
+            setPageAlert(type, message);
+            if (!message) return;
+            pageAlertTimer = setTimeout(function () {
+                setPageAlert("", "");
+                pageAlertTimer = null;
+            }, 7000);
+        }
+
+        function buildValidityLabel(item) {
+            var start = item.startsAt ? Referrals.formatDate(item.startsAt) : "Any";
+            var end = item.expiresAt ? Referrals.formatDate(item.expiresAt) : "No expiry";
+            return start + " → " + end;
+        }
 
         document.addEventListener("DOMContentLoaded", function () {
-            // ── RBAC: re-hydrate from server, then apply nav visibility ──────
             RBAC.fetchMe().then(function() {
                 RBAC.applyPageGuard('referrals:read');
                 RBAC.applyNavVisibility();
-                // Hide Program Settings button if no permission
                 if (!RBAC.can('referrals:manage_settings')) {
-                    var btn = document.getElementById('btn-settings');
-                    if (btn) btn.style.display = 'none';
+                    var createBtn = document.getElementById('btn-create-campaign');
+                    if (createBtn) createBtn.style.display = 'none';
                 }
             });
 
-            // ── User info ───────────────────────────────────────────────────
             var user = Auth.getUser();
             if (user) {
                 var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
                 var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
-                var role     = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
-                document.getElementById("navbar-user-avatar").textContent  = initials;
-                document.getElementById("navbar-user-name").textContent    = fullName;
-                document.getElementById("navbar-user-role").textContent    = role;
-                document.getElementById("dropdown-user-name").textContent  = fullName;
+                var role = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent = initials;
+                document.getElementById("navbar-user-name").textContent = fullName;
+                document.getElementById("navbar-user-role").textContent = role;
+                document.getElementById("dropdown-user-name").textContent = fullName;
                 document.getElementById("dropdown-user-email").textContent = user.email || "";
             }
             document.getElementById("logout-btn").addEventListener("click", function (e) {
-                e.preventDefault(); Auth.logout();
+                e.preventDefault();
+                Auth.logout();
             });
 
-            // ── Initial loads ───────────────────────────────────────────────
-            loadStats();
-            loadReferrals();
+            loadCampaignCodes();
 
-            // ── Status tabs ─────────────────────────────────────────────────
             document.getElementById("status-tabs").addEventListener("click", function (e) {
                 e.preventDefault();
-                var tab = e.target.closest("a[data-status]");
+                var tab = e.target.closest("a[data-active]");
                 if (!tab) return;
                 document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 tab.classList.add("active");
-                state.status = tab.dataset.status;
+                state.isActive = tab.dataset.active;
                 state.page = 1;
-                loadReferrals();
+                loadCampaignCodes();
             });
 
-            // ── Search (debounced) ──────────────────────────────────────────
             var searchTimer;
-            document.getElementById("filter-search").addEventListener("input", function () {
+            document.getElementById("filter-code").addEventListener("input", function () {
                 clearTimeout(searchTimer);
                 var val = this.value.trim();
                 searchTimer = setTimeout(function () {
-                    state.search = val; state.page = 1; loadReferrals();
-                }, 400);
+                    state.code = val;
+                    state.page = 1;
+                    loadCampaignCodes();
+                }, 350);
             });
 
-            // ── Per-page ────────────────────────────────────────────────────
             document.getElementById("filter-limit").addEventListener("change", function () {
-                state.limit = parseInt(this.value, 10); state.page = 1; loadReferrals();
+                state.limit = parseInt(this.value, 10);
+                state.page = 1;
+                loadCampaignCodes();
             });
 
-            // ── Clear filters ───────────────────────────────────────────────
             document.getElementById("btn-clear").addEventListener("click", function () {
-                document.getElementById("filter-search").value = "";
-                document.getElementById("filter-limit").value  = "20";
+                state.page = 1;
+                state.limit = 20;
+                state.isActive = "";
+                state.code = "";
+                document.getElementById("filter-code").value = "";
+                document.getElementById("filter-limit").value = "20";
                 document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
-                document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
-                state.page = 1; state.limit = 20; state.status = ""; state.search = "";
-                loadReferrals();
+                document.querySelector("#status-tabs .nav-link[data-active='']").classList.add("active");
+                loadCampaignCodes();
             });
 
-            // ── Refresh button ──────────────────────────────────────────────
             document.getElementById("btn-refresh").addEventListener("click", function () {
-                loadStats(); loadReferrals();
+                loadCampaignCodes();
             });
 
-            // ── Pagination clicks ───────────────────────────────────────────
             document.getElementById("pagination-btns").addEventListener("click", function (e) {
                 e.preventDefault();
                 var a = e.target.closest("a[data-page]");
@@ -587,287 +739,329 @@
                 var p = parseInt(a.dataset.page, 10);
                 if (p < 1 || p > state.totalPages) return;
                 state.page = p;
-                loadReferrals();
+                loadCampaignCodes();
                 window.scrollTo({ top: 0, behavior: "smooth" });
             });
 
-            // ── Table row / action button clicks ────────────────────────────
-            document.getElementById("referrals-tbody").addEventListener("click", function (e) {
-                var viewBtn = e.target.closest(".btn-view");
-                if (viewBtn) { e.stopPropagation(); openDetail(viewBtn.dataset.userId); return; }
-                var row = e.target.closest(".referral-row");
-                if (row) openDetail(row.dataset.userId);
+            document.getElementById("campaigns-tbody").addEventListener("click", function (e) {
+                var editBtn = e.target.closest(".btn-edit-campaign");
+                if (editBtn) { e.stopPropagation(); openCampaignEditor(editBtn.dataset.id, true); return; }
+                var deleteBtn = e.target.closest(".btn-delete-campaign");
+                if (deleteBtn) { e.stopPropagation(); deleteCampaignCode(deleteBtn.dataset.id); return; }
+                var viewBtn = e.target.closest(".btn-view-campaign");
+                if (viewBtn) { e.stopPropagation(); openCampaignDetail(viewBtn.dataset.id); return; }
+                var row = e.target.closest(".campaign-row");
+                if (row) openCampaignDetail(row.dataset.id);
             });
 
-            // ── Settings modal: load on show ────────────────────────────────
-            var settingsModalEl = document.getElementById("modal-settings");
-            settingsModalEl.addEventListener("show.bs.modal", loadSettingsModal);
-
-            // ── Settings form submit ────────────────────────────────────────
-            document.getElementById("form-settings").addEventListener("submit", async function (e) {
-                e.preventDefault();
-                var alertEl = document.getElementById("settings-alert");
-                var btn = document.getElementById("btn-save-settings");
-                alertEl.className = "alert d-none";
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving\u2026';
-                try {
-                    var payload = collectSettingsPayload();
-                    await Referrals.updateSettings(payload);
-                    alertEl.className = "alert alert-success";
-                    alertEl.textContent = "Settings saved successfully.";
-                    setTimeout(function () {
-                        bootstrap.Modal.getInstance(settingsModalEl).hide();
-                    }, 1200);
-                } catch (err) {
-                    alertEl.className = "alert alert-danger";
-                    alertEl.textContent = err.message || "Failed to save settings.";
-                } finally {
-                    btn.disabled = false;
-                    btn.textContent = "Save Settings";
-                }
+            document.getElementById("btn-create-campaign").addEventListener("click", function () {
+                openCampaignEditor(null);
             });
+
+            showDateTimePickerOnFocus("campaign-starts-at");
+            showDateTimePickerOnFocus("campaign-expires-at");
+
+            document.getElementById("form-campaign").addEventListener("submit", saveCampaign);
         });
 
-        // ── Load stats ──────────────────────────────────────────────────────────
-        // Response: { total, rewarded, failed, pending, totalRewarded }
-        async function loadStats() {
-            try {
-                var data = await Referrals.getStats();
-                document.getElementById("stat-total").textContent    = data.total    ?? "\u2014";
-                document.getElementById("stat-rewarded").textContent = data.rewarded ?? "\u2014";
-                document.getElementById("stat-rewards").textContent  = Referrals.formatMoney(data.totalRewarded ?? 0);
-                document.getElementById("stat-pending").textContent  = data.pending  ?? "\u2014";
-            } catch (e) { console.warn("Stats:", e); }
+        function renderStats(meta, rows) {
+            var total = meta.total != null ? meta.total : rows.length;
+            var active = rows.filter(function (r) { return !!r.isActive; }).length;
+            var inactive = rows.length - active;
+            var uses = rows.reduce(function (sum, r) { return sum + Number(r.usedCount || 0); }, 0);
+
+            document.getElementById("stat-total-campaigns").textContent = total;
+            document.getElementById("stat-active-campaigns").textContent = active;
+            document.getElementById("stat-inactive-campaigns").textContent = inactive;
+            document.getElementById("stat-total-uses").textContent = uses;
         }
 
-        // ── Load referrals table ────────────────────────────────────────────────
-        async function loadReferrals() {
-            var tbody = document.getElementById("referrals-tbody");
+        async function loadCampaignCodes() {
+            var tbody = document.getElementById("campaigns-tbody");
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-            document.getElementById("results-label").textContent = "Loading\u2026";
+            document.getElementById("results-label").textContent = "Loading…";
+
             try {
-                var result = await Referrals.getAll({
-                    page: state.page, limit: state.limit,
-                    status: state.status, search: state.search
+                var result = await Referrals.getCampaignCodes({
+                    page: state.page,
+                    limit: state.limit,
+                    isActive: state.isActive === "" ? undefined : state.isActive,
+                    code: state.code || undefined,
                 });
-                var rows = result.data || result.referrals || (Array.isArray(result) ? result : []);
-                var meta = result.meta || result.pagination || {};
+                var rows = result.data || [];
+                var meta = result.meta || {};
+
+                state.rows = rows;
                 state.totalPages = meta.totalPages || meta.pages || 1;
-                var count = meta.total ?? rows.length;
-                document.getElementById("results-label").textContent = count + " referral" + (count !== 1 ? "s" : "") + " found";
-                renderTable(rows);
+
+                var count = meta.total != null ? meta.total : rows.length;
+                document.getElementById("results-label").textContent = count + " campaign" + (count !== 1 ? "s" : "") + " found";
+
+                renderStats(meta, rows);
+                renderCampaignTable(rows);
                 renderPagination(meta);
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + (err.message || "Failed to load referrals.") + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + escHtml(err.message || "Failed to load campaign codes.") + '</td></tr>';
                 document.getElementById("results-label").textContent = "Error";
             }
         }
 
-        // ── Render table ────────────────────────────────────────────────────────
-        // Each row: { id, referrerId, referredId, code, status, rewardAmount, createdAt,
-        //             referrer:{id,firstName,lastName,email}, referred:{id,firstName,lastName,email,createdAt} }
-        function renderTable(rows) {
-            var tbody = document.getElementById("referrals-tbody");
+        function renderCampaignTable(rows) {
+            var tbody = document.getElementById("campaigns-tbody");
             if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No referrals found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No campaign codes found.</td></tr>';
                 return;
             }
-            tbody.innerHTML = rows.map(function (r, i) {
-                var referrer      = r.referrer || {};
-                var referrerName  = referrer.firstName
-                    ? referrer.firstName + " " + referrer.lastName : "\u2014";
-                var referrerEmail = referrer.email
-                    ? '<div class="text-secondary small">' + referrer.email + '</div>' : "";
-                var code     = r.code || "\u2014";
-                var referred = r.referred || {};
-                var referredName  = referred.firstName
-                    ? referred.firstName + " " + referred.lastName : "\u2014";
-                var referredEmail = referred.email
-                    ? '<div class="text-secondary small">' + referred.email + '</div>' : "";
-                var referredHtml  = referredName !== "\u2014"
-                    ? '<div class="fw-semibold">' + referredName + '</div>' + referredEmail
-                    : '<span class="text-secondary">\u2014</span>';
-                var date   = Referrals.formatDate(r.createdAt);
-                var reward = Referrals.formatMoney(r.rewardAmount ?? 0);
-                var status = r.status || "PENDING";
-                var userId = r.referrerId || referrer.id || "";
-                return '<tr class="referral-row" data-user-id="' + userId + '">' +
+
+            tbody.innerHTML = rows.map(function (c, i) {
+                var usage = Number(c.usedCount || 0) + " / " + (c.maxUses != null ? Number(c.maxUses) : "∞");
+                var code = escHtml(c.code || "—");
+                var name = escHtml(c.name || "—");
+                var desc = c.description ? '<div class="text-secondary small">' + escHtml(c.description) + '</div>' : "";
+                var bonus = Referrals.formatMoney(c.signupBonusAmount || 0);
+                var validity = buildValidityLabel(c);
+                var updated = Referrals.formatDateTime(c.updatedAt || c.createdAt);
+
+                return '<tr class="campaign-row" data-id="' + escHtml(c.id) + '">' +
                     '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
-                    '<td><div class="fw-semibold">' + referrerName + '</div>' + referrerEmail + '</td>' +
-                    '<td><code class="text-primary">' + code + '</code></td>' +
-                    '<td>' + referredHtml + '</td>' +
-                    '<td class="text-secondary small">' + date + '</td>' +
-                    '<td class="fw-semibold">' + reward + '</td>' +
-                    '<td>' + Referrals.rewardBadge(status) + '</td>' +
-                    '<td><button class="btn btn-sm btn-outline-secondary btn-view" data-user-id="' + userId + '" title="View referrals">' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
-                    '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>' +
-                    '<path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
-                    '</svg></button></td></tr>';
+                    '<td><span class="campaign-code text-primary">' + code + '</span></td>' +
+                    '<td><div class="fw-semibold">' + name + '</div>' + desc + '</td>' +
+                    '<td class="fw-semibold">' + bonus + '</td>' +
+                    '<td class="text-secondary small">' + escHtml(validity) + '</td>' +
+                    '<td><span class="badge bg-blue-lt usage-pill">' + escHtml(usage) + '</span></td>' +
+                    '<td>' + Referrals.activeBadge(!!c.isActive) + '</td>' +
+                    '<td class="text-secondary small">' + escHtml(updated) + '</td>' +
+                    '<td><div class="d-flex gap-1">' +
+                    '<button class="btn btn-sm btn-outline-secondary btn-view-campaign" data-id="' + escHtml(c.id) + '" title="View">' +
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>' +
+                    '</button>' +
+                    (RBAC.can('referrals:manage_settings')
+                        ? '<button class="btn btn-sm btn-outline-primary btn-edit-campaign" data-id="' + escHtml(c.id) + '" title="Edit">Edit</button>' +
+                          '<button class="btn btn-sm btn-outline-danger btn-delete-campaign" data-id="' + escHtml(c.id) + '" title="Delete">Delete</button>'
+                        : '') +
+                    '</div></td>' +
+                    '</tr>';
             }).join("");
         }
 
-        // ── Render pagination ───────────────────────────────────────────────────
+        async function deleteCampaignCode(id) {
+            if (!id) return;
+
+            var item = (state.rows || []).find(function (row) {
+                return String(row.id || "") === String(id);
+            }) || {};
+            var code = item.code || id;
+
+            var confirmed = window.confirm(
+                'Delete campaign code "' + code + '"?\n\nIf it has usage history, it will be deactivated instead of deleted.'
+            );
+            if (!confirmed) return;
+
+            try {
+                var result = await Referrals.deleteCampaignCode(id);
+                var action = String(result && result.action ? result.action : "").toUpperCase();
+                var message = (result && result.message)
+                    || (action === "DEACTIVATED"
+                        ? "Campaign code has usage history and was deactivated."
+                        : "Campaign code deleted successfully.");
+
+                flashPageAlert(action === "DEACTIVATED" ? "warning" : "success", message);
+                await loadCampaignCodes();
+            } catch (err) {
+                flashPageAlert("danger", err.message || "Failed to delete campaign code.");
+            }
+        }
+
         function renderPagination(meta) {
-            var total = meta.total || 0, page = meta.page || state.page;
-            var limit = meta.limit || state.limit, pages = meta.totalPages || meta.pages || 1;
-            var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
+            var total = meta.total || 0;
+            var page = meta.page || state.page;
+            var limit = meta.limit || state.limit;
+            var pages = meta.totalPages || meta.pages || 1;
+            var from = total ? (page - 1) * limit + 1 : 0;
+            var to = Math.min(page * limit, total);
+
             document.getElementById("pagination-info").textContent = total
-                ? "Showing " + from + "\u2013" + to + " of " + total : "No results";
+                ? "Showing " + from + "–" + to + " of " + total
+                : "No results";
+
             var ul = document.getElementById("pagination-btns");
-            ul.innerHTML = '';
-            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">\u00ab</a></li>');
-            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+            ul.innerHTML = "";
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
+
+            var start = Math.max(1, page - 2);
+            var end = Math.min(pages, start + 4);
             for (var p = start; p <= end; p++) {
                 ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
             }
-            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">\u00bb</a></li>');
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
         }
 
-        // ── Open detail modal (user referral list) ──────────────────────────────
-        // Response: { referralCode:{code,totalUses,totalEarned,...}, referrals:[...], referredBy:{...}|null }
-        async function openDetail(userId) {
-            if (!userId) return;
-            var body = document.getElementById("modal-detail-body");
+        async function openCampaignDetail(id) {
+            if (!id) return;
+            var body = document.getElementById("modal-campaign-detail-body");
             body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
-            var modal = new bootstrap.Modal(document.getElementById("modal-detail"));
-            modal.show();
+            new bootstrap.Modal(document.getElementById("modal-campaign-detail")).show();
+
             try {
-                var data = await Referrals.getByUser(userId);
-                var rc         = data.referralCode || {};
-                var referrals  = data.referrals || [];
-                var referredBy = data.referredBy || null;
-
-                // Mini stats from referralCode object
-                var totalUses   = rc.totalUses   ?? referrals.length;
-                var totalEarned = Referrals.formatMoney(rc.totalEarned ?? 0);
-                var rewarded    = referrals.filter(function (r) { return r.status === "REWARDED"; }).length;
-
-                var html = '<div class="row g-3 mb-4">';
-                html += '<div class="col-12 d-flex align-items-center gap-3">';
-                html += '<div><h4 class="mb-0">Referral Code: <code class="text-primary">' + (rc.code || "\u2014") + '</code></h4>';
-                html += '<div class="text-secondary small">User ID: ' + userId + '</div></div>';
-                html += '</div>';
-                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center">' +
-                    '<div class="h3 mb-0">' + totalUses + '</div><div class="text-secondary small">Total Uses</div>' +
-                    '</div></div></div>';
-                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center">' +
-                    '<div class="h3 mb-0">' + rewarded + '</div><div class="text-secondary small">Rewarded</div>' +
-                    '</div></div></div>';
-                html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center">' +
-                    '<div class="h3 mb-0">' + totalEarned + '</div><div class="text-secondary small">Total Earned</div>' +
-                    '</div></div></div>';
-                html += '</div>';
-
-                // Referred users table
-                // Each entry: { id, referrerId, referredId, code, status, rewardAmount, createdAt,
-                //               referred:{id,firstName,lastName,email,createdAt} }
-                if (referrals.length) {
-                    html += '<h6 class="mb-2">People Referred</h6>';
-                    html += '<div class="table-responsive"><table class="table table-sm table-vcenter">';
-                    html += '<thead><tr><th>Referred User</th><th>Date</th><th>Status</th><th>Reward</th></tr></thead><tbody>';
-                    referrals.forEach(function (ref) {
-                        var ru     = ref.referred || {};
-                        var ruName = ru.firstName ? ru.firstName + " " + ru.lastName : (ru.email || "\u2014");
-                        var date   = Referrals.formatDate(ref.createdAt);
-                        var reward = Referrals.formatMoney(ref.rewardAmount ?? 0);
-                        html += '<tr>' +
-                            '<td><div class="fw-semibold">' + ruName + '</div>' +
-                            (ru.email ? '<div class="text-secondary small">' + ru.email + '</div>' : '') + '</td>' +
-                            '<td class="text-secondary small">' + date + '</td>' +
-                            '<td>' + Referrals.rewardBadge(ref.status || "PENDING") + '</td>' +
-                            '<td>' + reward + '</td></tr>';
-                    });
-                    html += '</tbody></table></div>';
-                } else {
-                    html += '<div class="text-secondary text-center py-3">No referrals made yet.</div>';
-                }
-
-                // Referred-by section (who referred this user, optional)
-                if (referredBy) {
-                    var rb     = referredBy.referrer || {};
-                    var rbName = rb.firstName ? rb.firstName + " " + rb.lastName : "\u2014";
-                    html += '<hr class="my-3">';
-                    html += '<h6 class="mb-2">Referred By</h6>';
-                    html += '<div class="d-flex align-items-center gap-2 flex-wrap">';
-                    html += '<span class="fw-semibold">' + rbName + '</span>';
-                    if (rb.email) html += '<span class="text-secondary small">' + rb.email + '</span>';
-                    html += '<span class="ms-auto">' + Referrals.rewardBadge(referredBy.status || "PENDING") + '</span>';
-                    html += '<span class="fw-semibold ms-2">' + Referrals.formatMoney(referredBy.rewardAmount ?? 0) + '</span>';
-                    html += '</div>';
-                    html += '<div class="text-secondary small mt-1">Code used: <code>' + (referredBy.code || "\u2014") +
-                        '</code> &bull; ' + Referrals.formatDate(referredBy.createdAt) + '</div>';
-                }
-
+                var c = await Referrals.getCampaignCode(id);
+                var usage = Number(c.usedCount || 0) + " / " + (c.maxUses != null ? Number(c.maxUses) : "∞");
+                var html = '' +
+                    '<div class="row g-3">' +
+                    '<div class="col-md-6"><div class="text-secondary small">Code</div><div class="fw-semibold campaign-code">' + escHtml(c.code || "—") + '</div></div>' +
+                    '<div class="col-md-6"><div class="text-secondary small">Status</div><div>' + Referrals.activeBadge(!!c.isActive) + '</div></div>' +
+                    '<div class="col-md-8"><div class="text-secondary small">Campaign Name</div><div class="fw-semibold">' + escHtml(c.name || "—") + '</div></div>' +
+                    '<div class="col-md-4"><div class="text-secondary small">Signup Bonus</div><div class="fw-semibold">' + Referrals.formatMoney(c.signupBonusAmount || 0) + '</div></div>' +
+                    '<div class="col-12"><div class="text-secondary small">Description</div><div>' + escHtml(c.description || "—") + '</div></div>' +
+                    '<div class="col-md-6"><div class="text-secondary small">Starts At</div><div>' + escHtml(Referrals.formatDateTime(c.startsAt)) + '</div></div>' +
+                    '<div class="col-md-6"><div class="text-secondary small">Expires At</div><div>' + escHtml(Referrals.formatDateTime(c.expiresAt)) + '</div></div>' +
+                    '<div class="col-md-6"><div class="text-secondary small">Usage</div><div>' + escHtml(usage) + '</div></div>' +
+                    '<div class="col-md-6"><div class="text-secondary small">Last Updated</div><div>' + escHtml(Referrals.formatDateTime(c.updatedAt || c.createdAt)) + '</div></div>' +
+                    '<div class="col-12"><div class="text-secondary small">ID</div><div class="font-monospace text-break">' + escHtml(c.id || "—") + '</div></div>' +
+                    '</div>';
                 body.innerHTML = html;
             } catch (err) {
-                body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+                body.innerHTML = '<div class="alert alert-danger">' + escHtml(err.message || "Failed to load details.") + '</div>';
             }
         }
 
-        // ── Settings modal helpers ──────────────────────────────────────────────
-        async function loadSettingsModal() {
-            var formBody = document.getElementById("settings-form-body");
-            var alertEl  = document.getElementById("settings-alert");
-            alertEl.className = "alert d-none";
-            formBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+        async function openCampaignEditor(id, showModal) {
+            currentEditId = id || null;
+            setEditorAlert("", "");
+
+            var title = document.getElementById("campaign-editor-title");
+            var btn = document.getElementById("btn-save-campaign");
+            var codeInput = document.getElementById("campaign-code");
+            var editorModalEl = document.getElementById("modal-campaign-editor");
+
+            if (showModal) {
+                bootstrap.Modal.getOrCreateInstance(editorModalEl).show();
+            }
+
+            document.getElementById("form-campaign").reset();
+            document.getElementById("campaign-is-active").checked = true;
+
+            if (!id) {
+                title.textContent = "Create Campaign Code";
+                btn.textContent = "Create Campaign";
+                codeInput.disabled = false;
+                return;
+            }
+
+            title.textContent = "Edit Campaign Code";
+            btn.textContent = "Save Changes";
+            codeInput.disabled = true;
+
             try {
-                var settings = await Referrals.getSettings();
-                formBody.innerHTML = buildSettingsForm(settings);
+                var c = await Referrals.getCampaignCode(id);
+                document.getElementById("campaign-code").value = c.code || "";
+                document.getElementById("campaign-name").value = c.name || "";
+                document.getElementById("campaign-description").value = c.description || "";
+                document.getElementById("campaign-signup-bonus").value = c.signupBonusAmount != null ? Number(c.signupBonusAmount) : "";
+                document.getElementById("campaign-starts-at").value = isoToDateTimeLocal(c.startsAt);
+                document.getElementById("campaign-expires-at").value = isoToDateTimeLocal(c.expiresAt);
+                document.getElementById("campaign-max-uses").value = c.maxUses != null ? Number(c.maxUses) : "";
+                document.getElementById("campaign-is-active").checked = !!c.isActive;
             } catch (err) {
-                formBody.innerHTML = '<div class="alert alert-danger">' + (err.message || "Failed to load settings.") + '</div>';
+                setEditorAlert("danger", err.message || "Failed to load campaign for editing.");
             }
         }
 
-        // Settings response: { id, isActive, rewardType:"FIXED"|"PERCENTAGE", rewardValue, minDepositAmount, createdAt, updatedAt }
-        function buildSettingsForm(s) {
-            if (!s) s = {};
-            var isActive         = s.isActive !== false;
-            var rewardType       = s.rewardType       || "FIXED";
-            var rewardValue      = s.rewardValue      ?? "";
-            var minDepositAmount = s.minDepositAmount ?? "";
+        function collectCampaignPayload() {
+            var code = document.getElementById("campaign-code").value.trim();
+            var name = document.getElementById("campaign-name").value.trim();
+            var description = document.getElementById("campaign-description").value.trim();
+            var signupBonusRaw = document.getElementById("campaign-signup-bonus").value;
+            var startsInput = document.getElementById("campaign-starts-at");
+            var expiresInput = document.getElementById("campaign-expires-at");
+            var startsAtRaw = String(startsInput.value || "").trim();
+            var expiresAtRaw = String(expiresInput.value || "").trim();
+            var startsAt = dateTimeLocalToIso(startsAtRaw);
+            var expiresAt = dateTimeLocalToIso(expiresAtRaw);
+            var maxUsesRaw = document.getElementById("campaign-max-uses").value;
+            var isActive = document.getElementById("campaign-is-active").checked;
 
-            return '<div class="row g-3">' +
-                // Program Active toggle
-                '<div class="col-12">' +
-                '<div class="form-check form-switch">' +
-                '<input class="form-check-input" type="checkbox" id="setting-isActive" name="isActive"' + (isActive ? ' checked' : '') + '>' +
-                '<label class="form-check-label fw-semibold" for="setting-isActive">Program Active</label>' +
-                '<div class="text-secondary small">Enable or disable the referral program for all users.</div>' +
-                '</div></div>' +
-                // Reward Type
-                '<div class="col-md-6">' +
-                '<label class="form-label">Reward Type</label>' +
-                '<select name="rewardType" id="setting-rewardType" class="form-select">' +
-                '<option value="FIXED"' + (rewardType === "FIXED" ? ' selected' : '') + '>Fixed Amount (&#x20A6;)</option>' +
-                '<option value="PERCENTAGE"' + (rewardType === "PERCENTAGE" ? ' selected' : '') + '>Percentage (%)</option>' +
-                '</select>' +
-                '<div class="text-secondary small">FIXED pays a flat naira amount; PERCENTAGE gives a % of the deposit.</div></div>' +
-                // Reward Value
-                '<div class="col-md-6">' +
-                '<label class="form-label">Reward Value</label>' +
-                '<input type="number" name="rewardValue" id="setting-rewardValue" class="form-control" min="0.01" step="0.01" value="' + rewardValue + '" placeholder="e.g. 500">' +
-                '<div class="text-secondary small">Flat amount (&#x20A6;) or percentage rewarded to the referrer.</div></div>' +
-                // Min Deposit Amount
-                '<div class="col-md-6">' +
-                '<label class="form-label">Minimum Deposit Amount (&#x20A6;)</label>' +
-                '<input type="number" name="minDepositAmount" class="form-control" min="0" step="0.01" value="' + minDepositAmount + '" placeholder="e.g. 1000">' +
-                '<div class="text-secondary small">Minimum deposit the referred user must make to unlock the reward.</div></div>' +
-                '</div>';
+            if (!currentEditId) {
+                if (!startsAtRaw) {
+                    throw new Error("Start date and time are required.");
+                }
+                if (!expiresAtRaw) {
+                    throw new Error("End date and time are required.");
+                }
+            }
+
+            if (startsAtRaw && !startsAt) {
+                throw new Error("Start date and time are invalid.");
+            }
+            if (expiresAtRaw && !expiresAt) {
+                throw new Error("End date and time are invalid.");
+            }
+
+            if (!/^\d+(\.\d{1,2})?$/.test(String(signupBonusRaw || "").trim())) {
+                throw new Error("Signup bonus amount must have up to 2 decimal places.");
+            }
+
+            var signupBonusAmount = Number(signupBonusRaw);
+            if (!signupBonusRaw || isNaN(signupBonusAmount)) {
+                throw new Error("Signup bonus amount is required.");
+            }
+            if (signupBonusAmount < 0.01 || signupBonusAmount > 1000000) {
+                throw new Error("Signup bonus amount must be between 0.01 and 1,000,000.");
+            }
+
+            if (!currentEditId) {
+                if (!code) throw new Error("Code is required.");
+                if (!name) throw new Error("Campaign name is required.");
+            }
+
+            if (startsAt && expiresAt && new Date(startsAt).getTime() >= new Date(expiresAt).getTime()) {
+                throw new Error("Start date and time must be earlier than end date and time.");
+            }
+
+            var payload = {
+                isActive: isActive,
+                signupBonusAmount: signupBonusAmount,
+            };
+
+            if (!currentEditId && code) payload.code = code;
+            if (name) payload.name = name;
+            if (description) payload.description = description;
+            if (startsAtRaw) payload.startsAt = startsAt;
+            if (expiresAtRaw) payload.expiresAt = expiresAt;
+
+            if (maxUsesRaw !== "") {
+                var maxUses = parseInt(maxUsesRaw, 10);
+                if (isNaN(maxUses) || maxUses < 1) {
+                    throw new Error("Max uses must be an integer greater than or equal to 1.");
+                }
+                payload.maxUses = maxUses;
+            }
+
+            return payload;
         }
 
-        function collectSettingsPayload() {
-            var form    = document.getElementById("form-settings");
-            var fd      = new FormData(form);
-            var payload = {};
-            payload.isActive   = document.getElementById("setting-isActive").checked;
-            payload.rewardType = fd.get("rewardType") || "FIXED";
-            var rv = fd.get("rewardValue");
-            if (rv !== null && rv !== "") payload.rewardValue = parseFloat(rv);
-            var mda = fd.get("minDepositAmount");
-            if (mda !== null && mda !== "") payload.minDepositAmount = parseFloat(mda);
-            return payload;
+        async function saveCampaign(e) {
+            e.preventDefault();
+            var btn = document.getElementById("btn-save-campaign");
+            setEditorAlert("", "");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+
+            try {
+                var payload = collectCampaignPayload();
+                if (currentEditId) {
+                    await Referrals.updateCampaignCode(currentEditId, payload);
+                } else {
+                    await Referrals.createCampaignCode(payload);
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById("modal-campaign-editor")).hide();
+                loadCampaignCodes();
+            } catch (err) {
+                setEditorAlert("danger", err.message || "Failed to save campaign.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = currentEditId ? "Save Changes" : "Create Campaign";
+            }
         }
     </script>
 </body>

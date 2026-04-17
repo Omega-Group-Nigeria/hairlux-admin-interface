@@ -196,8 +196,8 @@
                                 <span class="nav-link-title">Services</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="./referrals.html">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                                 <span class="nav-link-icon d-md-none d-lg-inline-block">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -210,6 +210,10 @@
                                 </span>
                                 <span class="nav-link-title">Referrals</span>
                             </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./referrals.html">Regular Referrals</a>
+                                <a class="dropdown-item" href="./referral-campaigns.html">Referral Campaigns</a>
+                            </div>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="./discounts.html">
@@ -484,12 +488,13 @@
                                     <th>Type</th>
                                     <th>Amount</th>
                                     <th>Status</th>
+                                    <th>Method</th>
                                     <th>Reference</th>
                                     <th>Date</th>
                                 </tr>
                             </thead>
                             <tbody id="user-tx-tbody">
-                                <tr><td colspan="5" class="text-center py-4">
+                                <tr><td colspan="6" class="text-center py-4">
                                     <div class="spinner-border text-primary" role="status"></div>
                                 </td></tr>
                             </tbody>
@@ -780,6 +785,58 @@
                 '<a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
         }
 
+        function formatAddress(address) {
+            if (!address || typeof address !== "object") return "—";
+            var components = address.addressComponents || {};
+            var streetAddress = address.streetAddress || components.streetAddress || "";
+            var city = address.city || components.city || "";
+            var state = address.state || components.state || "";
+            var country = address.country || components.country || "";
+            return address.fullAddress || [streetAddress, city, state, country].filter(Boolean).join(", ") || "—";
+        }
+
+        function getGoogleMapsPlaceUrl(address) {
+            if (!address || !address.placeId) return "";
+            var query = formatAddress(address);
+            return "https://www.google.com/maps/search/?api=1&query="
+                + encodeURIComponent(query)
+                + "&query_place_id="
+                + encodeURIComponent(address.placeId);
+        }
+
+        function renderAddressesSection(addresses) {
+            if (!Array.isArray(addresses) || !addresses.length) {
+                return '<div class="px-4 py-3 border-bottom">' +
+                    '<div class="subheader mb-2">Addresses</div>' +
+                    '<div class="text-secondary small">No saved addresses.</div>' +
+                    '</div>';
+            }
+
+            var items = addresses.map(function (address) {
+                var line = formatAddress(address);
+                var mapsUrl = getGoogleMapsPlaceUrl(address);
+                return '<div class="border rounded p-2 mb-2">' +
+                    '<div class="d-flex align-items-start justify-content-between gap-2">' +
+                    '<div>' +
+                    '<div class="fw-semibold">' + (address.label || "Address") + (address.isDefault ? ' <span class="badge bg-primary-lt ms-1">Default</span>' : '') + '</div>' +
+                    '<div class="text-secondary small mt-1">' + line + '</div>' +
+                    (address.placeId
+                        ? '<div class="text-secondary small mt-3">Place ID: <span class="font-monospace d-inline-block text-truncate" style="max-width: 240px; vertical-align: bottom;">' + address.placeId + '</span></div>'
+                        : '') +
+                    '</div>' +
+                    (mapsUrl
+                        ? '<a href="' + mapsUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Map</a>'
+                        : '') +
+                    '</div>' +
+                    '</div>';
+            }).join("");
+
+            return '<div class="px-4 py-3 border-bottom">' +
+                '<div class="subheader mb-2">Addresses</div>' +
+                items +
+                '</div>';
+        }
+
         // ── Open user detail offcanvas ────────────────────────────────────────────
         async function openUserDetail(id) {
             if (!id || id === "undefined") return;
@@ -794,6 +851,9 @@
                 var wallet   = u.wallet || {};
                 var recentTx = u.transactions || [];
                 var stats    = u.stats || {};
+                var addresses = Array.isArray(profile.addresses)
+                    ? profile.addresses
+                    : (Array.isArray(u.addresses) ? u.addresses : []);
                 var isActive = profile.isActive !== undefined ? profile.isActive : (profile.status === "ACTIVE");
                 var name     = [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "—";
                 var initials = ((profile.firstName || " ")[0] + (profile.lastName || " ")[0]).toUpperCase();
@@ -844,6 +904,9 @@
                     '</div>' +
                     '</div>' +
 
+                    // ── Addresses
+                    renderAddressesSection(addresses) +
+
                     // ── Profile info
                     '<div class="px-4 py-3 border-bottom">' +
                     '<div class="subheader mb-2">Profile</div>' +
@@ -878,7 +941,7 @@
             _txState.status = document.getElementById("tx-filter-status").value;
 
             var tbody = document.getElementById("user-tx-tbody");
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
             document.getElementById("user-tx-results-label").textContent = "Loading…";
 
             new bootstrap.Modal(document.getElementById("modal-user-tx")).show();
@@ -903,15 +966,17 @@
                     count + " transaction" + (count !== 1 ? "s" : "");
 
                 if (!rows.length) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-4">No transactions found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No transactions found.</td></tr>';
                 } else {
                     tbody.innerHTML = rows.map(function (t) {
                         var typeBadge   = Wallets.typeBadge(t.type);
                         var statusBadge = Wallets.statusBadge(t.status);
+                        var methodBadge = Wallets.paymentMethodBadge(t.paymentMethod);
                         return '<tr>' +
                             '<td>' + typeBadge + '</td>' +
                             '<td class="fw-semibold">' + Users.formatMoney(t.amount) + '</td>' +
                             '<td>' + statusBadge + '</td>' +
+                            '<td>' + methodBadge + '</td>' +
                             '<td class="text-secondary small font-monospace">' + (t.reference ? t.reference.slice(0, 16) + "…" : "—") + '</td>' +
                             '<td class="text-secondary small">' + Users.formatDateTime(t.createdAt) + '</td>' +
                             '</tr>';
@@ -940,7 +1005,7 @@
                     '<li class="page-item ' + (page >= pages ? "disabled" : "") + '">' +
                     '<a class="page-link tx-pg" href="#" data-page="' + (page + 1) + '">»</a></li>');
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + (err.message || "Failed to load transactions.") + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + (err.message || "Failed to load transactions.") + '</td></tr>';
             }
         }
 

@@ -4,6 +4,82 @@
  */
 const Users = (() => {
 
+    function normalizeAddress(address) {
+        if (!address || typeof address !== "object") return {};
+
+        const sourceComponents = address.addressComponents && typeof address.addressComponents === "object"
+            ? address.addressComponents
+            : {};
+
+        const streetAddress = address.streetAddress || sourceComponents.streetAddress || "";
+        const city = address.city || sourceComponents.city || "";
+        const state = address.state || sourceComponents.state || "";
+        const country = address.country || sourceComponents.country || "";
+        const fullAddress = address.fullAddress || [streetAddress, city, state, country].filter(Boolean).join(", ");
+
+        return {
+            ...address,
+            streetAddress,
+            city,
+            state,
+            country,
+            fullAddress,
+            placeId: address.placeId || "",
+            addressComponents: {
+                streetAddress,
+                city,
+                state,
+                country,
+            },
+        };
+    }
+
+    function normalizeTransaction(tx) {
+        if (!tx || typeof tx !== "object") return tx;
+        return {
+            ...tx,
+            paymentMethod: String(tx.paymentMethod || "").toUpperCase(),
+        };
+    }
+
+    function normalizeUserDetailPayload(payload) {
+        if (!payload || typeof payload !== "object") return payload;
+
+        const normalized = { ...payload };
+        const profile = normalized.user && typeof normalized.user === "object"
+            ? { ...normalized.user }
+            : { ...normalized };
+
+        const topLevelAddresses = Array.isArray(normalized.addresses)
+            ? normalized.addresses.map(normalizeAddress)
+            : [];
+
+        const profileAddresses = Array.isArray(profile.addresses)
+            ? profile.addresses.map(normalizeAddress)
+            : [];
+
+        if (topLevelAddresses.length) normalized.addresses = topLevelAddresses;
+        if (profileAddresses.length) profile.addresses = profileAddresses;
+
+        if (!profile.addresses && topLevelAddresses.length) {
+            profile.addresses = topLevelAddresses;
+        }
+
+        if (Array.isArray(normalized.transactions)) {
+            normalized.transactions = normalized.transactions.map(normalizeTransaction);
+        }
+
+        if (normalized.user && typeof normalized.user === "object") {
+            normalized.user = profile;
+            return normalized;
+        }
+
+        return {
+            ...normalized,
+            ...profile,
+        };
+    }
+
     // ── API calls ─────────────────────────────────────────────────────────────
 
     async function getAll(params = {}) {
@@ -30,7 +106,7 @@ const Users = (() => {
         const res = await Auth.fetch("/admin/users/" + id);
         const raw = await res.json();
         if (!res.ok) throw new Error(raw.message || "Failed to load user");
-        return raw.data || raw;
+        return normalizeUserDetailPayload(raw.data || raw);
     }
 
     async function getUserTransactions(id, params = {}) {
@@ -43,10 +119,10 @@ const Users = (() => {
         const raw = await res.json();
         if (!res.ok) throw new Error(raw.message || "Failed to load user transactions");
         const payload = raw.data || raw;
-        if (Array.isArray(payload)) return { data: payload, meta: {} };
+        if (Array.isArray(payload)) return { data: payload.map(normalizeTransaction), meta: {} };
         // API returns { transactions: [...], pagination: {...} }
         return {
-            data: payload.transactions || payload.data || [],
+            data: (payload.transactions || payload.data || []).map(normalizeTransaction),
             meta: payload.pagination  || payload.meta  || {},
         };
     }

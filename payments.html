@@ -197,8 +197,8 @@
                                 <span class="nav-link-title">Services</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="./referrals.html">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                                 <span class="nav-link-icon d-md-none d-lg-inline-block">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -211,6 +211,10 @@
                                 </span>
                                 <span class="nav-link-title">Referrals</span>
                             </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="./referrals.html">Regular Referrals</a>
+                                <a class="dropdown-item" href="./referral-campaigns.html">Referral Campaigns</a>
+                            </div>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="./discounts.html">
@@ -486,6 +490,7 @@
                                                 <th class="w-1 text-secondary">#</th>
                                                 <th>Reference</th>
                                                 <th>Type</th>
+                                                <th>Payment Method</th>
                                                 <th>Amount</th>
                                                 <th>User</th>
                                                 <th>Date</th>
@@ -494,7 +499,7 @@
                                         </thead>
                                         <tbody id="transactions-tbody">
                                             <tr>
-                                                <td colspan="7" class="text-center py-5">
+                                                <td colspan="8" class="text-center py-5">
                                                     <div class="spinner-border text-primary" role="status"></div>
                                                 </td>
                                             </tr>
@@ -829,7 +834,7 @@
         // ── Load transactions table ───────────────────────────────────────────────
         async function loadTransactions() {
             var tbody = document.getElementById("transactions-tbody");
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
             document.getElementById("results-label").textContent = "Loading…";
             try {
                 var result = await Wallets.getAllTransactions({
@@ -848,7 +853,7 @@
                 renderTransactionsTable(rows);
                 renderPagination("tx", meta);
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.message || "Failed to load transactions.") + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + (err.message || "Failed to load transactions.") + '</td></tr>';
                 document.getElementById("results-label").textContent = "Error";
             }
         }
@@ -859,7 +864,7 @@
             _txMap = {};
             var tbody = document.getElementById("transactions-tbody");
             if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No transactions found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No transactions found.</td></tr>';
                 return;
             }
             tbody.innerHTML = rows.map(function (t, i) {
@@ -874,6 +879,7 @@
                     '<td class="text-secondary small">' + ((txState.page - 1) * txState.limit + i + 1) + '</td>' +
                     '<td>' + ref + '</td>' +
                     '<td>' + Wallets.typeBadge(t.type) + '</td>' +
+                    '<td>' + Wallets.paymentMethodBadge(t.paymentMethod) + '</td>' +
                     '<td class="fw-semibold">' + Wallets.formatMoney(t.amount) + '</td>' +
                     '<td><div class="fw-semibold">' + name + '</div>' + email + '</td>' +
                     '<td class="text-secondary small">' + Wallets.formatDateTime(t.createdAt) + '</td>' +
@@ -892,7 +898,6 @@
             var user       = (t.wallet && t.wallet.user) || t.user || {};
             var userName   = [user.firstName, user.lastName].filter(Boolean).join(" ") || "—";
             var walletId   = (t.wallet && t.wallet.id) || "—";
-            var hasPaystack = t.paystackReference && t.paystackReference !== t.reference;
 
             document.getElementById("offcanvas-tx-body").innerHTML =
                 // Amount + badges
@@ -918,10 +923,10 @@
                 '<div class="px-4 py-3 border-bottom">' +
                 '<div class="subheader mb-2">References</div>' +
                 '<dl class="row g-1 small mb-0">' +
+                '<dt class="col-5 text-secondary fw-normal">Payment Method</dt>' +
+                '<dd class="col-7 mb-2">' + Wallets.paymentMethodBadge(t.paymentMethod) + '</dd>' +
                 '<dt class="col-5 text-secondary fw-normal">Reference</dt>' +
                 '<dd class="col-7 mb-0 font-monospace text-break">' + (t.reference || "—") + '</dd>' +
-                '<dt class="col-5 text-secondary fw-normal">Paystack Ref</dt>' +
-                '<dd class="col-7 mb-0 font-monospace text-break">' + (t.paystackReference || '<span class="text-secondary">—</span>') + '</dd>' +
                 '<dt class="col-5 text-secondary fw-normal">Wallet ID</dt>' +
                 '<dd class="col-7 mb-0 font-monospace text-break">' + walletId + '</dd>' +
                 '<dt class="col-5 text-secondary fw-normal">Transaction ID</dt>' +
@@ -993,12 +998,13 @@
                             '<td>' + Wallets.typeBadge(t.type) + '</td>' +
                             '<td class="fw-semibold">' + Wallets.formatMoney(t.amount) + '</td>' +
                             '<td>' + Wallets.statusBadge(t.status) + '</td>' +
+                            '<td>' + Wallets.paymentMethodBadge(t.paymentMethod) + '</td>' +
                             '<td class="text-secondary small">' + Wallets.formatDateTime(t.createdAt) + '</td>' +
                             '<td class="text-secondary small font-monospace">' +
                             (t.reference ? t.reference.slice(0, 14) + "…" : "—") + '</td>' +
                             '</tr>';
                     }).join("")
-                    : '<tr><td colspan="5" class="text-center text-secondary py-3">No transactions yet.</td></tr>';
+                    : '<tr><td colspan="6" class="text-center text-secondary py-3">No transactions yet.</td></tr>';
 
                 body.innerHTML =
                     '<div class="d-flex align-items-center gap-3 mb-4">' +
@@ -1024,7 +1030,7 @@
                     '<h4 class="mb-3">Recent Transactions</h4>' +
                     '<div class="table-responsive">' +
                     '<table class="table table-vcenter table-sm table-nowrap">' +
-                    '<thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Date</th><th>Reference</th></tr></thead>' +
+                    '<thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Method</th><th>Date</th><th>Reference</th></tr></thead>' +
                     '<tbody>' + txHtml + '</tbody>' +
                     '</table></div>';
             } catch (err) {

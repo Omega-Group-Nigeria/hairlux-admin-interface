@@ -202,8 +202,8 @@
                                 <span class="nav-link-title">Services</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="../referrals.html">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                                 <span class="nav-link-icon d-md-none d-lg-inline-block">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -216,6 +216,10 @@
                                 </span>
                                 <span class="nav-link-title">Referrals</span>
                             </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="../referrals.html">Regular Referrals</a>
+                                <a class="dropdown-item" href="../referral-campaigns.html">Referral Campaigns</a>
+                            </div>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="../discounts.html">
@@ -407,6 +411,15 @@
         });
 
         // ── Render full reservation details ────────────────────────────────────
+        function escHtml(str) {
+            return String(str || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
         function renderResult(b) {
             var area     = document.getElementById("result-area");
             var customer = b.user || {};
@@ -414,10 +427,9 @@
                 ? customer.firstName + " " + customer.lastName
                 : (customer.name || b.guestName || "—");
             var services = b.services || (b.service ? [b.service] : []);
-            var address  = b.address || {};
-            var addrStr  = address.addressLine
-                ? [address.addressLine, address.city, address.state, address.country].filter(Boolean).join(", ")
-                : (address.street ? [address.street, address.city, address.state].filter(Boolean).join(", ") : null);
+            var address  = Bookings.normalizeAddress(b.address || {});
+            var addrStr  = Bookings.formatAddress(address, "");
+            var mapsUrl  = Bookings.getGoogleMapsPlaceUrl(address);
 
             var bookingType = b.bookingType || "";
             var isValid     = b.isValid;
@@ -505,7 +517,13 @@
 
                 // Address (HOME_SERVICE only)
                 (bookingType === "HOME_SERVICE" && addrStr
-                    ? '<div class="detail-section"><div class="detail-label mb-1">Service Address</div><div class="text-secondary">' + addrStr + '</div></div>'
+                                        ? '<div class="detail-section"><div class="detail-label mb-1">Service Address</div>' +
+                                            '<div class="text-secondary">' + escHtml(addrStr) + '</div>' +
+                                            (address.placeId
+                                                ? '<div class="text-secondary small mt-3">Place ID: <span class="font-monospace d-inline-block text-truncate" style="max-width: 240px; vertical-align: bottom;">' + escHtml(address.placeId) + '</span></div>' +
+                                                    '<div><a href="' + escHtml(mapsUrl) + '" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></div>'
+                                                : '') +
+                                            '</div>'
                     : '') +
 
                 // Guest info
