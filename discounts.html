@@ -975,7 +975,6 @@
             });
 
             // ── Initial load ─────────────────────────────────────────────────
-            loadStats();
             loadDiscounts();
 
             // ── Section tabs ─────────────────────────────────────────────────
@@ -1047,7 +1046,15 @@
 
             // ── Refresh ───────────────────────────────────────────────────────
             document.getElementById("btn-refresh").addEventListener("click", function () {
-                loadStats(); loadDiscounts();
+                var activeSection = (document.querySelector("#section-tabs .nav-link.active") || {}).dataset.section || "discounts";
+                if (activeSection === "influencer") {
+                    loadInfluencerCodes();
+                } else if (activeSection === "influencers-mgmt") {
+                    loadInfluencerStats();
+                    loadInfluencersList();
+                } else {
+                    loadDiscounts();
+                }
             });
 
             // ── Pagination: discounts ─────────────────────────────────────────
@@ -1107,7 +1114,7 @@
                     alertEl.textContent = "Discount code created successfully.";
                     this.reset();
                     document.getElementById("create-isActive").checked = true;
-                    loadStats(); loadDiscounts();
+                    loadDiscounts();
                     setTimeout(function () {
                         bootstrap.Modal.getInstance(document.getElementById("modal-create")).hide();
                     }, 1200);
@@ -1134,7 +1141,7 @@
                     await Discounts.update(id, payload);
                     alertEl.className = "alert alert-success";
                     alertEl.textContent = "Discount code updated.";
-                    loadStats(); loadDiscounts();
+                    loadDiscounts();
                     setTimeout(function () {
                         bootstrap.Modal.getInstance(document.getElementById("modal-edit")).hide();
                     }, 1200);
@@ -1155,7 +1162,7 @@
                 try {
                     await Discounts.remove(pendingDeleteId);
                     bootstrap.Modal.getInstance(document.getElementById("modal-delete")).hide();
-                    loadStats(); loadDiscounts();
+                    loadDiscounts();
                 } catch (err) {
                     alert(err.message || "Failed to delete.");
                 } finally {
@@ -1421,7 +1428,7 @@
             var sel = document.getElementById("inf-user-select");
             sel.innerHTML = '<option value="">Loading\u2026</option>';
             try {
-                var result = await Influencers.getAll({ limit: 100, page: 1, isActive: "true" });
+                var result = await Influencers.getAll({ limit: 20, page: 1, isActive: "true" });
                 var items  = result.data || result.influencers || (Array.isArray(result) ? result : []);
                 sel.innerHTML = '<option value="">\u2014 Select an influencer \u2014</option>';
                 items.forEach(function (inf) {
@@ -1436,25 +1443,20 @@
             }
         }
 
-        // ── Load stats ────────────────────────────────────────────────────────────
-        async function loadStats() {
-            try {
-                // Fetch all discount codes + influencer count in parallel.
-                // isActive filter is ignored by the API meta.total, so we derive counts client-side.
-                var results = await Promise.all([
-                    Discounts.getAll({ limit: 100, page: 1 }),
-                    Discounts.getAllInfluencer({ limit: 1, page: 1 })
-                ]);
-                var items    = results[0].data || results[0].discounts || (Array.isArray(results[0]) ? results[0] : []);
-                var total    = (results[0].meta || results[0].pagination || {}).total ?? items.length;
-                var active   = items.filter(function (d) { return d.isActive !== false; }).length;
-                var inactive = items.filter(function (d) { return d.isActive === false; }).length;
-                var infTotal = (results[1].meta || results[1].pagination || {}).total ?? 0;
-                document.getElementById("stat-total").textContent      = total;
-                document.getElementById("stat-active").textContent     = active;
-                document.getElementById("stat-inactive").textContent   = inactive;
-                document.getElementById("stat-influencer").textContent = infTotal;
-            } catch (e) { console.warn("Stats:", e); }
+        // ── Stats helpers (no extra network calls) ──────────────────────────────
+        function updateDiscountStats(rows, meta) {
+            var total = meta && meta.total != null ? Number(meta.total) : rows.length;
+            var active = rows.filter(function (d) { return d.isActive !== false; }).length;
+            var inactive = rows.filter(function (d) { return d.isActive === false; }).length;
+
+            document.getElementById("stat-total").textContent = total;
+            document.getElementById("stat-active").textContent = active;
+            document.getElementById("stat-inactive").textContent = inactive;
+        }
+
+        function updateInfluencerStat(rows, meta) {
+            var total = meta && meta.total != null ? Number(meta.total) : rows.length;
+            document.getElementById("stat-influencer").textContent = total;
         }
 
         // ── Load discounts table ──────────────────────────────────────────────────
@@ -1471,6 +1473,7 @@
                 state.totalPages = meta.totalPages || meta.pages || 1;
                 var count = meta.total != null ? meta.total : rows.length;
                 document.getElementById("results-label").textContent = count + " code" + (count !== 1 ? "s" : "") + " found";
+                updateDiscountStats(rows, meta);
                 renderDiscountsTable(rows);
                 renderPagination(meta, "pagination-info", "pagination-btns", state);
             } catch (err) {
@@ -1520,6 +1523,7 @@
                 infState.totalPages = meta.totalPages || meta.pages || 1;
                 var count = meta.total != null ? meta.total : rows.length;
                 document.getElementById("inf-results-label").textContent = count + " code" + (count !== 1 ? "s" : "") + " found";
+                updateInfluencerStat(rows, meta);
                 renderInfluencerTable(rows);
                 renderPagination(meta, "inf-pagination-info", "inf-pagination-btns", infState);
             } catch (err) {
@@ -1792,7 +1796,7 @@
             try {
                 // Single call — derive active/inactive counts from the returned data
                 // rather than making 3 separate requests (the API ignores isActive in meta.total)
-                var result = await Influencers.getAll({ limit: 100, page: 1 });
+                var result = await Influencers.getAll({ limit: 20, page: 1 });
                 var items  = result.data || result.influencers || (Array.isArray(result) ? result : []);
                 var total  = (result.meta || result.pagination || {}).total ?? items.length;
                 var active   = items.filter(function (inf) { return inf.isActive !== false; }).length;

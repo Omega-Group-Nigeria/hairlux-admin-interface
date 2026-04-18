@@ -125,7 +125,7 @@ const RBAC = (() => {
      *   requireAny — user must have at least one of the listed permissions
      *
      * This covers the canonical nav order:
-     *   Dashboard → Bookings → Payments → Users → Services → Referrals → Discounts → Careers
+     *   Dashboard → Bookings → Payments → Users → Services → Referrals → Discounts → Careers → Staff
      */
     const _NAV_MAP = {
         'index.html':     { type: 'require',    perm:  'analytics:read' },
@@ -137,6 +137,7 @@ const RBAC = (() => {
         'referral-campaigns.html': { type: 'require', perm: 'referrals:read' },
         'discounts.html': { type: 'require',    perm:  'discounts:read' },
         'careers.html':   { type: 'require',    perm:  'jobs:read' },
+        'staff.html':     { type: 'requireAny', perms: ['staff:read', 'staff:create', 'staff:update', 'staff:archive', 'staff:manage_status', 'staff:manage_locations'] },
     };
 
     /**
@@ -145,7 +146,7 @@ const RBAC = (() => {
      * Falls back to 'settings.html' if nothing matches.
      */
     function getFirstAccessiblePage() {
-        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'referrals.html', 'discounts.html', 'careers.html'];
+        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'referrals.html', 'discounts.html', 'careers.html', 'staff.html'];
         for (var i = 0; i < order.length; i++) {
             var rule = _NAV_MAP[order[i]];
             if (!rule) continue;

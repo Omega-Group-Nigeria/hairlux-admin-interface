@@ -676,6 +676,12 @@
 
             // ── Wallet table row click ────────────────────────────────────────────
             document.getElementById("wallets-tbody").addEventListener("click", function (e) {
+                var viewBtn = e.target.closest(".btn-wallet-view");
+                if (viewBtn) {
+                    e.stopPropagation();
+                    openWalletDetail(viewBtn.dataset.userId);
+                    return;
+                }
                 var row = e.target.closest(".wallet-row");
                 if (row) openWalletDetail(row.dataset.userId);
             });
@@ -823,7 +829,7 @@
                     '<td class="fw-semibold text-success">' + bal + '</td>' +
                     '<td>' + txCnt + '</td>' +
                     '<td class="text-secondary small">' + last + '</td>' +
-                    '<td><button class="btn btn-sm btn-outline-secondary" onclick="openWalletDetail(\'' + u.id + '\')" title="View wallet">' +
+                    '<td><button class="btn btn-sm btn-outline-secondary btn-wallet-view" data-user-id="' + u.id + '" title="View wallet">' +
                     '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
                     '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
                     '</svg></button></td>' +

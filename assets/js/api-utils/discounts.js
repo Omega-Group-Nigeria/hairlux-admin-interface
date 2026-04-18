@@ -9,12 +9,33 @@
 
 const Discounts = (() => {
 
+  const MAX_LIST_LIMIT = 20;
+
+  function normalizeListParams(params = {}) {
+    const normalized = { ...params };
+
+    if (normalized.limit !== "" && normalized.limit != null) {
+      const parsedLimit = parseInt(normalized.limit, 10);
+      normalized.limit = Number.isFinite(parsedLimit) && parsedLimit > 0
+        ? Math.min(parsedLimit, MAX_LIST_LIMIT)
+        : MAX_LIST_LIMIT;
+    }
+
+    if (normalized.page !== "" && normalized.page != null) {
+      const parsedPage = parseInt(normalized.page, 10);
+      normalized.page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    }
+
+    return normalized;
+  }
+
   // ─── DISCOUNT CODES ────────────────────────────────────────────────────────
 
   // GET /admin/discounts
   async function getAll(params = {}) {
+    const safeParams = normalizeListParams(params);
     const qs = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => { if (v !== "" && v != null) qs.set(k, v); });
+    Object.entries(safeParams).forEach(([k, v]) => { if (v !== "" && v != null) qs.set(k, v); });
     const url = "/admin/discounts" + (qs.toString() ? "?" + qs.toString() : "");
     const res = await Auth.fetch(url);
     const raw = await res.json().catch(() => ({}));
@@ -65,8 +86,9 @@ const Discounts = (() => {
 
   // GET /admin/discounts/influencer
   async function getAllInfluencer(params = {}) {
+    const safeParams = normalizeListParams(params);
     const qs = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => { if (v !== "" && v != null) qs.set(k, v); });
+    Object.entries(safeParams).forEach(([k, v]) => { if (v !== "" && v != null) qs.set(k, v); });
     const url = "/admin/discounts/influencer" + (qs.toString() ? "?" + qs.toString() : "");
     const res = await Auth.fetch(url);
     const raw = await res.json().catch(() => ({}));

@@ -432,8 +432,17 @@
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
+        var STAFF_PERMISSIONS = [
+            'staff:read',
+            'staff:create',
+            'staff:update',
+            'staff:archive',
+            'staff:manage_status',
+            'staff:manage_locations'
+        ];
         Auth.requireAuth();
         RBAC.loadFromStorage();
+        RBAC.applyPageGuard(STAFF_PERMISSIONS);
 
         var state = {
             page: 1,
@@ -453,7 +462,10 @@
         var _locationsList = [];
 
         document.addEventListener("DOMContentLoaded", function () {
-            RBAC.fetchMe().then(function () { RBAC.applyNavVisibility(); }).catch(function () {});
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuard(STAFF_PERMISSIONS);
+                RBAC.applyNavVisibility();
+            }).catch(function () {});
 
             var user = Auth.getUser();
             if (user) {
