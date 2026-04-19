@@ -43,7 +43,8 @@
         <div class="container container-tight py-4">
             <div class="text-center mb-4">
                 <!-- BEGIN NAVBAR LOGO --><a href="." aria-label="Tabler"
-                    class="navbar-brand navbar-brand-autodark"><img src="assets/img/logo.png" style="width: 70px;" alt=""></a><!-- END NAVBAR LOGO -->
+                    class="navbar-brand navbar-brand-autodark">
+                    <img id="login-brand-logo" src="assets/img/logo.png" style="width: 70px;" alt=""></a><!-- END NAVBAR LOGO -->
                     <p style="font-size: 14px;font-weight: 600;">Hairlux Administrator Panel</p>
             </div>
             
@@ -126,6 +127,28 @@
         }
         function hideAlert() {
             document.getElementById('login-alert').classList.add('d-none');
+        }
+
+        function syncLoginLogoWithTheme() {
+            var logo = document.getElementById('login-brand-logo');
+            if (!logo) return;
+            var rootTheme = document.documentElement.getAttribute('data-bs-theme');
+            var bodyTheme = document.body ? document.body.getAttribute('data-bs-theme') : '';
+            var activeTheme = (rootTheme || bodyTheme || '').toLowerCase();
+            logo.src = activeTheme === 'dark' ? 'assets/img/logo-light.webp' : 'assets/img/logo.png';
+        }
+        syncLoginLogoWithTheme();
+        var themeObserver = new MutationObserver(function (changes) {
+            for (var i = 0; i < changes.length; i++) {
+                if (changes[i].type === 'attributes' && changes[i].attributeName === 'data-bs-theme') {
+                    syncLoginLogoWithTheme();
+                    break;
+                }
+            }
+        });
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+        if (document.body) {
+            themeObserver.observe(document.body, { attributes: true, attributeFilter: ['data-bs-theme'] });
         }
 
         document.getElementById('toggle-password').addEventListener('click', function (e) {
