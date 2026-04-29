@@ -542,6 +542,20 @@
                                         <!-- ─── TAB: ADMIN ACCOUNTS ──────────────────── -->
                                         <div id="admin-tab-accounts" class="admin-tab-pane">
 
+                                            <!-- Search -->
+                                            <div class="mb-3 position-relative">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-secondary"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="admin-search-input" placeholder="Search admins by name, email or role…" autocomplete="off" />
+                                                    <button type="button" class="btn btn-outline-secondary d-none" id="admin-search-clear" title="Clear search">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+                                                    </button>
+                                                </div>
+                                                <div id="admin-search-results-info" class="form-hint mt-1 mb-0 d-none"></div>
+                                            </div>
+
                                             <!-- Stats pills -->
                                             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                                                 <span class="badge bg-secondary-lt px-3 py-2 fs-6">
@@ -1228,8 +1242,100 @@
                 _adminUsers = await Roles.getAdminUsers();
                 updateAdminStats(_adminUsers);
                 renderAdminTable(_adminUsers);
+                clearAdminSearch();
             } catch(err) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+            }
+        }
+
+        // ── Fuzzy search ──────────────────────────────────────────────────────
+        /**
+         * Simple fuzzy matcher. Returns a score > 0 if query matches str in order.
+         * Higher score = better match (exact substring gets highest score).
+         */
+        function fuzzyScore(str, query) {
+            str   = str.toLowerCase();
+            query = query.toLowerCase().trim();
+            if (!query) return 1;
+            // Exact or substring match gets top score
+            if (str.indexOf(query) !== -1) return 100 + query.length;
+            var qi = 0, si = 0, matches = 0, gaps = 0;
+            while (si < str.length && qi < query.length) {
+                if (str.charAt(si) === query.charAt(qi)) {
+                    matches++;
+                    qi++;
+                } else if (matches > 0) {
+                    gaps++;
+                }
+                si++;
+            }
+            if (qi < query.length) return 0; // couldn't match all query chars
+            // Score: more matches, fewer gaps = better
+            return matches - gaps * 0.5;
+        }
+
+        function filterAdminUsers(query) {
+            if (!query || !query.trim()) return _adminUsers.slice();
+            var q = query.trim();
+            var scored = _adminUsers.map(function(u) {
+                var name  = [u.firstName, u.lastName].filter(Boolean).join(' ') || '';
+                var email = u.email || '';
+                var role  = u.role || '';
+                var sName  = fuzzyScore(name, q);
+                var sEmail = fuzzyScore(email, q);
+                var sRole  = fuzzyScore(role, q);
+                var best   = Math.max(sName, sEmail, sRole);
+                return { user: u, score: best };
+            }).filter(function(item) { return item.score > 0; });
+            // Sort by descending score
+            scored.sort(function(a, b) { return b.score - a.score; });
+            return scored.map(function(item) { return item.user; });
+        }
+
+        function updateSearchInfo(filteredCount, totalCount, query) {
+            var infoEl = document.getElementById('admin-search-results-info');
+            if (!infoEl) return;
+            if (!query || !query.trim()) {
+                infoEl.classList.add('d-none');
+                return;
+            }
+            infoEl.classList.remove('d-none');
+            if (filteredCount === 0) {
+                infoEl.textContent = 'No results for "' + query.trim() + '"';
+            } else {
+                infoEl.textContent = 'Showing ' + filteredCount + ' of ' + totalCount + ' admin' + (totalCount === 1 ? '' : 's');
+            }
+        }
+
+        function clearAdminSearch() {
+            var input = document.getElementById('admin-search-input');
+            var clearBtn = document.getElementById('admin-search-clear');
+            if (input) input.value = '';
+            if (clearBtn) clearBtn.classList.add('d-none');
+            updateSearchInfo(0, 0, '');
+        }
+
+        function initAdminSearch() {
+            var input     = document.getElementById('admin-search-input');
+            var clearBtn  = document.getElementById('admin-search-clear');
+            if (!input) return;
+
+            input.addEventListener('input', function() {
+                var query = this.value;
+                if (clearBtn) clearBtn.classList.toggle('d-none', !query);
+                var filtered = filterAdminUsers(query);
+                renderAdminTable(filtered);
+                updateSearchInfo(filtered.length, _adminUsers.length, query);
+            });
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    input.value = '';
+                    clearBtn.classList.add('d-none');
+                    renderAdminTable(_adminUsers.slice());
+                    updateSearchInfo(0, 0, '');
+                    input.focus();
+                });
             }
         }
 
@@ -1328,6 +1434,7 @@
                     if (section === 'admin-management') {
                         populateRoleSelects().then(function() { renderPermRoleSelector(); });
                         loadAdminUsers();
+                        initAdminSearch();
                     }
                 });
             });
@@ -1557,6 +1664,7 @@
             if (hash === 'admin-management') {
                 populateRoleSelects().then(function() { renderPermRoleSelector(); });
                 loadAdminUsers();
+                initAdminSearch();
             }
         });
     </script>
