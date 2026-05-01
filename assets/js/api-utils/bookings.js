@@ -151,11 +151,16 @@ const Bookings = (() => {
   /**
    * Create a manual booking on behalf of a user (walk-in / phone booking).
    * @param {object} payload  AdminCreateBookingDto
+   *   idempotencyKey is optional but recommended — auto-generated if omitted.
    */
   async function createManualBooking(payload) {
+    const body = {
+      idempotencyKey: `admin-book-${crypto.randomUUID()}`,
+      ...payload,
+    };
     const res = await Auth.fetch("/admin/bookings", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Failed to create booking (${res.status})`);
