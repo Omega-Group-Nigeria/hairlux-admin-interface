@@ -155,6 +155,20 @@
                                 <span class="nav-link-title">Services</span>
                             </a>
                         </li>
+                                                <li class="nav-item">
+                            <a class="nav-link" href="./branches.html">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon icon-1">
+                                        <path d="M21 10c0 7 -9 13 -9 13s-9 -6 -9 -13a9 9 0 0 1 18 0" />
+                                        <path d="M12 7m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Branches</span>
+                            </a>
+                        </li>
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                                 <span class="nav-link-icon d-md-none d-lg-inline-block">
@@ -237,7 +251,6 @@
                         </div>
                         <div class="col-auto ms-auto d-flex gap-2">
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
-                            <button type="button" class="btn btn-outline-primary" id="btn-manage-locations">Manage Locations</button>
                             <button type="button" class="btn btn-primary" id="btn-create-staff">Create Staff</button>
                         </div>
                     </div>
@@ -388,65 +401,6 @@
         </div>
     </div>
 
-    <div class="modal modal-blur fade" id="modal-staff-locations" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Manage Staff Locations</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger d-none" id="locations-error"></div>
-
-                    <div class="border rounded p-3 mb-3">
-                        <div class="fw-semibold mb-2">Add new location</div>
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-8">
-                                <label class="form-label mb-1" for="location-create-name">Location Name</label>
-                                <input id="location-create-name" class="form-control form-control-sm" placeholder="Lekki Branch">
-                            </div>
-                            <div class="col-md-4 d-grid">
-                                <button class="btn btn-sm btn-primary w-100" id="btn-location-create">Add</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 align-items-end mb-2">
-                        <div class="col-md-8">
-                            <label class="form-label mb-1" for="location-search">Search</label>
-                            <input id="location-search" class="form-control" placeholder="Search locations...">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label mb-1" for="location-include-inactive">Visibility</label>
-                            <select id="location-include-inactive" class="form-select">
-                                <option value="false">Active only</option>
-                                <option value="true">Include inactive</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive border rounded">
-                        <table class="table table-vcenter card-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Status</th>
-                                    <th class="w-1">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="locations-tbody">
-                                <tr><td colspan="3" class="text-center py-4 text-secondary">No locations loaded.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
@@ -479,8 +433,6 @@
 
         var _currentStaffId = null;
         var _staffFormAction = null;
-        var _locationsModal = null;
-        var _locationsList = [];
 
         document.addEventListener("DOMContentLoaded", function () {
             RBAC.fetchMe().then(function () {
@@ -509,8 +461,6 @@
                 loadStaff();
                 loadBirthdays();
             });
-
-            document.getElementById("btn-manage-locations").addEventListener("click", openLocationsModal);
 
             document.getElementById("btn-create-staff").addEventListener("click", async function () {
                 await ensureLocationsLoaded();
@@ -632,41 +582,6 @@
                 if (delHist) return handleDeleteHistory(delHist.dataset.staffId, delHist.dataset.historyId);
             });
 
-            document.getElementById("btn-location-create").addEventListener("click", createManagedLocation);
-            var locationSearchTimer;
-            document.getElementById("location-search").addEventListener("input", function () {
-                clearTimeout(locationSearchTimer);
-                locationSearchTimer = setTimeout(loadLocationModalList, 300);
-            });
-            document.getElementById("location-include-inactive").addEventListener("change", loadLocationModalList);
-
-            document.getElementById("locations-tbody").addEventListener("click", function (e) {
-                var editBtn = e.target.closest(".btn-location-edit");
-                var toggleBtn = e.target.closest(".btn-location-toggle");
-                var deleteBtn = e.target.closest(".btn-location-delete");
-                var saveBtn = e.target.closest(".btn-location-save-inline");
-                var cancelBtn = e.target.closest(".btn-location-cancel-inline");
-                if (saveBtn) {
-                    saveLocationInline(saveBtn.dataset.id);
-                    return;
-                }
-                if (cancelBtn) {
-                    loadLocationModalList();
-                    return;
-                }
-                if (editBtn) {
-                    editLocationInline(editBtn.dataset.id, editBtn.dataset.name, editBtn.dataset.active === "true");
-                    return;
-                }
-                if (toggleBtn) {
-                    toggleLocationActive(toggleBtn.dataset.id, toggleBtn.dataset.name, toggleBtn.dataset.active === "true");
-                    return;
-                }
-                if (deleteBtn) {
-                    deleteManagedLocation(deleteBtn.dataset.id, deleteBtn.dataset.name);
-                }
-            });
-
             ensureLocationsLoaded();
             loadStaff();
             loadBirthdays();
@@ -705,21 +620,16 @@
             var includeInactive = config.includeInactive === true;
             try {
                 var rows = await Staff.getLocations({ includeInactive: includeInactive });
-                _locationsList = Array.isArray(rows) ? rows : [];
-                state.locationOptions = _locationsList.map(function (loc) {
+                var list = Array.isArray(rows) ? rows : [];
+                state.locationOptions = list.map(function (loc) {
                     return { value: String(locationId(loc)), label: locationLabel(loc), active: locationIsActive(loc) };
                 }).filter(function (x) { return x.value && x.label; });
 
                 if (config.syncFilters) {
                     renderLocationFilterOptions();
                 }
-                if (config.syncModal) {
-                    renderLocationsTable(_locationsList);
-                }
             } catch (err) {
-                if (config.syncModal) {
-                    renderLocationsTable([], err.message || "Failed to load locations");
-                }
+                console.warn("[staff] failed to load locations:", err.message);
             }
         }
 
@@ -1323,157 +1233,6 @@
             }
         }
 
-        async function openLocationsModal() {
-            if (!_locationsModal) {
-                _locationsModal = new bootstrap.Modal(document.getElementById("modal-staff-locations"));
-            }
-            _locationsModal.show();
-            resetLocationsError();
-            await loadLocationModalList();
-        }
-
-        function resetLocationsError() {
-            var errorEl = document.getElementById("locations-error");
-            errorEl.textContent = "";
-            errorEl.classList.add("d-none");
-        }
-
-        function showLocationsError(message) {
-            var errorEl = document.getElementById("locations-error");
-            errorEl.textContent = message || "Location action failed.";
-            errorEl.classList.remove("d-none");
-        }
-
-        function editLocationInline(id, name, isActive) {
-            var row = document.querySelector('#locations-tbody tr[data-id="' + id + '"]');
-            if (!row) return;
-            row.innerHTML =
-                '<td><input class="form-control form-control-sm" id="edit-location-name" value="' + esc(name || '') + '" placeholder="Location name"></td>' +
-                '<td><select class="form-select form-select-sm" id="edit-location-active">' +
-                    '<option value="true"' + (isActive ? ' selected' : '') + '>Active</option>' +
-                    '<option value="false"' + (!isActive ? ' selected' : '') + '>Inactive</option>' +
-                '</select></td>' +
-                '<td><div class="d-flex gap-1">' +
-                    '<button class="btn btn-sm btn-success btn-location-save-inline" data-id="' + esc(id) + '">Save</button>' +
-                    '<button class="btn btn-sm btn-outline-secondary btn-location-cancel-inline">Cancel</button>' +
-                '</div></td>';
-            document.getElementById("edit-location-name").focus();
-        }
-
-        async function loadLocationModalList() {
-            resetLocationsError();
-            var tbody = document.getElementById("locations-tbody");
-            var search = document.getElementById("location-search").value.trim();
-            var includeInactive = document.getElementById("location-include-inactive").value === "true";
-            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>';
-
-            try {
-                var rows = await Staff.getLocations({ search: search, includeInactive: includeInactive });
-                _locationsList = Array.isArray(rows) ? rows : [];
-                renderLocationsTable(_locationsList);
-                await loadManagedLocations({ includeInactive: true, syncFilters: true });
-            } catch (err) {
-                renderLocationsTable([], err.message || "Failed to load locations");
-                showLocationsError(err.message || "Failed to load locations.");
-            }
-        }
-
-        function renderLocationsTable(rows, errorMessage) {
-            var tbody = document.getElementById("locations-tbody");
-            if (errorMessage) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-danger text-center py-4">' + esc(errorMessage) + '</td></tr>';
-                return;
-            }
-            if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-secondary text-center py-4">No locations found.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = rows.map(function (loc) {
-                var id = String(locationId(loc));
-                var name = locationLabel(loc);
-                var active = locationIsActive(loc);
-                var statusBadge = active
-                    ? '<span class="badge bg-success-lt">Active</span>'
-                    : '<span class="badge bg-secondary-lt">Inactive</span>';
-                var toggleLabel = active ? 'Deactivate' : 'Activate';
-                return '<tr data-id="' + esc(id) + '">' +
-                    '<td>' + esc(name) + '</td>' +
-                    '<td>' + statusBadge + '</td>' +
-                    '<td><div class="btn-list flex-nowrap">' +
-                        '<button class="btn btn-sm btn-outline-primary btn-location-edit" data-id="' + esc(id) + '" data-name="' + esc(name) + '" data-active="' + String(active) + '">Edit</button>' +
-                        '<button class="btn btn-sm btn-outline-warning btn-location-toggle" data-id="' + esc(id) + '" data-name="' + esc(name) + '" data-active="' + String(active) + '">' + toggleLabel + '</button>' +
-                        '<button class="btn btn-sm btn-outline-danger btn-location-delete" data-id="' + esc(id) + '" data-name="' + esc(name) + '">Delete</button>' +
-                    '</div></td>' +
-                '</tr>';
-            }).join("");
-        }
-
-        async function createManagedLocation() {
-            resetLocationsError();
-            var btn = document.getElementById("btn-location-create");
-            var name = trimOrUndef(document.getElementById("location-create-name").value);
-            if (!name) {
-                showLocationsError("Location name is required.");
-                return;
-            }
-
-            try {
-                btn.disabled = true;
-                btn.textContent = "Loading...";
-                await Staff.createLocation({ name: name });
-                document.getElementById("location-create-name").value = "";
-                await loadLocationModalList();
-            } catch (err) {
-                showLocationsError(err.message || "Failed to create location.");
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "Add";
-            }
-        }
-
-        async function saveLocationInline(id) {
-            resetLocationsError();
-            var nameEl = document.getElementById("edit-location-name");
-            var activeEl = document.getElementById("edit-location-active");
-            var name = trimOrUndef(nameEl && nameEl.value);
-            var isActive = activeEl && activeEl.value === "true";
-
-            if (!id || !name) {
-                if (nameEl) nameEl.classList.add("is-invalid");
-                return;
-            }
-
-            if (nameEl) nameEl.classList.remove("is-invalid");
-
-            try {
-                await Staff.updateLocation(id, { name: name, isActive: isActive });
-                await loadLocationModalList();
-            } catch (err) {
-                showLocationsError(err.message || "Failed to update location.");
-            }
-        }
-
-        async function toggleLocationActive(id, name, currentlyActive) {
-            resetLocationsError();
-            try {
-                await Staff.updateLocation(id, { name: name, isActive: !currentlyActive });
-                await loadLocationModalList();
-            } catch (err) {
-                showLocationsError(err.message || "Failed to update location status.");
-            }
-        }
-
-        async function deleteManagedLocation(id, name) {
-            resetLocationsError();
-            if (!confirm('Delete location "' + name + '"?')) return;
-            try {
-                await Staff.deleteLocation(id);
-                await loadLocationModalList();
-            } catch (err) {
-                showLocationsError(err.message || "Failed to delete location.");
-            }
-        }
     </script>
 </body>
 

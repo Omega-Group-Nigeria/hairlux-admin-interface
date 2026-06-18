@@ -9,7 +9,8 @@
  *
  *   // 1. Outside DOMContentLoaded — sync guard from localStorage
  *   RBAC.loadFromStorage();
- *   RBAC.applyPageGuard('bookings:read'); // or array / null / true for superOnly
+ *   RBAC.applyPageGuard('bookings:read'); // or array / null
+ *   RBAC.applyPageGuardForCurrentPage();  // reads rule from _NAV_MAP for this page
  *
  *   // 2. Inside DOMContentLoaded — re-hydrate from server then apply nav
  *   RBAC.fetchMe().then(function() { RBAC.applyNavVisibility(); });
@@ -125,7 +126,7 @@ const RBAC = (() => {
      *   requireAny — user must have at least one of the listed permissions
      *
      * This covers the canonical nav order:
-     *   Dashboard → Bookings → Payments → Users → Services → Shop → Referrals → Discounts → Careers → Staff
+     *   Dashboard → Bookings → Payments → Users → Services → Branches → Shop → Referrals → Discounts → Careers → Staff
      */
     const _NAV_MAP = {
         'index.html':     { type: 'require',    perm:  'analytics:read' },
@@ -133,6 +134,7 @@ const RBAC = (() => {
         'payments.html':  { type: 'require',    perm:  'users:view_wallet' },
         'users.html':     { type: 'require',    perm:  'users:read' },
         'services.html':  { type: 'requireAny', perms: ['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories'] },
+        'branches.html':  { type: 'requireAny', perms: ['branches:read', 'branches:manage'] },
         'shop.html':      { type: 'requireAny', perms: ['shop:manage_products', 'shop:manage_categories', 'shop:manage_delivery', 'shop:update_status'] },
         'referrals.html': { type: 'require',    perm:  'referrals:read' },
         'referral-campaigns.html': { type: 'require', perm: 'referrals:read' },
@@ -147,7 +149,7 @@ const RBAC = (() => {
      * Falls back to 'settings.html' if nothing matches.
      */
     function getFirstAccessiblePage() {
-        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'shop.html', 'referrals.html', 'discounts.html', 'careers.html', 'staff.html'];
+        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'branches.html', 'shop.html', 'referrals.html', 'discounts.html', 'careers.html', 'staff.html'];
         for (var i = 0; i < order.length; i++) {
             var rule = _NAV_MAP[order[i]];
             if (!rule) continue;
@@ -199,6 +201,32 @@ const RBAC = (() => {
     }
 
     // ── Page guard ────────────────────────────────────────────────────────────
+
+    function _ruleToGuardPermission(rule) {
+        if (!rule) return null;
+        return rule.type === 'require' ? rule.perm : rule.perms;
+    }
+
+    /**
+     * Return the permission guard value for a page filename (e.g. 'shop.html').
+     * Matches the rule used by applyNavVisibility / getFirstAccessiblePage.
+     * @returns {string|string[]|null}
+     */
+    function getPagePermissions(pageFile) {
+        return _ruleToGuardPermission(_NAV_MAP[pageFile]);
+    }
+
+    function getCurrentPageFile() {
+        return window.location.pathname.split('/').pop() || 'index.html';
+    }
+
+    /**
+     * Apply the page guard for the current URL's filename using _NAV_MAP.
+     * Pages without a nav rule pass null (session-only access).
+     */
+    function applyPageGuardForCurrentPage(superOnly) {
+        return applyPageGuard(getPagePermissions(getCurrentPageFile()), superOnly);
+    }
 
     /**
      * Verify the current user has the required permission(s) and redirect if not.
@@ -259,7 +287,10 @@ const RBAC = (() => {
         getRole,
         getFirstAccessiblePage,
         getPermissions,
+        getPagePermissions,
+        getCurrentPageFile,
         applyNavVisibility,
         applyPageGuard,
+        applyPageGuardForCurrentPage,
     };
 })();

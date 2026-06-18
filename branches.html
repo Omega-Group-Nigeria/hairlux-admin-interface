@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Branches</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        table td { vertical-align: middle; }
+        .matrix-scroll { max-height: calc(100vh - 320px); overflow-y: auto; }
+        .matrix-scroll thead th { position: sticky; top: 0; z-index: 1; background: var(--tblr-bg-surface); box-shadow: 0 1px 0 var(--tblr-border-color); }
+        .matrix-row-unavailable { opacity: .65; }
+        .matrix-price-input { max-width: 110px; }
+        #offcanvas-services .offcanvas-body { padding-bottom: 0; display: flex; flex-direction: column; }
+        .matrix-footer { border-top: 1px solid var(--tblr-border-color); padding: .75rem 1rem; background: var(--tblr-bg-surface); }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg></a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1" /></svg></a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link" href="./index.html"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg></span><span class="nav-link-title">Dashboard</span></a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /></svg></span><span class="nav-link-title">Bookings</span></a>
+                            <div class="dropdown-menu"><a class="dropdown-item" href="./bookings.html">Overview</a><a class="dropdown-item" href="./bookings/index.html">Verify Booking</a><a class="dropdown-item" href="./bookings/calendar.html">Calendar</a></div>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="./payments.html"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M3 5m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" /><path d="M3 10l18 0" /></svg></span><span class="nav-link-title">Payments</span></a></li>
+                        <li class="nav-item"><a class="nav-link" href="./users.html"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg></span><span class="nav-link-title">Users</span></a></li>
+                        <li class="nav-item"><a class="nav-link" href="./services.html"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M3 21v-4a4 4 0 1 1 4 4h-4" /><path d="M21 3a16 16 0 0 0 -12.8 10.2" /><path d="M21 3a16 16 0 0 1 -10.2 12.8" /></svg></span><span class="nav-link-title">Services</span></a></li>
+                        <li class="nav-item active"><a class="nav-link" href="./branches.html"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M21 10c0 7 -9 13 -9 13s-9 -6 -9 -13a9 9 0 0 1 18 0" /><path d="M12 7m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /></svg></span><span class="nav-link-title">Branches</span></a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 17h-11v-14h-2" /><path d="M6 5l14 1l-1 7h-13" /></svg></span><span class="nav-link-title">Shop</span></a>
+                            <div class="dropdown-menu"><a class="dropdown-item" href="./shop.html#products">Products</a><a class="dropdown-item" href="./shop.html#categories">Categories</a><a class="dropdown-item" href="./shop.html#delivery">Delivery Regions</a><a class="dropdown-item" href="./shop.html#orders">Orders</a></div>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M15 5v2" /><path d="M15 11v2" /><path d="M15 17v2" /><path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" /></svg></span><span class="nav-link-title">Referrals</span></a>
+                            <div class="dropdown-menu"><a class="dropdown-item" href="./referrals.html">Regular Referrals</a><a class="dropdown-item" href="./referral-campaigns.html">Referral Campaigns</a></div>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="./discounts.html"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M15 5v2" /><path d="M15 11v2" /><path d="M15 17v2" /><path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-3a2 2 0 0 0 0 -4v-3a2 2 0 0 1 2 -2" /></svg></span><span class="nav-link-title">Discounts</span></a></li>
+                        <li class="nav-item"><a class="nav-link" href="./careers.html"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2" /></svg></span><span class="nav-link-title">Careers</span></a></li>
+                        <li class="nav-item"><a class="nav-link" href="./staff.html"><span class="nav-link-icon d-md-none d-lg-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg></span><span class="nav-link-title">Staff</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Locations</div>
+                            <h2 class="page-title">Branches</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
+                            <button type="button" class="btn btn-primary d-none" id="btn-add-branch">Add Branch</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert" class="alert d-none mb-3" role="alert"></div>
+
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-6 col-xl-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Total Branches</div><div class="h1 mb-0" id="stat-total">—</div></div></div></div>
+                        <div class="col-sm-6 col-xl-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Open</div><div class="h1 mb-0" id="stat-open">—</div></div></div></div>
+                        <div class="col-sm-6 col-xl-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Closed</div><div class="h1 mb-0" id="stat-closed">—</div></div></div></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Branches</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="card-body border-bottom py-4">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-secondary small mb-1">Search</label>
+                                    <input type="text" id="filter-search" class="form-control form-control-sm" placeholder="Branch name…">
+                                </div>
+                                <div class="col-6 col-md-auto">
+                                    <label class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="filter-inactive" checked>
+                                        <span class="form-check-label">Show closed branches</span>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-secondary" id="btn-clear-filters">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table">
+                                <thead><tr><th>Name</th><th>Address</th><th>Status</th><th>Created</th><th class="w-1">Actions</th></tr></thead>
+                                <tbody id="branches-tbody"><tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branch modal -->
+    <div class="modal modal-blur fade" id="modal-branch" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-branch-title">Add Branch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="modal-branch-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label" for="branch-name">Branch name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="branch-name" maxlength="100" placeholder="e.g. Lekki Branch">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label" for="branch-address">Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="branch-address" rows="3" maxlength="500" placeholder="e.g. 15 Admiralty Way, Lekki Phase 1, Lagos"></textarea>
+                        <div class="form-hint">Required. Max 500 characters.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-branch">Create Branch</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm modal -->
+    <div class="modal modal-blur fade" id="modal-confirm" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="confirm-title">Confirm</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body"><p id="confirm-msg" class="mb-0 text-secondary"></p></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-action">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-services" style="width:min(820px,100vw)">
+        <div class="offcanvas-header border-bottom">
+            <div>
+                <h5 class="offcanvas-title mb-0" id="matrix-title">Branch Services</h5>
+                <div class="text-secondary small" id="matrix-subtitle">—</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div id="matrix-alert" class="alert d-none mb-3" role="alert"></div>
+            <div class="mb-3">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label text-secondary small mb-1">Search services</label>
+                        <input type="text" class="form-control form-control-sm" id="matrix-search" placeholder="Service name…">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-secondary small mb-1">Category</label>
+                        <select class="form-select form-select-sm" id="matrix-category"><option value="">All categories</option></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-secondary small mb-1">Availability</label>
+                        <select class="form-select form-select-sm" id="matrix-availability">
+                            <option value="">All services</option>
+                            <option value="available">Available at branch</option>
+                            <option value="unavailable">Not available</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btn-matrix-clear">Clear</button>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-3" id="matrix-bulk-actions">
+                    <button type="button" class="btn btn-sm btn-outline-success btn-matrix-enable">Enable all</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-matrix-disable">Disable all</button>
+                    <button type="button" class="btn btn-sm btn-outline-warning btn-matrix-clear-prices">Clear overrides (shown)</button>
+                </div>
+            </div>
+            <div class="matrix-scroll flex-grow-1">
+                <table class="table table-vcenter table-sm card-table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="w-1">On</th>
+                            <th>Service</th>
+                            <th>Category</th>
+                            <th>Catalog</th>
+                            <th>Override</th>
+                            <th>Effective</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matrix-tbody"><tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm"></div></td></tr></tbody>
+                </table>
+            </div>
+            <div class="matrix-footer d-flex align-items-center justify-content-between gap-2 mt-3">
+                <span class="text-secondary small" id="matrix-dirty-label">No unsaved changes</span>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-matrix-discard" disabled>Discard</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-matrix-save" disabled>Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/api-utils/services.js"></script>
+    <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var listState = { search: "", includeInactive: true };
+        var _branches = [];
+        var _editBranchId = null;
+        var _pendingOp = null;
+        var pageAlertTimer = null;
+        var matrixAlertTimer = null;
+
+        var _matrixBranchId = null;
+        var _matrixRows = [];
+        var _matrixEdits = {};
+        var _categoryMap = {};
+        var matrixFilter = { search: "", categoryId: "", availability: "" };
+
+        function setPageAlert(type, message) {
+            var el = document.getElementById("page-alert");
+            if (!message) { el.className = "alert d-none mb-3"; el.textContent = ""; return; }
+            el.className = "alert alert-" + type + " mb-3";
+            el.textContent = message;
+        }
+
+        function flashPageAlert(type, message) {
+            if (pageAlertTimer) { clearTimeout(pageAlertTimer); pageAlertTimer = null; }
+            setPageAlert(type, message);
+            if (!message) return;
+            var el = document.getElementById("page-alert");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            pageAlertTimer = setTimeout(function () { setPageAlert("", ""); pageAlertTimer = null; }, 5000);
+        }
+
+        function setMatrixAlert(type, message) {
+            var el = document.getElementById("matrix-alert");
+            if (!message) { el.className = "alert d-none mb-3"; el.textContent = ""; return; }
+            el.className = "alert alert-" + type + " mb-3";
+            el.textContent = message;
+        }
+
+        function flashMatrixAlert(type, message) {
+            if (matrixAlertTimer) { clearTimeout(matrixAlertTimer); matrixAlertTimer = null; }
+            setMatrixAlert(type, message);
+            if (!message) return;
+            var el = document.getElementById("matrix-alert");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            matrixAlertTimer = setTimeout(function () { setMatrixAlert("", ""); matrixAlertTimer = null; }, 5000);
+        }
+
+        function esc(s) {
+            return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+        function escAttr(s) {
+            return String(s == null ? "" : s).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+        }
+
+        var BRANCH_MANAGE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></svg>';
+
+        function branchActionsHtml(branch, canManage) {
+            var isOpen = branch.isActive !== false;
+            var id = branch.id;
+            var name = escAttr(branch.name);
+            var items = '<a href="#" class="dropdown-item btn-branch-services" data-id="' + id + '" data-name="' + name + '">Branch services</a>';
+            if (canManage) {
+                items += '<div class="dropdown-divider"></div>';
+                items += '<a href="#" class="dropdown-item btn-branch-edit" data-id="' + id + '">Edit branch</a>';
+                items += '<a href="#" class="dropdown-item btn-branch-toggle" data-id="' + id + '" data-name="' + name + '" data-active="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close branch" : "Reopen branch") + '</a>';
+                items += '<div class="dropdown-divider"></div>';
+                items += '<a href="#" class="dropdown-item text-danger btn-branch-delete" data-id="' + id + '" data-name="' + name + '">Delete</a>';
+            }
+            return '<div class="dropdown">' +
+                '<button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" data-bs-boundary="window" aria-expanded="false">' +
+                BRANCH_MANAGE_ICON + 'Manage</button>' +
+                '<div class="dropdown-menu dropdown-menu-end">' + items + '</div>' +
+                '</div>';
+        }
+
+        function initBranchRowDropdowns() {
+            document.getElementById("branches-tbody").querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function (el) {
+                bootstrap.Dropdown.getOrCreateInstance(el, {
+                    popperConfig: { strategy: "fixed" },
+                });
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuardForCurrentPage();
+                RBAC.applyNavVisibility();
+                if (RBAC.can(Branches.PERMISSIONS.MANAGE)) {
+                    document.getElementById("btn-add-branch").classList.remove("d-none");
+                    document.getElementById("matrix-bulk-actions").classList.remove("d-none");
+                } else {
+                    document.getElementById("matrix-bulk-actions").classList.add("d-none");
+                    document.getElementById("btn-matrix-save").classList.add("d-none");
+                    document.getElementById("btn-matrix-discard").classList.add("d-none");
+                }
+            });
+
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                document.getElementById("navbar-user-avatar").textContent = initials;
+                document.getElementById("navbar-user-name").textContent = fullName;
+                document.getElementById("navbar-user-role").textContent = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("dropdown-user-name").textContent = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) { e.preventDefault(); Auth.logout(); });
+
+            document.getElementById("btn-refresh").addEventListener("click", function () { loadBranches({ notifySuccess: true }); });
+            document.getElementById("btn-add-branch").addEventListener("click", function () { openBranchModal(null); });
+            document.getElementById("btn-save-branch").addEventListener("click", saveBranch);
+            document.getElementById("btn-confirm-action").addEventListener("click", executeConfirmedOp);
+
+            var searchTimer;
+            document.getElementById("filter-search").addEventListener("input", function () {
+                clearTimeout(searchTimer);
+                var val = this.value.trim();
+                searchTimer = setTimeout(function () { listState.search = val; loadBranches(); }, 400);
+            });
+            document.getElementById("filter-inactive").addEventListener("change", function () {
+                listState.includeInactive = this.checked;
+                loadBranches();
+            });
+            document.getElementById("btn-clear-filters").addEventListener("click", function () {
+                document.getElementById("filter-search").value = "";
+                document.getElementById("filter-inactive").checked = true;
+                listState = { search: "", includeInactive: true };
+                loadBranches();
+            });
+
+            document.getElementById("branches-tbody").addEventListener("click", function (e) {
+                var servicesBtn = e.target.closest(".btn-branch-services");
+                var editBtn = e.target.closest(".btn-branch-edit");
+                var toggleBtn = e.target.closest(".btn-branch-toggle");
+                var deleteBtn = e.target.closest(".btn-branch-delete");
+                if (!(servicesBtn || editBtn || toggleBtn || deleteBtn)) return;
+                e.preventDefault();
+                if (servicesBtn) openServicesOffcanvas(servicesBtn.dataset.id, servicesBtn.dataset.name);
+                if (editBtn) openBranchModal(editBtn.dataset.id);
+                if (toggleBtn) confirmToggleBranch(toggleBtn.dataset.id, toggleBtn.dataset.name, toggleBtn.dataset.active === "true");
+                if (deleteBtn) confirmDeleteBranch(deleteBtn.dataset.id, deleteBtn.dataset.name);
+            });
+
+            var matrixSearchTimer;
+            document.getElementById("matrix-search").addEventListener("input", function () {
+                clearTimeout(matrixSearchTimer);
+                matrixSearchTimer = setTimeout(function () {
+                    matrixFilter.search = document.getElementById("matrix-search").value.trim();
+                    renderMatrix();
+                }, 300);
+            });
+            document.getElementById("matrix-category").addEventListener("change", function () {
+                matrixFilter.categoryId = this.value;
+                renderMatrix();
+            });
+            document.getElementById("matrix-availability").addEventListener("change", function () {
+                matrixFilter.availability = this.value;
+                renderMatrix();
+            });
+            document.getElementById("btn-matrix-clear").addEventListener("click", function () {
+                document.getElementById("matrix-search").value = "";
+                document.getElementById("matrix-category").value = "";
+                document.getElementById("matrix-availability").value = "";
+                matrixFilter = { search: "", categoryId: "", availability: "" };
+                renderMatrix();
+            });
+
+            document.getElementById("matrix-bulk-actions").addEventListener("click", function (e) {
+                if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+                if (e.target.closest(".btn-matrix-enable")) bulkMatrixAvailability(true);
+                if (e.target.closest(".btn-matrix-disable")) bulkMatrixAvailability(false);
+                if (e.target.closest(".btn-matrix-clear-prices")) bulkMatrixClearOverrides();
+            });
+            document.getElementById("matrix-tbody").addEventListener("change", function (e) {
+                var avail = e.target.closest(".matrix-available");
+                var price = e.target.closest(".matrix-price");
+                if (avail) onMatrixAvailabilityChange(avail.dataset.id, avail.checked);
+                if (price) onMatrixPriceChange(price.dataset.id, price.value);
+            });
+            document.getElementById("btn-matrix-save").addEventListener("click", saveMatrix);
+            document.getElementById("btn-matrix-discard").addEventListener("click", function () {
+                if (!matrixHasChanges()) {
+                    flashMatrixAlert("info", "No unsaved changes to discard.");
+                    return;
+                }
+                _matrixEdits = {};
+                renderMatrix();
+                updateMatrixDirtyState();
+                flashMatrixAlert("info", "Unsaved changes discarded.");
+            });
+
+            loadBranches();
+        });
+
+        async function loadBranches(options) {
+            options = options || {};
+            var tbody = document.getElementById("branches-tbody");
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                _branches = await Branches.getBranches({
+                    search: listState.search || undefined,
+                    includeInactive: listState.includeInactive,
+                });
+                var open = _branches.filter(function (b) { return b.isActive !== false; }).length;
+                document.getElementById("stat-total").textContent = _branches.length;
+                document.getElementById("stat-open").textContent = open;
+                document.getElementById("stat-closed").textContent = _branches.length - open;
+                document.getElementById("results-label").textContent = _branches.length + " branch" + (_branches.length !== 1 ? "es" : "");
+                if (options.notifySuccess) {
+                    flashPageAlert("success", "Branches refreshed.");
+                }
+                if (!_branches.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-5">No branches found.</td></tr>';
+                    return;
+                }
+                var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+                tbody.innerHTML = _branches.map(function (b) {
+                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, canManage) + '</td></tr>';
+                }).join("");
+                initBranchRowDropdowns();
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+                flashPageAlert("danger", e.message || "Failed to load branches.");
+            }
+        }
+
+        function formatBranchAddressCell(address) {
+            var text = String(address || "").trim();
+            if (!text) return '<span class="text-secondary">—</span>';
+            var display = text.length > 72 ? text.slice(0, 69) + "…" : text;
+            return '<span class="small text-secondary" title="' + escAttr(text) + '">' + esc(display) + '</span>';
+        }
+
+        function getBranchFormValues() {
+            return {
+                name: document.getElementById("branch-name").value.trim(),
+                address: document.getElementById("branch-address").value.trim(),
+            };
+        }
+
+        function validateBranchForm(values) {
+            if (!values.name) return "Please enter a branch name.";
+            if (values.name.length > 100) return "Branch name must be 100 characters or fewer.";
+            if (!values.address) return "Please enter a branch address.";
+            if (values.address.length > 500) return "Address must be 500 characters or fewer.";
+            return null;
+        }
+
+        async function openBranchModal(id) {
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            _editBranchId = id || null;
+            var errEl = document.getElementById("modal-branch-error");
+            var nameEl = document.getElementById("branch-name");
+            var addressEl = document.getElementById("branch-address");
+            errEl.classList.add("d-none");
+            document.getElementById("modal-branch-title").textContent = id ? "Edit Branch" : "Add Branch";
+            document.getElementById("btn-save-branch").textContent = id ? "Save Changes" : "Create Branch";
+            nameEl.value = "";
+            addressEl.value = "";
+
+            if (id) {
+                var branch = _branches.find(function (b) { return b.id === id; });
+                if (!branch) {
+                    try {
+                        branch = await Branches.getBranch(id);
+                    } catch (e) {
+                        flashPageAlert("danger", e.message || "Failed to load branch details.");
+                        return;
+                    }
+                }
+                nameEl.value = branch.name || "";
+                addressEl.value = branch.address || "";
+            }
+
+            new bootstrap.Modal(document.getElementById("modal-branch")).show();
+            setTimeout(function () { nameEl.focus(); }, 300);
+        }
+
+        async function saveBranch() {
+            var errEl = document.getElementById("modal-branch-error");
+            errEl.classList.add("d-none");
+            var values = getBranchFormValues();
+            var validationError = validateBranchForm(values);
+            if (validationError) {
+                errEl.textContent = validationError;
+                errEl.classList.remove("d-none");
+                return;
+            }
+            var btn = document.getElementById("btn-save-branch");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
+            try {
+                var payload = { name: values.name, address: values.address };
+                if (_editBranchId) await Branches.updateBranch(_editBranchId, payload);
+                else await Branches.createBranch(payload);
+                bootstrap.Modal.getInstance(document.getElementById("modal-branch")).hide();
+                flashPageAlert("success", _editBranchId ? "Branch updated successfully." : "Branch created successfully.");
+                loadBranches();
+            } catch (e) {
+                var msg = e.message || "Failed to save branch.";
+                errEl.textContent = msg;
+                errEl.classList.remove("d-none");
+                flashPageAlert("danger", msg);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = _editBranchId ? "Save Changes" : "Create Branch";
+            }
+        }
+
+        function confirmToggleBranch(id, name, isOpen) {
+            _pendingOp = { type: "toggleBranch", id: id, isActive: !isOpen };
+            document.getElementById("confirm-title").textContent = isOpen ? "Close Branch" : "Reopen Branch";
+            document.getElementById("confirm-msg").textContent = (isOpen ? "Close" : "Reopen") + ' "' + name + '"? ' + (isOpen ? "Customers will no longer see this branch." : "Branch will appear in the public picker again.");
+            document.getElementById("btn-confirm-action").className = isOpen ? "btn btn-warning" : "btn btn-success";
+            document.getElementById("btn-confirm-action").textContent = isOpen ? "Close Branch" : "Reopen";
+            new bootstrap.Modal(document.getElementById("modal-confirm")).show();
+        }
+
+        function confirmDeleteBranch(id, name) {
+            _pendingOp = { type: "deleteBranch", id: id };
+            document.getElementById("confirm-title").textContent = "Delete Branch";
+            document.getElementById("confirm-msg").textContent = 'Delete "' + name + '"? This fails if staff are still assigned to this location.';
+            document.getElementById("btn-confirm-action").className = "btn btn-danger";
+            document.getElementById("btn-confirm-action").textContent = "Delete";
+            new bootstrap.Modal(document.getElementById("modal-confirm")).show();
+        }
+
+        async function executeConfirmedOp() {
+            if (!_pendingOp) return;
+            var btn = document.getElementById("btn-confirm-action");
+            btn.disabled = true;
+            var orig = btn.textContent;
+            btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Working…';
+            try {
+                if (_pendingOp.type === "toggleBranch") {
+                    await Branches.updateBranch(_pendingOp.id, { isActive: _pendingOp.isActive });
+                    flashPageAlert("success", _pendingOp.isActive ? "Branch reopened." : "Branch closed.");
+                    loadBranches();
+                } else if (_pendingOp.type === "deleteBranch") {
+                    await Branches.deleteBranch(_pendingOp.id);
+                    flashPageAlert("success", "Branch deleted successfully.");
+                    loadBranches();
+                }
+                bootstrap.Modal.getInstance(document.getElementById("modal-confirm")).hide();
+            } catch (e) {
+                flashPageAlert("danger", e.message || "Operation failed.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = orig;
+                _pendingOp = null;
+            }
+        }
+
+        // ─── Service matrix ───────────────────────────────────────────────────────
+
+        function getMatrixRowState(row) {
+            var edit = _matrixEdits[row.serviceId] || {};
+            return {
+                isAvailable: "isAvailable" in edit ? edit.isAvailable : row.isAvailable,
+                walkInPrice: "walkInPrice" in edit ? edit.walkInPrice : row.walkInPrice,
+            };
+        }
+
+        function getFilteredMatrixRows() {
+            var q = (matrixFilter.search || "").toLowerCase();
+            return _matrixRows.filter(function (row) {
+                var state = getMatrixRowState(row);
+                if (q && row.name.toLowerCase().indexOf(q) === -1) return false;
+                if (matrixFilter.categoryId && row.categoryId !== matrixFilter.categoryId) return false;
+                if (matrixFilter.availability === "available" && !state.isAvailable) return false;
+                if (matrixFilter.availability === "unavailable" && state.isAvailable) return false;
+                return true;
+            });
+        }
+
+        function matrixHasChanges() {
+            return Object.keys(_matrixEdits).some(function (sid) {
+                var edit = _matrixEdits[sid];
+                var orig = _matrixRows.find(function (r) { return r.serviceId === sid; });
+                if (!orig) return false;
+                if ("isAvailable" in edit && edit.isAvailable !== orig.isAvailable) return true;
+                if ("walkInPrice" in edit && edit.walkInPrice !== orig.walkInPrice) return true;
+                return false;
+            });
+        }
+
+        function updateMatrixDirtyState() {
+            var dirty = matrixHasChanges();
+            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+            document.getElementById("matrix-dirty-label").textContent = dirty ? "Unsaved changes" : "No unsaved changes";
+            document.getElementById("matrix-dirty-label").className = dirty ? "small text-warning" : "text-secondary small";
+            if (canManage) {
+                document.getElementById("btn-matrix-save").disabled = !dirty;
+                document.getElementById("btn-matrix-discard").disabled = !dirty;
+            }
+            var shown = getFilteredMatrixRows();
+            var available = shown.filter(function (r) { return getMatrixRowState(r).isAvailable; }).length;
+            document.getElementById("matrix-subtitle").textContent = available + " of " + _matrixRows.length + " services available · " + shown.length + " shown";
+        }
+
+        function getOverrideInputValue(row) {
+            var edit = _matrixEdits[row.serviceId];
+            if (edit && "walkInPrice" in edit) return edit.walkInPrice == null ? "" : edit.walkInPrice;
+            return row.walkInPrice != null ? row.walkInPrice : "";
+        }
+
+        function onMatrixAvailabilityChange(serviceId, checked) {
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            _matrixEdits[serviceId] = Object.assign({}, _matrixEdits[serviceId] || {}, { isAvailable: checked });
+            renderMatrix();
+        }
+
+        function onMatrixPriceChange(serviceId, value) {
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            var row = _matrixRows.find(function (r) { return r.serviceId === serviceId; });
+            if (!row) return;
+            var trimmed = String(value).trim();
+            if (trimmed === "") {
+                if (row.walkInPrice != null || (_matrixEdits[serviceId] && "walkInPrice" in _matrixEdits[serviceId])) {
+                    _matrixEdits[serviceId] = Object.assign({}, _matrixEdits[serviceId] || {}, { walkInPrice: null });
+                } else if (_matrixEdits[serviceId]) {
+                    delete _matrixEdits[serviceId].walkInPrice;
+                    if (Object.keys(_matrixEdits[serviceId]).length === 0) delete _matrixEdits[serviceId];
+                }
+            } else {
+                var num = parseFloat(trimmed);
+                if (!isNaN(num) && num >= 0) {
+                    _matrixEdits[serviceId] = Object.assign({}, _matrixEdits[serviceId] || {}, { walkInPrice: num });
+                }
+            }
+            updateMatrixDirtyState();
+            var effectiveEl = document.querySelector('.matrix-effective[data-id="' + serviceId + '"]');
+            if (effectiveEl) {
+                var state = getMatrixRowState(row);
+                var eff = state.walkInPrice != null ? state.walkInPrice : row.catalogWalkInPrice;
+                effectiveEl.textContent = Branches.formatMoney(eff);
+            }
+        }
+
+        function bulkMatrixAvailability(enabled) {
+            var rows = getFilteredMatrixRows();
+            if (!rows.length) {
+                flashMatrixAlert("warning", "No services match the current filters.");
+                return;
+            }
+            rows.forEach(function (row) {
+                _matrixEdits[row.serviceId] = Object.assign({}, _matrixEdits[row.serviceId] || {}, { isAvailable: enabled });
+            });
+            renderMatrix();
+            flashMatrixAlert("info", (enabled ? "Enabled" : "Disabled") + " " + rows.length + " shown service(s). Save to apply.");
+        }
+
+        function bulkMatrixClearOverrides() {
+            var rows = getFilteredMatrixRows();
+            if (!rows.length) {
+                flashMatrixAlert("warning", "No services match the current filters.");
+                return;
+            }
+            var cleared = 0;
+            rows.forEach(function (row) {
+                var state = getMatrixRowState(row);
+                if (state.walkInPrice != null || row.walkInPrice != null) {
+                    _matrixEdits[row.serviceId] = Object.assign({}, _matrixEdits[row.serviceId] || {}, { walkInPrice: null });
+                    cleared++;
+                }
+            });
+            renderMatrix();
+            if (!cleared) {
+                flashMatrixAlert("info", "No price overrides to clear in the current view.");
+                return;
+            }
+            flashMatrixAlert("info", "Cleared overrides for " + cleared + " service(s). Save to apply.");
+        }
+
+        function buildPatchPayload() {
+            var services = [];
+            Object.keys(_matrixEdits).forEach(function (sid) {
+                var edit = _matrixEdits[sid];
+                var orig = _matrixRows.find(function (r) { return r.serviceId === sid; });
+                if (!orig) return;
+                var item = { serviceId: sid };
+                var changed = false;
+                if ("isAvailable" in edit && edit.isAvailable !== orig.isAvailable) {
+                    item.isAvailable = edit.isAvailable;
+                    changed = true;
+                }
+                if ("walkInPrice" in edit && edit.walkInPrice !== orig.walkInPrice) {
+                    item.walkInPrice = edit.walkInPrice;
+                    changed = true;
+                }
+                if (changed) services.push(item);
+            });
+            return services;
+        }
+
+        function renderMatrix() {
+            var tbody = document.getElementById("matrix-tbody");
+            var rows = getFilteredMatrixRows();
+            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No services match your filters.</td></tr>';
+                updateMatrixDirtyState();
+                return;
+            }
+            tbody.innerHTML = rows.map(function (row) {
+                var state = getMatrixRowState(row);
+                var catName = _categoryMap[row.categoryId] || "—";
+                var overrideVal = getOverrideInputValue(row);
+                var placeholder = row.catalogWalkInPrice != null ? row.catalogWalkInPrice : "";
+                var effective = state.walkInPrice != null ? state.walkInPrice : row.catalogWalkInPrice;
+                var rowCls = state.isAvailable ? "" : "matrix-row-unavailable";
+                var switchHtml = canManage
+                    ? '<label class="form-check form-switch m-0"><input type="checkbox" class="form-check-input matrix-available" data-id="' + row.serviceId + '"' + (state.isAvailable ? " checked" : "") + '></label>'
+                    : (state.isAvailable ? '<span class="badge bg-success-lt text-success">Yes</span>' : '<span class="badge bg-secondary-lt text-secondary">No</span>');
+                var priceHtml = canManage
+                    ? '<input type="number" class="form-control form-control-sm matrix-price matrix-price-input" data-id="' + row.serviceId + '" value="' + escAttr(overrideVal === "" ? "" : String(overrideVal)) + '" placeholder="' + escAttr(placeholder !== "" ? String(placeholder) : "Catalog") + '" min="0" step="100"' + (state.isAvailable ? "" : ' disabled') + '>'
+                    : '<span class="text-secondary small">' + (overrideVal !== "" && overrideVal != null ? Branches.formatMoney(overrideVal) : "—") + '</span>';
+                return '<tr class="' + rowCls + '">' +
+                    '<td>' + switchHtml + '</td>' +
+                    '<td><div class="fw-semibold">' + esc(row.name) + '</div></td>' +
+                    '<td><span class="badge bg-primary-lt text-primary">' + esc(catName) + '</span></td>' +
+                    '<td class="text-secondary small">' + Branches.formatMoney(row.catalogWalkInPrice) + '</td>' +
+                    '<td>' + priceHtml + '</td>' +
+                    '<td class="fw-semibold small matrix-effective" data-id="' + row.serviceId + '">' + Branches.formatMoney(effective) + '</td>' +
+                    '</tr>';
+            }).join("");
+            updateMatrixDirtyState();
+        }
+
+        async function loadCategoryMap() {
+            try {
+                var cats = await Services.getCategories();
+                _categoryMap = {};
+                cats.forEach(function (c) { _categoryMap[c.id] = c.name; });
+                var sel = document.getElementById("matrix-category");
+                var prev = sel.value;
+                sel.innerHTML = '<option value="">All categories</option>' +
+                    cats.map(function (c) { return '<option value="' + c.id + '">' + esc(c.name) + '</option>'; }).join("");
+                if (prev) sel.value = prev;
+            } catch (e) {
+                flashMatrixAlert("warning", e.message || "Failed to load service categories.");
+            }
+        }
+
+        async function openServicesOffcanvas(branchId, branchName) {
+            _matrixBranchId = branchId;
+            _matrixEdits = {};
+            matrixFilter = { search: "", categoryId: "", availability: "" };
+            setMatrixAlert("", "");
+            document.getElementById("matrix-search").value = "";
+            document.getElementById("matrix-category").value = "";
+            document.getElementById("matrix-availability").value = "";
+            document.getElementById("matrix-title").textContent = branchName + " — Services";
+            document.getElementById("matrix-tbody").innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm"></div></td></tr>';
+            new bootstrap.Offcanvas(document.getElementById("offcanvas-services")).show();
+            await loadCategoryMap();
+            try {
+                _matrixRows = await Branches.getBranchServices(branchId);
+                renderMatrix();
+            } catch (e) {
+                var msg = e.message || "Failed to load branch services.";
+                document.getElementById("matrix-tbody").innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(msg) + '</td></tr>';
+                flashMatrixAlert("danger", msg);
+            }
+        }
+
+        async function saveMatrix() {
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE) || !_matrixBranchId) return;
+            var services = buildPatchPayload();
+            if (!services.length) {
+                flashMatrixAlert("warning", "No changes to save.");
+                return;
+            }
+            var btn = document.getElementById("btn-matrix-save");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
+            try {
+                _matrixRows = await Branches.patchBranchServices(_matrixBranchId, services);
+                _matrixEdits = {};
+                renderMatrix();
+                flashMatrixAlert("success", "Saved changes for " + services.length + " service(s).");
+                flashPageAlert("success", "Branch services updated successfully.");
+            } catch (e) {
+                var msg = e.message || "Failed to save branch services.";
+                flashMatrixAlert("danger", msg);
+                flashPageAlert("danger", msg);
+            } finally {
+                btn.disabled = !matrixHasChanges();
+                btn.textContent = "Save Changes";
+            }
+        }
+    </script>
+</body>
+</html>
