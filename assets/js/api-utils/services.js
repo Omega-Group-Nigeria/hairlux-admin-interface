@@ -17,8 +17,8 @@
  *     PUT    /admin/services/:id           update service  (multipart/form-data)
  *     DELETE /admin/services/:id           delete service
  *     PUT    /admin/services/:id/status    toggle ACTIVE / INACTIVE  (JSON)
- *     POST   /admin/services/categories    create category (JSON)
- *     PUT    /admin/services/categories/:id   update category (JSON)
+ *     POST   /admin/services/categories    create category (multipart/form-data)
+ *     PUT    /admin/services/categories/:id   update category (multipart/form-data)
  *     DELETE /admin/services/categories/:id   delete category
  */
 
@@ -67,31 +67,40 @@ const Services = (() => {
 
     /**
      * GET /services/categories
-     * Returns array of { id, name, description, serviceCount, createdAt, updatedAt }
+     * Returns array of { id, name, description, imageUrl, serviceCount, createdAt, updatedAt }
      */
     async function getCategories() {
         const data = await apiFetch("/services/categories");
         return Array.isArray(data) ? data : (data.categories || []);
     }
 
-    /**
-     * POST /admin/services/categories  { name, description? }
-     */
-    async function createCategory(payload) {
-        return apiFetch("/admin/services/categories", {
-            method: "POST",
-            body: JSON.stringify(payload),
-        });
+    function getCategoryImageUrl(category) {
+        if (!category) return "";
+        const direct = category.imageUrl || category.image_url || "";
+        if (direct) return direct;
+        const publicId = category.imagePublicId || category.image_public_id;
+        if (!publicId) return "";
+        const cloud = (window.CLOUDINARY_CLOUD_NAME || "dkudoqsvl").replace(/\/$/, "");
+        return "https://res.cloudinary.com/" + cloud + "/image/upload/f_auto,q_auto/" + publicId;
     }
 
     /**
-     * PUT /admin/services/categories/:id  { name?, description? }
+     * POST /admin/services/categories  (multipart/form-data)
+     * Required: image (File), name. Optional: description.
+     * @param {FormData} formData
      */
-    async function updateCategory(id, payload) {
-        return apiFetch(`/admin/services/categories/${id}`, {
-            method: "PUT",
-            body: JSON.stringify(payload),
-        });
+    async function createCategory(formData) {
+        return multipartFetch("/admin/services/categories", "POST", formData);
+    }
+
+    /**
+     * PUT /admin/services/categories/:id  (multipart/form-data)
+     * Optional: image (File), name, description.
+     * @param {string}   id
+     * @param {FormData} formData
+     */
+    async function updateCategory(id, formData) {
+        return multipartFetch(`/admin/services/categories/${id}`, "PUT", formData);
     }
 
     /**
@@ -208,6 +217,7 @@ const Services = (() => {
     return {
         // Categories
         getCategories,
+        getCategoryImageUrl,
         createCategory,
         updateCategory,
         deleteCategory,

@@ -125,7 +125,7 @@ const RBAC = (() => {
      *   requireAny — user must have at least one of the listed permissions
      *
      * This covers the canonical nav order:
-     *   Dashboard → Bookings → Payments → Users → Services → Referrals → Discounts → Careers → Staff
+     *   Dashboard → Bookings → Payments → Users → Services → Shop → Referrals → Discounts → Careers → Staff
      */
     const _NAV_MAP = {
         'index.html':     { type: 'require',    perm:  'analytics:read' },
@@ -133,6 +133,7 @@ const RBAC = (() => {
         'payments.html':  { type: 'require',    perm:  'users:view_wallet' },
         'users.html':     { type: 'require',    perm:  'users:read' },
         'services.html':  { type: 'requireAny', perms: ['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories'] },
+        'shop.html':      { type: 'requireAny', perms: ['shop:manage_products', 'shop:manage_categories', 'shop:manage_delivery', 'shop:update_status'] },
         'referrals.html': { type: 'require',    perm:  'referrals:read' },
         'referral-campaigns.html': { type: 'require', perm: 'referrals:read' },
         'discounts.html': { type: 'require',    perm:  'discounts:read' },
@@ -146,7 +147,7 @@ const RBAC = (() => {
      * Falls back to 'settings.html' if nothing matches.
      */
     function getFirstAccessiblePage() {
-        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'referrals.html', 'discounts.html', 'careers.html', 'staff.html'];
+        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'shop.html', 'referrals.html', 'discounts.html', 'careers.html', 'staff.html'];
         for (var i = 0; i < order.length; i++) {
             var rule = _NAV_MAP[order[i]];
             if (!rule) continue;
@@ -171,9 +172,11 @@ const RBAC = (() => {
             var hrefs = Array.from(li.querySelectorAll('a[href]'))
                 .map(function (a) { return a.getAttribute('href') || ''; });
 
-            // Normalise: strip leading "./" or "../" and keep just the filename.
+            // Normalise: strip leading "./" or "../", hash, and query — keep just the filename.
             var pages = hrefs
-                .map(function (h) { return h.replace(/^(\.\.\/|\.\/)+/, ''); })
+                .map(function (h) {
+                    return h.replace(/^(\.\.\/|\.\/)+/, '').split('#')[0].split('?')[0];
+                })
                 .filter(Boolean);
 
             // Find the first matching rule.
