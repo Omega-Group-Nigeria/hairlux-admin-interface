@@ -494,6 +494,7 @@
                                             <th>Services</th>
                                             <th>Date &amp; Time</th>
                                             <th class="w-1">Type</th>
+                                            <th>Branch</th>
                                             <th>Amount</th>
                                             <th>Status</th>
                                             <th class="w-1">Actions</th>
@@ -501,7 +502,7 @@
                                     </thead>
                                     <tbody id="bookings-tbody">
                                         <tr>
-                                            <td colspan="8" class="text-center py-5">
+                                            <td colspan="9" class="text-center py-5">
                                                 <div class="spinner-border text-primary" role="status"></div>
                                             </td>
                                         </tr>
@@ -897,7 +898,7 @@
         // ── Load bookings table ─────────────────────────────────────────────────
         async function loadBookings() {
             var tbody = document.getElementById("bookings-tbody");
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
             document.getElementById("results-label").textContent = "Loading\u2026";
             try {
                 var result = await Bookings.getAll({
@@ -913,7 +914,7 @@
                 renderTable(rows);
                 renderPagination(meta);
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + (err.message || "Failed to load bookings.") + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + (err.message || "Failed to load bookings.") + '</td></tr>';
                 document.getElementById("results-label").textContent = "Error";
             }
         }
@@ -922,7 +923,7 @@
         function renderTable(rows) {
             var tbody = document.getElementById("bookings-tbody");
             if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No bookings found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No bookings found.</td></tr>';
                 return;
             }
             tbody.innerHTML = rows.map(function (b, i) {
@@ -970,6 +971,7 @@
                     : bookingType === "WALK_IN"
                         ? '<span class="badge bg-teal-lt">Walk-in</span>'
                         : '<span class="text-secondary small">\u2014</span>';
+                var branchCell = Bookings.formatBranchTableCell(b);
 
                 var dateTime = Bookings.formatDateTime(b.bookingDate || b.date, b.bookingTime || b.time);
                 var amount   = Bookings.formatMoney(b.totalAmount ?? b.amount ?? b.price ?? 0);
@@ -982,6 +984,7 @@
                     '<td class="td-services">' + svcCell + '</td>' +
                     '<td class="text-secondary small text-nowrap">' + dateTime + '</td>' +
                     '<td>' + typeCell + '</td>' +
+                    '<td class="small">' + branchCell + '</td>' +
                     '<td class="fw-semibold text-nowrap">' + amount + '</td>' +
                     '<td>' + Bookings.statusBadge(status) + '</td>' +
                     '<td><button class="btn btn-sm btn-outline-secondary btn-view" data-id="' + id + '" title="View">' +
@@ -1065,6 +1068,7 @@
                     '<div class="font-monospace fw-semibold">' + resCode + resBadge + '</div></div>' +
                     '<div class="col-12"><div class="mb-1 text-secondary small">Services</div>' +
                     '<div class="border rounded p-2">' + svcRows + '</div></div>' +
+                    Bookings.renderBranchDetailHtml(b, { layout: "col-12" }) +
                     (bookingType === "HOME_SERVICE" ?
                         '<div class="col-12"><div class="mb-1 text-secondary small">Service Address</div>' +
                         '<div>' + location + '</div>' +

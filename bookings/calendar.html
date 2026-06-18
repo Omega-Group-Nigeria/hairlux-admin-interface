@@ -523,7 +523,8 @@
                     var cust    = (b.user && b.user.firstName) ? b.user.firstName : "";
                     var timeStr = b.bookingTime || b.time || "";
                     var label   = (timeStr ? timeStr + " " : "") + (cust || svcName);
-                    var tooltip = [timeStr, cust || "", svcName, status.replace(/_/g, " ")].filter(Boolean).join(" · ");
+                    var branchLabel = Bookings.formatBranchLabel(b.branch, "");
+                    var tooltip = [timeStr, branchLabel, cust || "", svcName, status.replace(/_/g, " ")].filter(Boolean).join(" · ");
                     html += '<div class="cal-event cal-event-' + status + '" title="' + escHtml(tooltip) + '"' +
                         ' onclick="openDetail(\'' + b.id + '\')" data-id="' + b.id + '">' +
                         escHtml(label) + '</div>';
@@ -605,14 +606,15 @@
                     '<div class="font-monospace fw-semibold">' + escHtml(resCode) + resBadge + '</div></div>' +
                     '<div class="col-12"><div class="detail-label mb-1">Services</div>' +
                     '<div class="border rounded p-2">' + svcRows + '</div></div>' +
-                                        (addrStr
-                                                ? '<div class="col-12"><div class="detail-label">Service Address</div><div class="text-secondary">' + escHtml(addrStr) + '</div>' +
-                                                    (address.placeId
-                                                            ? '<div class="text-secondary small mt-3">Place ID: <span class="font-monospace d-inline-block text-truncate" style="max-width: 240px; vertical-align: bottom;">' + escHtml(address.placeId) + '</span></div>' +
-                                                                '<div><a href="' + escHtml(mapsUrl) + '" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></div>'
-                                                            : '') +
-                                                    '</div>'
-                                                : '') +
+                    Bookings.renderBranchDetailHtml(b, { esc: escHtml, layout: "col-12", labelClass: "detail-label" }) +
+                    (bookingType === "HOME_SERVICE" && addrStr
+                        ? '<div class="col-12"><div class="detail-label">Service Address</div><div class="text-secondary">' + escHtml(addrStr) + '</div>' +
+                            (address.placeId
+                                ? '<div class="text-secondary small mt-3">Place ID: <span class="font-monospace d-inline-block text-truncate" style="max-width: 240px; vertical-align: bottom;">' + escHtml(address.placeId) + '</span></div>' +
+                                    '<div><a href="' + escHtml(mapsUrl) + '" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></div>'
+                                : '') +
+                            '</div>'
+                        : '') +
                     (b.guestName ? '<div class="col-md-6"><div class="detail-label">Guest Name</div><div>' + escHtml(b.guestName) + '</div></div>' : '') +
                     (b.guestPhone ? '<div class="col-md-6"><div class="detail-label">Guest Phone</div><div>' + escHtml(b.guestPhone) + '</div></div>' : '') +
                     (b.guestEmail ? '<div class="col-md-6"><div class="detail-label">Guest Email</div><div>' + escHtml(b.guestEmail) + '</div></div>' : '') +

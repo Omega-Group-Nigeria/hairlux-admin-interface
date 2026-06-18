@@ -39,11 +39,85 @@ const Bookings = (() => {
     };
   }
 
+  function normalizeBranch(branch) {
+    if (!branch || typeof branch !== "object") return null;
+    const id = branch.id || null;
+    const name = String(branch.name || "").trim();
+    const address = String(branch.address || "").trim();
+    if (!id && !name && !address) return null;
+    return { id, name, address };
+  }
+
+  function resolveBranch(booking) {
+    if (!booking || typeof booking !== "object") return null;
+    const branch = normalizeBranch(booking.branch);
+    if (branch) return branch;
+    if (booking.branchId) {
+      return { id: booking.branchId, name: "", address: "" };
+    }
+    return null;
+  }
+
+  function formatBranchLabel(branch, fallback = "—") {
+    const normalized = normalizeBranch(branch);
+    return normalized && normalized.name ? normalized.name : fallback;
+  }
+
+  function formatBranchAddress(branch, fallback = "") {
+    const normalized = normalizeBranch(branch);
+    return normalized && normalized.address ? normalized.address : fallback;
+  }
+
+  function formatBranchTableCell(booking, esc = (value) => String(value || "")) {
+    const branch = resolveBranch(booking);
+    if (!branch || !branch.name) return '<span class="text-secondary">—</span>';
+    let html = `<div class="small fw-semibold">${esc(branch.name)}</div>`;
+    if (branch.address) {
+      const display = branch.address.length > 48
+        ? `${branch.address.slice(0, 45)}…`
+        : branch.address;
+      html += `<div class="text-secondary small" title="${esc(branch.address)}">${esc(display)}</div>`;
+    }
+    return html;
+  }
+
+  function renderBranchDetailHtml(booking, opts = {}) {
+    const esc = opts.esc || ((value) => String(value || ""));
+    const branch = resolveBranch(booking);
+    if (!branch || (!branch.name && !branch.address)) return "";
+
+    const name = esc(branch.name || "—");
+    const address = branch.address ? esc(branch.address) : "";
+    const label = esc(opts.label || "Branch");
+
+    if (opts.layout === "section") {
+      return '<div class="detail-section">' +
+        `<div class="detail-label mb-1">${label}</div>` +
+        `<div class="fw-semibold">${name}</div>` +
+        (address ? `<div class="text-secondary">${address}</div>` : "") +
+        "</div>";
+    }
+
+    const labelClass = opts.labelClass || "mb-1 text-secondary small";
+    let colClass = "";
+    if (opts.layout === "col-6") colClass = "col-md-6";
+    else if (opts.layout === "col-12") colClass = "col-12";
+
+    const open = colClass ? `<div class="${colClass}">` : "";
+    const close = colClass ? "</div>" : "";
+    return open +
+      `<div class="${labelClass}">${label}</div>` +
+      `<div class="fw-semibold">${name}</div>` +
+      (address ? `<div class="text-secondary small">${address}</div>` : "") +
+      close;
+  }
+
   function normalizeBooking(booking) {
     if (!booking || typeof booking !== "object") return booking;
     return {
       ...booking,
       address: normalizeAddress(booking.address || {}),
+      branch: normalizeBranch(booking.branch),
     };
   }
 
@@ -232,7 +306,7 @@ const Bookings = (() => {
     });
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Failed to update status (${res.status})`);
-    return raw.data || raw;
+    return normalizeBooking(raw.data || raw);
   }
 
   // ─── Business hours (public/admin) ───────────────────────────────────────────
@@ -338,6 +412,12 @@ const Bookings = (() => {
     formatDateTime,
     shortId,
     normalizeAddress,
+    normalizeBranch,
+    resolveBranch,
+    formatBranchLabel,
+    formatBranchAddress,
+    formatBranchTableCell,
+    renderBranchDetailHtml,
     formatAddress,
     getGoogleMapsPlaceUrl,
   };
