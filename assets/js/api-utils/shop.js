@@ -305,6 +305,14 @@ const Shop = (() => {
         return map[current] || [];
     }
 
+    /** Human-readable order reference for display (orderCode preferred). */
+    function orderRef(order) {
+        if (!order) return "—";
+        if (order.orderCode) return order.orderCode;
+        const id = order.id || "";
+        return id ? id.slice(0, 8) + "…" : "—";
+    }
+
     return {
         PERMISSIONS,
         ORDER_STATUSES,
@@ -332,5 +340,6 @@ const Shop = (() => {
         formatDate,
         formatDateTime,
         orderStatusTransitions,
+        orderRef,
     };
 })();

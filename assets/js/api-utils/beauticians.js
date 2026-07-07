@@ -1,0 +1,334 @@
+/**
+ * beauticians.js — Hairlux Admin
+ * /admin/beauticians/* + /admin/settings/home-service + /admin/payouts/* API calls.
+ *
+ * Requires:
+ *   - config.js  (window.API_BASE)
+ *   - auth.js    (Auth.fetch)
+ */
+
+const Beauticians = (() => {
+
+    async function apiFetch(path, options = {}) {
+        const res = await Auth.fetch(path, options);
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || `Request failed (${res.status})`);
+        return raw.data !== undefined ? raw.data : raw;
+    }
+
+    function firstArray() {
+        for (let i = 0; i < arguments.length; i++) {
+            if (Array.isArray(arguments[i])) return arguments[i];
+        }
+        return [];
+    }
+
+    // ── 1. Beautician management ─────────────────────────────────────────────
+
+    async function listBeauticians(params = {}) {
+        const q = new URLSearchParams();
+        if (params.page) q.set('page', params.page);
+        if (params.limit) q.set('limit', params.limit);
+        if (params.search) q.set('search', params.search);
+        if (params.kycStatus) q.set('kycStatus', params.kycStatus);
+        if (params.profileStatus) q.set('profileStatus', params.profileStatus);
+        if (params.availabilityStatus) q.set('availabilityStatus', params.availabilityStatus);
+        if (params.ratingMin !== undefined && params.ratingMin !== '') q.set('ratingMin', params.ratingMin);
+
+        const res = await Auth.fetch('/admin/beauticians' + (q.toString() ? '?' + q.toString() : ''));
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to load beauticians');
+
+        const payload = raw.data !== undefined ? raw.data : raw;
+        if (Array.isArray(payload)) return { data: payload, meta: {} };
+        return {
+            data: firstArray(payload.beauticians, payload.items, payload.data),
+            meta: payload.meta || payload.pagination || {},
+        };
+    }
+
+    async function getBeautician(id) {
+        return apiFetch('/admin/beauticians/' + id);
+    }
+
+    async function updateBeautician(id, payload) {
+        return apiFetch('/admin/beauticians/' + id, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getPendingProfileReviews(params = {}) {
+        const q = new URLSearchParams();
+        if (params.page) q.set('page', params.page);
+        if (params.limit) q.set('limit', params.limit);
+        if (params.submittedDaysAgoMin) q.set('submittedDaysAgoMin', params.submittedDaysAgoMin);
+
+        const res = await Auth.fetch('/admin/beauticians/pending-profile-reviews' + (q.toString() ? '?' + q.toString() : ''));
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to load pending reviews');
+
+        const payload = raw.data !== undefined ? raw.data : raw;
+        return {
+            data: firstArray(payload.beauticians, payload.items, payload.data),
+            meta: payload.meta || payload.pagination || {},
+        };
+    }
+
+    async function getPerformance(params = {}) {
+        const q = new URLSearchParams();
+        if (params.periodDays) q.set('periodDays', params.periodDays);
+        return apiFetch('/admin/beauticians/performance' + (q.toString() ? '?' + q.toString() : ''));
+    }
+
+    // ── 2. KYC review ──────────────────────────────────────────────────────────
+
+    async function approveKyc(id) {
+        return apiFetch('/admin/beauticians/' + id + '/kyc/approve', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{}',
+        });
+    }
+
+    async function rejectKyc(id, reason) {
+        return apiFetch('/admin/beauticians/' + id + '/kyc/reject', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
+    }
+
+    // ── 3. Professional profile review ────────────────────────────────────────
+
+    async function approveProfile(id, notes) {
+        return apiFetch('/admin/beauticians/' + id + '/profile/approve', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: notes || '' }),
+        });
+    }
+
+    async function rejectProfile(id, reason, notes) {
+        const body = { reason };
+        if (notes) body.notes = notes;
+        return apiFetch('/admin/beauticians/' + id + '/profile/reject', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+    }
+
+    // ── 4. Service assignment ─────────────────────────────────────────────────
+
+    async function listAssignedServices(id) {
+        const data = await apiFetch('/admin/beauticians/' + id + '/services');
+        return Array.isArray(data) ? data : data.data || data.services || [];
+    }
+
+    async function assignServices(id, serviceIds) {
+        return apiFetch('/admin/beauticians/' + id + '/services', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ serviceIds }),
+        });
+    }
+
+    // ── 5. Home service settings ─────────────────────────────────────────────
+
+    async function getHomeServiceSettings() {
+        return apiFetch('/admin/settings/home-service');
+    }
+
+    async function updateHomeServiceSettings(payload) {
+        return apiFetch('/admin/settings/home-service', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    // ── 5b. Dispatch settings ──────────────────────────────────────────────────
+
+    async function getDispatchSettings() {
+        return apiFetch('/admin/settings/dispatch');
+    }
+
+    async function updateDispatchSettings(payload) {
+        return apiFetch('/admin/settings/dispatch', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function updateDispatch(id, suspended) {
+        return apiFetch('/admin/beauticians/' + id + '/dispatch', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ suspended: !!suspended }),
+        });
+    }
+
+    // ── 6. Payouts ─────────────────────────────────────────────────────────────
+
+    async function listPayouts(params = {}) {
+        const q = new URLSearchParams();
+        if (params.status) q.set('status', params.status);
+        const path = '/admin/payouts' + (q.toString() ? '?' + q.toString() : '');
+        const data = await apiFetch(path);
+        if (Array.isArray(data)) return data;
+        return data.data || data.payouts || data.items || [];
+    }
+
+    async function listPendingPayouts() {
+        return listPayouts({ status: 'PENDING' });
+    }
+
+    async function processPayout(payoutRequestId) {
+        return apiFetch('/admin/payouts/process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payoutRequestId }),
+        });
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    const KYC_COLORS = {
+        PENDING: 'warning',
+        IN_PROGRESS: 'info',
+        VERIFIED: 'success',
+        REJECTED: 'danger',
+        SUSPENDED: 'dark',
+        NEEDS_REVIEW: 'orange',
+    };
+
+    const PROFILE_COLORS = {
+        NOT_SUBMITTED: 'secondary',
+        PENDING_REVIEW: 'warning',
+        APPROVED: 'success',
+        REJECTED: 'danger',
+    };
+
+    const AVAILABILITY_COLORS = {
+        OFFLINE: 'secondary',
+        ONLINE: 'success',
+        ON_JOB: 'info',
+    };
+
+    const PAYOUT_STATUS_COLORS = {
+        PENDING: 'warning',
+        PROCESSING: 'info',
+        COMPLETED: 'success',
+        REJECTED: 'danger',
+        CANCELLED: 'secondary',
+    };
+
+    function kycBadge(status) {
+        const val = String(status || '').toUpperCase();
+        const color = KYC_COLORS[val] || 'secondary';
+        return '<span class="badge bg-' + color + '-lt">' + val.replace(/_/g, ' ') + '</span>';
+    }
+
+    function profileBadge(status) {
+        const val = String(status || '').toUpperCase();
+        const color = PROFILE_COLORS[val] || 'secondary';
+        return '<span class="badge bg-' + color + '-lt">' + val.replace(/_/g, ' ') + '</span>';
+    }
+
+    function availabilityBadge(status) {
+        const val = String(status || '').toUpperCase();
+        const color = AVAILABILITY_COLORS[val] || 'secondary';
+        return '<span class="badge bg-' + color + '-lt">' + val.replace(/_/g, ' ') + '</span>';
+    }
+
+    function statusBadge(isActive) {
+        if (isActive === true || isActive === 'true') {
+            return '<span class="badge bg-green-lt">Active</span>';
+        }
+        return '<span class="badge bg-red-lt">Inactive</span>';
+    }
+
+    function formatMoney(amount) {
+        if (amount === null || amount === undefined) return '—';
+        const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+        if (Number.isNaN(num)) return '—';
+        return '\u20A6' + Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatDate(value) {
+        if (!value) return '—';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '—';
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+            ' \u00b7 ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function fullName(b) {
+        const user = b.user || {};
+        const parts = [user.firstName, user.lastName].filter(Boolean);
+        if (parts.length) return parts.join(' ');
+        return user.name || '—';
+    }
+
+    function beauticianUserId(b) {
+        return (b && b.user && b.user.id) || b.userId || null;
+    }
+
+    function dispatchSuspendedBadge(suspended) {
+        if (suspended) {
+            return '<span class="badge bg-red-lt">Dispatch suspended</span>';
+        }
+        return '<span class="badge bg-green-lt">Dispatch active</span>';
+    }
+
+    function payoutStatusBadge(status) {
+        const val = String(status || '').toUpperCase();
+        const color = PAYOUT_STATUS_COLORS[val] || 'secondary';
+        return '<span class="badge bg-' + color + '-lt">' + val.replace(/_/g, ' ') + '</span>';
+    }
+
+    return {
+        // API methods
+        listBeauticians,
+        getBeautician,
+        updateBeautician,
+        getPendingProfileReviews,
+        getPerformance,
+        approveKyc,
+        rejectKyc,
+        approveProfile,
+        rejectProfile,
+        listAssignedServices,
+        assignServices,
+        getHomeServiceSettings,
+        updateHomeServiceSettings,
+        getDispatchSettings,
+        updateDispatchSettings,
+        updateDispatch,
+        listPayouts,
+        listPendingPayouts,
+        processPayout,
+        // Helpers
+        kycBadge,
+        profileBadge,
+        availabilityBadge,
+        payoutStatusBadge,
+        statusBadge,
+        formatMoney,
+        formatDate,
+        formatDateTime,
+        fullName,
+        beauticianUserId,
+        dispatchSuspendedBadge,
+    };
+})();

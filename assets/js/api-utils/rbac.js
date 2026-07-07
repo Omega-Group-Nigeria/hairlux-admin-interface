@@ -3,7 +3,7 @@
  * Role-Based Access Control helper.
  *
  * Depends on auth.js being loaded first (uses Auth.fetch).
- * Load after auth.js on every protected page.
+ * Load after auth.js and nav-config.js on every protected page.
  *
  * Usage in every protected page:
  *
@@ -120,28 +120,13 @@ const RBAC = (() => {
 
     // ── Nav visibility ────────────────────────────────────────────────────────
 
-    /**
-     * Maps a page filename (e.g. "bookings.html") to a visibility rule.
-     *   require    — user must have the single permission
-     *   requireAny — user must have at least one of the listed permissions
-     *
-     * This covers the canonical nav order:
-     *   Dashboard → Bookings → Payments → Users → Services → Branches → Shop → Referrals → Discounts → Careers → Staff
-     */
-    const _NAV_MAP = {
-        'index.html':     { type: 'require',    perm:  'analytics:read' },
-        'bookings.html':  { type: 'require',    perm:  'bookings:read' },
-        'payments.html':  { type: 'require',    perm:  'users:view_wallet' },
-        'users.html':     { type: 'require',    perm:  'users:read' },
-        'services.html':  { type: 'requireAny', perms: ['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories'] },
-        'branches.html':  { type: 'requireAny', perms: ['branches:read', 'branches:manage'] },
-        'shop.html':      { type: 'requireAny', perms: ['shop:manage_products', 'shop:manage_categories', 'shop:manage_delivery', 'shop:update_status'] },
-        'referrals.html': { type: 'require',    perm:  'referrals:read' },
-        'referral-campaigns.html': { type: 'require', perm: 'referrals:read' },
-        'discounts.html': { type: 'require',    perm:  'discounts:read' },
-        'careers.html':   { type: 'require',    perm:  'jobs:read' },
-        'staff.html':     { type: 'requireAny', perms: ['staff:read', 'staff:create', 'staff:update', 'staff:archive', 'staff:manage_status', 'staff:manage_locations'] },
-    };
+    /** Page permission rules — sourced from NavConfig (nav-config.js). */
+    function _getNavMap() {
+        if (typeof NavConfig !== 'undefined' && NavConfig.buildPagePermissionMap) {
+            return NavConfig.buildPagePermissionMap();
+        }
+        return {};
+    }
 
     /**
      * Returns the filename of the first page in the nav order that the current
@@ -149,9 +134,12 @@ const RBAC = (() => {
      * Falls back to 'settings.html' if nothing matches.
      */
     function getFirstAccessiblePage() {
-        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'branches.html', 'shop.html', 'referrals.html', 'discounts.html', 'careers.html', 'staff.html'];
+        var order = (typeof NavConfig !== 'undefined' && NavConfig.getAccessiblePageOrder)
+            ? NavConfig.getAccessiblePageOrder()
+            : [];
+        var navMap = _getNavMap();
         for (var i = 0; i < order.length; i++) {
-            var rule = _NAV_MAP[order[i]];
+            var rule = navMap[order[i]];
             if (!rule) continue;
             var allowed = rule.type === 'require'
                 ? can(rule.perm)
@@ -169,7 +157,8 @@ const RBAC = (() => {
      * (../page.html) without any per-page HTML changes.
      */
     function applyNavVisibility() {
-        document.querySelectorAll('.navbar-nav > .nav-item').forEach(function (li) {
+        var navMap = _getNavMap();
+        document.querySelectorAll('#app-sidebar > .nav-item, .navbar-nav > .nav-item').forEach(function (li) {
             // Collect all hrefs inside this nav item (covers dropdown children too).
             var hrefs = Array.from(li.querySelectorAll('a[href]'))
                 .map(function (a) { return a.getAttribute('href') || ''; });
@@ -184,7 +173,7 @@ const RBAC = (() => {
             // Find the first matching rule.
             var rule = null;
             for (var i = 0; i < pages.length; i++) {
-                if (_NAV_MAP[pages[i]]) { rule = _NAV_MAP[pages[i]]; break; }
+                if (navMap[pages[i]]) { rule = navMap[pages[i]]; break; }
             }
             if (!rule) return; // no rule → always visible (e.g. settings link)
 
@@ -213,7 +202,7 @@ const RBAC = (() => {
      * @returns {string|string[]|null}
      */
     function getPagePermissions(pageFile) {
-        return _ruleToGuardPermission(_NAV_MAP[pageFile]);
+        return _ruleToGuardPermission(_getNavMap()[pageFile]);
     }
 
     function getCurrentPageFile() {
