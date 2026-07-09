@@ -504,10 +504,6 @@
                                                 <input type="number" class="form-control" id="dispatch-inter-tier-delay" min="0" max="600">
                                             </div>
                                             <div class="col-12 col-sm-6">
-                                                <label class="form-label" data-field-hint="rejectionCooldownSeconds">Rejection cooldown (sec)</label>
-                                                <input type="number" class="form-control" id="dispatch-rejection-cooldown" min="0" max="3600">
-                                            </div>
-                                            <div class="col-12 col-sm-6">
                                                 <label class="form-label" data-field-hint="locationStalenessMinutes">Location staleness (min)</label>
                                                 <input type="number" class="form-control" id="dispatch-location-staleness" min="1" max="60">
                                             </div>
@@ -689,7 +685,6 @@
             tier3Radius: 'Widest search before matching is exhausted. Default 25 km.',
             tier3OfferTtl: 'Offer timeout for tier 3. Default 75s.',
             interTierDelaySeconds: 'Wait time after a tier is exhausted before starting the next wider tier. Default 15s. Replaces the old global job offer timeout for escalation.',
-            rejectionCooldownSeconds: 'After a beautician declines a booking, they are excluded from that same booking for this many seconds (across all tiers). Default 120s.',
             locationStalenessMinutes: 'Beauticians whose last GPS ping is older than this are not offered jobs. Default 5 min.',
             locationRematchMinDistanceM: 'Minimum distance a beautician must move while online before the system re-scans nearby pending bookings. Default 500 m.',
             wakeExhaustedOnOnlineEnabled: 'When on, if a beautician comes online (or moves enough) near an exhausted booking, the system auto-retries matching once per booking.',
@@ -1309,7 +1304,6 @@
                 applyDispatchTierValue(tiers, 3, 'radius', 'dispatch-tier-3-radius');
                 applyDispatchTierValue(tiers, 3, 'ttl', 'dispatch-tier-3-ttl');
                 document.getElementById('dispatch-inter-tier-delay').value = d.interTierDelaySeconds ?? '';
-                document.getElementById('dispatch-rejection-cooldown').value = d.rejectionCooldownSeconds ?? '';
                 document.getElementById('dispatch-location-staleness').value = d.locationStalenessMinutes ?? '';
                 document.getElementById('dispatch-location-rematch').value = d.locationRematchMinDistanceM ?? '';
                 document.getElementById('dispatch-wake-exhausted').checked = !!d.wakeExhaustedOnOnlineEnabled;
@@ -1392,7 +1386,6 @@
                         },
                     ],
                     interTierDelaySeconds: parseInt(document.getElementById('dispatch-inter-tier-delay').value, 10),
-                    rejectionCooldownSeconds: parseInt(document.getElementById('dispatch-rejection-cooldown').value, 10),
                     locationStalenessMinutes: parseInt(document.getElementById('dispatch-location-staleness').value, 10),
                     locationRematchMinDistanceM: parseInt(document.getElementById('dispatch-location-rematch').value, 10),
                     wakeExhaustedOnOnlineEnabled: document.getElementById('dispatch-wake-exhausted').checked,
