@@ -25,18 +25,87 @@
         table td { vertical-align: middle; }
         .order-row { cursor: pointer; }
         .order-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
-        #dz-product-image { border: 2px dashed var(--tblr-border-color); border-radius: 8px; min-height: 130px; cursor: pointer; transition: border-color .2s, background .2s; padding: 0; overflow: hidden; }
-        #dz-product-image .dz-message { margin: 2.2rem 0; text-align: center; color: var(--tblr-secondary); pointer-events: none; }
-        #dz-product-image.dz-drag-hover { border-color: var(--tblr-primary); background: var(--tblr-primary-lt); }
-        #dz-product-image.dz-started .dz-message { display: none; }
-        #dz-product-image .dz-preview { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 0; border-top: 1px solid var(--tblr-border-color); background: var(--tblr-bg-surface); min-height: unset; width: 100%; float: none; }
-        #dz-product-image .dz-preview:first-of-type { border-top: none; }
-        #dz-product-image .dz-preview .dz-image { width: 60px; height: 60px; flex-shrink: 0; border-radius: 6px; overflow: hidden; }
-        #dz-product-image .dz-preview .dz-image img { width: 100%; height: 100%; object-fit: cover; }
-        #dz-product-image .dz-preview .dz-details { position: static; opacity: 1; background: none; padding: 0; flex: 1; min-width: 0; font-size: 0.8125rem; }
-        #dz-product-image .dz-preview .dz-progress, #dz-product-image .dz-preview .dz-success-mark, #dz-product-image .dz-preview .dz-error-mark { display: none !important; }
-        #dz-product-image .dz-preview .dz-remove { position: absolute; top: 8px; right: 10px; font-size: 0.7rem; color: var(--tblr-secondary); text-decoration: none; border: 1px solid var(--tblr-border-color); border-radius: 4px; padding: 1px 6px; }
-        #current-product-img { width: 100%; max-height: 180px; object-fit: contain; border-radius: 8px; border: 1px solid var(--tblr-border-color); display: block; }
+        .product-images-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .product-image-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--tblr-border-color);
+            background: var(--tblr-bg-surface-secondary);
+        }
+        .product-image-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .product-image-card.is-removed img { filter: grayscale(0.8); }
+        .product-image-card.is-new { box-shadow: inset 0 0 0 2px var(--tblr-success); }
+        .product-image-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            font-size: 0.625rem;
+            padding: 0.2em 0.45em;
+            z-index: 1;
+        }
+        .product-image-remove {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.72);
+            color: #fff;
+            z-index: 2;
+            cursor: pointer;
+            transition: background .15s, transform .15s;
+        }
+        .product-image-remove:hover:not(:disabled) {
+            background: rgba(214, 57, 57, 0.92);
+            transform: scale(1.05);
+        }
+        .product-image-remove.is-undo {
+            background: rgba(245, 159, 0, 0.92);
+        }
+        .product-image-remove:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        #dz-product-images {
+            border: 2px dashed var(--tblr-border-color);
+            border-radius: 8px;
+            min-height: 96px;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            padding: 0;
+            overflow: hidden;
+        }
+        #dz-product-images .dz-message {
+            margin: 1.6rem 0;
+            text-align: center;
+            color: var(--tblr-secondary);
+            pointer-events: none;
+            font-size: 0.875rem;
+        }
+        #dz-product-images.dz-drag-hover {
+            border-color: var(--tblr-primary);
+            background: var(--tblr-primary-lt);
+        }
+        .products-actions-cell { overflow: visible; }
+        .products-actions-cell .dropdown-menu { z-index: 1055; }
     </style>
 </head>
 
@@ -249,8 +318,9 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/shop.js"></script>
-    <script src="./assets/js/tabler.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
+    <script src="assets/js/shop-product-images.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
 
     <!-- Product modal -->
     <div class="modal modal-blur fade" id="modal-product" tabindex="-1">
@@ -262,13 +332,16 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="modal-product-error"></div>
-                    <div class="mb-3" id="current-img-wrapper" style="display:none">
-                        <label class="form-label text-secondary small mb-1">Current Image</label>
-                        <img id="current-product-img" src="" alt="Current product image">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small">Product Image <span class="text-danger" id="img-required-mark">*</span></label>
-                        <div id="dz-product-image"><div class="dz-message"><strong>Drop image here</strong> or click to upload</div></div>
+                    <div class="mb-3" id="product-images-section">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <label class="form-label small mb-0">Product Images <span class="text-danger" id="img-required-mark">*</span></label>
+                            <span class="badge bg-secondary-lt text-secondary" id="product-images-count">0 / 5</span>
+                        </div>
+                        <div id="product-images-gallery" class="product-images-gallery"></div>
+                        <div id="dz-product-images">
+                            <div class="dz-message"><strong>Drop images here</strong> or click to upload<br><span class="text-secondary">1–5 images · JPG, PNG, WebP · 10 MB max each</span></div>
+                        </div>
+                        <div class="text-secondary small mt-2" id="product-images-hint">Upload 1–5 images. First image is the cover thumbnail.</div>
                     </div>
                     <div class="mb-3"><label class="form-label">Name <span class="text-danger">*</span></label><input type="text" class="form-control" id="product-name"></div>
                     <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" id="product-description" rows="3"></textarea></div>
@@ -383,8 +456,6 @@
 
     <script>
         var bootstrap = window.tabler.bootstrap;
-        Dropzone.autoDiscover = false;
-
         Auth.requireAuth();
         RBAC.loadFromStorage();
         RBAC.applyPageGuardForCurrentPage();
@@ -395,8 +466,7 @@
         var _categories = [];
         var _editProductId = null;
         var _editProductStatus = "ACTIVE";
-        var _imageFile = null;
-        var _productDz = null;
+        var _productImages = null;
         var _pendingOp = null;
         var pageAlertTimer = null;
         var _nigerianStates = null;
@@ -608,9 +678,18 @@ initSectionTabs();
                 var editBtn = e.target.closest(".btn-edit-product");
                 var toggleBtn = e.target.closest(".btn-toggle-product");
                 var deleteBtn = e.target.closest(".btn-delete-product");
-                if (editBtn) openProductModal(editBtn.dataset.id);
-                if (toggleBtn) confirmToggleProduct(toggleBtn.dataset.id, toggleBtn.dataset.status, toggleBtn.dataset.name);
-                if (deleteBtn) confirmDeleteProduct(deleteBtn.dataset.id, deleteBtn.dataset.name);
+                if (editBtn) {
+                    e.preventDefault();
+                    openProductModal(editBtn.dataset.id);
+                }
+                if (toggleBtn) {
+                    e.preventDefault();
+                    confirmToggleProduct(toggleBtn.dataset.id, toggleBtn.dataset.status, toggleBtn.dataset.name);
+                }
+                if (deleteBtn) {
+                    e.preventDefault();
+                    confirmDeleteProduct(deleteBtn.dataset.id, deleteBtn.dataset.name);
+                }
             });
         }
 
@@ -728,6 +807,19 @@ initSectionTabs();
             }
         }
 
+        var PRODUCT_ACTIONS_ICON =
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
+            '<path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />' +
+            "</svg>";
+
+        function initProductRowDropdowns() {
+            document.getElementById("products-tbody").querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function (el) {
+                bootstrap.Dropdown.getOrCreateInstance(el, {
+                    popperConfig: { strategy: "fixed" },
+                });
+            });
+        }
+
         function renderProductsTable(rows) {
             var tbody = document.getElementById("products-tbody");
             if (!rows.length) {
@@ -741,13 +833,21 @@ initSectionTabs();
                 var thumb = imageUrl
                     ? '<img src="' + esc(imageUrl) + '" class="product-thumb" alt="" loading="lazy">'
                     : imgDefault;
-                var actions = '<div class="d-flex gap-1">';
+                var actions = "—";
                 if (RBAC.can(Shop.PERMISSIONS.MANAGE_PRODUCTS)) {
-                    actions += '<button class="btn btn-sm btn-ghost-primary btn-edit-product" data-id="' + p.id + '" title="Edit">Edit</button>';
-                    actions += '<button class="btn btn-sm btn-ghost-warning btn-toggle-product" data-id="' + p.id + '" data-status="' + p.status + '" data-name="' + escAttr(p.name) + '">' + (p.status === "ACTIVE" ? "Deactivate" : "Activate") + '</button>';
-                    actions += '<button class="btn btn-sm btn-ghost-danger btn-delete-product" data-id="' + p.id + '" data-name="' + escAttr(p.name) + '">Delete</button>';
+                    var toggleLabel = p.status === "ACTIVE" ? "Deactivate" : "Activate";
+                    actions =
+                        '<div class="dropdown dropup">' +
+                        '<button type="button" class="btn btn-sm btn-icon btn-ghost-secondary" data-bs-toggle="dropdown" data-bs-boundary="window" aria-expanded="false" aria-label="More actions">' +
+                        PRODUCT_ACTIONS_ICON +
+                        "</button>" +
+                        '<div class="dropdown-menu dropdown-menu-end">' +
+                        '<button type="button" class="dropdown-item btn-edit-product" data-id="' + p.id + '">Edit</button>' +
+                        '<button type="button" class="dropdown-item btn-toggle-product" data-id="' + p.id + '" data-status="' + p.status + '" data-name="' + escAttr(p.name) + '">' + toggleLabel + '</button>' +
+                        '<div class="dropdown-divider"></div>' +
+                        '<button type="button" class="dropdown-item text-danger btn-delete-product" data-id="' + p.id + '" data-name="' + escAttr(p.name) + '">Delete</button>' +
+                        "</div></div>";
                 }
-                actions += '</div>';
                 return '<tr>' +
                     '<td style="width:56px;padding-right:0">' + thumb + '</td>' +
                     '<td>' +
@@ -758,44 +858,33 @@ initSectionTabs();
                     '<td class="fw-semibold">' + Shop.formatMoney(p.price) + '</td>' +
                     '<td>' + Shop.stockBadge(p.stock, p.inStock) + '</td>' +
                     '<td>' + Shop.statusBadge(p.status) + '</td>' +
-                    '<td>' + actions + '</td></tr>';
+                    '<td class="products-actions-cell">' + actions + '</td></tr>';
             }).join("");
+            initProductRowDropdowns();
         }
 
-        function ensureProductDropzone() {
-            if (_productDz) return;
-            _productDz = new Dropzone("#dz-product-image", {
-                url: "/",
-                autoProcessQueue: false,
-                maxFiles: 1,
-                acceptedFiles: "image/jpeg,image/png,image/webp",
-                maxFilesize: 5,
-                addRemoveLinks: true,
-                init: function () {
-                    this.on("addedfile", function (file) {
-                        if (this.files.length > 1) this.removeFile(this.files[0]);
-                        _imageFile = file;
-                    });
-                    this.on("removedfile", function () { _imageFile = null; });
-                },
+        function ensureProductImageManager() {
+            if (_productImages) return _productImages;
+            _productImages = new ShopProductImages.ProductImageManager({
+                galleryEl: document.getElementById("product-images-gallery"),
+                dropzoneEl: document.getElementById("dz-product-images"),
+                countEl: document.getElementById("product-images-count"),
+                hintEl: document.getElementById("product-images-hint"),
+                requiredMarkEl: document.getElementById("img-required-mark"),
             });
+            _productImages.initDropzone();
+            return _productImages;
         }
 
         async function openProductModal(id) {
             if (!RBAC.can(Shop.PERMISSIONS.MANAGE_PRODUCTS)) return;
-            ensureProductDropzone();
+            var images = ensureProductImageManager();
             _editProductId = id;
-            _imageFile = null;
-            if (_productDz) _productDz.removeAllFiles(true);
+            images.reset();
             document.getElementById("modal-product-error").classList.add("d-none");
             document.getElementById("modal-product-title").textContent = id ? "Edit Product" : "Add Product";
             document.getElementById("btn-save-product").textContent = id ? "Save Changes" : "Create Product";
             document.getElementById("product-status-row").style.display = id ? "" : "none";
-            document.getElementById("img-required-mark").style.display = id ? "none" : "";
-            var currentImg = document.getElementById("current-product-img");
-            document.getElementById("current-img-wrapper").style.display = "none";
-            currentImg.src = "";
-            currentImg.removeAttribute("src");
             document.getElementById("product-name").value = "";
             document.getElementById("product-description").value = "";
             document.getElementById("product-price").value = "";
@@ -811,12 +900,7 @@ initSectionTabs();
                     document.getElementById("product-stock").value = p.stock ?? "";
                     document.getElementById("product-status").value = p.status || "ACTIVE";
                     _editProductStatus = p.status || "ACTIVE";
-                    var imageUrl = Shop.getProductImageUrl(p);
-                    if (imageUrl) {
-                        currentImg.src = imageUrl;
-                        currentImg.style.display = "block";
-                        document.getElementById("current-img-wrapper").style.display = "block";
-                    }
+                    images.loadProduct(p);
                 } catch (e) {
                     document.getElementById("modal-product-error").textContent = e.message;
                     document.getElementById("modal-product-error").classList.remove("d-none");
@@ -839,8 +923,10 @@ initSectionTabs();
                 errEl.classList.remove("d-none");
                 return;
             }
-            if (!_editProductId && !_imageFile) {
-                errEl.textContent = "Please upload a product image.";
+            var images = ensureProductImageManager();
+            var imageValidation = images.validate();
+            if (!imageValidation.ok) {
+                errEl.textContent = imageValidation.message;
                 errEl.classList.remove("d-none");
                 return;
             }
@@ -850,7 +936,7 @@ initSectionTabs();
             fd.append("categoryId", categoryId);
             fd.append("price", price);
             fd.append("stock", stock);
-            if (_imageFile) fd.append("image", _imageFile);
+            images.appendToFormData(fd);
             var btn = document.getElementById("btn-save-product");
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';

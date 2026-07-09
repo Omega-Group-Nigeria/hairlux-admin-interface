@@ -92,22 +92,32 @@ const Shop = (() => {
         return { items: [], meta: null };
     }
 
+    function getProductImages(product) {
+        if (!product) return [];
+        if (typeof ShopProductImages !== "undefined" && ShopProductImages.sortImages) {
+            return ShopProductImages.sortImages(product.images);
+        }
+        const images = Array.isArray(product.images) ? product.images.slice() : [];
+        return images
+            .filter(function (img) { return img && img.url; })
+            .sort(function (a, b) { return (a.sortOrder ?? 0) - (b.sortOrder ?? 0); });
+    }
+
     function getProductImageUrl(product) {
         if (!product) return "";
-        const direct = product.imageUrl || product.image_url || "";
-        if (direct) return direct;
-        if (product.image && typeof product.image === "string") return product.image;
-        if (product.image && product.image.url) return product.image.url;
-        const publicId = product.imagePublicId || product.image_public_id;
-        if (!publicId) return "";
-        const cloud = (window.CLOUDINARY_CLOUD_NAME || "dkudoqsvl").replace(/\/$/, "");
-        return "https://res.cloudinary.com/" + cloud + "/image/upload/f_auto,q_auto/" + publicId;
+        const images = getProductImages(product);
+        if (images.length && images[0].url) return images[0].url;
+        return product.imageUrl || product.image_url || "";
     }
 
     function normalizeProduct(product) {
         if (!product || typeof product !== "object") return product;
-        const imageUrl = getProductImageUrl(product);
-        return imageUrl && !product.imageUrl ? Object.assign({}, product, { imageUrl }) : product;
+        const images = getProductImages(product);
+        const imageUrl = images.length ? images[0].url : getProductImageUrl(product);
+        return Object.assign({}, product, {
+            images: images,
+            imageUrl: imageUrl || null,
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -333,6 +343,7 @@ const Shop = (() => {
         getOrders,
         getOrder,
         updateOrderStatus,
+        getProductImages,
         getProductImageUrl,
         statusBadge,
         stockBadge,

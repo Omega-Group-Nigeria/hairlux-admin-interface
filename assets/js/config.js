@@ -5,8 +5,8 @@
  */
 
 // API base URL (no trailing slash)
-window.API_BASE = "https://dev-hairlux-api-production.up.railway.app";
-// window.API_BASE = "http://localhost:3000"; // local
+// window.API_BASE = "https://dev-hairlux-api-production.up.railway.app";
+window.API_BASE = "http://localhost:3000"; // localgoo
 
 (function setupBackdropCleanup() {
 	function removeAll(selector) {

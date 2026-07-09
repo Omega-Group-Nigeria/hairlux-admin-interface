@@ -200,13 +200,21 @@ var Layout = window.Layout || (() => {
         }
     }
 
+    function syncNavAccess() {
+        if (typeof RBAC !== "undefined" && RBAC.syncNavFromCache) {
+            RBAC.syncNavFromCache();
+        }
+    }
+
     function init() {
         renderSidebar();
         fixHeaderPaths();
+        syncNavAccess();
         initHeader();
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+        syncNavAccess();
         initHeader();
         refreshShopOrderBadge();
     });
@@ -217,6 +225,7 @@ var Layout = window.Layout || (() => {
         fixHeaderPaths,
         initHeader,
         init,
+        syncNavAccess,
         refreshShopOrderBadge,
         updateShopConfirmedBadge,
     };
