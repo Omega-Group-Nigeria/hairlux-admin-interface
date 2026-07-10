@@ -51,6 +51,12 @@
         .popover.settings-field-popover { max-width: min(320px, calc(100vw - 2rem)); }
         .popover.settings-field-popover .popover-body { font-size: .8125rem; line-height: 1.45; }
         .payout-row td { vertical-align: middle; }
+        .daily-pool-stat { min-width: 0; }
+        .daily-pool-stat .stat-label { font-size: .75rem; color: var(--tblr-secondary); margin-bottom: .15rem; }
+        .daily-pool-stat .stat-value { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+        .daily-pool-progress { height: .5rem; }
+        .daily-pool-progress.near-cap .progress-bar { background-color: var(--tblr-warning); }
+        .daily-pool-progress.at-cap .progress-bar { background-color: var(--tblr-danger); }
         .service-check-label { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
         .service-check-label:hover { color: var(--tblr-primary); }
         .detail-section + .detail-section { border-top: 1px solid var(--tblr-border-color); padding-top: 1rem; margin-top: 1rem; }
@@ -413,6 +419,17 @@
                                                 </select>
                                             </div>
                                             <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="dailyPayoutLimit">Daily Payout Limit (NGN)</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₦</span>
+                                                    <input type="number" class="form-control" id="set-daily-payout-limit" min="0" step="1000" placeholder="e.g. 500000">
+                                                </div>
+                                                <label class="form-check form-switch mt-2 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="set-daily-payout-unlimited">
+                                                    <span class="form-check-label" data-field-hint="dailyPayoutUnlimited">Unlimited (no daily cap)</span>
+                                                </label>
+                                            </div>
+                                            <div class="col-12 col-sm-6">
                                                 <label class="form-label" data-field-hint="arrivalVerificationExpiryMinutes">Arrival Verification Expiry (min)</label>
                                                 <input type="number" class="form-control" id="set-arrival-expiry" min="1">
                                             </div>
@@ -552,6 +569,79 @@
                     <!-- SECTION: PAYOUTS                                            -->
                     <!-- ──────────────────────────────────────────────────────────── -->
                     <div id="section-payouts" class="d-none">
+                        <!-- Daily payout pool -->
+                        <div class="card mb-3" id="card-daily-payout-pool">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-0">Daily Payout Pool</h3>
+                                    <div class="card-subtitle text-secondary small mt-1">
+                                        Platform-wide cap for beautician withdrawals today
+                                        <span class="text-secondary">· Africa/Lagos midnight</span>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-daily-pool-refresh" title="Refresh pool usage">
+                                        Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success d-none" id="daily-pool-success"></div>
+                                <div class="alert alert-danger d-none" id="daily-pool-error"></div>
+
+                                <div class="row g-3 align-items-end mb-3" id="daily-pool-stats">
+                                    <div class="col-6 col-md-3 daily-pool-stat">
+                                        <div class="stat-label">Used today</div>
+                                        <div class="stat-value text-primary" id="daily-pool-used">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 daily-pool-stat">
+                                        <div class="stat-label">Remaining</div>
+                                        <div class="stat-value" id="daily-pool-remaining">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 daily-pool-stat">
+                                        <div class="stat-label">Daily limit</div>
+                                        <div class="stat-value" id="daily-pool-limit">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 daily-pool-stat">
+                                        <div class="stat-label">Status</div>
+                                        <div class="stat-value" id="daily-pool-status-badge">
+                                            <span class="badge bg-secondary-lt">Loading…</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="progress daily-pool-progress" id="daily-pool-progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                            <div class="progress-bar" id="daily-pool-progress-bar" style="width: 0%"></div>
+                                        </div>
+                                        <div class="text-secondary small mt-1" id="daily-pool-day-meta">Day starts at —</div>
+                                    </div>
+                                </div>
+
+                                <div id="daily-pool-manage" class="border-top pt-3 d-none">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-12 col-md-5">
+                                            <label class="form-label" for="pool-limit-input">Set daily limit (NGN)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">₦</span>
+                                                <input type="number" class="form-control" id="pool-limit-input" min="0" step="1000" placeholder="e.g. 500000">
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4 d-flex align-items-end">
+                                            <label class="form-check form-switch mb-2">
+                                                <input class="form-check-input" type="checkbox" id="pool-limit-unlimited">
+                                                <span class="form-check-label">Unlimited (no cap)</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-12 col-md-3">
+                                            <button type="button" class="btn btn-primary w-100" id="btn-daily-pool-save">Save limit</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-hint mt-2 mb-0">
+                                        Counts PENDING, PROCESSING, and COMPLETED payouts across all beauticians. Send unlimited to clear the cap.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card">
                             <div class="card-header">
                                 <h3 class="card-title">Payout Requests</h3>
@@ -671,6 +761,8 @@
         var SETTINGS_FIELD_HINTS = {
             commissionRate: 'Share of the job price paid to the beautician. Enter as a percentage here (e.g. 70 for 70%); the API stores a decimal between 0 and 1 (0.7).',
             payoutMode: 'MANUAL = admin marks bank transfers complete in the dashboard. AUTO = the system can initiate payouts when eligible.',
+            dailyPayoutLimit: 'Maximum total beautician withdrawals (NGN) per calendar day (Africa/Lagos midnight). Applies to manual and auto payout modes. Counts PENDING, PROCESSING, and COMPLETED.',
+            dailyPayoutUnlimited: 'When on, dailyPayoutLimit is cleared (null) and there is no platform-wide daily cap on payouts.',
             arrivalVerificationExpiryMinutes: 'How long the customer\u2019s arrival OTP/code stays valid after the beautician marks \u201carrived\u201d.',
             serviceCompletionBufferMinutes: 'Grace period after the scheduled end time before the job is treated as overdue for completion rules.',
             arrivalGeoFenceMeters: 'How close the beautician must be to the customer address (in meters) to pass arrival verification.',
@@ -1352,11 +1444,55 @@
                 document.getElementById('set-payout-mode').value = s.payoutMode || 'MANUAL';
                 document.getElementById('set-kyc-auto').checked = !!s.kycAutoApprove;
                 document.getElementById('set-no-show-penalty').checked = !!s.noShowPenaltyEnabled;
+                applyDailyLimitInputs(
+                    document.getElementById('set-daily-payout-limit'),
+                    document.getElementById('set-daily-payout-unlimited'),
+                    s.dailyPayoutLimit,
+                    canManage
+                );
             } catch (err) {
                 document.getElementById('settings-error').textContent = err.message || 'Failed to load settings';
                 document.getElementById('settings-error').classList.remove('d-none');
             }
             await loadDispatchSettings();
+        }
+
+        /** Sync limit number input + unlimited checkbox from API value (null = unlimited). */
+        function applyDailyLimitInputs(inputEl, unlimitedEl, limit, canEdit) {
+            var editable = canEdit !== false && !unlimitedEl.disabled;
+            var unlimited = limit === null || limit === undefined;
+            unlimitedEl.checked = unlimited;
+            if (unlimited) {
+                inputEl.value = '';
+                inputEl.disabled = true;
+                inputEl.placeholder = 'Unlimited';
+            } else {
+                inputEl.value = limit;
+                inputEl.disabled = !editable;
+                inputEl.placeholder = 'e.g. 500000';
+            }
+        }
+
+        function onUnlimitedToggle(inputEl, unlimitedEl) {
+            if (unlimitedEl.checked) {
+                inputEl.value = '';
+                inputEl.disabled = true;
+                inputEl.placeholder = 'Unlimited';
+            } else {
+                inputEl.disabled = unlimitedEl.disabled;
+                inputEl.placeholder = 'e.g. 500000';
+                if (!inputEl.disabled && inputEl.value === '') inputEl.focus();
+            }
+        }
+
+        /** Read limit from unlimited checkbox + number input. Returns number|null or throws. */
+        function readDailyLimitFromInputs(inputEl, unlimitedEl) {
+            if (unlimitedEl.checked) return null;
+            var raw = inputEl.value.trim();
+            if (raw === '') throw new Error('Enter a daily payout limit, or enable Unlimited.');
+            var num = Number(raw);
+            if (!Number.isFinite(num) || num < 0) throw new Error('Daily payout limit must be a number ≥ 0.');
+            return num;
         }
 
         async function saveDispatchSettings() {
@@ -1411,6 +1547,10 @@
             document.getElementById('settings-error').classList.add('d-none');
             try {
                 var commissionPct = document.getElementById('set-commission-rate').value;
+                var dailyPayoutLimit = readDailyLimitFromInputs(
+                    document.getElementById('set-daily-payout-limit'),
+                    document.getElementById('set-daily-payout-unlimited')
+                );
                 var payload = {
                     commissionRate: commissionPercentToRate(commissionPct),
                     arrivalVerificationExpiryMinutes: parseInt(document.getElementById('set-arrival-expiry').value, 10) || undefined,
@@ -1419,6 +1559,7 @@
                     noShowSuspendThreshold: parseInt(document.getElementById('set-no-show-threshold').value, 10) || undefined,
                     noShowWindowDays: parseInt(document.getElementById('set-no-show-window').value, 10) || undefined,
                     payoutMode: document.getElementById('set-payout-mode').value,
+                    dailyPayoutLimit: dailyPayoutLimit,
                     kycAutoApprove: document.getElementById('set-kyc-auto').checked,
                     noShowPenaltyEnabled: document.getElementById('set-no-show-penalty').checked,
                 };
@@ -1440,11 +1581,126 @@
             return count + ' ' + status.toLowerCase().replace(/_/g, ' ');
         }
 
+        function renderDailyPoolStats(pool) {
+            var unlimited = !!(pool.unlimited || pool.limit === null || pool.limit === undefined);
+            var used = Number(pool.used) || 0;
+            var limit = unlimited ? null : Number(pool.limit);
+            var remaining = unlimited ? null : (pool.remaining === null || pool.remaining === undefined
+                ? Math.max(0, (limit || 0) - used)
+                : Number(pool.remaining));
+
+            document.getElementById('daily-pool-used').textContent = Beauticians.formatMoney(used);
+
+            if (unlimited) {
+                document.getElementById('daily-pool-remaining').textContent = 'Unlimited';
+                document.getElementById('daily-pool-remaining').className = 'stat-value text-success';
+                document.getElementById('daily-pool-limit').textContent = 'No cap';
+                document.getElementById('daily-pool-status-badge').innerHTML =
+                    '<span class="badge bg-success-lt">Unlimited</span>';
+                document.getElementById('daily-pool-progress-wrap').classList.remove('near-cap', 'at-cap');
+                document.getElementById('daily-pool-progress-bar').style.width = '0%';
+                document.getElementById('daily-pool-progress-wrap').setAttribute('aria-valuenow', '0');
+            } else {
+                document.getElementById('daily-pool-remaining').textContent = Beauticians.formatMoney(remaining);
+                document.getElementById('daily-pool-remaining').className =
+                    remaining <= 0 ? 'stat-value text-danger' : 'stat-value text-success';
+                document.getElementById('daily-pool-limit').textContent = Beauticians.formatMoney(limit);
+
+                var pct = limit > 0
+                    ? Math.min(100, Math.round((used / limit) * 100))
+                    : (remaining <= 0 ? 100 : 0);
+                var wrap = document.getElementById('daily-pool-progress-wrap');
+                wrap.classList.remove('near-cap', 'at-cap');
+                if (remaining <= 0 || pct >= 100) {
+                    wrap.classList.add('at-cap');
+                    document.getElementById('daily-pool-status-badge').innerHTML =
+                        '<span class="badge bg-danger-lt">Cap reached</span>';
+                    pct = 100;
+                } else if (pct >= 80) {
+                    wrap.classList.add('near-cap');
+                    document.getElementById('daily-pool-status-badge').innerHTML =
+                        '<span class="badge bg-warning-lt">' + pct + '% used</span>';
+                } else {
+                    document.getElementById('daily-pool-status-badge').innerHTML =
+                        '<span class="badge bg-primary-lt">' + pct + '% used</span>';
+                }
+                document.getElementById('daily-pool-progress-bar').style.width = pct + '%';
+                wrap.setAttribute('aria-valuenow', String(pct));
+            }
+
+            var dayMeta = 'Timezone: ' + (pool.timezone || 'Africa/Lagos');
+            if (pool.dayStartsAt) {
+                dayMeta += ' · Day started ' + Beauticians.formatDateTime(pool.dayStartsAt);
+            }
+            document.getElementById('daily-pool-day-meta').textContent = dayMeta;
+
+            var canManage = RBAC.can('settings:manage');
+            var manageEl = document.getElementById('daily-pool-manage');
+            manageEl.classList.toggle('d-none', !canManage);
+            if (canManage) {
+                var inputEl = document.getElementById('pool-limit-input');
+                var unlimitedEl = document.getElementById('pool-limit-unlimited');
+                unlimitedEl.disabled = false;
+                applyDailyLimitInputs(inputEl, unlimitedEl, unlimited ? null : limit, true);
+            }
+        }
+
+        async function loadDailyPayoutPool() {
+            document.getElementById('daily-pool-error').classList.add('d-none');
+            if (!RBAC.can('beauticians:process_payouts')) {
+                document.getElementById('card-daily-payout-pool').classList.add('d-none');
+                return;
+            }
+            document.getElementById('card-daily-payout-pool').classList.remove('d-none');
+            try {
+                var pool = await Beauticians.getDailyPayoutPool();
+                renderDailyPoolStats(pool || {});
+            } catch (err) {
+                document.getElementById('daily-pool-error').textContent = err.message || 'Failed to load daily payout pool';
+                document.getElementById('daily-pool-error').classList.remove('d-none');
+                document.getElementById('daily-pool-used').textContent = '—';
+                document.getElementById('daily-pool-remaining').textContent = '—';
+                document.getElementById('daily-pool-limit').textContent = '—';
+                document.getElementById('daily-pool-status-badge').innerHTML =
+                    '<span class="badge bg-danger-lt">Error</span>';
+            }
+        }
+
+        async function saveDailyPayoutLimit() {
+            if (!RBAC.can('settings:manage')) return;
+            var btn = document.getElementById('btn-daily-pool-save');
+            document.getElementById('daily-pool-success').classList.add('d-none');
+            document.getElementById('daily-pool-error').classList.add('d-none');
+            setSaveButtonState(btn, true, 'Save limit');
+            try {
+                var dailyPayoutLimit = readDailyLimitFromInputs(
+                    document.getElementById('pool-limit-input'),
+                    document.getElementById('pool-limit-unlimited')
+                );
+                await Beauticians.updateHomeServiceSettings({ dailyPayoutLimit: dailyPayoutLimit });
+                document.getElementById('daily-pool-success').textContent =
+                    dailyPayoutLimit === null
+                        ? 'Daily payout limit cleared (unlimited).'
+                        : 'Daily payout limit set to ' + Beauticians.formatMoney(dailyPayoutLimit) + '.';
+                document.getElementById('daily-pool-success').classList.remove('d-none');
+                setTimeout(function () {
+                    document.getElementById('daily-pool-success').classList.add('d-none');
+                }, 3000);
+                await loadDailyPayoutPool();
+            } catch (err) {
+                document.getElementById('daily-pool-error').textContent = err.message || 'Failed to save daily payout limit';
+                document.getElementById('daily-pool-error').classList.remove('d-none');
+            } finally {
+                setSaveButtonState(btn, false, 'Save limit');
+            }
+        }
+
         // ── Load payouts ──────────────────────────────────────────────────────────
         async function loadPayouts() {
             var tbody = document.getElementById('payouts-tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
             document.getElementById('payouts-count-label').textContent = 'Loading…';
+            loadDailyPayoutPool();
             try {
                 var params = {};
                 if (payoutsState.status) params.status = payoutsState.status;
@@ -1664,6 +1920,12 @@
             initSettingsFieldHints();
             document.getElementById('btn-settings-save').addEventListener('click', saveSettings);
             document.getElementById('btn-dispatch-settings-save').addEventListener('click', saveDispatchSettings);
+            document.getElementById('set-daily-payout-unlimited').addEventListener('change', function () {
+                onUnlimitedToggle(
+                    document.getElementById('set-daily-payout-limit'),
+                    document.getElementById('set-daily-payout-unlimited')
+                );
+            });
 
             // ── Payouts ───────────────────────────────────────────────────────────
             document.getElementById('payouts-status-filter').addEventListener('change', function () {
@@ -1673,6 +1935,14 @@
             document.getElementById('payouts-tbody').addEventListener('click', function (e) {
                 var btn = e.target.closest('.btn-process-payout');
                 if (btn) handleProcessPayout(btn, btn.dataset.id, btn.dataset.amount);
+            });
+            document.getElementById('btn-daily-pool-refresh').addEventListener('click', loadDailyPayoutPool);
+            document.getElementById('btn-daily-pool-save').addEventListener('click', saveDailyPayoutLimit);
+            document.getElementById('pool-limit-unlimited').addEventListener('change', function () {
+                onUnlimitedToggle(
+                    document.getElementById('pool-limit-input'),
+                    document.getElementById('pool-limit-unlimited')
+                );
             });
         });
     </script>

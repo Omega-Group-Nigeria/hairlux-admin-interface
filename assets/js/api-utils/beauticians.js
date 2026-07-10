@@ -194,6 +194,15 @@ const Beauticians = (() => {
         });
     }
 
+    /**
+     * Live used / remaining capacity for today's platform payout pool.
+     * Day boundary: Africa/Lagos. Counted statuses: PENDING, PROCESSING, COMPLETED.
+     * @returns {Promise<{limit: number|null, used: number, remaining: number|null, dayStartsAt: string, timezone: string, unlimited: boolean}>}
+     */
+    async function getDailyPayoutPool() {
+        return apiFetch('/admin/payouts/daily-pool');
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     const KYC_COLORS = {
@@ -318,6 +327,7 @@ const Beauticians = (() => {
         listPayouts,
         listPendingPayouts,
         processPayout,
+        getDailyPayoutPool,
         // Helpers
         kycBadge,
         profileBadge,
