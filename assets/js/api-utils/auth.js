@@ -114,7 +114,7 @@ const Auth = (() => {
     return raw;
   }
 
-  // ─── POST /auth/refresh ───────────────────────────────────────────────────────
+  // ─── POST /auth/refresh-token ────────────────────────────────────────────────
 
   /**
    * Exchange the stored refresh token for a fresh access/refresh token pair.
@@ -125,7 +125,7 @@ const Auth = (() => {
     const refreshToken = getRefreshToken();
     if (!refreshToken) throw new Error("No refresh token stored.");
 
-    const res = await fetch(`${getBase()}/auth/refresh`, {
+    const res = await fetch(`${getBase()}/auth/refresh-token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
