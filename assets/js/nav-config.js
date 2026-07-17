@@ -18,7 +18,8 @@ var NavConfig = window.NavConfig || (() => {
         discounts: '<svg ' + SVG_ATTRS + '><path d="M9 15l6 -6" /><circle cx="9.5" cy="9.5" r=".5" fill="currentColor" /><circle cx="14.5" cy="14.5" r=".5" fill="currentColor" /><path d="M5 7.2a2.2 2.2 0 0 1 2.2 -2.2h1a2.2 2.2 0 0 0 1.55 -.64l.7 -.7a2.2 2.2 0 0 1 3.12 0l.7 .7a2.2 2.2 0 0 0 1.55 .64h1a2.2 2.2 0 0 1 2.2 2.2v1a2.2 2.2 0 0 0 .64 1.55l.7 .7a2.2 2.2 0 0 1 0 3.12l-.7 .7a2.2 2.2 0 0 0 -.64 1.55v1a2.2 2.2 0 0 1 -2.2 2.2h-1a2.2 2.2 0 0 0 -1.55 .64l-.7 .7a2.2 2.2 0 0 1 -3.12 0l-.7 -.7a2.2 2.2 0 0 0 -1.55 -.64h-1a2.2 2.2 0 0 1 -2.2 -2.2v-1a2.2 2.2 0 0 0 -.64 -1.55l-.7 -.7a2.2 2.2 0 0 1 0 -3.12l.7 -.7a2.2 2.2 0 0 0 .64 -1.55v-1" /></svg>',
         careers: '<svg ' + SVG_ATTRS + '><path d="M7 7h10a2 2 0 0 1 2 2v1l1 1v3l-1 1v3a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-3l-1 -1v-3l1 -1v-1a2 2 0 0 1 2 -2z" /><path d="M10 7v-2a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2" /></svg>',
         staff: '<svg ' + SVG_ATTRS + '><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>',
-        beauticians: '<svg ' + SVG_ATTRS + '><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>',
+        // Person on the move (home-service beauticians) — Tabler "walk"
+        beauticians: '<svg ' + SVG_ATTRS + '><path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M7 21l3 -4" /><path d="M16 21l-2 -4l-3 -3l1 -6" /><path d="M6 12l2 -3l4 -1l3 3l3 1" /></svg>',
     };
 
     /** @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string}>, permission?:object}>} */
@@ -79,7 +80,13 @@ var NavConfig = window.NavConfig || (() => {
             badge: "confirmedOrders",
             permission: {
                 type: "requireAny",
-                perms: ["shop:manage_products", "shop:manage_categories", "shop:manage_delivery", "shop:update_status"],
+                perms: [
+                    "shop:read",
+                    "shop:manage_products",
+                    "shop:manage_categories",
+                    "shop:manage_delivery",
+                    "shop:update_status",
+                ],
             },
             children: [
                 { label: "Products", href: "shop.html#products" },
@@ -134,6 +141,7 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "List", href: "beauticians.html#list" },
                 { label: "Profile Reviews", href: "beauticians.html#reviews" },
                 { label: "Services", href: "beauticians.html#services" },
+                { label: "Service Rates", href: "beauticians.html#service-rates" },
                 { label: "Settings", href: "beauticians.html#settings" },
                 { label: "Payouts", href: "beauticians.html#payouts" },
             ],

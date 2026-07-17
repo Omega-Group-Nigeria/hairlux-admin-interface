@@ -586,6 +586,8 @@
                 var name     = [u.firstName, u.lastName].filter(Boolean).join(" ") || "—";
                 var email    = u.email || "—";
                 var phone    = u.phone || '<span class="text-secondary">—</span>';
+                var dob      = Users.formatDate(u.dateOfBirth);
+                var userMeta = [email, dob !== "—" ? dob : ""].filter(Boolean).join(" · ");
                 var isActive = u.isActive !== undefined ? u.isActive : (u.status === "ACTIVE");
                 var initials = ((u.firstName || "")[0] + (u.lastName || "")[0]).toUpperCase() || "?";
                 var avatarColor = isActive ? "bg-primary-lt text-primary" : "bg-secondary-lt text-secondary";
@@ -598,7 +600,7 @@
                     '<div class="d-flex align-items-center gap-2">' +
                     '<span class="avatar avatar-sm ' + avatarColor + '">' + initials + '</span>' +
                     '<div><div class="fw-semibold">' + name + '</div>' +
-                    '<div class="text-secondary small">' + email + '</div></div>' +
+                    '<div class="text-secondary small">' + (userMeta || "—") + '</div></div>' +
                     '</div></td>' +
                     '<td class="text-secondary">' + phone + '</td>' +
                     '<td>' + Users.roleBadge(u.role) + '</td>' +
@@ -733,6 +735,7 @@
                     '<div class="fw-bold fs-5 lh-sm">' + name + '</div>' +
                     '<div class="text-secondary small">' + (profile.email || "—") + '</div>' +
                     (profile.phone ? '<div class="text-secondary small">' + profile.phone + '</div>' : '') +
+                    (profile.dateOfBirth ? '<div class="text-secondary small">Born ' + Users.formatDate(profile.dateOfBirth) + '</div>' : '') +
                     '</div>' +
                     '<div class="d-flex flex-column gap-1 align-items-end">' +
                     Users.roleBadge(profile.role) + Users.statusBadge(isActive) +
@@ -772,6 +775,8 @@
                     '<dl class="row g-1 small mb-0">' +
                     '<dt class="col-5 text-secondary fw-normal">User ID</dt>' +
                     '<dd class="col-7 font-monospace text-break mb-0">' + (profile.id || "—") + '</dd>' +
+                    '<dt class="col-5 text-secondary fw-normal">Date of Birth</dt>' +
+                    '<dd class="col-7 mb-0">' + Users.formatDate(profile.dateOfBirth) + '</dd>' +
                     '<dt class="col-5 text-secondary fw-normal">Joined</dt>' +
                     '<dd class="col-7 mb-0">' + Users.formatDateTime(profile.createdAt) + '</dd>' +
                     '<dt class="col-5 text-secondary fw-normal">Last Updated</dt>' +

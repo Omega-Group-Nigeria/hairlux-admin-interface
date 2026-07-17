@@ -63,12 +63,8 @@ var Layout = window.Layout || (() => {
 
     function canViewShopOrders() {
         if (typeof RBAC === "undefined" || !RBAC.can) return false;
-        return [
-            "shop:manage_products",
-            "shop:manage_categories",
-            "shop:manage_delivery",
-            "shop:update_status",
-        ].some(function (p) { return RBAC.can(p); });
+        // Confirmed-order badge is for fulfilment visibility
+        return RBAC.can("shop:read") || RBAC.can("shop:update_status");
     }
 
     function updateShopConfirmedBadge(count) {

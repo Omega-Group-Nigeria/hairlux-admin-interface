@@ -1,6 +1,8 @@
 /**
  * beauticians.js — Hairlux Admin
- * /admin/beauticians/* + /admin/settings/home-service + /admin/payouts/* API calls.
+ * /admin/beauticians/* + /admin/settings/home-service +
+ * /admin/settings/service-commission-rates + /admin/settings/dispatch +
+ * /admin/payouts/* API calls.
  *
  * Requires:
  *   - config.js  (window.API_BASE)
@@ -149,6 +151,42 @@ const Beauticians = (() => {
         });
     }
 
+    // ── 5a. Per-service commission overrides ─────────────────────────────────
+    // Rates are beautician take-home fraction (0–1). Services without a row use
+    // HomeServiceSettings.commissionRate. See documents/service-commission-rates.md
+
+    /**
+     * GET /admin/settings/service-commission-rates
+     * Returns only services with an explicit override.
+     * @returns {Promise<Array<{serviceId:string, serviceName:string, commissionRate:number, updatedAt:string}>>}
+     */
+    async function listServiceCommissionRates() {
+        const data = await apiFetch('/admin/settings/service-commission-rates');
+        return Array.isArray(data) ? data : firstArray(data && data.items, data && data.rates);
+    }
+
+    /**
+     * PUT /admin/settings/service-commission-rates/:serviceId
+     * Upsert override. commissionRate must be 0–1.
+     */
+    async function setServiceCommissionRate(serviceId, commissionRate) {
+        return apiFetch('/admin/settings/service-commission-rates/' + encodeURIComponent(serviceId), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commissionRate }),
+        });
+    }
+
+    /**
+     * DELETE /admin/settings/service-commission-rates/:serviceId
+     * Removes override so the service uses the platform default again.
+     */
+    async function deleteServiceCommissionRate(serviceId) {
+        return apiFetch('/admin/settings/service-commission-rates/' + encodeURIComponent(serviceId), {
+            method: 'DELETE',
+        });
+    }
+
     // ── 5b. Dispatch settings ──────────────────────────────────────────────────
 
     async function getDispatchSettings() {
@@ -289,6 +327,16 @@ const Beauticians = (() => {
         return user.name || '—';
     }
 
+    function dateOfBirth(b) {
+        if (!b || typeof b !== 'object') return null;
+        const user = b.user || {};
+        return user.dateOfBirth || b.dateOfBirth || null;
+    }
+
+    function formatDateOfBirth(b) {
+        return formatDate(dateOfBirth(b));
+    }
+
     function beauticianUserId(b) {
         return (b && b.user && b.user.id) || b.userId || null;
     }
@@ -321,6 +369,9 @@ const Beauticians = (() => {
         assignServices,
         getHomeServiceSettings,
         updateHomeServiceSettings,
+        listServiceCommissionRates,
+        setServiceCommissionRate,
+        deleteServiceCommissionRate,
         getDispatchSettings,
         updateDispatchSettings,
         updateDispatch,
@@ -338,6 +389,8 @@ const Beauticians = (() => {
         formatDate,
         formatDateTime,
         fullName,
+        dateOfBirth,
+        formatDateOfBirth,
         beauticianUserId,
         dispatchSuspendedBadge,
     };

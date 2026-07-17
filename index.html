@@ -289,7 +289,7 @@
     <!-- SCRIPTS -->
     <!-- FORCE ASSIGN MODAL -->
     <div class="modal modal-blur fade" id="modal-force-assign" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Force Assign Beautician</h5>
@@ -297,10 +297,30 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-secondary small mb-3">Bypass dispatch matching and assign a beautician directly. Pending offers will be cancelled.</p>
-                    <label class="form-label">Beautician</label>
-                    <select id="force-assign-beautician" class="form-select">
-                        <option value="">Loading beauticians…</option>
-                    </select>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label" for="force-assign-search">Search</label>
+                            <input type="search" id="force-assign-search" class="form-control" placeholder="Search by name, email, or phone…" autocomplete="off">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="force-assign-availability">Availability</label>
+                            <select id="force-assign-availability" class="form-select">
+                                <option value="">All</option>
+                                <option value="ONLINE">Online</option>
+                                <option value="OFFLINE">Offline</option>
+                                <option value="ON_JOB">On Job</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="force-assign-selected" class="force-assign-selected-banner d-none py-2 px-3 mb-3 small rounded"></div>
+                    <div id="force-assign-list" class="list-group list-group-flush border rounded" style="min-height: 200px; max-height: 360px; overflow-y: auto;">
+                        <div class="list-group-item text-center text-secondary py-5">Loading beauticians…</div>
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
+                        <p class="m-0 text-secondary small" id="force-assign-pagination-info">—</p>
+                        <ul class="pagination pagination-sm m-0 ms-auto" id="force-assign-pagination-btns"></ul>
+                    </div>
+                    <input type="hidden" id="force-assign-beautician" value="">
                     <div id="force-assign-error" class="alert alert-danger d-none mt-3 mb-0 small"></div>
                 </div>
                 <div class="modal-footer">
@@ -333,18 +353,24 @@
     <script src="assets/js/world.js" defer></script>
     <script src="assets/js/api-utils/bookings.js" defer></script>
     <script src="assets/js/api-utils/beauticians.js" defer></script>
+    <script src="assets/js/force-assign-modal.js" defer></script>
     <script src="assets/js/api-utils/analytics.js" defer></script>
     <script>
-        // Guard: redirect to login if no token
-        Auth.requireAuth();
-        RBAC.loadFromStorage();
-        // Sync pre-check from localStorage — redirects immediately if cached
-        // permissions already show no analytics access (avoids any flash).
-        if (RBAC.getRole() !== null && !RBAC.can('analytics:read')) {
-            window.location.replace('./' + RBAC.getFirstAccessiblePage());
-        }
-
+        // Guard: spinner + session check before any redirect logic runs.
+        // Unauthenticated users go to login — never to settings.html.
         var bootstrap; // set after tabler loads
+        var __authReady = Auth.requireAuth().then(function (ok) {
+            if (!ok) return false;
+            RBAC.loadFromStorage();
+            // Sync pre-check from localStorage — redirects immediately if cached
+            // permissions already show no analytics access (avoids any flash).
+            if (RBAC.getRole() !== null && !RBAC.can('analytics:read')) {
+                if (Auth.showAuthBootScreen) Auth.showAuthBootScreen('Loading…');
+                window.location.replace('./' + RBAC.getFirstAccessiblePage());
+                return false;
+            }
+            return true;
+        });
 
         // ── Booking detail offcanvas ──────────────────────────────────────────
         async function openDetail(id) {
@@ -500,54 +526,36 @@
             }
         }
 
-        var dispatchActionBookingId = null;
-        var forceAssignOptionsLoaded = false;
-
-        async function loadForceAssignOptions() {
-            var select = document.getElementById('force-assign-beautician');
-            select.innerHTML = '<option value="">Loading beauticians…</option>';
-            try {
-                var result = await Beauticians.listBeauticians({
-                    limit: 100,
-                    profileStatus: 'APPROVED',
-                    kycStatus: 'VERIFIED',
-                });
-                var rows = (result.data || []).filter(function (b) {
-                    return b.isActive !== false && Beauticians.beauticianUserId(b);
-                });
-                if (!rows.length) {
-                    select.innerHTML = '<option value="">— No eligible beauticians —</option>';
-                    return;
-                }
-                select.innerHTML = '<option value="">— Select beautician —</option>' + rows.map(function (b) {
-                    var uid = Beauticians.beauticianUserId(b);
-                    return '<option value="' + uid + '">' + Beauticians.fullName(b) + '</option>';
-                }).join('');
-                forceAssignOptionsLoaded = true;
-            } catch (err) {
-                select.innerHTML = '<option value="">— Failed to load —</option>';
-            }
-        }
-
-        async function openForceAssignModal(bookingId) {
-            dispatchActionBookingId = bookingId;
-            document.getElementById('force-assign-error').classList.add('d-none');
-            if (!forceAssignOptionsLoaded) await loadForceAssignOptions();
-            bootstrap = bootstrap || window.tabler.bootstrap;
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-force-assign')).show();
+        function openForceAssignModal(bookingId) {
+            ForceAssignModal.open(bookingId);
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            // ── RBAC: re-hydrate from server — definitive permission check ────────
-            RBAC.fetchMe().then(function() {
-                if (!RBAC.can('analytics:read')) {
-                    window.location.replace('./' + RBAC.getFirstAccessiblePage());
-                    return; // leave cloak on, redirect is in progress
+            // ── Auth + RBAC: wait for session, then hydrate permissions ──────────
+            (__authReady || Promise.resolve(true)).then(function (ok) {
+                if (!ok) return; // redirect to login (or another page) already in progress
+                return RBAC.fetchMe().then(function () {
+                    // Session gone after fetchMe / refresh failure → login, not settings
+                    if (!Auth.isLoggedIn()) {
+                        if (Auth.showAuthBootScreen) Auth.showAuthBootScreen('Redirecting to login…');
+                        window.location.replace('./login.html');
+                        return;
+                    }
+                    if (!RBAC.can('analytics:read')) {
+                        if (Auth.showAuthBootScreen) Auth.showAuthBootScreen('Loading…');
+                        window.location.replace('./' + RBAC.getFirstAccessiblePage());
+                        return; // leave cloak on, redirect is in progress
+                    }
+                    // Reveal page body and apply nav visibility together
+                    if (Auth.hideAuthBootScreen) Auth.hideAuthBootScreen();
+                    var cloak = document.getElementById('page-content-cloak');
+                    if (cloak) cloak.parentNode.removeChild(cloak);
+                    RBAC.applyNavVisibility();
+                });
+            }).catch(function () {
+                if (!Auth.isLoggedIn()) {
+                    window.location.replace('./login.html');
                 }
-                // Reveal page body and apply nav visibility together
-                var cloak = document.getElementById('page-content-cloak');
-                if (cloak) cloak.parentNode.removeChild(cloak);
-                RBAC.applyNavVisibility();
             });
 
             // ── Populate user info from session ──────────────────────────────
@@ -571,30 +579,10 @@
                 Auth.logout();
             });
 
-            document.getElementById('btn-force-assign-confirm').addEventListener('click', async function () {
-                if (!dispatchActionBookingId) return;
-                var beauticianUserId = document.getElementById('force-assign-beautician').value;
-                var btn = this;
-                var errEl = document.getElementById('force-assign-error');
-                if (!beauticianUserId) {
-                    errEl.textContent = 'Please select a beautician.';
-                    errEl.classList.remove('d-none');
-                    return;
-                }
-                if (!confirm('Force assign this booking to the selected beautician?')) return;
-                btn.disabled = true;
-                errEl.classList.add('d-none');
-                try {
-                    await Bookings.forceAssign(dispatchActionBookingId, beauticianUserId);
-                    bootstrap = bootstrap || window.tabler.bootstrap;
-                    bootstrap.Modal.getInstance(document.getElementById('modal-force-assign')).hide();
-                    openDetail(dispatchActionBookingId);
-                } catch (err) {
-                    errEl.textContent = err.message || 'Failed to force assign.';
-                    errEl.classList.remove('d-none');
-                } finally {
-                    btn.disabled = false;
-                }
+            ForceAssignModal.init({
+                onSuccess: async function (id) {
+                    openDetail(id);
+                },
             });
 
             // ── Load dashboard KPIs + charts ─────────────────────────────────

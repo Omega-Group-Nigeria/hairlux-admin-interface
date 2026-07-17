@@ -833,6 +833,17 @@
                 if (!RBAC.can('influencers:read')) {
                     document.querySelectorAll('#section-tabs .nav-item a[data-section="influencers-mgmt"]').forEach(function(el) { el.closest('.nav-item').style.display = 'none'; });
                 }
+                // Assign influencer discount code (discounts:manage_influencer)
+                if (!RBAC.can('discounts:manage_influencer')) {
+                    var assignCodeBtn = document.getElementById('btn-create-influencer');
+                    if (assignCodeBtn) assignCodeBtn.style.display = 'none';
+                }
+                // Promote user to influencer (influencers:create)
+                if (!RBAC.can('influencers:create')) {
+                    document.querySelectorAll('[data-bs-target="#modal-infl-create"]').forEach(function (b) {
+                        b.style.display = 'none';
+                    });
+                }
             });
 
             // ── Initial load ─────────────────────────────────────────────────
@@ -1039,6 +1050,7 @@
             // ── Create influencer code ────────────────────────────────────────
             document.getElementById("form-create-influencer").addEventListener("submit", async function (e) {
                 e.preventDefault();
+                if (!RBAC.can('discounts:manage_influencer')) return;
                 var alertEl = document.getElementById("inf-create-alert");
                 var btn     = document.getElementById("btn-save-influencer");
                 alertEl.className = "alert d-none";
@@ -1227,6 +1239,7 @@
                 document.getElementById("btn-infl-promote-confirm").classList.remove("d-none");
             });
             document.getElementById("btn-infl-promote-confirm").addEventListener("click", async function () {
+                if (!RBAC.can('influencers:create')) return;
                 var userId  = document.getElementById("infl-promote-user-id").value;
                 var notes   = document.getElementById("infl-promote-notes").value.trim();
                 var alertEl = document.getElementById("infl-create-alert");

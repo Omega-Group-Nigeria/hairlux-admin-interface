@@ -63,6 +63,119 @@
         .btn-view-photo-avatar { cursor: pointer; }
         .btn-view-photo-avatar:hover { opacity: .9; }
         #modal-photo-img { max-height: 70vh; width: auto; max-width: 100%; object-fit: contain; }
+
+        .detail-services-scroll {
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .detail-services-scroll .service-row:last-child { border-bottom: 0 !important; }
+        .detail-heavy-box .detail-prose {
+            white-space: pre-wrap;
+            font-size: .875rem;
+            line-height: 1.5;
+        }
+        .col-lg-6 > .detail-subsection:last-child { margin-bottom: 0; }
+        .detail-heavy-box .detail-job-row:last-child { border-bottom: 0 !important; }
+        #offcanvas-detail .offcanvas-body { padding: 1.5rem 2rem; }
+        .offcanvas-detail-hero {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--tblr-border-color);
+        }
+        .detail-section-heading {
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--tblr-secondary);
+            margin-bottom: .75rem;
+        }
+        .detail-section-heading .detail-count {
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+        .detail-subsection { margin-bottom: 1.5rem; }
+        .detail-heavy-box {
+            border: 1px solid var(--tblr-border-color);
+            border-radius: var(--tblr-border-radius, .5rem);
+            padding: 1rem 1.25rem;
+            background: var(--tblr-bg-surface-secondary, var(--tblr-bg-surface));
+        }
+        .detail-cert-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+        #modal-cert-body { min-height: 280px; }
+        #modal-cert-loading { min-height: 240px; }
+        #modal-cert-img { max-height: 70vh; width: auto; max-width: 100%; object-fit: contain; }
+        #modal-cert-frame { height: 70vh; border: 0; }
+        /* Searchable dropdown picker (beautician assign + service rate override) */
+        .svc-beautician-picker,
+        .scr-service-picker { position: relative; }
+        .svc-beautician-picker-toggle,
+        .scr-service-picker-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            min-height: calc(1.4285714em + .875rem + 2px);
+            padding: .4375rem .75rem;
+            font-size: .875rem;
+            line-height: 1.4285714;
+            color: var(--tblr-body-color);
+            background-color: var(--tblr-bg-forms, var(--tblr-bg-surface));
+            border: 1px solid var(--tblr-border-color);
+            border-radius: var(--tblr-border-radius, .25rem);
+            text-align: left;
+        }
+        .svc-beautician-picker-toggle:disabled,
+        .scr-service-picker-toggle:disabled { opacity: .65; cursor: not-allowed; }
+        .svc-beautician-picker-toggle::after,
+        .scr-service-picker-toggle::after {
+            content: '';
+            width: .55rem;
+            height: .55rem;
+            margin-left: .75rem;
+            border-right: 2px solid var(--tblr-secondary);
+            border-bottom: 2px solid var(--tblr-secondary);
+            transform: rotate(45deg) translateY(-2px);
+            flex-shrink: 0;
+        }
+        .svc-beautician-picker-menu,
+        .scr-service-picker-menu {
+            width: 100%;
+            padding: 0;
+            overflow: hidden;
+        }
+        .svc-beautician-picker-search,
+        .scr-service-picker-search {
+            padding: .5rem;
+            border-bottom: 1px solid var(--tblr-border-color);
+            background: var(--tblr-bg-surface);
+        }
+        .svc-beautician-picker-list,
+        .scr-service-picker-list {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .svc-beautician-option .option-meta,
+        .scr-service-option .option-meta {
+            font-size: .75rem;
+            color: var(--tblr-secondary);
+        }
+        .svc-beautician-option.active,
+        .scr-service-option.active {
+            background-color: var(--tblr-primary-lt);
+            color: var(--tblr-primary);
+        }
+        /* Allow searchable picker menu to extend past modal body */
+        #modal-service-commission .modal-body { overflow: visible; }
+        #modal-service-commission .modal-content { overflow: visible; }
     </style>
 </head>
 
@@ -196,6 +309,7 @@
                         <li class="nav-item"><a class="nav-link active" href="#" data-section="list">List</a></li>
                         <li class="nav-item"><a class="nav-link" href="#" data-section="reviews">Profile Reviews</a></li>
                         <li class="nav-item"><a class="nav-link" href="#" data-section="services">Services</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="service-rates">Service Rates</a></li>
                         <li class="nav-item"><a class="nav-link" href="#" data-section="settings">Settings</a></li>
                         <li class="nav-item"><a class="nav-link" href="#" data-section="payouts">Payouts</a></li>
                     </ul>
@@ -324,6 +438,7 @@
                                             <tr>
                                                 <th class="w-1">#</th>
                                                 <th>Name</th>
+                                                <th>Date of Birth</th>
                                                 <th>Specialties</th>
                                                 <th>Experience</th>
                                                 <th>KYC Status</th>
@@ -333,7 +448,7 @@
                                         </thead>
                                         <tbody id="reviews-tbody">
                                             <tr>
-                                                <td colspan="7" class="text-center py-5">
+                                                <td colspan="8" class="text-center py-5">
                                                     <div class="spinner-border text-primary" role="status"></div>
                                                 </td>
                                             </tr>
@@ -359,10 +474,21 @@
                             <div class="card-body">
                                 <div class="row g-3 align-items-end mb-4">
                                     <div class="col-12 col-md-6">
-                                        <label class="form-label text-secondary small mb-1">Select Beautician</label>
-                                        <select id="svc-beautician-select" class="form-select">
-                                            <option value="">— Select a beautician —</option>
-                                        </select>
+                                        <label class="form-label text-secondary small mb-1" for="svc-beautician-toggle">Select Beautician</label>
+                                        <div class="dropdown svc-beautician-picker" id="svc-beautician-picker">
+                                            <input type="hidden" id="svc-beautician-select" value="">
+                                            <button type="button" class="svc-beautician-picker-toggle" id="svc-beautician-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                                <span id="svc-beautician-label" class="text-secondary">— Select a beautician —</span>
+                                            </button>
+                                            <div class="dropdown-menu svc-beautician-picker-menu">
+                                                <div class="svc-beautician-picker-search">
+                                                    <input type="search" id="svc-beautician-search" class="form-control form-control-sm" placeholder="Search name, email or phone…" autocomplete="off">
+                                                </div>
+                                                <div id="svc-beautician-list" class="svc-beautician-picker-list">
+                                                    <div class="text-center text-secondary py-3 small">Open to load beauticians</div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-auto">
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-svc-load">Load Services</button>
@@ -398,19 +524,12 @@
                                 <div class="card flex-fill" id="card-home-service-settings">
                                     <div class="card-header" style="display: grid;">
                                         <h3 class="card-title mb-0">Home Service Settings</h3>
-                                        <div class="card-subtitle text-secondary small mt-1">Commission, payout, arrival &amp; no-show</div>
+                                        <div class="card-subtitle text-secondary small mt-1">Payout, arrival &amp; no-show</div>
                                     </div>
                                     <div class="card-body d-flex flex-column">
                                         <div class="alert alert-success d-none" id="settings-success"></div>
                                         <div class="alert alert-danger d-none" id="settings-error"></div>
                                         <div class="row g-3">
-                                            <div class="col-12 col-sm-6">
-                                                <label class="form-label" data-field-hint="commissionRate">Commission Rate</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="set-commission-rate" min="0" max="100" step="1" placeholder="e.g. 70">
-                                                    <span class="input-group-text">%</span>
-                                                </div>
-                                            </div>
                                             <div class="col-12 col-sm-6">
                                                 <label class="form-label" data-field-hint="payoutMode">Payout Mode</label>
                                                 <select class="form-select" id="set-payout-mode">
@@ -562,6 +681,79 @@
                                     </div>
                                 </div>
                             </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- SECTION: SERVICE RATES (default + per-service overrides)    -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="section-service-rates" class="d-none">
+                        <!-- Platform default (GET/PUT /admin/settings/home-service → commissionRate) -->
+                        <div class="card mb-3" id="card-default-beautician-share">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-0">Default Beautician Share</h3>
+                                    <div class="card-subtitle text-secondary small mt-1">
+                                        Platform default take-home % for home-service lines without a custom override
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success d-none" id="scr-default-success"></div>
+                                <div class="alert alert-danger d-none" id="scr-default-error"></div>
+                                <div class="mb-0">
+                                    <label class="form-label" for="scr-default-rate" data-field-hint="commissionRate">Beautician share</label>
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <div class="input-group" style="max-width: 12rem;">
+                                            <input type="number" class="form-control" id="scr-default-rate" min="0" max="100" step="0.1" placeholder="e.g. 70">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" id="btn-scr-default-save">Save Default Share</button>
+                                    </div>
+                                    <div class="form-hint mt-1">Applies to all services without an override below</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Per-service overrides -->
+                        <div class="card" id="card-service-commission-rates">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-0">Service Rate Overrides</h3>
+                                    <div class="card-subtitle text-secondary small mt-1">
+                                        Custom beautician share for specific catalog services. Exceptions only — everything else uses the default above.
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button type="button" class="btn btn-primary btn-sm" id="btn-scr-add" data-bs-toggle="modal" data-bs-target="#modal-service-commission">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                                        Add Override
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success d-none" id="scr-success"></div>
+                                <div class="alert alert-danger d-none" id="scr-error"></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover card-table mb-0" id="scr-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Service</th>
+                                                <th class="w-1 text-nowrap">Share</th>
+                                                <th class="text-nowrap">Amount &amp; earnings</th>
+                                                <th class="w-1 text-nowrap">Updated</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="scr-tbody">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-secondary py-4">Loading…</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -705,6 +897,71 @@
     </div>
 
     <!-- ── PROFILE PHOTO PREVIEW MODAL ── -->
+    <!-- Add / Edit service commission override -->
+    <div class="modal modal-blur fade" id="modal-service-commission" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scr-modal-title">Add Service Override</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-service-commission" novalidate>
+                    <div class="modal-body">
+                        <div class="alert alert-danger d-none" id="scr-modal-error" role="alert"></div>
+                        <p class="text-secondary small mb-3">
+                            Rate is the <strong>beautician take-home share</strong> of that service’s home-service line amount
+                            (e.g. 3% means ₦30,000 on a ₦1,000,000 line). Multi-service jobs blend rates per line.
+                        </p>
+                        <div class="mb-3" id="scr-service-select-wrap">
+                            <label class="form-label required" for="scr-service-toggle">Service</label>
+                            <div class="dropdown scr-service-picker" id="scr-service-picker">
+                                <input type="hidden" id="scr-service-select" value="">
+                                <button type="button" class="scr-service-picker-toggle" id="scr-service-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <span id="scr-service-label" class="text-secondary">— Select a service —</span>
+                                </button>
+                                <div class="dropdown-menu scr-service-picker-menu">
+                                    <div class="scr-service-picker-search">
+                                        <input type="search" id="scr-service-search" class="form-control form-control-sm" placeholder="Search service name…" autocomplete="off">
+                                    </div>
+                                    <div id="scr-service-list" class="scr-service-picker-list">
+                                        <div class="text-center text-secondary py-3 small">Open to load services</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-hint">Only services without an existing override are listed when adding</div>
+                        </div>
+                        <div class="mb-0 d-none" id="scr-service-name-wrap">
+                            <label class="form-label">Service</label>
+                            <div class="form-control-plaintext fw-semibold" id="scr-service-name-display">—</div>
+                        </div>
+                        <div class="mb-0 mt-3">
+                            <label class="form-label required" for="scr-rate-input">Beautician share (%)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="scr-rate-input" inputmode="decimal" autocomplete="off" placeholder="e.g. 3" maxlength="6" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-hint">Numbers only, 0–100</div>
+                            <div id="scr-earnings-preview" class="border rounded p-2 mt-2 d-none" style="background: var(--tblr-bg-surface-secondary, var(--tblr-bg-surface));">
+                                <div class="text-secondary small mb-1">Earnings preview</div>
+                                <div class="small">
+                                    Service amount: <strong id="scr-preview-amount">—</strong>
+                                    <span class="text-secondary mx-1">·</span>
+                                    Beautician earns: <strong class="text-success" id="scr-preview-earn">—</strong>
+                                    <span class="text-secondary" id="scr-preview-pct"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="scr-edit-service-id" value="">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-scr-save">Save Override</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal modal-blur fade" id="modal-photo-preview" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -723,16 +980,39 @@
         </div>
     </div>
 
+    <!-- ── CERTIFICATION PREVIEW MODAL ── -->
+    <div class="modal modal-blur fade" id="modal-cert-preview" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-cert-title">Certification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center bg-dark-lt p-3 d-flex align-items-center justify-content-center" id="modal-cert-body">
+                    <div id="modal-cert-loading" class="d-flex align-items-center justify-content-center w-100">
+                        <div class="spinner-border text-primary" role="status" aria-label="Loading certification"></div>
+                    </div>
+                    <img id="modal-cert-img" src="" alt="" class="rounded d-none">
+                    <iframe id="modal-cert-frame" class="w-100 rounded d-none" title="Certification preview"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <a id="modal-cert-open" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Open in new tab</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ── BEAUTICIAN DETAIL OFFCANVAS ── -->
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-detail" data-bs-scroll="true" style="width:560px;max-width:100vw;">
-        <div class="offcanvas-header border-bottom">
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-detail" data-bs-scroll="true" style="width:1120px;max-width:100vw;">
+        <div class="offcanvas-header border-bottom px-4 py-3">
             <h5 class="offcanvas-title">Beautician Details</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body" id="offcanvas-detail-body">
             <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
         </div>
-        <div class="border-top p-3 d-flex gap-2 flex-wrap align-items-center" id="offcanvas-detail-actions"></div>
+        <div class="border-top px-4 py-3 d-flex gap-2 flex-wrap align-items-center" id="offcanvas-detail-actions"></div>
     </div>
 
     <!-- ── BOOTSTRAP / VENDOR SCRIPTS ── -->
@@ -742,1210 +1022,14 @@
     <script src="assets/js/api-utils/beauticians.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
-    <script>
-        var bootstrap = window.tabler.bootstrap;
+    <!-- Beauticians page modules (order matters) -->
+    <script src="assets/js/beauticians/state.js"></script>
+    <script src="assets/js/beauticians/utils.js"></script>
+    <script src="assets/js/beauticians/api.js"></script>
+    <script src="assets/js/beauticians/ui.js"></script>
+    <script src="assets/js/beauticians/handlers.js"></script>
+    <script src="assets/js/beauticians/index.js"></script>
 
-        Auth.requireAuth();
-        RBAC.loadFromStorage();
-        RBAC.applyPageGuardForCurrentPage();
-
-        // ── State ──────────────────────────────────────────────────────────────────
-        var VALID_SECTIONS = ['list', 'reviews', 'services', 'settings', 'payouts'];
-        var payoutsState = { status: '' };
-        var activeSection = 'list';
-        var listState = { page: 1, limit: 20, search: '', kycStatus: '', profileStatus: '', availabilityStatus: '', ratingMin: '', totalPages: 1 };
-        var reviewsState = { page: 1, limit: 20, submittedDaysAgoMin: '', totalPages: 1 };
-        var beauticianOptionsLoaded = false;
-
-        // ── Settings field hints ───────────────────────────────────────────────────
-        var SETTINGS_FIELD_HINTS = {
-            commissionRate: 'Share of the job price paid to the beautician. Enter as a percentage here (e.g. 70 for 70%); the API stores a decimal between 0 and 1 (0.7).',
-            payoutMode: 'MANUAL = admin marks bank transfers complete in the dashboard. AUTO = the system can initiate payouts when eligible.',
-            dailyPayoutLimit: 'Maximum total beautician withdrawals (NGN) per calendar day (Africa/Lagos midnight). Applies to manual and auto payout modes. Counts PENDING, PROCESSING, and COMPLETED.',
-            dailyPayoutUnlimited: 'When on, dailyPayoutLimit is cleared (null) and there is no platform-wide daily cap on payouts.',
-            arrivalVerificationExpiryMinutes: 'How long the customer\u2019s arrival OTP/code stays valid after the beautician marks \u201carrived\u201d.',
-            serviceCompletionBufferMinutes: 'Grace period after the scheduled end time before the job is treated as overdue for completion rules.',
-            arrivalGeoFenceMeters: 'How close the beautician must be to the customer address (in meters) to pass arrival verification.',
-            noShowSuspendThreshold: 'How many no-shows trigger a suspension. If a beautician hits that count within the window (default 3 in 30 days), their account is auto-suspended (isActive = false).',
-            noShowWindowDays: 'How long we keep counting. Each no-show is tracked in a rolling window (default 30 days). After that period, the count resets.',
-            kycAutoApprove: 'When on, a successful QoreID result sets the beautician to VERIFIED immediately. When off, they go to NEEDS_REVIEW until an admin approves KYC.',
-            noShowPenaltyEnabled: 'When on, no-shows count toward the suspend threshold. When off, no-show tracking penalties are skipped.',
-            tier1Radius: 'Smallest search area (nearest beauticians). Default 5 km. Must be a whole number.',
-            tier1OfferTtl: 'Seconds the beautician has to accept a tier-1 offer before it expires. Default 45s. Integer 10\u2013300.',
-            tier2Radius: 'Wider search if tier 1 finds no accept. Default 12 km.',
-            tier2OfferTtl: 'Offer timeout for tier 2. Default 60s.',
-            tier3Radius: 'Widest search before matching is exhausted. Default 25 km.',
-            tier3OfferTtl: 'Offer timeout for tier 3. Default 75s.',
-            interTierDelaySeconds: 'Wait time after a tier is exhausted before starting the next wider tier. Default 15s. Replaces the old global job offer timeout for escalation.',
-            locationStalenessMinutes: 'Beauticians whose last GPS ping is older than this are not offered jobs. Default 5 min.',
-            locationRematchMinDistanceM: 'Minimum distance a beautician must move while online before the system re-scans nearby pending bookings. Default 500 m.',
-            wakeExhaustedOnOnlineEnabled: 'When on, if a beautician comes online (or moves enough) near an exhausted booking, the system auto-retries matching once per booking.',
-            scoringWeightDistance: 'Weight (not a percentage), default 1. Higher values prefer closer beauticians more strongly in ranking.',
-            scoringWeightRating: 'Weight, default 0.3. Higher values prefer higher-rated beauticians more.',
-            scoringWeightAcceptance: 'Weight for historical job acceptance, default 0.2. This is a ranking multiplier, not an acceptance percentage. Read-only until the API supports writes.',
-            scoringWeightIdle: 'Weight, default 0.1. Higher values favour beauticians who have been waiting longer for a job. Read-only until the API supports writes.',
-            envOverrides: 'When active, environment variables override tier radius and/or offer TTL. Tier fields may not affect production until those env vars are removed.'
-        };
-
-        var SETTINGS_HINT_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/></svg>';
-
-        function initSettingsFieldHints() {
-            document.querySelectorAll('#section-settings [data-field-hint]').forEach(function (el) {
-                if (el.dataset.hintReady === '1') return;
-                var hint = SETTINGS_FIELD_HINTS[el.dataset.fieldHint];
-                if (!hint) return;
-
-                if (el.classList.contains('form-check-label')) {
-                    el.classList.add('d-inline-flex', 'align-items-center', 'gap-1', 'flex-wrap');
-                } else if (el.classList.contains('form-label') || el.classList.contains('settings-scoring-label')) {
-                    el.classList.add('d-flex', 'align-items-center', 'gap-1');
-                }
-
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'btn btn-link btn-sm p-0 lh-1 settings-hint-btn';
-                btn.setAttribute('aria-label', 'Show field hint');
-                btn.innerHTML = SETTINGS_HINT_ICON;
-                el.appendChild(btn);
-
-                bootstrap.Popover.getOrCreateInstance(btn, {
-                    trigger: 'focus',
-                    placement: 'top',
-                    container: 'body',
-                    customClass: 'settings-field-popover',
-                    content: hint,
-                    sanitize: true,
-                });
-
-                el.dataset.hintReady = '1';
-            });
-        }
-
-        // ── Utility ────────────────────────────────────────────────────────────────
-        function showAlert(msg, type) {
-            var el = document.getElementById('page-alert');
-            if (!msg) { el.classList.add('d-none'); return; }
-            el.textContent = msg;
-            el.className = 'alert alert-' + (type || 'danger') + ' mb-3';
-            el.classList.remove('d-none');
-            setTimeout(function () { el.classList.add('d-none'); }, 5000);
-        }
-
-        function setSaveButtonState(btn, isSaving, label) {
-            if (!btn) return;
-            btn.disabled = !!isSaving;
-            btn.innerHTML = isSaving
-                ? '<span class="spinner-border spinner-border-sm me-1"></span> Saving…'
-                : label;
-        }
-
-        function canAccessSection(section) {
-            if (section === 'list') return RBAC.can('beauticians:read');
-            if (section === 'reviews') return RBAC.can('beauticians:review');
-            if (section === 'services') return RBAC.can('beauticians:assign_services');
-            if (section === 'settings') return RBAC.can('settings:read') || RBAC.can('settings:manage');
-            if (section === 'payouts') return RBAC.can('beauticians:process_payouts');
-            return true;
-        }
-
-        function applyTabVisibility() {
-            document.querySelectorAll('#section-tabs .nav-item').forEach(function (li) {
-                var tab = li.querySelector('a[data-section]');
-                if (!tab) return;
-                li.style.display = canAccessSection(tab.dataset.section) ? '' : 'none';
-            });
-        }
-
-        function applyPerformanceVisibility() {
-            var el = document.getElementById('perf-summary');
-            if (!el) return;
-            el.classList.toggle('d-none', !RBAC.can('beauticians:read'));
-        }
-
-        function firstAccessibleSection() {
-            for (var i = 0; i < VALID_SECTIONS.length; i++) {
-                if (canAccessSection(VALID_SECTIONS[i])) return VALID_SECTIONS[i];
-            }
-            return 'list';
-        }
-
-        function refreshPage() {
-            if (RBAC.can('beauticians:read')) loadPerformance();
-            refreshCurrentSection();
-        }
-
-        function refreshCurrentSection() {
-            if (activeSection === 'list') loadList();
-            else if (activeSection === 'reviews') loadReviews();
-            else if (activeSection === 'services') loadBeauticianOptions();
-            else if (activeSection === 'settings') loadSettings();
-            else if (activeSection === 'payouts') loadPayouts();
-        }
-
-        function switchSection(section, updateHash) {
-            if (VALID_SECTIONS.indexOf(section) === -1) section = firstAccessibleSection();
-            if (!canAccessSection(section)) section = firstAccessibleSection();
-            activeSection = section;
-            if (updateHash !== false && window.location.hash.replace(/^#/, '') !== section) {
-                history.replaceState(null, '', '#' + section);
-            }
-            document.querySelectorAll('#section-tabs .nav-link').forEach(function (t) {
-                t.classList.toggle('active', t.dataset.section === section);
-            });
-            VALID_SECTIONS.forEach(function (s) {
-                var el = document.getElementById('section-' + s);
-                if (el) el.classList.toggle('d-none', s !== section);
-            });
-            refreshCurrentSection();
-        }
-
-        function applySectionFromHash() {
-            var hash = (window.location.hash || '').replace(/^#/, '').toLowerCase();
-            if (VALID_SECTIONS.indexOf(hash) === -1) hash = firstAccessibleSection();
-            switchSection(hash, false);
-        }
-
-        function renderPagination(prefix, meta) {
-            var total = meta.total || 0;
-            var page = meta.page || 1;
-            var limit = meta.limit || 20;
-            var pages = meta.totalPages || 1;
-            var from = total ? (page - 1) * limit + 1 : 0;
-            var to = Math.min(page * limit, total);
-            document.getElementById(prefix + '-pagination-info').textContent = total ? 'Showing ' + from + '–' + to + ' of ' + total : 'No results';
-            var ul = document.getElementById(prefix + '-pagination-btns');
-            ul.innerHTML = '';
-            ul.insertAdjacentHTML('beforeend',
-                '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
-            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
-            for (var p = start; p <= end; p++) {
-                ul.insertAdjacentHTML('beforeend',
-                    '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
-            }
-            ul.insertAdjacentHTML('beforeend',
-                '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
-        }
-
-        // ── Load beautician list ───────────────────────────────────────────────────
-        async function loadList() {
-            var tbody = document.getElementById('list-tbody');
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-            document.getElementById('list-results-label').textContent = 'Loading…';
-            try {
-                var result = await Beauticians.listBeauticians({
-                    page: listState.page,
-                    limit: listState.limit,
-                    search: listState.search,
-                    kycStatus: listState.kycStatus,
-                    profileStatus: listState.profileStatus,
-                    availabilityStatus: listState.availabilityStatus,
-                    ratingMin: listState.ratingMin,
-                });
-                var rows = result.data || [];
-                var meta = result.meta || {};
-                listState.totalPages = meta.totalPages || 1;
-                var count = meta.total ?? rows.length;
-                document.getElementById('list-results-label').textContent = count + ' beautician' + (count !== 1 ? 's' : '') + ' found';
-                renderListTable(rows, meta);
-                renderPagination('list', meta);
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">' + (err.message || 'Failed to load.') + '</td></tr>';
-                document.getElementById('list-results-label').textContent = 'Error';
-            }
-        }
-
-        function renderListTable(rows, meta) {
-            var tbody = document.getElementById('list-tbody');
-            if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-secondary py-5">No beauticians found.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = rows.map(function (b, i) {
-                var name = Beauticians.fullName(b);
-                var email = (b.user && b.user.email) || '';
-                var phone = (b.user && b.user.phone) || '';
-                var rating = b.ratingAverage != null ? b.ratingAverage.toFixed(1) : '—';
-                var jobs = b.totalJobsCompleted ?? '—';
-                var earnings = Beauticians.formatMoney(b.totalEarnings);
-                return '<tr class="beautician-row" data-id="' + b.id + '">' +
-                    '<td class="text-secondary small">' + ((listState.page - 1) * listState.limit + i + 1) + '</td>' +
-                    '<td><div class="fw-semibold">' + name + '</div><div class="text-secondary small">' + email + (phone ? ' · ' + phone : '') + '</div></td>' +
-                    '<td>' + Beauticians.kycBadge(b.kycStatus) + '</td>' +
-                    '<td>' + Beauticians.profileBadge(b.profileStatus) + '</td>' +
-                    '<td>' + Beauticians.availabilityBadge(b.availabilityStatus) + '</td>' +
-                    '<td class="fw-semibold">' + rating + '</td>' +
-                    '<td>' + jobs + '</td>' +
-                    '<td class="fw-semibold text-success">' + earnings + '</td>' +
-                    '<td>' + Beauticians.statusBadge(b.isActive) + '</td>' +
-                    '<td><button class="btn btn-sm btn-ghost-secondary px-2 open-detail-btn" data-id="' + b.id + '" title="View details">' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>' +
-                    '</button></td>' +
-                    '</tr>';
-            }).join('');
-        }
-
-        function openPhotoPreview(url, name) {
-            if (!url) return;
-            document.getElementById('modal-photo-img').src = url;
-            document.getElementById('modal-photo-img').alt = name || 'Profile photo';
-            document.getElementById('modal-photo-title').textContent = (name || 'Beautician') + ' — Profile Photo';
-            document.getElementById('modal-photo-open').href = url;
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-photo-preview')).show();
-        }
-
-        // ── Beautician detail offcanvas ────────────────────────────────────────────
-        async function openDetail(id) {
-            if (!id) return;
-            var body = document.getElementById('offcanvas-detail-body');
-            var actions = document.getElementById('offcanvas-detail-actions');
-            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
-            actions.innerHTML = '';
-            var oc = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvas-detail'));
-            oc.show();
-            try {
-                var b = await Beauticians.getBeautician(id);
-                var user = b.user || {};
-                var name = Beauticians.fullName(b);
-                var email = user.email || '—';
-                var phone = user.phone || '—';
-
-                var specialties = Array.isArray(b.specialties) && b.specialties.length
-                    ? b.specialties.map(function (s) { return '<span class="badge bg-azure-lt me-1">' + s + '</span>'; }).join('')
-                    : '<span class="text-secondary">None listed</span>';
-
-                var assignedSvc = Array.isArray(b.assignedServices) && b.assignedServices.length
-                    ? b.assignedServices.map(function (as) {
-                        var svc = as.service || {};
-                        return '<div class="d-flex justify-content-between py-1 border-bottom"><span>' + (svc.name || 'Service') + '</span><span class="text-secondary">' + Beauticians.formatMoney(svc.homeServicePrice) + '</span></div>';
-                    }).join('')
-                    : '<div class="text-secondary">No services assigned</div>';
-
-                var recentJobsHtml = Array.isArray(b.recentJobs) && b.recentJobs.length
-                    ? b.recentJobs.slice(0, 5).map(function (j) {
-                        return '<div class="d-flex justify-content-between py-1 border-bottom small"><span>' + (j.reservationCode || '—') + '</span><span>' + Beauticians.formatDate(j.bookingDate) + '</span><span>' + Beauticians.formatMoney(j.totalAmount) + '</span></div>';
-                    }).join('')
-                    : '<div class="text-secondary small">No recent jobs</div>';
-
-                var walletBalance = b.walletBalance != null ? Beauticians.formatMoney(b.walletBalance) : '—';
-                var photoUrl = b.profilePhotoUrl || '';
-                var initials = ((user.firstName || '?')[0] + (user.lastName || '')[0]).toUpperCase() || '?';
-                var safePhotoUrl = photoUrl.replace(/"/g, '&quot;');
-                var safeName = name.replace(/"/g, '&quot;');
-                var avatarHtml = photoUrl
-                    ? '<span class="avatar avatar-lg rounded btn-view-photo-avatar btn-view-photo" role="button" tabindex="0" title="View photo" data-url="' + safePhotoUrl + '" data-name="' + safeName + '"><img src="' + safePhotoUrl + '" alt="' + safeName + '"></span>'
-                    : '<span class="avatar avatar-lg rounded-circle bg-primary-lt fw-bold fs-4">' + initials + '</span>';
-                var viewPhotoHtml = photoUrl
-                    ? '<button type="button" class="btn btn-sm btn-ghost-primary px-0 mt-1 btn-view-photo" data-url="' + safePhotoUrl + '" data-name="' + safeName + '">View photo</button>'
-                    : '';
-
-                body.innerHTML =
-                    '<div class="d-flex align-items-center gap-3 mb-4">' +
-                    avatarHtml +
-                    '<div><div class="fw-bold fs-5">' + name + '</div>' +
-                    '<div class="text-secondary small">' + email + '</div>' +
-                    '<div class="text-secondary small">' + phone + '</div>' + viewPhotoHtml + '</div></div>' +
-
-                    '<div class="row g-3 mb-4">' +
-                    '<div class="col-6"><div class="text-secondary small">KYC</div>' + Beauticians.kycBadge(b.kycStatus) + '</div>' +
-                    '<div class="col-6"><div class="text-secondary small">Profile</div>' + Beauticians.profileBadge(b.profileStatus) + '</div>' +
-                    '<div class="col-6"><div class="text-secondary small">Availability</div>' + Beauticians.availabilityBadge(b.availabilityStatus) + '</div>' +
-                    '<div class="col-6"><div class="text-secondary small">Dispatch</div>' + Beauticians.dispatchSuspendedBadge(!!b.dispatchSuspended) + '</div>' +
-                    '<div class="col-6"><div class="text-secondary small">Wallet Balance</div><div class="fw-semibold text-success">' + walletBalance + '</div></div>' +
-                    '</div>' +
-
-                    (b.bio ? '<div class="mb-3"><div class="text-secondary small mb-1">Bio</div><div>' + b.bio + '</div></div>' : '') +
-
-                    '<div class="mb-3"><div class="text-secondary small mb-1">Specialties</div><div>' + specialties + '</div></div>' +
-
-                    '<div class="detail-section"><div class="text-secondary small mb-1">Assigned Services</div>' +
-                    '<div class="border rounded p-2">' + assignedSvc + '</div></div>' +
-
-                    '<div class="detail-section"><div class="text-secondary small mb-1">Recent Jobs</div>' +
-                    '<div class="border rounded p-2">' + recentJobsHtml + '</div></div>' +
-
-                    (b.kycReferences ? '<div class="detail-section"><div class="text-secondary small mb-1">KYC References</div>' +
-                    '<dl class="row g-1 small mb-0"><dt class="col-5 text-secondary fw-normal">QoreID Customer</dt><dd class="col-7 mb-0 font-monospace">' + (b.kycReferences.qoreIdCustomerId || '—') + '</dd>' +
-                    '<dt class="col-5 text-secondary fw-normal">QoreID Session</dt><dd class="col-7 mb-0 font-monospace">' + (b.kycReferences.qoreIdSessionId || '—') + '</dd></dl></div>' : '') +
-
-                    '<div class="detail-section"><div class="text-secondary small mb-1">Profile ID</div>' +
-                    '<div class="font-monospace text-secondary small">' + b.id + '</div></div>';
-
-                actions.innerHTML = buildDetailActions(b);
-            } catch (err) {
-                body.innerHTML = '<div class="alert alert-danger">' + (err.message || 'Failed to load details.') + '</div>';
-            }
-        }
-
-        function buildDetailActions(b) {
-            var html = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="offcanvas">Close</button>';
-            var id = (b.id || '').replace(/'/g, "\\'");
-            var kyc = (b.kycStatus || '').toUpperCase();
-            var profile = (b.profileStatus || '').toUpperCase();
-
-            if (RBAC.can('beauticians:review') && (kyc === 'NEEDS_REVIEW' || kyc === 'PENDING')) {
-                html += '<button class="btn btn-success btn-sm" onclick="handleKycApprove(\'' + id + '\')">Approve KYC</button>';
-                html += '<button class="btn btn-danger btn-sm" onclick="handleKycReject(\'' + id + '\')">Reject KYC</button>';
-            }
-            if (RBAC.can('beauticians:review') && profile === 'PENDING_REVIEW' && kyc === 'VERIFIED') {
-                html += '<button class="btn btn-success btn-sm" onclick="handleProfileApprove(\'' + id + '\')">Approve Profile</button>';
-                html += '<button class="btn btn-danger btn-sm" onclick="handleProfileReject(\'' + id + '\')">Reject Profile</button>';
-            }
-            if (RBAC.can('beauticians:manage')) {
-                html += '<button class="btn btn-outline-secondary btn-sm" onclick="openSuspendModal(\'' + id + '\',\'' + (b.isActive ? 'true' : 'false') + '\')">' + (b.isActive ? 'Suspend' : 'Reactivate') + '</button>';
-                var dispatchSuspended = b.dispatchSuspended ? 'true' : 'false';
-                html += '<button class="btn btn-outline-warning btn-sm" onclick="toggleDispatchSuspended(\'' + id + '\',\'' + dispatchSuspended + '\')">' +
-                    (b.dispatchSuspended ? 'Resume Dispatch' : 'Suspend Dispatch') + '</button>';
-            }
-            return html;
-        }
-
-        async function toggleDispatchSuspended(id, isSuspended) {
-            var suspended = isSuspended === 'true';
-            var msg = suspended
-                ? 'Resume this beautician for dispatch matching?'
-                : 'Suspend this beautician from dispatch matching? Pending offers will be cancelled.';
-            if (!confirm(msg)) return;
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Updating…';
-            try {
-                await Beauticians.updateDispatch(id, !suspended);
-                openDetail(id);
-                showAlert(suspended ? 'Dispatch matching resumed' : 'Dispatch matching suspended', suspended ? 'success' : 'warning');
-                loadList();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span><button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        // ── KYC Action handlers ────────────────────────────────────────────────────
-        async function handleKycApprove(id) {
-            if (!confirm('Approve KYC for this beautician?')) return;
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing…';
-            try {
-                await Beauticians.approveKyc(id);
-                openDetail(id);
-                showAlert('KYC approved successfully', 'success');
-                loadList();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span><button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function handleKycReject(id) {
-            var reason = prompt('Enter rejection reason:');
-            if (!reason) return;
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing…';
-            try {
-                await Beauticians.rejectKyc(id, reason);
-                openDetail(id);
-                showAlert('KYC rejected', 'warning');
-                loadList();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span><button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function handleProfileApprove(id) {
-            if (!confirm('Approve professional profile for this beautician?')) return;
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing…';
-            try {
-                await Beauticians.approveProfile(id);
-                openDetail(id);
-                showAlert('Profile approved successfully', 'success');
-                loadList();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span><button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function handleProfileReject(id) {
-            var reason = prompt('Enter rejection reason:');
-            if (!reason) return;
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing…';
-            try {
-                await Beauticians.rejectProfile(id, reason);
-                openDetail(id);
-                showAlert('Profile rejected', 'warning');
-                loadList();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span><button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function openSuspendModal(id, isActive) {
-            var newActive = isActive === 'true' ? false : true;
-            var msg = newActive ? 'Reactivate this beautician?' : 'Suspend this beautician? This removes them from job matching.';
-            if (!confirm(msg)) return;
-            var body = document.getElementById('offcanvas-detail-body');
-            var actions = document.getElementById('offcanvas-detail-actions');
-            var prevActions = actions.innerHTML;
-            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Updating…';
-            try {
-                await Beauticians.updateBeautician(id, { isActive: newActive });
-                showAlert(newActive ? 'Beautician reactivated' : 'Beautician suspended', newActive ? 'success' : 'warning');
-                loadList();
-                openDetail(id);
-            } catch (err) {
-                body.innerHTML = '<div class="alert alert-danger">' + (err.message || 'Failed to update.') + '</div>';
-                actions.innerHTML = prevActions;
-            }
-        }
-
-        // ── Load reviews ──────────────────────────────────────────────────────────
-        async function loadReviews() {
-            var tbody = document.getElementById('reviews-tbody');
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-            try {
-                var result = await Beauticians.getPendingProfileReviews({
-                    page: reviewsState.page,
-                    limit: reviewsState.limit,
-                    submittedDaysAgoMin: reviewsState.submittedDaysAgoMin,
-                });
-                var rows = result.data || [];
-                var meta = result.meta || {};
-                reviewsState.totalPages = meta.totalPages || 1;
-                renderReviewsTable(rows, meta);
-                renderPagination('reviews', meta);
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.message || 'Failed to load.') + '</td></tr>';
-            }
-        }
-
-        function renderReviewsTable(rows, meta) {
-            var tbody = document.getElementById('reviews-tbody');
-            if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No pending profile reviews.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = rows.map(function (b, i) {
-                var name = Beauticians.fullName(b);
-                var specs = Array.isArray(b.specialties) ? b.specialties.join(', ') : '—';
-                var exp = b.yearsOfExperience ? b.yearsOfExperience + ' yrs' : '—';
-                var submitted = Beauticians.formatDateTime(b.updatedAt || b.createdAt);
-                return '<tr>' +
-                    '<td class="text-secondary small">' + ((reviewsState.page - 1) * reviewsState.limit + i + 1) + '</td>' +
-                    '<td><div class="fw-semibold">' + name + '</div></td>' +
-                    '<td class="text-secondary small">' + specs + '</td>' +
-                    '<td>' + exp + '</td>' +
-                    '<td>' + Beauticians.kycBadge(b.kycStatus) + '</td>' +
-                    '<td class="text-secondary small">' + submitted + '</td>' +
-                    '<td><button class="btn btn-sm btn-ghost-primary open-detail-btn" data-id="' + b.id + '" title="View beautician information">View information</button></td>' +
-                    '</tr>';
-            }).join('');
-        }
-
-        // ── Load performance ──────────────────────────────────────────────────────
-        async function loadPerformance() {
-            var periodDays = document.getElementById('perf-period-days').value;
-            try {
-                var data = await Beauticians.getPerformance({ periodDays: periodDays });
-                document.getElementById('perf-active').textContent = data.activeBeauticians ?? '—';
-                document.getElementById('perf-online').textContent = data.onlineBeauticians ?? '—';
-                document.getElementById('perf-jobs').textContent = data.completedJobs ?? '—';
-                document.getElementById('perf-fill-rate').textContent = (data.fillRatePercent != null ? data.fillRatePercent.toFixed(1) : '—') + '%';
-                document.getElementById('perf-avg-rating').textContent = data.avgRating != null ? data.avgRating.toFixed(1) : '—';
-                document.getElementById('perf-kyc-rate').textContent = (data.kycPassRatePercent != null ? data.kycPassRatePercent.toFixed(1) : '—') + '%';
-                document.getElementById('perf-profile-rate').textContent = (data.profileApprovalRatePercent != null ? data.profileApprovalRatePercent.toFixed(1) : '—') + '%';
-            } catch (err) {
-                console.warn('Performance load:', err);
-            }
-        }
-
-        // ── Load services ─────────────────────────────────────────────────────────
-        async function loadBeauticianOptions() {
-            var select = document.getElementById('svc-beautician-select');
-            if (beauticianOptionsLoaded && select.options.length > 1) return;
-            select.innerHTML = '<option value="">Loading beauticians…</option>';
-            try {
-                var result = await Beauticians.listBeauticians({ page: 1, limit: 100, profileStatus: 'APPROVED' });
-                var rows = result.data || [];
-                if (!rows.length) {
-                    select.innerHTML = '<option value="">— No approved beauticians —</option>';
-                    return;
-                }
-                select.innerHTML = '<option value="">— Select a beautician —</option>' + rows.map(function (b) {
-                    return '<option value="' + b.id + '">' + Beauticians.fullName(b) + '</option>';
-                }).join('');
-                beauticianOptionsLoaded = true;
-            } catch (err) {
-                select.innerHTML = '<option value="">— Failed to load beauticians —</option>';
-                showAlert(err.message || 'Failed to load beautician list', 'danger');
-            }
-        }
-
-        function updateSvcSelectedCount() {
-            var checkboxes = document.querySelectorAll('.svc-checkbox');
-            var count = document.querySelectorAll('.svc-checkbox:checked').length;
-            document.getElementById('svc-count-label').textContent = count + ' selected';
-            var selectAll = document.getElementById('svc-select-all');
-            if (selectAll) {
-                var total = checkboxes.length;
-                selectAll.checked = total > 0 && count === total;
-                selectAll.indeterminate = count > 0 && count < total;
-            }
-        }
-
-        async function loadServicesForBeautician() {
-            var select = document.getElementById('svc-beautician-select');
-            var bId = select.value;
-            if (!bId) return;
-            var area = document.getElementById('svc-assignment-area');
-            var list = document.getElementById('svc-catalog-list');
-            var selectAllWrap = document.getElementById('svc-select-all-wrap');
-            list.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary spinner-inline" role="status"></div> Loading…</div>';
-            selectAllWrap.classList.add('d-none');
-            area.classList.remove('d-none');
-            area.classList.add('d-block');
-
-            try {
-                var allServices = await Services.getAll({ bookingType: 'HOME_SERVICE', status: 'ACTIVE' });
-                var assigned = await Beauticians.listAssignedServices(bId);
-                var assignedIds = {};
-                (assigned || []).forEach(function (a) {
-                    var sid = a.serviceId || (a.service && a.service.id);
-                    if (sid) assignedIds[sid] = true;
-                });
-
-                if (!Array.isArray(allServices) || !allServices.length) {
-                    list.innerHTML = '<div class="text-center text-secondary py-4">No active home-service catalog items available.</div>';
-                    return;
-                }
-
-                list.innerHTML = allServices.map(function (s) {
-                    var checked = assignedIds[s.id] ? 'checked' : '';
-                    return '<label class="service-check-label"><input type="checkbox" class="form-check-input svc-checkbox" value="' + s.id + '" ' + checked + '> <span>' + s.name + '</span> <span class="text-secondary ms-auto small">' + Services.formatMoney(s.homeServicePrice || 0) + '</span></label>';
-                }).join('');
-                selectAllWrap.classList.remove('d-none');
-                updateSvcSelectedCount();
-
-                list.querySelectorAll('.svc-checkbox').forEach(function (cb) {
-                    cb.addEventListener('change', updateSvcSelectedCount);
-                });
-            } catch (err) {
-                list.innerHTML = '<div class="text-center text-danger py-4">' + (err.message || 'Failed to load services.') + '</div>';
-            }
-        }
-
-        async function saveServiceAssignments() {
-            if (!RBAC.can('beauticians:assign_services')) return;
-            var bId = document.getElementById('svc-beautician-select').value;
-            if (!bId) return;
-            var checked = document.querySelectorAll('.svc-checkbox:checked');
-            var serviceIds = Array.from(checked).map(function (cb) { return cb.value; });
-            var svcBtn = document.getElementById('btn-svc-save');
-            setSaveButtonState(svcBtn, true, 'Save Assignments');
-            try {
-                await Beauticians.assignServices(bId, serviceIds);
-                showAlert('Services assigned successfully', 'success');
-                loadServicesForBeautician();
-            } catch (err) {
-                showAlert(err.message || 'Failed to assign services', 'danger');
-            } finally {
-                setSaveButtonState(svcBtn, false, 'Save Assignments');
-            }
-        }
-
-        // ── Load settings ─────────────────────────────────────────────────────────
-        function applyDispatchTierValue(tiers, tier, field, elementId) {
-            var row = (tiers || []).find(function (t) { return t.tier === tier; });
-            var el = document.getElementById(elementId);
-            if (!el || !row) return;
-            if (field === 'radius') el.value = row.radiusKm ?? '';
-            if (field === 'ttl') el.value = row.offerTtlSeconds ?? '';
-        }
-
-        function formatScoringWeight(value) {
-            if (value == null || value === '') return '—';
-            var num = typeof value === 'number' ? value : parseFloat(value);
-            if (Number.isNaN(num)) return '—';
-            return String(num);
-        }
-
-        function commissionRateToPercent(rate) {
-            if (rate == null || rate === '') return '';
-            var num = parseFloat(rate);
-            if (Number.isNaN(num)) return '';
-            return Math.round(num * 10000) / 100;
-        }
-
-        function commissionPercentToRate(percent) {
-            if (percent == null || percent === '') return undefined;
-            var num = parseFloat(percent);
-            if (Number.isNaN(num)) return undefined;
-            return Math.round(num * 100) / 10000;
-        }
-
-        async function loadDispatchSettings() {
-            var canManage = RBAC.can('settings:manage');
-            document.getElementById('btn-dispatch-settings-save').classList.toggle('d-none', !canManage);
-            document.querySelectorAll('#card-dispatch-settings input:not([readonly]), #card-dispatch-settings select').forEach(function (el) {
-                el.disabled = !canManage;
-            });
-            try {
-                var d = await Beauticians.getDispatchSettings();
-                var tiers = d.tiers || [];
-                applyDispatchTierValue(tiers, 1, 'radius', 'dispatch-tier-1-radius');
-                applyDispatchTierValue(tiers, 1, 'ttl', 'dispatch-tier-1-ttl');
-                applyDispatchTierValue(tiers, 2, 'radius', 'dispatch-tier-2-radius');
-                applyDispatchTierValue(tiers, 2, 'ttl', 'dispatch-tier-2-ttl');
-                applyDispatchTierValue(tiers, 3, 'radius', 'dispatch-tier-3-radius');
-                applyDispatchTierValue(tiers, 3, 'ttl', 'dispatch-tier-3-ttl');
-                document.getElementById('dispatch-inter-tier-delay').value = d.interTierDelaySeconds ?? '';
-                document.getElementById('dispatch-location-staleness').value = d.locationStalenessMinutes ?? '';
-                document.getElementById('dispatch-location-rematch').value = d.locationRematchMinDistanceM ?? '';
-                document.getElementById('dispatch-wake-exhausted').checked = !!d.wakeExhaustedOnOnlineEnabled;
-                var weights = d.scoringWeights || {};
-                document.getElementById('dispatch-weight-distance').textContent = formatScoringWeight(weights.distance);
-                document.getElementById('dispatch-weight-rating').textContent = formatScoringWeight(weights.rating);
-                document.getElementById('dispatch-weight-acceptance').textContent = formatScoringWeight(weights.acceptanceRate);
-                document.getElementById('dispatch-weight-idle').textContent = formatScoringWeight(weights.idleMinutes);
-                var envEl = document.getElementById('dispatch-env-overrides');
-                var env = d.envOverrides || {};
-                var envParts = [];
-                if (env.homeServiceMatchingRadiiKm != null) envParts.push('Radii env override active');
-                if (env.dispatchOfferTtlSeconds != null) envParts.push('Offer TTL env override active');
-                var envTextEl = document.getElementById('dispatch-env-overrides-text');
-                if (envParts.length) {
-                    if (envTextEl) envTextEl.textContent = envParts.join(' · ');
-                    envEl.classList.remove('d-none');
-                } else {
-                    if (envTextEl) envTextEl.textContent = '';
-                    envEl.classList.add('d-none');
-                }
-            } catch (err) {
-                document.getElementById('dispatch-settings-error').textContent = err.message || 'Failed to load dispatch settings';
-                document.getElementById('dispatch-settings-error').classList.remove('d-none');
-            }
-        }
-
-        async function loadSettings() {
-            var canManage = RBAC.can('settings:manage');
-            document.getElementById('btn-settings-save').classList.toggle('d-none', !canManage);
-            document.querySelectorAll('#card-home-service-settings input, #card-home-service-settings select').forEach(function (el) {
-                el.disabled = !canManage;
-            });
-            document.getElementById('dispatch-settings-success').classList.add('d-none');
-            document.getElementById('dispatch-settings-error').classList.add('d-none');
-            document.getElementById('settings-success').classList.add('d-none');
-            document.getElementById('settings-error').classList.add('d-none');
-            try {
-                var s = await Beauticians.getHomeServiceSettings();
-                document.getElementById('set-commission-rate').value = commissionRateToPercent(s.commissionRate);
-                document.getElementById('set-arrival-expiry').value = s.arrivalVerificationExpiryMinutes ?? '';
-                document.getElementById('set-completion-buffer').value = s.serviceCompletionBufferMinutes ?? '';
-                document.getElementById('set-geo-fence').value = s.arrivalGeoFenceMeters ?? '';
-                document.getElementById('set-no-show-threshold').value = s.noShowSuspendThreshold ?? '';
-                document.getElementById('set-no-show-window').value = s.noShowWindowDays ?? '';
-                document.getElementById('set-payout-mode').value = s.payoutMode || 'MANUAL';
-                document.getElementById('set-kyc-auto').checked = !!s.kycAutoApprove;
-                document.getElementById('set-no-show-penalty').checked = !!s.noShowPenaltyEnabled;
-                applyDailyLimitInputs(
-                    document.getElementById('set-daily-payout-limit'),
-                    document.getElementById('set-daily-payout-unlimited'),
-                    s.dailyPayoutLimit,
-                    canManage
-                );
-            } catch (err) {
-                document.getElementById('settings-error').textContent = err.message || 'Failed to load settings';
-                document.getElementById('settings-error').classList.remove('d-none');
-            }
-            await loadDispatchSettings();
-        }
-
-        /** Sync limit number input + unlimited checkbox from API value (null = unlimited). */
-        function applyDailyLimitInputs(inputEl, unlimitedEl, limit, canEdit) {
-            var editable = canEdit !== false && !unlimitedEl.disabled;
-            var unlimited = limit === null || limit === undefined;
-            unlimitedEl.checked = unlimited;
-            if (unlimited) {
-                inputEl.value = '';
-                inputEl.disabled = true;
-                inputEl.placeholder = 'Unlimited';
-            } else {
-                inputEl.value = limit;
-                inputEl.disabled = !editable;
-                inputEl.placeholder = 'e.g. 500000';
-            }
-        }
-
-        function onUnlimitedToggle(inputEl, unlimitedEl) {
-            if (unlimitedEl.checked) {
-                inputEl.value = '';
-                inputEl.disabled = true;
-                inputEl.placeholder = 'Unlimited';
-            } else {
-                inputEl.disabled = unlimitedEl.disabled;
-                inputEl.placeholder = 'e.g. 500000';
-                if (!inputEl.disabled && inputEl.value === '') inputEl.focus();
-            }
-        }
-
-        /** Read limit from unlimited checkbox + number input. Returns number|null or throws. */
-        function readDailyLimitFromInputs(inputEl, unlimitedEl) {
-            if (unlimitedEl.checked) return null;
-            var raw = inputEl.value.trim();
-            if (raw === '') throw new Error('Enter a daily payout limit, or enable Unlimited.');
-            var num = Number(raw);
-            if (!Number.isFinite(num) || num < 0) throw new Error('Daily payout limit must be a number ≥ 0.');
-            return num;
-        }
-
-        async function saveDispatchSettings() {
-            if (!RBAC.can('settings:manage')) return;
-            var btn = document.getElementById('btn-dispatch-settings-save');
-            var shouldReload = false;
-            setSaveButtonState(btn, true, 'Save Dispatch Settings');
-            document.getElementById('dispatch-settings-success').classList.add('d-none');
-            document.getElementById('dispatch-settings-error').classList.add('d-none');
-            try {
-                var payload = {
-                    tiers: [
-                        {
-                            tier: 1,
-                            radiusKm: parseInt(document.getElementById('dispatch-tier-1-radius').value, 10) || undefined,
-                            offerTtlSeconds: parseInt(document.getElementById('dispatch-tier-1-ttl').value, 10) || undefined,
-                        },
-                        {
-                            tier: 2,
-                            radiusKm: parseInt(document.getElementById('dispatch-tier-2-radius').value, 10) || undefined,
-                            offerTtlSeconds: parseInt(document.getElementById('dispatch-tier-2-ttl').value, 10) || undefined,
-                        },
-                        {
-                            tier: 3,
-                            radiusKm: parseInt(document.getElementById('dispatch-tier-3-radius').value, 10) || undefined,
-                            offerTtlSeconds: parseInt(document.getElementById('dispatch-tier-3-ttl').value, 10) || undefined,
-                        },
-                    ],
-                    interTierDelaySeconds: parseInt(document.getElementById('dispatch-inter-tier-delay').value, 10),
-                    locationStalenessMinutes: parseInt(document.getElementById('dispatch-location-staleness').value, 10),
-                    locationRematchMinDistanceM: parseInt(document.getElementById('dispatch-location-rematch').value, 10),
-                    wakeExhaustedOnOnlineEnabled: document.getElementById('dispatch-wake-exhausted').checked,
-                };
-                await Beauticians.updateDispatchSettings(payload);
-                document.getElementById('dispatch-settings-success').textContent = 'Dispatch settings saved successfully';
-                document.getElementById('dispatch-settings-success').classList.remove('d-none');
-                shouldReload = true;
-            } catch (err) {
-                document.getElementById('dispatch-settings-error').textContent = err.message || 'Failed to save dispatch settings';
-                document.getElementById('dispatch-settings-error').classList.remove('d-none');
-            } finally {
-                setSaveButtonState(btn, false, 'Save Dispatch Settings');
-            }
-            if (shouldReload) loadDispatchSettings();
-        }
-
-        async function saveSettings() {
-            if (!RBAC.can('settings:manage')) return;
-            var btn = document.getElementById('btn-settings-save');
-            setSaveButtonState(btn, true, 'Save Home Service Settings');
-            document.getElementById('settings-success').classList.add('d-none');
-            document.getElementById('settings-error').classList.add('d-none');
-            try {
-                var commissionPct = document.getElementById('set-commission-rate').value;
-                var dailyPayoutLimit = readDailyLimitFromInputs(
-                    document.getElementById('set-daily-payout-limit'),
-                    document.getElementById('set-daily-payout-unlimited')
-                );
-                var payload = {
-                    commissionRate: commissionPercentToRate(commissionPct),
-                    arrivalVerificationExpiryMinutes: parseInt(document.getElementById('set-arrival-expiry').value, 10) || undefined,
-                    serviceCompletionBufferMinutes: parseInt(document.getElementById('set-completion-buffer').value, 10) || undefined,
-                    arrivalGeoFenceMeters: parseInt(document.getElementById('set-geo-fence').value, 10) || undefined,
-                    noShowSuspendThreshold: parseInt(document.getElementById('set-no-show-threshold').value, 10) || undefined,
-                    noShowWindowDays: parseInt(document.getElementById('set-no-show-window').value, 10) || undefined,
-                    payoutMode: document.getElementById('set-payout-mode').value,
-                    dailyPayoutLimit: dailyPayoutLimit,
-                    kycAutoApprove: document.getElementById('set-kyc-auto').checked,
-                    noShowPenaltyEnabled: document.getElementById('set-no-show-penalty').checked,
-                };
-                await Beauticians.updateHomeServiceSettings(payload);
-                document.getElementById('settings-success').textContent = 'Settings saved successfully';
-                document.getElementById('settings-success').classList.remove('d-none');
-                setTimeout(function () { document.getElementById('settings-success').classList.add('d-none'); }, 3000);
-            } catch (err) {
-                document.getElementById('settings-error').textContent = err.message || 'Failed to save settings';
-                document.getElementById('settings-error').classList.remove('d-none');
-            } finally {
-                setSaveButtonState(btn, false, 'Save Home Service Settings');
-            }
-        }
-
-        function payoutsCountLabel(count) {
-            var status = payoutsState.status;
-            if (!status) return count + ' payout' + (count === 1 ? '' : 's');
-            return count + ' ' + status.toLowerCase().replace(/_/g, ' ');
-        }
-
-        function renderDailyPoolStats(pool) {
-            var unlimited = !!(pool.unlimited || pool.limit === null || pool.limit === undefined);
-            var used = Number(pool.used) || 0;
-            var limit = unlimited ? null : Number(pool.limit);
-            var remaining = unlimited ? null : (pool.remaining === null || pool.remaining === undefined
-                ? Math.max(0, (limit || 0) - used)
-                : Number(pool.remaining));
-
-            document.getElementById('daily-pool-used').textContent = Beauticians.formatMoney(used);
-
-            if (unlimited) {
-                document.getElementById('daily-pool-remaining').textContent = 'Unlimited';
-                document.getElementById('daily-pool-remaining').className = 'stat-value text-success';
-                document.getElementById('daily-pool-limit').textContent = 'No cap';
-                document.getElementById('daily-pool-status-badge').innerHTML =
-                    '<span class="badge bg-success-lt">Unlimited</span>';
-                document.getElementById('daily-pool-progress-wrap').classList.remove('near-cap', 'at-cap');
-                document.getElementById('daily-pool-progress-bar').style.width = '0%';
-                document.getElementById('daily-pool-progress-wrap').setAttribute('aria-valuenow', '0');
-            } else {
-                document.getElementById('daily-pool-remaining').textContent = Beauticians.formatMoney(remaining);
-                document.getElementById('daily-pool-remaining').className =
-                    remaining <= 0 ? 'stat-value text-danger' : 'stat-value text-success';
-                document.getElementById('daily-pool-limit').textContent = Beauticians.formatMoney(limit);
-
-                var pct = limit > 0
-                    ? Math.min(100, Math.round((used / limit) * 100))
-                    : (remaining <= 0 ? 100 : 0);
-                var wrap = document.getElementById('daily-pool-progress-wrap');
-                wrap.classList.remove('near-cap', 'at-cap');
-                if (remaining <= 0 || pct >= 100) {
-                    wrap.classList.add('at-cap');
-                    document.getElementById('daily-pool-status-badge').innerHTML =
-                        '<span class="badge bg-danger-lt">Cap reached</span>';
-                    pct = 100;
-                } else if (pct >= 80) {
-                    wrap.classList.add('near-cap');
-                    document.getElementById('daily-pool-status-badge').innerHTML =
-                        '<span class="badge bg-warning-lt">' + pct + '% used</span>';
-                } else {
-                    document.getElementById('daily-pool-status-badge').innerHTML =
-                        '<span class="badge bg-primary-lt">' + pct + '% used</span>';
-                }
-                document.getElementById('daily-pool-progress-bar').style.width = pct + '%';
-                wrap.setAttribute('aria-valuenow', String(pct));
-            }
-
-            var dayMeta = 'Timezone: ' + (pool.timezone || 'Africa/Lagos');
-            if (pool.dayStartsAt) {
-                dayMeta += ' · Day started ' + Beauticians.formatDateTime(pool.dayStartsAt);
-            }
-            document.getElementById('daily-pool-day-meta').textContent = dayMeta;
-
-            var canManage = RBAC.can('settings:manage');
-            var manageEl = document.getElementById('daily-pool-manage');
-            manageEl.classList.toggle('d-none', !canManage);
-            if (canManage) {
-                var inputEl = document.getElementById('pool-limit-input');
-                var unlimitedEl = document.getElementById('pool-limit-unlimited');
-                unlimitedEl.disabled = false;
-                applyDailyLimitInputs(inputEl, unlimitedEl, unlimited ? null : limit, true);
-            }
-        }
-
-        async function loadDailyPayoutPool() {
-            document.getElementById('daily-pool-error').classList.add('d-none');
-            if (!RBAC.can('beauticians:process_payouts')) {
-                document.getElementById('card-daily-payout-pool').classList.add('d-none');
-                return;
-            }
-            document.getElementById('card-daily-payout-pool').classList.remove('d-none');
-            try {
-                var pool = await Beauticians.getDailyPayoutPool();
-                renderDailyPoolStats(pool || {});
-            } catch (err) {
-                document.getElementById('daily-pool-error').textContent = err.message || 'Failed to load daily payout pool';
-                document.getElementById('daily-pool-error').classList.remove('d-none');
-                document.getElementById('daily-pool-used').textContent = '—';
-                document.getElementById('daily-pool-remaining').textContent = '—';
-                document.getElementById('daily-pool-limit').textContent = '—';
-                document.getElementById('daily-pool-status-badge').innerHTML =
-                    '<span class="badge bg-danger-lt">Error</span>';
-            }
-        }
-
-        async function saveDailyPayoutLimit() {
-            if (!RBAC.can('settings:manage')) return;
-            var btn = document.getElementById('btn-daily-pool-save');
-            document.getElementById('daily-pool-success').classList.add('d-none');
-            document.getElementById('daily-pool-error').classList.add('d-none');
-            setSaveButtonState(btn, true, 'Save limit');
-            try {
-                var dailyPayoutLimit = readDailyLimitFromInputs(
-                    document.getElementById('pool-limit-input'),
-                    document.getElementById('pool-limit-unlimited')
-                );
-                await Beauticians.updateHomeServiceSettings({ dailyPayoutLimit: dailyPayoutLimit });
-                document.getElementById('daily-pool-success').textContent =
-                    dailyPayoutLimit === null
-                        ? 'Daily payout limit cleared (unlimited).'
-                        : 'Daily payout limit set to ' + Beauticians.formatMoney(dailyPayoutLimit) + '.';
-                document.getElementById('daily-pool-success').classList.remove('d-none');
-                setTimeout(function () {
-                    document.getElementById('daily-pool-success').classList.add('d-none');
-                }, 3000);
-                await loadDailyPayoutPool();
-            } catch (err) {
-                document.getElementById('daily-pool-error').textContent = err.message || 'Failed to save daily payout limit';
-                document.getElementById('daily-pool-error').classList.remove('d-none');
-            } finally {
-                setSaveButtonState(btn, false, 'Save limit');
-            }
-        }
-
-        // ── Load payouts ──────────────────────────────────────────────────────────
-        async function loadPayouts() {
-            var tbody = document.getElementById('payouts-tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-            document.getElementById('payouts-count-label').textContent = 'Loading…';
-            loadDailyPayoutPool();
-            try {
-                var params = {};
-                if (payoutsState.status) params.status = payoutsState.status;
-                var rows = await Beauticians.listPayouts(params);
-                if (!rows.length) {
-                    var emptyMsg = payoutsState.status
-                        ? 'No ' + payoutsState.status.toLowerCase().replace(/_/g, ' ') + ' payout requests.'
-                        : 'No payout requests found.';
-                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">' + emptyMsg + '</td></tr>';
-                    document.getElementById('payouts-count-label').textContent = payoutsCountLabel(0);
-                    return;
-                }
-                document.getElementById('payouts-count-label').textContent = payoutsCountLabel(rows.length);
-                tbody.innerHTML = rows.map(function (p, i) {
-                    var b = p.beautician || {};
-                    var name = [b.firstName, b.lastName].filter(Boolean).join(' ') || '—';
-                    var status = (p.status || '').toUpperCase();
-                    var actionCell = status === 'PENDING' && RBAC.can('beauticians:process_payouts')
-                        ? '<button class="btn btn-success btn-sm btn-process-payout" data-id="' + p.id + '" data-amount="' + p.amount + '">Process</button>'
-                        : '<span class="text-secondary small">—</span>';
-                    return '<tr class="payout-row">' +
-                        '<td class="text-secondary small">' + (i + 1) + '</td>' +
-                        '<td><div class="fw-semibold">' + name + '</div><div class="text-secondary small">' + (b.email || '') + '</div></td>' +
-                        '<td class="fw-semibold text-success">' + Beauticians.formatMoney(p.amount) + '</td>' +
-                        '<td>' + Beauticians.payoutStatusBadge(p.status) + '</td>' +
-                        '<td>' + (p.bankName || p.bankCode || '—') + '</td>' +
-                        '<td class="font-monospace small">' + (p.accountNumber || '—') + '<br><span class="text-secondary">' + (p.accountName || '') + '</span></td>' +
-                        '<td class="text-secondary small">' + Beauticians.formatDateTime(p.createdAt) + '</td>' +
-                        '<td>' + actionCell + '</td>' +
-                        '</tr>';
-                }).join('');
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + (err.message || 'Failed to load.') + '</td></tr>';
-                document.getElementById('payouts-count-label').textContent = 'Error';
-            }
-        }
-
-        async function handleProcessPayout(btn, payoutRequestId, amount) {
-            if (!RBAC.can('beauticians:process_payouts')) return;
-            if (!confirm('Process payout of ' + Beauticians.formatMoney(amount) + '? This will debit the beautician\'s wallet.')) return;
-            setSaveButtonState(btn, true, 'Process');
-            var responded = false;
-            try {
-                var result = await Beauticians.processPayout(payoutRequestId);
-                responded = true;
-                showAlert('Payout processed successfully. Ref: ' + (result.reference || ''), 'success');
-            } catch (err) {
-                responded = true;
-                showAlert(err.message || 'Failed to process payout', 'danger');
-            } finally {
-                setSaveButtonState(btn, false, 'Process');
-            }
-            if (responded) await loadPayouts();
-        }
-
-        // ── DOMContentLoaded ──────────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', function () {
-            RBAC.fetchMe().then(function () {
-                RBAC.applyPageGuardForCurrentPage();
-                RBAC.applyNavVisibility();
-                applyPerformanceVisibility();
-                applyTabVisibility();
-                if (RBAC.can('beauticians:read')) loadPerformance();
-                applySectionFromHash();
-            });
-
-
-
-            // ── Tab switching ─────────────────────────────────────────────────────
-            document.getElementById('section-tabs').addEventListener('click', function (e) {
-                e.preventDefault();
-                var tab = e.target.closest('a[data-section]');
-                if (!tab) return;
-                switchSection(tab.dataset.section, true);
-            });
-            window.addEventListener('hashchange', applySectionFromHash);
-
-            applyPerformanceVisibility();
-            applyTabVisibility();
-            if (RBAC.can('beauticians:read')) loadPerformance();
-            if (!window.location.hash || window.location.hash.replace(/^#/, '').toLowerCase() === 'performance') {
-                switchSection(firstAccessibleSection(), true);
-            } else {
-                applySectionFromHash();
-            }
-
-            // ── Refresh button ────────────────────────────────────────────────────
-            document.getElementById('btn-refresh').addEventListener('click', refreshPage);
-
-            // ── Beautician list ───────────────────────────────────────────────────
-            var listSearchTimer;
-            document.getElementById('list-search').addEventListener('input', function () {
-                clearTimeout(listSearchTimer);
-                var val = this.value.trim();
-                listSearchTimer = setTimeout(function () {
-                    listState.search = val;
-                    listState.page = 1;
-                    loadList();
-                }, 400);
-            });
-            document.getElementById('list-kyc-status').addEventListener('change', function () {
-                listState.kycStatus = this.value;
-                listState.page = 1;
-                loadList();
-            });
-            document.getElementById('list-profile-status').addEventListener('change', function () {
-                listState.profileStatus = this.value;
-                listState.page = 1;
-                loadList();
-            });
-            document.getElementById('list-avail-status').addEventListener('change', function () {
-                listState.availabilityStatus = this.value;
-                listState.page = 1;
-                loadList();
-            });
-            document.getElementById('list-rating-min').addEventListener('change', function () {
-                listState.ratingMin = this.value;
-                listState.page = 1;
-                loadList();
-            });
-            document.getElementById('btn-list-clear').addEventListener('click', function () {
-                document.getElementById('list-search').value = '';
-                document.getElementById('list-kyc-status').value = '';
-                document.getElementById('list-profile-status').value = '';
-                document.getElementById('list-avail-status').value = '';
-                document.getElementById('list-rating-min').value = '';
-                listState.search = '';
-                listState.kycStatus = '';
-                listState.profileStatus = '';
-                listState.availabilityStatus = '';
-                listState.ratingMin = '';
-                listState.page = 1;
-                loadList();
-            });
-
-            // List pagination
-            document.getElementById('list-pagination-btns').addEventListener('click', function (e) {
-                e.preventDefault();
-                var a = e.target.closest('a[data-page]');
-                if (!a) return;
-                var p = parseInt(a.dataset.page, 10);
-                if (p < 1 || p > listState.totalPages) return;
-                listState.page = p;
-                loadList();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-
-            // Profile photo preview (delegated from detail offcanvas)
-            document.getElementById('offcanvas-detail-body').addEventListener('click', function (e) {
-                var btn = e.target.closest('.btn-view-photo');
-                if (!btn) return;
-                e.preventDefault();
-                openPhotoPreview(btn.dataset.url, btn.dataset.name);
-            });
-            document.getElementById('offcanvas-detail-body').addEventListener('keydown', function (e) {
-                if (e.key !== 'Enter' && e.key !== ' ') return;
-                var btn = e.target.closest('.btn-view-photo');
-                if (!btn) return;
-                e.preventDefault();
-                openPhotoPreview(btn.dataset.url, btn.dataset.name);
-            });
-
-            // List open detail (delegated)
-            document.getElementById('list-tbody').addEventListener('click', function (e) {
-                var btn = e.target.closest('.open-detail-btn');
-                if (btn) {
-                    e.stopPropagation();
-                    openDetail(btn.dataset.id);
-                    return;
-                }
-                var row = e.target.closest('.beautician-row');
-                if (row) openDetail(row.dataset.id);
-            });
-
-            // ── Reviews ───────────────────────────────────────────────────────────
-            document.getElementById('btn-reviews-apply').addEventListener('click', function () {
-                reviewsState.submittedDaysAgoMin = document.getElementById('reviews-days-min').value;
-                reviewsState.page = 1;
-                loadReviews();
-            });
-
-            document.getElementById('reviews-pagination-btns').addEventListener('click', function (e) {
-                e.preventDefault();
-                var a = e.target.closest('a[data-page]');
-                if (!a) return;
-                var p = parseInt(a.dataset.page, 10);
-                if (p < 1 || p > reviewsState.totalPages) return;
-                reviewsState.page = p;
-                loadReviews();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-
-            // Reviews open detail
-            document.getElementById('reviews-tbody').addEventListener('click', function (e) {
-                var btn = e.target.closest('.open-detail-btn');
-                if (btn) openDetail(btn.dataset.id);
-            });
-
-            // ── Performance ───────────────────────────────────────────────────────
-            document.getElementById('perf-period-days').addEventListener('change', loadPerformance);
-
-            // ── Services ──────────────────────────────────────────────────────────
-            document.getElementById('btn-svc-load').addEventListener('click', loadServicesForBeautician);
-            document.getElementById('btn-svc-save').addEventListener('click', saveServiceAssignments);
-            document.getElementById('svc-select-all').addEventListener('change', function () {
-                var checked = this.checked;
-                document.querySelectorAll('.svc-checkbox').forEach(function (cb) {
-                    cb.checked = checked;
-                });
-                updateSvcSelectedCount();
-            });
-            if (!RBAC.can('beauticians:assign_services')) {
-                document.getElementById('btn-svc-save').classList.add('d-none');
-            }
-
-            // ── Settings ──────────────────────────────────────────────────────────
-            initSettingsFieldHints();
-            document.getElementById('btn-settings-save').addEventListener('click', saveSettings);
-            document.getElementById('btn-dispatch-settings-save').addEventListener('click', saveDispatchSettings);
-            document.getElementById('set-daily-payout-unlimited').addEventListener('change', function () {
-                onUnlimitedToggle(
-                    document.getElementById('set-daily-payout-limit'),
-                    document.getElementById('set-daily-payout-unlimited')
-                );
-            });
-
-            // ── Payouts ───────────────────────────────────────────────────────────
-            document.getElementById('payouts-status-filter').addEventListener('change', function () {
-                payoutsState.status = this.value;
-                loadPayouts();
-            });
-            document.getElementById('payouts-tbody').addEventListener('click', function (e) {
-                var btn = e.target.closest('.btn-process-payout');
-                if (btn) handleProcessPayout(btn, btn.dataset.id, btn.dataset.amount);
-            });
-            document.getElementById('btn-daily-pool-refresh').addEventListener('click', loadDailyPayoutPool);
-            document.getElementById('btn-daily-pool-save').addEventListener('click', saveDailyPayoutLimit);
-            document.getElementById('pool-limit-unlimited').addEventListener('change', function () {
-                onUnlimitedToggle(
-                    document.getElementById('pool-limit-input'),
-                    document.getElementById('pool-limit-unlimited')
-                );
-            });
-        });
-    </script>
 </body>
 
 </html>

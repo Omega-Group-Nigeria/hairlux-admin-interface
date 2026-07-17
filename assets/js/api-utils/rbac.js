@@ -245,6 +245,15 @@ const RBAC = (() => {
         }
 
         if (!allowed) {
+            // Unauthenticated → login (never bounce to settings.html)
+            if (typeof Auth !== 'undefined' && Auth.isLoggedIn && !Auth.isLoggedIn()) {
+                if (Auth.showAuthBootScreen) Auth.showAuthBootScreen('Redirecting to login…');
+                window.location.replace(
+                    typeof Auth.loginPath === 'function' ? Auth.loginPath() : './login.html'
+                );
+                return false;
+            }
+
             // Correct sub-directory detection: only bookings/ pages live one level deep.
             var isSubDir = window.location.pathname.includes('/bookings/');
             var currentFile = window.location.pathname.split('/').pop() || 'index.html';
@@ -252,8 +261,8 @@ const RBAC = (() => {
             if (isSubDir) {
                 redirect = '../index.html';
             } else if (currentFile === 'index.html' || currentFile === '') {
-                // Never redirect index.html to itself — use settings as safe fallback.
-                redirect = './settings.html';
+                // Never redirect index.html to itself — first allowed app page, else settings.
+                redirect = './' + getFirstAccessiblePage();
             } else {
                 redirect = './index.html';
             }

@@ -384,6 +384,7 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/beauticians.js"></script>
     <script src="assets/js/api-utils/bookings.js"></script>
+    <script src="assets/js/force-assign-modal.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
     <!-- BUSINESS HOURS MODAL -->
@@ -506,7 +507,7 @@
 
     <!-- FORCE ASSIGN MODAL -->
     <div class="modal modal-blur fade" id="modal-force-assign" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Force Assign Beautician</h5>
@@ -514,10 +515,30 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-secondary small mb-3">Bypass dispatch matching and assign a beautician directly. Pending offers will be cancelled.</p>
-                    <label class="form-label">Beautician</label>
-                    <select id="force-assign-beautician" class="form-select">
-                        <option value="">Loading beauticians…</option>
-                    </select>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label" for="force-assign-search">Search</label>
+                            <input type="search" id="force-assign-search" class="form-control" placeholder="Search by name, email, or phone…" autocomplete="off">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="force-assign-availability">Availability</label>
+                            <select id="force-assign-availability" class="form-select">
+                                <option value="">All</option>
+                                <option value="ONLINE">Online</option>
+                                <option value="OFFLINE">Offline</option>
+                                <option value="ON_JOB">On Job</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="force-assign-selected" class="force-assign-selected-banner d-none py-2 px-3 mb-3 small rounded"></div>
+                    <div id="force-assign-list" class="list-group list-group-flush border rounded" style="min-height: 200px; max-height: 360px; overflow-y: auto;">
+                        <div class="list-group-item text-center text-secondary py-5">Loading beauticians…</div>
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
+                        <p class="m-0 text-secondary small" id="force-assign-pagination-info">—</p>
+                        <ul class="pagination pagination-sm m-0 ms-auto" id="force-assign-pagination-btns"></ul>
+                    </div>
+                    <input type="hidden" id="force-assign-beautician" value="">
                     <div id="force-assign-error" class="alert alert-danger d-none mt-3 mb-0 small"></div>
                 </div>
                 <div class="modal-footer">
@@ -552,14 +573,23 @@
         // ── Page state ──────────────────────────────────────────────────────────
         var state = { page: 1, limit: 20, status: "", search: "", startDate: "", endDate: "", totalPages: 1 };
         var dispatchActionBookingId = null;
-        var forceAssignOptionsLoaded = false;
 
         document.addEventListener("DOMContentLoaded", function () {
             // ── RBAC: re-hydrate from server, apply guard + nav ────────────
             RBAC.fetchMe().then(function() {
                 RBAC.applyPageGuard('bookings:read');
                 RBAC.applyNavVisibility();
+                // Business hours & exceptions require bookings:manage_schedule
+                if (!RBAC.can('bookings:manage_schedule')) {
+                    var hoursBtn = document.getElementById('btn-business-hours');
+                    if (hoursBtn) hoursBtn.style.display = 'none';
+                }
             });
+            // Sync hide from cache (before fetchMe returns)
+            if (!RBAC.can('bookings:manage_schedule')) {
+                var hoursBtnSync = document.getElementById('btn-business-hours');
+                if (hoursBtnSync) hoursBtnSync.style.display = 'none';
+            }
             // ── Initial loads ───────────────────────────────────────────────
             loadStats();
             loadBookings();
@@ -656,6 +686,7 @@
 
             // ── Business hours modal: load on show ───────────────────────────
             document.getElementById("modal-business-hours").addEventListener("show.bs.modal", function () {
+                if (!RBAC.can('bookings:manage_schedule')) return;
                 loadBusinessHours();
                 loadBusinessExceptions();
             });
@@ -663,6 +694,7 @@
             // ── Business hours form: save ────────────────────────────────────
             document.getElementById("form-business-hours").addEventListener("submit", async function (e) {
                 e.preventDefault();
+                if (!RBAC.can('bookings:manage_schedule')) return;
                 var alertEl = document.getElementById("business-hours-alert");
                 var btn = document.getElementById("btn-save-hours");
                 alertEl.className = "alert d-none";
@@ -693,6 +725,7 @@
             // ── Exception form: add ──────────────────────────────────────────
             document.getElementById("form-exception").addEventListener("submit", async function (e) {
                 e.preventDefault();
+                if (!RBAC.can('bookings:manage_schedule')) return;
                 var alertEl = document.getElementById("exception-alert");
                 var btn     = document.getElementById("btn-create-exception");
                 alertEl.className = "alert d-none";
@@ -728,6 +761,7 @@
             document.getElementById("exceptions-list").addEventListener("click", async function (e) {
                 var btn = e.target.closest(".btn-delete-exception");
                 if (!btn) return;
+                if (!RBAC.can('bookings:manage_schedule')) return;
                 if (!confirm("Delete this exception?")) return;
                 btn.disabled = true;
                 try {
@@ -1059,37 +1093,8 @@
             bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-retry-matching')).show();
         }
 
-        async function loadForceAssignOptions() {
-            var select = document.getElementById('force-assign-beautician');
-            select.innerHTML = '<option value="">Loading beauticians…</option>';
-            try {
-                var result = await Beauticians.listBeauticians({
-                    limit: 100,
-                    profileStatus: 'APPROVED',
-                    kycStatus: 'VERIFIED',
-                });
-                var rows = (result.data || []).filter(function (b) {
-                    return b.isActive !== false && Beauticians.beauticianUserId(b);
-                });
-                if (!rows.length) {
-                    select.innerHTML = '<option value="">— No eligible beauticians —</option>';
-                    return;
-                }
-                select.innerHTML = '<option value="">— Select beautician —</option>' + rows.map(function (b) {
-                    var uid = Beauticians.beauticianUserId(b);
-                    return '<option value="' + uid + '">' + Beauticians.fullName(b) + '</option>';
-                }).join('');
-                forceAssignOptionsLoaded = true;
-            } catch (err) {
-                select.innerHTML = '<option value="">— Failed to load —</option>';
-            }
-        }
-
-        async function openForceAssignModal(bookingId) {
-            dispatchActionBookingId = bookingId;
-            document.getElementById('force-assign-error').classList.add('d-none');
-            if (!forceAssignOptionsLoaded) await loadForceAssignOptions();
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-force-assign')).show();
+        function openForceAssignModal(bookingId) {
+            ForceAssignModal.open(bookingId);
         }
 
         document.getElementById('btn-retry-matching-confirm').addEventListener('click', async function () {
@@ -1112,30 +1117,12 @@
             }
         });
 
-        document.getElementById('btn-force-assign-confirm').addEventListener('click', async function () {
-            if (!dispatchActionBookingId) return;
-            var beauticianUserId = document.getElementById('force-assign-beautician').value;
-            var btn = this;
-            var errEl = document.getElementById('force-assign-error');
-            if (!beauticianUserId) {
-                errEl.textContent = 'Please select a beautician.';
-                errEl.classList.remove('d-none');
-                return;
-            }
-            if (!confirm('Force assign this booking to the selected beautician?')) return;
-            btn.disabled = true;
-            errEl.classList.add('d-none');
-            try {
-                await Bookings.forceAssign(dispatchActionBookingId, beauticianUserId);
-                bootstrap.Modal.getInstance(document.getElementById('modal-force-assign')).hide();
-                loadBookings(); loadStats();
-                openDetail(dispatchActionBookingId);
-            } catch (err) {
-                errEl.textContent = err.message || 'Failed to force assign.';
-                errEl.classList.remove('d-none');
-            } finally {
-                btn.disabled = false;
-            }
+        ForceAssignModal.init({
+            onSuccess: async function (id) {
+                loadBookings();
+                loadStats();
+                openDetail(id);
+            },
         });
 
         // ── Business hours ────────────────────────────────────────────────────

@@ -143,25 +143,65 @@ const Auth = (() => {
 
   // ─── Authenticated fetch ──────────────────────────────────────────────────────
 
+  /** Resolve login.html relative to current page (root vs bookings/). */
+  function loginPath() {
+    return window.location.pathname.includes("/bookings/") ? "../login.html" : "./login.html";
+  }
+
+  /**
+   * Full-page session check overlay so protected pages never flash content
+   * while auth is unresolved or while redirecting to login.
+   */
+  function showAuthBootScreen(message) {
+    if (typeof document === "undefined") return;
+    if (document.getElementById("auth-boot-screen")) return;
+    var style = document.createElement("style");
+    style.id = "auth-boot-style";
+    style.textContent =
+      "#auth-boot-screen{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;" +
+      "align-items:center;justify-content:center;gap:1rem;background:var(--tblr-bg-surface,#fff);" +
+      "color:var(--tblr-body-color,#1e293b);font-family:inherit}" +
+      "#auth-boot-screen .auth-boot-spinner{width:2rem;height:2rem;border:2px solid rgba(0,0,0,.12);" +
+      "border-top-color:var(--tblr-primary,#206bc4);border-radius:50%;animation:auth-boot-spin .7s linear infinite}" +
+      "@keyframes auth-boot-spin{to{transform:rotate(360deg)}}" +
+      "#auth-boot-screen .auth-boot-msg{font-size:.875rem;opacity:.7}";
+    var el = document.createElement("div");
+    el.id = "auth-boot-screen";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    el.innerHTML =
+      '<div class="auth-boot-spinner" aria-hidden="true"></div>' +
+      '<div class="auth-boot-msg">' + (message || "Checking session…") + "</div>";
+    // Prefer early inject so content behind never paints meaningfully
+    (document.head || document.documentElement).appendChild(style);
+    (document.body || document.documentElement).appendChild(el);
+  }
+
+  function hideAuthBootScreen() {
+    var el = document.getElementById("auth-boot-screen");
+    var style = document.getElementById("auth-boot-style");
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+    if (style && style.parentNode) style.parentNode.removeChild(style);
+  }
+
   /**
    * Drop-in fetch() wrapper for authenticated API calls.
    *   • Proactively refreshes the access token when it is near expiry.
    *   • Adds  Authorization: Bearer <token>  automatically.
    *   • On 401, attempts one token refresh then retries once.
-   *   • On second 401 (refresh also failed) → logout.
+   *   • On second 401 (refresh also failed) → logout + throw (never returns undefined).
    *
    * @param {string} path  — API path, e.g. "/admin/bookings"
    * @param {RequestInit} [options]
    * @returns {Promise<Response>}
-   *
-   * Usage:
-   *   const res  = await Auth.fetch("/admin/bookings");
-   *   const data = await res.json();
    */
   async function authFetch(path, options = {}) {
     if (isTokenExpired()) {
       try { await refreshAccessToken(); }
-      catch { logout(); return; }
+      catch {
+        logout();
+        throw new Error("Session expired. Please log in again.");
+      }
     }
 
     const buildRequest = () =>
@@ -182,7 +222,7 @@ const Auth = (() => {
         res = await buildRequest();
       } catch {
         logout();
-        return;
+        throw new Error("Session expired. Please log in again.");
       }
     }
 
@@ -193,23 +233,35 @@ const Auth = (() => {
 
   function logout() {
     clearSession();
-    window.location.href = "./login.html";
+    showAuthBootScreen("Redirecting to login…");
+    window.location.replace(loginPath());
   }
 
   /**
    * Call at the top of every protected page.
-   * Redirects to login.html if not authenticated.
+   * Redirects to login.html if not authenticated (with a boot spinner, no page flash).
    * Proactively refreshes a near-expiry token so the page starts with a fresh one.
+   *
+   * @returns {Promise<boolean>} true when session is ready; false if redirecting to login
    */
   async function requireAuth() {
     if (!isLoggedIn()) {
-      window.location.href = "./login.html";
-      return;
+      showAuthBootScreen("Redirecting to login…");
+      window.location.replace(loginPath());
+      return false;
     }
     if (isTokenExpired()) {
-      try { await refreshAccessToken(); }
-      catch { logout(); }
+      showAuthBootScreen("Checking session…");
+      try {
+        await refreshAccessToken();
+        hideAuthBootScreen();
+        return true;
+      } catch {
+        logout();
+        return false;
+      }
     }
+    return true;
   }
 
   // ─── Expose ───────────────────────────────────────────────────────────────────
@@ -225,5 +277,8 @@ const Auth = (() => {
     isLoggedIn,
     isTokenExpired,
     clearSession,
+    loginPath,
+    showAuthBootScreen,
+    hideAuthBootScreen,
   };
 })();
