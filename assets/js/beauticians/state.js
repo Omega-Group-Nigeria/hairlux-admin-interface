@@ -29,6 +29,18 @@
             totalPages: 1,
         },
 
+        /** Customer reviews inside beautician detail offcanvas */
+        detailReviews: {
+            beauticianId: null,
+            page: 1,
+            limit: 10,
+            sortBy: 'createdAt',
+            sortOrder: 'desc',
+            totalPages: 1,
+            total: 0,
+            loading: false,
+        },
+
         payouts: {
             status: '',
         },
@@ -56,7 +68,7 @@
             arrivalVerificationExpiryMinutes: 'How long the customer\u2019s arrival OTP/code stays valid after the beautician marks \u201carrived\u201d.',
             serviceCompletionBufferMinutes: 'Grace period after the scheduled end time before the job is treated as overdue for completion rules.',
             arrivalGeoFenceMeters: 'How close the beautician must be to the customer address (in meters) to pass arrival verification.',
-            noShowSuspendThreshold: 'How many no-shows trigger a suspension. If a beautician hits that count within the window (default 3 in 30 days), their account is auto-suspended (isActive = false).',
+            noShowSuspendThreshold: 'How many no-shows trigger a suspension. If a beautician hits that count within the window (default 3 in 30 days), their account is auto-suspended',
             noShowWindowDays: 'How long we keep counting. Each no-show is tracked in a rolling window (default 30 days). After that period, the count resets.',
             kycAutoApprove: 'When on, a successful QoreID result sets the beautician to VERIFIED immediately. When off, they go to NEEDS_REVIEW until an admin approves KYC.',
             noShowPenaltyEnabled: 'When on, no-shows count toward the suspend threshold. When off, no-show tracking penalties are skipped.',

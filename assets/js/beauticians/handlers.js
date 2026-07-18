@@ -11,6 +11,10 @@
     var Api = BP.Api;
     var bootstrap = global.tabler && global.tabler.bootstrap;
 
+    function getBootstrap() {
+        return (global.tabler && global.tabler.bootstrap) || global.bootstrap || bootstrap;
+    }
+
     // Utils aliases (original bare-call style)
     var showAlert = Utils.showAlert;
     var setSaveButtonState = Utils.setSaveButtonState;
@@ -50,6 +54,7 @@
     var renderCertifications = UI.renderCertifications;
     var renderBeauticianBankDetails = UI.renderBeauticianBankDetails;
     var renderBeauticianDetailContent = UI.renderBeauticianDetailContent;
+    var updateDetailReviewsPanel = UI.updateDetailReviewsPanel;
     var buildDetailActions = UI.buildDetailActions;
     var renderReviewsTable = UI.renderReviewsTable;
     var getSvcBeauticianId = UI.getSvcBeauticianId;
@@ -147,7 +152,8 @@ async function openDetail(id) {
     var actions = document.getElementById('offcanvas-detail-actions');
     body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
     actions.innerHTML = '';
-    var oc = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvas-detail'));
+    var bs = getBootstrap();
+    var oc = bs.Offcanvas.getOrCreateInstance(document.getElementById('offcanvas-detail'));
     oc.show();
     try {
         var results = await Promise.all([
@@ -156,25 +162,155 @@ async function openDetail(id) {
         ]);
         var b = results[0];
         var settings = results[1];
+        State.detailReviews.beauticianId = b.id;
+        State.detailReviews.page = 1;
         body.innerHTML = renderBeauticianDetailContent(b, settings);
         actions.innerHTML = buildDetailActions(b);
+        loadDetailReviews(b.id);
     } catch (err) {
         body.innerHTML = '<div class="alert alert-danger">' + escHtml(err.message || 'Failed to load details.') + '</div>';
     }
 }
 
+async function loadDetailReviews(beauticianId) {
+    var id = beauticianId || State.detailReviews.beauticianId;
+    if (!id) return;
+    State.detailReviews.beauticianId = id;
+    State.detailReviews.loading = true;
+    updateDetailReviewsPanel([], {}, { loading: true });
+    try {
+        var result = await Api.getBeauticianReviews(id, {
+            page: State.detailReviews.page,
+            limit: State.detailReviews.limit || 10,
+            sortBy: State.detailReviews.sortBy || 'createdAt',
+            sortOrder: State.detailReviews.sortOrder || 'desc',
+        });
+        var rows = result.data || [];
+        var meta = result.meta || {};
+        // Normalize meta when API omits pagination fields
+        var limit = State.detailReviews.limit || 10;
+        var page = State.detailReviews.page || 1;
+        if (meta.total == null && rows.length < limit && page === 1) {
+            meta.total = rows.length;
+        }
+        if (!meta.limit) meta.limit = limit;
+        if (!meta.page) meta.page = page;
+        if (!meta.totalPages) {
+            meta.totalPages = meta.total != null
+                ? Math.max(1, Math.ceil(Number(meta.total) / limit))
+                : (rows.length >= limit ? page + 1 : page);
+        }
+        State.detailReviews.totalPages = meta.totalPages || 1;
+        State.detailReviews.total = meta.total != null ? meta.total : State.detailReviews.total;
+        State.detailReviews.loading = false;
+        updateDetailReviewsPanel(rows, meta);
+    } catch (err) {
+        State.detailReviews.loading = false;
+        updateDetailReviewsPanel([], {}, { error: err.message || 'Failed to load customer reviews.' });
+    }
+}
+
+var dispatchSuspendTargetId = null;
+
+function getDispatchSuspendMode() {
+    var checked = document.querySelector('input[name="dispatch-suspend-mode"]:checked');
+    return checked ? checked.value : 'indefinite';
+}
+
+function syncDispatchSuspendModeUi() {
+    var mode = getDispatchSuspendMode();
+    var hoursWrap = document.getElementById('dispatch-suspend-hours-wrap');
+    var untilWrap = document.getElementById('dispatch-suspend-until-wrap');
+    if (hoursWrap) hoursWrap.classList.toggle('d-none', mode !== 'hours');
+    if (untilWrap) untilWrap.classList.toggle('d-none', mode !== 'until');
+}
+
+function openDispatchSuspendModal(id) {
+    dispatchSuspendTargetId = id;
+    document.getElementById('dispatch-suspend-id').value = id;
+    document.getElementById('dispatch-suspend-reason').value = '';
+    document.getElementById('dispatch-suspend-hours').value = '72';
+    document.getElementById('dispatch-suspend-until').value = '';
+    document.getElementById('dispatch-suspend-error').classList.add('d-none');
+    document.getElementById('dispatch-suspend-error').textContent = '';
+    var indefinite = document.querySelector('input[name="dispatch-suspend-mode"][value="indefinite"]');
+    if (indefinite) indefinite.checked = true;
+    syncDispatchSuspendModeUi();
+    var submitBtn = document.getElementById('dispatch-suspend-submit');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Suspend Dispatch Matching';
+    getBootstrap().Modal.getOrCreateInstance(document.getElementById('modal-dispatch-suspend')).show();
+}
+
+function buildDispatchSuspendPayload() {
+    var reason = (document.getElementById('dispatch-suspend-reason').value || '').trim();
+    var mode = getDispatchSuspendMode();
+    var payload = { suspended: true };
+    if (reason) payload.reason = reason;
+
+    if (mode === 'hours') {
+        var hours = parseInt(document.getElementById('dispatch-suspend-hours').value, 10);
+        if (!hours || hours < 1 || hours > 720) {
+            throw new Error('Duration must be between 1 and 720 hours.');
+        }
+        payload.durationHours = hours;
+    } else if (mode === 'until') {
+        var untilVal = document.getElementById('dispatch-suspend-until').value;
+        if (!untilVal) throw new Error('Choose a date and time for auto-resume.');
+        var untilDate = new Date(untilVal);
+        if (Number.isNaN(untilDate.getTime())) throw new Error('Invalid date and time.');
+        if (untilDate.getTime() <= Date.now()) throw new Error('Resume time must be in the future.');
+        payload.until = untilDate.toISOString();
+    }
+    return payload;
+}
+
+async function submitDispatchSuspend() {
+    var id = dispatchSuspendTargetId || document.getElementById('dispatch-suspend-id').value;
+    if (!id) return;
+    var errEl = document.getElementById('dispatch-suspend-error');
+    var submitBtn = document.getElementById('dispatch-suspend-submit');
+    errEl.classList.add('d-none');
+    errEl.textContent = '';
+
+    var payload;
+    try {
+        payload = buildDispatchSuspendPayload();
+    } catch (validationErr) {
+        errEl.textContent = validationErr.message || 'Invalid form values.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Suspending…';
+    try {
+        await Api.updateDispatch(id, payload);
+        getBootstrap().Modal.getOrCreateInstance(document.getElementById('modal-dispatch-suspend')).hide();
+        showAlert('Dispatch matching suspended', 'warning');
+        openDetail(id);
+        loadList();
+    } catch (err) {
+        errEl.textContent = err.message || 'Failed to suspend dispatch matching.';
+        errEl.classList.remove('d-none');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Suspend Dispatch Matching';
+    }
+}
+
 async function toggleDispatchSuspended(id, isSuspended) {
     var suspended = isSuspended === 'true';
-    var msg = suspended
-        ? 'Resume this beautician for dispatch matching?'
-        : 'Suspend this beautician from dispatch matching? Pending offers will be cancelled.';
-    if (!confirm(msg)) return;
+    if (!suspended) {
+        openDispatchSuspendModal(id);
+        return;
+    }
+    if (!confirm('Resume this beautician for dispatch matching? Any timed probation will be cancelled.')) return;
     var actions = document.getElementById('offcanvas-detail-actions');
     actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Updating…';
     try {
-        await Api.updateDispatch(id, !suspended);
+        await Api.updateDispatch(id, { suspended: false });
         openDetail(id);
-        showAlert(suspended ? 'Dispatch matching resumed' : 'Dispatch matching suspended', suspended ? 'success' : 'warning');
+        showAlert('Dispatch matching resumed', 'success');
         loadList();
     } catch (err) {
         actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span><button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
@@ -240,23 +376,65 @@ async function handleProfileReject(id) {
     }
 }
 
-async function openSuspendModal(id, isActive) {
-    var newActive = isActive === 'true' ? false : true;
-    var msg = newActive ? 'Reactivate this beautician?' : 'Suspend this beautician? This removes them from job matching.';
-    if (!confirm(msg)) return;
-    var body = document.getElementById('offcanvas-detail-body');
-    var actions = document.getElementById('offcanvas-detail-actions');
-    var prevActions = actions.innerHTML;
-    body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
-    actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Updating…';
+var accountSuspendTargetId = null;
+var accountSuspendNewActive = false;
+
+function openSuspendModal(id, isActive) {
+    accountSuspendTargetId = id;
+    // isActive string reflects current state; action flips it
+    var currentlyActive = isActive === 'true';
+    accountSuspendNewActive = !currentlyActive;
+
+    document.getElementById('account-suspend-id').value = id;
+    document.getElementById('account-suspend-new-active').value = accountSuspendNewActive ? 'true' : 'false';
+    document.getElementById('account-suspend-error').classList.add('d-none');
+    document.getElementById('account-suspend-error').textContent = '';
+
+    var titleEl = document.getElementById('account-suspend-title');
+    var leadEl = document.getElementById('account-suspend-lead');
+    var noteEl = document.getElementById('account-suspend-note');
+    var submitBtn = document.getElementById('account-suspend-submit');
+
+    if (accountSuspendNewActive) {
+        titleEl.textContent = 'Reactivate Account';
+        leadEl.textContent = 'Reactivate this beautician account so they can use the app again?';
+        noteEl.textContent = 'They can sign in again. To manage job offers only, use Suspend or Resume Dispatch Matching.';
+        submitBtn.className = 'btn btn-success';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Reactivate Account';
+    } else {
+        titleEl.textContent = 'Suspend Account';
+        leadEl.textContent = 'Suspend this beautician account? They will be deactivated';
+        noteEl.textContent = 'To block job offers without deactivating the account, use Suspend Dispatch Matching instead.';
+        submitBtn.className = 'btn btn-danger';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Suspend Account';
+    }
+
+    getBootstrap().Modal.getOrCreateInstance(document.getElementById('modal-account-suspend')).show();
+}
+
+async function submitAccountSuspend() {
+    var id = accountSuspendTargetId || document.getElementById('account-suspend-id').value;
+    if (!id) return;
+    var newActive = accountSuspendNewActive;
+    var errEl = document.getElementById('account-suspend-error');
+    var submitBtn = document.getElementById('account-suspend-submit');
+    errEl.classList.add('d-none');
+    errEl.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving…';
     try {
         await Api.updateBeautician(id, { isActive: newActive });
-        showAlert(newActive ? 'Beautician reactivated' : 'Beautician suspended', newActive ? 'success' : 'warning');
+        getBootstrap().Modal.getOrCreateInstance(document.getElementById('modal-account-suspend')).hide();
+        showAlert(newActive ? 'Beautician account reactivated' : 'Beautician account suspended', newActive ? 'success' : 'warning');
         loadList();
         openDetail(id);
     } catch (err) {
-        body.innerHTML = '<div class="alert alert-danger">' + (err.message || 'Failed to update.') + '</div>';
-        actions.innerHTML = prevActions;
+        errEl.textContent = err.message || 'Failed to update account.';
+        errEl.classList.remove('d-none');
+        submitBtn.disabled = false;
+        submitBtn.textContent = newActive ? 'Reactivate Account' : 'Suspend Account';
     }
 }
 
@@ -1228,6 +1406,53 @@ function init() {
             document.getElementById('pool-limit-unlimited')
         );
     });
+
+    // ── Dispatch suspend probation modal ──────────────────────────────────
+    document.querySelectorAll('input[name="dispatch-suspend-mode"]').forEach(function (radio) {
+        radio.addEventListener('change', syncDispatchSuspendModeUi);
+    });
+    var dispatchSuspendSubmit = document.getElementById('dispatch-suspend-submit');
+    if (dispatchSuspendSubmit) {
+        dispatchSuspendSubmit.addEventListener('click', submitDispatchSuspend);
+    }
+
+    // ── Account suspend modal ─────────────────────────────────────────────
+    var accountSuspendSubmit = document.getElementById('account-suspend-submit');
+    if (accountSuspendSubmit) {
+        accountSuspendSubmit.addEventListener('click', submitAccountSuspend);
+    }
+
+    // ── Detail offcanvas: customer reviews controls (delegated) ───────────
+    var detailBody = document.getElementById('offcanvas-detail-body');
+    if (detailBody) {
+        detailBody.addEventListener('change', function (e) {
+            if (!e.target || e.target.id !== 'detail-reviews-sort') return;
+            var parts = String(e.target.value || 'createdAt:desc').split(':');
+            State.detailReviews.sortBy = parts[0] || 'createdAt';
+            State.detailReviews.sortOrder = parts[1] || 'desc';
+            State.detailReviews.page = 1;
+            loadDetailReviews();
+        });
+        detailBody.addEventListener('click', function (e) {
+            var refreshBtn = e.target.closest('#detail-reviews-refresh');
+            if (refreshBtn) {
+                e.preventDefault();
+                loadDetailReviews();
+                return;
+            }
+            var pageLink = e.target.closest('a[data-detail-reviews-page]');
+            if (pageLink) {
+                e.preventDefault();
+                if (pageLink.closest('.disabled') || pageLink.closest('.page-item.disabled')) return;
+                var page = parseInt(pageLink.getAttribute('data-detail-reviews-page'), 10);
+                if (!page || page < 1) return;
+                var maxPage = State.detailReviews.totalPages || 1;
+                if (page > maxPage) return;
+                State.detailReviews.page = page;
+                loadDetailReviews();
+            }
+        });
+    }
 }
 
     
@@ -1240,12 +1465,17 @@ function init() {
         applySectionFromHash: applySectionFromHash,
         loadList: loadList,
         openDetail: openDetail,
+        loadDetailReviews: loadDetailReviews,
         toggleDispatchSuspended: toggleDispatchSuspended,
+        openDispatchSuspendModal: openDispatchSuspendModal,
+        submitDispatchSuspend: submitDispatchSuspend,
+        syncDispatchSuspendModeUi: syncDispatchSuspendModeUi,
         handleKycApprove: handleKycApprove,
         handleKycReject: handleKycReject,
         handleProfileApprove: handleProfileApprove,
         handleProfileReject: handleProfileReject,
         openSuspendModal: openSuspendModal,
+        submitAccountSuspend: submitAccountSuspend,
         loadReviews: loadReviews,
         loadPerformance: loadPerformance,
         loadBeauticianOptions: loadBeauticianOptions,
@@ -1272,4 +1502,16 @@ function init() {
         handleProcessPayout: handleProcessPayout,
         init: init
     };
+
+    // Detail action buttons use inline onclick="…" — expose handlers on window
+    global.handleKycApprove = handleKycApprove;
+    global.handleKycReject = handleKycReject;
+    global.handleProfileApprove = handleProfileApprove;
+    global.handleProfileReject = handleProfileReject;
+    global.openSuspendModal = openSuspendModal;
+    global.submitAccountSuspend = submitAccountSuspend;
+    global.toggleDispatchSuspended = toggleDispatchSuspended;
+    global.openDispatchSuspendModal = openDispatchSuspendModal;
+    global.submitDispatchSuspend = submitDispatchSuspend;
+    global.loadDetailReviews = loadDetailReviews;
 })(window);

@@ -16,6 +16,7 @@
     var escHtml = Utils.escHtml;
     var detailField = Utils.detailField;
     var detailHeading = Utils.detailHeading;
+    var detailCard = Utils.detailCard;
     var detailLight = Utils.detailLight;
     var detailHeavy = Utils.detailHeavy;
     var formatCommissionLabel = Utils.formatCommissionLabel;
@@ -229,6 +230,129 @@ function renderBeauticianBankDetails(b) {
         detailField('Account Name', escHtml(accountName || '—'), 'col-sm-12') +
         '</div>';
 }
+
+function detailMetric(label, valueHtml, valueClass) {
+    return '<div class="col-6 col-md-4">' +
+        '<div class="detail-metric">' +
+        '<div class="detail-metric-label">' + escHtml(label) + '</div>' +
+        '<div class="detail-metric-value' + (valueClass ? ' ' + valueClass : '') + '">' + valueHtml + '</div>' +
+        '</div></div>';
+}
+
+function renderStarRating(rating) {
+    var n = Math.round(Number(rating) || 0);
+    if (n < 0) n = 0;
+    if (n > 5) n = 5;
+    var html = '<span class="detail-review-stars" aria-label="' + n + ' out of 5">';
+    for (var i = 1; i <= 5; i++) {
+        html += i <= n ? '★' : '<span class="star-empty">★</span>';
+    }
+    html += '</span>';
+    return html;
+}
+
+function reviewCustomerName(r) {
+    if (!r || typeof r !== 'object') return 'Customer';
+    var c = r.customer || r.user || r.reviewer || {};
+    var parts = [c.firstName || r.customerFirstName, c.lastName || r.customerLastName].filter(Boolean);
+    if (parts.length) return parts.join(' ');
+    return c.name || r.customerName || r.userName || 'Customer';
+}
+
+function reviewCommentText(r) {
+    if (!r || typeof r !== 'object') return '';
+    return r.comment || r.notes || r.reviewNotes || r.body || r.text || r.feedback || '';
+}
+
+function renderCustomerReviewItem(r) {
+    var rating = r.rating != null ? r.rating : r.score;
+    var comment = reviewCommentText(r);
+    var when = r.createdAt || r.reviewedAt || r.updatedAt;
+    var booking = r.reservationCode || (r.booking && (r.booking.reservationCode || r.booking.id)) || r.bookingId || '';
+    return '<article class="detail-review-item">' +
+        '<div class="detail-review-item-top">' +
+        '<div class="fw-semibold text-truncate" title="' + escHtml(reviewCustomerName(r)) + '">' + escHtml(reviewCustomerName(r)) + '</div>' +
+        (when ? '<div class="text-secondary small text-nowrap">' + escHtml(Beauticians.formatDateTime(when)) + '</div>' : '') +
+        '</div>' +
+        '<div class="mt-1">' + renderStarRating(rating) +
+        (rating != null ? ' <span class="text-secondary small">' + escHtml(Number(rating).toFixed(1)) + '</span>' : '') +
+        '</div>' +
+        (comment
+            ? '<div class="detail-prose detail-review-comment mt-2">' + escHtml(comment) + '</div>'
+            : '<div class="text-secondary small mt-2">No written comment</div>') +
+        (booking
+            ? '<div class="text-secondary small mt-auto pt-2">Booking <span class="font-monospace">' + escHtml(booking) + '</span></div>'
+            : '') +
+        '</article>';
+}
+
+function renderDetailReviewsListHtml(rows) {
+    if (!rows || !rows.length) {
+        return '<div class="text-secondary text-center py-4">No customer reviews yet.</div>';
+    }
+    return '<div class="detail-reviews-grid">' + rows.map(renderCustomerReviewItem).join('') + '</div>';
+}
+
+function renderDetailReviewsPagination(meta) {
+    meta = meta || {};
+    var total = meta.total != null ? Number(meta.total) : 0;
+    var page = meta.page || State.detailReviews.page || 1;
+    var limit = meta.limit || State.detailReviews.limit || 10;
+    var pages = meta.totalPages || State.detailReviews.totalPages || 1;
+    if (!total && pages <= 1) {
+        return '';
+    }
+    var from = total ? (page - 1) * limit + 1 : 0;
+    var to = total ? Math.min(page * limit, total) : 0;
+    var info = total ? 'Showing ' + from + '–' + to + ' of ' + total : 'Page ' + page;
+
+    var btns = '';
+    btns += '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '">' +
+        '<a class="page-link" href="#" data-detail-reviews-page="' + (page - 1) + '" aria-label="Previous">«</a></li>';
+    var start = Math.max(1, page - 2);
+    var end = Math.min(pages, start + 4);
+    for (var p = start; p <= end; p++) {
+        btns += '<li class="page-item ' + (p === page ? 'active' : '') + '">' +
+            '<a class="page-link" href="#" data-detail-reviews-page="' + p + '">' + p + '</a></li>';
+    }
+    btns += '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '">' +
+        '<a class="page-link" href="#" data-detail-reviews-page="' + (page + 1) + '" aria-label="Next">»</a></li>';
+
+    return '<div class="detail-reviews-footer">' +
+        '<p class="m-0 text-secondary small" id="detail-reviews-pagination-info">' + escHtml(info) + '</p>' +
+        (pages > 1
+            ? '<ul class="pagination pagination-sm m-0" id="detail-reviews-pagination-btns">' + btns + '</ul>'
+            : '') +
+        '</div>';
+}
+
+function updateDetailReviewsPanel(rows, meta, opts) {
+    opts = opts || {};
+    var list = document.getElementById('detail-reviews-list');
+    var footer = document.getElementById('detail-reviews-footer-wrap');
+    var errEl = document.getElementById('detail-reviews-error');
+    if (!list) return;
+
+    if (errEl) {
+        if (opts.error) {
+            errEl.textContent = opts.error;
+            errEl.classList.remove('d-none');
+        } else {
+            errEl.textContent = '';
+            errEl.classList.add('d-none');
+        }
+    }
+
+    if (opts.loading) {
+        list.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>';
+        if (footer) footer.innerHTML = '';
+        return;
+    }
+
+    list.innerHTML = renderDetailReviewsListHtml(rows || []);
+    if (footer) footer.innerHTML = renderDetailReviewsPagination(meta || {});
+}
+
 function renderBeauticianDetailContent(b, settings) {
     var user = b.user || {};
     var name = Beauticians.fullName(b);
@@ -238,10 +362,9 @@ function renderBeauticianDetailContent(b, settings) {
     var walletBalance = b.walletBalance != null ? Beauticians.formatMoney(b.walletBalance) : '—';
     var totalEarnings = b.totalEarnings != null ? Beauticians.formatMoney(b.totalEarnings) : '—';
     var ratingAverage = b.ratingAverage != null ? Number(b.ratingAverage).toFixed(1) : '—';
-    var reviewNotes = b.reviewNotes ? escHtml(b.reviewNotes) : '<span class="text-secondary">No review notes</span>';
     var platformCommission = settings ? formatCommissionLabel(settings.commissionRate) : null;
     // Per-beautician commissionRateOverride is no longer applied to job offers / payouts / wallet credit.
-    // Pay is platform default + per-service overrides (Beauticians → Settings).
+    // Pay is platform default + per-service overrides (Beauticians → Service Rates).
     var commissionDisplay = platformCommission
         ? platformCommission + '% <span class="text-secondary small fw-normal">(platform default; per-service overrides may apply)</span>'
         : '—';
@@ -285,82 +408,125 @@ function renderBeauticianDetailContent(b, settings) {
         ? '<button type="button" class="btn btn-sm btn-ghost-primary px-0 mt-1 btn-view-photo" data-url="' + safePhotoUrl + '" data-name="' + safeName + '">View photo</button>'
         : '';
 
-    var profileReviewerHtml =
-        '<div class="mt-3 pt-3 border-top">' +
-        '<div class="text-secondary small mb-2">Profile Reviewed By</div>' +
-        '<div>' + renderProfileReviewer(b.profileReviewedBy) + '</div>' +
-        (b.profileReviewedAt
-            ? '<div class="text-secondary small mt-2">Reviewed ' + escHtml(Beauticians.formatDateTime(b.profileReviewedAt)) + '</div>'
-            : '') +
-        '</div>';
+    var dispatchUntil = Beauticians.dispatchSuspendedUntil(b);
+    var dispatchReason = Beauticians.dispatchSuspendedReason(b);
 
-    var statusSection = detailLight('Account Status',
+    var heroCard = detailCard(null,
+        '<div class="detail-hero-layout">' +
+        avatarHtml +
+        '<div class="detail-hero-meta">' +
+        '<div class="d-flex align-items-center gap-2 flex-wrap">' +
+        '<div class="fw-bold fs-3 lh-sm mb-0">' + escHtml(name) + '</div>' +
+        Beauticians.statusBadge(b.isActive) +
+        '</div>' +
+        '<div class="text-secondary mt-1">' + escHtml(email) + '</div>' +
+        '<div class="text-secondary">' + escHtml(phone) + '</div>' +
+        '<div class="text-secondary small">Born ' + escHtml(dateOfBirth) + '</div>' +
+        viewPhotoHtml +
+        '</div>' +
+        '<div class="detail-hero-side">' +
+        '<div class="detail-field-label">Profile ID</div>' +
+        '<div class="font-monospace text-secondary small text-break">' + escHtml(b.id) + '</div>' +
+        '</div></div>',
+        { className: 'detail-card-hero' });
+
+    var statusBody =
         '<div class="row g-3">' +
         detailField('KYC', Beauticians.kycBadge(b.kycStatus)) +
         detailField('Profile', Beauticians.profileBadge(b.profileStatus)) +
-        detailField('Availability', Beauticians.availabilityBadge(b.availabilityStatus)) +
-        detailField('Dispatch', Beauticians.dispatchSuspendedBadge(!!b.dispatchSuspended)) +
         detailField('Account', Beauticians.statusBadge(b.isActive)) +
-        (b.yearsOfExperience != null ? detailField('Experience', escHtml(b.yearsOfExperience) + ' yrs') : '') +
-        '</div>' + profileReviewerHtml);
+        detailField('Availability', Beauticians.availabilityBadge(b.availabilityStatus)) +
+        detailField('Dispatch Matching', Beauticians.dispatchSuspendedBadge(!!b.dispatchSuspended, dispatchUntil), 'col-12') +
+        (b.dispatchSuspended && dispatchUntil
+            ? detailField('Dispatch Suspended Until', escHtml(Beauticians.formatDateTime(dispatchUntil)))
+            : '') +
+        (b.dispatchSuspended && dispatchReason
+            ? detailField('Dispatch Suspend Reason', escHtml(dispatchReason), 'col-12')
+            : '') +
+        '</div>' +
+        '<div class="mt-3 pt-3 border-top">' +
+        '<div class="detail-field-label">Profile reviewed by</div>' +
+        '<div class="detail-field-value">' + renderProfileReviewer(b.profileReviewedBy) + '</div>' +
+        (b.profileReviewedAt
+            ? '<div class="text-secondary small mt-1">Reviewed ' + escHtml(Beauticians.formatDateTime(b.profileReviewedAt)) + '</div>'
+            : '') +
+        '</div>';
 
-    var reviewsSection = detailLight('Reviews & Ratings',
-        '<div class="row g-3">' +
-        detailField('Average Rating', '<span class="fw-semibold fs-4">' + escHtml(ratingAverage) + '</span>', 'col-sm-6') +
-        detailField('Jobs Completed', escHtml(b.totalJobsCompleted != null ? b.totalJobsCompleted : '—'), 'col-sm-6') +
-        '</div>') +
-        detailHeavy('Review Notes', '<div class="detail-prose">' + reviewNotes + '</div>');
+    var performanceBody =
+        '<div class="row g-2">' +
+        detailMetric('Avg rating', escHtml(ratingAverage)) +
+        detailMetric('Jobs completed', escHtml(b.totalJobsCompleted != null ? b.totalJobsCompleted : '—')) +
+        detailMetric('Wallet', escHtml(walletBalance), 'text-success') +
+        '</div>';
 
-    var earningsSection = detailLight('Earnings & Wallet',
-        '<div class="row g-3">' +
-        detailField('Wallet Balance', '<span class="fw-semibold text-success fs-4">' + escHtml(walletBalance) + '</span>', 'col-sm-6') +
-        detailField('Total Earnings', '<span class="fw-semibold">' + escHtml(totalEarnings) + '</span>', 'col-sm-6') +
-        '</div>');
+    var profileBody =
+        (b.yearsOfExperience != null
+            ? '<div class="mb-3"><div class="detail-field-label">Experience</div><div class="detail-field-value">' + escHtml(b.yearsOfExperience) + ' yrs</div></div>'
+            : '') +
+        (b.bio
+            ? '<div class="mb-3"><div class="detail-field-label">Bio</div><div class="detail-prose">' + escHtml(b.bio) + '</div></div>'
+            : '<div class="mb-3 text-secondary small">No bio provided</div>') +
+        '<div class="mb-3"><div class="detail-field-label">Specialties</div><div>' + specialties + '</div></div>' +
+        '<div><div class="detail-field-label">Certifications</div>' + renderCertifications(b.certifications) + '</div>';
 
-    var payoutSection = detailLight('Payout Details',
+    var moneyBody =
         '<div class="row g-3 mb-3">' +
-        detailField('Beautician Share', commissionDisplay, 'col-sm-6') +
-        detailField('Platform Payout Mode', payoutMode, 'col-sm-6') +
+        detailField('Wallet balance', '<span class="fw-semibold text-success">' + escHtml(walletBalance) + '</span>') +
+        detailField('Total earnings', '<span class="fw-semibold">' + escHtml(totalEarnings) + '</span>') +
+        detailField('Beautician share', commissionDisplay) +
+        detailField('Payout mode', payoutMode) +
         '</div>' +
-        '<div class="text-secondary small mb-2">Payout Bank Details</div>' +
-        renderBeauticianBankDetails(b));
+        '<div class="pt-3 border-top">' +
+        '<div class="detail-field-label mb-2">Payout bank details</div>' +
+        renderBeauticianBankDetails(b) +
+        '</div>';
 
-    var assignedSection = detailHeavy('Assigned Services',
-        '<div class="detail-services-scroll">' + assignedSvc + '</div>', assignedCount);
-    var recentSection = detailHeavy('Recent Jobs', recentJobsHtml, recentCount);
-
-    var kycSection = b.kycReferences ? detailLight('KYC References',
-        '<dl class="row g-2 small mb-0">' +
-        '<dt class="col-sm-5 text-secondary fw-normal">QoreID Customer</dt><dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdCustomerId || '—') + '</dd>' +
-        '<dt class="col-sm-5 text-secondary fw-normal">QoreID Session</dt><dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdSessionId || '—') + '</dd>' +
-        '</dl>') : '';
-
-    return '' +
-        '<div class="offcanvas-detail-hero">' + avatarHtml +
-        '<div class="flex-grow-1"><div class="fw-bold fs-3">' + escHtml(name) + '</div>' +
-        '<div class="text-secondary">' + escHtml(email) + '</div>' +
-        '<div class="text-secondary">' + escHtml(phone) + '</div>' +
-        '<div class="text-secondary">Born ' + escHtml(dateOfBirth) + '</div>' +
-        viewPhotoHtml + '</div>' +
-        '<div class="text-end align-self-start">' +
-        '<div class="text-secondary small mb-1">Profile ID</div>' +
-        '<div class="font-monospace text-secondary small">' + escHtml(b.id) + '</div>' +
+    var dr = State.detailReviews || {};
+    var reviewsToolbar =
+        '<div class="detail-reviews-toolbar">' +
+        '<div>' +
+        '<label class="form-label" for="detail-reviews-sort">Sort</label>' +
+        '<select class="form-select form-select-sm" id="detail-reviews-sort" style="min-width:10rem">' +
+        '<option value="createdAt:desc"' + (dr.sortBy === 'createdAt' && dr.sortOrder !== 'asc' ? ' selected' : '') + '>Newest first</option>' +
+        '<option value="createdAt:asc"' + (dr.sortBy === 'createdAt' && dr.sortOrder === 'asc' ? ' selected' : '') + '>Oldest first</option>' +
+        '<option value="rating:desc"' + (dr.sortBy === 'rating' && dr.sortOrder !== 'asc' ? ' selected' : '') + '>Highest rating</option>' +
+        '<option value="rating:asc"' + (dr.sortBy === 'rating' && dr.sortOrder === 'asc' ? ' selected' : '') + '>Lowest rating</option>' +
+        '</select></div>' +
+        '<div class="ms-auto">' +
+        '<button type="button" class="btn btn-sm btn-outline-secondary" id="detail-reviews-refresh">Refresh</button>' +
         '</div></div>' +
+        '<div class="alert alert-danger d-none py-2" id="detail-reviews-error" role="alert"></div>' +
+        '<div class="detail-reviews-list" id="detail-reviews-list">' +
+        '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>' +
+        '</div>' +
+        '<div id="detail-reviews-footer-wrap"></div>';
 
-        '<div class="row g-4">' +
-        '<div class="col-lg-6">' + statusSection +
-        (b.bio ? detailHeavy('Bio', '<div class="detail-prose">' + escHtml(b.bio) + '</div>') : '') +
-        detailLight('Specialties', '<div>' + specialties + '</div>') +
-        detailLight('Certifications', renderCertifications(b.certifications)) +
-        '</div>' +
-        '<div class="col-lg-6">' + reviewsSection + earningsSection + payoutSection + '</div>' +
-        '</div>' +
+    var kycBody = b.kycReferences
+        ? '<dl class="row g-2 small mb-0">' +
+            '<dt class="col-sm-5 text-secondary fw-normal">QoreID Customer</dt>' +
+            '<dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdCustomerId || '—') + '</dd>' +
+            '<dt class="col-sm-5 text-secondary fw-normal">QoreID Session</dt>' +
+            '<dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdSessionId || '—') + '</dd>' +
+          '</dl>'
+        : '';
 
-        '<div class="row g-4 mt-1">' +
-        '<div class="col-lg-6">' + assignedSection + '</div>' +
-        '<div class="col-lg-6">' + recentSection + '</div>' +
+    return '<div class="detail-stack" data-beautician-id="' + escHtml(b.id) + '">' +
+        heroCard +
+        '<div class="detail-grid detail-grid-2">' +
+        detailCard('Account status', statusBody) +
+        detailCard('Performance snapshot', performanceBody) +
         '</div>' +
-        (kycSection ? '<div class="row g-4 mt-1"><div class="col-lg-6">' + kycSection + '</div></div>' : '') ;
+        '<div class="detail-grid detail-grid-2">' +
+        detailCard('Profile', profileBody) +
+        detailCard('Earnings & payouts', moneyBody) +
+        '</div>' +
+        detailCard('Customer reviews', reviewsToolbar) +
+        '<div class="detail-grid detail-grid-2">' +
+        detailCard('Assigned services', '<div class="detail-services-scroll">' + assignedSvc + '</div>', { count: assignedCount }) +
+        detailCard('Recent jobs', recentJobsHtml, { count: recentCount }) +
+        '</div>' +
+        (kycBody ? detailCard('KYC references', kycBody) : '') +
+        '</div>';
 }
 function buildDetailActions(b) {
     var html = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="offcanvas">Close</button>';
@@ -377,10 +543,10 @@ function buildDetailActions(b) {
         html += '<button class="btn btn-danger btn-sm" onclick="handleProfileReject(\'' + id + '\')">Reject Profile</button>';
     }
     if (RBAC.can('beauticians:manage')) {
-        html += '<button class="btn btn-outline-secondary btn-sm" onclick="openSuspendModal(\'' + id + '\',\'' + (b.isActive ? 'true' : 'false') + '\')">' + (b.isActive ? 'Suspend' : 'Reactivate') + '</button>';
+        html += '<button class="btn btn-outline-secondary btn-sm" onclick="openSuspendModal(\'' + id + '\',\'' + (b.isActive ? 'true' : 'false') + '\')">' + (b.isActive ? 'Suspend Account' : 'Reactivate Account') + '</button>';
         var dispatchSuspended = b.dispatchSuspended ? 'true' : 'false';
         html += '<button class="btn btn-outline-warning btn-sm" onclick="toggleDispatchSuspended(\'' + id + '\',\'' + dispatchSuspended + '\')">' +
-            (b.dispatchSuspended ? 'Resume Dispatch' : 'Suspend Dispatch') + '</button>';
+            (b.dispatchSuspended ? 'Resume Dispatch Matching' : 'Suspend Dispatch Matching') + '</button>';
     }
     return html;
 }
@@ -753,6 +919,8 @@ function renderDailyPoolStats(pool) {
         renderCertifications: renderCertifications,
         renderBeauticianBankDetails: renderBeauticianBankDetails,
         renderBeauticianDetailContent: renderBeauticianDetailContent,
+        updateDetailReviewsPanel: updateDetailReviewsPanel,
+        renderDetailReviewsListHtml: renderDetailReviewsListHtml,
         buildDetailActions: buildDetailActions,
         renderReviewsTable: renderReviewsTable,
         getSvcBeauticianId: getSvcBeauticianId,

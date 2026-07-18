@@ -43,8 +43,9 @@ function escHtml(value) {
 }
 
 function detailField(label, valueHtml, colClass) {
-    return '<div class="' + (colClass || 'col-sm-6 col-lg-4') + '">' +
-        '<div class="text-secondary small mb-1">' + escHtml(label) + '</div><div>' + valueHtml + '</div></div>';
+    return '<div class="' + (colClass || 'col-sm-6') + '">' +
+        '<div class="detail-field-label">' + escHtml(label) + '</div>' +
+        '<div class="detail-field-value">' + valueHtml + '</div></div>';
 }
 
 function detailHeading(title, count) {
@@ -54,13 +55,32 @@ function detailHeading(title, count) {
     return '<div class="detail-section-heading">' + escHtml(title) + countHtml + '</div>';
 }
 
+/** Distinct card container for offcanvas hierarchy */
+function detailCard(title, innerHtml, opts) {
+    opts = opts || {};
+    var countHtml = opts.count != null
+        ? ' <span class="detail-count">(' + escHtml(opts.count) + ')</span>'
+        : '';
+    var level = opts.level || 'primary'; // primary | secondary
+    var extraClass = opts.className ? ' ' + opts.className : '';
+    var headerExtra = opts.headerHtml || '';
+    return '<section class="detail-card detail-card-' + level + extraClass + '">' +
+        (title
+            ? '<div class="detail-card-header">' +
+                '<div class="detail-card-title">' + escHtml(title) + countHtml + '</div>' +
+                headerExtra +
+              '</div>'
+            : '') +
+        '<div class="detail-card-body">' + innerHtml + '</div>' +
+        '</section>';
+}
+
 function detailLight(title, innerHtml) {
-    return '<div class="detail-subsection">' + detailHeading(title) + innerHtml + '</div>';
+    return detailCard(title, innerHtml, { level: 'secondary' });
 }
 
 function detailHeavy(title, innerHtml, count) {
-    return '<div class="detail-subsection">' + detailHeading(title, count) +
-        '<div class="detail-heavy-box">' + innerHtml + '</div></div>';
+    return detailCard(title, innerHtml, { level: 'primary', count: count });
 }
 
 function formatCommissionLabel(rate) {
@@ -206,6 +226,7 @@ function scrServiceSearchHaystack(s) {
         escHtml: escHtml,
         detailField: detailField,
         detailHeading: detailHeading,
+        detailCard: detailCard,
         detailLight: detailLight,
         detailHeavy: detailHeavy,
         formatCommissionLabel: formatCommissionLabel,

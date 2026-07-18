@@ -61,6 +61,37 @@ const Beauticians = (() => {
         });
     }
 
+    /**
+     * GET /admin/beauticians/:id/reviews
+     * Customer reviews for a beautician profile (beautician_profiles.id).
+     * @param {string} id
+     * @param {{page?:number,limit?:number,sortBy?:'createdAt'|'rating',sortOrder?:'asc'|'desc',ratingMin?:number,ratingMax?:number,status?:string}} [params]
+     */
+    async function getBeauticianReviews(id, params = {}) {
+        const q = new URLSearchParams();
+        if (params.page) q.set('page', params.page);
+        if (params.limit) q.set('limit', params.limit);
+        if (params.sortBy) q.set('sortBy', params.sortBy);
+        if (params.sortOrder) q.set('sortOrder', params.sortOrder);
+        if (params.ratingMin !== undefined && params.ratingMin !== '') q.set('ratingMin', params.ratingMin);
+        if (params.ratingMax !== undefined && params.ratingMax !== '') q.set('ratingMax', params.ratingMax);
+        if (params.status) q.set('status', params.status);
+
+        const res = await Auth.fetch(
+            '/admin/beauticians/' + encodeURIComponent(id) + '/reviews' +
+            (q.toString() ? '?' + q.toString() : '')
+        );
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to load reviews');
+
+        const payload = raw.data !== undefined ? raw.data : raw;
+        if (Array.isArray(payload)) return { data: payload, meta: {} };
+        return {
+            data: firstArray(payload.reviews, payload.items, payload.data),
+            meta: payload.meta || payload.pagination || {},
+        };
+    }
+
     async function getPendingProfileReviews(params = {}) {
         const q = new URLSearchParams();
         if (params.page) q.set('page', params.page);
@@ -201,11 +232,36 @@ const Beauticians = (() => {
         });
     }
 
-    async function updateDispatch(id, suspended) {
+    /**
+     * PATCH /admin/beauticians/:id/dispatch
+     * @param {string} id - beautician profile id
+     * @param {boolean|object} suspendedOrPayload - boolean for simple toggle, or payload:
+     *   { suspended: true, durationHours?: 1–720, until?: ISO string, reason?: string }
+     *   Use until or durationHours (not both). Omit both for indefinite suspend.
+     *   { suspended: false } to resume (cancels probation job).
+     */
+    async function updateDispatch(id, suspendedOrPayload) {
+        var body;
+        if (suspendedOrPayload && typeof suspendedOrPayload === 'object') {
+            body = { suspended: !!suspendedOrPayload.suspended };
+            if (body.suspended) {
+                if (suspendedOrPayload.durationHours != null && suspendedOrPayload.durationHours !== '') {
+                    body.durationHours = Number(suspendedOrPayload.durationHours);
+                }
+                if (suspendedOrPayload.until) {
+                    body.until = suspendedOrPayload.until;
+                }
+                if (suspendedOrPayload.reason) {
+                    body.reason = String(suspendedOrPayload.reason).trim();
+                }
+            }
+        } else {
+            body = { suspended: !!suspendedOrPayload };
+        }
         return apiFetch('/admin/beauticians/' + id + '/dispatch', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ suspended: !!suspended }),
+            body: JSON.stringify(body),
         });
     }
 
@@ -341,8 +397,22 @@ const Beauticians = (() => {
         return (b && b.user && b.user.id) || b.userId || null;
     }
 
-    function dispatchSuspendedBadge(suspended) {
+    function dispatchSuspendedUntil(b) {
+        if (!b || typeof b !== 'object') return null;
+        return b.dispatchSuspendedUntil || b.dispatchSuspendedUntilAt || b.suspendedUntil || null;
+    }
+
+    function dispatchSuspendedReason(b) {
+        if (!b || typeof b !== 'object') return null;
+        var r = b.dispatchSuspendedReason || b.suspendedReason || null;
+        return r ? String(r) : null;
+    }
+
+    function dispatchSuspendedBadge(suspended, until) {
         if (suspended) {
+            if (until) {
+                return '<span class="badge bg-red-lt">Suspended until ' + formatDateTime(until) + '</span>';
+            }
             return '<span class="badge bg-red-lt">Dispatch suspended</span>';
         }
         return '<span class="badge bg-green-lt">Dispatch active</span>';
@@ -359,6 +429,7 @@ const Beauticians = (() => {
         listBeauticians,
         getBeautician,
         updateBeautician,
+        getBeauticianReviews,
         getPendingProfileReviews,
         getPerformance,
         approveKyc,
@@ -392,6 +463,8 @@ const Beauticians = (() => {
         dateOfBirth,
         formatDateOfBirth,
         beauticianUserId,
+        dispatchSuspendedUntil,
+        dispatchSuspendedReason,
         dispatchSuspendedBadge,
     };
 })();
