@@ -47,7 +47,7 @@
                     <img id="login-brand-logo" src="assets/img/logo.png" style="width: 70px;" alt=""></a><!-- END NAVBAR LOGO -->
                     <p style="font-size: 14px;font-weight: 600;">Hairlux Administrator Panel</p>
             </div>
-            
+
             <!-- Alert: hidden by default, shown on error/success -->
             <div id="login-alert" class="alert alert-dismissible d-none mb-3" role="alert">
                 <div class="d-flex">
@@ -59,7 +59,16 @@
 
             <div class="card card-md">
                 <div class="card-body">
-                    <h2 class="h2 text-center mb-4">Login to your account</h2>
+                    <h2 class="h2 text-center mb-3">Login to your account</h2>
+
+                    <!-- Admin / Staff toggle -->
+                    <div class="btn-group w-100 mb-4" role="group" aria-label="Login type">
+                        <input type="radio" class="btn-check" name="login-type" id="login-type-admin" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="login-type-admin">For Admin</label>
+                        <input type="radio" class="btn-check" name="login-type" id="login-type-staff" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="login-type-staff">For Staff</label>
+                    </div>
+
                     <form id="login-form" autocomplete="off" novalidate>
                         <div class="mb-3">
                             <label class="form-label" for="login-email">Email address</label>
@@ -160,11 +169,12 @@
         document.getElementById('login-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             hideAlert();
-            var email    = document.getElementById('login-email').value.trim();
-            var password = document.getElementById('login-password').value;
-            var btn      = document.getElementById('login-btn');
-            var btnText  = document.getElementById('login-btn-text');
-            var spinner  = document.getElementById('login-btn-spinner');
+            var email     = document.getElementById('login-email').value.trim();
+            var password  = document.getElementById('login-password').value;
+            var loginType = document.getElementById('login-type-staff').checked ? 'staff' : 'admin';
+            var btn       = document.getElementById('login-btn');
+            var btnText   = document.getElementById('login-btn-text');
+            var spinner   = document.getElementById('login-btn-spinner');
 
             if (!email || !password) {
                 showAlert('danger', 'Please enter your email and password.');
@@ -175,8 +185,16 @@
             spinner.classList.remove('d-none');
 
             try {
-                await Auth.login(email, password);
+                await Auth.login(email, password, loginType);
                 showAlert('success', 'Login successful! Loading your workspace…');
+
+                if (loginType === 'staff') {
+                    // Staff have no admin permissions to check — straight to
+                    // the staff dashboard, no RBAC nav-visibility pass needed.
+                    window.location.href = './staff-portal.html';
+                    return;
+                }
+
                 // Fetch server-fresh permissions before redirecting so the user
                 // lands directly on the first page they are allowed to see.
                 await RBAC.fetchMe();
