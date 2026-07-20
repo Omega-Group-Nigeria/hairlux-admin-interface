@@ -143,9 +143,18 @@ const Beauticians = (() => {
         });
     }
 
-    async function rejectProfile(id, reason, notes) {
+    /**
+     * PATCH /admin/beauticians/:id/profile/reject
+     * @param {string} id
+     * @param {string} reason - required rejection reason shown to beautician
+     * @param {string} [notes]
+     * @param {'FULL'|'VIDEO_ONLY'} [scope] - FULL (default) rejects whole profile;
+     *   VIDEO_ONLY keeps profile locked and requires a new intro video only
+     */
+    async function rejectProfile(id, reason, notes, scope) {
         const body = { reason };
         if (notes) body.notes = notes;
+        if (scope === 'FULL' || scope === 'VIDEO_ONLY') body.scope = scope;
         return apiFetch('/admin/beauticians/' + id + '/profile/reject', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -310,6 +319,7 @@ const Beauticians = (() => {
 
     const PROFILE_COLORS = {
         NOT_SUBMITTED: 'secondary',
+        AWAITING_VIDEO: 'info',
         PENDING_REVIEW: 'warning',
         APPROVED: 'success',
         REJECTED: 'danger',
@@ -374,6 +384,15 @@ const Beauticians = (() => {
         if (Number.isNaN(d.getTime())) return String(value);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
             ' \u00b7 ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === null || bytes === undefined || bytes === '') return '—';
+        const num = typeof bytes === 'string' ? parseFloat(bytes) : Number(bytes);
+        if (!Number.isFinite(num) || num < 0) return '—';
+        if (num < 1024) return Math.round(num) + ' B';
+        if (num < 1048576) return (num / 1024).toFixed(1) + ' KB';
+        return (num / 1048576).toFixed(2) + ' MB';
     }
 
     function fullName(b) {
@@ -459,6 +478,7 @@ const Beauticians = (() => {
         formatMoney,
         formatDate,
         formatDateTime,
+        formatBytes,
         fullName,
         dateOfBirth,
         formatDateOfBirth,

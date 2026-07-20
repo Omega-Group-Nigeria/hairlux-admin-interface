@@ -41,9 +41,9 @@
 // ── GET /user/profile ─────────────────────────────────────────────────
 async function loadProfile() {
     try {
-        var result = await Api.getProfile();
-        if (!result.res.ok) throw new Error(result.message || 'Failed to load profile');
-        State.profile = result.data;
+        var res  = await Api.getProfile();
+        var raw  = await res.json().catch(function(){ return {}; });
+        State.profile = raw.data || raw;
         populateUserInfo(State.profile);
         fillProfileForm(State.profile);
     } catch(err) {
@@ -62,9 +62,10 @@ document.getElementById('form-profile').addEventListener('submit', async functio
             lastName:  document.getElementById('input-lastName').value.trim(),
             phone:     document.getElementById('input-phone').value.trim() || undefined,
         };
-        var result = await Api.updateProfile(body);
-        if (!result.res.ok) throw new Error(result.message || 'Update failed (' + result.res.status + ')');
-        State.profile = result.data || State.profile;
+        var res = await Api.updateProfile(body);
+        var raw = await res.json().catch(function(){ return {}; });
+        if (!res.ok) throw new Error(raw.message || 'Update failed (' + res.status + ')');
+        State.profile = raw.data || State.profile;
         populateUserInfo(State.profile);
         localStorage.setItem('hairlux_user', JSON.stringify(State.profile));
         showAlert('success', 'Profile updated successfully.');
@@ -92,8 +93,9 @@ document.getElementById('form-password').addEventListener('submit', async functi
             currentPassword: document.getElementById('input-currentPassword').value,
             newPassword: newPwd,
         };
-        var result = await Api.changePassword(body);
-        if (!result.res.ok) throw new Error(result.message || 'Password change failed (' + result.res.status + ')');
+        var res = await Api.changePassword(body);
+        var raw = await res.json().catch(function(){ return {}; });
+        if (!res.ok) throw new Error(raw.message || 'Password change failed (' + res.status + ')');
         showAlert('success', 'Password changed successfully.');
         document.getElementById('form-password').reset();
     } catch(err) {
@@ -437,6 +439,9 @@ async function init() {
         initAdminSearch();
     }
 }
+
+    
+
 
     SP.Handlers = {
         loadProfile: loadProfile,

@@ -239,6 +239,179 @@
         #modal-cert-loading { min-height: 240px; }
         #modal-cert-img { max-height: 70vh; width: auto; max-width: 100%; object-fit: contain; }
         #modal-cert-frame { height: 70vh; border: 0; }
+
+        /* KYC intro video player modal */
+        #modal-kyc-video-preview .modal-body { overflow: hidden; }
+        .kyc-video-stage {
+            position: relative;
+            background: #0b0f14;
+            min-height: 240px;
+            max-height: min(58vh, 480px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kyc-video-el {
+            display: block;
+            width: 100%;
+            max-height: min(58vh, 480px);
+            background: #000;
+            outline: none;
+        }
+        .kyc-video-el.is-hidden { visibility: hidden; }
+        .kyc-video-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            background: rgba(11, 15, 20, 0.72);
+            z-index: 2;
+        }
+        .kyc-video-overlay.d-none { display: none !important; }
+        .kyc-video-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .75rem;
+            color: #e5e7eb;
+            text-align: center;
+        }
+        .kyc-video-loading .spinner-border {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-width: .2em;
+            color: #fff;
+        }
+        .kyc-video-error-panel {
+            max-width: 22rem;
+            width: 100%;
+            text-align: center;
+            color: #f3f4f6;
+        }
+        .kyc-video-error-icon {
+            width: 2.75rem;
+            height: 2.75rem;
+            margin: 0 auto .75rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(220, 53, 69, 0.2);
+            color: #f87171;
+        }
+        .kyc-video-error-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: .35rem;
+        }
+        .kyc-video-error-msg {
+            font-size: .8125rem;
+            line-height: 1.45;
+            color: #d1d5db;
+            margin-bottom: 0;
+        }
+        .kyc-video-controls {
+            background: #111827;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: .9rem 1.1rem 1rem;
+        }
+        .kyc-video-seek-row {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            margin-bottom: .85rem;
+            min-width: 0;
+        }
+        .kyc-video-seek-row .kyc-video-time {
+            color: #d1d5db;
+            font-size: .75rem;
+            font-variant-numeric: tabular-nums;
+            font-family: var(--tblr-font-monospace, ui-monospace, monospace);
+            flex-shrink: 0;
+            min-width: 2.4rem;
+        }
+        .kyc-video-seek-row .kyc-video-time-end { text-align: right; }
+        .kyc-video-seek {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 1.25rem;
+            margin: 0;
+            cursor: pointer;
+        }
+        .kyc-video-main-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: .75rem;
+            min-width: 0;
+        }
+        .kyc-video-volume-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: .45rem;
+            min-width: 0;
+        }
+        .kyc-video-play-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kyc-video-main-spacer { min-width: 0; }
+        .kyc-video-ctrl-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            padding: 0;
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+        .kyc-video-play-btn {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+        .kyc-video-volume {
+            width: 6.5rem;
+            max-width: 100%;
+            min-width: 3.5rem;
+            height: 1.25rem;
+            margin: 0;
+            cursor: pointer;
+        }
+        .kyc-video-controls.is-disabled {
+            opacity: .55;
+            pointer-events: none;
+        }
+        .kyc-video-controls .form-range::-webkit-slider-runnable-track {
+            height: .28rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.22);
+        }
+        .kyc-video-controls .form-range::-moz-range-track {
+            height: .28rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.22);
+        }
+        .kyc-video-controls .form-range::-webkit-slider-thumb {
+            margin-top: -.32rem;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.35);
+        }
+        .kyc-video-controls .form-range::-moz-range-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.35);
+        }
+        @media (max-width: 420px) {
+            .kyc-video-volume { width: 4.25rem; }
+            .kyc-video-main-row { gap: .4rem; }
+        }
         /* Searchable dropdown picker (beautician assign + service rate override) */
         .svc-beautician-picker,
         .scr-service-picker { position: relative; }
@@ -377,7 +550,14 @@
                             <div class="page-pretitle">Provider Operations</div>
                             <h2 class="page-title">Beauticians</h2>
                         </div>
-                        <div class="col-auto ms-auto d-flex gap-2">
+                        <div class="col-auto ms-auto d-flex align-items-center gap-2">
+                            <label class="form-label text-secondary small mb-0" for="perf-period-days">Period (days):</label>
+                            <select id="perf-period-days" class="form-select form-select-sm" style="width:auto">
+                                <option value="7">Last 7 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                                <option value="365">Last year</option>
+                            </select>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
                                 Refresh
@@ -395,15 +575,6 @@
 
                     <!-- Performance summary (always visible above tabs) -->
                     <div id="perf-summary" class="mb-4">
-                        <div class="d-flex align-items-center justify-content-end gap-2 mb-3">
-                            <label class="form-label text-secondary small mb-0">Period (days):</label>
-                            <select id="perf-period-days" class="form-select form-select-sm" style="width:auto">
-                                <option value="7">Last 7 days</option>
-                                <option value="30" selected>Last 30 days</option>
-                                <option value="90">Last 90 days</option>
-                                <option value="365">Last year</option>
-                            </select>
-                        </div>
                         <div class="row row-deck row-cards" id="perf-cards">
                             <div class="col-sm-6 col-lg-3">
                                 <div class="card"><div class="card-body"><div class="perf-label">Active Beauticians</div><div class="perf-value" id="perf-active">—</div></div></div>
@@ -478,6 +649,7 @@
                                         <select id="list-profile-status" class="form-select form-select-sm">
                                             <option value="">All Profiles</option>
                                             <option value="NOT_SUBMITTED">Not Submitted</option>
+                                            <option value="AWAITING_VIDEO">Awaiting Video</option>
                                             <option value="PENDING_REVIEW">Pending Review</option>
                                             <option value="APPROVED">Approved</option>
                                             <option value="REJECTED">Rejected</option>
@@ -567,13 +739,14 @@
                                                 <th>Specialties</th>
                                                 <th>Experience</th>
                                                 <th>KYC Status</th>
+                                                <th>Portfolio</th>
                                                 <th>Submitted</th>
                                                 <th class="w-1">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody id="reviews-tbody">
                                             <tr>
-                                                <td colspan="8" class="text-center py-5">
+                                                <td colspan="9" class="text-center py-5">
                                                     <div class="spinner-border text-primary" role="status"></div>
                                                 </td>
                                             </tr>
@@ -1128,8 +1301,137 @@
         </div>
     </div>
 
+    <!-- ── KYC INTRO VIDEO PLAYER MODAL ── -->
+    <div class="modal modal-blur fade" id="modal-kyc-video-preview" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-kyc-video-title">Intro video</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-dark p-0">
+                    <div class="kyc-video-stage">
+                        <video
+                            id="modal-kyc-video"
+                            class="kyc-video-el"
+                            playsinline
+                            preload="auto"
+                            controlslist="nodownload noremoteplayback"
+                            disablepictureinpicture
+                            referrerpolicy="no-referrer"
+                        ></video>
+                        <div class="kyc-video-overlay" id="kyc-video-loading" role="status" aria-live="polite">
+                            <div class="kyc-video-loading">
+                                <div class="spinner-border" role="status" aria-hidden="true"></div>
+                                <div class="small" id="kyc-video-loading-msg">Preparing video…</div>
+                            </div>
+                        </div>
+                        <div class="kyc-video-overlay d-none" id="kyc-video-error" role="alert" aria-live="assertive">
+                            <div class="kyc-video-error-panel">
+                                <div class="kyc-video-error-icon" aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                </div>
+                                <div class="kyc-video-error-title" id="kyc-video-error-title">Could not load video</div>
+                                <p class="kyc-video-error-msg" id="kyc-video-error-msg">Something went wrong while fetching this intro video.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kyc-video-controls is-disabled" id="kyc-video-controls">
+                        <div class="kyc-video-seek-row">
+                            <span class="kyc-video-time" id="kyc-video-current">0:00</span>
+                            <input type="range" class="form-range kyc-video-seek" id="kyc-video-seek" min="0" max="0" step="0.1" value="0" disabled aria-label="Seek">
+                            <span class="kyc-video-time kyc-video-time-end" id="kyc-video-duration">0:00</span>
+                        </div>
+                        <div class="kyc-video-main-row">
+                            <div class="kyc-video-volume-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-light kyc-video-ctrl-btn" id="kyc-video-mute" aria-label="Mute" disabled>
+                                    <svg id="kyc-video-icon-volume" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 8a5 5 0 0 1 0 8"/><path d="M17.7 5a9 9 0 0 1 0 14"/><path d="M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5"/></svg>
+                                    <svg id="kyc-video-icon-mute" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5"/><path d="M16 10l4 4m0 -4l-4 4"/></svg>
+                                </button>
+                                <label class="visually-hidden" for="kyc-video-volume">Volume</label>
+                                <input type="range" class="form-range kyc-video-volume" id="kyc-video-volume" min="0" max="1" step="0.05" value="0.85" disabled aria-label="Volume">
+                            </div>
+                            <div class="kyc-video-play-wrap">
+                                <button type="button" class="btn btn-light kyc-video-ctrl-btn kyc-video-play-btn" id="kyc-video-play-pause" aria-label="Play" disabled>
+                                    <svg id="kyc-video-icon-play" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M8 5v14l11 -7z"/></svg>
+                                    <svg id="kyc-video-icon-pause" class="d-none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M6 5h4v14h-4zm8 0h4v14h-4z"/></svg>
+                                </button>
+                            </div>
+                            <div class="kyc-video-main-spacer" aria-hidden="true"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- ── ACCOUNT SUSPEND / REACTIVATE MODAL ── -->
+    <div class="modal modal-blur fade" id="modal-profile-reject" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject profile / video</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="profile-reject-id" value="">
+                    <div class="alert alert-danger d-none py-2" id="profile-reject-error" role="alert"></div>
+                    <p class="text-secondary small mb-3">
+                        Review the intro video and profile materials first. Rejection clears the stored video key; choose how far to roll the beautician back.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label required" for="profile-reject-reason">Reason</label>
+                        <textarea id="profile-reject-reason" class="form-control" rows="3" placeholder="Why this submission was not accepted…" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="profile-reject-notes">Notes <span class="text-secondary fw-normal">(optional)</span></label>
+                        <textarea id="profile-reject-notes" class="form-control" rows="2" placeholder="Extra feedback shown with the reason…"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Reject scope</label>
+                        <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="profile-reject-scope" value="FULL" class="form-selectgroup-input" checked>
+                                <span class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <span class="me-3">
+                                        <span class="form-selectgroup-check"></span>
+                                    </span>
+                                    <span>
+                                        <strong>Full profile</strong>
+                                        <span class="d-block text-secondary small">Status → REJECTED · profile editable · resubmit profile + video</span>
+                                    </span>
+                                </span>
+                            </label>
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="profile-reject-scope" value="VIDEO_ONLY" class="form-selectgroup-input">
+                                <span class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <span class="me-3">
+                                        <span class="form-selectgroup-check"></span>
+                                    </span>
+                                    <span>
+                                        <strong>Video only</strong>
+                                        <span class="d-block text-secondary small">Status → AWAITING_VIDEO · profile stays locked · re-upload video only</span>
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="form-hint mt-2" id="profile-reject-scope-hint">
+                            Full reject: beautician can edit profile fields, then resubmit profile and a new video (status → REJECTED).
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="profile-reject-submit">Reject submission</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal modal-blur fade" id="modal-account-suspend" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -1229,6 +1531,9 @@
         <div class="offcanvas-header border-bottom px-4 py-3">
             <h5 class="offcanvas-title">Beautician Details</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="px-4 pt-3 d-none" id="offcanvas-detail-alert-wrap">
+            <div id="offcanvas-detail-alert" class="alert alert-danger mb-0 py-2" role="alert"></div>
         </div>
         <div class="offcanvas-body" id="offcanvas-detail-body">
             <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>

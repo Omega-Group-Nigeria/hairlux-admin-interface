@@ -17,6 +17,7 @@
 
     // Utils aliases (original bare-call style)
     var showAlert = Utils.showAlert;
+    var clearOffcanvasAlert = Utils.clearOffcanvasAlert;
     var setSaveButtonState = Utils.setSaveButtonState;
     var canAccessSection = Utils.canAccessSection;
     var escHtml = Utils.escHtml;
@@ -50,6 +51,9 @@
     var openPhotoPreview = UI.openPhotoPreview;
     var setCertPreviewLoading = UI.setCertPreviewLoading;
     var openCertificationPreview = UI.openCertificationPreview;
+    var openKycVideoModal = UI.openKycVideoModal;
+    var initKycVideoModal = UI.initKycVideoModal;
+    var downloadKycVideo = UI.downloadKycVideo;
     var renderProfileReviewer = UI.renderProfileReviewer;
     var renderCertifications = UI.renderCertifications;
     var renderBeauticianBankDetails = UI.renderBeauticianBankDetails;
@@ -152,8 +156,10 @@ async function openDetail(id) {
     var actions = document.getElementById('offcanvas-detail-actions');
     body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
     actions.innerHTML = '';
+    if (typeof clearOffcanvasAlert === 'function') clearOffcanvasAlert();
     var bs = getBootstrap();
-    var oc = bs.Offcanvas.getOrCreateInstance(document.getElementById('offcanvas-detail'));
+    var ocEl = document.getElementById('offcanvas-detail');
+    var oc = bs.Offcanvas.getOrCreateInstance(ocEl);
     oc.show();
     try {
         var results = await Promise.all([
@@ -348,31 +354,98 @@ async function handleKycReject(id) {
 }
 
 async function handleProfileApprove(id) {
-    if (!confirm('Approve professional profile for this beautician?')) return;
+    if (!confirm('Approve this beautician\'s professional profile and intro video? They will become fully verified for home services.')) return;
     var actions = document.getElementById('offcanvas-detail-actions');
     actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing…';
     try {
         await Api.approveProfile(id);
         openDetail(id);
-        showAlert('Profile approved successfully', 'success');
+        showAlert('Profile and video approved successfully', 'success');
         loadList();
+        if (State.activeSection === 'reviews') loadReviews();
     } catch (err) {
         actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span><button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
     }
 }
 
-async function handleProfileReject(id) {
-    var reason = prompt('Enter rejection reason:');
-    if (!reason) return;
-    var actions = document.getElementById('offcanvas-detail-actions');
-    actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing…';
+var profileRejectTargetId = null;
+
+function handleProfileReject(id) {
+    openProfileRejectModal(id);
+}
+
+function openProfileRejectModal(id) {
+    profileRejectTargetId = id;
+    document.getElementById('profile-reject-id').value = id || '';
+    document.getElementById('profile-reject-reason').value = '';
+    document.getElementById('profile-reject-notes').value = '';
+    document.getElementById('profile-reject-error').classList.add('d-none');
+    document.getElementById('profile-reject-error').textContent = '';
+    var fullScope = document.querySelector('input[name="profile-reject-scope"][value="FULL"]');
+    if (fullScope) fullScope.checked = true;
+    syncProfileRejectScopeUi();
+    var submitBtn = document.getElementById('profile-reject-submit');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Reject submission';
+    getBootstrap().Modal.getOrCreateInstance(document.getElementById('modal-profile-reject')).show();
+}
+
+function getProfileRejectScope() {
+    var checked = document.querySelector('input[name="profile-reject-scope"]:checked');
+    return checked ? checked.value : 'FULL';
+}
+
+function syncProfileRejectScopeUi() {
+    var scope = getProfileRejectScope();
+    var hint = document.getElementById('profile-reject-scope-hint');
+    if (!hint) return;
+    if (scope === 'VIDEO_ONLY') {
+        hint.textContent = 'Profile stays locked. Beautician must re-record and re-upload the intro video only (status → AWAITING VIDEO). The previous video is deleted.';
+    } else {
+        hint.textContent = 'Full reject: beautician can edit profile fields, then resubmit profile and a new video (status → REJECTED).';
+    }
+}
+
+async function submitProfileReject() {
+    var id = profileRejectTargetId || document.getElementById('profile-reject-id').value;
+    var reason = (document.getElementById('profile-reject-reason').value || '').trim();
+    var notes = (document.getElementById('profile-reject-notes').value || '').trim();
+    var scope = getProfileRejectScope();
+    var errEl = document.getElementById('profile-reject-error');
+    var submitBtn = document.getElementById('profile-reject-submit');
+
+    if (!id) {
+        errEl.textContent = 'Missing beautician id.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+    if (!reason) {
+        errEl.textContent = 'A rejection reason is required.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+    if (scope !== 'FULL' && scope !== 'VIDEO_ONLY') scope = 'FULL';
+
+    errEl.classList.add('d-none');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Rejecting…';
+
     try {
-        await Api.rejectProfile(id, reason);
+        await Api.rejectProfile(id, reason, notes || undefined, scope);
+        var rejectModal = getBootstrap().Modal.getInstance(document.getElementById('modal-profile-reject'));
+        if (rejectModal) rejectModal.hide();
+        var msg = scope === 'VIDEO_ONLY'
+            ? 'Video rejected — beautician must re-upload intro video'
+            : 'Profile rejected — beautician may fix profile and resubmit';
+        showAlert(msg, 'warning');
         openDetail(id);
-        showAlert('Profile rejected', 'warning');
         loadList();
+        if (State.activeSection === 'reviews') loadReviews();
     } catch (err) {
-        actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span><button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+        errEl.textContent = err.message || 'Failed to reject.';
+        errEl.classList.remove('d-none');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Reject submission';
     }
 }
 
@@ -1178,6 +1251,14 @@ function init() {
     // ── Refresh button ────────────────────────────────────────────────────
     document.getElementById('btn-refresh').addEventListener('click', refreshPage);
 
+    // Clear offcanvas banners when detail panel closes
+    var detailOc = document.getElementById('offcanvas-detail');
+    if (detailOc) {
+        detailOc.addEventListener('hidden.bs.offcanvas', function () {
+            if (typeof clearOffcanvasAlert === 'function') clearOffcanvasAlert();
+        });
+    }
+
     // ── Beautician list ───────────────────────────────────────────────────
     var listSearchTimer;
     document.getElementById('list-search').addEventListener('input', function () {
@@ -1236,7 +1317,10 @@ function init() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    // Profile photo & certification preview (delegated from detail offcanvas)
+    // KYC intro video modal player (controls wired once)
+    if (typeof initKycVideoModal === 'function') initKycVideoModal();
+
+    // Profile photo, certification & KYC video preview (delegated from detail offcanvas)
     document.getElementById('offcanvas-detail-body').addEventListener('click', function (e) {
         var photoBtn = e.target.closest('.btn-view-photo');
         if (photoBtn) {
@@ -1248,6 +1332,32 @@ function init() {
         if (certBtn) {
             e.preventDefault();
             openCertificationPreview(certBtn.dataset.url, certBtn.dataset.title);
+            return;
+        }
+        var videoBtn = e.target.closest('.btn-view-kyc-video');
+        if (videoBtn) {
+            e.preventDefault();
+            openKycVideoModal(videoBtn.dataset.url, { title: videoBtn.dataset.title || 'Intro video' });
+            return;
+        }
+        var downloadBtn = e.target.closest('.btn-download-kyc-video');
+        if (downloadBtn) {
+            e.preventDefault();
+            if (downloadBtn.disabled) return;
+            var prevLabel = downloadBtn.innerHTML;
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Downloading…';
+            Promise.resolve(downloadKycVideo(downloadBtn.dataset.url, downloadBtn.dataset.filename))
+                .then(function () {
+                    // success toast is shown inside downloadKycVideo via showAlert
+                })
+                .catch(function (err) {
+                    showAlert((err && err.message) || 'Download failed.', 'danger');
+                })
+                .then(function () {
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = prevLabel;
+                });
         }
     });
     document.getElementById('offcanvas-detail-body').addEventListener('keydown', function (e) {
@@ -1262,6 +1372,18 @@ function init() {
         if (certBtn) {
             e.preventDefault();
             openCertificationPreview(certBtn.dataset.url, certBtn.dataset.title);
+            return;
+        }
+        var videoBtn = e.target.closest('.btn-view-kyc-video');
+        if (videoBtn) {
+            e.preventDefault();
+            openKycVideoModal(videoBtn.dataset.url, { title: videoBtn.dataset.title || 'Intro video' });
+            return;
+        }
+        var downloadBtn = e.target.closest('.btn-download-kyc-video');
+        if (downloadBtn) {
+            e.preventDefault();
+            downloadBtn.click();
         }
     });
 
@@ -1422,6 +1544,15 @@ function init() {
         accountSuspendSubmit.addEventListener('click', submitAccountSuspend);
     }
 
+    // ── Profile / video reject modal (scope: FULL | VIDEO_ONLY) ──────────
+    document.querySelectorAll('input[name="profile-reject-scope"]').forEach(function (radio) {
+        radio.addEventListener('change', syncProfileRejectScopeUi);
+    });
+    var profileRejectSubmit = document.getElementById('profile-reject-submit');
+    if (profileRejectSubmit) {
+        profileRejectSubmit.addEventListener('click', submitProfileReject);
+    }
+
     // ── Detail offcanvas: customer reviews controls (delegated) ───────────
     var detailBody = document.getElementById('offcanvas-detail-body');
     if (detailBody) {
@@ -1474,6 +1605,9 @@ function init() {
         handleKycReject: handleKycReject,
         handleProfileApprove: handleProfileApprove,
         handleProfileReject: handleProfileReject,
+        openProfileRejectModal: openProfileRejectModal,
+        submitProfileReject: submitProfileReject,
+        syncProfileRejectScopeUi: syncProfileRejectScopeUi,
         openSuspendModal: openSuspendModal,
         submitAccountSuspend: submitAccountSuspend,
         loadReviews: loadReviews,
@@ -1508,6 +1642,7 @@ function init() {
     global.handleKycReject = handleKycReject;
     global.handleProfileApprove = handleProfileApprove;
     global.handleProfileReject = handleProfileReject;
+    global.submitProfileReject = submitProfileReject;
     global.openSuspendModal = openSuspendModal;
     global.submitAccountSuspend = submitAccountSuspend;
     global.toggleDispatchSuspended = toggleDispatchSuspended;

@@ -20,36 +20,11 @@
     var populateStateSelect = Utils.populateStateSelect;
     var regionActiveBadge = Utils.regionActiveBadge;
 
-function canAccessSection(section) {
-    if (section === "products") return Shop.canViewProducts();
-    if (section === "categories") return Shop.canViewCategories();
-    if (section === "delivery") return Shop.canViewDelivery();
-    if (section === "orders") return Shop.canViewOrders();
-    return false;
-}
-
-function firstAccessibleSection() {
-    for (var i = 0; i < State.VALID_SECTIONS.length; i++) {
-        if (canAccessSection(State.VALID_SECTIONS[i])) return State.VALID_SECTIONS[i];
-    }
-    return "products";
-}
-
-function applySectionTabVisibility() {
-    document.querySelectorAll("#section-tabs .nav-item").forEach(function (li) {
-        var tab = li.querySelector("a[data-section]");
-        if (!tab) return;
-        li.style.display = canAccessSection(tab.dataset.section) ? "" : "none";
-    });
-}
-
 function initSectionTabs() {
-    applySectionTabVisibility();
     document.getElementById("section-tabs").addEventListener("click", function (e) {
         e.preventDefault();
         var tab = e.target.closest("a[data-section]");
         if (!tab) return;
-        if (!canAccessSection(tab.dataset.section)) return;
         switchSection(tab.dataset.section, true);
     });
     window.addEventListener("hashchange", applySectionFromHash);
@@ -57,23 +32,17 @@ function initSectionTabs() {
 
 function applySectionFromHash() {
     var hash = (window.location.hash || "").replace(/^#/, "").toLowerCase();
-    if (State.VALID_SECTIONS.indexOf(hash) === -1 || !canAccessSection(hash)) {
-        hash = firstAccessibleSection();
-    }
+    if (State.VALID_SECTIONS.indexOf(hash) === -1) hash = "products";
     switchSection(hash, false);
 }
 
 function switchSection(section, updateHash) {
-    if (State.VALID_SECTIONS.indexOf(section) === -1 || !canAccessSection(section)) {
-        section = firstAccessibleSection();
-    }
+    if (State.VALID_SECTIONS.indexOf(section) === -1) section = "products";
     State.currentSection = section;
     if (updateHash !== false && window.location.hash.replace(/^#/, "") !== section) {
         history.replaceState(null, "", "#" + section);
     }
-    document.querySelectorAll("#section-tabs .nav-link").forEach(function (t) {
-        t.classList.toggle("active", t.dataset.section === section);
-    });
+    document.querySelectorAll("#section-tabs .nav-link").forEach(function (t) { t.classList.toggle("active", t.dataset.section === section); });
     ["products", "categories", "delivery", "orders"].forEach(function (s) {
         var pane = document.getElementById("section-" + s);
         if (pane) pane.classList.toggle("d-none", s !== section);
@@ -90,10 +59,7 @@ function switchSection(section, updateHash) {
         headerBtn.classList.remove("d-none");
         headerBtn.textContent = "Add Region";
     }
-    // Handlers load after UI; resolve at call time to avoid a hard circular dependency.
-    if (SP.Handlers && typeof SP.Handlers.refreshCurrentSection === "function") {
-        SP.Handlers.refreshCurrentSection();
-    }
+    refreshCurrentSection();
 }
 
 function initProductRowDropdowns() {
@@ -168,9 +134,6 @@ function updateOrderStats(rows) {
 }
 
     SP.UI = {
-        canAccessSection: canAccessSection,
-        firstAccessibleSection: firstAccessibleSection,
-        applySectionTabVisibility: applySectionTabVisibility,
         initSectionTabs: initSectionTabs,
         applySectionFromHash: applySectionFromHash,
         switchSection: switchSection,

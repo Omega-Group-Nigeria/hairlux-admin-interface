@@ -21,6 +21,7 @@
     var detailHeavy = Utils.detailHeavy;
     var formatCommissionLabel = Utils.formatCommissionLabel;
     var isPdfUrl = Utils.isPdfUrl;
+    var renderPortfolioUrl = Utils.renderPortfolioUrl;
     var commissionRateToPercent = Utils.commissionRateToPercent;
     var commissionPercentToRate = Utils.commissionPercentToRate;
     var formatScoringWeight = Utils.formatScoringWeight;
@@ -215,6 +216,723 @@ function renderCertifications(certifications) {
         return '<button type="button" class="btn btn-sm btn-outline-secondary btn-view-certification" ' +
             'data-url="' + safeUrl + '" data-title="' + escHtml(title) + '">' + escHtml(title) + '</button>';
     }).join('') + '</div>';
+}
+
+/**
+ * Allow only bare http(s) media URLs for the in-app KYC video player.
+ * Rejects credentialed URLs and non-http schemes.
+ */
+function sanitizeMediaUrl(rawUrl) {
+    if (rawUrl == null || String(rawUrl).trim() === '') return null;
+    try {
+        var parsed = new URL(String(rawUrl).trim());
+        if ((parsed.protocol === 'https:' || parsed.protocol === 'http:') && !parsed.username && !parsed.password) {
+            return parsed.href;
+        }
+    } catch (e) {
+        return null;
+    }
+    return null;
+}
+
+/**
+ * Public R2 URL from GET /admin/beauticians/:id → kycVideo.url
+ * (public r2.dev URL; no signing / Cloudinary).
+ */
+function resolveKycVideoUrl(kycVideoOrUrl) {
+    if (kycVideoOrUrl == null) return null;
+    if (typeof kycVideoOrUrl === 'string') return sanitizeMediaUrl(kycVideoOrUrl);
+    if (typeof kycVideoOrUrl === 'object') {
+        return sanitizeMediaUrl(kycVideoOrUrl.url || kycVideoOrUrl.downloadUrl || '');
+    }
+    return null;
+}
+
+/**
+ * Load full file bytes via XHR (handles R2 200 and 206 Partial Content).
+ * fetch() + res.ok can still leave awkward partial responses; XHR blob is reliable.
+ */
+function fetchKycVideoBlob(url) {
+    return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'blob';
+        xhr.withCredentials = false;
+        // Do not send Range — we want the full object when possible
+        xhr.onload = function () {
+            // 200 OK and 206 Partial Content are both usable when the body is present
+            if (xhr.status !== 200 && xhr.status !== 206) {
+                reject(new Error('Download failed (HTTP ' + xhr.status + ')'));
+                return;
+            }
+            var blob = xhr.response;
+            if (!blob || !blob.size) {
+                reject(new Error('Downloaded file is empty'));
+                return;
+            }
+            // Normalize type for save dialogs
+            if (!blob.type || blob.type === 'application/octet-stream') {
+                blob = new Blob([blob], { type: 'video/mp4' });
+            }
+            resolve(blob);
+        };
+        xhr.onerror = function () {
+            reject(new Error('Network error while downloading video (check R2 CORS for this origin)'));
+        };
+        xhr.onabort = function () {
+            reject(new Error('Download was cancelled'));
+        };
+        xhr.send();
+    });
+}
+
+/**
+ * Force a same-tab file download for cross-origin R2 URLs.
+ * Plain <a download> is ignored for other origins and opens a new tab instead.
+ */
+function downloadKycVideo(url, fileName) {
+    var safeUrl = sanitizeMediaUrl(url);
+    if (!safeUrl) {
+        if (typeof showAlert === 'function') showAlert('Video URL unavailable.', 'danger');
+        return Promise.reject(new Error('Video URL unavailable.'));
+    }
+    var name = (fileName && String(fileName).trim()) || 'intro-video.mp4';
+    name = name.replace(/[^\w.\-]+/g, '_') || 'intro-video.mp4';
+
+    return fetchKycVideoBlob(safeUrl).then(function (blob) {
+        var objectUrl = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = name;
+        a.rel = 'noopener';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.setTimeout(function () {
+            try { URL.revokeObjectURL(objectUrl); } catch (e) { /* ignore */ }
+        }, 2000);
+        if (typeof showAlert === 'function') {
+            showAlert('Download started (' + name + ').', 'success');
+        }
+    });
+}
+
+// ── ffmpeg.wasm: re-encode broken mobile AAC so Chrome can play with audio ──
+var _kycFfmpeg = null;
+var _kycFfmpegLoadPromise = null;
+var _kycBlobUrl = null;
+var KYC_FFMPEG_SCRIPT = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
+var KYC_FFMPEG_CORE_BASE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+
+function loadScriptOnce(src) {
+    return new Promise(function (resolve, reject) {
+        var existing = document.querySelector('script[data-kyc-src="' + src + '"]');
+        if (existing) {
+            if (existing.dataset.loaded === '1') resolve();
+            else existing.addEventListener('load', function () { resolve(); });
+            existing.addEventListener('error', function () { reject(new Error('Failed to load script')); });
+            return;
+        }
+        var s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.dataset.kycSrc = src;
+        s.onload = function () {
+            s.dataset.loaded = '1';
+            resolve();
+        };
+        s.onerror = function () {
+            reject(new Error('Failed to load FFmpeg library'));
+        };
+        document.head.appendChild(s);
+    });
+}
+
+function kycToBlobURL(url, mimeType) {
+    return fetch(url)
+        .then(function (res) {
+            if (!res.ok) throw new Error('Could not download FFmpeg core (' + res.status + ')');
+            return res.arrayBuffer();
+        })
+        .then(function (buf) {
+            return URL.createObjectURL(new Blob([buf], { type: mimeType || 'application/octet-stream' }));
+        });
+}
+
+function revokeKycBlobUrl() {
+    if (_kycBlobUrl) {
+        try {
+            URL.revokeObjectURL(_kycBlobUrl);
+        } catch (e) { /* ignore */ }
+        _kycBlobUrl = null;
+    }
+}
+
+/**
+ * Lazy-load ffmpeg.wasm (single-thread core). Cached after first open.
+ * First load downloads ~25–30 MB core; later opens reuse the instance.
+ * Safe to call repeatedly — concurrent callers share one load promise.
+ */
+function getKycFfmpeg(onStatus) {
+    if (_kycFfmpeg && _kycFfmpeg.loaded) {
+        return Promise.resolve(_kycFfmpeg);
+    }
+    if (_kycFfmpegLoadPromise) return _kycFfmpegLoadPromise;
+
+    if (typeof onStatus === 'function') {
+        onStatus('Downloading video engine in the background (first time only)…');
+    }
+
+    _kycFfmpegLoadPromise = loadScriptOnce(KYC_FFMPEG_SCRIPT)
+        .then(function () {
+            var FFmpegCtor = (window.FFmpegWASM && window.FFmpegWASM.FFmpeg) || (window.FFmpeg && window.FFmpeg.FFmpeg);
+            if (!FFmpegCtor) throw new Error('FFmpeg WASM failed to initialize');
+            if (typeof onStatus === 'function') {
+                onStatus('Loading video engine core…');
+            }
+            var ffmpeg = new FFmpegCtor();
+            return Promise.all([
+                kycToBlobURL(KYC_FFMPEG_CORE_BASE + '/ffmpeg-core.js', 'text/javascript'),
+                kycToBlobURL(KYC_FFMPEG_CORE_BASE + '/ffmpeg-core.wasm', 'application/wasm'),
+            ]).then(function (urls) {
+                return ffmpeg.load({
+                    coreURL: urls[0],
+                    wasmURL: urls[1],
+                }).then(function () {
+                    _kycFfmpeg = ffmpeg;
+                    return ffmpeg;
+                });
+            });
+        })
+        .catch(function (err) {
+            _kycFfmpegLoadPromise = null;
+            throw err;
+        });
+
+    return _kycFfmpegLoadPromise;
+}
+
+/**
+ * Kick off engine download without blocking (first Play click).
+ * Subsequent getKycFfmpeg() calls reuse the same in-flight promise.
+ */
+function warmKycFfmpegInBackground() {
+    if (_kycFfmpeg && _kycFfmpeg.loaded) return;
+    if (_kycFfmpegLoadPromise) return;
+    getKycFfmpeg(null).catch(function () {
+        // Errors surface when prepareKycVideoForPlayback awaits the same promise
+    });
+}
+
+/**
+ * Fetch public R2 video while engine loads (in parallel on first open),
+ * re-encode audio to AAC 44.1 kHz (copy video), return blob: URL.
+ */
+function prepareKycVideoForPlayback(remoteUrl, onStatus) {
+    var status = typeof onStatus === 'function' ? onStatus : function () {};
+    var engineReady = false;
+    var videoReady = false;
+
+    function syncStatus() {
+        if (!engineReady && !videoReady) {
+            status('Downloading video engine & video in the background…');
+        } else if (!engineReady && videoReady) {
+            status('Video ready — finishing video engine download…');
+        } else if (engineReady && !videoReady) {
+            status('Engine ready — downloading video…');
+        } else {
+            status('Fixing audio for browser playback…');
+        }
+    }
+
+    // Start both immediately so the ~30 MB engine does not block the R2 fetch
+    warmKycFfmpegInBackground();
+    syncStatus();
+
+    var engineP = getKycFfmpeg(function (msg) {
+        if (!engineReady) status(msg || 'Downloading video engine in the background…');
+    }).then(function (ffmpeg) {
+        engineReady = true;
+        syncStatus();
+        return ffmpeg;
+    });
+
+    var videoP = fetch(remoteUrl, {
+        mode: 'cors',
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        cache: 'no-store',
+    }).then(function (res) {
+        if (!res.ok && res.status !== 206) {
+            throw new Error('Storage returned HTTP ' + res.status);
+        }
+        return res.arrayBuffer();
+    }).then(function (buf) {
+        if (!buf || !buf.byteLength) throw new Error('Downloaded video is empty');
+        videoReady = true;
+        syncStatus();
+        return buf;
+    });
+
+    return Promise.all([engineP, videoP]).then(function (results) {
+        var ffmpeg = results[0];
+        var buf = results[1];
+        status('Fixing audio for browser playback…');
+        var input = new Uint8Array(buf);
+        return ffmpeg.writeFile('input.mp4', input).then(function () {
+            return ffmpeg.exec([
+                '-i', 'input.mp4',
+                '-c:v', 'copy',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                '-ar', '44100',
+                '-ac', '1',
+                '-movflags', '+faststart',
+                'output.mp4',
+            ]);
+        }).then(function () {
+            return ffmpeg.readFile('output.mp4');
+        }).then(function (data) {
+            try { ffmpeg.deleteFile('input.mp4'); } catch (e1) { /* ignore */ }
+            try { ffmpeg.deleteFile('output.mp4'); } catch (e2) { /* ignore */ }
+            var bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+            var blob = new Blob([bytes], { type: 'video/mp4' });
+            revokeKycBlobUrl();
+            _kycBlobUrl = URL.createObjectURL(blob);
+            return _kycBlobUrl;
+        });
+    });
+}
+
+function loadKycVideoSource(video, src, loadToken) {
+    if (!video || !src) return;
+    video.dataset.kycLoadToken = loadToken || video.dataset.kycLoadToken || '';
+    video.setAttribute('playsinline', '');
+    video.setAttribute('preload', 'auto');
+    video.setAttribute('controlslist', 'nodownload noremoteplayback');
+    video.setAttribute('disablepictureinpicture', '');
+    video.setAttribute('referrerpolicy', 'no-referrer');
+    video.controls = false;
+    video.autoplay = false;
+    video.src = src;
+    try {
+        video.load();
+    } catch (e) { /* ignore */ }
+}
+
+function formatMediaTime(seconds) {
+    if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return '0:00';
+    var total = Math.floor(seconds);
+    var m = Math.floor(total / 60);
+    var s = total % 60;
+    return m + ':' + String(s).padStart(2, '0');
+}
+
+function getKycVideoEl() {
+    return document.getElementById('modal-kyc-video');
+}
+
+function setKycVideoPlayUi(isPlaying) {
+    var playIcon = document.getElementById('kyc-video-icon-play');
+    var pauseIcon = document.getElementById('kyc-video-icon-pause');
+    var btn = document.getElementById('kyc-video-play-pause');
+    if (playIcon) playIcon.classList.toggle('d-none', !!isPlaying);
+    if (pauseIcon) pauseIcon.classList.toggle('d-none', !isPlaying);
+    if (btn) btn.setAttribute('aria-label', isPlaying ? 'Pause' : 'Play');
+}
+
+function setKycVideoMuteUi(muted) {
+    var onIcon = document.getElementById('kyc-video-icon-volume');
+    var offIcon = document.getElementById('kyc-video-icon-mute');
+    var btn = document.getElementById('kyc-video-mute');
+    if (onIcon) onIcon.classList.toggle('d-none', !!muted);
+    if (offIcon) offIcon.classList.toggle('d-none', !muted);
+    if (btn) btn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+}
+
+function setKycVideoControlsEnabled(enabled) {
+    var controls = document.getElementById('kyc-video-controls');
+    var playBtn = document.getElementById('kyc-video-play-pause');
+    var muteBtn = document.getElementById('kyc-video-mute');
+    var seek = document.getElementById('kyc-video-seek');
+    var volume = document.getElementById('kyc-video-volume');
+    if (controls) controls.classList.toggle('is-disabled', !enabled);
+    if (playBtn) playBtn.disabled = !enabled;
+    if (muteBtn) muteBtn.disabled = !enabled;
+    if (volume) volume.disabled = !enabled;
+    if (seek) {
+        var video = getKycVideoEl();
+        var hasDuration = video && Number.isFinite(video.duration) && video.duration > 0;
+        seek.disabled = !enabled || !hasDuration;
+    }
+}
+
+function setKycVideoLoading(isLoading, message) {
+    var loadingEl = document.getElementById('kyc-video-loading');
+    var msgEl = document.getElementById('kyc-video-loading-msg');
+    var video = getKycVideoEl();
+    if (loadingEl) loadingEl.classList.toggle('d-none', !isLoading);
+    if (msgEl && message) msgEl.textContent = message;
+    if (msgEl && isLoading && !message) msgEl.textContent = 'Preparing video…';
+    if (video) video.classList.toggle('is-hidden', !!isLoading);
+    if (isLoading) {
+        setKycVideoControlsEnabled(false);
+        hideKycVideoError();
+    }
+}
+
+function hideKycVideoError() {
+    var errEl = document.getElementById('kyc-video-error');
+    if (!errEl) return;
+    errEl.classList.add('d-none');
+    var titleEl = document.getElementById('kyc-video-error-title');
+    var msgEl = document.getElementById('kyc-video-error-msg');
+    if (titleEl) titleEl.textContent = 'Could not load video';
+    if (msgEl) msgEl.textContent = 'Something went wrong while fetching this intro video.';
+}
+
+function showKycVideoError(title, message) {
+    var loadingEl = document.getElementById('kyc-video-loading');
+    var errEl = document.getElementById('kyc-video-error');
+    var titleEl = document.getElementById('kyc-video-error-title');
+    var msgEl = document.getElementById('kyc-video-error-msg');
+    var video = getKycVideoEl();
+    if (loadingEl) loadingEl.classList.add('d-none');
+    if (video) video.classList.add('is-hidden');
+    if (titleEl) titleEl.textContent = title || 'Could not load video';
+    if (msgEl) msgEl.textContent = message || 'Something went wrong while fetching this intro video.';
+    if (errEl) errEl.classList.remove('d-none');
+    setKycVideoPlayUi(false);
+    setKycVideoControlsEnabled(false);
+}
+
+function kycVideoErrorMessageFromMedia(video) {
+    var code = video && video.error ? video.error.code : null;
+    // MEDIA_ERR_* constants: 1 aborted, 2 network, 3 decode, 4 src not supported
+    if (code === 2) {
+        return {
+            title: 'Network error',
+            message: 'The video could not be loaded from storage. Check the public R2 URL and your connection.',
+        };
+    }
+    if (code === 3) {
+        return {
+            title: 'Playback error',
+            message: 'This file could not be decoded. Ask the beautician to re-upload as MP4 (H.264 + AAC) if the problem continues.',
+        };
+    }
+    if (code === 4) {
+        return {
+            title: 'Could not load video',
+            message: 'The browser could not open this stream. Confirm the public R2 object URL is reachable and the file is a valid MP4.',
+        };
+    }
+    if (code === 1) {
+        return {
+            title: 'Load cancelled',
+            message: 'Video loading was interrupted. Close and open the player again to retry.',
+        };
+    }
+    return {
+        title: 'Could not load video',
+        message: 'The intro video failed to load from the public storage URL.',
+    };
+}
+
+function markKycVideoReady() {
+    var video = getKycVideoEl();
+    var errEl = document.getElementById('kyc-video-error');
+    if (errEl && !errEl.classList.contains('d-none')) return;
+    setKycVideoLoading(false);
+    if (video) video.classList.remove('is-hidden');
+    setKycVideoControlsEnabled(true);
+    syncKycVideoProgress();
+}
+
+function syncKycVideoProgress() {
+    var video = getKycVideoEl();
+    if (!video) return;
+    var seek = document.getElementById('kyc-video-seek');
+    var currentEl = document.getElementById('kyc-video-current');
+    var durationEl = document.getElementById('kyc-video-duration');
+    var duration = Number.isFinite(video.duration) ? video.duration : 0;
+    var current = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+    var controls = document.getElementById('kyc-video-controls');
+    var controlsOn = controls && !controls.classList.contains('is-disabled');
+    if (seek && seek.dataset.seeking !== '1') {
+        seek.max = duration > 0 ? String(duration) : '0';
+        seek.value = String(current);
+        seek.disabled = !controlsOn || duration <= 0;
+    }
+    if (currentEl) currentEl.textContent = formatMediaTime(current);
+    if (durationEl) durationEl.textContent = formatMediaTime(duration);
+}
+
+/**
+ * Stop playback and clear the media element source (including blob URLs from ffmpeg).
+ */
+function stopKycVideoPlayer() {
+    var video = getKycVideoEl();
+    if (!video) return;
+    video.dataset.kycLoadToken = '';
+    try {
+        video.pause();
+    } catch (e) { /* ignore */ }
+    video.removeAttribute('src');
+    while (video.firstChild) video.removeChild(video.firstChild);
+    try {
+        video.load();
+    } catch (e2) { /* ignore */ }
+    revokeKycBlobUrl();
+    setKycVideoPlayUi(false);
+    setKycVideoControlsEnabled(false);
+    var seek = document.getElementById('kyc-video-seek');
+    if (seek) {
+        seek.value = '0';
+        seek.max = '0';
+        seek.disabled = true;
+        seek.dataset.seeking = '0';
+    }
+    var currentEl = document.getElementById('kyc-video-current');
+    var durationEl = document.getElementById('kyc-video-duration');
+    if (currentEl) currentEl.textContent = '0:00';
+    if (durationEl) durationEl.textContent = '0:00';
+    hideKycVideoError();
+    setKycVideoLoading(false);
+    if (video) video.classList.remove('is-hidden');
+}
+
+/**
+ * Open intro video: fetch public R2 URL → ffmpeg.wasm re-encode audio → play blob.
+ * Keeps H.264 video as-is; rewrites AAC so Chrome can decode with sound.
+ */
+function openKycVideoModal(url, opts) {
+    opts = opts || {};
+    var remoteUrl = resolveKycVideoUrl(url);
+    var video = getKycVideoEl();
+    var modalEl = document.getElementById('modal-kyc-video-preview');
+    var titleEl = document.getElementById('modal-kyc-video-title');
+    if (!video || !modalEl) return;
+
+    if (titleEl) titleEl.textContent = opts.title || 'Intro video';
+
+    stopKycVideoPlayer();
+    // First Play: start ~30 MB engine download immediately (shared promise; does not block R2 fetch)
+    warmKycFfmpegInBackground();
+    setKycVideoLoading(true, 'Downloading video engine & video in the background…');
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+    if (!remoteUrl) {
+        showKycVideoError(
+            'Video unavailable',
+            'No public video URL is available for this intro video.'
+        );
+        return;
+    }
+
+    var loadToken = String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8);
+    video.dataset.kycLoadToken = loadToken;
+
+    var volume = document.getElementById('kyc-video-volume');
+    if (volume) {
+        var vol = parseFloat(volume.value);
+        if (!Number.isFinite(vol)) vol = 0.85;
+        volume.value = String(vol);
+        video.volume = Math.min(1, Math.max(0, vol));
+        video.muted = vol <= 0;
+        setKycVideoMuteUi(video.muted);
+    }
+
+    prepareKycVideoForPlayback(remoteUrl, function (msg) {
+        if (video.dataset.kycLoadToken !== loadToken) return;
+        setKycVideoLoading(true, msg);
+    })
+        .then(function (blobUrl) {
+            if (video.dataset.kycLoadToken !== loadToken) {
+                // Modal was closed mid-process; drop this blob if we created a new one
+                if (blobUrl && blobUrl === _kycBlobUrl) return;
+                return;
+            }
+            setKycVideoLoading(true, 'Starting player…');
+            loadKycVideoSource(video, blobUrl, loadToken);
+        })
+        .catch(function (err) {
+            if (video.dataset.kycLoadToken !== loadToken) return;
+            var message = (err && err.message) ? String(err.message) : 'Processing failed.';
+            // Common when SharedArrayBuffer is blocked without COOP/COEP on some hosts
+            if (/SharedArrayBuffer|cross-origin|security/i.test(message)) {
+                message = 'Video engine needs a secure context. Serve admin over HTTPS with Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: require-corp, or open via a host that sets those headers.';
+            }
+            showKycVideoError('Could not prepare video', message);
+        });
+
+    window.setTimeout(function () {
+        if (video.dataset.kycLoadToken !== loadToken) return;
+        var errVisible = document.getElementById('kyc-video-error');
+        var stillLoading = document.getElementById('kyc-video-loading');
+        if (errVisible && !errVisible.classList.contains('d-none')) return;
+        if (stillLoading && stillLoading.classList.contains('d-none')) return;
+        if (video.readyState >= 2) {
+            markKycVideoReady();
+            return;
+        }
+        showKycVideoError(
+            'Taking too long',
+            'Preparing the video is taking longer than expected. First open downloads the video engine (~30 MB) in the background. Try again on a faster connection.'
+        );
+    }, 120000);
+}
+
+/**
+ * KYC intro video from GET /admin/beauticians/:id → data.kycVideo
+ * Shape: { fileKey, url } (public R2.dev URL).
+ */
+function renderKycVideo(kycVideo) {
+    if (!kycVideo || typeof kycVideo !== 'object') {
+        return '<div class="text-secondary small">No intro video submitted</div>';
+    }
+    var safeHref = resolveKycVideoUrl(kycVideo);
+    var fileName = 'intro-video.mp4';
+    if (kycVideo.fileKey) {
+        var keyParts = String(kycVideo.fileKey).split('/');
+        var last = keyParts[keyParts.length - 1];
+        if (last) fileName = last.replace(/[^\w.\-]+/g, '_') || fileName;
+    }
+    var actions = safeHref
+        ? '<div class="d-flex flex-wrap align-items-center gap-2">' +
+            '<button type="button" class="btn btn-sm btn-primary btn-view-kyc-video" data-url="' + escHtml(safeHref) + '" data-title="Intro video">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-inline me-1" aria-hidden="true"><path d="M7 4v16l13 -8z"/></svg>' +
+            'Play intro video' +
+            '</button>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary btn-download-kyc-video" data-url="' + escHtml(safeHref) + '" data-filename="' + escHtml(fileName) + '">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-inline me-1" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 11l5 5l5 -5"/><path d="M12 4l0 12"/></svg>' +
+            'Download video' +
+            '</button>' +
+          '</div>'
+        : '<span class="text-secondary small">Video URL unavailable.</span>';
+    return '<div class="row g-3">' +
+        detailField('Status', '<span class="badge bg-success-lt">Submitted</span>') +
+        (kycVideo.fileKey
+            ? detailField('File', '<span class="font-monospace small text-break">' + escHtml(kycVideo.fileKey) + '</span>', 'col-12')
+            : '') +
+        '<div class="col-12 mt-1">' +
+        actions +
+        '</div></div>';
+}
+
+/** Wire modal player controls once (idempotent). */
+function initKycVideoModal() {
+    var modalEl = document.getElementById('modal-kyc-video-preview');
+    var video = getKycVideoEl();
+    if (!modalEl || !video || modalEl.dataset.kycVideoReady === '1') return;
+    modalEl.dataset.kycVideoReady = '1';
+
+    var playBtn = document.getElementById('kyc-video-play-pause');
+    var muteBtn = document.getElementById('kyc-video-mute');
+    var seek = document.getElementById('kyc-video-seek');
+    var volume = document.getElementById('kyc-video-volume');
+
+    if (playBtn) {
+        playBtn.addEventListener('click', function () {
+            if (!video.src || playBtn.disabled) return;
+            if (video.paused || video.ended) {
+                var p = video.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(function () {
+                        setKycVideoPlayUi(false);
+                        showKycVideoError(
+                            'Could not start playback',
+                            'The browser blocked or failed to start playback. Try again.'
+                        );
+                    });
+                }
+            } else {
+                video.pause();
+            }
+        });
+    }
+
+    if (muteBtn) {
+        muteBtn.addEventListener('click', function () {
+            if (muteBtn.disabled) return;
+            video.muted = !video.muted;
+            if (!video.muted && video.volume === 0 && volume) {
+                volume.value = '0.5';
+                video.volume = 0.5;
+            }
+            setKycVideoMuteUi(video.muted);
+            if (volume && !video.muted) volume.value = String(video.volume);
+            if (volume && video.muted) volume.value = '0';
+        });
+    }
+
+    if (seek) {
+        seek.addEventListener('pointerdown', function () { seek.dataset.seeking = '1'; });
+        seek.addEventListener('pointerup', function () { seek.dataset.seeking = '0'; });
+        seek.addEventListener('pointercancel', function () { seek.dataset.seeking = '0'; });
+        seek.addEventListener('input', function () {
+            if (seek.disabled) return;
+            var t = parseFloat(seek.value);
+            if (Number.isFinite(t)) video.currentTime = t;
+            var currentEl = document.getElementById('kyc-video-current');
+            if (currentEl) currentEl.textContent = formatMediaTime(t);
+        });
+        seek.addEventListener('change', function () {
+            seek.dataset.seeking = '0';
+            syncKycVideoProgress();
+        });
+    }
+
+    if (volume) {
+        volume.addEventListener('input', function () {
+            if (volume.disabled) return;
+            var v = parseFloat(volume.value);
+            if (!Number.isFinite(v)) return;
+            video.volume = Math.min(1, Math.max(0, v));
+            video.muted = video.volume === 0;
+            setKycVideoMuteUi(video.muted);
+        });
+    }
+
+    video.addEventListener('play', function () { setKycVideoPlayUi(true); });
+    video.addEventListener('pause', function () { setKycVideoPlayUi(false); });
+    video.addEventListener('ended', function () { setKycVideoPlayUi(false); });
+    video.addEventListener('timeupdate', syncKycVideoProgress);
+    video.addEventListener('durationchange', syncKycVideoProgress);
+    video.addEventListener('loadedmetadata', function () {
+        syncKycVideoProgress();
+        // Metadata alone is enough to enable seek; keep spinner until canplay if still buffering
+        if (video.readyState >= 3) markKycVideoReady();
+    });
+    video.addEventListener('canplay', function () {
+        markKycVideoReady();
+    });
+    video.addEventListener('canplaythrough', function () {
+        markKycVideoReady();
+    });
+    video.addEventListener('waiting', function () {
+        // Mid-playback buffer stall: subtle loading without full error state
+        if (!video.paused && video.currentTime > 0) return;
+        var errEl = document.getElementById('kyc-video-error');
+        if (errEl && !errEl.classList.contains('d-none')) return;
+        setKycVideoLoading(true);
+    });
+    video.addEventListener('playing', function () {
+        markKycVideoReady();
+    });
+    video.addEventListener('error', function () {
+        var info = kycVideoErrorMessageFromMedia(video);
+        showKycVideoError(info.title, info.message);
+    });
+
+    modalEl.addEventListener('hidden.bs.modal', function () {
+        stopKycVideoPlayer();
+    });
+    // Pause immediately when hide starts (before animation ends)
+    modalEl.addEventListener('hide.bs.modal', function () {
+        try { video.pause(); } catch (e) { /* ignore */ }
+    });
 }
 function renderBeauticianBankDetails(b) {
     var bank = b.payoutBankAccount || b.bankAccount || b.payoutDetails || {};
@@ -443,6 +1161,14 @@ function renderBeauticianDetailContent(b, settings) {
         (b.dispatchSuspended && dispatchReason
             ? detailField('Dispatch Suspend Reason', escHtml(dispatchReason), 'col-12')
             : '') +
+        '</div>';
+
+    var reviewNotesRaw = b.reviewNotes || b.profileReviewNotes || b.adminReviewNotes || '';
+    var performanceBody =
+        '<div class="row g-2">' +
+        detailMetric('Avg rating', escHtml(ratingAverage)) +
+        detailMetric('Jobs completed', escHtml(b.totalJobsCompleted != null ? b.totalJobsCompleted : '—')) +
+        detailMetric('Wallet', escHtml(walletBalance), 'text-success') +
         '</div>' +
         '<div class="mt-3 pt-3 border-top">' +
         '<div class="detail-field-label">Profile reviewed by</div>' +
@@ -450,14 +1176,13 @@ function renderBeauticianDetailContent(b, settings) {
         (b.profileReviewedAt
             ? '<div class="text-secondary small mt-1">Reviewed ' + escHtml(Beauticians.formatDateTime(b.profileReviewedAt)) + '</div>'
             : '') +
-        '</div>';
-
-    var performanceBody =
-        '<div class="row g-2">' +
-        detailMetric('Avg rating', escHtml(ratingAverage)) +
-        detailMetric('Jobs completed', escHtml(b.totalJobsCompleted != null ? b.totalJobsCompleted : '—')) +
-        detailMetric('Wallet', escHtml(walletBalance), 'text-success') +
-        '</div>';
+        '</div>' +
+        (reviewNotesRaw
+            ? '<div class="mt-3 pt-3 border-top">' +
+                '<div class="detail-field-label">Review notes</div>' +
+                '<div class="detail-prose">' + escHtml(String(reviewNotesRaw)) + '</div>' +
+              '</div>'
+            : '');
 
     var profileBody =
         (b.yearsOfExperience != null
@@ -501,31 +1226,44 @@ function renderBeauticianDetailContent(b, settings) {
         '</div>' +
         '<div id="detail-reviews-footer-wrap"></div>';
 
-    var kycBody = b.kycReferences
-        ? '<dl class="row g-2 small mb-0">' +
+    var kycRefsHtml = b.kycReferences
+        ? '<div class="mt-3 pt-3 border-top">' +
+            '<div class="detail-field-label mb-2">QoreID references</div>' +
+            '<dl class="row g-2 small mb-0">' +
             '<dt class="col-sm-5 text-secondary fw-normal">QoreID Customer</dt>' +
             '<dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdCustomerId || '—') + '</dd>' +
             '<dt class="col-sm-5 text-secondary fw-normal">QoreID Session</dt>' +
             '<dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdSessionId || '—') + '</dd>' +
-          '</dl>'
+            '</dl></div>'
         : '';
+    var kycBody =
+        '<div class="row g-3">' +
+        detailField('Status', Beauticians.kycBadge(b.kycStatus)) +
+        detailField('Portfolio URL', renderPortfolioUrl(b.portfolioUrl), 'col-12') +
+        '</div>' +
+        kycRefsHtml;
+
+    var kycVideoBody = renderKycVideo(b.kycVideo);
 
     return '<div class="detail-stack" data-beautician-id="' + escHtml(b.id) + '">' +
         heroCard +
         '<div class="detail-grid detail-grid-2">' +
         detailCard('Account status', statusBody) +
-        detailCard('Performance snapshot', performanceBody) +
+        detailCard('Performance & review', performanceBody) +
         '</div>' +
         '<div class="detail-grid detail-grid-2">' +
         detailCard('Profile', profileBody) +
+        detailCard('Intro video', kycVideoBody) +
+        '</div>' +
+        '<div class="detail-grid detail-grid-2">' +
         detailCard('Earnings & payouts', moneyBody) +
+        detailCard('KYC', kycBody) +
         '</div>' +
         detailCard('Customer reviews', reviewsToolbar) +
         '<div class="detail-grid detail-grid-2">' +
         detailCard('Assigned services', '<div class="detail-services-scroll">' + assignedSvc + '</div>', { count: assignedCount }) +
         detailCard('Recent jobs', recentJobsHtml, { count: recentCount }) +
         '</div>' +
-        (kycBody ? detailCard('KYC references', kycBody) : '') +
         '</div>';
 }
 function buildDetailActions(b) {
@@ -539,10 +1277,11 @@ function buildDetailActions(b) {
         html += '<button class="btn btn-danger btn-sm" onclick="handleKycReject(\'' + id + '\')">Reject KYC</button>';
     }
     if (RBAC.can('beauticians:review') && profile === 'PENDING_REVIEW' && kyc === 'VERIFIED') {
-        html += '<button class="btn btn-success btn-sm" onclick="handleProfileApprove(\'' + id + '\')">Approve Profile</button>';
-        html += '<button class="btn btn-danger btn-sm" onclick="handleProfileReject(\'' + id + '\')">Reject Profile</button>';
+        html += '<button class="btn btn-success btn-sm" onclick="handleProfileApprove(\'' + id + '\')">Approve Profile &amp; Video</button>';
+        html += '<button class="btn btn-danger btn-sm" onclick="handleProfileReject(\'' + id + '\')">Reject</button>';
     }
-    if (RBAC.can('beauticians:manage')) {
+    // Account / dispatch suspend only for fully approved profiles (not mid-onboarding)
+    if (RBAC.can('beauticians:manage') && profile === 'APPROVED') {
         html += '<button class="btn btn-outline-secondary btn-sm" onclick="openSuspendModal(\'' + id + '\',\'' + (b.isActive ? 'true' : 'false') + '\')">' + (b.isActive ? 'Suspend Account' : 'Reactivate Account') + '</button>';
         var dispatchSuspended = b.dispatchSuspended ? 'true' : 'false';
         html += '<button class="btn btn-outline-warning btn-sm" onclick="toggleDispatchSuspended(\'' + id + '\',\'' + dispatchSuspended + '\')">' +
@@ -553,7 +1292,7 @@ function buildDetailActions(b) {
 function renderReviewsTable(rows, meta) {
     var tbody = document.getElementById('reviews-tbody');
     if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No pending profile reviews.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No pending profile reviews.</td></tr>';
         return;
     }
     tbody.innerHTML = rows.map(function (b, i) {
@@ -561,7 +1300,7 @@ function renderReviewsTable(rows, meta) {
         var dob = Beauticians.formatDateOfBirth(b);
         var specs = Array.isArray(b.specialties) ? b.specialties.join(', ') : '—';
         var exp = b.yearsOfExperience ? b.yearsOfExperience + ' yrs' : '—';
-        var submitted = Beauticians.formatDateTime(b.updatedAt || b.createdAt);
+        var submitted = Beauticians.formatDateTime(b.profileSubmittedAt || b.updatedAt || b.createdAt);
         return '<tr>' +
             '<td class="text-secondary small">' + ((State.reviews.page - 1) * State.reviews.limit + i + 1) + '</td>' +
             '<td><div class="fw-semibold">' + name + '</div></td>' +
@@ -569,6 +1308,7 @@ function renderReviewsTable(rows, meta) {
             '<td class="text-secondary small">' + specs + '</td>' +
             '<td>' + exp + '</td>' +
             '<td>' + Beauticians.kycBadge(b.kycStatus) + '</td>' +
+            '<td class="small">' + renderPortfolioUrl(b.portfolioUrl) + '</td>' +
             '<td class="text-secondary small">' + submitted + '</td>' +
             '<td><button class="btn btn-sm btn-ghost-primary open-detail-btn" data-id="' + b.id + '" title="View beautician information">View information</button></td>' +
             '</tr>';
@@ -915,8 +1655,13 @@ function renderDailyPoolStats(pool) {
         openPhotoPreview: openPhotoPreview,
         setCertPreviewLoading: setCertPreviewLoading,
         openCertificationPreview: openCertificationPreview,
+        openKycVideoModal: openKycVideoModal,
+        downloadKycVideo: downloadKycVideo,
+        stopKycVideoPlayer: stopKycVideoPlayer,
+        initKycVideoModal: initKycVideoModal,
         renderProfileReviewer: renderProfileReviewer,
         renderCertifications: renderCertifications,
+        renderKycVideo: renderKycVideo,
         renderBeauticianBankDetails: renderBeauticianBankDetails,
         renderBeauticianDetailContent: renderBeauticianDetailContent,
         updateDetailReviewsPanel: updateDetailReviewsPanel,

@@ -14,6 +14,11 @@
     }
 
     SP.bootstrap = global.tabler && global.tabler.bootstrap;
+    SP.State.isSuperAdmin = RBAC.isSuperAdmin();
+
+    Auth.requireAuth();
+    RBAC.loadFromStorage();
+    SP.State.isSuperAdmin = RBAC.isSuperAdmin();
 
     function start() {
         var maybePromise = SP.Handlers.init();
@@ -24,20 +29,9 @@
         }
     }
 
-    function boot() {
-        Auth.requireAuth().then(function (ok) {
-            if (!ok) return; // redirecting to login — do not load profile / flash UI work
-            RBAC.loadFromStorage();
-            SP.State.isSuperAdmin = RBAC.isSuperAdmin();
-            document.body.classList.remove('settings-auth-pending');
-            if (Auth.hideAuthBootScreen) Auth.hideAuthBootScreen();
-            start();
-        });
-    }
-
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', boot);
+        document.addEventListener('DOMContentLoaded', start);
     } else {
-        boot();
+        start();
     }
 })(window);

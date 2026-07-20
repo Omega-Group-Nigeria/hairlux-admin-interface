@@ -684,7 +684,7 @@
             </div>
         `).join('');
 
-        // Click on row → open editor (read-only if no jobs:update)
+        // Click on row → open editor
         container.querySelectorAll('.job-row').forEach(row => {
             row.addEventListener('click', e => {
                 if (e.target.closest('.btn-toggle-pub')) return; // handled separately
@@ -721,10 +721,6 @@
 
     // ── Open editor ────────────────────────────────────────────────
     function openEditor(job) {
-        if (!job && !RBAC.can('jobs:create')) return;
-        // Existing jobs need jobs:update to edit fields; without it open as read-only view if jobs:read
-        if (job && !RBAC.can('jobs:update') && !RBAC.can('jobs:read')) return;
-
         _editingId = job ? job.id : null;
 
         // Update header labels
@@ -767,26 +763,6 @@
         if (job && RBAC.can('jobs:delete')) { btnDel.classList.remove('d-none'); }
         else                                { btnDel.classList.add('d-none'); }
 
-        // Save button: create needs jobs:create, edit needs jobs:update
-        const canSave = job ? RBAC.can('jobs:update') : RBAC.can('jobs:create');
-        const saveBtn = document.getElementById('btn-save-job');
-        if (saveBtn) {
-            saveBtn.classList.toggle('d-none', !canSave);
-            saveBtn.disabled = !canSave;
-        }
-        // Disable form fields for read-only viewers
-        const editorEl = document.getElementById('job-editor');
-        if (editorEl) {
-            editorEl.querySelectorAll('input, select, textarea, button.btn-remove-resp, #btn-add-resp').forEach(function (el) {
-                if (el.id === 'btn-save-job' || el.id === 'btn-delete-job' || el.id === 'btn-close-editor') return;
-                if (el.closest && el.closest('.ql-toolbar')) return;
-                el.disabled = !canSave;
-            });
-            if (_quill && _quill.root) {
-                _quill.root.setAttribute('contenteditable', canSave ? 'true' : 'false');
-            }
-        }
-
         // Clear errors
         const errEl = document.getElementById('form-error');
         errEl.classList.add('d-none');
@@ -794,6 +770,7 @@
 
         // Show editor, hide empty state
         document.getElementById('form-empty-state').style.display  = 'none';
+        const editorEl = document.getElementById('job-editor');
         editorEl.style.display = 'flex';
 
         // Highlight active row in list
@@ -827,15 +804,6 @@
 
     // ── Submit form ────────────────────────────────────────────────
     async function submitForm() {
-        if (_editingId && !RBAC.can('jobs:update')) {
-            _showError('You do not have permission to update job postings.');
-            return;
-        }
-        if (!_editingId && !RBAC.can('jobs:create')) {
-            _showError('You do not have permission to create job postings.');
-            return;
-        }
-
         const title    = document.getElementById('job-title').value.trim();
         const type     = document.getElementById('job-type').value;
         const location = document.getElementById('job-location').value.trim();

@@ -72,7 +72,4 @@ function fuzzyScore(str, query) {
         showAdminAlert: showAdminAlert,
         fuzzyScore: fuzzyScore,
     };
-
-    // Used by inline onclick handlers in settings.html
-    global.dismissAlert = dismissAlert;
 })(window);

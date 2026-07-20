@@ -6,12 +6,11 @@
  *   - config.js (window.API_BASE)
  *   - auth.js   (Auth.fetch, Auth.getToken, Auth.isTokenExpired, Auth.refreshAccessToken, Auth.logout)
  *
- * Permissions (see documents/PERMISSIONS.md + shop-admin-permissions.md):
- *   shop:read              — view products, categories, delivery regions & orders
- *   shop:manage_products   — create/update/delete products
+ * Permissions (see documents/shop-admin-permissions.md):
+ *   shop:manage_products   — list/view/create/update/delete products
  *   shop:manage_categories — manage product categories
  *   shop:manage_delivery   — manage delivery regions & fees
- *   shop:update_status     — advance fulfilment / cancel orders
+ *   shop:update_status     — view orders, advance fulfilment, or cancel
  *
  * Admin endpoints:
  *   GET    /admin/shop/categories
@@ -36,43 +35,11 @@
 const Shop = (() => {
 
     const PERMISSIONS = {
-        READ:              "shop:read",
         MANAGE_PRODUCTS:   "shop:manage_products",
         MANAGE_CATEGORIES: "shop:manage_categories",
         MANAGE_DELIVERY:   "shop:manage_delivery",
         UPDATE_STATUS:     "shop:update_status",
     };
-
-    /** True if user can open the Shop page at all. */
-    function canAccessShop() {
-        if (typeof RBAC === "undefined" || !RBAC.can) return false;
-        return RBAC.can(PERMISSIONS.READ)
-            || RBAC.can(PERMISSIONS.MANAGE_PRODUCTS)
-            || RBAC.can(PERMISSIONS.MANAGE_CATEGORIES)
-            || RBAC.can(PERMISSIONS.MANAGE_DELIVERY)
-            || RBAC.can(PERMISSIONS.UPDATE_STATUS);
-    }
-
-    /** True if user may view the products catalog (read-only or manage). */
-    function canViewProducts() {
-        if (typeof RBAC === "undefined" || !RBAC.can) return false;
-        return RBAC.can(PERMISSIONS.READ) || RBAC.can(PERMISSIONS.MANAGE_PRODUCTS);
-    }
-
-    function canViewCategories() {
-        if (typeof RBAC === "undefined" || !RBAC.can) return false;
-        return RBAC.can(PERMISSIONS.READ) || RBAC.can(PERMISSIONS.MANAGE_CATEGORIES);
-    }
-
-    function canViewDelivery() {
-        if (typeof RBAC === "undefined" || !RBAC.can) return false;
-        return RBAC.can(PERMISSIONS.READ) || RBAC.can(PERMISSIONS.MANAGE_DELIVERY);
-    }
-
-    function canViewOrders() {
-        if (typeof RBAC === "undefined" || !RBAC.can) return false;
-        return RBAC.can(PERMISSIONS.READ) || RBAC.can(PERMISSIONS.UPDATE_STATUS);
-    }
 
     const ORDER_STATUSES = ["CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
 
@@ -359,11 +326,6 @@ const Shop = (() => {
     return {
         PERMISSIONS,
         ORDER_STATUSES,
-        canAccessShop,
-        canViewProducts,
-        canViewCategories,
-        canViewDelivery,
-        canViewOrders,
         getCategories,
         createCategory,
         updateCategory,

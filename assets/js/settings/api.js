@@ -8,7 +8,6 @@
 
     async function _jsonFetch(path, options) {
         var res = await Auth.fetch(path, options);
-        if (!res) throw new Error('Session expired. Please log in again.');
         var raw = await res.json().catch(function () { return {}; });
         return { res: res, raw: raw, data: raw.data !== undefined ? raw.data : raw, message: raw.message };
     }

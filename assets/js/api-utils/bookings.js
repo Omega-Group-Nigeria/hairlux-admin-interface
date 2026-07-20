@@ -89,6 +89,15 @@ const Bookings = (() => {
     const name = esc(branch.name || "—");
     const address = branch.address ? esc(branch.address) : "";
     const label = esc(opts.label || "Branch");
+    const labelClass = opts.labelClass || "detail-field-label";
+
+    if (opts.plain) {
+      return '<div class="row g-3">' +
+        `<div class="col-12"><div class="${labelClass}">${label}</div>` +
+        `<div class="detail-field-value fw-semibold">${name}</div>` +
+        (address ? `<div class="text-secondary small mt-1">${address}</div>` : "") +
+        "</div></div>";
+    }
 
     if (opts.layout === "section") {
       return '<div class="detail-section">' +
@@ -98,7 +107,7 @@ const Bookings = (() => {
         "</div>";
     }
 
-    const labelClass = opts.labelClass || "mb-1 text-secondary small";
+    const legacyLabelClass = opts.labelClass || "mb-1 text-secondary small";
     let colClass = "";
     if (opts.layout === "col-6") colClass = "col-md-6";
     else if (opts.layout === "col-12") colClass = "col-12";
@@ -106,7 +115,7 @@ const Bookings = (() => {
     const open = colClass ? `<div class="${colClass}">` : "";
     const close = colClass ? "</div>" : "";
     return open +
-      `<div class="${labelClass}">${label}</div>` +
+      `<div class="${legacyLabelClass}">${label}</div>` +
       `<div class="fw-semibold">${name}</div>` +
       (address ? `<div class="text-secondary small">${address}</div>` : "") +
       close;
@@ -515,6 +524,20 @@ const Bookings = (() => {
     return num % 1 === 0 ? String(num) : num.toFixed(1);
   }
 
+  /** Filled/empty stars (1–5) from a numeric rating. Rounds to nearest whole star. */
+  function renderStarRating(rating, opts = {}) {
+    const esc = opts.esc || ((value) => String(value ?? ""));
+    let n = Math.round(Number(rating) || 0);
+    if (n < 0) n = 0;
+    if (n > 5) n = 5;
+    const label = formatCustomerRating(rating) || String(n);
+    let html = '<span class="detail-review-stars" aria-label="' + esc(label) + ' out of 5">';
+    for (let i = 1; i <= 5; i++) {
+      html += i <= n ? "★" : '<span class="star-empty">★</span>';
+    }
+    return html + "</span>";
+  }
+
   function renderCustomerFeedbackHtml(booking, opts = {}) {
     if (!booking) return "";
     const hasRating = booking.customerRating != null;
@@ -522,21 +545,28 @@ const Bookings = (() => {
     if (!hasRating && !hasReview) return "";
 
     const esc = opts.esc || ((value) => String(value ?? ""));
-    const labelClass = opts.labelClass || "mb-1 text-secondary small";
-    const titleClass = opts.titleClass || "mb-2 fw-semibold";
-    let inner = '<div class="' + titleClass + '">Customer Feedback</div><div class="row g-3">';
+    const labelClass = opts.labelClass || "detail-field-label";
+    const showTitle = opts.showTitle !== false && !opts.plain;
+    let inner = (showTitle ? '<div class="mb-2 fw-semibold">Customer Feedback</div>' : "") +
+      '<div class="row g-3">';
     if (hasRating) {
+      const score = formatCustomerRating(booking.customerRating);
       inner +=
-        '<div class="col-md-4"><div class="' + labelClass + '">Rating</div>' +
-        '<div class="fw-semibold">' + esc(formatCustomerRating(booking.customerRating)) +
-        ' <span class="text-secondary fw-normal">/ 5</span></div></div>';
+        '<div class="col-12"><div class="' + labelClass + '">Rating</div>' +
+        '<div class="detail-field-value">' +
+        '<div class="detail-rating-row">' +
+        renderStarRating(booking.customerRating, { esc }) +
+        '<span class="fw-semibold">' + esc(score) +
+        ' <span class="text-secondary fw-normal">/ 5</span></span>' +
+        "</div></div></div>";
     }
     if (hasReview) {
       inner +=
         '<div class="col-12"><div class="' + labelClass + '">Review</div>' +
-        '<div class="text-secondary">' + esc(booking.customerReview) + "</div></div>";
+        '<div class="detail-prose text-secondary">' + esc(booking.customerReview) + "</div></div>";
     }
     inner += "</div>";
+    if (opts.plain) return inner;
     if (opts.section) return '<div class="detail-section">' + inner + "</div>";
     if (opts.layout) return '<div class="' + opts.layout + '">' + inner + "</div>";
     return '<div class="col-12">' + inner + "</div>";
@@ -545,21 +575,23 @@ const Bookings = (() => {
   function renderHomeServiceTimelineHtml(booking, opts = {}) {
     if (!isHomeServiceBooking(booking)) return "";
     const esc = opts.esc || ((value) => String(value ?? ""));
-    const labelClass = opts.labelClass || "mb-1 text-secondary small";
-    const titleClass = opts.titleClass || "mb-2 fw-semibold";
+    const labelClass = opts.labelClass || "detail-field-label";
+    const showTitle = opts.showTitle !== false && !opts.plain;
     const fields = [
       ["Arrival verified", booking.arrivalVerifiedAt],
       ["Service started", booking.serviceStartedAt],
       ["Service completed", booking.serviceCompletedAt],
     ];
+    const col = opts.plain ? "col-12" : "col-sm-4";
     const inner =
-      '<div class="' + titleClass + '">Service Timeline</div>' +
+      (showTitle ? '<div class="mb-2 fw-semibold">Service Timeline</div>' : "") +
       '<div class="row g-3">' +
       fields.map(function (pair) {
-        return '<div class="col-md-4"><div class="' + labelClass + '">' + esc(pair[0]) + "</div>" +
-          "<div>" + esc(formatIsoDateTime(pair[1])) + "</div></div>";
+        return '<div class="' + col + '"><div class="' + labelClass + '">' + esc(pair[0]) + "</div>" +
+          '<div class="detail-field-value">' + esc(formatIsoDateTime(pair[1])) + "</div></div>";
       }).join("") +
       "</div>";
+    if (opts.plain) return inner;
     if (opts.section) return '<div class="detail-section">' + inner + "</div>";
     if (opts.layout) return '<div class="' + opts.layout + '">' + inner + "</div>";
     return '<div class="col-12">' + inner + "</div>";
@@ -570,14 +602,16 @@ const Bookings = (() => {
     const message = getAssignmentStatusMessage(booking);
     if (!message || !isHomeServiceBooking(booking)) return "";
     const alertClass = isMatchingExhausted(booking) ? "alert-warning" : "alert-info";
-    let html = '<div class="col-12"><div class="alert ' + alertClass + ' mb-0 py-2 small">' + esc(message);
+    let html = '<div class="alert ' + alertClass + ' mb-0 py-2 small">' + esc(message);
     if (booking.dispatchStatus) {
       html += '<div class="mt-1">Dispatch: ' + dispatchStatusBadge(booking.dispatchStatus) + "</div>";
     }
     if (booking.matchingAttempt != null) {
       html += '<div class="mt-1 text-secondary">Matching tier: ' + esc(booking.matchingAttempt) + "</div>";
     }
-    return html + "</div></div>";
+    html += "</div>";
+    if (opts.plain) return html;
+    return '<div class="col-12">' + html + "</div>";
   }
 
   function renderDispatchTraceHtml(trace, opts = {}) {
@@ -586,20 +620,27 @@ const Bookings = (() => {
 
     const events = Array.isArray(trace.events) ? trace.events : [];
     const offers = Array.isArray(trace.offers) ? trace.offers : [];
+    const showTitle = opts.showTitle !== false && !opts.plain;
+    const labelClass = "detail-field-label";
 
-    let summary = '<div class="detail-section"><div class="mb-2 fw-semibold">Dispatch Trace</div>' +
-      '<div class="row g-2 small mb-3">' +
-      '<div class="col-6"><span class="text-secondary">Dispatch status</span><div>' + dispatchStatusBadge(trace.dispatchStatus) + "</div></div>" +
-      '<div class="col-6"><span class="text-secondary">Matching tier</span><div>' + esc(trace.matchingAttempt ?? "—") + "</div></div>" +
-      '<div class="col-6"><span class="text-secondary">Started</span><div>' + esc(formatIsoDateTime(trace.matchingStartedAt)) + "</div></div>" +
-      '<div class="col-6"><span class="text-secondary">Exhausted</span><div>' + esc(formatIsoDateTime(trace.matchingExhaustedAt)) + "</div></div>" +
+    let summary =
+      (showTitle ? '<div class="mb-2 fw-semibold">Dispatch Trace</div>' : "") +
+      '<div class="row g-3 mb-3">' +
+      '<div class="col-sm-6"><div class="' + labelClass + '">Dispatch status</div>' +
+      '<div class="detail-field-value">' + dispatchStatusBadge(trace.dispatchStatus) + "</div></div>" +
+      '<div class="col-sm-6"><div class="' + labelClass + '">Matching tier</div>' +
+      '<div class="detail-field-value">' + esc(trace.matchingAttempt ?? "—") + "</div></div>" +
+      '<div class="col-sm-6"><div class="' + labelClass + '">Started</div>' +
+      '<div class="detail-field-value">' + esc(formatIsoDateTime(trace.matchingStartedAt)) + "</div></div>" +
+      '<div class="col-sm-6"><div class="' + labelClass + '">Exhausted</div>' +
+      '<div class="detail-field-value">' + esc(formatIsoDateTime(trace.matchingExhaustedAt)) + "</div></div>" +
       "</div>";
 
     const eventRows = events.length
       ? events.map(function (ev) {
         const label = DISPATCH_EVENT_LABELS[ev.eventType] || ev.eventType || "Event";
         const detail = summarizeDispatchEvent(ev, esc);
-        return '<div class="d-flex gap-2 py-1 border-bottom small">' +
+        return '<div class="detail-trace-event d-flex gap-2 py-2 border-bottom small">' +
           '<span class="text-secondary text-nowrap" style="min-width:7rem">' + esc(formatIsoDateTime(ev.createdAt)) + "</span>" +
           '<span class="fw-semibold">' + esc(label) + "</span>" +
           (detail ? '<span class="text-secondary ms-auto text-end">' + detail + "</span>" : "") +
@@ -624,10 +665,13 @@ const Bookings = (() => {
         "</tbody></table></div>"
       : '<div class="text-secondary small py-2">No job offers recorded.</div>';
 
-    return summary +
-      '<div class="border rounded p-2 mb-2" style="max-height:220px;overflow-y:auto">' + eventRows + "</div>" +
-      '<div class="text-secondary small mb-1">Job offers</div>' + offerRows +
-      "</div>";
+    const body = summary +
+      '<div class="detail-field-label mb-1">Events</div>' +
+      '<div class="detail-trace-events border rounded px-2 mb-3" style="max-height:220px;overflow-y:auto">' + eventRows + "</div>" +
+      '<div class="detail-field-label mb-1">Job offers</div>' + offerRows;
+
+    if (opts.plain) return body;
+    return '<div class="detail-section">' + body + "</div>";
   }
 
   function statusBadge(status) {
@@ -675,6 +719,7 @@ const Bookings = (() => {
     renderHomeServiceTimelineHtml,
     renderCustomerFeedbackHtml,
     formatCustomerRating,
+    renderStarRating,
     renderDispatchTraceHtml,
     getBusinessHours,
     getBusinessExceptions,

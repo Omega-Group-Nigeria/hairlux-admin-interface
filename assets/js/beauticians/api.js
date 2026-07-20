@@ -16,8 +16,10 @@
         getPerformance: function (params) { return Beauticians.getPerformance(params); },
         approveKyc: function (id) { return Beauticians.approveKyc(id); },
         rejectKyc: function (id, reason) { return Beauticians.rejectKyc(id, reason); },
-        approveProfile: function (id) { return Beauticians.approveProfile(id); },
-        rejectProfile: function (id, reason) { return Beauticians.rejectProfile(id, reason); },
+        approveProfile: function (id, notes) { return Beauticians.approveProfile(id, notes); },
+        rejectProfile: function (id, reason, notes, scope) {
+            return Beauticians.rejectProfile(id, reason, notes, scope);
+        },
         listAssignedServices: function (id) { return Beauticians.listAssignedServices(id); },
         assignServices: function (id, serviceIds) { return Beauticians.assignServices(id, serviceIds); },
         getHomeServiceSettings: function () { return Beauticians.getHomeServiceSettings(); },

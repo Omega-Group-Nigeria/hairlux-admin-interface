@@ -144,6 +144,13 @@ var ForceAssignModal = (function () {
             if (nestedCoords) return nestedCoords;
         }
 
+        // Prefer temp* when both are non-null; otherwise fall back to standard fields
+        var tempLat = toNumber(source.tempLatitude ?? source.tempLat);
+        var tempLng = toNumber(source.tempLongitude ?? source.tempLng);
+        if (tempLat != null && tempLng != null) {
+            return { lat: tempLat, lng: tempLng };
+        }
+
         var lat = toNumber(source.lat ?? source.latitude ?? source.currentLat ?? source.lastKnownLat);
         var lng = toNumber(source.lng ?? source.longitude ?? source.currentLng ?? source.lastKnownLng);
         if (lat == null || lng == null) return null;
@@ -152,19 +159,36 @@ var ForceAssignModal = (function () {
 
     function extractBeauticianCoords(beautician) {
         if (!beautician || typeof beautician !== 'object') return null;
+
+        // Prefer temporary live coords when both are present (only if not null)
+        var tempLat = toNumber(beautician.tempLatitude ?? beautician.tempLat);
+        var tempLng = toNumber(beautician.tempLongitude ?? beautician.tempLng);
+        if (tempLat != null && tempLng != null) {
+            return { lat: tempLat, lng: tempLng };
+        }
+
         return extractCoords({
             lat: beautician.currentLat ?? beautician.lastKnownLat ?? beautician.lat ?? beautician.latitude,
             lng: beautician.currentLng ?? beautician.lastKnownLng ?? beautician.lng ?? beautician.longitude,
             currentLocation: beautician.currentLocation,
             lastKnownLocation: beautician.lastKnownLocation,
             coordinates: beautician.coordinates,
+            tempLatitude: beautician.tempLatitude,
+            tempLongitude: beautician.tempLongitude,
         });
     }
 
     function extractBookingCoords(booking) {
         if (!booking || typeof booking !== 'object') return null;
+        // Service / job location — temp coords first when both set, then address / location
+        var tempLat = toNumber(booking.tempLatitude ?? booking.tempLat);
+        var tempLng = toNumber(booking.tempLongitude ?? booking.tempLng);
+        if (tempLat != null && tempLng != null) {
+            return { lat: tempLat, lng: tempLng };
+        }
         return extractCoords(booking.address)
-            || (typeof booking.location === 'object' ? extractCoords(booking.location) : null);
+            || (typeof booking.location === 'object' ? extractCoords(booking.location) : null)
+            || extractCoords(booking);
     }
 
     async function loadBookingCoords(id) {
@@ -212,12 +236,12 @@ var ForceAssignModal = (function () {
     function renderDistanceHtml(beautician) {
         var label = getBeauticianDistanceLabel(beautician);
         if (label) {
-            return '<div class="text-secondary small">' + escapeHtml(label) + ' away</div>';
+            return '<span class="text-secondary small">' + escapeHtml(label) + ' away</span>';
         }
         if (!bookingCoords) {
-            return '<div class="text-secondary small">Distance unavailable</div>';
+            return '<span class="text-secondary small">Distance unavailable</span>';
         }
-        return '<div class="text-secondary small">Location unknown</div>';
+        return '<span class="text-secondary small">Location unknown</span>';
     }
 
     function renderList(rows, meta) {
@@ -257,8 +281,11 @@ var ForceAssignModal = (function () {
                 '</div>' +
                 '<div class="text-end flex-shrink-0">' +
                 Beauticians.availabilityBadge(b.availabilityStatus) +
-                '<div class="text-secondary small mt-1"><span class="fw-semibold text-body">' + rating + '</span> rating</div>' +
+                '<div class="d-flex align-items-center justify-content-end gap-2 flex-wrap mt-1">' +
+                '<span class="text-secondary small"><span class="fw-semibold text-body">' + rating + '</span> rating</span>' +
+                '<span class="text-secondary small opacity-50" aria-hidden="true">·</span>' +
                 renderDistanceHtml(b) +
+                '</div>' +
                 '</div></div></button>';
         }).join('');
         renderPagination(meta);

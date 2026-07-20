@@ -356,21 +356,16 @@
     <script src="assets/js/force-assign-modal.js" defer></script>
     <script src="assets/js/api-utils/analytics.js" defer></script>
     <script>
-        // Guard: spinner + session check before any redirect logic runs.
-        // Unauthenticated users go to login — never to settings.html.
+        // Guard: redirect to login if no token
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        // Sync pre-check from localStorage — redirects immediately if cached
+        // permissions already show no analytics access (avoids any flash).
+        if (RBAC.getRole() !== null && !RBAC.can('analytics:read')) {
+            window.location.replace('./' + RBAC.getFirstAccessiblePage());
+        }
+
         var bootstrap; // set after tabler loads
-        var __authReady = Auth.requireAuth().then(function (ok) {
-            if (!ok) return false;
-            RBAC.loadFromStorage();
-            // Sync pre-check from localStorage — redirects immediately if cached
-            // permissions already show no analytics access (avoids any flash).
-            if (RBAC.getRole() !== null && !RBAC.can('analytics:read')) {
-                if (Auth.showAuthBootScreen) Auth.showAuthBootScreen('Loading…');
-                window.location.replace('./' + RBAC.getFirstAccessiblePage());
-                return false;
-            }
-            return true;
-        });
 
         // ── Booking detail offcanvas ──────────────────────────────────────────
         async function openDetail(id) {
@@ -531,31 +526,16 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            // ── Auth + RBAC: wait for session, then hydrate permissions ──────────
-            (__authReady || Promise.resolve(true)).then(function (ok) {
-                if (!ok) return; // redirect to login (or another page) already in progress
-                return RBAC.fetchMe().then(function () {
-                    // Session gone after fetchMe / refresh failure → login, not settings
-                    if (!Auth.isLoggedIn()) {
-                        if (Auth.showAuthBootScreen) Auth.showAuthBootScreen('Redirecting to login…');
-                        window.location.replace('./login.html');
-                        return;
-                    }
-                    if (!RBAC.can('analytics:read')) {
-                        if (Auth.showAuthBootScreen) Auth.showAuthBootScreen('Loading…');
-                        window.location.replace('./' + RBAC.getFirstAccessiblePage());
-                        return; // leave cloak on, redirect is in progress
-                    }
-                    // Reveal page body and apply nav visibility together
-                    if (Auth.hideAuthBootScreen) Auth.hideAuthBootScreen();
-                    var cloak = document.getElementById('page-content-cloak');
-                    if (cloak) cloak.parentNode.removeChild(cloak);
-                    RBAC.applyNavVisibility();
-                });
-            }).catch(function () {
-                if (!Auth.isLoggedIn()) {
-                    window.location.replace('./login.html');
+            // ── RBAC: re-hydrate from server — definitive permission check ────────
+            RBAC.fetchMe().then(function() {
+                if (!RBAC.can('analytics:read')) {
+                    window.location.replace('./' + RBAC.getFirstAccessiblePage());
+                    return; // leave cloak on, redirect is in progress
                 }
+                // Reveal page body and apply nav visibility together
+                var cloak = document.getElementById('page-content-cloak');
+                if (cloak) cloak.parentNode.removeChild(cloak);
+                RBAC.applyNavVisibility();
             });
 
             // ── Populate user info from session ──────────────────────────────

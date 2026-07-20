@@ -46,25 +46,15 @@ async function ensureNigerianStates() {
 
 function loadActiveSection() {
     if (State.currentSection === "products") {
-        if (!Shop.canViewProducts()) return Promise.resolve();
         return Promise.all([
             loadProducts(),
             loadProductStats(),
             loadCategoriesForFilters(),
         ]);
     }
-    if (State.currentSection === "categories") {
-        if (!Shop.canViewCategories()) return Promise.resolve();
-        return loadCategoriesTable();
-    }
-    if (State.currentSection === "delivery") {
-        if (!Shop.canViewDelivery()) return Promise.resolve();
-        return loadDeliveryTable();
-    }
-    if (State.currentSection === "orders") {
-        if (!Shop.canViewOrders()) return Promise.resolve();
-        return loadOrders();
-    }
+    if (State.currentSection === "categories") return loadCategoriesTable();
+    if (State.currentSection === "delivery") return loadDeliveryTable();
+    if (State.currentSection === "orders") return loadOrders();
     return Promise.resolve();
 }
 
@@ -550,12 +540,6 @@ function confirmDeleteRegion(id, name) {
 }
 
 async function loadOrders() {
-    if (!Shop.canViewOrders()) {
-        document.getElementById("orders-tbody").innerHTML =
-            '<tr><td colspan="6" class="text-center text-secondary py-5">You do not have permission to view orders.</td></tr>';
-        document.getElementById("orders-results-label").textContent = "—";
-        return;
-    }
     setTableLoading("orders-tbody", 6);
     document.getElementById("orders-results-label").textContent = "Loading…";
     var tbody = document.getElementById("orders-tbody");
@@ -591,7 +575,6 @@ async function loadOrders() {
 }
 
 async function openOrderDetail(id) {
-    if (!Shop.canViewOrders()) return;
     var body = document.getElementById("offcanvas-order-body");
     var actions = document.getElementById("offcanvas-order-actions");
     body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
@@ -632,7 +615,6 @@ async function openOrderDetail(id) {
 }
 
 function confirmOrderStatus(id, newStatus, currentStatus, orderLabel) {
-    if (!RBAC.can(Shop.PERMISSIONS.UPDATE_STATUS)) return;
     State.pendingOp = { type: "orderStatus", id: id, newStatus: newStatus };
     document.getElementById("confirm-title").textContent = "Update Order Status";
     document.getElementById("confirm-msg").textContent = "Change order " + (orderLabel || "") + " from " + currentStatus + " to " + newStatus + "?";
@@ -699,7 +681,7 @@ async function init() {
         RBAC.applyPageGuardForCurrentPage();
         RBAC.applyNavVisibility();
     });
-    initSectionTabs();
+initSectionTabs();
     initProductEvents();
     initCategoryEvents();
     initDeliveryEvents();

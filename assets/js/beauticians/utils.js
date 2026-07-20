@@ -7,13 +7,70 @@
     var BP = (global.BeauticiansPage = global.BeauticiansPage || {});
     var State = BP.State;
 
+function isDetailOffcanvasOpen() {
+    var oc = document.getElementById('offcanvas-detail');
+    return !!(oc && oc.classList.contains('show'));
+}
+
+/**
+ * Toast/banner for the page. When the beautician detail offcanvas is open,
+ * messages surface inside the offcanvas (not under the backdrop on the page).
+ */
 function showAlert(msg, type) {
+    if (isDetailOffcanvasOpen()) {
+        showOffcanvasAlert(msg, type);
+        return;
+    }
     var el = document.getElementById('page-alert');
-    if (!msg) { el.classList.add('d-none'); return; }
+    if (!el) return;
+    if (!msg) {
+        el.classList.add('d-none');
+        return;
+    }
     el.textContent = msg;
     el.className = 'alert alert-' + (type || 'danger') + ' mb-3';
     el.classList.remove('d-none');
-    setTimeout(function () { el.classList.add('d-none'); }, 5000);
+    setTimeout(function () {
+        el.classList.add('d-none');
+    }, 5000);
+}
+
+function showOffcanvasAlert(msg, type) {
+    var wrap = document.getElementById('offcanvas-detail-alert-wrap');
+    var el = document.getElementById('offcanvas-detail-alert');
+    if (!wrap || !el) {
+        // Fallback if markup missing
+        var pageEl = document.getElementById('page-alert');
+        if (!pageEl) return;
+        if (!msg) {
+            pageEl.classList.add('d-none');
+            return;
+        }
+        pageEl.textContent = msg;
+        pageEl.className = 'alert alert-' + (type || 'danger') + ' mb-3';
+        pageEl.classList.remove('d-none');
+        return;
+    }
+    if (!msg) {
+        wrap.classList.add('d-none');
+        el.textContent = '';
+        return;
+    }
+    el.textContent = msg;
+    el.className = 'alert alert-' + (type || 'danger') + ' mb-0 py-2';
+    wrap.classList.remove('d-none');
+    // Scroll alert into view within offcanvas
+    try {
+        wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } catch (e) { /* ignore */ }
+    window.clearTimeout(showOffcanvasAlert._timer);
+    showOffcanvasAlert._timer = window.setTimeout(function () {
+        wrap.classList.add('d-none');
+    }, 6000);
+}
+
+function clearOffcanvasAlert() {
+    showOffcanvasAlert('', 'danger');
 }
 
 function setSaveButtonState(btn, isSaving, label) {
@@ -90,6 +147,33 @@ function formatCommissionLabel(rate) {
 
 function isPdfUrl(url) {
     return /\.pdf(\?|#|$)/i.test(String(url || ''));
+}
+
+/**
+ * Portfolio links are untrusted external content from the beautician app.
+ * Only https URLs are linkified; always open in a new tab (never iframe).
+ */
+function renderPortfolioUrl(url) {
+    if (url == null || String(url).trim() === '') {
+        return '<span class="text-secondary">—</span>';
+    }
+    var raw = String(url).trim();
+    var safeHref = null;
+    try {
+        var parsed = new URL(raw);
+        if (parsed.protocol === 'https:' && !parsed.username && !parsed.password) {
+            safeHref = parsed.href;
+        }
+    } catch (e) {
+        safeHref = null;
+    }
+    if (!safeHref) {
+        return '<span class="text-secondary text-break" title="Invalid or non-https URL">' + escHtml(raw) + '</span>';
+    }
+    return '<a href="' + escHtml(safeHref) + '" target="_blank" rel="noopener noreferrer" class="text-break">' +
+        escHtml(raw) +
+        ' <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-inline opacity-75" aria-hidden="true"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"/><path d="M11 13l9 -9"/><path d="M15 4h5v5"/></svg>' +
+        '</a>';
 }
 
 function commissionRateToPercent(rate) {
@@ -221,6 +305,9 @@ function scrServiceSearchHaystack(s) {
 
     BP.Utils = {
         showAlert: showAlert,
+        showOffcanvasAlert: showOffcanvasAlert,
+        clearOffcanvasAlert: clearOffcanvasAlert,
+        isDetailOffcanvasOpen: isDetailOffcanvasOpen,
         setSaveButtonState: setSaveButtonState,
         canAccessSection: canAccessSection,
         escHtml: escHtml,
@@ -231,6 +318,7 @@ function scrServiceSearchHaystack(s) {
         detailHeavy: detailHeavy,
         formatCommissionLabel: formatCommissionLabel,
         isPdfUrl: isPdfUrl,
+        renderPortfolioUrl: renderPortfolioUrl,
         commissionRateToPercent: commissionRateToPercent,
         commissionPercentToRate: commissionPercentToRate,
         formatScoringWeight: formatScoringWeight,

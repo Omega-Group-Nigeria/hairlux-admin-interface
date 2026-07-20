@@ -29,7 +29,7 @@ function switchSection(sectionId) {
 
 function routeOnLoad() {
     var hash = (location.hash || '#profile').replace('#', '');
-    var valid = State.VALID_SECTIONS || ['profile', 'security', 'admin-management'];
+    var valid = ['profile', 'security', 'admin-management'];
     switchSection(valid.indexOf(hash) !== -1 ? hash : 'profile');
 }
 
@@ -366,7 +366,4 @@ async function renderPermMatrix() {
         clearAdminSearch: clearAdminSearch,
         renderPermMatrix: renderPermMatrix,
     };
-
-    // Used by inline onclick handlers in settings.html
-    global.togglePwd = togglePwd;
 })(window);
