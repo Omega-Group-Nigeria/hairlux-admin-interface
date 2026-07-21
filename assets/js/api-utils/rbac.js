@@ -106,13 +106,27 @@ const RBAC = (() => {
 
     // ── Nav visibility ────────────────────────────────────────────────────────
 
-    /** Page permission rules — sourced from NavConfig (nav-config.js). */
-    function _getNavMap() {
-        if (typeof NavConfig !== 'undefined' && NavConfig.buildPagePermissionMap) {
-            return NavConfig.buildPagePermissionMap();
-        }
-        return {};
-    }
+    /**
+     * Maps a page filename (e.g. "bookings.html") to a visibility rule.
+     *   require    — user must have the single permission
+     *   requireAny — user must have at least one of the listed permissions
+     *
+     * This covers the canonical nav order:
+     *   Dashboard → Bookings → Payments → Users → Services → Referrals → Discounts → Careers → Staff
+     */
+    const _NAV_MAP = {
+        'index.html':     { type: 'require',    perm:  'analytics:read' },
+        'bookings.html':  { type: 'require',    perm:  'bookings:read' },
+        'payments.html':  { type: 'require',    perm:  'users:view_wallet' },
+        'users.html':     { type: 'require',    perm:  'users:read' },
+        'services.html':  { type: 'requireAny', perms: ['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories'] },
+        'referrals.html': { type: 'require',    perm:  'referrals:read' },
+        'referral-campaigns.html': { type: 'require', perm: 'referrals:read' },
+        'discounts.html': { type: 'require',    perm:  'discounts:read' },
+        'careers.html':   { type: 'require',    perm:  'jobs:read' },
+        'applications.html': { type: 'require', perm: 'application:read' },
+        'staff.html':     { type: 'requireAny', perms: ['staff:read', 'staff:create', 'staff:update', 'staff:archive', 'staff:manage_status', 'staff:manage_locations'] },
+    };
 
     /**
      * Returns the filename of the first page in the nav order that the current
@@ -120,10 +134,7 @@ const RBAC = (() => {
      * Falls back to 'settings.html' if nothing matches.
      */
     function getFirstAccessiblePage() {
-        var order = (typeof NavConfig !== 'undefined' && NavConfig.getAccessiblePageOrder)
-            ? NavConfig.getAccessiblePageOrder()
-            : [];
-        var navMap = _getNavMap();
+        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'referrals.html', 'discounts.html', 'careers.html', 'applications.html', 'staff.html'];
         for (var i = 0; i < order.length; i++) {
             var rule = navMap[order[i]];
             if (!rule) continue;
