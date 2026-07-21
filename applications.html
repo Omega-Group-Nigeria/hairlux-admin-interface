@@ -505,7 +505,9 @@
 
             var docsBlock = '';
             var docLinks = [];
-            if (a.cvUrl && a.cvUrl !== 'string') docLinks.push('<a href="' + a.cvUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">CV</a>');
+            // Prefer signed/public download URL from file-upload API; fall back to legacy cvUrl
+            var cvHref = a.cvDownloadUrl || (a.cvUrl && a.cvUrl !== 'string' ? a.cvUrl : '');
+            if (cvHref) docLinks.push('<a href="' + cvHref + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">View CV</a>');
             if (a.portfolioUrl && a.portfolioUrl !== 'string') docLinks.push('<a href="' + a.portfolioUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Portfolio</a>');
             if (docLinks.length) docsBlock = '<div class="detail-lbl">Documents</div><div class="detail-val d-flex gap-2">' + docLinks.join('') + '</div>';
 

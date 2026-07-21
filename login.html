@@ -188,11 +188,14 @@
                 await Auth.login(email, password, loginType);
                 showAlert('success', 'Login successful! Loading your workspace…');
 
-                // Fetch server-fresh permissions before redirecting so the user
-                // lands on the first page they are allowed to see.
+                if (loginType === 'staff') {
+                    // Staff workspace (mide-dev staff-portal)
+                    window.location.href = './staff-portal.html';
+                    return;
+                }
+
+                // Admin: fetch server-fresh permissions and land on first allowed page
                 await RBAC.fetchMe();
-                // Staff portal is not a separate page in this app yet — use first
-                // accessible admin page (or settings fallback) for both tabs.
                 var dest = RBAC.can('analytics:read') ? './index.html' : ('./' + RBAC.getFirstAccessiblePage());
                 window.location.href = dest;
             } catch (err) {
