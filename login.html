@@ -188,16 +188,11 @@
                 await Auth.login(email, password, loginType);
                 showAlert('success', 'Login successful! Loading your workspace…');
 
-                if (loginType === 'staff') {
-                    // Staff have no admin permissions to check — straight to
-                    // the staff dashboard, no RBAC nav-visibility pass needed.
-                    window.location.href = './staff-portal.html';
-                    return;
-                }
-
                 // Fetch server-fresh permissions before redirecting so the user
-                // lands directly on the first page they are allowed to see.
+                // lands on the first page they are allowed to see.
                 await RBAC.fetchMe();
+                // Staff portal is not a separate page in this app yet — use first
+                // accessible admin page (or settings fallback) for both tabs.
                 var dest = RBAC.can('analytics:read') ? './index.html' : ('./' + RBAC.getFirstAccessiblePage());
                 window.location.href = dest;
             } catch (err) {

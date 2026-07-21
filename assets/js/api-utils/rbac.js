@@ -10,7 +10,7 @@
  *   // 1. Outside DOMContentLoaded — sync guard from localStorage
  *   RBAC.loadFromStorage();
  *   RBAC.applyPageGuard('bookings:read'); // or array / null
- *   RBAC.applyPageGuardForCurrentPage();  // reads rule from _NAV_MAP for this page
+ *   RBAC.applyPageGuardForCurrentPage();  // reads rule from NavConfig for this page
  *
  *   // 2. Inside DOMContentLoaded — re-hydrate from server then refresh nav
  *   RBAC.fetchMe().then(function() { RBAC.applyNavVisibility(); });
@@ -106,27 +106,13 @@ const RBAC = (() => {
 
     // ── Nav visibility ────────────────────────────────────────────────────────
 
-    /**
-     * Maps a page filename (e.g. "bookings.html") to a visibility rule.
-     *   require    — user must have the single permission
-     *   requireAny — user must have at least one of the listed permissions
-     *
-     * This covers the canonical nav order:
-     *   Dashboard → Bookings → Payments → Users → Services → Referrals → Discounts → Careers → Staff
-     */
-    const _NAV_MAP = {
-        'index.html':     { type: 'require',    perm:  'analytics:read' },
-        'bookings.html':  { type: 'require',    perm:  'bookings:read' },
-        'payments.html':  { type: 'require',    perm:  'users:view_wallet' },
-        'users.html':     { type: 'require',    perm:  'users:read' },
-        'services.html':  { type: 'requireAny', perms: ['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories'] },
-        'referrals.html': { type: 'require',    perm:  'referrals:read' },
-        'referral-campaigns.html': { type: 'require', perm: 'referrals:read' },
-        'discounts.html': { type: 'require',    perm:  'discounts:read' },
-        'careers.html':   { type: 'require',    perm:  'jobs:read' },
-        'applications.html': { type: 'require', perm: 'application:read' },
-        'staff.html':     { type: 'requireAny', perms: ['staff:read', 'staff:create', 'staff:update', 'staff:archive', 'staff:manage_status', 'staff:manage_locations'] },
-    };
+    /** Page permission rules — sourced from NavConfig (nav-config.js). */
+    function _getNavMap() {
+        if (typeof NavConfig !== 'undefined' && NavConfig.buildPagePermissionMap) {
+            return NavConfig.buildPagePermissionMap();
+        }
+        return {};
+    }
 
     /**
      * Returns the filename of the first page in the nav order that the current
@@ -134,7 +120,10 @@ const RBAC = (() => {
      * Falls back to 'settings.html' if nothing matches.
      */
     function getFirstAccessiblePage() {
-        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'referrals.html', 'discounts.html', 'careers.html', 'applications.html', 'staff.html'];
+        var order = (typeof NavConfig !== 'undefined' && NavConfig.getAccessiblePageOrder)
+            ? NavConfig.getAccessiblePageOrder()
+            : [];
+        var navMap = _getNavMap();
         for (var i = 0; i < order.length; i++) {
             var rule = navMap[order[i]];
             if (!rule) continue;
@@ -218,7 +207,7 @@ const RBAC = (() => {
     }
 
     /**
-     * Apply the page guard for the current URL's filename using _NAV_MAP.
+     * Apply the page guard for the current URL's filename using NavConfig.
      * Pages without a nav rule pass null (session-only access).
      */
     function applyPageGuardForCurrentPage(superOnly) {
