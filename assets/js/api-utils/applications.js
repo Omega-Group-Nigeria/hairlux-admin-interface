@@ -149,8 +149,14 @@ const Applications = (() => {
       ', ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' });
   }
 
+  async function getReport() {
+    const res = await Auth.fetch('/admin/applications/report');
+    const raw = await res.json().catch(() => ({}));
+    return raw.data || raw;
+  }
+
   return {
-    getAll, getOne, updateStatus, scheduleInterview, convertToStaff, getLocations,
+    getAll, getOne, updateStatus, scheduleInterview, convertToStaff, getLocations, getReport,
     STATUS_ORDER, STATUS_LABELS, STATUS_COLORS, NEXT_STATUS,
     statusBadge, formatDate, formatDateTime,
   };

@@ -198,6 +198,54 @@ const Staff = (() => {
         });
     }
 
+    async function getOnboarding(id) {
+        return jsonFetch("/admin/staff/" + id + "/onboarding");
+    }
+
+    async function getOnboardingSummary() {
+        return jsonFetch("/admin/staff/onboarding-summary");
+    }
+
+    async function updateOnboardingItem(id, itemId, payload) {
+        return jsonFetch("/admin/staff/" + id + "/onboarding/" + itemId, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getDocumentStatus(id) {
+        return jsonFetch("/admin/staff/" + id + "/documents");
+    }
+
+    async function getDirectives(id) {
+        return jsonFetch("/admin/staff/" + id + "/directives");
+    }
+
+    async function getPassportPhotoUrl(id) {
+        return jsonFetch("/admin/staff/" + id + "/passport-photo");
+    }
+
+    function idCardUrl(id) {
+        const base = (window.API_BASE || "").replace(/\/$/, "");
+        return base + "/admin/staff/" + id + "/id-card.pdf";
+    }
+
+    /** Downloads the ID card PDF using an authenticated fetch (browser can't attach a JWT to a plain <a href>). */
+    async function downloadIdCard(id, staffCode) {
+        const res = await Auth.fetch("/admin/staff/" + id + "/id-card.pdf");
+        if (!res.ok) throw new Error("Failed to generate ID card");
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "staff-id-" + (staffCode || id) + ".pdf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }
+
     const STATUS_COLORS = {
         ACTIVE: "success",
         ON_LEAVE: "warning",
@@ -241,6 +289,14 @@ const Staff = (() => {
         addHistory,
         updateHistory,
         removeHistory,
+        getOnboarding,
+        getOnboardingSummary,
+        updateOnboardingItem,
+        getDocumentStatus,
+        getDirectives,
+        getPassportPhotoUrl,
+        idCardUrl,
+        downloadIdCard,
         statusBadge,
         formatDate,
         fullName,

@@ -133,6 +133,7 @@
                             <h2 class="page-title">Applications</h2>
                         </div>
                         <div class="col-auto ms-auto d-flex flex-wrap gap-2 align-items-center">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-view-report">View Report</button>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -189,6 +190,12 @@
                                         <input type="text" id="filter-search" class="form-control"
                                             placeholder="Name, email, phone, or reference…">
                                     </div>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="filter-branch" class="form-select form-select-sm">
+                                        <option value="">All branches</option>
+                                    </select>
                                 </div>
                                 <div class="col-6 col-md-3 col-lg-2">
                                     <label class="form-label text-secondary small mb-1">Per page</label>
@@ -271,8 +278,23 @@
     </div>
 
     <!-- SCRIPTS -->
+    <div class="modal modal-blur fade" id="modal-report" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Recruitment Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="report-modal-body">
+                    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/applications.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
@@ -285,7 +307,7 @@
 
         // ── Page state ──────────────────────────────────────────────────────────
         var qsStatus = new URLSearchParams(window.location.search).get('status') || '';
-        var state = { page: 1, limit: 20, status: qsStatus, search: '', totalPages: 1 };
+        var state = { page: 1, limit: 20, status: qsStatus, search: '', locationId: '', totalPages: 1 };
         var currentDetailId = null;
         var locationsCache = null;
 
@@ -319,6 +341,7 @@
                 if (match) match.classList.add("active");
                 else document.querySelector('#status-tabs .nav-link[data-status=""]').classList.add("active");
             }
+            loadBranchFilterOptions();
             loadApplications();
 
             // ── Status tabs ─────────────────────────────────────────────────
@@ -348,13 +371,25 @@
                 state.limit = parseInt(this.value, 10); state.page = 1; loadApplications();
             });
 
+            // ── Branch ──────────────────────────────────────────────────────
+            document.getElementById("filter-branch").addEventListener("change", function () {
+                state.locationId = this.value; state.page = 1; loadApplications();
+            });
+
+            // ── Recruitment report ──────────────────────────────────────────
+            document.getElementById("btn-view-report").addEventListener("click", function () {
+                new bootstrap.Modal(document.getElementById("modal-report")).show();
+                loadRecruitmentReport();
+            });
+
             // ── Clear filters ───────────────────────────────────────────────
             document.getElementById("btn-clear").addEventListener("click", function () {
                 document.getElementById("filter-search").value = "";
                 document.getElementById("filter-limit").value  = "20";
+                document.getElementById("filter-branch").value = "";
                 document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
-                state.page = 1; state.limit = 20; state.status = ""; state.search = "";
+                state.page = 1; state.limit = 20; state.status = ""; state.search = ""; state.locationId = "";
                 loadApplications();
             });
 
@@ -383,6 +418,54 @@
         });
 
         // ── Load & render list ──────────────────────────────────────────────────
+        async function loadBranchFilterOptions() {
+            try {
+                var branches = await Staff.getLocations();
+                var sel = document.getElementById("filter-branch");
+                sel.innerHTML = '<option value="">All branches</option>' +
+                    branches.map(function (b) {
+                        return '<option value="' + b.id + '">' + b.name + '</option>';
+                    }).join("");
+            } catch (err) {
+                console.error("Failed to load branches for filter", err);
+            }
+        }
+
+        async function loadRecruitmentReport() {
+            var body = document.getElementById("report-modal-body");
+            body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+            try {
+                var r = await Applications.getReport();
+
+                var roleRows = (r.byRole || []).map(function (x) {
+                    return '<tr><td>' + x.role + '</td><td class="text-end">' + x.count + '</td></tr>';
+                }).join("") || '<tr><td colspan="2" class="text-secondary text-center">No data</td></tr>';
+
+                var statusRows = (r.byStatus || []).map(function (x) {
+                    return '<tr><td>' + Applications.statusBadge(x.status) + '</td><td class="text-end">' + x.count + '</td></tr>';
+                }).join("") || '<tr><td colspan="2" class="text-secondary text-center">No data</td></tr>';
+
+                body.innerHTML =
+                    '<div class="row row-cards mb-4">' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.totalApplications ?? 0) + '</div><div class="text-secondary small">Total applicants</div></div></div></div>' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.hiredCount ?? 0) + '</div><div class="text-secondary small">Hired</div></div></div></div>' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.averageTimeToHireDays != null ? r.averageTimeToHireDays + 'd' : '—') + '</div><div class="text-secondary small">Avg. time to hire</div></div></div></div>' +
+                    '</div>' +
+                    '<div class="row">' +
+                        '<div class="col-6">' +
+                            '<h4>By role</h4>' +
+                            '<table class="table table-sm"><tbody>' + roleRows + '</tbody></table>' +
+                        '</div>' +
+                        '<div class="col-6">' +
+                            '<h4>By status</h4>' +
+                            '<table class="table table-sm"><tbody>' + statusRows + '</tbody></table>' +
+                        '</div>' +
+                    '</div>';
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + (err.message || "Failed to load report.") + '</div>';
+            }
+        }
+
         async function loadApplications() {
             var tbody = document.getElementById("applications-tbody");
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
@@ -390,7 +473,8 @@
             try {
                 var result = await Applications.getAll({
                     page: state.page, limit: state.limit,
-                    status: state.status, search: state.search
+                    status: state.status, search: state.search,
+                    preferredLocationId: state.locationId
                 });
                 var rows = result.data || (Array.isArray(result) ? result : []);
                 var meta = result.meta || {};
@@ -705,7 +789,10 @@ async function submitScheduleInterview() {
             var actions = document.getElementById('offcanvas-detail-actions');
             actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Converting…';
             try {
-                await Applications.convertToStaff(currentDetailId, { locationId: loc });
+                var result = await Applications.convertToStaff(currentDetailId, { locationId: loc });
+                if (result && result.rehireWarning) {
+                    alert(result.rehireWarning);
+                }
                 openDetail(currentDetailId);
                 loadApplications();
             } catch (err) {
