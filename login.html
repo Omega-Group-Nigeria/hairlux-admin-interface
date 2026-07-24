@@ -33,6 +33,70 @@
         .td-services { min-width: 180px; white-space: normal; }
         .badge-used { background: var(--tblr-secondary-lt); color: var(--tblr-secondary); }
         .badge-valid { background: var(--tblr-success-lt); color: var(--tblr-success); }
+        .login-type-toggle {
+            position: relative;
+            display: flex;
+            background: #f1f3f5;
+            border-radius: 8px;
+            padding: 3px;
+            height: 40px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,.06);
+        }
+        .login-type-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+        .login-type-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .875rem;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            z-index: 2;
+            transition: color .2s ease;
+            user-select: none;
+            border-radius: 6px;
+            padding: 0 12px;
+            white-space: nowrap;
+        }
+        .login-type-input:checked + .login-type-label {
+            color: #1f2937;
+        }
+        .login-type-slider {
+            position: absolute;
+            top: 3px;
+            bottom: 3px;
+            left: 3px;
+            width: calc(50% - 3px);
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+            transition: transform .25s cubic-bezier(.4,0,.2,1);
+            z-index: 1;
+            pointer-events: none;
+        }
+        #login-type-staff:checked ~ .login-type-slider {
+            transform: translateX(100%);
+        }
+        [data-bs-theme="dark"] .login-type-toggle {
+            background: #2a2d33;
+        }
+        [data-bs-theme="dark"] .login-type-label {
+            color: #9ca3af;
+        }
+        [data-bs-theme="dark"] .login-type-input:checked + .login-type-label {
+            color: #f3f4f6;
+        }
+        [data-bs-theme="dark"] .login-type-slider {
+            background: #3a3d45;
+            box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 1px 2px rgba(0,0,0,.15);
+        }
     </style>
 </head>
 
@@ -61,12 +125,13 @@
                 <div class="card-body">
                     <h2 class="h2 text-center mb-3">Login to your account</h2>
 
-                    <!-- Admin / Staff toggle -->
-                    <div class="btn-group w-100 mb-4" role="group" aria-label="Login type">
-                        <input type="radio" class="btn-check" name="login-type" id="login-type-admin" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary" for="login-type-admin">For Admin</label>
-                        <input type="radio" class="btn-check" name="login-type" id="login-type-staff" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="login-type-staff">For Staff</label>
+                    <!-- Admin / Staff sliding toggle -->
+                    <div class="login-type-toggle mb-4" role="group" aria-label="Login type">
+                        <input type="radio" class="login-type-input" name="login-type" id="login-type-admin" autocomplete="off" checked>
+                        <label class="login-type-label" for="login-type-admin">For Admin</label>
+                        <input type="radio" class="login-type-input" name="login-type" id="login-type-staff" autocomplete="off">
+                        <label class="login-type-label" for="login-type-staff">For Staff</label>
+                        <div class="login-type-slider"></div>
                     </div>
 
                     <form id="login-form" autocomplete="off" novalidate>
