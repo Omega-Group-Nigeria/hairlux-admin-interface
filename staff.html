@@ -269,6 +269,7 @@
             includeArchived: false,
             totalPages: 1,
             locationOptions: [],
+            staffOptions: [],
         };
 
         var _currentStaffId = null;
@@ -388,20 +389,38 @@
                 var archiveBtn = e.target.closest(".btn-oc-archive");
                 var restoreBtn = e.target.closest(".btn-oc-restore");
                 var addHistoryBtn = e.target.closest(".btn-oc-add-history");
+                var idCardBtn = e.target.closest(".btn-oc-idcard");
                 if (editBtn) return handleEditStaff(editBtn.dataset.id);
                 if (statusBtn) return handleStatusStaff(statusBtn.dataset.id);
                 if (archiveBtn) return handleArchiveStaff(archiveBtn.dataset.id);
                 if (restoreBtn) return handleRestoreStaff(restoreBtn.dataset.id);
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
+                if (idCardBtn) return handleDownloadIdCard(idCardBtn.dataset.id, idCardBtn.dataset.staffCode);
             });
 
             document.getElementById("offcanvas-staff-body").addEventListener("click", function (e) {
                 var addHistoryBtn = e.target.closest(".btn-oc-add-history");
                 var editHist = e.target.closest(".btn-edit-history");
                 var delHist = e.target.closest(".btn-delete-history");
+                var onboardingToggle = e.target.closest(".btn-onboarding-toggle");
+                var onboardingApprove = e.target.closest(".btn-onboarding-approve");
+                var onboardingReject = e.target.closest(".btn-onboarding-reject");
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
                 if (editHist) return handleEditHistory(editHist.dataset.staffId, editHist.dataset.historyId);
                 if (delHist) return handleDeleteHistory(delHist.dataset.staffId, delHist.dataset.historyId);
+                if (onboardingToggle) {
+                    return handleToggleOnboardingItem(
+                        onboardingToggle.dataset.staffId,
+                        onboardingToggle.dataset.itemId,
+                        onboardingToggle.dataset.next === "true"
+                    );
+                }
+                if (onboardingApprove) {
+                    return handleApproveOnboardingItem(onboardingApprove.dataset.staffId, onboardingApprove.dataset.itemId);
+                }
+                if (onboardingReject) {
+                    return handleRejectOnboardingItem(onboardingReject.dataset.staffId, onboardingReject.dataset.itemId);
+                }
             });
 
             ensureLocationsLoaded();
@@ -435,6 +454,28 @@
         async function ensureLocationsLoaded() {
             if (state.locationOptions.length) return;
             await loadManagedLocations({ includeInactive: true, syncFilters: true });
+        }
+
+        async function ensureStaffOptionsLoaded() {
+            if (state.staffOptions.length) return;
+            try {
+                var result = await Staff.getAll({ limit: 100 });
+                state.staffOptions = (result.data || []).map(function (s) {
+                    return { value: String(s.id), label: Staff.fullName(s) + (s.staffCode ? ' (' + s.staffCode + ')' : '') };
+                });
+            } catch (err) {
+                console.error("Failed to load staff options for manager dropdown", err);
+            }
+        }
+
+        /** Excludes the staff member themselves -- they can't report to themselves (also enforced server-side). */
+        function resolveManagerOptions(excludeStaffId, selectedId) {
+            var selected = String(selectedId || "");
+            var options = state.staffOptions.filter(function (x) { return x.value !== String(excludeStaffId); });
+            if (selected && !options.some(function (x) { return x.value === selected; })) {
+                options.push({ value: selected, label: "Current manager" });
+            }
+            return options;
         }
 
         async function loadManagedLocations(options) {
@@ -565,6 +606,122 @@
             }
         }
 
+        const ONBOARDING_ITEM_LABELS = {
+            GUARANTOR_VERIFICATION: 'Guarantor Verification',
+            EMERGENCY_CONTACT: 'Emergency Contact',
+            REFERENCE_CHECK: 'Reference Check',
+            ADDRESS_VERIFICATION: 'Address Verification',
+            PASSPORT_PHOTO: 'Passport Photo',
+            POLICY_ACKNOWLEDGMENT: 'Policy Acknowledgment',
+        };
+
+        var ONBOARDING_SUBMISSION_FIELDS = {
+            GUARANTOR_VERIFICATION: [
+                ['Name', 'guarantorName'], ['Occupation', 'guarantorOccupation'],
+                ['Phone', 'guarantorPhone'], ['Address', 'guarantorAddress'],
+            ],
+            EMERGENCY_CONTACT: [
+                ['Name', 'emergencyContactName'], ['Phone', 'emergencyContactPhone'],
+                ['Relationship', 'emergencyContactRelation'],
+            ],
+            ADDRESS_VERIFICATION: [['Address', 'address']],
+            REFERENCE_CHECK: [
+                ['Name', 'referenceName'], ['Phone', 'referencePhone'],
+                ['Relationship', 'referenceRelationship'],
+            ],
+        };
+
+        function renderOnboardingSection(staffId, onboarding, staffRecord, passportPhotoUrl) {
+            if (!onboarding) {
+                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load onboarding checklist.</div>';
+            }
+            var items = onboarding.items || [];
+            var doneCount = items.filter(function (i) { return i.isComplete; }).length;
+            var pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+
+            var rows = items.map(function (item) {
+                var label = ONBOARDING_ITEM_LABELS[item.type] || item.type;
+
+                if (item.isComplete) {
+                    return '<div class="d-flex align-items-center justify-content-between py-1">' +
+                        '<div><span class="text-success me-2">\u2713</span>' + esc(label) +
+                        '<div class="text-secondary small ms-4">Approved ' + esc(Staff.formatDate(item.completedAt)) + '</div></div>' +
+                        '<button class="btn btn-xs btn-outline-secondary btn-onboarding-toggle" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '" data-next="false">Reopen</button>' +
+                        '</div>';
+                }
+
+                if (item.reviewStatus === 'SUBMITTED') {
+                    var submittedHtml;
+                    if (item.type === 'PASSPORT_PHOTO') {
+                        submittedHtml = passportPhotoUrl
+                            ? '<a href="' + esc(passportPhotoUrl) + '" target="_blank" rel="noopener">View uploaded photo</a>'
+                            : '<span class="text-secondary">Photo submitted, but the view link failed to load.</span>';
+                    } else {
+                        var fields = ONBOARDING_SUBMISSION_FIELDS[item.type] || [];
+                        submittedHtml = fields.map(function (pair) {
+                            return '<div><span class="text-secondary">' + esc(pair[0]) + ':</span> ' + esc((staffRecord && staffRecord[pair[1]]) || '-') + '</div>';
+                        }).join('');
+                    }
+                    return '<div class="py-2 border-bottom">' +
+                        '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                        '<div><span class="text-warning me-2">\u23F3</span>' + esc(label) + ' <span class="badge bg-warning-lt">Pending review</span></div>' +
+                        '</div>' +
+                        '<div class="small ms-4 mb-2">' + submittedHtml + '</div>' +
+                        '<div class="ms-4 d-flex gap-1">' +
+                        '<button class="btn btn-xs btn-success btn-onboarding-approve" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '">Approve</button>' +
+                        '<button class="btn btn-xs btn-outline-danger btn-onboarding-reject" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '">Reject</button>' +
+                        '</div></div>';
+                }
+
+                return '<div class="d-flex align-items-center justify-content-between py-1">' +
+                    '<div><span class="text-danger me-2">\u2717</span>' + esc(label) +
+                    '<div class="text-secondary small ms-4">Not yet submitted</div></div>' +
+                    '<button class="btn btn-xs btn-outline-success btn-onboarding-toggle" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '" data-next="true">Mark Complete</button>' +
+                    '</div>';
+            }).join('');
+
+            return '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                '<span class="small fw-semibold">' + pct + '% complete</span>' +
+                '<span class="small text-secondary">' + doneCount + ' of ' + items.length + '</span></div>' +
+                '<div class="progress mb-2" style="height:6px"><div class="progress-bar bg-success" style="width:' + pct + '%"></div></div>' +
+                rows;
+        }
+
+        function renderDocumentsSection(documents) {
+            if (!documents) {
+                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load document status.</div>';
+            }
+            var docs = documents.documents || [];
+            if (!docs.length) {
+                return '<div class="text-secondary small">No company documents have been created yet. Add them under Staff &rarr; Company Documents.</div>';
+            }
+            return docs.map(function (d) {
+                var badge = d.acknowledged
+                    ? '<span class="badge bg-success-lt">Acknowledged ' + esc(Staff.formatDate(d.acknowledgedAt)) + '</span>'
+                    : '<span class="badge bg-warning-lt">Not yet acknowledged</span>';
+                return '<div class="d-flex align-items-center justify-content-between py-1">' +
+                    '<div class="small">' + esc(d.title) + '</div>' + badge + '</div>';
+            }).join('');
+        }
+
+        function renderDirectivesSection(directives) {
+            if (!directives) {
+                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load tasks.</div>';
+            }
+            if (!directives.length) {
+                return '<div class="text-secondary small">No tasks assigned to this staff member.</div>';
+            }
+            var STATUS_BADGE = { PENDING: 'bg-red-lt', ACKNOWLEDGED: 'bg-warning-lt', COMPLETED: 'bg-success-lt' };
+            return directives.slice(0, 5).map(function (d) {
+                var badgeClass = STATUS_BADGE[d.status] || 'bg-secondary-lt';
+                return '<div class="py-1">' +
+                    '<div class="d-flex align-items-center justify-content-between">' +
+                    '<div class="small fw-semibold">' + esc(d.title) + '</div>' +
+                    '<span class="badge ' + badgeClass + '">' + esc(d.status) + '</span></div>' +
+                    '<div class="text-secondary small">' + esc(d.body) + '</div></div>';
+            }).join('');
+        }
+
         async function openStaffDetail(id) {
             _currentStaffId = id;
             var body = document.getElementById("offcanvas-staff-body");
@@ -575,6 +732,13 @@
 
             try {
                 var s = await Staff.getOne(id);
+
+                var onboardingResult = await Staff.getOnboarding(id).catch(function () { return null; });
+                var documentsResult = await Staff.getDocumentStatus(id).catch(function () { return null; });
+                var directivesResult = await Staff.getDirectives(id).catch(function () { return null; });
+                var passportPhotoResult = await Staff.getPassportPhotoUrl(id).catch(function () { return null; });
+                var passportPhotoUrl = passportPhotoResult && passportPhotoResult.viewUrl;
+
                 var history = s.histories || s.employmentHistory || s.history || [];
                 var employmentStartDate = s.employmentStartDate || s.startDate || null;
                 if (!employmentStartDate && history.length) {
@@ -598,6 +762,18 @@
                         '<dt class="col-5 text-secondary">Employment Start</dt><dd class="col-7">' + esc(Staff.formatDate(employmentStartDate || '-')) + '</dd>' +
                         '<dt class="col-5 text-secondary">Created</dt><dd class="col-7">' + esc(Staff.formatDate(s.createdAt)) + '</dd>' +
                     '</dl>' +
+                    '<div class="mb-3">' +
+                        '<div class="fw-semibold mb-1">Onboarding Checklist</div>' +
+                        renderOnboardingSection(id, onboardingResult, s, passportPhotoUrl) +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                        '<div class="fw-semibold mb-1">Company Documents</div>' +
+                        renderDocumentsSection(documentsResult) +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                        '<div class="fw-semibold mb-1">Tasks &amp; Directives</div>' +
+                        renderDirectivesSection(directivesResult) +
+                    '</div>' +
                     '<div class="d-flex align-items-center justify-content-between mb-2">' +
                         '<div class="fw-semibold">Employment History</div>' +
                         '<button class="btn btn-sm btn-outline-primary btn-oc-add-history" data-id="' + esc(s.id) + '">Add</button>' +
@@ -626,6 +802,7 @@
 
                 actions.innerHTML =
                     '<button class="btn btn-outline-primary btn-oc-edit" data-id="' + esc(s.id) + '">Edit</button>' +
+                    '<button class="btn btn-outline-secondary btn-oc-idcard" data-id="' + esc(s.id) + '" data-staff-code="' + esc(s.staffCode || '') + '">Download ID Card</button>' +
                     '<button class="btn btn-outline-warning btn-oc-status" data-id="' + esc(s.id) + '">Update Status</button>' +
                     '<button class="btn btn-outline-danger btn-oc-archive" data-id="' + esc(s.id) + '">Archive</button>' +
                     '<button class="btn btn-outline-success btn-oc-restore" data-id="' + esc(s.id) + '">Restore</button>';
@@ -740,6 +917,7 @@
             }
 
             if (action.type === "update") {
+                var managerOptions = resolveManagerOptions(action.staffId, d.reportingToId);
                 form.innerHTML =
                     buildInput('col-md-6', 'Full Name', 'sf-name', d.name || '') +
                     buildInput('col-md-6', 'Email', 'sf-email', d.email || '', 'email') +
@@ -748,6 +926,7 @@
                     buildInput('col-md-4', 'Current Role', 'sf-current-role', d.currentRole || '') +
                     buildOptionSelect('col-md-4', 'Location', 'sf-location-id', selectedLocationId, locationOptions, 'Select location', true) +
                     buildSelect('col-md-4', 'Employment Status', 'sf-employment-status', d.employmentStatus || 'ACTIVE', statusOpts) +
+                    buildOptionSelect('col-md-6', 'Reports To', 'sf-reporting-to-id', String(d.reportingToId || ''), managerOptions, 'No manager assigned', false) +
                     '<div class="col-12" id="sf-exit-fields-wrap">' +
                         '<div class="row g-3">' +
                             buildInput('col-md-6', 'Reason For Exit', 'sf-reason-for-exit', d.reasonForExit || '') +
@@ -838,6 +1017,7 @@
                     employmentStatus: document.getElementById("sf-employment-status").value,
                     reasonForExit: trimOrUndef(document.getElementById("sf-reason-for-exit").value),
                     exitDate: trimOrUndef(document.getElementById("sf-exit-date").value),
+                    reportingToId: document.getElementById("sf-reporting-to-id").value || null,
                 };
                 if (String(updatePayload.employmentStatus || "").toUpperCase() !== "EXITED") {
                     delete updatePayload.reasonForExit;
@@ -938,6 +1118,7 @@
         async function handleEditStaff(id) {
             try {
                 await ensureLocationsLoaded();
+                await ensureStaffOptionsLoaded();
                 var s = await Staff.getOne(id);
                 openStaffFormModal({
                     type: "update",
@@ -954,6 +1135,7 @@
                         employmentStatus: s.employmentStatus || "ACTIVE",
                         reasonForExit: s.reasonForExit || "",
                         exitDate: (s.exitDate || "").slice(0, 10),
+                        reportingToId: String(s.reportingToId || (s.reportingTo && s.reportingTo.id) || ""),
                     }
                 });
             } catch (err) {
@@ -996,6 +1178,45 @@
                 await loadStaff();
             } catch (err) {
                 alert(err.message || "Restore failed");
+            }
+        }
+
+        async function handleDownloadIdCard(id, staffCode) {
+            try {
+                await Staff.downloadIdCard(id, staffCode);
+            } catch (err) {
+                alert(err.message || "Could not generate ID card");
+            }
+        }
+
+        async function handleToggleOnboardingItem(staffId, itemId, next) {
+            try {
+                await Staff.updateOnboardingItem(staffId, itemId, { isComplete: next });
+                if (_currentStaffId) await openStaffDetail(_currentStaffId);
+            } catch (err) {
+                alert(err.message || "Could not update onboarding item");
+            }
+        }
+
+        async function handleApproveOnboardingItem(staffId, itemId) {
+            if (!confirm("Approve this submission? This marks the item complete.")) return;
+            try {
+                await Staff.updateOnboardingItem(staffId, itemId, { isComplete: true });
+                if (_currentStaffId) await openStaffDetail(_currentStaffId);
+            } catch (err) {
+                alert(err.message || "Could not approve onboarding item");
+            }
+        }
+
+        async function handleRejectOnboardingItem(staffId, itemId) {
+            var note = prompt("Why is this being rejected? This note is visible to the staff member.");
+            if (note === null) return; // cancelled
+            if (!note.trim()) { alert("A reason is required so the staff member knows what to fix."); return; }
+            try {
+                await Staff.updateOnboardingItem(staffId, itemId, { isComplete: false, notes: note.trim() });
+                if (_currentStaffId) await openStaffDetail(_currentStaffId);
+            } catch (err) {
+                alert(err.message || "Could not reject onboarding item");
             }
         }
 

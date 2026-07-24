@@ -229,6 +229,57 @@
                         </div>
                     </div>
 
+                    <!-- HR SNAPSHOT — GET /admin/staff/*, /admin/directives, /admin/inventory/dashboard -->
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">HR Snapshot</h3>
+                                    <div class="card-actions">
+                                        <a href="./staff.html" class="btn btn-sm btn-outline-primary">Staff Overview</a>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <a href="./staff.html" class="text-decoration-none">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3"><span class="bg-warning-lt text-warning avatar">📋</span></div>
+                                                    <div>
+                                                        <div class="h3 mb-0" id="hr-snap-onboarding">—</div>
+                                                        <div class="text-secondary small">Open onboarding items</div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <a href="./staff-directives.html" class="text-decoration-none">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3"><span class="bg-red-lt text-red avatar">✅</span></div>
+                                                    <div>
+                                                        <div class="h3 mb-0" id="hr-snap-directives">—</div>
+                                                        <div class="text-secondary small">Pending directives</div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <a href="./staff-inventory.html" class="text-decoration-none">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3"><span class="bg-orange-lt text-orange avatar">📦</span></div>
+                                                    <div>
+                                                        <div class="h3 mb-0" id="hr-snap-lowstock">—</div>
+                                                        <div class="text-secondary small">Low-stock alerts</div>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- RECENT BOOKINGS — GET /admin/bookings -->
                     <div class="row">
                         <div class="col-12">
@@ -355,6 +406,9 @@
     <script src="assets/js/api-utils/beauticians.js" defer></script>
     <script src="assets/js/force-assign-modal.js" defer></script>
     <script src="assets/js/api-utils/analytics.js" defer></script>
+    <script src="assets/js/api-utils/staff.js" defer></script>
+    <script src="assets/js/api-utils/staff-comms.js" defer></script>
+    <script src="assets/js/api-utils/staff-operations.js" defer></script>
     <script>
         // Guard: redirect to login if no token
         Auth.requireAuth();
@@ -567,6 +621,7 @@
 
             // ── Load dashboard KPIs + charts ─────────────────────────────────
             Analytics.loadDashboard({ days: 30 });
+            loadHrSnapshot();
 
             // ── Revenue range toggle buttons (7d / 30d / 90d) ────────────────
             document.querySelectorAll(".btn-group [data-days]").forEach(function (btn) {
@@ -587,6 +642,38 @@
                 });
             });
         });
+
+        async function loadHrSnapshot() {
+            try {
+                const summary = await Staff.getOnboardingSummary();
+                setText("hr-snap-onboarding", summary.totalIncompleteItems);
+            } catch (err) {
+                console.error("Failed to load onboarding summary", err);
+                setText("hr-snap-onboarding", "—");
+            }
+
+            try {
+                const directives = await StaffComms.getAllDirectives({ status: "PENDING" });
+                setText("hr-snap-directives", directives.length);
+            } catch (err) {
+                console.error("Failed to load directives", err);
+                setText("hr-snap-directives", "—");
+            }
+
+            try {
+                const totals = await StaffOps.getInventoryDashboard();
+                const lowStock = totals.filter(function (t) { return t.total <= StaffOps.LOW_STOCK_THRESHOLD; }).length;
+                setText("hr-snap-lowstock", lowStock);
+            } catch (err) {
+                console.error("Failed to load inventory dashboard", err);
+                setText("hr-snap-lowstock", "—");
+            }
+        }
+
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = String(value);
+        }
     </script>
 </body>
 

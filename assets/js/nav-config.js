@@ -130,11 +130,18 @@ var NavConfig = window.NavConfig || (() => {
             id: "staff",
             label: "Staff",
             icon: "staff",
-            href: "staff.html",
             permission: {
                 type: "requireAny",
                 perms: ["staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations"],
             },
+            children: [
+                { label: "Staff Records", href: "staff.html" },
+                { label: "Company Documents", href: "staff-documents.html" },
+                { label: "Announcements", href: "staff-announcements.html" },
+                { label: "Tasks & Directives", href: "staff-directives.html" },
+                { label: "Attendance", href: "staff-attendance.html" },
+                { label: "Inventory", href: "staff-inventory.html" },
+            ],
         },
         {
             id: "beauticians",

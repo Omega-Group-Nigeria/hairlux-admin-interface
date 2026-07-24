@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Company Documents</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        table td { vertical-align: middle; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg></a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1" /></svg></a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Staff</div>
+                            <h2 class="page-title">Company Documents</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert" class="alert d-none mb-3" role="alert"></div>
+
+                    <div class="alert alert-info mb-4">
+                        Every new hire must acknowledge the current version of each document below before their onboarding is complete.
+                        Uploading a new version here does <strong>not</strong> erase history — every staff member's acknowledgement of a
+                        prior version stays on record as a true account of what they actually agreed to at the time.
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Document Types</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table">
+                                <thead><tr><th>Document Type</th><th>Current Title</th><th>Version</th><th>Created</th><th class="w-1">Actions</th></tr></thead>
+                                <tbody id="documents-tbody"><tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document version modal -->
+    <div class="modal modal-blur fade" id="modal-document" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-document-title">New Document Version</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="modal-document-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Document type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="document-type" disabled></select>
+                        <div class="form-hint">Set automatically from the row you clicked.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="document-title">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="document-title" maxlength="200" placeholder="e.g. Hairlux Confidentiality Agreement (NDA)">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label" for="document-file">Document file (PDF) <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="document-file" accept="application/pdf">
+                        <div class="form-hint">Max 15MB, PDF only.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-document">Create Version</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/api-utils/staff-documents.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var _activeDocsByType = {};
+        var _pendingType = null;
+        var pageAlertTimer = null;
+
+        function setPageAlert(type, message) {
+            var el = document.getElementById("page-alert");
+            if (!message) { el.className = "alert d-none mb-3"; el.textContent = ""; return; }
+            el.className = "alert alert-" + type + " mb-3";
+            el.textContent = message;
+        }
+
+        function flashPageAlert(type, message) {
+            if (pageAlertTimer) { clearTimeout(pageAlertTimer); pageAlertTimer = null; }
+            setPageAlert(type, message);
+            if (!message) return;
+            pageAlertTimer = setTimeout(function () { setPageAlert("", ""); pageAlertTimer = null; }, 5000);
+        }
+
+        function esc(s) {
+            return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function renderDocumentsTable() {
+            var canManage = RBAC.can(StaffDocuments.PERMISSIONS.MANAGE);
+            var tbody = document.getElementById("documents-tbody");
+            tbody.innerHTML = StaffDocuments.DOCUMENT_TYPES.map(function (t) {
+                var doc = _activeDocsByType[t.value];
+                var actionBtn = canManage
+                    ? '<button type="button" class="btn btn-sm btn-outline-primary btn-doc-version" data-type="' + t.value + '">' + (doc ? "New Version" : "Create") + '</button>'
+                    : "";
+                if (!doc) {
+                    return '<tr><td class="fw-semibold">' + esc(t.label) + '</td>' +
+                        '<td colspan="3" class="text-secondary">Not created yet</td>' +
+                        '<td>' + actionBtn + '</td></tr>';
+                }
+                return '<tr><td class="fw-semibold">' + esc(t.label) + '</td>' +
+                    '<td>' + esc(doc.title) + '</td>' +
+                    '<td><span class="badge bg-blue-lt">v' + doc.version + '</span></td>' +
+                    '<td class="text-secondary small">' + StaffDocuments.formatDate(doc.createdAt) + '</td>' +
+                    '<td>' + actionBtn + '</td></tr>';
+            }).join("");
+        }
+
+        async function loadDocuments(options) {
+            options = options || {};
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var docs = await StaffDocuments.getActiveDocuments();
+                _activeDocsByType = {};
+                docs.forEach(function (d) { _activeDocsByType[d.type] = d; });
+                renderDocumentsTable();
+                var missing = StaffDocuments.DOCUMENT_TYPES.length - docs.length;
+                document.getElementById("results-label").textContent =
+                    docs.length + " of " + StaffDocuments.DOCUMENT_TYPES.length + " document types created" +
+                    (missing > 0 ? " — " + missing + " missing" : "");
+                if (options.notifySuccess) flashPageAlert("success", "Refreshed.");
+            } catch (e) {
+                document.getElementById("documents-tbody").innerHTML =
+                    '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message || "Failed to load documents.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        function openDocumentModal(type) {
+            if (!RBAC.can(StaffDocuments.PERMISSIONS.MANAGE)) return;
+            _pendingType = type;
+            var existing = _activeDocsByType[type];
+            var errEl = document.getElementById("modal-document-error");
+            errEl.classList.add("d-none");
+
+            var typeSelect = document.getElementById("document-type");
+            typeSelect.innerHTML = StaffDocuments.DOCUMENT_TYPES.map(function (t) {
+                return '<option value="' + t.value + '"' + (t.value === type ? " selected" : "") + '>' + esc(t.label) + '</option>';
+            }).join("");
+
+            document.getElementById("modal-document-title").textContent = existing
+                ? "New Version — " + StaffDocuments.typeLabel(type)
+                : "Create — " + StaffDocuments.typeLabel(type);
+            document.getElementById("btn-save-document").textContent = existing ? "Create New Version" : "Create Version";
+            document.getElementById("document-title").value = existing ? existing.title : "";
+            document.getElementById("document-file").value = "";
+
+            new bootstrap.Modal(document.getElementById("modal-document")).show();
+        }
+
+        async function saveDocument() {
+            var errEl = document.getElementById("modal-document-error");
+            errEl.classList.add("d-none");
+            var title = document.getElementById("document-title").value.trim();
+            var fileInput = document.getElementById("document-file");
+            var file = fileInput.files && fileInput.files[0];
+
+            if (!title) { errEl.textContent = "Title is required."; errEl.classList.remove("d-none"); return; }
+            if (!file) { errEl.textContent = "Choose a PDF file."; errEl.classList.remove("d-none"); return; }
+            if (file.type !== "application/pdf") { errEl.textContent = "Only PDF files are accepted."; errEl.classList.remove("d-none"); return; }
+            if (file.size > 15 * 1024 * 1024) { errEl.textContent = "File must be 15MB or smaller."; errEl.classList.remove("d-none"); return; }
+
+            var btn = document.getElementById("btn-save-document");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Uploading…';
+            try {
+                var uploadResult = await StaffDocuments.uploadFile(file);
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
+                await StaffDocuments.createDocument({ type: _pendingType, title: title, contentUrl: uploadResult.contentUrl });
+                bootstrap.Modal.getInstance(document.getElementById("modal-document")).hide();
+                flashPageAlert("success", "Document version created successfully.");
+                loadDocuments();
+            } catch (e) {
+                var msg = e.message || "Failed to save document.";
+                errEl.textContent = msg;
+                errEl.classList.remove("d-none");
+                flashPageAlert("danger", msg);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = _activeDocsByType[_pendingType] ? "Create New Version" : "Create Version";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuardForCurrentPage();
+                RBAC.applyNavVisibility();
+                renderDocumentsTable();
+            });
+
+            document.getElementById("btn-refresh").addEventListener("click", function () { loadDocuments({ notifySuccess: true }); });
+            document.getElementById("btn-save-document").addEventListener("click", saveDocument);
+
+            document.getElementById("documents-tbody").addEventListener("click", function (e) {
+                var versionBtn = e.target.closest(".btn-doc-version");
+                if (versionBtn) openDocumentModal(versionBtn.dataset.type);
+            });
+
+            loadDocuments();
+        });
+    </script>
+</body>
+</html>

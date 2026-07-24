@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Tasks &amp; Directives</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        table td { vertical-align: middle; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg></a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1" /></svg></a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Staff</div>
+                            <h2 class="page-title">Tasks &amp; Directives</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
+                            <button type="button" class="btn btn-primary d-none" id="btn-add-directive">New Directive</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert" class="alert d-none mb-3" role="alert"></div>
+
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Pending</div><div class="h1 mb-0" id="stat-pending">—</div></div></div></div>
+                        <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Acknowledged</div><div class="h1 mb-0" id="stat-acknowledged">—</div></div></div></div>
+                        <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Completed</div><div class="h1 mb-0" id="stat-completed">—</div></div></div></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Directives</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="card-body border-bottom py-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">Status</label>
+                                    <select class="form-select form-select-sm" id="filter-status">
+                                        <option value="">All statuses</option>
+                                        <option value="PENDING">Pending</option>
+                                        <option value="ACKNOWLEDGED">Acknowledged</option>
+                                        <option value="COMPLETED">Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table">
+                                <thead><tr><th>Title</th><th>Assigned To</th><th>Status</th><th>From</th><th>Sent</th></tr></thead>
+                                <tbody id="directives-tbody"><tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Directive modal -->
+    <div class="modal modal-blur fade" id="modal-directive" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Directive</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="modal-directive-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label" for="directive-title">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="directive-title" maxlength="200" placeholder="e.g. Submit updated price list">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="directive-body">Instructions <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="directive-body" rows="4" maxlength="5000" placeholder="e.g. Please review and confirm the new service price list by Friday."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Send to <span class="text-danger">*</span></label>
+                        <select class="form-select" id="directive-recipient-type">
+                            <option value="INDIVIDUAL">One specific staff member</option>
+                            <option value="BRANCH">Everyone at a branch</option>
+                        </select>
+                        <div class="form-hint">A branch directive creates one independent task per staff member there — each tracks their own status separately.</div>
+                    </div>
+                    <div class="mb-0" id="directive-staff-wrap">
+                        <label class="form-label" for="directive-staff">Staff member <span class="text-danger">*</span></label>
+                        <select class="form-select" id="directive-staff"><option value="">Loading staff…</option></select>
+                    </div>
+                    <div class="mb-0 d-none" id="directive-branch-wrap">
+                        <label class="form-label" for="directive-branch">Branch <span class="text-danger">*</span></label>
+                        <select class="form-select" id="directive-branch"><option value="">Loading branches…</option></select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-directive">Send Directive</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/api-utils/staff.js"></script>
+    <script src="./assets/js/api-utils/staff-comms.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var _branchesLoaded = false;
+        var _staffLoaded = false;
+        var _currentStatusFilter = "";
+        var pageAlertTimer = null;
+
+        function setPageAlert(type, message) {
+            var el = document.getElementById("page-alert");
+            if (!message) { el.className = "alert d-none mb-3"; el.textContent = ""; return; }
+            el.className = "alert alert-" + type + " mb-3";
+            el.textContent = message;
+        }
+
+        function flashPageAlert(type, message) {
+            if (pageAlertTimer) { clearTimeout(pageAlertTimer); pageAlertTimer = null; }
+            setPageAlert(type, message);
+            if (!message) return;
+            pageAlertTimer = setTimeout(function () { setPageAlert("", ""); pageAlertTimer = null; }, 5000);
+        }
+
+        function esc(s) {
+            return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function timeAgo(value) {
+            if (!value) return "-";
+            var d = new Date(value);
+            if (isNaN(d.getTime())) return "-";
+            var mins = Math.floor((Date.now() - d.getTime()) / 60000);
+            if (mins < 60) return mins + "m ago";
+            var hrs = Math.floor(mins / 60);
+            if (hrs < 24) return hrs + "h ago";
+            var days = Math.floor(hrs / 24);
+            if (days < 7) return days + "d ago";
+            return StaffComms.formatDate(value);
+        }
+
+        async function loadDirectives(options) {
+            options = options || {};
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var directives = await StaffComms.getAllDirectives({ status: _currentStatusFilter || undefined });
+                var tbody = document.getElementById("directives-tbody");
+                if (!directives.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-4">No directives found.</td></tr>';
+                } else {
+                    tbody.innerHTML = directives.map(function (d) {
+                        var assignedTo = d.targetStaff ? d.targetStaff.name + " (" + (d.targetStaff.staffCode || "") + ")" : "-";
+                        return '<tr><td class="fw-semibold">' + esc(d.title) + '</td>' +
+                            '<td>' + esc(assignedTo) + '</td>' +
+                            '<td>' + StaffComms.directiveStatusBadge(d.status) + '</td>' +
+                            '<td>' + esc(StaffComms.createdByName(d)) + '</td>' +
+                            '<td class="text-secondary small">' + timeAgo(d.createdAt) + '</td></tr>';
+                    }).join("");
+                }
+                document.getElementById("results-label").textContent = directives.length + " total";
+
+                document.getElementById("stat-pending").textContent = directives.filter(function (d) { return d.status === "PENDING"; }).length;
+                document.getElementById("stat-acknowledged").textContent = directives.filter(function (d) { return d.status === "ACKNOWLEDGED"; }).length;
+                document.getElementById("stat-completed").textContent = directives.filter(function (d) { return d.status === "COMPLETED"; }).length;
+
+                if (options.notifySuccess) flashPageAlert("success", "Refreshed.");
+            } catch (e) {
+                document.getElementById("directives-tbody").innerHTML =
+                    '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message || "Failed to load directives.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        async function ensureBranchesLoaded() {
+            if (_branchesLoaded) return;
+            try {
+                var branches = await Staff.getLocations();
+                var sel = document.getElementById("directive-branch");
+                sel.innerHTML = branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join("");
+                _branchesLoaded = true;
+            } catch (e) {
+                flashPageAlert("danger", "Failed to load branches: " + (e.message || ""));
+            }
+        }
+
+        async function ensureStaffLoaded() {
+            if (_staffLoaded) return;
+            try {
+                var result = await Staff.getAll({ limit: 100 });
+                var sel = document.getElementById("directive-staff");
+                sel.innerHTML = result.data.map(function (s) {
+                    return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + ' (' + esc(s.staffCode || "") + ')</option>';
+                }).join("");
+                _staffLoaded = true;
+            } catch (e) {
+                flashPageAlert("danger", "Failed to load staff: " + (e.message || ""));
+            }
+        }
+
+        function onRecipientTypeChange() {
+            var type = document.getElementById("directive-recipient-type").value;
+            document.getElementById("directive-staff-wrap").classList.toggle("d-none", type !== "INDIVIDUAL");
+            document.getElementById("directive-branch-wrap").classList.toggle("d-none", type !== "BRANCH");
+            if (type === "INDIVIDUAL") ensureStaffLoaded();
+            if (type === "BRANCH") ensureBranchesLoaded();
+        }
+
+        function openDirectiveModal() {
+            if (!RBAC.can(StaffComms.PERMISSIONS.MANAGE)) return;
+            document.getElementById("modal-directive-error").classList.add("d-none");
+            document.getElementById("directive-title").value = "";
+            document.getElementById("directive-body").value = "";
+            document.getElementById("directive-recipient-type").value = "INDIVIDUAL";
+            onRecipientTypeChange();
+            new bootstrap.Modal(document.getElementById("modal-directive")).show();
+        }
+
+        async function saveDirective() {
+            var errEl = document.getElementById("modal-directive-error");
+            errEl.classList.add("d-none");
+
+            var title = document.getElementById("directive-title").value.trim();
+            var body = document.getElementById("directive-body").value.trim();
+            var type = document.getElementById("directive-recipient-type").value;
+            var payload = { title: title, body: body };
+
+            if (!title) { errEl.textContent = "Title is required."; errEl.classList.remove("d-none"); return; }
+            if (!body) { errEl.textContent = "Instructions are required."; errEl.classList.remove("d-none"); return; }
+
+            if (type === "INDIVIDUAL") {
+                payload.targetStaffId = document.getElementById("directive-staff").value;
+                if (!payload.targetStaffId) { errEl.textContent = "Select a staff member."; errEl.classList.remove("d-none"); return; }
+            } else {
+                payload.targetLocationId = document.getElementById("directive-branch").value;
+                if (!payload.targetLocationId) { errEl.textContent = "Select a branch."; errEl.classList.remove("d-none"); return; }
+            }
+
+            var btn = document.getElementById("btn-save-directive");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Sending…';
+            try {
+                var result = await StaffComms.createDirective(payload);
+                bootstrap.Modal.getInstance(document.getElementById("modal-directive")).hide();
+                var count = result && result.fannedOutTo ? result.fannedOutTo : 1;
+                flashPageAlert("success", count > 1 ? "Directive sent to " + count + " staff members." : "Directive sent successfully.");
+                loadDirectives();
+            } catch (e) {
+                var msg = e.message || "Failed to send directive.";
+                errEl.textContent = msg;
+                errEl.classList.remove("d-none");
+                flashPageAlert("danger", msg);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Send Directive";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuardForCurrentPage();
+                RBAC.applyNavVisibility();
+                if (RBAC.can(StaffComms.PERMISSIONS.MANAGE)) {
+                    document.getElementById("btn-add-directive").classList.remove("d-none");
+                }
+            });
+
+            document.getElementById("btn-refresh").addEventListener("click", function () { loadDirectives({ notifySuccess: true }); });
+            document.getElementById("btn-add-directive").addEventListener("click", openDirectiveModal);
+            document.getElementById("btn-save-directive").addEventListener("click", saveDirective);
+            document.getElementById("directive-recipient-type").addEventListener("change", onRecipientTypeChange);
+            document.getElementById("filter-status").addEventListener("change", function () {
+                _currentStatusFilter = this.value;
+                loadDirectives();
+            });
+
+            loadDirectives();
+        });
+    </script>
+</body>
+</html>
