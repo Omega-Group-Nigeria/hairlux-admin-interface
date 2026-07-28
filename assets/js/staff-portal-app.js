@@ -711,9 +711,9 @@ function renderDocumentList(containerSelector, isStandalone) {
   const footer =
     !isStandalone && !currentDocuments.allAcknowledged
       ? '<div style="text-align:center;padding:24px;margin-top:8px;background:rgba(255,255,255,.02);border-radius:var(--r2);border:2px dashed var(--border)">' +
-        '<div style="font-size:28px;margin-bottom:10px">\uD83D\uDD10</div>' +
-        '<div style="font-weight:700;font-size:14px;color:var(--light);margin-bottom:4px">Complete all documents to finalise onboarding</div>' +
-        '<div style="font-size:12px;color:var(--muted)">' + docs.filter((d) => !d.acknowledged).length + ' document(s) remaining.</div></div>'
+      '<div style="font-size:28px;margin-bottom:10px">\uD83D\uDD10</div>' +
+      '<div style="font-weight:700;font-size:14px;color:var(--light);margin-bottom:4px">Complete all documents to finalise onboarding</div>' +
+      '<div style="font-size:12px;color:var(--muted)">' + docs.filter((d) => !d.acknowledged).length + ' document(s) remaining.</div></div>'
       : '';
 
   container.innerHTML = intro + items.join('') + footer;
@@ -776,7 +776,7 @@ async function loadAnnouncements() {
     })
     .join('');
 
-  announcements.filter((a) => !a.isRead).forEach((a) => StaffSelf.markAnnouncementRead(a.id).catch(() => {}));
+  announcements.filter((a) => !a.isRead).forEach((a) => StaffSelf.markAnnouncementRead(a.id).catch(() => { }));
 }
 
 // -- Directives / Tasks --
@@ -912,6 +912,15 @@ function renderCheckinButton(todayRecord) {
 }
 
 async function handleAttendanceToggle() {
+  const btn = document.getElementById('attendance-toggle-btn');
+  const st = document.querySelectorAll('#attendance .info-item .val')[0];
+  const originalText = btn ? btn.textContent : '';
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '…';
+  }
+
   try {
     if (checkedInToday) {
       await StaffSelf.checkOut();
@@ -920,6 +929,161 @@ async function handleAttendanceToggle() {
     }
     await loadAttendance();
     renderDashboard();
+  } catch (err) {
+    alert(err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+}
+
+// -- Leave & Permission --------------------------------------------------------
+
+const LEAVE_TYPE_LABELS = {
+  ANNUAL_LEAVE: 'Annual Leave',
+  SICK_LEAVE: 'Sick Leave',
+  CASUAL_LEAVE: 'Casual Leave',
+  DAY_OFF: 'Day Off',
+  PERMISSION_LATE_ARRIVAL: 'Permission — Late Arrival',
+  PERMISSION_EARLY_DEPARTURE: 'Permission — Early Departure',
+  OVERTIME_REQUEST: 'Overtime Request',
+};
+
+const PERMISSION_TYPES = ['PERMISSION_LATE_ARRIVAL', 'PERMISSION_EARLY_DEPARTURE'];
+
+async function loadLeaveRequests() {
+  const container = document.getElementById('leave-list-container');
+  try {
+    const requests = await StaffSelf.getMyLeaveRequests();   // ← was getLeaveRequests, wrong name
+    renderLeaveRequests(requests);
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small py-3">' + err.message + '</div>';
+  }
+}
+
+function renderLeaveRequests(requests) {
+  const container = document.getElementById('leave-list-container');
+  if (!requests || !requests.length) {
+    container.innerHTML = '<div class="text-secondary small py-3">No leave requests yet.</div>';
+    return;
+  }
+
+  const statusColor = { PENDING: 'amber', APPROVED: 'green', REJECTED: 'red' };
+
+  container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    '<th>Type</th><th>Dates</th><th>Reason</th><th>Status</th>' +
+    '</tr></thead><tbody>' +
+    requests.map(function (r) {
+      var dates = StaffSelf.formatDate(r.startDate) + (r.startDate !== r.endDate ? ' – ' + StaffSelf.formatDate(r.endDate) : '');
+      if (PERMISSION_TYPES.includes(r.type) && r.startTime) {
+        dates += ' (' + r.startTime + (r.endTime ? '–' + r.endTime : '') + ')';
+      }
+      return '<tr>' +
+        '<td>' + (LEAVE_TYPE_LABELS[r.type] || r.type) + '</td>' +
+        '<td>' + dates + '</td>' +
+        '<td class="text-secondary small">' + escapeHtml(r.reason) + '</td>' +
+        '<td><span class="bdg ' + (statusColor[r.status] || '') + '">' + r.status + '</span>' +
+        (r.status === 'REJECTED' && r.rejectionReason ? '<div class="text-secondary small mt-1">' + escapeHtml(r.rejectionReason) + '</div>' : '') +
+        '</td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+}
+
+function renderLeaveRequests(requests) {
+  const container = document.getElementById('leave-list-container');
+  if (!requests || !requests.length) {
+    container.innerHTML = '<div class="text-secondary small py-3">No leave requests yet.</div>';
+    return;
+  }
+
+  const statusColor = { PENDING: 'amber', APPROVED: 'green', REJECTED: 'red' };
+
+  container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    '<th>Type</th><th>Dates</th><th>Reason</th><th>Status</th>' +
+    '</tr></thead><tbody>' +
+    requests.map(function (r) {
+      var dates = formatDate(r.startDate) + (r.startDate !== r.endDate ? ' – ' + formatDate(r.endDate) : '');
+      if (PERMISSION_TYPES.includes(r.type) && r.startTime) {
+        dates += ' (' + r.startTime + (r.endTime ? '–' + r.endTime : '') + ')';
+      }
+      return '<tr>' +
+        '<td>' + (LEAVE_TYPE_LABELS[r.type] || r.type) + '</td>' +
+        '<td>' + dates + '</td>' +
+        '<td class="text-secondary small">' + escapeHtml(r.reason) + '</td>' +
+        '<td><span class="bdg ' + (statusColor[r.status] || '') + '">' + r.status + '</span>' +
+        (r.status === 'REJECTED' && r.rejectionReason ? '<div class="text-secondary small mt-1">' + escapeHtml(r.rejectionReason) + '</div>' : '') +
+        '</td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+}
+
+function showLeaveRequestForm() {
+  var formContainer = document.getElementById('leave-form-container');
+  formContainer.style.display = 'block';
+  formContainer.innerHTML =
+    '<div class="row g-2 mb-3">' +
+    '<div class="col-12"><label class="form-label small mb-1">Request Type</label>' +
+    '<select class="input" id="lr-type" onchange="toggleLeaveTimeFields()">' +
+    Object.keys(LEAVE_TYPE_LABELS).map(function (k) { return '<option value="' + k + '">' + LEAVE_TYPE_LABELS[k] + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="col-6"><label class="form-label small mb-1">Start Date</label>' +
+    '<input type="date" class="input" id="lr-start-date"></div>' +
+    '<div class="col-6"><label class="form-label small mb-1">End Date</label>' +
+    '<input type="date" class="input" id="lr-end-date"></div>' +
+    '<div class="col-6" id="lr-start-time-wrap" style="display:none">' +
+    '<label class="form-label small mb-1">From (time)</label>' +
+    '<input type="time" class="input" id="lr-start-time"></div>' +
+    '<div class="col-6" id="lr-end-time-wrap" style="display:none">' +
+    '<label class="form-label small mb-1">To (time)</label>' +
+    '<input type="time" class="input" id="lr-end-time"></div>' +
+    '<div class="col-12"><label class="form-label small mb-1">Reason</label>' +
+    '<textarea class="input" id="lr-reason" rows="2"></textarea></div>' +
+    '</div>' +
+    '<div class="flex gap2">' +
+    '<button class="btn btn-gold btn-sm" onclick="submitLeaveRequestForm()">Submit Request</button>' +
+    '<button class="btn btn-ghost btn-sm" onclick="cancelLeaveRequestForm()">Cancel</button>' +
+    '</div>';
+}
+
+function toggleLeaveTimeFields() {
+  var isPermission = PERMISSION_TYPES.includes(document.getElementById('lr-type').value);
+  document.getElementById('lr-start-time-wrap').style.display = isPermission ? 'block' : 'none';
+  document.getElementById('lr-end-time-wrap').style.display = isPermission ? 'block' : 'none';
+}
+
+function cancelLeaveRequestForm() {
+  document.getElementById('leave-form-container').style.display = 'none';
+  document.getElementById('leave-form-container').innerHTML = '';
+}
+
+async function submitLeaveRequestForm() {
+  var type = document.getElementById('lr-type').value;
+  var startDate = document.getElementById('lr-start-date').value;
+  var endDate = document.getElementById('lr-end-date').value;
+  var reason = document.getElementById('lr-reason').value.trim();
+  var isPermission = PERMISSION_TYPES.includes(type);
+  var startTime = isPermission ? document.getElementById('lr-start-time').value : undefined;
+  var endTime = isPermission ? document.getElementById('lr-end-time').value : undefined;
+
+  if (!startDate || !endDate || !reason) {
+    alert('Start date, end date, and reason are required.');
+    return;
+  }
+  if (isPermission && (!startTime || !endTime)) {
+    alert('Please specify the time window for this permission request.');
+    return;
+  }
+
+  try {
+    await StaffSelf.submitLeaveRequest({
+      type: type, startDate: startDate, endDate: endDate,
+      startTime: startTime, endTime: endTime, reason: reason,
+    });
+    cancelLeaveRequestForm();
+    await loadLeaveRequests();
   } catch (err) {
     alert(err.message);
   }
@@ -981,8 +1145,8 @@ async function loadInventoryDashboard() {
       .map((t) => {
         const statusBadge =
           t.total <= 0 ? '<span class="badge b-red">Out of Stock</span>' :
-          t.total <= LOW_STOCK_THRESHOLD ? '<span class="badge b-amber">Low</span>' :
-          '<span class="badge b-green">Good</span>';
+            t.total <= LOW_STOCK_THRESHOLD ? '<span class="badge b-amber">Low</span>' :
+              '<span class="badge b-green">Good</span>';
         return (
           '<tr><td style="font-weight:600;color:var(--white)">' + escapeHtml(t.productName) + '</td><td>\u2014</td>' +
           '<td>' + t.total + ' units</td><td>\u2014</td><td>' + statusBadge + '</td>' +

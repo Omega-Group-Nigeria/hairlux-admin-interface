@@ -328,6 +328,7 @@ tbody tr:last-child td{border-bottom:none}
 
   <div class="sb-sec">Daily Operations</div>
   <div class="sb-item" onclick="show('attendance')"><span class="ico">🕐</span>Attendance</div>
+  <div class="sb-item" onclick="show('leave')"><span class="ico">🗓️</span>Leave & Permission</div>
   <div class="sb-item" onclick="show('inventory')"><span class="ico">📦</span>Inventory</div>
 
   <div class="sb-item" onclick="show('sales')"><span class="ico">💳</span>Sales & Bookings<span class="bdg gold">4</span></div>
@@ -635,6 +636,23 @@ tbody tr:last-child td{border-bottom:none}
               <tr><td>9 Jul</td><td>Wednesday</td><td>08:45 AM</td><td>09:10 PM</td><td>12.4</td><td><span class="badge b-green">Present</span></td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ LEAVE REQUEST ═══ -->
+
+    <div id="leave" class="screen">
+      <div class="card mb4">
+        <div class="card-h">
+          <h3>My Leave &amp; Permission Requests</h3>
+          <button class="btn btn-gold btn-sm" onclick="showLeaveRequestForm()">+ New Request</button>
+        </div>
+        <div class="card-b" id="leave-form-container" style="display:none"></div>
+        <div class="card-b" id="leave-list-container">
+          <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1110,21 +1128,22 @@ window.onload = () => {
   startClock();
 };
 
-const pages = {
-  'dashboard':['Good morning, Amina 👋','Dashboard'],
-  'onboarding':['Complete Onboarding','Onboarding'],
-  'profile':['My Profile','Profile'],
-  'agreements':['Documents & Agreements','Documents'],
-  'attendance':['Attendance','Attendance'],
-  'inventory':['Inventory — Stock Management','Inventory'],
-  'announcements':['Announcements','Announcements'],
-  'tasks':['Tasks & Directives','Tasks'],
-  'notifications':['Notifications','Notifications'],
-  'sales':['Sales & Bookings','Sales'],
-  'commission':['My Commission & Earnings','Commission'],
-  'payroll':['Payslips & Payroll','Payroll'],
-  'audit-trail':['Audit Trail','Audit'],
-};
+  const pages = {
+    'dashboard': ['Good morning, Amina 👋', 'Dashboard'],
+    'onboarding': ['Complete Onboarding', 'Onboarding'],
+    'profile': ['My Profile', 'Profile'],
+    'agreements': ['Documents & Agreements', 'Documents'],
+    'attendance': ['Attendance', 'Attendance'],
+    'leave': ['Leave & Permission', 'Leave'],
+    'inventory': ['Inventory — Stock Management', 'Inventory'],
+    'announcements': ['Announcements', 'Announcements'],
+    'tasks': ['Tasks & Directives', 'Tasks'],
+    'notifications': ['Notifications', 'Notifications'],
+    'sales': ['Sales & Bookings', 'Sales'],
+    'commission': ['My Commission & Earnings', 'Commission'],
+    'payroll': ['Payslips & Payroll', 'Payroll'],
+    'audit-trail': ['Audit Trail', 'Audit'],
+  };
 const ctas = {
   'dashboard':'⏵ Check In',
   'attendance':'Check In',

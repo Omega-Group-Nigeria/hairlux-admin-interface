@@ -10,6 +10,13 @@ const StaffOps = (() => {
         return raw.data !== undefined ? raw.data : raw;
     }
 
+    async function correctAttendance(recordId, payload) {
+        return jsonFetch(`/admin/attendance/${recordId}/correct`, {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+        });
+    }
+
     async function getAttendanceReport(params = {}) {
         const q = new URLSearchParams();
         if (params.date) q.set("date", params.date);
@@ -48,6 +55,7 @@ const StaffOps = (() => {
 
     return {
         getAttendanceReport,
+        correctAttendance,
         getInventoryDashboard,
         getInventoryEntries,
         LOW_STOCK_THRESHOLD,

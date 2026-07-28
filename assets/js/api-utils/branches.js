@@ -26,7 +26,7 @@
 const Branches = (() => {
 
     const PERMISSIONS = {
-        READ:   "branches:read",
+        READ: "branches:read",
         MANAGE: "branches:manage",
     };
 
@@ -67,7 +67,14 @@ const Branches = (() => {
         if (!name) throw new Error("Branch name is required.");
         if (!address) throw new Error("Branch address is required.");
         if (address.length > 500) throw new Error("Address must be 500 characters or fewer.");
-        return { name, address };
+
+        const body = { name, address };
+        if (payload.code) body.code = payload.code;
+        if (payload.gpsLat !== undefined && payload.gpsLat !== "") body.gpsLat = Number(payload.gpsLat);
+        if (payload.gpsLng !== undefined && payload.gpsLng !== "") body.gpsLng = Number(payload.gpsLng);
+        if (payload.approvedRadiusMeters !== undefined && payload.approvedRadiusMeters !== "") body.approvedRadiusMeters = Number(payload.approvedRadiusMeters);
+        if (payload.lateGracePeriodMinutes !== undefined && payload.lateGracePeriodMinutes !== "") body.lateGracePeriodMinutes = Number(payload.lateGracePeriodMinutes);
+        return body;
     }
 
     function normalizeUpdateBranchPayload(payload) {
@@ -78,6 +85,10 @@ const Branches = (() => {
             if (!body.address) throw new Error("Branch address cannot be empty.");
             if (body.address.length > 500) throw new Error("Address must be 500 characters or fewer.");
         }
+        if (body.gpsLat !== undefined && body.gpsLat !== "") body.gpsLat = Number(body.gpsLat);
+        if (body.gpsLng !== undefined && body.gpsLng !== "") body.gpsLng = Number(body.gpsLng);
+        if (body.approvedRadiusMeters !== undefined && body.approvedRadiusMeters !== "") body.approvedRadiusMeters = Number(body.approvedRadiusMeters);
+        if (body.lateGracePeriodMinutes !== undefined && body.lateGracePeriodMinutes !== "") body.lateGracePeriodMinutes = Number(body.lateGracePeriodMinutes);
         return body;
     }
 
