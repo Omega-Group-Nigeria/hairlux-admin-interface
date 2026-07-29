@@ -1652,13 +1652,13 @@
         <div class="tb-left">
           <div class="bc" id="bc">Staff Portal <span style="color:var(--border)">›</span> <span
               id="bc-page">Dashboard</span></div>
-          <h1 id="page-h1">Good morning, Amina 👋</h1>
+          <h1 id="page-h1">Welcome</h1>
         </div>
         <div class="tb-right">
           <button class="btn btn-gold btn-sm" id="tb-cta" onclick="handleTopBarCta()">⏵ Check In</button>
           <div class="ico-btn" onclick="show('notifications')">🔔<div class="ndot"></div>
           </div>
-          <div class="av sm">AO</div>
+          <div class="av sm" id="topbar-avatar">—</div>
         </div>
       </div>
 
@@ -1668,13 +1668,12 @@
         <div id="dashboard" class="screen active">
           <!-- onboarding alert -->
           <div
-            style="background:rgba(157,130,72,.08);border:1px solid rgba(157,130,72,.25);border-radius:var(--r2);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+            style="background:rgba(157,130,72,.08);border:1px solid rgba(157,130,72,.25);border-radius:var(--r2);padding:14px 18px;margin-bottom:20px;display:none;align-items:center;gap:12px">
             <span style="font-size:20px">⚠️</span>
             <div style="flex:1">
-              <div style="font-size:13px;font-weight:700;color:var(--gold)">Onboarding Incomplete — 2 steps remaining
+              <div style="font-size:13px;font-weight:700;color:var(--gold)">Onboarding Incomplete
               </div>
-              <div style="font-size:12px;color:var(--muted)">Please complete your Code of Conduct and Guarantor Form to
-                finalise your onboarding.</div>
+              <div style="font-size:12px;color:var(--muted)">Loading…</div>
             </div>
             <button class="btn btn-gold btn-sm" onclick="show('onboarding')">Complete Now →</button>
           </div>
@@ -1683,72 +1682,45 @@
             <div class="stat gold">
               <div class="stat-ico" style="background:rgba(157,130,72,.12)">📅</div>
               <div class="stat-lbl">Attendance (Month)</div>
-              <div class="stat-val">98%</div>
-              <div class="stat-delta up">↑ Excellent</div>
+              <div class="stat-val">—</div>
+              <div class="stat-delta neu">Loading…</div>
             </div>
             <div class="stat green">
               <div class="stat-ico" style="background:var(--green2)">✅</div>
               <div class="stat-lbl">Tasks Today</div>
-              <div class="stat-val">3</div>
-              <div class="stat-delta amber">1 urgent</div>
+              <div class="stat-val">—</div>
+              <div class="stat-delta neu">Loading…</div>
             </div>
             <div class="stat blue">
               <div class="stat-ico" style="background:var(--blue2)">⭐</div>
               <div class="stat-lbl">Client Rating</div>
-              <div class="stat-val">4.8</div>
-              <div class="stat-delta up">↑ +0.2 this week</div>
+              <div class="stat-val">—</div>
+              <div class="stat-delta neu">No data yet</div>
             </div>
             <div class="stat purple">
               <div class="stat-ico" style="background:rgba(142,68,173,.12)">📢</div>
               <div class="stat-lbl">Unread Announcements</div>
-              <div class="stat-val">2</div>
-              <div class="stat-delta neu">New</div>
+              <div class="stat-val">—</div>
+              <div class="stat-delta neu">Loading…</div>
             </div>
           </div>
 
           <div class="g2">
             <div style="display:flex;flex-direction:column;gap:14px">
-              <!-- Announcements -->
+              <!-- Announcements / directives — replaced by renderDashboard(); placeholder swept via .banner removal -->
               <div class="banner">
-                <div class="tag">📢 Management — All Staff</div>
-                <h3>July Performance Review — Friday 18th</h3>
-                <p>All branch staff are expected to attend the monthly performance review at the Academy branch
-                  conference room.</p>
-                <div class="meta">From: Qudus Jimoh, CEO · 12 Jul 2026</div>
-              </div>
-              <div class="banner urgent">
-                <div class="tag" style="color:var(--red)">🚨 Urgent Directive — Amina Okafor</div>
-                <h3 style="font-size:14px">Complete client consultation notes by 5:00 PM today</h3>
-                <p>Please update all outstanding client consultation records in the system before close of business.</p>
-                <div class="meta" style="color:var(--red)">From: Fatima Adeyemi, Branch Manager · Today</div>
+                <div class="tag">Loading…</div>
+                <h3>—</h3>
+                <p>—</p>
+                <div class="meta">—</div>
               </div>
               <!-- Tasks -->
               <div class="card">
                 <div class="card-h">
-                  <h3>My Tasks</h3><span class="badge b-amber">3 pending</span>
+                  <h3>My Tasks</h3><span class="badge b-amber">—</span>
                 </div>
                 <div class="card-b" style="padding:16px 22px">
-                  <div class="task urgent">
-                    <div class="task-chk" id="t1">!</div>
-                    <div>
-                      <div class="task-title">Update client consultation notes</div>
-                      <div class="task-due">Due today by 5:00 PM</div>
-                    </div>
-                  </div>
-                  <div class="task">
-                    <div class="task-chk" onclick="checkTask(this)">○</div>
-                    <div>
-                      <div class="task-title">Complete guarantor form submission</div>
-                      <div class="task-due">Due: 15 Jul 2026</div>
-                    </div>
-                  </div>
-                  <div class="task">
-                    <div class="task-chk" onclick="checkTask(this)">○</div>
-                    <div>
-                      <div class="task-title">Sign Code of Conduct document</div>
-                      <div class="task-due">Due: 16 Jul 2026</div>
-                    </div>
-                  </div>
+                  <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>
                 </div>
               </div>
             </div>
@@ -1761,41 +1733,37 @@
                 </div>
                 <div class="card-b">
                   <div class="flex aic gap3 mb4">
-                    <div class="av lg">AO</div>
+                    <div class="av lg">—</div>
                     <div>
-                      <div style="font-size:16px;font-weight:800;color:var(--white)">Amina Okafor</div>
-                      <div style="font-size:12px;color:var(--gold);font-weight:600">Senior Hair Stylist</div>
-                      <div style="font-size:10px;color:var(--muted);font-family:monospace;margin-top:2px">HL-ACD-0012
+                      <div style="font-size:16px;font-weight:800;color:var(--white)">Loading…</div>
+                      <div style="font-size:12px;color:var(--gold);font-weight:600">—</div>
+                      <div style="font-size:10px;color:var(--muted);font-family:monospace;margin-top:2px">—
                       </div>
                     </div>
                   </div>
                   <div class="info-grid">
                     <div class="info-item">
                       <div class="lbl">Branch</div>
-                      <div class="val">Academy, Ibadan</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">Type</div>
-                      <div class="val">Full-Time</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">Reports To</div>
-                      <div class="val">Fatima Adeyemi</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">Start Date</div>
-                      <div class="val">14 Jul 2026</div>
+                      <div class="val">—</div>
                     </div>
                   </div>
-                  <div class="divider"></div>
+                  <div class="divider" style="display:none"></div>
                   <div
-                    style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">
+                    style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:none">
                     Key Responsibilities</div>
-                  <ul style="font-size:12px;color:var(--muted);padding-left:16px;line-height:2">
-                    <li>Premium cut, colour & treatment delivery</li>
-                    <li>Client consultation & profile management</li>
-                    <li>Stock monitoring for styling station</li>
-                    <li>Mentoring junior stylists and trainees</li>
+                  <ul style="font-size:12px;color:var(--muted);padding-left:16px;line-height:2;display:none">
                   </ul>
                 </div>
               </div>
@@ -1807,20 +1775,10 @@
                 </div>
                 <div class="card-b">
                   <div style="margin-bottom:8px">
-                    <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600;color:var(--gold)">65%
-                        Complete</span><span style="font-size:11px;color:var(--muted)">4 of 6 done</span></div>
-                    <div class="pbar"><span style="width:65%"></span></div>
+                    <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600;color:var(--gold)">—
+                      </span><span style="font-size:11px;color:var(--muted)">Loading…</span></div>
+                    <div class="pbar"><span style="width:0%"></span></div>
                   </div>
-                  <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span
-                      style="font-size:12px">Employment Contract</span></div>
-                  <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span
-                      style="font-size:12px">Staff Handbook</span></div>
-                  <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span
-                      style="font-size:12px">NDA & IT Policy</span></div>
-                  <div class="flex gap2 mb2"><span style="color:var(--amber);font-size:13px">⏳</span><span
-                      style="font-size:12px">Code of Conduct — Pending</span></div>
-                  <div class="flex gap2"><span style="color:var(--amber);font-size:13px">⏳</span><span
-                      style="font-size:12px">Guarantor Form — Pending</span></div>
                 </div>
               </div>
             </div>
@@ -1833,32 +1791,32 @@
             <div class="step done">
               <div class="step-c">✓</div>
               <div>
-                <div class="step-lbl">Credentials Created</div>
+                <div class="step-lbl">Account Created</div>
               </div>
             </div>
             <div class="step-line"></div>
-            <div class="step done">
+            <div class="step done" id="onb-step-personal">
               <div class="step-c">✓</div>
               <div>
                 <div class="step-lbl">Personal Info</div>
               </div>
             </div>
             <div class="step-line"></div>
-            <div class="step act">
+            <div class="step pend" id="onb-step-documents">
               <div class="step-c">3</div>
               <div>
                 <div class="step-lbl">Documents</div>
               </div>
             </div>
             <div class="step-line"></div>
-            <div class="step pend">
+            <div class="step pend" id="onb-step-verification">
               <div class="step-c">4</div>
               <div>
                 <div class="step-lbl">Verification</div>
               </div>
             </div>
             <div class="step-line"></div>
-            <div class="step pend">
+            <div class="step pend" id="onb-step-complete">
               <div class="step-c">5</div>
               <div>
                 <div class="step-lbl">Complete</div>
@@ -1866,92 +1824,23 @@
             </div>
           </div>
 
-          <div class="flex aic gap2 mb4"
-            style="background:var(--green2);border:1px solid rgba(39,174,96,.25);border-radius:var(--r2);padding:12px 16px">
-            <span style="color:var(--green);font-size:16px">✓</span>
-            <span style="font-size:13px;font-weight:600;color:var(--green)">Credentials dispatched to
-              amina.okafor@gmail.com — 14 Jul 2026, 08:30 AM</span>
-          </div>
-
           <div class="g4 mb4">
             <div class="stat gold">
               <div class="stat-lbl">Employee Number</div>
-              <div class="stat-val" style="font-size:16px;font-family:monospace">HL-ACD-0012</div>
-            </div>
-            <div class="stat purple">
-              <div class="stat-lbl">Username</div>
-              <div class="stat-val" style="font-size:13px;font-family:monospace">amina.okafor</div>
-              <div style="font-size:10px;color:var(--muted)">@hairlux.com.ng</div>
-            </div>
-            <div class="stat blue">
-              <div class="stat-lbl">Temp Password</div>
-              <div class="stat-val" style="font-size:18px">••••••••</div>
-              <div style="font-size:10px;color:var(--muted)">Sent by email</div>
+              <div class="stat-val" id="onb-staff-code" style="font-size:16px;font-family:monospace">—</div>
             </div>
             <div class="stat green">
               <div class="stat-lbl">Branch Assigned</div>
-              <div class="stat-val" style="font-size:18px">Academy</div>
+              <div class="stat-val" id="onb-branch" style="font-size:18px">—</div>
             </div>
           </div>
 
           <div class="card">
             <div class="card-h">
-              <h3>Document Review & Acknowledgement</h3><span class="badge b-gold">4 of 6 acknowledged</span>
+              <h3>Document Review & Acknowledgement</h3><span class="badge">—</span>
             </div>
             <div class="card-b">
-              <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Read each document carefully. Your
-                electronic acknowledgement creates a legal and timestamped record.</p>
-              <div class="ag-item done">
-                <div class="ag-chk">✓</div>
-                <div style="flex:1">
-                  <div class="ag-title">Employment Contract</div>
-                  <div class="ag-desc">Acknowledged 14 Jul · 10:24 AM · IP: 197.210.xx.xx</div>
-                </div><button class="btn btn-ghost btn-sm">View</button>
-              </div>
-              <div class="ag-item done">
-                <div class="ag-chk">✓</div>
-                <div style="flex:1">
-                  <div class="ag-title">Confidentiality Agreement (NDA)</div>
-                  <div class="ag-desc">Acknowledged 14 Jul · 10:31 AM</div>
-                </div><button class="btn btn-ghost btn-sm">View</button>
-              </div>
-              <div class="ag-item done">
-                <div class="ag-chk">✓</div>
-                <div style="flex:1">
-                  <div class="ag-title">IT & Acceptable Use Policy</div>
-                  <div class="ag-desc">Acknowledged 14 Jul · 10:38 AM</div>
-                </div><button class="btn btn-ghost btn-sm">View</button>
-              </div>
-              <div class="ag-item done">
-                <div class="ag-chk">✓</div>
-                <div style="flex:1">
-                  <div class="ag-title">Staff Handbook</div>
-                  <div class="ag-desc">Acknowledged 14 Jul · 10:45 AM</div>
-                </div><button class="btn btn-ghost btn-sm">View</button>
-              </div>
-              <div class="ag-item cur">
-                <div class="ag-chk" style="color:var(--gold)">→</div>
-                <div style="flex:1">
-                  <div class="ag-title">Code of Conduct</div>
-                  <div class="ag-desc">Please review and acknowledge before proceeding.</div>
-                </div><button class="btn btn-gold btn-sm">Read & Sign</button>
-              </div>
-              <div class="ag-item pend" style="opacity:.5">
-                <div class="ag-chk"></div>
-                <div style="flex:1">
-                  <div class="ag-title">Data Protection & Privacy Policy</div>
-                  <div class="ag-desc">Available after Code of Conduct is acknowledged.</div>
-                </div><button class="btn btn-ghost btn-sm" disabled>Locked</button>
-              </div>
-
-              <div
-                style="text-align:center;padding:24px;margin-top:8px;background:rgba(255,255,255,.02);border-radius:var(--r2);border:2px dashed var(--border)">
-                <div style="font-size:28px;margin-bottom:10px">🔐</div>
-                <div style="font-weight:700;font-size:14px;color:var(--light);margin-bottom:4px">Complete all 6
-                  documents to finalise onboarding</div>
-                <div style="font-size:12px;color:var(--muted)">2 documents remaining. Onboarding will be marked complete
-                  once all are acknowledged and guarantor form is submitted.</div>
-              </div>
+              <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>
             </div>
           </div>
 
@@ -1963,7 +1852,9 @@
               <p style="font-size:13px;color:var(--muted);margin-bottom:16px">These items can't be self-certified — your
                 branch manager marks each one complete once you've submitted the relevant form or information in person.
               </p>
-              <div id="onboarding-verification-checklist"></div>
+              <div id="onboarding-verification-checklist">
+                <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1972,35 +1863,35 @@
         <div id="profile" class="screen">
           <div class="card mb4">
             <div class="prof-hero">
-              <div class="av xl">AO</div>
+              <div class="av xl">—</div>
               <div>
                 <div class="prof-hero-info">
-                  <div class="name">Amina Okafor</div>
-                  <div class="role">Senior Hair Stylist — Academy Branch</div>
-                  <div class="id">HL-ACD-0012 · amina.okafor@hairlux.com.ng</div>
+                  <div class="name">Loading…</div>
+                  <div class="role">—</div>
+                  <div class="id">—</div>
                 </div>
                 <div class="prof-stats">
                   <div class="ps">
-                    <div class="val">92</div>
+                    <div class="val" id="prof-days-active">—</div>
                     <div class="lbl">Days Active</div>
                   </div>
                   <div class="ps">
-                    <div class="val">98%</div>
+                    <div class="val" id="prof-attendance">—</div>
                     <div class="lbl">Attendance</div>
                   </div>
                   <div class="ps">
-                    <div class="val">4.8★</div>
+                    <div class="val" id="prof-rating">—</div>
                     <div class="lbl">Client Rating</div>
                   </div>
                   <div class="ps">
-                    <div class="val">✓</div>
+                    <div class="val" id="prof-verified">—</div>
                     <div class="lbl">Verified</div>
                   </div>
                 </div>
               </div>
               <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-                <span class="badge b-green">Active Employee</span>
-                <span style="font-size:11px;color:var(--muted)">Employed 14 Jul 2026</span>
+                <span class="badge">—</span>
+                <span style="font-size:11px;color:var(--muted)" id="prof-employed-date">—</span>
                 <button class="btn btn-ghost btn-sm mt2">Edit Profile</button>
               </div>
             </div>
@@ -2013,23 +1904,23 @@
                   <div class="info-grid">
                     <div class="info-item">
                       <div class="lbl">Date of Birth</div>
-                      <div class="val">14 March 1998</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">Gender</div>
-                      <div class="val">Female</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">Phone</div>
-                      <div class="val">+234 812 345 6789</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">NIN</div>
-                      <div class="val" style="font-family:monospace;font-size:11px">2234 5678 901</div>
+                      <div class="val" style="font-family:monospace;font-size:11px">—</div>
                     </div>
                     <div class="info-item" style="grid-column:span 2">
                       <div class="lbl">Address</div>
-                      <div class="val">15 Alao Akala Road, Ibadan, Oyo State</div>
+                      <div class="val">—</div>
                     </div>
                   </div>
                 </div>
@@ -2040,23 +1931,23 @@
                   <div class="info-grid">
                     <div class="info-item">
                       <div class="lbl">Department</div>
-                      <div class="val">Styling & Hair Care</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">Type</div>
-                      <div class="val">Full-Time</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">Branch</div>
-                      <div class="val">Academy, Ibadan</div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item">
                       <div class="lbl">Status</div>
-                      <div class="val"><span class="badge b-green">Active</span></div>
+                      <div class="val">—</div>
                     </div>
                     <div class="info-item" style="grid-column:span 2">
                       <div class="lbl">Reporting Line</div>
-                      <div class="val">Mrs. Fatima Adeyemi — Branch Manager</div>
+                      <div class="val">—</div>
                     </div>
                   </div>
                 </div>
@@ -2068,15 +1959,15 @@
               <div class="info-grid" style="max-width:400px">
                 <div class="info-item">
                   <div class="lbl">Name</div>
-                  <div class="val">Ngozi Okafor</div>
+                  <div class="val">—</div>
                 </div>
                 <div class="info-item">
                   <div class="lbl">Relationship</div>
-                  <div class="val">Mother</div>
+                  <div class="val">—</div>
                 </div>
                 <div class="info-item">
                   <div class="lbl">Phone</div>
-                  <div class="val">+234 803 456 7890</div>
+                  <div class="val">—</div>
                 </div>
               </div>
             </div>
@@ -2087,28 +1978,7 @@
               <h3>Verification Checklist</h3>
             </div>
             <div class="card-b">
-              <div class="flex aic gap3 mb3" style="padding:10px;background:var(--green2);border-radius:var(--r2)"><span
-                  style="color:var(--green);font-size:18px">✓</span>
-                <div>
-                  <div style="font-size:13px;font-weight:600">NIN Verified</div>
-                  <div style="font-size:11px;color:var(--muted)">Captured during onboarding</div>
-                </div><span class="badge b-green" style="margin-left:auto">Complete</span>
-              </div>
-              <div class="flex aic gap3 mb3" style="padding:10px;background:var(--amber2);border-radius:var(--r2)"><span
-                  style="color:var(--amber);font-size:18px">⏳</span>
-                <div>
-                  <div style="font-size:13px;font-weight:600">Address Verification</div>
-                  <div style="font-size:11px;color:var(--muted)">Physical verification pending</div>
-                </div><span class="badge b-amber" style="margin-left:auto">Pending</span>
-              </div>
-              <div class="flex aic gap3" style="padding:10px;background:var(--red2);border-radius:var(--r2)"><span
-                  style="color:var(--red);font-size:18px">✗</span>
-                <div>
-                  <div style="font-size:13px;font-weight:600">Guarantor Form</div>
-                  <div style="font-size:11px;color:var(--muted)">Not yet submitted — required to complete onboarding
-                  </div>
-                </div><span class="badge b-red" style="margin-left:auto">Not Started</span>
-              </div>
+              <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>
             </div>
           </div>
         </div>
@@ -2117,51 +1987,10 @@
         <div id="agreements" class="screen">
           <div class="card">
             <div class="card-h">
-              <h3>Company Documents</h3><span class="badge b-gold">4 of 6 acknowledged</span>
+              <h3>Company Documents</h3><span class="badge">—</span>
             </div>
             <div class="card-b">
-              <div class="ag-item done">
-                <div class="ag-chk">✓</div>
-                <div style="flex:1">
-                  <div class="ag-title">Employment Contract</div>
-                  <div class="ag-desc">Acknowledged 14 Jul · 10:24 AM · IP: 197.210.xx.xx</div>
-                </div><button class="btn btn-ghost btn-sm">View PDF</button>
-              </div>
-              <div class="ag-item done">
-                <div class="ag-chk">✓</div>
-                <div style="flex:1">
-                  <div class="ag-title">Confidentiality Agreement (NDA)</div>
-                  <div class="ag-desc">Acknowledged 14 Jul · 10:31 AM</div>
-                </div><button class="btn btn-ghost btn-sm">View PDF</button>
-              </div>
-              <div class="ag-item done">
-                <div class="ag-chk">✓</div>
-                <div style="flex:1">
-                  <div class="ag-title">IT & Acceptable Use Policy</div>
-                  <div class="ag-desc">Acknowledged 14 Jul · 10:38 AM</div>
-                </div><button class="btn btn-ghost btn-sm">View PDF</button>
-              </div>
-              <div class="ag-item done">
-                <div class="ag-chk">✓</div>
-                <div style="flex:1">
-                  <div class="ag-title">Staff Handbook</div>
-                  <div class="ag-desc">Acknowledged 14 Jul · 10:45 AM</div>
-                </div><button class="btn btn-ghost btn-sm">View PDF</button>
-              </div>
-              <div class="ag-item cur">
-                <div class="ag-chk" style="color:var(--gold)">→</div>
-                <div style="flex:1">
-                  <div class="ag-title">Code of Conduct</div>
-                  <div class="ag-desc">Please review and confirm acceptance before proceeding.</div>
-                </div><button class="btn btn-gold btn-sm">Read & Sign</button>
-              </div>
-              <div class="ag-item pend" style="opacity:.5">
-                <div class="ag-chk"></div>
-                <div style="flex:1">
-                  <div class="ag-title">Data Protection & Privacy Policy</div>
-                  <div class="ag-desc">Unlocks after Code of Conduct is acknowledged.</div>
-                </div><span style="font-size:11px;color:var(--muted)">🔒 Locked</span>
-              </div>
+              <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>
             </div>
           </div>
         </div>
@@ -3085,7 +2914,7 @@
     };
 
     const pages = {
-      'dashboard': ['Good morning, Amina 👋', 'Dashboard'],
+      'dashboard': ['Welcome', 'Dashboard'],
       'onboarding': ['Complete Onboarding', 'Onboarding'],
       'profile': ['My Profile', 'Profile'],
       'agreements': ['Documents & Agreements', 'Documents'],

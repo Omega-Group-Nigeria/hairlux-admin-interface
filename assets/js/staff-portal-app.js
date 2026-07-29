@@ -46,6 +46,37 @@ async function initStaffPortal() {
   ]);
 
   renderDashboard();
+  renderOnboardingStatusStrip();
+}
+
+/**
+ * Onboarding screen's step bar + Employee Number / Branch stat tiles --
+ * previously 100% static/fake. Wires them to real data now that currentStaff,
+ * currentDocuments, and currentOnboarding are all guaranteed loaded.
+ */
+function renderOnboardingStatusStrip() {
+  const codeEl = document.getElementById('onb-staff-code');
+  if (codeEl) codeEl.textContent = currentStaff.staffCode || '—';
+  const branchEl = document.getElementById('onb-branch');
+  if (branchEl) branchEl.textContent = currentStaff.location ? currentStaff.location.name : '—';
+
+  const setStep = (id, done) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('done', done);
+    el.classList.toggle('pend', !done);
+    const c = el.querySelector('.step-c');
+    if (c && done) c.textContent = '✓';
+  };
+
+  // "Account Created" and "Personal Info" have no distinct incomplete state in
+  // this system -- if you can see this screen at all, both are already true.
+  const documentsDone = !!(currentDocuments && currentDocuments.allAcknowledged);
+  const verificationDone = !!(currentOnboarding && currentOnboarding.onboardingComplete);
+  setStep('onb-step-personal', true);
+  setStep('onb-step-documents', documentsDone);
+  setStep('onb-step-verification', verificationDone);
+  setStep('onb-step-complete', documentsDone && verificationDone);
 }
 
 /**
@@ -76,6 +107,7 @@ function renderStaffChip() {
   if (idEl) idEl.textContent = currentStaff.staffCode || '';
 
   renderAvatarInto(document.getElementById('staff-chip-avatar'), currentStaff);
+  renderAvatarInto(document.getElementById('topbar-avatar'), currentStaff);
   const nameEl = document.getElementById('staff-chip-name');
   if (nameEl) nameEl.textContent = currentStaff.name || 'Staff Member';
 
@@ -543,6 +575,35 @@ function renderProfileScreen() {
     if (items[0]) items[0].textContent = s.emergencyContactName || 'Not on file';
     if (items[1]) items[1].textContent = s.emergencyContactRelation || 'Not on file';
     if (items[2]) items[2].textContent = s.emergencyContactPhone || 'Not on file';
+  }
+
+  // prof-stats row — only Days Active and Verified have real data behind
+  // them. Attendance-rate and Client Rating have no backing metric yet
+  // (same gap as the Dashboard's Client Rating stat) -- show "No data"
+  // honestly rather than a fabricated number.
+  const activeHistory = (s.histories || [])[0];
+  const daysActiveEl = document.getElementById('prof-days-active');
+  if (daysActiveEl) {
+    if (activeHistory && activeHistory.startDate) {
+      const days = Math.max(0, Math.floor((Date.now() - new Date(activeHistory.startDate).getTime()) / 86400000));
+      daysActiveEl.textContent = String(days);
+    } else {
+      daysActiveEl.textContent = '—';
+    }
+  }
+  const attendanceStatEl = document.getElementById('prof-attendance');
+  if (attendanceStatEl) attendanceStatEl.textContent = 'No data';
+  const ratingEl = document.getElementById('prof-rating');
+  if (ratingEl) ratingEl.textContent = 'No data';
+  const verifiedEl = document.getElementById('prof-verified');
+  if (verifiedEl) {
+    verifiedEl.textContent = (currentOnboarding && currentOnboarding.onboardingComplete) ? '✓' : '—';
+  }
+  const employedDateEl = document.getElementById('prof-employed-date');
+  if (employedDateEl) {
+    employedDateEl.textContent = activeHistory && activeHistory.startDate
+      ? 'Employed ' + StaffSelf.formatDate(activeHistory.startDate)
+      : '—';
   }
 
   wireIdCardButton();
@@ -1260,7 +1321,6 @@ function statusBadgeClass(status) {
 }
 
 // -- Boot --
-
 document.addEventListener('DOMContentLoaded', () => {
   initStaffPortal();
 });
