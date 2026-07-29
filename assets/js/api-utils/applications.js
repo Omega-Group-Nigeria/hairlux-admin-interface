@@ -175,7 +175,7 @@ const Applications = (() => {
   const NEXT_STATUS = {
     SUBMITTED: 'UNDER_REVIEW',
     UNDER_REVIEW: 'SHORTLISTED',
-    INTERVIEW_COMPLETED: 'OFFER_EXTENDED',
+    // INTERVIEW_COMPLETED: 'OFFER_EXTENDED',
   };
 
   function statusBadge(status) {

@@ -134,6 +134,10 @@ const StaffSelf = (() => {
         });
     }
 
+    async function getCompensation() {
+        return jsonFetch("/staff/me/compensation");
+    }
+
     // -- Onboarding self-submission ------------------------------------------------
     async function submitGuarantor(payload) {
         return jsonFetch("/staff/me/onboarding/guarantor", {
@@ -290,5 +294,8 @@ const StaffSelf = (() => {
         formatDate,
         formatTime,
         timeAgo,
+        submitLeaveRequest,
+        getMyLeaveRequests,
+        getCompensation,
     };
 })();

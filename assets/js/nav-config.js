@@ -140,7 +140,9 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Announcements", href: "staff-announcements.html" },
                 { label: "Tasks & Directives", href: "staff-directives.html" },
                 { label: "Attendance", href: "staff-attendance.html" },
-                { label: "Inventory", href: "staff-inventory.html" },
+                { label: "Leave Requests", href: "leave-requests.html" },
+                { label: "Inventory Log (Legacy)", href: "staff-inventory.html" },
+                { label: "Inventory Items", href: "inventory-items.html" },
             ],
         },
         {

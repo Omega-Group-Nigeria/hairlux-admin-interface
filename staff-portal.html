@@ -1,1203 +1,3160 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hairlux Staff Portal</title>
-<style>
-@font-face {
-  font-family: 'Bdogrotesk Vf';
-  src: url("https://cdn.prod.website-files.com/675c8e48ca0e0fb5ab421239/675c8e48ca0e0fb5ab421302_BDOGrotesk-VF.ttf") format("truetype");
-  font-weight: 300 900;
-  font-style: normal;
-  font-display: swap;
-}
-:root{
-  /* Page canvas is a soft off-white; cards/sidebar/topbar sit one step up at pure white */
-  --dark:#FAFAFA;--dark2:#FFFFFF;--dark3:#161616;--dark4:#262626;
-  --gold:#9D8248;--gold2:#C2A06A;--gold-bg:rgba(157,130,72,.10);
-  --white:#0F0F0F;--off:#F7F7F7;--border:#E4E4E4;--border2:rgba(15,15,15,.05);
-  --text:#1A1A1A;--muted:#8A8A8A;--light:#4D4D4D;
-  --green:#27AE60;--green2:rgba(39,174,96,.10);
-  --red:#E74C3C;--red2:rgba(231,76,60,.10);
-  --amber:#B8790A;--amber2:rgba(184,121,10,.10);
-  --blue:#2E86DE;--blue2:rgba(46,134,222,.10);
-  --purple:#8E44AD;--teal:#16A085;
-  --sidebar:250px;--r:12px;--r2:8px;--r3:4px;
-  --sh:0 2px 16px rgba(15,15,15,.06);--sh2:0 10px 28px rgba(15,15,15,.10);
-  /* Fixed-role tokens: these surfaces stay dark/gold regardless of theme, so
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hairlux Staff Portal</title>
+  <style>
+    @font-face {
+      font-family: 'Bdogrotesk Vf';
+      src: url("https://cdn.prod.website-files.com/675c8e48ca0e0fb5ab421239/675c8e48ca0e0fb5ab421302_BDOGrotesk-VF.ttf") format("truetype");
+      font-weight: 300 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      /* Page canvas is a soft off-white; cards/sidebar/topbar sit one step up at pure white */
+      --dark: #FAFAFA;
+      --dark2: #FFFFFF;
+      --dark3: #161616;
+      --dark4: #262626;
+      --gold: #9D8248;
+      --gold2: #C2A06A;
+      --gold-bg: rgba(157, 130, 72, .10);
+      --white: #0F0F0F;
+      --off: #F7F7F7;
+      --border: #E4E4E4;
+      --border2: rgba(15, 15, 15, .05);
+      --text: #1A1A1A;
+      --muted: #8A8A8A;
+      --light: #4D4D4D;
+      --green: #27AE60;
+      --green2: rgba(39, 174, 96, .10);
+      --red: #E74C3C;
+      --red2: rgba(231, 76, 60, .10);
+      --amber: #B8790A;
+      --amber2: rgba(184, 121, 10, .10);
+      --blue: #2E86DE;
+      --blue2: rgba(46, 134, 222, .10);
+      --purple: #8E44AD;
+      --teal: #16A085;
+      --sidebar: 250px;
+      --r: 12px;
+      --r2: 8px;
+      --r3: 4px;
+      --sh: 0 2px 16px rgba(15, 15, 15, .06);
+      --sh2: 0 10px 28px rgba(15, 15, 15, .10);
+      /* Fixed-role tokens: these surfaces stay dark/gold regardless of theme, so
      they need their own text colors rather than the page's --white/--muted */
-  --ink:#0F0F0F;
-  --on-dark-title:#FFFFFF;--on-dark-text:rgba(255,255,255,.62);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{font-family:'Bdogrotesk Vf','Inter',system-ui,sans-serif;font-size:14px;background:var(--dark);color:var(--text);display:flex;overflow:hidden}
+      --ink: #0F0F0F;
+      --on-dark-title: #FFFFFF;
+      --on-dark-text: rgba(255, 255, 255, .62);
+    }
 
-/* ── SIDEBAR ── */
-.sidebar{width:var(--sidebar);background:var(--dark2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;flex-shrink:0}
-.sb-top{padding:22px 20px 18px;border-bottom:1px solid var(--border)}
-.sb-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.sb-logo{width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:var(--ink);flex-shrink:0}
-.sb-brand-name{font-size:16px;font-weight:800;color:var(--white);letter-spacing:-.02em}
-.sb-brand-sub{font-size:9px;color:var(--gold);letter-spacing:.12em;text-transform:uppercase}
-.staff-chip{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px}
-.av{width:34px;height:34px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--ink);flex-shrink:0}
-.av.sm{width:26px;height:26px;font-size:10px}
-.av.lg{width:54px;height:54px;font-size:20px}
-.av.xl{width:80px;height:80px;font-size:28px}
-.av.blue{background:linear-gradient(135deg,var(--blue),#1a5fb0)}
-.av.purple{background:linear-gradient(135deg,var(--purple),#6c3483)}
-.av.green{background:linear-gradient(135deg,var(--green),#1e8449)}
-.av.teal{background:linear-gradient(135deg,var(--teal),#0e6655)}
-.chip-name{font-size:12px;font-weight:700;color:var(--white)}
-.chip-role{font-size:10px;color:var(--muted)}
-.chip-id{font-size:9px;color:var(--gold);font-family:monospace;margin-top:2px}
-.sb-sec{padding:16px 16px 5px;font-size:9px;font-weight:700;color:rgba(130,148,165,.45);letter-spacing:.12em;text-transform:uppercase}
-.sb-item{display:flex;align-items:center;gap:10px;padding:9px 14px;margin:1px 8px;border-radius:var(--r2);color:var(--muted);cursor:pointer;transition:.18s;font-size:13px;font-weight:500;position:relative;user-select:none}
-.sb-item:hover{background:rgba(255,255,255,.05);color:var(--light)}
-.sb-item.active{background:var(--gold-bg);color:var(--gold);border:1px solid rgba(157,130,72,.2)}
-.sb-item .ico{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-.sb-item .bdg{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:9px;line-height:1.5}
-.sb-item .bdg.amber{background:var(--amber)}
-.sb-item .bdg.gold{background:var(--gold);color:var(--ink)}
-.sb-footer{margin-top:auto;border-top:1px solid var(--border);padding:16px}
-.sb-logout{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r2);cursor:pointer;color:var(--muted);font-size:12px;font-weight:600;transition:.18s}
-.sb-logout:hover{background:var(--red2);color:var(--red)}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
 
-/* ── MAIN ── */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    html,
+    body {
+      height: 100%
+    }
 
-/* ── TOPBAR ── */
-.topbar{height:64px;background:var(--dark2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;flex-shrink:0}
-.tb-left h1{font-size:17px;font-weight:800;color:var(--white)}
-.bc{font-size:11px;color:var(--muted);margin-bottom:2px;display:flex;align-items:center;gap:5px}
-.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.ico-btn{width:36px;height:36px;border-radius:var(--r2);border:1px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:16px;transition:.18s;position:relative}
-.ico-btn:hover{background:rgba(255,255,255,.06);color:var(--light)}
-.ndot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid var(--dark2)}
+    body {
+      font-family: 'Bdogrotesk Vf', 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      background: var(--dark);
+      color: var(--text);
+      display: flex;
+      overflow: hidden
+    }
 
-/* ── CONTENT ── */
-.content{flex:1;overflow-y:auto;padding:26px 28px;background:var(--dark)}
-.screen{display:none}.screen.active{display:block}
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar);
+      background: var(--dark2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0
+    }
 
-/* ── GRID ── */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.flex{display:flex}.aic{align-items:center}.jsb{justify-content:space-between}
-.gap2{gap:8px}.gap3{gap:12px}.gap4{gap:16px}
-.mt2{margin-top:8px}.mt3{margin-top:12px}.mt4{margin-top:16px}.mt6{margin-top:24px}
-.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}.mb4{margin-bottom:16px}.mb6{margin-bottom:24px}
+    .sb-top {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border)
+    }
 
-/* ── CARD ── */
-.card{background:var(--dark2);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
-.oc-modal-overlay{position:fixed;inset:0;background:rgba(15,15,15,.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
-.oc-modal-box{background:var(--dark2);border-radius:var(--r);box-shadow:var(--sh2);max-width:420px;width:100%;max-height:90vh;overflow-y:auto;padding:24px}
-.oc-modal-box h3{font-size:16px;font-weight:700;margin-bottom:4px}
-.oc-modal-box .oc-modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
-.oc-field{margin-bottom:14px}
-.oc-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.oc-field input[type="text"],.oc-field input[type="tel"],.oc-field input[type="file"]{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r3);font-size:13px;font-family:inherit;background:var(--off)}
-.oc-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
-.oc-modal-error{background:var(--red2);color:var(--red);font-size:12px;padding:8px 12px;border-radius:var(--r3);margin-bottom:14px;display:none}
-.card-h{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-h h3{font-size:14px;font-weight:700;color:var(--white)}
-.card-b{padding:20px 22px}
+    .sb-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px
+    }
 
-/* ── STAT ── */
-.stat{background:var(--dark2);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:.2s;cursor:default}
-.stat:hover{border-color:rgba(157,130,72,.3);transform:translateY(-2px);box-shadow:var(--sh2)}
-.stat-ico{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
-.stat-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.stat-val{font-size:28px;font-weight:800;color:var(--white);line-height:1;margin:6px 0 4px}
-.stat-delta{font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
-.up{color:var(--green)}.down{color:var(--red)}.neu{color:var(--muted)}
-.stat::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:.07}
-.stat.gold::after{background:var(--gold)}.stat.green::after{background:var(--green)}
-.stat.blue::after{background:var(--blue)}.stat.purple::after{background:var(--purple)}
-.stat.amber::after{background:var(--amber)}.stat.teal::after{background:var(--teal)}
+    .sb-logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--ink);
+      flex-shrink: 0
+    }
 
-/* ── BADGE ── */
-.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.6}
-.b-green{background:var(--green2);color:var(--green)}
-.b-red{background:var(--red2);color:var(--red)}
-.b-amber{background:var(--amber2);color:var(--amber)}
-.b-blue{background:var(--blue2);color:var(--blue)}
-.b-gold{background:var(--gold-bg);color:var(--gold)}
-.b-purple{background:rgba(142,68,173,.12);color:var(--purple)}
-.b-teal{background:rgba(22,160,133,.12);color:var(--teal)}
+    .sb-brand-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -.02em
+    }
 
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--r2);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.18s;font-family:inherit;text-decoration:none;letter-spacing:.01em}
-.btn-gold{background:linear-gradient(135deg,var(--gold),#8a7040);color:var(--ink)}
-.btn-gold:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 18px rgba(157,130,72,.3)}
-.btn-dark{background:rgba(255,255,255,.07);color:var(--light);border:1px solid var(--border)}
-.btn-dark:hover{background:rgba(255,255,255,.11)}
-.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
-.btn-ghost:hover{color:var(--light);border-color:rgba(255,255,255,.2)}
-.btn-success{background:var(--green2);color:var(--green);border:1px solid rgba(39,174,96,.25)}
-.btn-danger{background:var(--red2);color:var(--red);border:1px solid rgba(231,76,60,.25)}
-.btn-sm{padding:5px 12px;font-size:11px}
+    .sb-brand-sub {
+      font-size: 9px;
+      color: var(--gold);
+      letter-spacing: .12em;
+      text-transform: uppercase
+    }
 
-/* ── FORM ── */
-.form-group{margin-bottom:16px}
-.label{display:block;font-size:11px;font-weight:700;color:var(--light);margin-bottom:6px;letter-spacing:.02em}
-.req{color:var(--red)}
-.input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--r2);font-size:13px;color:var(--text);background:rgba(255,255,255,.04);transition:.18s;outline:none;font-family:inherit}
-.input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(157,130,72,.1)}
-.input::placeholder{color:rgba(130,148,165,.4)}
-textarea.input{resize:vertical;min-height:80px;line-height:1.5}
-select.input{cursor:pointer}
-.helper{font-size:11px;color:var(--muted);margin-top:4px}
-.divider{border:none;border-top:1px solid var(--border);margin:18px 0}
+    .staff-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 10px 12px
+    }
 
-/* ── TABLE ── */
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-thead tr{background:rgba(255,255,255,.03);border-bottom:2px solid var(--border)}
-th{padding:11px 16px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
-td{padding:13px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
-tbody tr:hover{background:rgba(255,255,255,.025)}
-tbody tr:last-child td{border-bottom:none}
+    .av {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--ink);
+      flex-shrink: 0
+    }
 
-/* ── STATUS TRACKER ── */
-.st-steps{display:flex;flex-direction:column}
-.st-step{display:flex;gap:14px;position:relative}
-.st-step::before{content:'';position:absolute;left:15px;top:34px;bottom:-8px;width:2px;background:var(--border)}
-.st-step:last-child::before{display:none}
-.st-circle{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;z-index:1;border:2px solid var(--border);color:var(--muted);background:var(--dark2)}
-.st-step.done .st-circle{background:var(--green);border-color:var(--green);color:#fff}
-.st-step.cur .st-circle{background:var(--gold);border-color:var(--gold);color:var(--ink);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(157,130,72,.4)}50%{box-shadow:0 0 0 8px rgba(157,130,72,.0)}}
-.st-body{padding-bottom:22px}
-.st-title{font-size:13px;font-weight:700;color:var(--light);padding-top:5px}
-.st-date{font-size:11px;color:var(--muted);margin-top:2px}
-.st-note{font-size:12px;color:var(--muted);margin-top:8px;background:rgba(255,255,255,.04);border-radius:var(--r2);padding:10px 12px;border-left:3px solid var(--gold);line-height:1.5}
+    .av.sm {
+      width: 26px;
+      height: 26px;
+      font-size: 10px
+    }
 
-/* ── AGREEMENT ── */
-.ag-item{display:flex;align-items:flex-start;gap:14px;padding:16px;border-radius:var(--r2);border:1.5px solid var(--border);margin-bottom:10px;transition:.2s;cursor:pointer}
-.ag-item:hover{border-color:rgba(255,255,255,.15)}
-.ag-item.done{border-color:rgba(39,174,96,.3);background:rgba(39,174,96,.04)}
-.ag-item.cur{border-color:rgba(157,130,72,.4);background:rgba(157,130,72,.06)}
-.ag-chk{width:22px;height:22px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:2px}
-.ag-item.done .ag-chk{background:var(--green);color:#fff}
-.ag-item.cur .ag-chk{border:2px solid var(--gold);background:rgba(157,130,72,.1)}
-.ag-item.pend .ag-chk{border:2px solid var(--border)}
-.ag-title{font-size:13px;font-weight:700;color:var(--white)}
-.ag-desc{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+    .av.lg {
+      width: 54px;
+      height: 54px;
+      font-size: 20px
+    }
 
-/* ── NOTIFICATION ── */
-.notif{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:.15s}
-.notif:hover{background:rgba(255,255,255,.025)}
-.notif.unread{background:rgba(157,130,72,.03)}
-.ndot2{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:5px}
-.ndot2.read{background:transparent;border:1.5px solid var(--border)}
-.n-t{font-size:13px;font-weight:600;color:var(--white)}
-.n-b{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
-.n-d{font-size:10px;color:rgba(130,148,165,.55);margin-top:3px}
+    .av.xl {
+      width: 80px;
+      height: 80px;
+      font-size: 28px
+    }
 
-/* ── ANNOUNCE BANNER ── */
-.banner{background:linear-gradient(135deg,var(--dark3),var(--dark4));border:1px solid var(--border);border-radius:var(--r);padding:22px;position:relative;overflow:hidden;margin-bottom:14px}
-.banner::after{content:'';position:absolute;top:-30px;right:-30px;width:130px;height:130px;border-radius:50%;background:rgba(157,130,72,.08)}
-.banner .tag{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.banner h3{font-size:15px;font-weight:800;color:var(--on-dark-title);margin-bottom:6px}
-.banner p{font-size:12px;color:var(--on-dark-text);line-height:1.5}
-.banner .meta{font-size:11px;color:var(--gold);margin-top:12px;font-weight:600}
-.banner.urgent{border-color:rgba(231,76,60,.3);background:linear-gradient(135deg,rgba(231,76,60,.08),rgba(22,22,22,.95))}
-.banner.urgent::after{background:rgba(231,76,60,.1)}
+    .av.blue {
+      background: linear-gradient(135deg, var(--blue), #1a5fb0)
+    }
 
-/* ── TASK ── */
-.task{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-radius:var(--r2);border:1px solid var(--border);margin-bottom:8px;transition:.18s;background:rgba(255,255,255,.02)}
-.task:hover{border-color:rgba(255,255,255,.12)}
-.task.urgent{border-color:rgba(231,76,60,.3);background:rgba(231,76,60,.04)}
-.task.done{opacity:.5}
-.task-chk{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);flex-shrink:0;cursor:pointer;margin-top:1px;transition:.18s;display:flex;align-items:center;justify-content:center;font-size:10px}
-.task-chk:hover{border-color:var(--gold)}
-.task-chk.checked{background:var(--green);border-color:var(--green);color:#fff}
-.task-title{font-size:13px;font-weight:600;color:var(--light)}
-.task-due{font-size:10px;color:var(--muted);margin-top:2px}
-.task.urgent .task-title{color:var(--red)}
+    .av.purple {
+      background: linear-gradient(135deg, var(--purple), #6c3483)
+    }
 
-/* ── CHECKIN BUTTON ── */
-.ci-btn{width:110px;height:110px;border-radius:50%;background:rgba(157,130,72,.1);border:3px solid var(--gold);color:var(--gold);font-size:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;transition:.2s;user-select:none}
-.ci-btn:hover{background:rgba(157,130,72,.2);transform:scale(1.04)}
-.ci-btn.active{background:rgba(39,174,96,.12);border-color:var(--green);color:var(--green)}
+    .av.green {
+      background: linear-gradient(135deg, var(--green), #1e8449)
+    }
 
-/* ── WEEK DOTS ── */
-.week-dots{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
-.wd{display:flex;flex-direction:column;align-items:center;gap:5px}
-.wd .day{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase}
-.wd .dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-.wd .dot.ok{background:var(--green);color:#fff}
-.wd .dot.late{background:var(--amber);color:#fff}
-.wd .dot.absent{background:rgba(231,76,60,.2);color:var(--red)}
-.wd .dot.today{background:var(--dark4);border:2px solid var(--gold);color:var(--gold)}
-.wd .dot.off{background:rgba(255,255,255,.05);color:var(--muted);border:1.5px dashed var(--border)}
+    .av.teal {
+      background: linear-gradient(135deg, var(--teal), #0e6655)
+    }
 
-/* ── PROGRESS BAR ── */
-.pbar{height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;margin:6px 0}
-.pbar span{display:block;height:100%;border-radius:4px;background:var(--gold);transition:width .5s}
-.pbar.green span{background:var(--green)}
-.pbar.red span{background:var(--red)}
-.pbar.amber span{background:var(--amber)}
+    .chip-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--white)
+    }
 
-/* ── INVENTORY ── */
-.inv-bar{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:12px}
-.inv-name{flex:1;color:var(--light);font-weight:500}
-.inv-fill{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.07)}
-.inv-fill span{display:block;height:100%;border-radius:3px;background:var(--green)}
-.inv-fill.lo span{background:var(--red)}
-.inv-fill.md span{background:var(--amber)}
+    .chip-role {
+      font-size: 10px;
+      color: var(--muted)
+    }
 
-/* ── PROFILE HERO ── */
-.prof-hero{background:linear-gradient(135deg,var(--dark3) 0%,var(--dark2) 100%);padding:32px 28px;display:flex;align-items:center;gap:24px;border-bottom:1px solid var(--border)}
-.prof-hero-info .name{font-size:22px;font-weight:800;color:var(--white)}
-.prof-hero-info .role{font-size:13px;color:var(--gold);margin-top:4px;font-weight:600}
-.prof-hero-info .id{font-size:11px;color:var(--muted);margin-top:3px;font-family:monospace;letter-spacing:.06em}
-.prof-stats{display:flex;gap:28px;margin-top:18px}
-.ps{text-align:center}
-.ps .val{font-size:20px;font-weight:800;color:var(--white)}
-.ps .lbl{font-size:10px;color:var(--muted);margin-top:2px}
+    .chip-id {
+      font-size: 9px;
+      color: var(--gold);
+      font-family: monospace;
+      margin-top: 2px
+    }
 
-/* ── INFO GRID ── */
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.info-item .lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.info-item .val{font-size:13px;color:var(--light);margin-top:3px;font-weight:500}
+    .sb-sec {
+      padding: 16px 16px 5px;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(130, 148, 165, .45);
+      letter-spacing: .12em;
+      text-transform: uppercase
+    }
 
-/* ── UPLOAD ── */
-.upload{border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:.2s;background:rgba(255,255,255,.02)}
-.upload:hover{border-color:var(--gold);background:rgba(157,130,72,.04)}
+    .sb-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      margin: 1px 8px;
+      border-radius: var(--r2);
+      color: var(--muted);
+      cursor: pointer;
+      transition: .18s;
+      font-size: 13px;
+      font-weight: 500;
+      position: relative;
+      user-select: none
+    }
 
-/* ── STEPS ── */
-.steps{display:flex;align-items:center;margin-bottom:28px}
-.step{display:flex;align-items:center;gap:8px;flex:1}
-.step-c{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
-.step.done .step-c{background:var(--green);color:#fff}
-.step.act .step-c{background:var(--gold);color:var(--ink)}
-.step.pend .step-c{background:rgba(255,255,255,.07);color:var(--muted);border:2px solid var(--border)}
-.step-lbl{font-size:11px;font-weight:600}
-.step.act .step-lbl{color:var(--white)}.step.done .step-lbl{color:var(--green)}.step.pend .step-lbl{color:var(--muted)}
-.step-line{flex:1;height:2px;background:var(--border)}
-.step.done .step-line,.step.done+.step .step-line{background:var(--green)}
+    .sb-item:hover {
+      background: rgba(255, 255, 255, .05);
+      color: var(--light)
+    }
 
-/* ── CAREER ── */
-.chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:.18s;white-space:nowrap;font-family:inherit}
-.chip:hover,.chip.active{border-color:var(--gold);background:rgba(157,130,72,.12);color:var(--gold)}
+    .sb-item.active {
+      background: var(--gold-bg);
+      color: var(--gold);
+      border: 1px solid rgba(157, 130, 72, .2)
+    }
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:#c2c2c2}
-</style>
+    .sb-item .ico {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0
+    }
+
+    .sb-item .bdg {
+      margin-left: auto;
+      background: var(--red);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 9px;
+      line-height: 1.5
+    }
+
+    .sb-item .bdg.amber {
+      background: var(--amber)
+    }
+
+    .sb-item .bdg.gold {
+      background: var(--gold);
+      color: var(--ink)
+    }
+
+    .sb-footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      padding: 16px
+    }
+
+    .sb-logout {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--r2);
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      transition: .18s
+    }
+
+    .sb-logout:hover {
+      background: var(--red2);
+      color: var(--red)
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      height: 64px;
+      background: var(--dark2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+      flex-shrink: 0
+    }
+
+    .tb-left h1 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--white)
+    }
+
+    .bc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .tb-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .ico-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r2);
+      border: 1px solid var(--border);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 16px;
+      transition: .18s;
+      position: relative
+    }
+
+    .ico-btn:hover {
+      background: rgba(255, 255, 255, .06);
+      color: var(--light)
+    }
+
+    .ndot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+      border: 2px solid var(--dark2)
+    }
+
+    /* ── CONTENT ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 26px 28px;
+      background: var(--dark)
+    }
+
+    .screen {
+      display: none
+    }
+
+    .screen.active {
+      display: block
+    }
+
+    /* ── GRID ── */
+    .g2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px
+    }
+
+    .g3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px
+    }
+
+    .g4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px
+    }
+
+    .flex {
+      display: flex
+    }
+
+    .aic {
+      align-items: center
+    }
+
+    .jsb {
+      justify-content: space-between
+    }
+
+    .gap2 {
+      gap: 8px
+    }
+
+    .gap3 {
+      gap: 12px
+    }
+
+    .gap4 {
+      gap: 16px
+    }
+
+    .mt2 {
+      margin-top: 8px
+    }
+
+    .mt3 {
+      margin-top: 12px
+    }
+
+    .mt4 {
+      margin-top: 16px
+    }
+
+    .mt6 {
+      margin-top: 24px
+    }
+
+    .mb2 {
+      margin-bottom: 8px
+    }
+
+    .mb3 {
+      margin-bottom: 12px
+    }
+
+    .mb4 {
+      margin-bottom: 16px
+    }
+
+    .mb6 {
+      margin-bottom: 24px
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--sh);
+      overflow: hidden
+    }
+
+    .oc-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 15, 15, .5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px
+    }
+
+    .oc-modal-box {
+      background: var(--dark2);
+      border-radius: var(--r);
+      box-shadow: var(--sh2);
+      max-width: 420px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px
+    }
+
+    .oc-modal-box h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px
+    }
+
+    .oc-modal-box .oc-modal-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 18px
+    }
+
+    .oc-field {
+      margin-bottom: 14px
+    }
+
+    .oc-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px
+    }
+
+    .oc-field input[type="text"],
+    .oc-field input[type="tel"],
+    .oc-field input[type="file"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--r3);
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--off)
+    }
+
+    .oc-modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 20px
+    }
+
+    .oc-modal-error {
+      background: var(--red2);
+      color: var(--red);
+      font-size: 12px;
+      padding: 8px 12px;
+      border-radius: var(--r3);
+      margin-bottom: 14px;
+      display: none
+    }
+
+    .card-h {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .card-h h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white)
+    }
+
+    .card-b {
+      padding: 20px 22px
+    }
+
+    /* ── STAT ── */
+    .stat {
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: .2s;
+      cursor: default
+    }
+
+    .stat:hover {
+      border-color: rgba(157, 130, 72, .3);
+      transform: translateY(-2px);
+      box-shadow: var(--sh2)
+    }
+
+    .stat-ico {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 14px
+    }
+
+    .stat-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em
+    }
+
+    .stat-val {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1;
+      margin: 6px 0 4px
+    }
+
+    .stat-delta {
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px
+    }
+
+    .up {
+      color: var(--green)
+    }
+
+    .down {
+      color: var(--red)
+    }
+
+    .neu {
+      color: var(--muted)
+    }
+
+    .stat::after {
+      content: '';
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      opacity: .07
+    }
+
+    .stat.gold::after {
+      background: var(--gold)
+    }
+
+    .stat.green::after {
+      background: var(--green)
+    }
+
+    .stat.blue::after {
+      background: var(--blue)
+    }
+
+    .stat.purple::after {
+      background: var(--purple)
+    }
+
+    .stat.amber::after {
+      background: var(--amber)
+    }
+
+    .stat.teal::after {
+      background: var(--teal)
+    }
+
+    /* ── BADGE ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700
+    }
+
+    .badge::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .6
+    }
+
+    .b-green {
+      background: var(--green2);
+      color: var(--green)
+    }
+
+    .b-red {
+      background: var(--red2);
+      color: var(--red)
+    }
+
+    .b-amber {
+      background: var(--amber2);
+      color: var(--amber)
+    }
+
+    .b-blue {
+      background: var(--blue2);
+      color: var(--blue)
+    }
+
+    .b-gold {
+      background: var(--gold-bg);
+      color: var(--gold)
+    }
+
+    .b-purple {
+      background: rgba(142, 68, 173, .12);
+      color: var(--purple)
+    }
+
+    .b-teal {
+      background: rgba(22, 160, 133, .12);
+      color: var(--teal)
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: var(--r2);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: .18s;
+      font-family: inherit;
+      text-decoration: none;
+      letter-spacing: .01em
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #8a7040);
+      color: var(--ink)
+    }
+
+    .btn-gold:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 18px rgba(157, 130, 72, .3)
+    }
+
+    .btn-dark {
+      background: rgba(255, 255, 255, .07);
+      color: var(--light);
+      border: 1px solid var(--border)
+    }
+
+    .btn-dark:hover {
+      background: rgba(255, 255, 255, .11)
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border)
+    }
+
+    .btn-ghost:hover {
+      color: var(--light);
+      border-color: rgba(255, 255, 255, .2)
+    }
+
+    .btn-success {
+      background: var(--green2);
+      color: var(--green);
+      border: 1px solid rgba(39, 174, 96, .25)
+    }
+
+    .btn-danger {
+      background: var(--red2);
+      color: var(--red);
+      border: 1px solid rgba(231, 76, 60, .25)
+    }
+
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: 11px
+    }
+
+    /* ── FORM ── */
+    .form-group {
+      margin-bottom: 16px
+    }
+
+    .label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--light);
+      margin-bottom: 6px;
+      letter-spacing: .02em
+    }
+
+    .req {
+      color: var(--red)
+    }
+
+    .input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r2);
+      font-size: 13px;
+      color: var(--text);
+      background: rgba(255, 255, 255, .04);
+      transition: .18s;
+      outline: none;
+      font-family: inherit
+    }
+
+    .input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(157, 130, 72, .1)
+    }
+
+    .input::placeholder {
+      color: rgba(130, 148, 165, .4)
+    }
+
+    textarea.input {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5
+    }
+
+    select.input {
+      cursor: pointer
+    }
+
+    .helper {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 18px 0
+    }
+
+    /* ── TABLE ── */
+    .tbl-wrap {
+      overflow-x: auto
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    thead tr {
+      background: rgba(255, 255, 255, .03);
+      border-bottom: 2px solid var(--border)
+    }
+
+    th {
+      padding: 11px 16px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      white-space: nowrap
+    }
+
+    td {
+      padding: 13px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+      vertical-align: middle
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, .025)
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none
+    }
+
+    /* ── STATUS TRACKER ── */
+    .st-steps {
+      display: flex;
+      flex-direction: column
+    }
+
+    .st-step {
+      display: flex;
+      gap: 14px;
+      position: relative
+    }
+
+    .st-step::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 34px;
+      bottom: -8px;
+      width: 2px;
+      background: var(--border)
+    }
+
+    .st-step:last-child::before {
+      display: none
+    }
+
+    .st-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      z-index: 1;
+      border: 2px solid var(--border);
+      color: var(--muted);
+      background: var(--dark2)
+    }
+
+    .st-step.done .st-circle {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff
+    }
+
+    .st-step.cur .st-circle {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--ink);
+      animation: pulse 2s infinite
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(157, 130, 72, .4)
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px rgba(157, 130, 72, .0)
+      }
+    }
+
+    .st-body {
+      padding-bottom: 22px
+    }
+
+    .st-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--light);
+      padding-top: 5px
+    }
+
+    .st-date {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px
+    }
+
+    .st-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      background: rgba(255, 255, 255, .04);
+      border-radius: var(--r2);
+      padding: 10px 12px;
+      border-left: 3px solid var(--gold);
+      line-height: 1.5
+    }
+
+    /* ── AGREEMENT ── */
+    .ag-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px;
+      border-radius: var(--r2);
+      border: 1.5px solid var(--border);
+      margin-bottom: 10px;
+      transition: .2s;
+      cursor: pointer
+    }
+
+    .ag-item:hover {
+      border-color: rgba(255, 255, 255, .15)
+    }
+
+    .ag-item.done {
+      border-color: rgba(39, 174, 96, .3);
+      background: rgba(39, 174, 96, .04)
+    }
+
+    .ag-item.cur {
+      border-color: rgba(157, 130, 72, .4);
+      background: rgba(157, 130, 72, .06)
+    }
+
+    .ag-chk {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      margin-top: 2px
+    }
+
+    .ag-item.done .ag-chk {
+      background: var(--green);
+      color: #fff
+    }
+
+    .ag-item.cur .ag-chk {
+      border: 2px solid var(--gold);
+      background: rgba(157, 130, 72, .1)
+    }
+
+    .ag-item.pend .ag-chk {
+      border: 2px solid var(--border)
+    }
+
+    .ag-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--white)
+    }
+
+    .ag-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.4
+    }
+
+    /* ── NOTIFICATION ── */
+    .notif {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+      cursor: pointer;
+      transition: .15s
+    }
+
+    .notif:hover {
+      background: rgba(255, 255, 255, .025)
+    }
+
+    .notif.unread {
+      background: rgba(157, 130, 72, .03)
+    }
+
+    .ndot2 {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+      margin-top: 5px
+    }
+
+    .ndot2.read {
+      background: transparent;
+      border: 1.5px solid var(--border)
+    }
+
+    .n-t {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white)
+    }
+
+    .n-b {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.4
+    }
+
+    .n-d {
+      font-size: 10px;
+      color: rgba(130, 148, 165, .55);
+      margin-top: 3px
+    }
+
+    /* ── ANNOUNCE BANNER ── */
+    .banner {
+      background: linear-gradient(135deg, var(--dark3), var(--dark4));
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 14px
+    }
+
+    .banner::after {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: rgba(157, 130, 72, .08)
+    }
+
+    .banner .tag {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px
+    }
+
+    .banner h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--on-dark-title);
+      margin-bottom: 6px
+    }
+
+    .banner p {
+      font-size: 12px;
+      color: var(--on-dark-text);
+      line-height: 1.5
+    }
+
+    .banner .meta {
+      font-size: 11px;
+      color: var(--gold);
+      margin-top: 12px;
+      font-weight: 600
+    }
+
+    .banner.urgent {
+      border-color: rgba(231, 76, 60, .3);
+      background: linear-gradient(135deg, rgba(231, 76, 60, .08), rgba(22, 22, 22, .95))
+    }
+
+    .banner.urgent::after {
+      background: rgba(231, 76, 60, .1)
+    }
+
+    /* ── TASK ── */
+    .task {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 13px 16px;
+      border-radius: var(--r2);
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      transition: .18s;
+      background: rgba(255, 255, 255, .02)
+    }
+
+    .task:hover {
+      border-color: rgba(255, 255, 255, .12)
+    }
+
+    .task.urgent {
+      border-color: rgba(231, 76, 60, .3);
+      background: rgba(231, 76, 60, .04)
+    }
+
+    .task.done {
+      opacity: .5
+    }
+
+    .task-chk {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      cursor: pointer;
+      margin-top: 1px;
+      transition: .18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px
+    }
+
+    .task-chk:hover {
+      border-color: var(--gold)
+    }
+
+    .task-chk.checked {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff
+    }
+
+    .task-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--light)
+    }
+
+    .task-due {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px
+    }
+
+    .task.urgent .task-title {
+      color: var(--red)
+    }
+
+    /* ── CHECKIN BUTTON ── */
+    .ci-btn {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(157, 130, 72, .1);
+      border: 3px solid var(--gold);
+      color: var(--gold);
+      font-size: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      transition: .2s;
+      user-select: none
+    }
+
+    .ci-btn:hover {
+      background: rgba(157, 130, 72, .2);
+      transform: scale(1.04)
+    }
+
+    .ci-btn.active {
+      background: rgba(39, 174, 96, .12);
+      border-color: var(--green);
+      color: var(--green)
+    }
+
+    /* ── WEEK DOTS ── */
+    .week-dots {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      text-align: center
+    }
+
+    .wd {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px
+    }
+
+    .wd .day {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase
+    }
+
+    .wd .dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700
+    }
+
+    .wd .dot.ok {
+      background: var(--green);
+      color: #fff
+    }
+
+    .wd .dot.late {
+      background: var(--amber);
+      color: #fff
+    }
+
+    .wd .dot.absent {
+      background: rgba(231, 76, 60, .2);
+      color: var(--red)
+    }
+
+    .wd .dot.today {
+      background: var(--dark4);
+      border: 2px solid var(--gold);
+      color: var(--gold)
+    }
+
+    .wd .dot.off {
+      background: rgba(255, 255, 255, .05);
+      color: var(--muted);
+      border: 1.5px dashed var(--border)
+    }
+
+    /* ── PROGRESS BAR ── */
+    .pbar {
+      height: 7px;
+      background: rgba(255, 255, 255, .07);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 6px 0
+    }
+
+    .pbar span {
+      display: block;
+      height: 100%;
+      border-radius: 4px;
+      background: var(--gold);
+      transition: width .5s
+    }
+
+    .pbar.green span {
+      background: var(--green)
+    }
+
+    .pbar.red span {
+      background: var(--red)
+    }
+
+    .pbar.amber span {
+      background: var(--amber)
+    }
+
+    /* ── INVENTORY ── */
+    .inv-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 12px
+    }
+
+    .inv-name {
+      flex: 1;
+      color: var(--light);
+      font-weight: 500
+    }
+
+    .inv-fill {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, .07)
+    }
+
+    .inv-fill span {
+      display: block;
+      height: 100%;
+      border-radius: 3px;
+      background: var(--green)
+    }
+
+    .inv-fill.lo span {
+      background: var(--red)
+    }
+
+    .inv-fill.md span {
+      background: var(--amber)
+    }
+
+    /* ── PROFILE HERO ── */
+    .prof-hero {
+      background: linear-gradient(135deg, var(--dark3) 0%, var(--dark2) 100%);
+      padding: 32px 28px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .prof-hero-info .name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white)
+    }
+
+    .prof-hero-info .role {
+      font-size: 13px;
+      color: var(--gold);
+      margin-top: 4px;
+      font-weight: 600
+    }
+
+    .prof-hero-info .id {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      font-family: monospace;
+      letter-spacing: .06em
+    }
+
+    .prof-stats {
+      display: flex;
+      gap: 28px;
+      margin-top: 18px
+    }
+
+    .ps {
+      text-align: center
+    }
+
+    .ps .val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--white)
+    }
+
+    .ps .lbl {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px
+    }
+
+    /* ── INFO GRID ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px
+    }
+
+    .info-item .lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+
+    .info-item .val {
+      font-size: 13px;
+      color: var(--light);
+      margin-top: 3px;
+      font-weight: 500
+    }
+
+    /* ── UPLOAD ── */
+    .upload {
+      border: 2px dashed var(--border);
+      border-radius: var(--r);
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: .2s;
+      background: rgba(255, 255, 255, .02)
+    }
+
+    .upload:hover {
+      border-color: var(--gold);
+      background: rgba(157, 130, 72, .04)
+    }
+
+    /* ── STEPS ── */
+    .steps {
+      display: flex;
+      align-items: center;
+      margin-bottom: 28px
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1
+    }
+
+    .step-c {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800
+    }
+
+    .step.done .step-c {
+      background: var(--green);
+      color: #fff
+    }
+
+    .step.act .step-c {
+      background: var(--gold);
+      color: var(--ink)
+    }
+
+    .step.pend .step-c {
+      background: rgba(255, 255, 255, .07);
+      color: var(--muted);
+      border: 2px solid var(--border)
+    }
+
+    .step-lbl {
+      font-size: 11px;
+      font-weight: 600
+    }
+
+    .step.act .step-lbl {
+      color: var(--white)
+    }
+
+    .step.done .step-lbl {
+      color: var(--green)
+    }
+
+    .step.pend .step-lbl {
+      color: var(--muted)
+    }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border)
+    }
+
+    .step.done .step-line,
+    .step.done+.step .step-line {
+      background: var(--green)
+    }
+
+    /* ── CAREER ── */
+    .chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: .18s;
+      white-space: nowrap;
+      font-family: inherit
+    }
+
+    .chip:hover,
+    .chip.active {
+      border-color: var(--gold);
+      background: rgba(157, 130, 72, .12);
+      color: var(--gold)
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #c2c2c2
+    }
+  </style>
 </head>
+
 <body>
-<script src="./assets/js/config.js"></script>
-<script src="./assets/js/api-utils/auth.js"></script>
-<script src="./assets/js/api-utils/staff-self.js"></script>
+  <script src="./assets/js/config.js"></script>
+  <script src="./assets/js/api-utils/auth.js"></script>
+  <script src="./assets/js/api-utils/staff-self.js"></script>
 
-<div class="oc-modal-overlay" id="onboarding-modal-overlay" style="display:none" onclick="if(event.target===this) closeOnboardingModal()">
-  <div class="oc-modal-box" id="onboarding-modal-box"></div>
-</div>
-<script>Auth.requireAuth();</script>
-
-<div id="screen-staff-app" style="display:flex;width:100%">
-<aside class="sidebar">
-  <div class="sb-top">
-    <div class="sb-logo-row">
-      <div class="sb-logo">H</div>
-      <div><div class="sb-brand-name">Hairlux</div><div class="sb-brand-sub">Staff Portal</div></div>
-    </div>
-    <div class="staff-chip">
-      <div class="av sm" id="staff-chip-avatar">--</div>
-      <div>
-        <div class="chip-name" id="staff-chip-name">Loading…</div>
-        <div class="chip-role" id="staff-chip-role"></div>
-        <div class="chip-id" id="staff-chip-id"></div>
-      </div>
-    </div>
+  <div class="oc-modal-overlay" id="onboarding-modal-overlay" style="display:none"
+    onclick="if(event.target===this) closeOnboardingModal()">
+    <div class="oc-modal-box" id="onboarding-modal-box"></div>
   </div>
+  <script>Auth.requireAuth();</script>
 
-  <div class="sb-sec">My Workspace</div>
-  <div class="sb-item active" onclick="show('dashboard')"><span class="ico">🏠</span>Dashboard</div>
-  <div class="sb-item" onclick="show('onboarding')"><span class="ico">🚀</span>Complete Onboarding<span class="bdg amber">!</span></div>
-  <div class="sb-item" onclick="show('profile')"><span class="ico">👤</span>My Profile</div>
-  <div class="sb-item" onclick="show('agreements')"><span class="ico">📋</span>Documents & Agreements</div>
-
-  <div class="sb-sec">Daily Operations</div>
-  <div class="sb-item" onclick="show('attendance')"><span class="ico">🕐</span>Attendance</div>
-  <div class="sb-item" onclick="show('leave')"><span class="ico">🗓️</span>Leave & Permission</div>
-  <div class="sb-item" onclick="show('inventory')"><span class="ico">📦</span>Inventory</div>
-
-  <div class="sb-item" onclick="show('sales')"><span class="ico">💳</span>Sales & Bookings<span class="bdg gold">4</span></div>
-  <div class="sb-item" onclick="show('commission')"><span class="ico">💰</span>My Commission</div>
-  <div class="sb-item" onclick="show('payroll')"><span class="ico">🧾</span>Payslips & Payroll</div>
-  <div class="sb-sec">Communications</div>
-  <div class="sb-item" onclick="show('announcements')"><span class="ico">📢</span>Announcements<span class="bdg">2</span></div>
-  <div class="sb-item" onclick="show('tasks')"><span class="ico">✅</span>Tasks & Directives<span class="bdg amber">3</span></div>
-  <div class="sb-item" onclick="show('notifications')"><span class="ico">🔔</span>Notifications<span class="bdg">5</span></div>
-
-  <div class="sb-sec">Compliance</div>
-  <div class="sb-item" onclick="show('audit-trail')"><span class="ico">🔍</span>Audit Trail</div>
-  <div class="sb-sec">Future Features</div>
-  <div class="sb-item" style="opacity:.4"><span class="ico">🏖️</span>Leave Requests</div>
-
-
-  <div class="sb-footer">
-    <div class="sb-logout" onclick="Auth.logout()"><span>🚪</span>Sign Out</div>
-  </div>
-</aside>
-
-<div class="main">
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="tb-left">
-      <div class="bc" id="bc">Staff Portal <span style="color:var(--border)">›</span> <span id="bc-page">Dashboard</span></div>
-      <h1 id="page-h1">Good morning, Amina 👋</h1>
-    </div>
-    <div class="tb-right">
-      <button class="btn btn-gold btn-sm" id="tb-cta" onclick="handleTopBarCta()">⏵ Check In</button>
-      <div class="ico-btn" onclick="show('notifications')">🔔<div class="ndot"></div></div>
-      <div class="av sm">AO</div>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- ═══ DASHBOARD ═══ -->
-    <div id="dashboard" class="screen active">
-      <!-- onboarding alert -->
-      <div style="background:rgba(157,130,72,.08);border:1px solid rgba(157,130,72,.25);border-radius:var(--r2);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:20px">⚠️</span>
-        <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--gold)">Onboarding Incomplete — 2 steps remaining</div><div style="font-size:12px;color:var(--muted)">Please complete your Code of Conduct and Guarantor Form to finalise your onboarding.</div></div>
-        <button class="btn btn-gold btn-sm" onclick="show('onboarding')">Complete Now →</button>
-      </div>
-
-      <div class="g4 mb6">
-        <div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">📅</div><div class="stat-lbl">Attendance (Month)</div><div class="stat-val">98%</div><div class="stat-delta up">↑ Excellent</div></div>
-        <div class="stat green"><div class="stat-ico" style="background:var(--green2)">✅</div><div class="stat-lbl">Tasks Today</div><div class="stat-val">3</div><div class="stat-delta amber">1 urgent</div></div>
-        <div class="stat blue"><div class="stat-ico" style="background:var(--blue2)">⭐</div><div class="stat-lbl">Client Rating</div><div class="stat-val">4.8</div><div class="stat-delta up">↑ +0.2 this week</div></div>
-        <div class="stat purple"><div class="stat-ico" style="background:rgba(142,68,173,.12)">📢</div><div class="stat-lbl">Unread Announcements</div><div class="stat-val">2</div><div class="stat-delta neu">New</div></div>
-      </div>
-
-      <div class="g2">
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <!-- Announcements -->
-          <div class="banner">
-            <div class="tag">📢 Management — All Staff</div>
-            <h3>July Performance Review — Friday 18th</h3>
-            <p>All branch staff are expected to attend the monthly performance review at the Academy branch conference room.</p>
-            <div class="meta">From: Qudus Jimoh, CEO · 12 Jul 2026</div>
-          </div>
-          <div class="banner urgent">
-            <div class="tag" style="color:var(--red)">🚨 Urgent Directive — Amina Okafor</div>
-            <h3 style="font-size:14px">Complete client consultation notes by 5:00 PM today</h3>
-            <p>Please update all outstanding client consultation records in the system before close of business.</p>
-            <div class="meta" style="color:var(--red)">From: Fatima Adeyemi, Branch Manager · Today</div>
-          </div>
-          <!-- Tasks -->
-          <div class="card">
-            <div class="card-h"><h3>My Tasks</h3><span class="badge b-amber">3 pending</span></div>
-            <div class="card-b" style="padding:16px 22px">
-              <div class="task urgent"><div class="task-chk" id="t1">!</div><div><div class="task-title">Update client consultation notes</div><div class="task-due">Due today by 5:00 PM</div></div></div>
-              <div class="task"><div class="task-chk" onclick="checkTask(this)">○</div><div><div class="task-title">Complete guarantor form submission</div><div class="task-due">Due: 15 Jul 2026</div></div></div>
-              <div class="task"><div class="task-chk" onclick="checkTask(this)">○</div><div><div class="task-title">Sign Code of Conduct document</div><div class="task-due">Due: 16 Jul 2026</div></div></div>
-            </div>
+  <div id="screen-staff-app" style="display:flex;width:100%">
+    <aside class="sidebar">
+      <div class="sb-top">
+        <div class="sb-logo-row">
+          <div class="sb-logo">H</div>
+          <div>
+            <div class="sb-brand-name">Hairlux</div>
+            <div class="sb-brand-sub">Staff Portal</div>
           </div>
         </div>
+        <div class="staff-chip">
+          <div class="av sm" id="staff-chip-avatar">--</div>
+          <div>
+            <div class="chip-name" id="staff-chip-name">Loading…</div>
+            <div class="chip-role" id="staff-chip-role"></div>
+            <div class="chip-id" id="staff-chip-id"></div>
+          </div>
+        </div>
+      </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <!-- Profile summary -->
-          <div class="card">
-            <div class="card-h"><h3>My Profile</h3><button class="btn btn-ghost btn-sm" onclick="show('profile')">View Full</button></div>
-            <div class="card-b">
-              <div class="flex aic gap3 mb4">
-                <div class="av lg">AO</div>
-                <div>
-                  <div style="font-size:16px;font-weight:800;color:var(--white)">Amina Okafor</div>
-                  <div style="font-size:12px;color:var(--gold);font-weight:600">Senior Hair Stylist</div>
-                  <div style="font-size:10px;color:var(--muted);font-family:monospace;margin-top:2px">HL-ACD-0012</div>
+      <div class="sb-sec">My Workspace</div>
+      <div class="sb-item active" onclick="show('dashboard')"><span class="ico">🏠</span>Dashboard</div>
+      <div class="sb-item" onclick="show('onboarding')"><span class="ico">🚀</span>Complete Onboarding<span
+          class="bdg amber">!</span></div>
+      <div class="sb-item" onclick="show('profile')"><span class="ico">👤</span>My Profile</div>
+      <div class="sb-item" onclick="show('agreements')"><span class="ico">📋</span>Documents & Agreements</div>
+
+      <div class="sb-sec">Daily Operations</div>
+      <div class="sb-item" onclick="show('attendance')"><span class="ico">🕐</span>Attendance</div>
+      <div class="sb-item" onclick="show('leave')"><span class="ico">🗓️</span>Leave & Permission</div>
+      <div class="sb-item" onclick="show('inventory')"><span class="ico">📦</span>Inventory</div>
+
+      <div class="sb-item" onclick="show('sales')"><span class="ico">💳</span>Sales & Bookings<span
+          class="bdg gold">4</span></div>
+      <div class="sb-item" onclick="show('commission')"><span class="ico">💰</span>My Commission</div>
+      <div class="sb-item" onclick="show('payroll')"><span class="ico">🧾</span>Payslips & Payroll</div>
+      <div class="sb-sec">Communications</div>
+      <div class="sb-item" onclick="show('announcements')"><span class="ico">📢</span>Announcements<span
+          class="bdg">2</span></div>
+      <div class="sb-item" onclick="show('tasks')"><span class="ico">✅</span>Tasks & Directives<span
+          class="bdg amber">3</span></div>
+      <div class="sb-item" onclick="show('notifications')"><span class="ico">🔔</span>Notifications<span
+          class="bdg">5</span></div>
+
+      <div class="sb-sec">Compliance</div>
+      <div class="sb-item" onclick="show('audit-trail')"><span class="ico">🔍</span>Audit Trail</div>
+      <div class="sb-sec">Future Features</div>
+      <div class="sb-item" style="opacity:.4"><span class="ico">🏖️</span>Leave Requests</div>
+
+
+      <div class="sb-footer">
+        <div class="sb-logout" onclick="Auth.logout()"><span>🚪</span>Sign Out</div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <!-- TOPBAR -->
+      <div class="topbar">
+        <div class="tb-left">
+          <div class="bc" id="bc">Staff Portal <span style="color:var(--border)">›</span> <span
+              id="bc-page">Dashboard</span></div>
+          <h1 id="page-h1">Good morning, Amina 👋</h1>
+        </div>
+        <div class="tb-right">
+          <button class="btn btn-gold btn-sm" id="tb-cta" onclick="handleTopBarCta()">⏵ Check In</button>
+          <div class="ico-btn" onclick="show('notifications')">🔔<div class="ndot"></div>
+          </div>
+          <div class="av sm">AO</div>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- ═══ DASHBOARD ═══ -->
+        <div id="dashboard" class="screen active">
+          <!-- onboarding alert -->
+          <div
+            style="background:rgba(157,130,72,.08);border:1px solid rgba(157,130,72,.25);border-radius:var(--r2);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:20px">⚠️</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700;color:var(--gold)">Onboarding Incomplete — 2 steps remaining
+              </div>
+              <div style="font-size:12px;color:var(--muted)">Please complete your Code of Conduct and Guarantor Form to
+                finalise your onboarding.</div>
+            </div>
+            <button class="btn btn-gold btn-sm" onclick="show('onboarding')">Complete Now →</button>
+          </div>
+
+          <div class="g4 mb6">
+            <div class="stat gold">
+              <div class="stat-ico" style="background:rgba(157,130,72,.12)">📅</div>
+              <div class="stat-lbl">Attendance (Month)</div>
+              <div class="stat-val">98%</div>
+              <div class="stat-delta up">↑ Excellent</div>
+            </div>
+            <div class="stat green">
+              <div class="stat-ico" style="background:var(--green2)">✅</div>
+              <div class="stat-lbl">Tasks Today</div>
+              <div class="stat-val">3</div>
+              <div class="stat-delta amber">1 urgent</div>
+            </div>
+            <div class="stat blue">
+              <div class="stat-ico" style="background:var(--blue2)">⭐</div>
+              <div class="stat-lbl">Client Rating</div>
+              <div class="stat-val">4.8</div>
+              <div class="stat-delta up">↑ +0.2 this week</div>
+            </div>
+            <div class="stat purple">
+              <div class="stat-ico" style="background:rgba(142,68,173,.12)">📢</div>
+              <div class="stat-lbl">Unread Announcements</div>
+              <div class="stat-val">2</div>
+              <div class="stat-delta neu">New</div>
+            </div>
+          </div>
+
+          <div class="g2">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <!-- Announcements -->
+              <div class="banner">
+                <div class="tag">📢 Management — All Staff</div>
+                <h3>July Performance Review — Friday 18th</h3>
+                <p>All branch staff are expected to attend the monthly performance review at the Academy branch
+                  conference room.</p>
+                <div class="meta">From: Qudus Jimoh, CEO · 12 Jul 2026</div>
+              </div>
+              <div class="banner urgent">
+                <div class="tag" style="color:var(--red)">🚨 Urgent Directive — Amina Okafor</div>
+                <h3 style="font-size:14px">Complete client consultation notes by 5:00 PM today</h3>
+                <p>Please update all outstanding client consultation records in the system before close of business.</p>
+                <div class="meta" style="color:var(--red)">From: Fatima Adeyemi, Branch Manager · Today</div>
+              </div>
+              <!-- Tasks -->
+              <div class="card">
+                <div class="card-h">
+                  <h3>My Tasks</h3><span class="badge b-amber">3 pending</span>
+                </div>
+                <div class="card-b" style="padding:16px 22px">
+                  <div class="task urgent">
+                    <div class="task-chk" id="t1">!</div>
+                    <div>
+                      <div class="task-title">Update client consultation notes</div>
+                      <div class="task-due">Due today by 5:00 PM</div>
+                    </div>
+                  </div>
+                  <div class="task">
+                    <div class="task-chk" onclick="checkTask(this)">○</div>
+                    <div>
+                      <div class="task-title">Complete guarantor form submission</div>
+                      <div class="task-due">Due: 15 Jul 2026</div>
+                    </div>
+                  </div>
+                  <div class="task">
+                    <div class="task-chk" onclick="checkTask(this)">○</div>
+                    <div>
+                      <div class="task-title">Sign Code of Conduct document</div>
+                      <div class="task-due">Due: 16 Jul 2026</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="info-grid">
-                <div class="info-item"><div class="lbl">Branch</div><div class="val">Academy, Ibadan</div></div>
-                <div class="info-item"><div class="lbl">Type</div><div class="val">Full-Time</div></div>
-                <div class="info-item"><div class="lbl">Reports To</div><div class="val">Fatima Adeyemi</div></div>
-                <div class="info-item"><div class="lbl">Start Date</div><div class="val">14 Jul 2026</div></div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <!-- Profile summary -->
+              <div class="card">
+                <div class="card-h">
+                  <h3>My Profile</h3><button class="btn btn-ghost btn-sm" onclick="show('profile')">View Full</button>
+                </div>
+                <div class="card-b">
+                  <div class="flex aic gap3 mb4">
+                    <div class="av lg">AO</div>
+                    <div>
+                      <div style="font-size:16px;font-weight:800;color:var(--white)">Amina Okafor</div>
+                      <div style="font-size:12px;color:var(--gold);font-weight:600">Senior Hair Stylist</div>
+                      <div style="font-size:10px;color:var(--muted);font-family:monospace;margin-top:2px">HL-ACD-0012
+                      </div>
+                    </div>
+                  </div>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <div class="lbl">Branch</div>
+                      <div class="val">Academy, Ibadan</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">Type</div>
+                      <div class="val">Full-Time</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">Reports To</div>
+                      <div class="val">Fatima Adeyemi</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">Start Date</div>
+                      <div class="val">14 Jul 2026</div>
+                    </div>
+                  </div>
+                  <div class="divider"></div>
+                  <div
+                    style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">
+                    Key Responsibilities</div>
+                  <ul style="font-size:12px;color:var(--muted);padding-left:16px;line-height:2">
+                    <li>Premium cut, colour & treatment delivery</li>
+                    <li>Client consultation & profile management</li>
+                    <li>Stock monitoring for styling station</li>
+                    <li>Mentoring junior stylists and trainees</li>
+                  </ul>
+                </div>
+              </div>
+              <!-- Onboarding progress -->
+              <div class="card">
+                <div class="card-h">
+                  <h3>Onboarding Status</h3><button class="btn btn-gold btn-sm"
+                    onclick="show('onboarding')">Continue</button>
+                </div>
+                <div class="card-b">
+                  <div style="margin-bottom:8px">
+                    <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600;color:var(--gold)">65%
+                        Complete</span><span style="font-size:11px;color:var(--muted)">4 of 6 done</span></div>
+                    <div class="pbar"><span style="width:65%"></span></div>
+                  </div>
+                  <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span
+                      style="font-size:12px">Employment Contract</span></div>
+                  <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span
+                      style="font-size:12px">Staff Handbook</span></div>
+                  <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span
+                      style="font-size:12px">NDA & IT Policy</span></div>
+                  <div class="flex gap2 mb2"><span style="color:var(--amber);font-size:13px">⏳</span><span
+                      style="font-size:12px">Code of Conduct — Pending</span></div>
+                  <div class="flex gap2"><span style="color:var(--amber);font-size:13px">⏳</span><span
+                      style="font-size:12px">Guarantor Form — Pending</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ ONBOARDING ═══ -->
+        <div id="onboarding" class="screen">
+          <div class="steps">
+            <div class="step done">
+              <div class="step-c">✓</div>
+              <div>
+                <div class="step-lbl">Credentials Created</div>
+              </div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step done">
+              <div class="step-c">✓</div>
+              <div>
+                <div class="step-lbl">Personal Info</div>
+              </div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step act">
+              <div class="step-c">3</div>
+              <div>
+                <div class="step-lbl">Documents</div>
+              </div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step pend">
+              <div class="step-c">4</div>
+              <div>
+                <div class="step-lbl">Verification</div>
+              </div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step pend">
+              <div class="step-c">5</div>
+              <div>
+                <div class="step-lbl">Complete</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex aic gap2 mb4"
+            style="background:var(--green2);border:1px solid rgba(39,174,96,.25);border-radius:var(--r2);padding:12px 16px">
+            <span style="color:var(--green);font-size:16px">✓</span>
+            <span style="font-size:13px;font-weight:600;color:var(--green)">Credentials dispatched to
+              amina.okafor@gmail.com — 14 Jul 2026, 08:30 AM</span>
+          </div>
+
+          <div class="g4 mb4">
+            <div class="stat gold">
+              <div class="stat-lbl">Employee Number</div>
+              <div class="stat-val" style="font-size:16px;font-family:monospace">HL-ACD-0012</div>
+            </div>
+            <div class="stat purple">
+              <div class="stat-lbl">Username</div>
+              <div class="stat-val" style="font-size:13px;font-family:monospace">amina.okafor</div>
+              <div style="font-size:10px;color:var(--muted)">@hairlux.com.ng</div>
+            </div>
+            <div class="stat blue">
+              <div class="stat-lbl">Temp Password</div>
+              <div class="stat-val" style="font-size:18px">••••••••</div>
+              <div style="font-size:10px;color:var(--muted)">Sent by email</div>
+            </div>
+            <div class="stat green">
+              <div class="stat-lbl">Branch Assigned</div>
+              <div class="stat-val" style="font-size:18px">Academy</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">
+              <h3>Document Review & Acknowledgement</h3><span class="badge b-gold">4 of 6 acknowledged</span>
+            </div>
+            <div class="card-b">
+              <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Read each document carefully. Your
+                electronic acknowledgement creates a legal and timestamped record.</p>
+              <div class="ag-item done">
+                <div class="ag-chk">✓</div>
+                <div style="flex:1">
+                  <div class="ag-title">Employment Contract</div>
+                  <div class="ag-desc">Acknowledged 14 Jul · 10:24 AM · IP: 197.210.xx.xx</div>
+                </div><button class="btn btn-ghost btn-sm">View</button>
+              </div>
+              <div class="ag-item done">
+                <div class="ag-chk">✓</div>
+                <div style="flex:1">
+                  <div class="ag-title">Confidentiality Agreement (NDA)</div>
+                  <div class="ag-desc">Acknowledged 14 Jul · 10:31 AM</div>
+                </div><button class="btn btn-ghost btn-sm">View</button>
+              </div>
+              <div class="ag-item done">
+                <div class="ag-chk">✓</div>
+                <div style="flex:1">
+                  <div class="ag-title">IT & Acceptable Use Policy</div>
+                  <div class="ag-desc">Acknowledged 14 Jul · 10:38 AM</div>
+                </div><button class="btn btn-ghost btn-sm">View</button>
+              </div>
+              <div class="ag-item done">
+                <div class="ag-chk">✓</div>
+                <div style="flex:1">
+                  <div class="ag-title">Staff Handbook</div>
+                  <div class="ag-desc">Acknowledged 14 Jul · 10:45 AM</div>
+                </div><button class="btn btn-ghost btn-sm">View</button>
+              </div>
+              <div class="ag-item cur">
+                <div class="ag-chk" style="color:var(--gold)">→</div>
+                <div style="flex:1">
+                  <div class="ag-title">Code of Conduct</div>
+                  <div class="ag-desc">Please review and acknowledge before proceeding.</div>
+                </div><button class="btn btn-gold btn-sm">Read & Sign</button>
+              </div>
+              <div class="ag-item pend" style="opacity:.5">
+                <div class="ag-chk"></div>
+                <div style="flex:1">
+                  <div class="ag-title">Data Protection & Privacy Policy</div>
+                  <div class="ag-desc">Available after Code of Conduct is acknowledged.</div>
+                </div><button class="btn btn-ghost btn-sm" disabled>Locked</button>
+              </div>
+
+              <div
+                style="text-align:center;padding:24px;margin-top:8px;background:rgba(255,255,255,.02);border-radius:var(--r2);border:2px dashed var(--border)">
+                <div style="font-size:28px;margin-bottom:10px">🔐</div>
+                <div style="font-weight:700;font-size:14px;color:var(--light);margin-bottom:4px">Complete all 6
+                  documents to finalise onboarding</div>
+                <div style="font-size:12px;color:var(--muted)">2 documents remaining. Onboarding will be marked complete
+                  once all are acknowledged and guarantor form is submitted.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt4">
+            <div class="card-h">
+              <h3>Verification</h3><span class="badge b-amber">Requires branch manager</span>
+            </div>
+            <div class="card-b">
+              <p style="font-size:13px;color:var(--muted);margin-bottom:16px">These items can't be self-certified — your
+                branch manager marks each one complete once you've submitted the relevant form or information in person.
+              </p>
+              <div id="onboarding-verification-checklist"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PROFILE ═══ -->
+        <div id="profile" class="screen">
+          <div class="card mb4">
+            <div class="prof-hero">
+              <div class="av xl">AO</div>
+              <div>
+                <div class="prof-hero-info">
+                  <div class="name">Amina Okafor</div>
+                  <div class="role">Senior Hair Stylist — Academy Branch</div>
+                  <div class="id">HL-ACD-0012 · amina.okafor@hairlux.com.ng</div>
+                </div>
+                <div class="prof-stats">
+                  <div class="ps">
+                    <div class="val">92</div>
+                    <div class="lbl">Days Active</div>
+                  </div>
+                  <div class="ps">
+                    <div class="val">98%</div>
+                    <div class="lbl">Attendance</div>
+                  </div>
+                  <div class="ps">
+                    <div class="val">4.8★</div>
+                    <div class="lbl">Client Rating</div>
+                  </div>
+                  <div class="ps">
+                    <div class="val">✓</div>
+                    <div class="lbl">Verified</div>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+                <span class="badge b-green">Active Employee</span>
+                <span style="font-size:11px;color:var(--muted)">Employed 14 Jul 2026</span>
+                <button class="btn btn-ghost btn-sm mt2">Edit Profile</button>
+              </div>
+            </div>
+            <div class="card-b">
+              <div class="g2 mb4">
+                <div>
+                  <div
+                    style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
+                    Personal Information</div>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <div class="lbl">Date of Birth</div>
+                      <div class="val">14 March 1998</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">Gender</div>
+                      <div class="val">Female</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">Phone</div>
+                      <div class="val">+234 812 345 6789</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">NIN</div>
+                      <div class="val" style="font-family:monospace;font-size:11px">2234 5678 901</div>
+                    </div>
+                    <div class="info-item" style="grid-column:span 2">
+                      <div class="lbl">Address</div>
+                      <div class="val">15 Alao Akala Road, Ibadan, Oyo State</div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div
+                    style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
+                    Employment Details</div>
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <div class="lbl">Department</div>
+                      <div class="val">Styling & Hair Care</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">Type</div>
+                      <div class="val">Full-Time</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">Branch</div>
+                      <div class="val">Academy, Ibadan</div>
+                    </div>
+                    <div class="info-item">
+                      <div class="lbl">Status</div>
+                      <div class="val"><span class="badge b-green">Active</span></div>
+                    </div>
+                    <div class="info-item" style="grid-column:span 2">
+                      <div class="lbl">Reporting Line</div>
+                      <div class="val">Mrs. Fatima Adeyemi — Branch Manager</div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="divider"></div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Key Responsibilities</div>
-              <ul style="font-size:12px;color:var(--muted);padding-left:16px;line-height:2">
-                <li>Premium cut, colour & treatment delivery</li>
-                <li>Client consultation & profile management</li>
-                <li>Stock monitoring for styling station</li>
-                <li>Mentoring junior stylists and trainees</li>
-              </ul>
+              <div
+                style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">
+                Emergency Contact</div>
+              <div class="info-grid" style="max-width:400px">
+                <div class="info-item">
+                  <div class="lbl">Name</div>
+                  <div class="val">Ngozi Okafor</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">Relationship</div>
+                  <div class="val">Mother</div>
+                </div>
+                <div class="info-item">
+                  <div class="lbl">Phone</div>
+                  <div class="val">+234 803 456 7890</div>
+                </div>
+              </div>
             </div>
           </div>
-          <!-- Onboarding progress -->
+          <!-- Verification checklist -->
           <div class="card">
-            <div class="card-h"><h3>Onboarding Status</h3><button class="btn btn-gold btn-sm" onclick="show('onboarding')">Continue</button></div>
+            <div class="card-h">
+              <h3>Verification Checklist</h3>
+            </div>
             <div class="card-b">
-              <div style="margin-bottom:8px"><div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600;color:var(--gold)">65% Complete</span><span style="font-size:11px;color:var(--muted)">4 of 6 done</span></div><div class="pbar"><span style="width:65%"></span></div></div>
-              <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span style="font-size:12px">Employment Contract</span></div>
-              <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span style="font-size:12px">Staff Handbook</span></div>
-              <div class="flex gap2 mb2"><span style="color:var(--green);font-size:13px">✓</span><span style="font-size:12px">NDA & IT Policy</span></div>
-              <div class="flex gap2 mb2"><span style="color:var(--amber);font-size:13px">⏳</span><span style="font-size:12px">Code of Conduct — Pending</span></div>
-              <div class="flex gap2"><span style="color:var(--amber);font-size:13px">⏳</span><span style="font-size:12px">Guarantor Form — Pending</span></div>
+              <div class="flex aic gap3 mb3" style="padding:10px;background:var(--green2);border-radius:var(--r2)"><span
+                  style="color:var(--green);font-size:18px">✓</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600">NIN Verified</div>
+                  <div style="font-size:11px;color:var(--muted)">Captured during onboarding</div>
+                </div><span class="badge b-green" style="margin-left:auto">Complete</span>
+              </div>
+              <div class="flex aic gap3 mb3" style="padding:10px;background:var(--amber2);border-radius:var(--r2)"><span
+                  style="color:var(--amber);font-size:18px">⏳</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600">Address Verification</div>
+                  <div style="font-size:11px;color:var(--muted)">Physical verification pending</div>
+                </div><span class="badge b-amber" style="margin-left:auto">Pending</span>
+              </div>
+              <div class="flex aic gap3" style="padding:10px;background:var(--red2);border-radius:var(--r2)"><span
+                  style="color:var(--red);font-size:18px">✗</span>
+                <div>
+                  <div style="font-size:13px;font-weight:600">Guarantor Form</div>
+                  <div style="font-size:11px;color:var(--muted)">Not yet submitted — required to complete onboarding
+                  </div>
+                </div><span class="badge b-red" style="margin-left:auto">Not Started</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- ═══ ONBOARDING ═══ -->
-    <div id="onboarding" class="screen">
-      <div class="steps">
-        <div class="step done"><div class="step-c">✓</div><div><div class="step-lbl">Credentials Created</div></div></div>
-        <div class="step-line"></div>
-        <div class="step done"><div class="step-c">✓</div><div><div class="step-lbl">Personal Info</div></div></div>
-        <div class="step-line"></div>
-        <div class="step act"><div class="step-c">3</div><div><div class="step-lbl">Documents</div></div></div>
-        <div class="step-line"></div>
-        <div class="step pend"><div class="step-c">4</div><div><div class="step-lbl">Verification</div></div></div>
-        <div class="step-line"></div>
-        <div class="step pend"><div class="step-c">5</div><div><div class="step-lbl">Complete</div></div></div>
-      </div>
-
-      <div class="flex aic gap2 mb4" style="background:var(--green2);border:1px solid rgba(39,174,96,.25);border-radius:var(--r2);padding:12px 16px">
-        <span style="color:var(--green);font-size:16px">✓</span>
-        <span style="font-size:13px;font-weight:600;color:var(--green)">Credentials dispatched to amina.okafor@gmail.com — 14 Jul 2026, 08:30 AM</span>
-      </div>
-
-      <div class="g4 mb4">
-        <div class="stat gold"><div class="stat-lbl">Employee Number</div><div class="stat-val" style="font-size:16px;font-family:monospace">HL-ACD-0012</div></div>
-        <div class="stat purple"><div class="stat-lbl">Username</div><div class="stat-val" style="font-size:13px;font-family:monospace">amina.okafor</div><div style="font-size:10px;color:var(--muted)">@hairlux.com.ng</div></div>
-        <div class="stat blue"><div class="stat-lbl">Temp Password</div><div class="stat-val" style="font-size:18px">••••••••</div><div style="font-size:10px;color:var(--muted)">Sent by email</div></div>
-        <div class="stat green"><div class="stat-lbl">Branch Assigned</div><div class="stat-val" style="font-size:18px">Academy</div></div>
-      </div>
-
-      <div class="card">
-        <div class="card-h"><h3>Document Review & Acknowledgement</h3><span class="badge b-gold">4 of 6 acknowledged</span></div>
-        <div class="card-b">
-          <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Read each document carefully. Your electronic acknowledgement creates a legal and timestamped record.</p>
-          <div class="ag-item done"><div class="ag-chk">✓</div><div style="flex:1"><div class="ag-title">Employment Contract</div><div class="ag-desc">Acknowledged 14 Jul · 10:24 AM · IP: 197.210.xx.xx</div></div><button class="btn btn-ghost btn-sm">View</button></div>
-          <div class="ag-item done"><div class="ag-chk">✓</div><div style="flex:1"><div class="ag-title">Confidentiality Agreement (NDA)</div><div class="ag-desc">Acknowledged 14 Jul · 10:31 AM</div></div><button class="btn btn-ghost btn-sm">View</button></div>
-          <div class="ag-item done"><div class="ag-chk">✓</div><div style="flex:1"><div class="ag-title">IT & Acceptable Use Policy</div><div class="ag-desc">Acknowledged 14 Jul · 10:38 AM</div></div><button class="btn btn-ghost btn-sm">View</button></div>
-          <div class="ag-item done"><div class="ag-chk">✓</div><div style="flex:1"><div class="ag-title">Staff Handbook</div><div class="ag-desc">Acknowledged 14 Jul · 10:45 AM</div></div><button class="btn btn-ghost btn-sm">View</button></div>
-          <div class="ag-item cur"><div class="ag-chk" style="color:var(--gold)">→</div><div style="flex:1"><div class="ag-title">Code of Conduct</div><div class="ag-desc">Please review and acknowledge before proceeding.</div></div><button class="btn btn-gold btn-sm">Read & Sign</button></div>
-          <div class="ag-item pend" style="opacity:.5"><div class="ag-chk"></div><div style="flex:1"><div class="ag-title">Data Protection & Privacy Policy</div><div class="ag-desc">Available after Code of Conduct is acknowledged.</div></div><button class="btn btn-ghost btn-sm" disabled>Locked</button></div>
-
-          <div style="text-align:center;padding:24px;margin-top:8px;background:rgba(255,255,255,.02);border-radius:var(--r2);border:2px dashed var(--border)">
-            <div style="font-size:28px;margin-bottom:10px">🔐</div>
-            <div style="font-weight:700;font-size:14px;color:var(--light);margin-bottom:4px">Complete all 6 documents to finalise onboarding</div>
-            <div style="font-size:12px;color:var(--muted)">2 documents remaining. Onboarding will be marked complete once all are acknowledged and guarantor form is submitted.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card mt4">
-        <div class="card-h"><h3>Verification</h3><span class="badge b-amber">Requires branch manager</span></div>
-        <div class="card-b">
-          <p style="font-size:13px;color:var(--muted);margin-bottom:16px">These items can't be self-certified — your branch manager marks each one complete once you've submitted the relevant form or information in person.</p>
-          <div id="onboarding-verification-checklist"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ PROFILE ═══ -->
-    <div id="profile" class="screen">
-      <div class="card mb4">
-        <div class="prof-hero">
-          <div class="av xl">AO</div>
-          <div>
-            <div class="prof-hero-info">
-              <div class="name">Amina Okafor</div>
-              <div class="role">Senior Hair Stylist — Academy Branch</div>
-              <div class="id">HL-ACD-0012 · amina.okafor@hairlux.com.ng</div>
+        <!-- ═══ AGREEMENTS ═══ -->
+        <div id="agreements" class="screen">
+          <div class="card">
+            <div class="card-h">
+              <h3>Company Documents</h3><span class="badge b-gold">4 of 6 acknowledged</span>
             </div>
-            <div class="prof-stats">
-              <div class="ps"><div class="val">92</div><div class="lbl">Days Active</div></div>
-              <div class="ps"><div class="val">98%</div><div class="lbl">Attendance</div></div>
-              <div class="ps"><div class="val">4.8★</div><div class="lbl">Client Rating</div></div>
-              <div class="ps"><div class="val">✓</div><div class="lbl">Verified</div></div>
+            <div class="card-b">
+              <div class="ag-item done">
+                <div class="ag-chk">✓</div>
+                <div style="flex:1">
+                  <div class="ag-title">Employment Contract</div>
+                  <div class="ag-desc">Acknowledged 14 Jul · 10:24 AM · IP: 197.210.xx.xx</div>
+                </div><button class="btn btn-ghost btn-sm">View PDF</button>
+              </div>
+              <div class="ag-item done">
+                <div class="ag-chk">✓</div>
+                <div style="flex:1">
+                  <div class="ag-title">Confidentiality Agreement (NDA)</div>
+                  <div class="ag-desc">Acknowledged 14 Jul · 10:31 AM</div>
+                </div><button class="btn btn-ghost btn-sm">View PDF</button>
+              </div>
+              <div class="ag-item done">
+                <div class="ag-chk">✓</div>
+                <div style="flex:1">
+                  <div class="ag-title">IT & Acceptable Use Policy</div>
+                  <div class="ag-desc">Acknowledged 14 Jul · 10:38 AM</div>
+                </div><button class="btn btn-ghost btn-sm">View PDF</button>
+              </div>
+              <div class="ag-item done">
+                <div class="ag-chk">✓</div>
+                <div style="flex:1">
+                  <div class="ag-title">Staff Handbook</div>
+                  <div class="ag-desc">Acknowledged 14 Jul · 10:45 AM</div>
+                </div><button class="btn btn-ghost btn-sm">View PDF</button>
+              </div>
+              <div class="ag-item cur">
+                <div class="ag-chk" style="color:var(--gold)">→</div>
+                <div style="flex:1">
+                  <div class="ag-title">Code of Conduct</div>
+                  <div class="ag-desc">Please review and confirm acceptance before proceeding.</div>
+                </div><button class="btn btn-gold btn-sm">Read & Sign</button>
+              </div>
+              <div class="ag-item pend" style="opacity:.5">
+                <div class="ag-chk"></div>
+                <div style="flex:1">
+                  <div class="ag-title">Data Protection & Privacy Policy</div>
+                  <div class="ag-desc">Unlocks after Code of Conduct is acknowledged.</div>
+                </div><span style="font-size:11px;color:var(--muted)">🔒 Locked</span>
+              </div>
             </div>
           </div>
-          <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-            <span class="badge b-green">Active Employee</span>
-            <span style="font-size:11px;color:var(--muted)">Employed 14 Jul 2026</span>
-            <button class="btn btn-ghost btn-sm mt2">Edit Profile</button>
-          </div>
         </div>
-        <div class="card-b">
+
+        <!-- ═══ ATTENDANCE ═══ -->
+        <div id="attendance" class="screen">
           <div class="g2 mb4">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Personal Information</div>
-              <div class="info-grid">
-                <div class="info-item"><div class="lbl">Date of Birth</div><div class="val">14 March 1998</div></div>
-                <div class="info-item"><div class="lbl">Gender</div><div class="val">Female</div></div>
-                <div class="info-item"><div class="lbl">Phone</div><div class="val">+234 812 345 6789</div></div>
-                <div class="info-item"><div class="lbl">NIN</div><div class="val" style="font-family:monospace;font-size:11px">2234 5678 901</div></div>
-                <div class="info-item" style="grid-column:span 2"><div class="lbl">Address</div><div class="val">15 Alao Akala Road, Ibadan, Oyo State</div></div>
+            <div class="card">
+              <div class="card-b" style="text-align:center;padding:32px">
+                <div style="font-size:48px;font-weight:800;color:var(--white);letter-spacing:-.02em" id="clk">08:47 AM
+                </div>
+                <div style="font-size:13px;color:var(--muted);margin-bottom:28px">Monday, 14 July 2026 · Academy Branch
+                </div>
+                <div class="ci-btn" id="ci-btn" onclick="handleAttendanceToggle()">⏵</div>
+                <div style="font-size:12px;color:var(--muted)" id="ci-status">Tap to Check In</div>
               </div>
             </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Employment Details</div>
-              <div class="info-grid">
-                <div class="info-item"><div class="lbl">Department</div><div class="val">Styling & Hair Care</div></div>
-                <div class="info-item"><div class="lbl">Type</div><div class="val">Full-Time</div></div>
-                <div class="info-item"><div class="lbl">Branch</div><div class="val">Academy, Ibadan</div></div>
-                <div class="info-item"><div class="lbl">Status</div><div class="val"><span class="badge b-green">Active</span></div></div>
-                <div class="info-item" style="grid-column:span 2"><div class="lbl">Reporting Line</div><div class="val">Mrs. Fatima Adeyemi — Branch Manager</div></div>
+            <div class="card">
+              <div class="card-h">
+                <h3>This Week</h3>
+              </div>
+              <div class="card-b">
+                <div class="week-dots mb4">
+                  <div class="wd">
+                    <div class="day">Mon</div>
+                    <div class="dot ok">✓</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Tue</div>
+                    <div class="dot ok">✓</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Wed</div>
+                    <div class="dot ok">✓</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Thu</div>
+                    <div class="dot late">L</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Fri</div>
+                    <div class="dot today">—</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Sat</div>
+                    <div class="dot off">–</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Sun</div>
+                    <div class="dot off">–</div>
+                  </div>
+                </div>
+                <div class="divider"></div>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="lbl">Check-In Today</div>
+                    <div class="val">08:47 AM</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="lbl">Check-Out</div>
+                    <div class="val">— Pending</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="lbl">Hours This Week</div>
+                    <div class="val">24.5 hrs</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="lbl">Monthly Rate</div>
+                    <div class="val">98%</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div class="divider"></div>
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Emergency Contact</div>
-          <div class="info-grid" style="max-width:400px">
-            <div class="info-item"><div class="lbl">Name</div><div class="val">Ngozi Okafor</div></div>
-            <div class="info-item"><div class="lbl">Relationship</div><div class="val">Mother</div></div>
-            <div class="info-item"><div class="lbl">Phone</div><div class="val">+234 803 456 7890</div></div>
-          </div>
-        </div>
-      </div>
-      <!-- Verification checklist -->
-      <div class="card">
-        <div class="card-h"><h3>Verification Checklist</h3></div>
-        <div class="card-b">
-          <div class="flex aic gap3 mb3" style="padding:10px;background:var(--green2);border-radius:var(--r2)"><span style="color:var(--green);font-size:18px">✓</span><div><div style="font-size:13px;font-weight:600">NIN Verified</div><div style="font-size:11px;color:var(--muted)">Captured during onboarding</div></div><span class="badge b-green" style="margin-left:auto">Complete</span></div>
-          <div class="flex aic gap3 mb3" style="padding:10px;background:var(--amber2);border-radius:var(--r2)"><span style="color:var(--amber);font-size:18px">⏳</span><div><div style="font-size:13px;font-weight:600">Address Verification</div><div style="font-size:11px;color:var(--muted)">Physical verification pending</div></div><span class="badge b-amber" style="margin-left:auto">Pending</span></div>
-          <div class="flex aic gap3" style="padding:10px;background:var(--red2);border-radius:var(--r2)"><span style="color:var(--red);font-size:18px">✗</span><div><div style="font-size:13px;font-weight:600">Guarantor Form</div><div style="font-size:11px;color:var(--muted)">Not yet submitted — required to complete onboarding</div></div><span class="badge b-red" style="margin-left:auto">Not Started</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ AGREEMENTS ═══ -->
-    <div id="agreements" class="screen">
-      <div class="card">
-        <div class="card-h"><h3>Company Documents</h3><span class="badge b-gold">4 of 6 acknowledged</span></div>
-        <div class="card-b">
-          <div class="ag-item done"><div class="ag-chk">✓</div><div style="flex:1"><div class="ag-title">Employment Contract</div><div class="ag-desc">Acknowledged 14 Jul · 10:24 AM · IP: 197.210.xx.xx</div></div><button class="btn btn-ghost btn-sm">View PDF</button></div>
-          <div class="ag-item done"><div class="ag-chk">✓</div><div style="flex:1"><div class="ag-title">Confidentiality Agreement (NDA)</div><div class="ag-desc">Acknowledged 14 Jul · 10:31 AM</div></div><button class="btn btn-ghost btn-sm">View PDF</button></div>
-          <div class="ag-item done"><div class="ag-chk">✓</div><div style="flex:1"><div class="ag-title">IT & Acceptable Use Policy</div><div class="ag-desc">Acknowledged 14 Jul · 10:38 AM</div></div><button class="btn btn-ghost btn-sm">View PDF</button></div>
-          <div class="ag-item done"><div class="ag-chk">✓</div><div style="flex:1"><div class="ag-title">Staff Handbook</div><div class="ag-desc">Acknowledged 14 Jul · 10:45 AM</div></div><button class="btn btn-ghost btn-sm">View PDF</button></div>
-          <div class="ag-item cur"><div class="ag-chk" style="color:var(--gold)">→</div><div style="flex:1"><div class="ag-title">Code of Conduct</div><div class="ag-desc">Please review and confirm acceptance before proceeding.</div></div><button class="btn btn-gold btn-sm">Read & Sign</button></div>
-          <div class="ag-item pend" style="opacity:.5"><div class="ag-chk"></div><div style="flex:1"><div class="ag-title">Data Protection & Privacy Policy</div><div class="ag-desc">Unlocks after Code of Conduct is acknowledged.</div></div><span style="font-size:11px;color:var(--muted)">🔒 Locked</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ ATTENDANCE ═══ -->
-    <div id="attendance" class="screen">
-      <div class="g2 mb4">
-        <div class="card">
-          <div class="card-b" style="text-align:center;padding:32px">
-            <div style="font-size:48px;font-weight:800;color:var(--white);letter-spacing:-.02em" id="clk">08:47 AM</div>
-            <div style="font-size:13px;color:var(--muted);margin-bottom:28px">Monday, 14 July 2026 · Academy Branch</div>
-            <div class="ci-btn" id="ci-btn" onclick="handleAttendanceToggle()">⏵</div>
-            <div style="font-size:12px;color:var(--muted)" id="ci-status">Tap to Check In</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-h"><h3>This Week</h3></div>
-          <div class="card-b">
-            <div class="week-dots mb4">
-              <div class="wd"><div class="day">Mon</div><div class="dot ok">✓</div></div>
-              <div class="wd"><div class="day">Tue</div><div class="dot ok">✓</div></div>
-              <div class="wd"><div class="day">Wed</div><div class="dot ok">✓</div></div>
-              <div class="wd"><div class="day">Thu</div><div class="dot late">L</div></div>
-              <div class="wd"><div class="day">Fri</div><div class="dot today">—</div></div>
-              <div class="wd"><div class="day">Sat</div><div class="dot off">–</div></div>
-              <div class="wd"><div class="day">Sun</div><div class="dot off">–</div></div>
-            </div>
-            <div class="divider"></div>
-            <div class="info-grid">
-              <div class="info-item"><div class="lbl">Check-In Today</div><div class="val">08:47 AM</div></div>
-              <div class="info-item"><div class="lbl">Check-Out</div><div class="val">— Pending</div></div>
-              <div class="info-item"><div class="lbl">Hours This Week</div><div class="val">24.5 hrs</div></div>
-              <div class="info-item"><div class="lbl">Monthly Rate</div><div class="val">98%</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>Attendance History — July</h3></div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Date</th><th>Day</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr><td>14 Jul</td><td>Monday</td><td>08:47 AM</td><td>—</td><td>—</td><td><span class="badge b-green">Present</span></td></tr>
-              <tr><td>13 Jul</td><td>Sunday</td><td>—</td><td>—</td><td>—</td><td><span class="badge b-teal">Day Off</span></td></tr>
-              <tr><td>12 Jul</td><td>Saturday</td><td>—</td><td>—</td><td>—</td><td><span class="badge b-teal">Day Off</span></td></tr>
-              <tr><td>11 Jul</td><td>Friday</td><td>09:15 AM</td><td>09:02 PM</td><td>11.8</td><td><span class="badge b-amber">Late</span></td></tr>
-              <tr><td>10 Jul</td><td>Thursday</td><td>08:30 AM</td><td>09:00 PM</td><td>12.5</td><td><span class="badge b-green">Present</span></td></tr>
-              <tr><td>9 Jul</td><td>Wednesday</td><td>08:45 AM</td><td>09:10 PM</td><td>12.4</td><td><span class="badge b-green">Present</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ LEAVE REQUEST ═══ -->
-
-    <div id="leave" class="screen">
-      <div class="card mb4">
-        <div class="card-h">
-          <h3>My Leave &amp; Permission Requests</h3>
-          <button class="btn btn-gold btn-sm" onclick="showLeaveRequestForm()">+ New Request</button>
-        </div>
-        <div class="card-b" id="leave-form-container" style="display:none"></div>
-        <div class="card-b" id="leave-list-container">
-          <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ INVENTORY ═══ -->
-    <div id="inventory" class="screen">
-      <div class="g4 mb4">
-        <div class="stat blue"><div class="stat-lbl">Total Products</div><div class="stat-val">142</div></div>
-        <div class="stat green"><div class="stat-lbl">In Stock</div><div class="stat-val">128</div><div class="stat-delta up">↑ Healthy</div></div>
-        <div class="stat amber"><div class="stat-lbl">Low Stock</div><div class="stat-val">10</div><div class="stat-delta down">! Reorder</div></div>
-        <div class="stat gold" style=""><div class="stat-lbl">Out of Stock</div><div class="stat-val" style="color:var(--red)">4</div><div class="stat-delta down">↓ Critical</div></div>
-      </div>
-      <div class="g2 mb4">
-        <div class="card">
-          <div class="card-h"><h3>Log Stock Entry</h3><span class="badge b-gold">Academy Branch</span></div>
-          <div class="card-b">
-            <div class="form-group"><label class="label">Item Name <span class="req">*</span></label><input class="input" placeholder="e.g. Argan Oil Treatment 250ml"></div>
-            <div class="g2">
-              <div class="form-group"><label class="label">Category</label><select class="input"><option>Hair Treatment</option><option>Colour</option><option>Tools</option><option>Retail</option></select></div>
-              <div class="form-group"><label class="label">Quantity <span class="req">*</span></label><input class="input" type="number" placeholder="0"></div>
-            </div>
-            <div class="g2">
-              <div class="form-group"><label class="label">Entry Type</label><select class="input"><option>Received</option><option>Used / Sold</option><option>Damaged</option><option>Returned</option></select></div>
-              <div class="form-group"><label class="label">Date</label><input class="input" value="14 Jul 2026"></div>
-            </div>
-            <div class="form-group"><label class="label">Notes</label><input class="input" placeholder="Supplier, batch no., etc."></div>
-            <button class="btn btn-gold" style="width:100%">Submit Stock Entry</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-h"><h3>⚠️ Low Stock Alert</h3><span class="badge b-red">4 critical</span></div>
-          <div class="card-b">
-            <div class="inv-bar"><div class="inv-name">Argan Oil Shampoo 500ml</div><div class="inv-fill lo"><span style="width:8%"></span></div><span style="font-size:11px;color:var(--red);font-weight:700;min-width:50px;text-align:right">2 left</span></div>
-            <div class="inv-bar"><div class="inv-name">Purple Toning Shampoo</div><div class="inv-fill lo"><span style="width:0%"></span></div><span style="font-size:11px;color:var(--red);font-weight:700;min-width:50px;text-align:right">OUT</span></div>
-            <div class="inv-bar"><div class="inv-name">Colour Developer 20V</div><div class="inv-fill md"><span style="width:24%"></span></div><span style="font-size:11px;color:var(--amber);font-weight:700;min-width:50px;text-align:right">6 left</span></div>
-            <div class="inv-bar"><div class="inv-name">Heat Protectant Spray</div><div class="inv-fill md"><span style="width:16%"></span></div><span style="font-size:11px;color:var(--amber);font-weight:700;min-width:50px;text-align:right">4 left</span></div>
-            <div class="inv-bar"><div class="inv-name">Argan Oil Treatment 250ml</div><div class="inv-fill"><span style="width:80%"></span></div><span style="font-size:11px;color:var(--green);font-weight:700;min-width:50px;text-align:right">24</span></div>
-            <button class="btn btn-ghost btn-sm mt3" style="width:100%">Report to Management</button>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>Stock Register — Academy Branch</h3></div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Product</th><th>Category</th><th>Stock Level</th><th>Last Entry</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody>
-              <tr><td style="font-weight:600;color:var(--white)">Argan Oil Treatment 250ml</td><td>Hair Treatment</td><td>24 units</td><td>12 Jul</td><td><span class="badge b-green">Good</span></td><td><button class="btn btn-ghost btn-sm">Update</button></td></tr>
-              <tr><td style="font-weight:600;color:var(--white)">Argan Oil Shampoo 500ml</td><td>Shampoo</td><td>2 units</td><td>13 Jul</td><td><span class="badge b-red">Critical</span></td><td><button class="btn btn-danger btn-sm">Alert</button></td></tr>
-              <tr><td style="font-weight:600;color:var(--white)">Purple Toning Shampoo</td><td>Shampoo</td><td>0 units</td><td>10 Jul</td><td><span class="badge b-red">Out of Stock</span></td><td><button class="btn btn-danger btn-sm">Alert</button></td></tr>
-              <tr><td style="font-weight:600;color:var(--white)">Colour Developer 20V</td><td>Colour</td><td>6 units</td><td>11 Jul</td><td><span class="badge b-amber">Low</span></td><td><button class="btn btn-ghost btn-sm">Update</button></td></tr>
-              <tr><td style="font-weight:600;color:var(--white)">Clip-In Extensions (Set)</td><td>Extensions</td><td>18 units</td><td>9 Jul</td><td><span class="badge b-green">Good</span></td><td><button class="btn btn-ghost btn-sm">Update</button></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ ANNOUNCEMENTS ═══ -->
-    <div id="announcements" class="screen">
-      <div class="banner">
-        <div class="tag">📢 All Staff · High Priority</div>
-        <h3>July Performance Review — Friday 18th July</h3>
-        <p>All branch staff are expected to attend the monthly performance review at the Academy branch conference room. Punctuality is required. Please bring your July activity summary.</p>
-        <div class="meta">From: Qudus Jimoh, CEO · Sent 12 Jul 2026 · 10:00 AM</div>
-      </div>
-      <div class="banner urgent">
-        <div class="tag" style="color:var(--red)">🚨 Academy Branch · Urgent</div>
-        <h3 style="font-size:14px">Complete client consultation notes by 5:00 PM today</h3>
-        <p>All outstanding client consultation records must be updated in the system before close of business today. This affects client follow-up and branch reporting.</p>
-        <div class="meta" style="color:var(--red)">From: Fatima Adeyemi, Branch Manager · Today 09:00 AM</div>
-      </div>
-      <div class="banner">
-        <div class="tag">📢 All Staff · Informational</div>
-        <h3>New Uniform Policy — Effective 1st August 2026</h3>
-        <p>Updated uniform standards take effect from 1st August. Please review the new dress code guidelines in your Staff Handbook. All staff must comply from the effective date.</p>
-        <div class="meta">From: Qudus Jimoh, CEO · Sent 10 Jul 2026 · 2:00 PM</div>
-      </div>
-    </div>
-
-    <!-- ═══ TASKS ═══ -->
-    <div id="tasks" class="screen">
-      <div class="g2 mb4">
-        <div class="stat red"><div class="stat-lbl">Urgent Tasks</div><div class="stat-val">1</div></div>
-        <div class="stat amber"><div class="stat-lbl">Pending Tasks</div><div class="stat-val">3</div></div>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>Tasks & Directives</h3><span class="badge b-amber">3 pending</span></div>
-        <div class="card-b">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">From Management — Today</div>
-          <div class="task urgent"><div class="task-chk">!</div><div style="flex:1"><div class="task-title">Update client consultation notes by 5:00 PM</div><div class="task-due">Urgent · Assigned by Fatima Adeyemi · Due today</div></div><button class="btn btn-danger btn-sm">Mark Done</button></div>
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 12px">Personal Onboarding Tasks</div>
-          <div class="task"><div class="task-chk" onclick="checkTask(this)">○</div><div style="flex:1"><div class="task-title">Complete guarantor form submission</div><div class="task-due">Due: 15 Jul 2026 · Required for onboarding completion</div></div><button class="btn btn-ghost btn-sm" onclick="show('onboarding')">Go to Onboarding</button></div>
-          <div class="task"><div class="task-chk" onclick="checkTask(this)">○</div><div style="flex:1"><div class="task-title">Sign Code of Conduct document</div><div class="task-due">Due: 16 Jul 2026</div></div><button class="btn btn-ghost btn-sm" onclick="show('agreements')">Sign Now</button></div>
-          <div class="task done"><div class="task-chk checked">✓</div><div style="flex:1"><div class="task-title" style="text-decoration:line-through;opacity:.5">Sign Employment Contract</div><div class="task-due">Completed 14 Jul 2026</div></div></div>
-          <div class="task done"><div class="task-chk checked">✓</div><div style="flex:1"><div class="task-title" style="text-decoration:line-through;opacity:.5">Acknowledge Staff Handbook</div><div class="task-due">Completed 14 Jul 2026</div></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ NOTIFICATIONS ═══ -->
-    <div id="notifications" class="screen">
-      <div class="card">
-        <div class="card-h"><h3>Notifications</h3><div class="flex gap2"><span class="badge b-gold">5 new</span><button class="btn btn-ghost btn-sm">Mark all read</button></div></div>
-        <div>
-          <div class="notif unread"><div class="ndot2"></div><div><div class="n-t">⚠️ Urgent: Update client consultation notes</div><div class="n-b">Branch Manager has requested all consultation records be updated by 5:00 PM today.</div><div class="n-d">10 mins ago · From: Fatima Adeyemi</div></div></div>
-          <div class="notif unread"><div class="ndot2"></div><div><div class="n-t">📢 New Announcement: July Performance Review</div><div class="n-b">All staff are required to attend the review session on Friday 18th July at Academy branch.</div><div class="n-d">2 hours ago · From: Qudus Jimoh</div></div></div>
-          <div class="notif unread"><div class="ndot2"></div><div><div class="n-t">⏳ Onboarding Reminder: Code of Conduct Pending</div><div class="n-b">Your onboarding is 65% complete. Please sign the Code of Conduct to continue.</div><div class="n-d">Today · 8:00 AM · System</div></div></div>
-          <div class="notif"><div class="ndot2 read"></div><div><div class="n-t">✓ Check-In Confirmed — 08:47 AM</div><div class="n-b">Your attendance has been recorded for today, Monday 14 July 2026.</div><div class="n-d">Today · 08:47 AM · System</div></div></div>
-          <div class="notif"><div class="ndot2 read"></div><div><div class="n-t">👋 Welcome to Hairlux, Amina!</div><div class="n-b">Your staff account has been created. Staff ID: HL-ACD-0012. Credentials sent to your email.</div><div class="n-d">14 Jul 2026 · 08:30 AM</div></div></div>
-          <div class="notif"><div class="ndot2 read"></div><div><div class="n-t">📋 Employment Contract Acknowledged</div><div class="n-b">You successfully acknowledged your Employment Contract on 14 Jul 2026 at 10:24 AM.</div><div class="n-d">14 Jul 2026 · 10:24 AM</div></div></div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══ SALES & BOOKINGS ═══ -->
-    <div id="sales" class="screen">
-      <div class="g4 mb6">
-        <div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">💳</div><div class="stat-lbl">Today's Sales</div><div class="stat-val">₦48,500</div><div class="stat-delta up">↑ 4 bookings</div></div>
-        <div class="stat green"><div class="stat-ico" style="background:var(--green2)">📋</div><div class="stat-lbl">Bookings Today</div><div class="stat-val">4</div><div class="stat-delta up">↑ 3 completed</div></div>
-        <div class="stat blue"><div class="stat-ico" style="background:var(--blue2)">💵</div><div class="stat-lbl">My Commission (Today)</div><div class="stat-val">₦9,700</div><div class="stat-delta up">↑ 20%</div></div>
-        <div class="stat purple"><div class="stat-ico" style="background:rgba(142,68,173,.12)">📅</div><div class="stat-lbl">Pending Bookings</div><div class="stat-val">1</div><div class="stat-delta amber">Awaiting</div></div>
-      </div>
-
-      <!-- Today's Bookings -->
-      <div class="card mb4">
-        <div class="card-h">
-          <h3>Today's Bookings — 14 July 2026</h3>
-          <div class="flex gap2">
-            <select class="input" style="width:auto;padding:6px 10px;font-size:11px"><option>All Status</option><option>Completed</option><option>In Progress</option><option>Pending</option></select>
-          </div>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Booking ID</th><th>Client</th><th>Service</th><th>Price</th><th>Commission (20%)</th><th>Time</th><th>Status</th><th>Receipt</th></tr></thead>
-            <tbody>
-              <tr>
-                <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0441</td>
-                <td><div style="font-weight:600;color:var(--white)">Mrs. Tunde Bakare</div><div style="font-size:10px;color:var(--muted)">Walk-in</div></td>
-                <td>Full Colour Treatment</td>
-                <td style="font-weight:700;color:var(--white)">₦18,000</td>
-                <td style="font-weight:700;color:var(--green)">₦3,600</td>
-                <td>09:00 AM</td>
-                <td><span class="badge b-green">Completed</span></td>
-                <td><button class="btn btn-ghost btn-sm">View</button></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0442</td>
-                <td><div style="font-weight:600;color:var(--white)">Miss Adaeze Obi</div><div style="font-size:10px;color:var(--muted)">Returning</div></td>
-                <td>Haircut & Style</td>
-                <td style="font-weight:700;color:var(--white)">₦8,500</td>
-                <td style="font-weight:700;color:var(--green)">₦1,700</td>
-                <td>11:30 AM</td>
-                <td><span class="badge b-green">Completed</span></td>
-                <td><button class="btn btn-ghost btn-sm">View</button></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0443</td>
-                <td><div style="font-weight:600;color:var(--white)">Mrs. Grace Iyanu</div><div style="font-size:10px;color:var(--muted)">Membership</div></td>
-                <td>Deep Conditioning + Blowout</td>
-                <td style="font-weight:700;color:var(--white)">₦12,000</td>
-                <td style="font-weight:700;color:var(--green)">₦2,400</td>
-                <td>2:00 PM</td>
-                <td><span class="badge b-green">Completed</span></td>
-                <td><button class="btn btn-ghost btn-sm">View</button></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0444</td>
-                <td><div style="font-weight:600;color:var(--white)">Miss Simi Adeleke</div><div style="font-size:10px;color:var(--muted)">Walk-in</div></td>
-                <td>Scalp Treatment</td>
-                <td style="font-weight:700;color:var(--white)">₦10,000</td>
-                <td style="font-weight:700;color:var(--amber)">₦2,000</td>
-                <td>4:30 PM</td>
-                <td><span class="badge b-amber">In Progress</span></td>
-                <td><button class="btn btn-ghost btn-sm">View</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="padding:14px 20px;border-top:1px solid var(--border);background:rgba(157,130,72,.05);display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:12px;color:var(--muted)">4 bookings today</span>
-          <div class="flex gap4">
-            <div style="text-align:right"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Total Sales</div><div style="font-size:16px;font-weight:800;color:var(--white)">₦48,500</div></div>
-            <div style="text-align:right"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">My Commission</div><div style="font-size:16px;font-weight:800;color:var(--green)">₦9,700</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Monthly sales summary -->
-      <div class="g2">
-        <div class="card">
-          <div class="card-h"><h3>Monthly Sales — July 2026</h3></div>
-          <div class="card-b">
-            <div style="margin-bottom:12px"><div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Sales Target</span><span style="font-size:12px;font-weight:700;color:var(--gold)">₦300,000</span></div><div class="pbar"><span style="width:62%"></span></div><div style="font-size:11px;color:var(--muted);margin-top:4px">₦185,200 achieved — 62% of target</div></div>
-            <div class="divider"></div>
-            <div class="info-grid">
-              <div class="info-item"><div class="lbl">Total Bookings</div><div class="val">32</div></div>
-              <div class="info-item"><div class="lbl">Completed</div><div class="val" style="color:var(--green)">28</div></div>
-              <div class="info-item"><div class="lbl">Services Revenue</div><div class="val">₦165,000</div></div>
-              <div class="info-item"><div class="lbl">Products Revenue</div><div class="val">₦20,200</div></div>
-              <div class="info-item"><div class="lbl">Avg Per Booking</div><div class="val">₦5,782</div></div>
-              <div class="info-item"><div class="lbl">Commission Earned</div><div class="val" style="color:var(--green)">₦37,040</div></div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-h"><h3>Services Breakdown</h3></div>
-          <div class="card-b">
-            <div style="margin-bottom:14px"><div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Full Colour Treatment</span><span style="font-size:11px;color:var(--gold)">10 × ₦18,000</span></div><div class="pbar"><span style="width:75%"></span></div></div>
-            <div style="margin-bottom:14px"><div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Haircut & Style</span><span style="font-size:11px;color:var(--gold)">8 × ₦8,500</span></div><div class="pbar"><span style="width:55%"></span></div></div>
-            <div style="margin-bottom:14px"><div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Deep Conditioning</span><span style="font-size:11px;color:var(--gold)">7 × ₦12,000</span></div><div class="pbar"><span style="width:45%"></span></div></div>
-            <div style="margin-bottom:14px"><div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Scalp Treatment</span><span style="font-size:11px;color:var(--gold)">5 × ₦10,000</span></div><div class="pbar"><span style="width:32%"></span></div></div>
-            <div><div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Other Services</span><span style="font-size:11px;color:var(--gold)">2 × various</span></div><div class="pbar"><span style="width:12%"></span></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ COMMISSION ═══ -->
-    <div id="commission" class="screen">
-      <div class="g4 mb6">
-        <div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">💰</div><div class="stat-lbl">Commission This Month</div><div class="stat-val">₦37,040</div><div class="stat-delta up">↑ +₦9,700 today</div></div>
-        <div class="stat green"><div class="stat-ico" style="background:var(--green2)">📈</div><div class="stat-lbl">Commission Rate</div><div class="stat-val">20%</div><div class="stat-delta neu">Per booking</div></div>
-        <div class="stat blue"><div class="stat-ico" style="background:var(--blue2)">📅</div><div class="stat-lbl">Last Payout</div><div class="stat-val">₦32,500</div><div class="stat-delta neu">Jun 2026</div></div>
-        <div class="stat purple"><div class="stat-ico" style="background:rgba(142,68,173,.12)">🎯</div><div class="stat-lbl">Bonus Target</div><div class="stat-val">₦5,000</div><div class="stat-delta amber">₦7,960 away</div></div>
-      </div>
-
-      <div class="g2 mb4">
-        <div class="card">
-          <div class="card-h"><h3>Commission Breakdown — July</h3></div>
-          <div class="card-b">
-            <div style="background:var(--gold-bg);border:1px solid rgba(157,130,72,.25);border-radius:var(--r2);padding:16px;margin-bottom:18px">
-              <div style="font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Commission Formula</div>
-              <div style="font-size:13px;color:var(--light)">Total Booking Value × 20% = Commission Earned</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px">Bonus of ₦5,000 when monthly sales exceed ₦300,000</div>
+          <div class="card">
+            <div class="card-h">
+              <h3>Attendance History — July</h3>
             </div>
             <div class="tbl-wrap">
               <table>
-                <thead><tr><th>Week</th><th>Bookings</th><th>Sales Value</th><th>Commission (20%)</th><th>Bonus</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Day</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  <tr><td>Week 1 (1–6 Jul)</td><td>8</td><td style="font-weight:600;color:var(--white)">₦48,000</td><td style="font-weight:700;color:var(--green)">₦9,600</td><td>—</td></tr>
-                  <tr><td>Week 2 (7–13 Jul)</td><td>10</td><td style="font-weight:600;color:var(--white)">₦62,500</td><td style="font-weight:700;color:var(--green)">₦12,500</td><td>—</td></tr>
-                  <tr><td>Week 3 (14–20 Jul)</td><td>8</td><td style="font-weight:600;color:var(--white)">₦48,500</td><td style="font-weight:700;color:var(--green)">₦9,700</td><td>—</td></tr>
-                  <tr><td>Week 4 (21–31 Jul)</td><td colspan="4" style="color:var(--muted);font-style:italic">In progress...</td></tr>
-                  <tr style="background:rgba(157,130,72,.05)"><td style="font-weight:700;color:var(--white)">TOTAL</td><td style="font-weight:700;color:var(--white)">26</td><td style="font-weight:800;color:var(--white)">₦159,000</td><td style="font-weight:800;color:var(--green)">₦31,800</td><td style="color:var(--muted)">Pending</td></tr>
+                  <tr>
+                    <td>14 Jul</td>
+                    <td>Monday</td>
+                    <td>08:47 AM</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td><span class="badge b-green">Present</span></td>
+                  </tr>
+                  <tr>
+                    <td>13 Jul</td>
+                    <td>Sunday</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td><span class="badge b-teal">Day Off</span></td>
+                  </tr>
+                  <tr>
+                    <td>12 Jul</td>
+                    <td>Saturday</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td><span class="badge b-teal">Day Off</span></td>
+                  </tr>
+                  <tr>
+                    <td>11 Jul</td>
+                    <td>Friday</td>
+                    <td>09:15 AM</td>
+                    <td>09:02 PM</td>
+                    <td>11.8</td>
+                    <td><span class="badge b-amber">Late</span></td>
+                  </tr>
+                  <tr>
+                    <td>10 Jul</td>
+                    <td>Thursday</td>
+                    <td>08:30 AM</td>
+                    <td>09:00 PM</td>
+                    <td>12.5</td>
+                    <td><span class="badge b-green">Present</span></td>
+                  </tr>
+                  <tr>
+                    <td>9 Jul</td>
+                    <td>Wednesday</td>
+                    <td>08:45 AM</td>
+                    <td>09:10 PM</td>
+                    <td>12.4</td>
+                    <td><span class="badge b-green">Present</span></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-h"><h3>Earnings History</h3></div>
-          <div class="card-b">
-            <div style="margin-bottom:16px">
-              <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">July 2026 (in progress)</span><span style="font-size:12px;font-weight:700;color:var(--gold)">₦31,800</span></div>
-              <div class="pbar"><span style="width:62%"></span></div>
+
+        <!-- ═══ LEAVE REQUEST ═══ -->
+
+        <div id="leave" class="screen">
+          <div class="card mb4">
+            <div class="card-h">
+              <h3>My Leave &amp; Permission Requests</h3>
+              <button class="btn btn-gold btn-sm" onclick="showLeaveRequestForm()">+ New Request</button>
             </div>
-            <div style="margin-bottom:16px">
-              <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">June 2026</span><span style="font-size:12px;font-weight:700;color:var(--green)">₦32,500 ✓ Paid</span></div>
-              <div class="pbar green"><span style="width:68%"></span></div>
-            </div>
-            <div style="margin-bottom:16px">
-              <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">May 2026</span><span style="font-size:12px;font-weight:700;color:var(--green)">₦28,200 ✓ Paid</span></div>
-              <div class="pbar green"><span style="width:55%"></span></div>
-            </div>
-            <div style="margin-bottom:16px">
-              <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">April 2026</span><span style="font-size:12px;font-weight:700;color:var(--green)">₦25,900 ✓ Paid</span></div>
-              <div class="pbar green"><span style="width:50%"></span></div>
-            </div>
-            <div class="divider"></div>
-            <div class="flex aic jsb">
-              <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Total Earned (2026)</div><div style="font-size:18px;font-weight:800;color:var(--white)">₦118,400</div></div>
-              <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Total Paid Out</div><div style="font-size:18px;font-weight:800;color:var(--green)">₦86,600</div></div>
+            <div class="card-b" id="leave-form-container" style="display:none"></div>
+            <div class="card-b" id="leave-list-container">
+              <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- ═══ PAYROLL ═══ -->
-    <div id="payroll" class="screen">
-      <div class="g4 mb6">
-        <div class="stat green"><div class="stat-ico" style="background:var(--green2)">💵</div><div class="stat-lbl">Base Salary</div><div class="stat-val">₦120,000</div><div class="stat-delta neu">Monthly</div></div>
-        <div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">💰</div><div class="stat-lbl">Commission (Jun)</div><div class="stat-val">₦32,500</div><div class="stat-delta up">↑ Paid</div></div>
-        <div class="stat blue"><div class="stat-ico" style="background:var(--blue2)">📋</div><div class="stat-lbl">Deductions (Jun)</div><div class="stat-val">₦8,000</div><div class="stat-delta neu">Pension + Tax</div></div>
-        <div class="stat purple"><div class="stat-ico" style="background:rgba(142,68,173,.12)">🏦</div><div class="stat-lbl">Net Pay (Jun)</div><div class="stat-val">₦144,500</div><div class="stat-delta up">↑ Paid 30 Jun</div></div>
-      </div>
-
-      <!-- Latest Payslip -->
-      <div class="card mb4">
-        <div class="card-h">
-          <h3>Payslip — June 2026</h3>
-          <div class="flex gap2">
-            <select class="input" style="width:auto;padding:6px 10px;font-size:11px"><option>June 2026</option><option>May 2026</option><option>April 2026</option></select>
-            <button class="btn btn-gold btn-sm">⬇ Download PDF</button>
+        <!-- ═══ INVENTORY ═══ -->
+        <div id="inventory" class="screen">
+          <div class="g4 mb4">
+            <div class="stat blue">
+              <div class="stat-lbl">Total Items</div>
+              <div class="stat-val" id="inv-total">—</div>
+            </div>
+            <div class="stat green">
+              <div class="stat-lbl">Healthy</div>
+              <div class="stat-val" id="inv-healthy">—</div>
+            </div>
+            <div class="stat amber">
+              <div class="stat-lbl">Low Stock</div>
+              <div class="stat-val" id="inv-low">—</div>
+            </div>
+            <div class="stat gold">
+              <div class="stat-lbl">Out of Stock</div>
+              <div class="stat-val" id="inv-out" style="color:var(--red)">—</div>
+            </div>
+          </div>
+          <div class="g2 mb4">
+            <div class="card">
+              <div class="card-h">
+                <h3>Request Stock Transfer</h3>
+              </div>
+              <div class="card-b">
+                <div class="form-group"><label class="label">Item <span class="req">*</span></label>
+                  <select class="input" id="inv-transfer-item">
+                    <option value="">Select an item…</option>
+                  </select>
+                </div>
+                <div class="form-group"><label class="label">Direction</label>
+                  <select class="input" id="inv-transfer-direction" onchange="toggleTransferDirection()">
+                    <option value="send">Send from my branch to another branch</option>
+                    <option value="request">Request from another branch to mine</option>
+                  </select>
+                </div>
+                <div class="form-group" id="inv-transfer-branch-wrap"><label class="label">Other Branch <span
+                      class="req">*</span></label>
+                  <select class="input" id="inv-transfer-branch">
+                    <option value="">Select branch…</option>
+                  </select>
+                </div>
+                <div class="form-group"><label class="label">Quantity <span class="req">*</span></label>
+                  <input class="input" type="number" min="1" id="inv-transfer-qty" placeholder="0">
+                </div>
+                <button class="btn btn-gold" style="width:100%" onclick="submitTransferRequest()">Submit Transfer
+                  Request</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-h">
+                <h3>My Transfer Requests</h3>
+              </div>
+              <div class="card-b" id="inv-transfers-list">
+                <div class="text-secondary small">Loading…</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h">
+              <h3>Stock Register</h3>
+              <select class="input" id="inv-category-filter" style="max-width:180px" onchange="loadInventoryItems()">
+                <option value="">All Categories</option>
+                <option value="FOR_SALE">For Sale</option>
+                <option value="INTERNAL_USE">Internal Use</option>
+                <option value="STORAGE">Storage</option>
+              </select>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>Stock Level</th>
+                    <th>Threshold</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="inv-items-tbody">
+                  <tr>
+                    <td colspan="6" class="text-secondary">Loading…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-        <div class="card-b">
-          <!-- Payslip header -->
-          <div style="background:linear-gradient(135deg,var(--dark3),var(--dark4));border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start">
+
+
+        <!-- ═══ ANNOUNCEMENTS ═══ -->
+        <div id="announcements" class="screen">
+          <div class="banner">
+            <div class="tag">📢 All Staff · High Priority</div>
+            <h3>July Performance Review — Friday 18th July</h3>
+            <p>All branch staff are expected to attend the monthly performance review at the Academy branch conference
+              room. Punctuality is required. Please bring your July activity summary.</p>
+            <div class="meta">From: Qudus Jimoh, CEO · Sent 12 Jul 2026 · 10:00 AM</div>
+          </div>
+          <div class="banner urgent">
+            <div class="tag" style="color:var(--red)">🚨 Academy Branch · Urgent</div>
+            <h3 style="font-size:14px">Complete client consultation notes by 5:00 PM today</h3>
+            <p>All outstanding client consultation records must be updated in the system before close of business today.
+              This affects client follow-up and branch reporting.</p>
+            <div class="meta" style="color:var(--red)">From: Fatima Adeyemi, Branch Manager · Today 09:00 AM</div>
+          </div>
+          <div class="banner">
+            <div class="tag">📢 All Staff · Informational</div>
+            <h3>New Uniform Policy — Effective 1st August 2026</h3>
+            <p>Updated uniform standards take effect from 1st August. Please review the new dress code guidelines in
+              your Staff Handbook. All staff must comply from the effective date.</p>
+            <div class="meta">From: Qudus Jimoh, CEO · Sent 10 Jul 2026 · 2:00 PM</div>
+          </div>
+        </div>
+
+        <!-- ═══ TASKS ═══ -->
+        <div id="tasks" class="screen">
+          <div class="g2 mb4">
+            <div class="stat red">
+              <div class="stat-lbl">Urgent Tasks</div>
+              <div class="stat-val">1</div>
+            </div>
+            <div class="stat amber">
+              <div class="stat-lbl">Pending Tasks</div>
+              <div class="stat-val">3</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h">
+              <h3>Tasks & Directives</h3><span class="badge b-amber">3 pending</span>
+            </div>
+            <div class="card-b">
+              <div
+                style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
+                From Management — Today</div>
+              <div class="task urgent">
+                <div class="task-chk">!</div>
+                <div style="flex:1">
+                  <div class="task-title">Update client consultation notes by 5:00 PM</div>
+                  <div class="task-due">Urgent · Assigned by Fatima Adeyemi · Due today</div>
+                </div><button class="btn btn-danger btn-sm">Mark Done</button>
+              </div>
+              <div
+                style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 12px">
+                Personal Onboarding Tasks</div>
+              <div class="task">
+                <div class="task-chk" onclick="checkTask(this)">○</div>
+                <div style="flex:1">
+                  <div class="task-title">Complete guarantor form submission</div>
+                  <div class="task-due">Due: 15 Jul 2026 · Required for onboarding completion</div>
+                </div><button class="btn btn-ghost btn-sm" onclick="show('onboarding')">Go to Onboarding</button>
+              </div>
+              <div class="task">
+                <div class="task-chk" onclick="checkTask(this)">○</div>
+                <div style="flex:1">
+                  <div class="task-title">Sign Code of Conduct document</div>
+                  <div class="task-due">Due: 16 Jul 2026</div>
+                </div><button class="btn btn-ghost btn-sm" onclick="show('agreements')">Sign Now</button>
+              </div>
+              <div class="task done">
+                <div class="task-chk checked">✓</div>
+                <div style="flex:1">
+                  <div class="task-title" style="text-decoration:line-through;opacity:.5">Sign Employment Contract</div>
+                  <div class="task-due">Completed 14 Jul 2026</div>
+                </div>
+              </div>
+              <div class="task done">
+                <div class="task-chk checked">✓</div>
+                <div style="flex:1">
+                  <div class="task-title" style="text-decoration:line-through;opacity:.5">Acknowledge Staff Handbook
+                  </div>
+                  <div class="task-due">Completed 14 Jul 2026</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ NOTIFICATIONS ═══ -->
+        <div id="notifications" class="screen">
+          <div class="card">
+            <div class="card-h">
+              <h3>Notifications</h3>
+              <div class="flex gap2"><span class="badge b-gold">5 new</span><button class="btn btn-ghost btn-sm">Mark
+                  all read</button></div>
+            </div>
             <div>
-              <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">Hairlux Salon & Spa · Omega Pathway Innovative Limited</div>
-              <div style="font-size:18px;font-weight:800;color:var(--white)">PAYSLIP</div>
-              <div style="font-size:12px;color:var(--muted);margin-top:4px">Period: 1 June 2026 — 30 June 2026</div>
+              <div class="notif unread">
+                <div class="ndot2"></div>
+                <div>
+                  <div class="n-t">⚠️ Urgent: Update client consultation notes</div>
+                  <div class="n-b">Branch Manager has requested all consultation records be updated by 5:00 PM today.
+                  </div>
+                  <div class="n-d">10 mins ago · From: Fatima Adeyemi</div>
+                </div>
+              </div>
+              <div class="notif unread">
+                <div class="ndot2"></div>
+                <div>
+                  <div class="n-t">📢 New Announcement: July Performance Review</div>
+                  <div class="n-b">All staff are required to attend the review session on Friday 18th July at Academy
+                    branch.</div>
+                  <div class="n-d">2 hours ago · From: Qudus Jimoh</div>
+                </div>
+              </div>
+              <div class="notif unread">
+                <div class="ndot2"></div>
+                <div>
+                  <div class="n-t">⏳ Onboarding Reminder: Code of Conduct Pending</div>
+                  <div class="n-b">Your onboarding is 65% complete. Please sign the Code of Conduct to continue.</div>
+                  <div class="n-d">Today · 8:00 AM · System</div>
+                </div>
+              </div>
+              <div class="notif">
+                <div class="ndot2 read"></div>
+                <div>
+                  <div class="n-t">✓ Check-In Confirmed — 08:47 AM</div>
+                  <div class="n-b">Your attendance has been recorded for today, Monday 14 July 2026.</div>
+                  <div class="n-d">Today · 08:47 AM · System</div>
+                </div>
+              </div>
+              <div class="notif">
+                <div class="ndot2 read"></div>
+                <div>
+                  <div class="n-t">👋 Welcome to Hairlux, Amina!</div>
+                  <div class="n-b">Your staff account has been created. Staff ID: HL-ACD-0012. Credentials sent to your
+                    email.</div>
+                  <div class="n-d">14 Jul 2026 · 08:30 AM</div>
+                </div>
+              </div>
+              <div class="notif">
+                <div class="ndot2 read"></div>
+                <div>
+                  <div class="n-t">📋 Employment Contract Acknowledged</div>
+                  <div class="n-b">You successfully acknowledged your Employment Contract on 14 Jul 2026 at 10:24 AM.
+                  </div>
+                  <div class="n-d">14 Jul 2026 · 10:24 AM</div>
+                </div>
+              </div>
             </div>
-            <div style="text-align:right">
-              <div style="font-size:14px;font-weight:700;color:var(--white)">Amina Okafor</div>
-              <div style="font-size:11px;color:var(--muted)">HL-ACD-0012 · Senior Hair Stylist</div>
-              <div style="font-size:11px;color:var(--muted)">Academy Branch · Full-Time</div>
+          </div>
+        </div>
+
+
+        <!-- ═══ SALES & BOOKINGS ═══ -->
+        <div id="sales" class="screen">
+          <div class="g4 mb6">
+            <div class="stat gold">
+              <div class="stat-ico" style="background:rgba(157,130,72,.12)">💳</div>
+              <div class="stat-lbl">Today's Sales</div>
+              <div class="stat-val">₦48,500</div>
+              <div class="stat-delta up">↑ 4 bookings</div>
+            </div>
+            <div class="stat green">
+              <div class="stat-ico" style="background:var(--green2)">📋</div>
+              <div class="stat-lbl">Bookings Today</div>
+              <div class="stat-val">4</div>
+              <div class="stat-delta up">↑ 3 completed</div>
+            </div>
+            <div class="stat blue">
+              <div class="stat-ico" style="background:var(--blue2)">💵</div>
+              <div class="stat-lbl">My Commission (Today)</div>
+              <div class="stat-val">₦9,700</div>
+              <div class="stat-delta up">↑ 20%</div>
+            </div>
+            <div class="stat purple">
+              <div class="stat-ico" style="background:rgba(142,68,173,.12)">📅</div>
+              <div class="stat-lbl">Pending Bookings</div>
+              <div class="stat-val">1</div>
+              <div class="stat-delta amber">Awaiting</div>
+            </div>
+          </div>
+
+          <!-- Today's Bookings -->
+          <div class="card mb4">
+            <div class="card-h">
+              <h3>Today's Bookings — 14 July 2026</h3>
+              <div class="flex gap2">
+                <select class="input" style="width:auto;padding:6px 10px;font-size:11px">
+                  <option>All Status</option>
+                  <option>Completed</option>
+                  <option>In Progress</option>
+                  <option>Pending</option>
+                </select>
+              </div>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Booking ID</th>
+                    <th>Client</th>
+                    <th>Service</th>
+                    <th>Price</th>
+                    <th>Commission (20%)</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Receipt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0441</td>
+                    <td>
+                      <div style="font-weight:600;color:var(--white)">Mrs. Tunde Bakare</div>
+                      <div style="font-size:10px;color:var(--muted)">Walk-in</div>
+                    </td>
+                    <td>Full Colour Treatment</td>
+                    <td style="font-weight:700;color:var(--white)">₦18,000</td>
+                    <td style="font-weight:700;color:var(--green)">₦3,600</td>
+                    <td>09:00 AM</td>
+                    <td><span class="badge b-green">Completed</span></td>
+                    <td><button class="btn btn-ghost btn-sm">View</button></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0442</td>
+                    <td>
+                      <div style="font-weight:600;color:var(--white)">Miss Adaeze Obi</div>
+                      <div style="font-size:10px;color:var(--muted)">Returning</div>
+                    </td>
+                    <td>Haircut & Style</td>
+                    <td style="font-weight:700;color:var(--white)">₦8,500</td>
+                    <td style="font-weight:700;color:var(--green)">₦1,700</td>
+                    <td>11:30 AM</td>
+                    <td><span class="badge b-green">Completed</span></td>
+                    <td><button class="btn btn-ghost btn-sm">View</button></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0443</td>
+                    <td>
+                      <div style="font-weight:600;color:var(--white)">Mrs. Grace Iyanu</div>
+                      <div style="font-size:10px;color:var(--muted)">Membership</div>
+                    </td>
+                    <td>Deep Conditioning + Blowout</td>
+                    <td style="font-weight:700;color:var(--white)">₦12,000</td>
+                    <td style="font-weight:700;color:var(--green)">₦2,400</td>
+                    <td>2:00 PM</td>
+                    <td><span class="badge b-green">Completed</span></td>
+                    <td><button class="btn btn-ghost btn-sm">View</button></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0444</td>
+                    <td>
+                      <div style="font-weight:600;color:var(--white)">Miss Simi Adeleke</div>
+                      <div style="font-size:10px;color:var(--muted)">Walk-in</div>
+                    </td>
+                    <td>Scalp Treatment</td>
+                    <td style="font-weight:700;color:var(--white)">₦10,000</td>
+                    <td style="font-weight:700;color:var(--amber)">₦2,000</td>
+                    <td>4:30 PM</td>
+                    <td><span class="badge b-amber">In Progress</span></td>
+                    <td><button class="btn btn-ghost btn-sm">View</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div
+              style="padding:14px 20px;border-top:1px solid var(--border);background:rgba(157,130,72,.05);display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:12px;color:var(--muted)">4 bookings today</span>
+              <div class="flex gap4">
+                <div style="text-align:right">
+                  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Total
+                    Sales</div>
+                  <div style="font-size:16px;font-weight:800;color:var(--white)">₦48,500</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">My
+                    Commission</div>
+                  <div style="font-size:16px;font-weight:800;color:var(--green)">₦9,700</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monthly sales summary -->
+          <div class="g2">
+            <div class="card">
+              <div class="card-h">
+                <h3>Monthly Sales — July 2026</h3>
+              </div>
+              <div class="card-b">
+                <div style="margin-bottom:12px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Sales Target</span><span
+                      style="font-size:12px;font-weight:700;color:var(--gold)">₦300,000</span></div>
+                  <div class="pbar"><span style="width:62%"></span></div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:4px">₦185,200 achieved — 62% of target</div>
+                </div>
+                <div class="divider"></div>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="lbl">Total Bookings</div>
+                    <div class="val">32</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="lbl">Completed</div>
+                    <div class="val" style="color:var(--green)">28</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="lbl">Services Revenue</div>
+                    <div class="val">₦165,000</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="lbl">Products Revenue</div>
+                    <div class="val">₦20,200</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="lbl">Avg Per Booking</div>
+                    <div class="val">₦5,782</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="lbl">Commission Earned</div>
+                    <div class="val" style="color:var(--green)">₦37,040</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-h">
+                <h3>Services Breakdown</h3>
+              </div>
+              <div class="card-b">
+                <div style="margin-bottom:14px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Full Colour
+                      Treatment</span><span style="font-size:11px;color:var(--gold)">10 × ₦18,000</span></div>
+                  <div class="pbar"><span style="width:75%"></span></div>
+                </div>
+                <div style="margin-bottom:14px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Haircut & Style</span><span
+                      style="font-size:11px;color:var(--gold)">8 × ₦8,500</span></div>
+                  <div class="pbar"><span style="width:55%"></span></div>
+                </div>
+                <div style="margin-bottom:14px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Deep
+                      Conditioning</span><span style="font-size:11px;color:var(--gold)">7 × ₦12,000</span></div>
+                  <div class="pbar"><span style="width:45%"></span></div>
+                </div>
+                <div style="margin-bottom:14px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Scalp Treatment</span><span
+                      style="font-size:11px;color:var(--gold)">5 × ₦10,000</span></div>
+                  <div class="pbar"><span style="width:32%"></span></div>
+                </div>
+                <div>
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Other Services</span><span
+                      style="font-size:11px;color:var(--gold)">2 × various</span></div>
+                  <div class="pbar"><span style="width:12%"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ COMMISSION ═══ -->
+        <div id="commission" class="screen">
+          <div class="g4 mb6">
+            <div class="stat gold">
+              <div class="stat-ico" style="background:rgba(157,130,72,.12)">💰</div>
+              <div class="stat-lbl">Commission This Month</div>
+              <div class="stat-val">₦37,040</div>
+              <div class="stat-delta up">↑ +₦9,700 today</div>
+            </div>
+            <div class="stat green">
+              <div class="stat-ico" style="background:var(--green2)">📈</div>
+              <div class="stat-lbl">Commission Rate</div>
+              <div class="stat-val">20%</div>
+              <div class="stat-delta neu">Per booking</div>
+            </div>
+            <div class="stat blue">
+              <div class="stat-ico" style="background:var(--blue2)">📅</div>
+              <div class="stat-lbl">Last Payout</div>
+              <div class="stat-val">₦32,500</div>
+              <div class="stat-delta neu">Jun 2026</div>
+            </div>
+            <div class="stat purple">
+              <div class="stat-ico" style="background:rgba(142,68,173,.12)">🎯</div>
+              <div class="stat-lbl">Bonus Target</div>
+              <div class="stat-val">₦5,000</div>
+              <div class="stat-delta amber">₦7,960 away</div>
             </div>
           </div>
 
           <div class="g2 mb4">
-            <!-- Earnings -->
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Earnings</div>
-              <div class="tbl-wrap">
-                <table>
-                  <thead><tr><th>Item</th><th style="text-align:right">Amount</th></tr></thead>
-                  <tbody>
-                    <tr><td>Basic Salary</td><td style="text-align:right;font-weight:600;color:var(--white)">₦120,000</td></tr>
-                    <tr><td>Sales Commission (20% of ₦162,500)</td><td style="text-align:right;font-weight:600;color:var(--green)">₦32,500</td></tr>
-                    <tr><td>Attendance Bonus (100%)</td><td style="text-align:right;font-weight:600;color:var(--green)">₦2,000</td></tr>
-                    <tr><td>Task Completion Bonus</td><td style="text-align:right;font-weight:600;color:var(--green)">₦1,500</td></tr>
-                    <tr style="background:rgba(39,174,96,.06)"><td style="font-weight:700;color:var(--white)">Gross Earnings</td><td style="text-align:right;font-weight:800;color:var(--white)">₦156,000</td></tr>
-                  </tbody>
-                </table>
+            <div class="card">
+              <div class="card-h">
+                <h3>Commission Breakdown — July</h3>
+              </div>
+              <div class="card-b">
+                <div
+                  style="background:var(--gold-bg);border:1px solid rgba(157,130,72,.25);border-radius:var(--r2);padding:16px;margin-bottom:18px">
+                  <div
+                    style="font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">
+                    Commission Formula</div>
+                  <div style="font-size:13px;color:var(--light)">Total Booking Value × 20% = Commission Earned</div>
+                  <div style="font-size:11px;color:var(--muted);margin-top:4px">Bonus of ₦5,000 when monthly sales
+                    exceed ₦300,000</div>
+                </div>
+                <div class="tbl-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Week</th>
+                        <th>Bookings</th>
+                        <th>Sales Value</th>
+                        <th>Commission (20%)</th>
+                        <th>Bonus</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Week 1 (1–6 Jul)</td>
+                        <td>8</td>
+                        <td style="font-weight:600;color:var(--white)">₦48,000</td>
+                        <td style="font-weight:700;color:var(--green)">₦9,600</td>
+                        <td>—</td>
+                      </tr>
+                      <tr>
+                        <td>Week 2 (7–13 Jul)</td>
+                        <td>10</td>
+                        <td style="font-weight:600;color:var(--white)">₦62,500</td>
+                        <td style="font-weight:700;color:var(--green)">₦12,500</td>
+                        <td>—</td>
+                      </tr>
+                      <tr>
+                        <td>Week 3 (14–20 Jul)</td>
+                        <td>8</td>
+                        <td style="font-weight:600;color:var(--white)">₦48,500</td>
+                        <td style="font-weight:700;color:var(--green)">₦9,700</td>
+                        <td>—</td>
+                      </tr>
+                      <tr>
+                        <td>Week 4 (21–31 Jul)</td>
+                        <td colspan="4" style="color:var(--muted);font-style:italic">In progress...</td>
+                      </tr>
+                      <tr style="background:rgba(157,130,72,.05)">
+                        <td style="font-weight:700;color:var(--white)">TOTAL</td>
+                        <td style="font-weight:700;color:var(--white)">26</td>
+                        <td style="font-weight:800;color:var(--white)">₦159,000</td>
+                        <td style="font-weight:800;color:var(--green)">₦31,800</td>
+                        <td style="color:var(--muted)">Pending</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-            <!-- Deductions -->
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Deductions</div>
-              <div class="tbl-wrap">
-                <table>
-                  <thead><tr><th>Item</th><th style="text-align:right">Amount</th></tr></thead>
-                  <tbody>
-                    <tr><td>Pension Contribution (5%)</td><td style="text-align:right;font-weight:600;color:var(--red)">-₦6,000</td></tr>
-                    <tr><td>Tax (PAYE)</td><td style="text-align:right;font-weight:600;color:var(--red)">-₦2,000</td></tr>
-                    <tr><td>Late Arrival Deduction (1 day)</td><td style="text-align:right;font-weight:600;color:var(--red)">-₦0</td></tr>
-                    <tr><td>Absence Deduction</td><td style="text-align:right;font-weight:600;color:var(--muted)">—</td></tr>
-                    <tr style="background:rgba(231,76,60,.06)"><td style="font-weight:700;color:var(--white)">Total Deductions</td><td style="text-align:right;font-weight:800;color:var(--red)">-₦8,000</td></tr>
-                  </tbody>
-                </table>
+            <div class="card">
+              <div class="card-h">
+                <h3>Earnings History</h3>
+              </div>
+              <div class="card-b">
+                <div style="margin-bottom:16px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">July 2026 (in
+                      progress)</span><span style="font-size:12px;font-weight:700;color:var(--gold)">₦31,800</span>
+                  </div>
+                  <div class="pbar"><span style="width:62%"></span></div>
+                </div>
+                <div style="margin-bottom:16px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">June 2026</span><span
+                      style="font-size:12px;font-weight:700;color:var(--green)">₦32,500 ✓ Paid</span></div>
+                  <div class="pbar green"><span style="width:68%"></span></div>
+                </div>
+                <div style="margin-bottom:16px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">May 2026</span><span
+                      style="font-size:12px;font-weight:700;color:var(--green)">₦28,200 ✓ Paid</span></div>
+                  <div class="pbar green"><span style="width:55%"></span></div>
+                </div>
+                <div style="margin-bottom:16px">
+                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">April 2026</span><span
+                      style="font-size:12px;font-weight:700;color:var(--green)">₦25,900 ✓ Paid</span></div>
+                  <div class="pbar green"><span style="width:50%"></span></div>
+                </div>
+                <div class="divider"></div>
+                <div class="flex aic jsb">
+                  <div>
+                    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Total
+                      Earned (2026)</div>
+                    <div style="font-size:18px;font-weight:800;color:var(--white)">₦118,400</div>
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Total
+                      Paid Out</div>
+                    <div style="font-size:18px;font-weight:800;color:var(--green)">₦86,600</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Net pay -->
-          <div style="background:linear-gradient(135deg,rgba(39,174,96,.12),rgba(39,174,96,.06));border:1px solid rgba(39,174,96,.3);border-radius:var(--r2);padding:20px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.08em">Net Pay</div>
-              <div style="font-size:32px;font-weight:800;color:var(--white);line-height:1.1">₦148,000</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px">Paid 30 June 2026 · GTBank **** 4521</div>
+        <!-- ═══ PAYROLL ═══ -->
+        <div id="payroll" class="screen">
+          <div class="card mb4">
+            <div class="card-h">
+              <h3>My Compensation</h3>
             </div>
-            <div style="text-align:right">
-              <div style="font-size:11px;color:var(--muted)">Attendance: 30/30 days ✓</div>
-              <div style="font-size:11px;color:var(--muted)">Late Arrivals: 0</div>
-              <div style="font-size:11px;color:var(--muted)">Tasks Completed: 12/14</div>
-              <div style="font-size:11px;color:var(--green);font-weight:700;margin-top:6px">✓ PAID</div>
+            <div class="card-b">
+              <div class="alert"
+                style="background:rgba(157,130,72,.08);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--muted)">
+                This shows your base salary and allowances from your offer letter. Full payslips, commission breakdowns,
+                and deductions aren't built yet — this is a partial view, not a complete payroll record.
+              </div>
+              <div id="comp-content">
+                <div class="text-secondary small">Loading…</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- ═══ AUDIT TRAIL ═══ -->
-    <div id="audit-trail" class="screen">
-      <div class="g4 mb6">
-        <div class="stat gold"><div class="stat-lbl">Total Actions Logged</div><div class="stat-val">284</div><div class="stat-delta neu">This month</div></div>
-        <div class="stat green"><div class="stat-lbl">Acknowledged Docs</div><div class="stat-val">4</div><div class="stat-delta neu">of 6</div></div>
-        <div class="stat blue"><div class="stat-lbl">Bookings Recorded</div><div class="stat-val">32</div><div class="stat-delta up">↑ July</div></div>
-        <div class="stat purple"><div class="stat-lbl">Payroll Events</div><div class="stat-val">2</div><div class="stat-delta neu">Logged</div></div>
-      </div>
 
-      <div class="card">
-        <div class="card-h">
-          <h3>My Audit Trail</h3>
-          <div class="flex gap2">
-            <select class="input" style="width:auto;padding:6px 10px;font-size:11px"><option>All Categories</option><option>Attendance</option><option>Sales</option><option>Payroll</option><option>Onboarding</option><option>Profile</option></select>
-            <select class="input" style="width:auto;padding:6px 10px;font-size:11px"><option>July 2026</option><option>June 2026</option></select>
-            <button class="btn btn-ghost btn-sm">Export CSV</button>
+        <!-- ═══ AUDIT TRAIL ═══ -->
+        <div id="audit-trail" class="screen">
+          <div class="g4 mb6">
+            <div class="stat gold">
+              <div class="stat-lbl">Total Actions Logged</div>
+              <div class="stat-val">284</div>
+              <div class="stat-delta neu">This month</div>
+            </div>
+            <div class="stat green">
+              <div class="stat-lbl">Acknowledged Docs</div>
+              <div class="stat-val">4</div>
+              <div class="stat-delta neu">of 6</div>
+            </div>
+            <div class="stat blue">
+              <div class="stat-lbl">Bookings Recorded</div>
+              <div class="stat-val">32</div>
+              <div class="stat-delta up">↑ July</div>
+            </div>
+            <div class="stat purple">
+              <div class="stat-lbl">Payroll Events</div>
+              <div class="stat-val">2</div>
+              <div class="stat-delta neu">Logged</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">
+              <h3>My Audit Trail</h3>
+              <div class="flex gap2">
+                <select class="input" style="width:auto;padding:6px 10px;font-size:11px">
+                  <option>All Categories</option>
+                  <option>Attendance</option>
+                  <option>Sales</option>
+                  <option>Payroll</option>
+                  <option>Onboarding</option>
+                  <option>Profile</option>
+                </select>
+                <select class="input" style="width:auto;padding:6px 10px;font-size:11px">
+                  <option>July 2026</option>
+                  <option>June 2026</option>
+                </select>
+                <button class="btn btn-ghost btn-sm">Export CSV</button>
+              </div>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Category</th>
+                    <th>Action</th>
+                    <th>Reference</th>
+                    <th>IP / Device</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 08:47 AM</td>
+                    <td><span class="badge b-green">Attendance</span></td>
+                    <td style="color:var(--light)">Check-In recorded · Academy Branch · GPS: 7.3558°N, 3.9470°E</td>
+                    <td style="font-family:monospace;font-size:10px;color:var(--gold)">ATT-20260714-001</td>
+                    <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Mobile</td>
+                    <td><span class="badge b-green">Verified</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 09:00 AM</td>
+                    <td><span class="badge b-gold">Sales</span></td>
+                    <td style="color:var(--light)">Booking completed — Full Colour Treatment · Mrs. Tunde Bakare ·
+                      ₦18,000 · Commission ₦3,600</td>
+                    <td style="font-family:monospace;font-size:10px;color:var(--gold)">BK-2026-0441</td>
+                    <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Desktop</td>
+                    <td><span class="badge b-green">Posted</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 10:45 AM</td>
+                    <td><span class="badge b-blue">Onboarding</span></td>
+                    <td style="color:var(--light)">Staff Handbook acknowledged · Timestamp & IP captured</td>
+                    <td style="font-family:monospace;font-size:10px;color:var(--gold)">OB-DOC-004</td>
+                    <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Desktop</td>
+                    <td><span class="badge b-green">Confirmed</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:11px;color:var(--muted)">13 Jul 2026 · 11:30 AM</td>
+                    <td><span class="badge b-gold">Sales</span></td>
+                    <td style="color:var(--light)">Booking completed — Haircut & Style · Miss Adaeze Obi · ₦8,500 ·
+                      Commission ₦1,700</td>
+                    <td style="font-family:monospace;font-size:10px;color:var(--gold)">BK-2026-0438</td>
+                    <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Mobile</td>
+                    <td><span class="badge b-green">Posted</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:11px;color:var(--muted)">30 Jun 2026 · 11:00 PM</td>
+                    <td><span class="badge b-purple">Payroll</span></td>
+                    <td style="color:var(--light)">Payslip issued — June 2026 · Net Pay ₦148,000 · Paid to GTBank ****
+                      4521</td>
+                    <td style="font-family:monospace;font-size:10px;color:var(--gold)">PAY-2026-06</td>
+                    <td style="font-size:11px;color:var(--muted)">System · Auto</td>
+                    <td><span class="badge b-green">Confirmed</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 08:30 AM</td>
+                    <td><span class="badge b-teal">Profile</span></td>
+                    <td style="color:var(--light)">Employee account created · Staff ID HL-ACD-0012 · Credentials
+                      dispatched by email</td>
+                    <td style="font-family:monospace;font-size:10px;color:var(--gold)">SYS-CREATE-0012</td>
+                    <td style="font-size:11px;color:var(--muted)">Admin Action · System</td>
+                    <td><span class="badge b-green">Verified</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 10:24 AM</td>
+                    <td><span class="badge b-blue">Onboarding</span></td>
+                    <td style="color:var(--light)">Employment Contract acknowledged · Timestamp & IP logged</td>
+                    <td style="font-family:monospace;font-size:10px;color:var(--gold)">OB-DOC-001</td>
+                    <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Desktop</td>
+                    <td><span class="badge b-green">Confirmed</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 10:31 AM</td>
+                    <td><span class="badge b-blue">Onboarding</span></td>
+                    <td style="color:var(--light)">NDA acknowledged · Timestamp & IP logged</td>
+                    <td style="font-family:monospace;font-size:10px;color:var(--gold)">OB-DOC-002</td>
+                    <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Desktop</td>
+                    <td><span class="badge b-green">Confirmed</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div
+              style="padding:12px 20px;border-top:1px solid var(--border);background:rgba(255,255,255,.02);display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;color:var(--muted)">🔒 All entries are immutable and tamper-proof. Audit
+                records cannot be edited or deleted.</span>
+            </div>
           </div>
         </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Timestamp</th><th>Category</th><th>Action</th><th>Reference</th><th>IP / Device</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr>
-                <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 08:47 AM</td>
-                <td><span class="badge b-green">Attendance</span></td>
-                <td style="color:var(--light)">Check-In recorded · Academy Branch · GPS: 7.3558°N, 3.9470°E</td>
-                <td style="font-family:monospace;font-size:10px;color:var(--gold)">ATT-20260714-001</td>
-                <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Mobile</td>
-                <td><span class="badge b-green">Verified</span></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 09:00 AM</td>
-                <td><span class="badge b-gold">Sales</span></td>
-                <td style="color:var(--light)">Booking completed — Full Colour Treatment · Mrs. Tunde Bakare · ₦18,000 · Commission ₦3,600</td>
-                <td style="font-family:monospace;font-size:10px;color:var(--gold)">BK-2026-0441</td>
-                <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Desktop</td>
-                <td><span class="badge b-green">Posted</span></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 10:45 AM</td>
-                <td><span class="badge b-blue">Onboarding</span></td>
-                <td style="color:var(--light)">Staff Handbook acknowledged · Timestamp & IP captured</td>
-                <td style="font-family:monospace;font-size:10px;color:var(--gold)">OB-DOC-004</td>
-                <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Desktop</td>
-                <td><span class="badge b-green">Confirmed</span></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px;color:var(--muted)">13 Jul 2026 · 11:30 AM</td>
-                <td><span class="badge b-gold">Sales</span></td>
-                <td style="color:var(--light)">Booking completed — Haircut & Style · Miss Adaeze Obi · ₦8,500 · Commission ₦1,700</td>
-                <td style="font-family:monospace;font-size:10px;color:var(--gold)">BK-2026-0438</td>
-                <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Mobile</td>
-                <td><span class="badge b-green">Posted</span></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px;color:var(--muted)">30 Jun 2026 · 11:00 PM</td>
-                <td><span class="badge b-purple">Payroll</span></td>
-                <td style="color:var(--light)">Payslip issued — June 2026 · Net Pay ₦148,000 · Paid to GTBank **** 4521</td>
-                <td style="font-family:monospace;font-size:10px;color:var(--gold)">PAY-2026-06</td>
-                <td style="font-size:11px;color:var(--muted)">System · Auto</td>
-                <td><span class="badge b-green">Confirmed</span></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 08:30 AM</td>
-                <td><span class="badge b-teal">Profile</span></td>
-                <td style="color:var(--light)">Employee account created · Staff ID HL-ACD-0012 · Credentials dispatched by email</td>
-                <td style="font-family:monospace;font-size:10px;color:var(--gold)">SYS-CREATE-0012</td>
-                <td style="font-size:11px;color:var(--muted)">Admin Action · System</td>
-                <td><span class="badge b-green">Verified</span></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 10:24 AM</td>
-                <td><span class="badge b-blue">Onboarding</span></td>
-                <td style="color:var(--light)">Employment Contract acknowledged · Timestamp & IP logged</td>
-                <td style="font-family:monospace;font-size:10px;color:var(--gold)">OB-DOC-001</td>
-                <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Desktop</td>
-                <td><span class="badge b-green">Confirmed</span></td>
-              </tr>
-              <tr>
-                <td style="font-family:monospace;font-size:11px;color:var(--muted)">14 Jul 2026 · 10:31 AM</td>
-                <td><span class="badge b-blue">Onboarding</span></td>
-                <td style="color:var(--light)">NDA acknowledged · Timestamp & IP logged</td>
-                <td style="font-family:monospace;font-size:10px;color:var(--gold)">OB-DOC-002</td>
-                <td style="font-size:11px;color:var(--muted)">197.210.xx.xx · Desktop</td>
-                <td><span class="badge b-green">Confirmed</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="padding:12px 20px;border-top:1px solid var(--border);background:rgba(255,255,255,.02);display:flex;align-items:center;gap:8px">
-          <span style="font-size:11px;color:var(--muted)">🔒 All entries are immutable and tamper-proof. Audit records cannot be edited or deleted.</span>
-        </div>
-      </div>
-    </div>
 
-  </div><!-- /content -->
-</div><!-- /main -->
-</div><!-- /screen-staff-app -->
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /screen-staff-app -->
 
 
-<script>
-let checkedIn = false;
+  <script>
+    let checkedIn = false;
 
-window.onload = () => {
-  document.getElementById('screen-staff-app').style.display = 'flex';
-  show('dashboard');
-  startClock();
-};
+    window.onload = () => {
+      document.getElementById('screen-staff-app').style.display = 'flex';
+      show('dashboard');
+      startClock();
+    };
 
-  const pages = {
-    'dashboard': ['Good morning, Amina 👋', 'Dashboard'],
-    'onboarding': ['Complete Onboarding', 'Onboarding'],
-    'profile': ['My Profile', 'Profile'],
-    'agreements': ['Documents & Agreements', 'Documents'],
-    'attendance': ['Attendance', 'Attendance'],
-    'leave': ['Leave & Permission', 'Leave'],
-    'inventory': ['Inventory — Stock Management', 'Inventory'],
-    'announcements': ['Announcements', 'Announcements'],
-    'tasks': ['Tasks & Directives', 'Tasks'],
-    'notifications': ['Notifications', 'Notifications'],
-    'sales': ['Sales & Bookings', 'Sales'],
-    'commission': ['My Commission & Earnings', 'Commission'],
-    'payroll': ['Payslips & Payroll', 'Payroll'],
-    'audit-trail': ['Audit Trail', 'Audit'],
-  };
-const ctas = {
-  'dashboard':'⏵ Check In',
-  'attendance':'Check In',
-  'onboarding':'Save Progress',
-  'inventory':'+ Log Entry',
-  'sales':'+ New Booking',
-  'commission':'Export Report',
-  'payroll':'Download Payslip',
-  'audit-trail':'Export Log',
-};
-function show(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById(id);
-  if(el) el.classList.add('active');
-  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
-  const p = pages[id];
-  if(p){
-    document.getElementById('page-h1').textContent = p[0];
-    document.getElementById('bc-page').textContent = p[1];
-    document.getElementById('tb-cta').textContent = ctas[id] || '⏵ Check In';
-  }
-  document.querySelectorAll('.sb-item').forEach(item=>{
-    const oc=item.getAttribute('onclick')||'';
-    if(oc.includes("'"+id+"'") || oc.includes('"'+id+'"')){item.classList.add('active');}
-  });
-}
+    const pages = {
+      'dashboard': ['Good morning, Amina 👋', 'Dashboard'],
+      'onboarding': ['Complete Onboarding', 'Onboarding'],
+      'profile': ['My Profile', 'Profile'],
+      'agreements': ['Documents & Agreements', 'Documents'],
+      'attendance': ['Attendance', 'Attendance'],
+      'leave': ['Leave & Permission', 'Leave'],
+      'inventory': ['Inventory — Stock Management', 'Inventory'],
+      'announcements': ['Announcements', 'Announcements'],
+      'tasks': ['Tasks & Directives', 'Tasks'],
+      'notifications': ['Notifications', 'Notifications'],
+      'sales': ['Sales & Bookings', 'Sales'],
+      'commission': ['My Commission & Earnings', 'Commission'],
+      'payroll': ['Payslips & Payroll', 'Payroll'],
+      'audit-trail': ['Audit Trail', 'Audit'],
+    };
+    const ctas = {
+      'dashboard': '⏵ Check In',
+      'attendance': 'Check In',
+      'onboarding': 'Save Progress',
+      'inventory': '+ Log Entry',
+      'sales': '+ New Booking',
+      'commission': 'Export Report',
+      'payroll': 'Download Payslip',
+      'audit-trail': 'Export Log',
+    };
+    function show(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+      document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+      const p = pages[id];
+      if (p) {
+        document.getElementById('page-h1').textContent = p[0];
+        document.getElementById('bc-page').textContent = p[1];
+        document.getElementById('tb-cta').textContent = ctas[id] || '⏵ Check In';
+      }
+      document.querySelectorAll('.sb-item').forEach(item => {
+        const oc = item.getAttribute('onclick') || '';
+        if (oc.includes("'" + id + "'") || oc.includes('"' + id + '"')) { item.classList.add('active'); }
+      });
+    }
 
-function startClock(){
-  function upd(){
-    const now=new Date(),h=now.getHours(),m=now.getMinutes();
-    const a=h>=12?'PM':'AM',hh=h%12||12;
-    const t=`${String(hh).padStart(2,'0')}:${String(m).padStart(2,'0')} ${a}`;
-    const el=document.getElementById('clk');
-    if(el) el.textContent=t;
-  }
-  upd(); setInterval(upd,30000);
-}
+    function startClock() {
+      function upd() {
+        const now = new Date(), h = now.getHours(), m = now.getMinutes();
+        const a = h >= 12 ? 'PM' : 'AM', hh = h % 12 || 12;
+        const t = `${String(hh).padStart(2, '0')}:${String(m).padStart(2, '0')} ${a}`;
+        const el = document.getElementById('clk');
+        if (el) el.textContent = t;
+      }
+      upd(); setInterval(upd, 30000);
+    }
 
-// NOTE: the Dashboard screen's small task-preview widget still uses this
-// visual-only toggle -- Dashboard hasn't been wired to real data yet (see
-// staff-portal-app.js, which currently covers Onboarding, Profile,
-// Agreements, Attendance, Inventory, Announcements, and Tasks). The real
-// Tasks screen no longer uses this -- it's fully re-rendered with real
-// directive data and real onclick handlers.
-function checkTask(el){
-  if(el.classList.contains('checked')){
-    el.classList.remove('checked');el.textContent='○';
-    el.closest('.task').classList.remove('done');
-  } else {
-    el.classList.add('checked');el.textContent='✓';
-    el.closest('.task').classList.add('done');
-  }
-}
-</script>
-<script src="./assets/js/staff-portal-app.js"></script>
+    // NOTE: the Dashboard screen's small task-preview widget still uses this
+    // visual-only toggle -- Dashboard hasn't been wired to real data yet (see
+    // staff-portal-app.js, which currently covers Onboarding, Profile,
+    // Agreements, Attendance, Inventory, Announcements, and Tasks). The real
+    // Tasks screen no longer uses this -- it's fully re-rendered with real
+    // directive data and real onclick handlers.
+    function checkTask(el) {
+      if (el.classList.contains('checked')) {
+        el.classList.remove('checked'); el.textContent = '○';
+        el.closest('.task').classList.remove('done');
+      } else {
+        el.classList.add('checked'); el.textContent = '✓';
+        el.closest('.task').classList.add('done');
+      }
+    }
+  </script>
+  <script src="./assets/js/staff-portal-app.js"></script>
 </body>
+
 </html>
