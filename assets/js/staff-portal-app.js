@@ -41,6 +41,8 @@ async function initStaffPortal() {
     loadDirectives(),
     loadAttendance(),
     loadInventoryDashboard(),
+    loadLeaveRequests(),
+    loadCompensation(),
   ]);
 
   renderDashboard();
@@ -711,9 +713,9 @@ function renderDocumentList(containerSelector, isStandalone) {
   const footer =
     !isStandalone && !currentDocuments.allAcknowledged
       ? '<div style="text-align:center;padding:24px;margin-top:8px;background:rgba(255,255,255,.02);border-radius:var(--r2);border:2px dashed var(--border)">' +
-        '<div style="font-size:28px;margin-bottom:10px">\uD83D\uDD10</div>' +
-        '<div style="font-weight:700;font-size:14px;color:var(--light);margin-bottom:4px">Complete all documents to finalise onboarding</div>' +
-        '<div style="font-size:12px;color:var(--muted)">' + docs.filter((d) => !d.acknowledged).length + ' document(s) remaining.</div></div>'
+      '<div style="font-size:28px;margin-bottom:10px">\uD83D\uDD10</div>' +
+      '<div style="font-weight:700;font-size:14px;color:var(--light);margin-bottom:4px">Complete all documents to finalise onboarding</div>' +
+      '<div style="font-size:12px;color:var(--muted)">' + docs.filter((d) => !d.acknowledged).length + ' document(s) remaining.</div></div>'
       : '';
 
   container.innerHTML = intro + items.join('') + footer;
@@ -776,7 +778,7 @@ async function loadAnnouncements() {
     })
     .join('');
 
-  announcements.filter((a) => !a.isRead).forEach((a) => StaffSelf.markAnnouncementRead(a.id).catch(() => {}));
+  announcements.filter((a) => !a.isRead).forEach((a) => StaffSelf.markAnnouncementRead(a.id).catch(() => { }));
 }
 
 // -- Directives / Tasks --
@@ -912,6 +914,15 @@ function renderCheckinButton(todayRecord) {
 }
 
 async function handleAttendanceToggle() {
+  const btn = document.getElementById('attendance-toggle-btn');
+  const st = document.querySelectorAll('#attendance .info-item .val')[0];
+  const originalText = btn ? btn.textContent : '';
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '…';
+  }
+
   try {
     if (checkedInToday) {
       await StaffSelf.checkOut();
@@ -922,119 +933,308 @@ async function handleAttendanceToggle() {
     renderDashboard();
   } catch (err) {
     alert(err.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+}
+
+// -- Leave & Permission --------------------------------------------------------
+
+const LEAVE_TYPE_LABELS = {
+  ANNUAL_LEAVE: 'Annual Leave',
+  SICK_LEAVE: 'Sick Leave',
+  CASUAL_LEAVE: 'Casual Leave',
+  DAY_OFF: 'Day Off',
+  PERMISSION_LATE_ARRIVAL: 'Permission — Late Arrival',
+  PERMISSION_EARLY_DEPARTURE: 'Permission — Early Departure',
+  OVERTIME_REQUEST: 'Overtime Request',
+};
+
+const PERMISSION_TYPES = ['PERMISSION_LATE_ARRIVAL', 'PERMISSION_EARLY_DEPARTURE'];
+
+async function loadLeaveRequests() {
+  const container = document.getElementById('leave-list-container');
+  try {
+    const requests = await StaffSelf.getMyLeaveRequests();   // ← was getLeaveRequests, wrong name
+    renderLeaveRequests(requests);
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small py-3">' + err.message + '</div>';
+  }
+}
+
+function renderLeaveRequests(requests) {
+  const container = document.getElementById('leave-list-container');
+  if (!requests || !requests.length) {
+    container.innerHTML = '<div class="text-secondary small py-3">No leave requests yet.</div>';
+    return;
+  }
+
+  const statusColor = { PENDING: 'amber', APPROVED: 'green', REJECTED: 'red' };
+
+  container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    '<th>Type</th><th>Dates</th><th>Reason</th><th>Status</th>' +
+    '</tr></thead><tbody>' +
+    requests.map(function (r) {
+      var dates = StaffSelf.formatDate(r.startDate) + (r.startDate !== r.endDate ? ' – ' + StaffSelf.formatDate(r.endDate) : '');
+      if (PERMISSION_TYPES.includes(r.type) && r.startTime) {
+        dates += ' (' + r.startTime + (r.endTime ? '–' + r.endTime : '') + ')';
+      }
+      return '<tr>' +
+        '<td>' + (LEAVE_TYPE_LABELS[r.type] || r.type) + '</td>' +
+        '<td>' + dates + '</td>' +
+        '<td class="text-secondary small">' + escapeHtml(r.reason) + '</td>' +
+        '<td><span class="bdg ' + (statusColor[r.status] || '') + '">' + r.status + '</span>' +
+        (r.status === 'REJECTED' && r.rejectionReason ? '<div class="text-secondary small mt-1">' + escapeHtml(r.rejectionReason) + '</div>' : '') +
+        '</td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+}
+
+function showLeaveRequestForm() {
+  var formContainer = document.getElementById('leave-form-container');
+  formContainer.style.display = 'block';
+  formContainer.innerHTML =
+    '<div class="row g-2 mb-3">' +
+    '<div class="col-12"><label class="form-label small mb-1">Request Type</label>' +
+    '<select class="input" id="lr-type" onchange="toggleLeaveTimeFields()">' +
+    Object.keys(LEAVE_TYPE_LABELS).map(function (k) { return '<option value="' + k + '">' + LEAVE_TYPE_LABELS[k] + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="col-6"><label class="form-label small mb-1">Start Date</label>' +
+    '<input type="date" class="input" id="lr-start-date"></div>' +
+    '<div class="col-6"><label class="form-label small mb-1">End Date</label>' +
+    '<input type="date" class="input" id="lr-end-date"></div>' +
+    '<div class="col-6" id="lr-start-time-wrap" style="display:none">' +
+    '<label class="form-label small mb-1">From (time)</label>' +
+    '<input type="time" class="input" id="lr-start-time"></div>' +
+    '<div class="col-6" id="lr-end-time-wrap" style="display:none">' +
+    '<label class="form-label small mb-1">To (time)</label>' +
+    '<input type="time" class="input" id="lr-end-time"></div>' +
+    '<div class="col-12"><label class="form-label small mb-1">Reason</label>' +
+    '<textarea class="input" id="lr-reason" rows="2"></textarea></div>' +
+    '</div>' +
+    '<div class="flex gap2">' +
+    '<button class="btn btn-gold btn-sm" onclick="submitLeaveRequestForm()">Submit Request</button>' +
+    '<button class="btn btn-ghost btn-sm" onclick="cancelLeaveRequestForm()">Cancel</button>' +
+    '</div>';
+}
+
+function toggleLeaveTimeFields() {
+  var isPermission = PERMISSION_TYPES.includes(document.getElementById('lr-type').value);
+  document.getElementById('lr-start-time-wrap').style.display = isPermission ? 'block' : 'none';
+  document.getElementById('lr-end-time-wrap').style.display = isPermission ? 'block' : 'none';
+}
+
+function cancelLeaveRequestForm() {
+  document.getElementById('leave-form-container').style.display = 'none';
+  document.getElementById('leave-form-container').innerHTML = '';
+}
+
+async function submitLeaveRequestForm() {
+  var type = document.getElementById('lr-type').value;
+  var startDate = document.getElementById('lr-start-date').value;
+  var endDate = document.getElementById('lr-end-date').value;
+  var reason = document.getElementById('lr-reason').value.trim();
+  var isPermission = PERMISSION_TYPES.includes(type);
+  var startTime = isPermission ? document.getElementById('lr-start-time').value : undefined;
+  var endTime = isPermission ? document.getElementById('lr-end-time').value : undefined;
+
+  if (!startDate || !endDate || !reason) {
+    alert('Start date, end date, and reason are required.');
+    return;
+  }
+  if (isPermission && (!startTime || !endTime)) {
+    alert('Please specify the time window for this permission request.');
+    return;
+  }
+
+  try {
+    await StaffSelf.submitLeaveRequest({
+      type: type, startDate: startDate, endDate: endDate,
+      startTime: startTime, endTime: endTime, reason: reason,
+    });
+    cancelLeaveRequestForm();
+    await loadLeaveRequests();
+  } catch (err) {
+    alert(err.message);
   }
 }
 
 // -- Inventory --
 
-async function loadInventoryDashboard() {
-  let totals;
+var inventoryBranchesCache = null;
+
+async function loadInventoryItems() {
+  const category = document.getElementById('inv-category-filter').value;
+  let result;
   try {
-    totals = await StaffSelf.getInventoryDashboard();
-    console.log('[staff-portal] inventory dashboard loaded:', totals);
+    result = await InventorySelf.getItems({ category, limit: 100 });
   } catch (err) {
-    console.error('Failed to load inventory dashboard', err);
+    console.error('Failed to load inventory items', err);
+    document.getElementById('inv-items-tbody').innerHTML =
+      '<tr><td colspan="6" class="text-danger">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
     return;
   }
 
-  const LOW_STOCK_THRESHOLD = 5;
-  const outOfStock = totals.filter((t) => t.total <= 0).length;
-  const lowStock = totals.filter((t) => t.total > 0 && t.total <= LOW_STOCK_THRESHOLD).length;
-  const healthy = totals.length - outOfStock - lowStock;
+  const items = result.data || [];
+  const outOfStock = items.filter((i) => i.currentQuantity <= 0).length;
+  const lowStock = items.filter((i) => i.currentQuantity > 0 && i.currentQuantity <= i.lowStockThreshold).length;
+  const healthy = items.length - outOfStock - lowStock;
 
-  const statEls = document.querySelectorAll('#inventory .g4 .stat-val');
-  if (statEls[0]) statEls[0].textContent = String(totals.length);
-  if (statEls[1]) statEls[1].textContent = String(healthy);
-  if (statEls[2]) statEls[2].textContent = String(lowStock);
-  if (statEls[3]) statEls[3].textContent = String(outOfStock);
+  document.getElementById('inv-total').textContent = String(items.length);
+  document.getElementById('inv-healthy').textContent = String(healthy);
+  document.getElementById('inv-low').textContent = String(lowStock);
+  document.getElementById('inv-out').textContent = String(outOfStock);
 
-  const alertCard = document.querySelectorAll('#inventory .g2 .card')[1];
-  if (alertCard) {
-    const badge = alertCard.querySelector('.card-h .badge');
-    const body = alertCard.querySelector('.card-b');
-    const critical = totals.filter((t) => t.total <= LOW_STOCK_THRESHOLD).sort((a, b) => a.total - b.total);
-    if (badge) badge.textContent = critical.length + ' critical';
-    if (body) {
-      const bars = critical
-        .slice(0, 6)
-        .map((t) => {
-          const pct = Math.max(0, Math.min(100, (t.total / 50) * 100));
-          const cls = t.total <= 0 ? 'lo' : 'md';
-          const color = t.total <= 0 ? 'var(--red)' : 'var(--amber)';
-          return (
-            '<div class="inv-bar"><div class="inv-name">' + escapeHtml(t.productName) + '</div>' +
-            '<div class="inv-fill ' + cls + '"><span style="width:' + pct + '%"></span></div>' +
-            '<span style="font-size:11px;color:' + color + ';font-weight:700;min-width:50px;text-align:right">' +
-            (t.total <= 0 ? 'OUT' : t.total + ' left') + '</span></div>'
-          );
-        })
-        .join('');
-      body.innerHTML = (bars || '<div style="color:var(--muted);font-size:13px">No low-stock items \u2014 nice work.</div>') +
-        '<button class="btn btn-ghost btn-sm mt3" style="width:100%" onclick="show(\'inventory\')">Refresh</button>';
-    }
+  const tbody = document.getElementById('inv-items-tbody');
+  if (!items.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-secondary">No items yet for this branch.</td></tr>';
+  } else {
+    tbody.innerHTML = items.map(function (i) {
+      var statusBadge = i.currentQuantity <= 0
+        ? '<span class="badge b-red">Out of Stock</span>'
+        : i.currentQuantity <= i.lowStockThreshold
+          ? '<span class="badge b-amber">Low</span>'
+          : '<span class="badge b-green">Good</span>';
+      return '<tr>' +
+        '<td style="font-weight:600;color:var(--white)">' + escapeHtml(i.name) + '</td>' +
+        '<td>' + (InventorySelf.CATEGORY_LABELS[i.category] || i.category) + '</td>' +
+        '<td>' + i.currentQuantity + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
+        '<td>' + i.lowStockThreshold + '</td>' +
+        '<td>' + statusBadge + '</td>' +
+        '<td><button class="btn btn-ghost btn-sm" onclick="promptReceiveGoods(\'' + i.id + '\', \'' + escapeHtml(i.name).replace(/'/g, "\\'") + '\')">Receive Goods</button></td>' +
+        '</tr>';
+    }).join('');
   }
 
-  const table = document.querySelectorAll('#inventory table tbody')[0];
-  if (table) {
-    table.innerHTML = totals
-      .sort((a, b) => a.productName.localeCompare(b.productName))
-      .map((t) => {
-        const statusBadge =
-          t.total <= 0 ? '<span class="badge b-red">Out of Stock</span>' :
-          t.total <= LOW_STOCK_THRESHOLD ? '<span class="badge b-amber">Low</span>' :
-          '<span class="badge b-green">Good</span>';
-        return (
-          '<tr><td style="font-weight:600;color:var(--white)">' + escapeHtml(t.productName) + '</td><td>\u2014</td>' +
-          '<td>' + t.total + ' units</td><td>\u2014</td><td>' + statusBadge + '</td>' +
-          '<td><button class="btn btn-ghost btn-sm" onclick="show(\'inventory\')">Details</button></td></tr>'
-        );
-      })
-      .join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No inventory logged yet.</td></tr>';
+  // Populate the transfer-item dropdown from the same item list.
+  var transferSelect = document.getElementById('inv-transfer-item');
+  transferSelect.innerHTML = '<option value="">Select an item…</option>' +
+    items.map(function (i) { return '<option value="' + i.id + '">' + escapeHtml(i.name) + ' (' + i.currentQuantity + ' in stock)</option>'; }).join('');
+}
+
+async function promptReceiveGoods(itemId, itemName) {
+  var qtyStr = prompt('Quantity received for "' + itemName + '":');
+  if (qtyStr === null) return;
+  var qty = parseInt(qtyStr, 10);
+  if (!qty || qty < 1) { alert('Please enter a valid quantity.'); return; }
+  var note = prompt('Note (optional — supplier, batch no., etc.):') || undefined;
+
+  try {
+    await InventorySelf.receiveGoods(itemId, { quantity: qty, note: note });
+    await loadInventoryItems();
+  } catch (err) {
+    alert(err.message || 'Failed to record goods received.');
   }
 }
 
-function wireInventoryForm() {
-  const form = document.querySelector('#inventory .g2 .card:first-child .card-b');
-  if (!form || form.dataset.wired) return;
-  form.dataset.wired = '1';
-
-  const nameInput = form.querySelector('input.input[placeholder*="Argan"]');
-  const qtyInput = form.querySelector('input[type="number"]');
-  const typeSelect = form.querySelector('select.input');
-  const noteInput = form.querySelectorAll('input.input')[form.querySelectorAll('input.input').length - 1];
-  const submitBtn = form.querySelector('button.btn-gold');
-
-  if (submitBtn) {
-    submitBtn.addEventListener('click', async () => {
-      const productName = (nameInput?.value || '').trim();
-      const quantity = parseInt(qtyInput?.value, 10);
-      const typeRaw = (typeSelect?.value || '').toUpperCase();
-      const type = typeRaw.includes('RECEIVED') ? 'RECEIVED' : 'SOLD';
-
-      if (!productName || !quantity || quantity < 1) {
-        alert('Please enter an item name and a valid quantity.');
-        return;
-      }
-
-      submitBtn.disabled = true;
-      try {
-        await StaffSelf.logInventoryEntry({
-          productName,
-          type,
-          quantity,
-          note: (noteInput?.value || '').trim() || undefined,
-        });
-        if (nameInput) nameInput.value = '';
-        if (qtyInput) qtyInput.value = '';
-        if (noteInput) noteInput.value = '';
-        await loadInventoryDashboard();
-      } catch (err) {
-        alert('Could not log entry: ' + err.message);
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
+async function ensureInventoryBranches() {
+  if (inventoryBranchesCache) return inventoryBranchesCache;
+  try {
+    var result = await InventorySelf.getBranches();
+    inventoryBranchesCache = result.data || (Array.isArray(result) ? result : []);
+  } catch (err) {
+    inventoryBranchesCache = [];
   }
+  return inventoryBranchesCache;
+}
+
+function toggleTransferDirection() {
+  // Direction only affects the submit-time payload shape (which item is
+  // "from" vs "to") — the form fields themselves stay the same either way.
+}
+
+async function submitTransferRequest() {
+  var itemId = document.getElementById('inv-transfer-item').value;
+  var direction = document.getElementById('inv-transfer-direction').value;
+  var otherBranchId = document.getElementById('inv-transfer-branch').value;
+  var qty = parseInt(document.getElementById('inv-transfer-qty').value, 10);
+
+  if (!itemId || !otherBranchId || !qty || qty < 1) {
+    alert('Please select an item, a branch, and enter a valid quantity.');
+    return;
+  }
+
+  var payload;
+  if (direction === 'send') {
+    // Sending FROM my branch's item TO the other branch.
+    payload = { fromItemId: itemId, toBranchId: otherBranchId, quantity: qty };
+  } else {
+    // Requesting stock — the selected item must belong to the OTHER branch,
+    // and my own branch is the destination. Since the item dropdown is
+    // currently populated from MY branch's items only, "request" mode isn't
+    // fully wired yet — flagged rather than silently sent incorrectly.
+    alert('Requesting stock FROM another branch requires browsing that branch\'s items first — this direction isn\'t wired yet. Use "Send" for now, or ask an admin to initiate a pull on your behalf.');
+    return;
+  }
+
+  try {
+    await InventorySelf.requestTransfer(payload);
+    document.getElementById('inv-transfer-qty').value = '';
+    await loadTransferRequests();
+    alert('Transfer request submitted.');
+  } catch (err) {
+    alert(err.message || 'Failed to submit transfer request.');
+  }
+}
+
+async function loadTransferRequests() {
+  var container = document.getElementById('inv-transfers-list');
+  try {
+    var result = await InventorySelf.getTransferRequests();
+    var transfers = result.data || (Array.isArray(result) ? result : []);
+    if (!transfers.length) {
+      container.innerHTML = '<div class="text-secondary small">No transfer requests yet.</div>';
+      return;
+    }
+    var statusColor = { PENDING: 'amber', APPROVED: 'green', REJECTED: 'red', COMPLETED: 'green' };
+    container.innerHTML = transfers.map(function (t) {
+      return '<div class="inv-bar">' +
+        '<div class="inv-name">' + escapeHtml(t.fromItem ? t.fromItem.name : 'Item') + ' \u00d7 ' + t.quantity + '</div>' +
+        '<span class="bdg ' + (statusColor[t.status] || '') + '">' + t.status + '</span>' +
+        '</div>';
+    }).join('');
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
+}
+
+async function loadCompensation() {
+  var container = document.getElementById('comp-content');
+  try {
+    var result = await StaffSelf.getCompensation();
+    var comp = result.data || result;
+
+    if (!comp) {
+      container.innerHTML = '<div class="text-secondary small">No compensation record found — this may apply to staff added before the recruitment system was in use.</div>';
+      return;
+    }
+
+    var effectiveDateStr = comp.effectiveDate ? StaffSelf.formatDate(comp.effectiveDate) : '—';
+
+    container.innerHTML =
+      '<div class="g2">' +
+      '<div class="stat green"><div class="stat-lbl">Base Salary</div><div class="stat-val">\u20a6' + Number(comp.baseSalary).toLocaleString() + '</div><div class="stat-delta neu">Monthly</div></div>' +
+      (comp.allowances
+        ? '<div class="stat gold"><div class="stat-lbl">Allowances</div><div class="stat-val">\u20a6' + Number(comp.allowances).toLocaleString() + '</div><div class="stat-delta neu">Monthly</div></div>'
+        : '<div class="stat"><div class="stat-lbl">Allowances</div><div class="stat-val">\u2014</div></div>') +
+      '</div>' +
+      (comp.compensationNote ? '<div class="text-secondary small mt3">' + escapeHtml(comp.compensationNote) + '</div>' : '') +
+      '<div class="text-secondary small mt3">Effective from ' + effectiveDateStr + ' \u00b7 ' + escapeHtml(comp.role || '') + '</div>';
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
+}
+
+async function loadInventoryDashboard() {
+  await loadInventoryItems();
+  await loadTransferRequests();
+  var branches = await ensureInventoryBranches();
+  var branchSelect = document.getElementById('inv-transfer-branch');
+  branchSelect.innerHTML = '<option value="">Select branch…</option>' +
+    branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
 }
 
 // -- Small helpers --
@@ -1063,5 +1263,4 @@ function statusBadgeClass(status) {
 
 document.addEventListener('DOMContentLoaded', () => {
   initStaffPortal();
-  wireInventoryForm();
 });

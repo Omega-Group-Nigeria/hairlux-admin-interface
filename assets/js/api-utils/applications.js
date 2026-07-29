@@ -17,7 +17,7 @@ const Applications = (() => {
     if (search) params.set('search', search);
     if (preferredLocationId) params.set('preferredLocationId', preferredLocationId);
     if (jobId) params.set('jobId', jobId);
-    if (page)  params.set('page', page);
+    if (page) params.set('page', page);
     if (limit) params.set('limit', limit);
     const qs = params.toString() ? '?' + params.toString() : '';
     const res = await Auth.fetch(`/admin/applications${qs}`);
@@ -64,6 +64,54 @@ const Applications = (() => {
     });
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || 'Failed to schedule interview');
+    return raw.data || raw;
+  }
+
+  /**
+ * Record the interview outcome — PASS/FAIL/HOLD — tied to a real interviewer.
+ * @param {string} id
+ * @param {object} payload  { outcome, interviewerId, note? }
+ */
+  async function recordInterviewOutcome(id, payload) {
+    const res = await Auth.fetch(`/admin/applications/${id}/interview-outcome`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || 'Failed to record interview outcome');
+    return raw.data || raw;
+  }
+
+  /**
+   * Record Employment Approval — the gate before an offer letter can be generated.
+   * @param {string} id
+   * @param {object} payload  { notes? }
+   */
+  async function recordEmploymentApproval(id, payload) {
+    const res = await Auth.fetch(`/admin/applications/${id}/employment-approval`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || 'Failed to record employment approval');
+    return raw.data || raw;
+  }
+
+  /**
+   * Generate and send an offer letter. Requires employment approval to already exist.
+   * @param {string} id
+   * @param {object} payload  { baseSalary, allowances?, compensationNote?, effectiveDate, templateUsed? }
+   */
+  async function generateOfferLetter(id, payload) {
+    const res = await Auth.fetch(`/admin/applications/${id}/offer-letter`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || 'Failed to generate offer letter');
     return raw.data || raw;
   }
 
@@ -127,12 +175,12 @@ const Applications = (() => {
   const NEXT_STATUS = {
     SUBMITTED: 'UNDER_REVIEW',
     UNDER_REVIEW: 'SHORTLISTED',
-    INTERVIEW_COMPLETED: 'OFFER_EXTENDED',
+    // INTERVIEW_COMPLETED: 'OFFER_EXTENDED',
   };
 
   function statusBadge(status) {
     const label = STATUS_LABELS[status] || status;
-    const cls   = STATUS_COLORS[status] || 'bg-secondary-lt';
+    const cls = STATUS_COLORS[status] || 'bg-secondary-lt';
     return `<span class="badge ${cls}">${label}</span>`;
   }
 
@@ -157,6 +205,7 @@ const Applications = (() => {
 
   return {
     getAll, getOne, updateStatus, scheduleInterview, convertToStaff, getLocations, getReport,
+    recordInterviewOutcome, recordEmploymentApproval, generateOfferLetter,   // ← add
     STATUS_ORDER, STATUS_LABELS, STATUS_COLORS, NEXT_STATUS,
     statusBadge, formatDate, formatDateTime,
   };

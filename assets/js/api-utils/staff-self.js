@@ -57,12 +57,68 @@ const StaffSelf = (() => {
     }
 
     // -- Attendance -------------------------------------------------------------
+    function getCurrentPosition() {
+        function attempt(options) {
+            return new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                    (err) => reject(err),
+                    options,
+                );
+            });
+        }
+
+        return new Promise(async (resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('Geolocation is not supported on this device.'));
+                return;
+            }
+            try {
+                const coords = await attempt({ enableHighAccuracy: true, timeout: 8000 });
+                resolve(coords);
+            } catch (firstErr) {
+                // High-accuracy failed or timed out (common indoors) — retry with a coarser,
+                // faster reading rather than failing the clock-in outright.
+                try {
+                    const coords = await attempt({ enableHighAccuracy: false, timeout: 8000 });
+                    resolve(coords);
+                } catch (secondErr) {
+                    reject(new Error('Location access is required to clock in. Please enable it and try again.'));
+                }
+            }
+        });
+    }
+
+    // -- Attendance -------------------------------------------------------------
     async function checkIn() {
-        return jsonFetch("/staff/me/attendance/check-in", { method: "POST" });
+        const coords = await getCurrentPosition();
+        return jsonFetch("/staff/me/attendance/check-in", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(coords),
+        });
     }
 
     async function checkOut() {
-        return jsonFetch("/staff/me/attendance/check-out", { method: "POST" });
+        const coords = await getCurrentPosition();
+        return jsonFetch("/staff/me/attendance/check-out", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(coords),
+        });
+    }
+
+    // -- Leave & Permission --------------------------------------------------------
+    async function submitLeaveRequest(payload) {
+        return jsonFetch("/staff/me/leave-requests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getMyLeaveRequests() {
+        return jsonFetch("/staff/me/leave-requests");
     }
 
     async function getAttendance() {
@@ -76,6 +132,10 @@ const StaffSelf = (() => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
         });
+    }
+
+    async function getCompensation() {
+        return jsonFetch("/staff/me/compensation");
     }
 
     // -- Onboarding self-submission ------------------------------------------------
@@ -234,5 +294,8 @@ const StaffSelf = (() => {
         formatDate,
         formatTime,
         timeAgo,
+        submitLeaveRequest,
+        getMyLeaveRequests,
+        getCompensation,
     };
 })();
