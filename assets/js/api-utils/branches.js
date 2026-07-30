@@ -18,6 +18,8 @@
  *   GET    /admin/branches/:id
  *   PATCH  /admin/branches/:id
  *   DELETE /admin/branches/:id
+ *   PATCH  /admin/branches/:id/manager
+ *   DELETE /admin/branches/:id/manager
  *   GET    /admin/branches/:id/services
  *   PUT    /admin/branches/:id/services
  *   PATCH  /admin/branches/:id/services
@@ -110,6 +112,17 @@ const Branches = (() => {
         return apiFetch(`/admin/branches/${id}`, { method: "DELETE" });
     }
 
+    async function setManager(id, staffId) {
+        return apiFetch(`/admin/branches/${id}/manager`, {
+            method: "PATCH",
+            body: JSON.stringify({ staffId }),
+        });
+    }
+
+    async function removeManager(id) {
+        return apiFetch(`/admin/branches/${id}/manager`, { method: "DELETE" });
+    }
+
     async function getBranchServices(branchId) {
         const data = await apiFetch(`/admin/branches/${branchId}/services`);
         return Array.isArray(data) ? data : (data.services || data.data || []);
@@ -168,6 +181,8 @@ const Branches = (() => {
         createBranch,
         updateBranch,
         deleteBranch,
+        setManager,
+        removeManager,
         getBranchServices,
         setBranchServices,
         patchBranchServices,

@@ -121,6 +121,31 @@ const StaffSelf = (() => {
         return jsonFetch("/staff/me/leave-requests");
     }
 
+    async function approveLeaveRequest(id) {
+        return jsonFetch("/staff/me/leave-requests/" + id + "/approve", { method: "PATCH" });
+    }
+
+    async function rejectLeaveRequest(id, reason) {
+        return jsonFetch("/staff/me/leave-requests/" + id + "/reject", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason }),
+        });
+    }
+
+    async function reassignLeaveRequest(id, toApproverId, reason) {
+        return jsonFetch("/staff/me/leave-requests/" + id + "/reassign", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ toApproverId, reason }),
+        });
+    }
+
+    // -- My Approvals (generic, cross-module queue) -----------------------------
+    async function getPendingApprovals() {
+        return jsonFetch("/staff/me/approvals/pending");
+    }
+
     async function getAttendance() {
         return jsonFetch("/staff/me/attendance");
     }
@@ -296,6 +321,10 @@ const StaffSelf = (() => {
         timeAgo,
         submitLeaveRequest,
         getMyLeaveRequests,
+        approveLeaveRequest,
+        rejectLeaveRequest,
+        reassignLeaveRequest,
+        getPendingApprovals,
         getCompensation,
     };
 })();

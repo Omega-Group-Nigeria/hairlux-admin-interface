@@ -42,6 +42,7 @@ async function initStaffPortal() {
     loadAttendance(),
     loadInventoryDashboard(),
     loadLeaveRequests(),
+    loadMyApprovals(),
     loadCompensation(),
   ]);
 
@@ -1123,6 +1124,131 @@ async function submitLeaveRequestForm() {
   }
 }
 
+// -- My Approvals (generic, cross-module queue) --------------------------------
+
+var currentApprovals = [];
+
+var APPROVAL_TYPE_LABELS = {
+  LEAVE_REQUEST: 'Leave Request',
+  INVENTORY_ADJUSTMENT: 'Stock Adjustment',
+  STOCK_TRANSFER: 'Stock Transfer',
+};
+
+async function loadMyApprovals() {
+  var container = document.getElementById('approvals-list-container');
+  try {
+    currentApprovals = await StaffSelf.getPendingApprovals();
+    renderApprovals();
+    updateApprovalsBadge();
+  } catch (err) {
+    if (container) container.innerHTML = '<div class="text-danger small py-3">' + err.message + '</div>';
+  }
+}
+
+function updateApprovalsBadge() {
+  var badge = document.getElementById('approvals-badge');
+  if (!badge) return;
+  var count = (currentApprovals || []).length;
+  if (count === 0) { badge.style.display = 'none'; return; }
+  badge.style.display = '';
+  badge.textContent = String(count);
+}
+
+function approvalSummary(item) {
+  if (item.requestType === 'LEAVE_REQUEST' && item.leaveRequest) {
+    var lr = item.leaveRequest;
+    return (LEAVE_TYPE_LABELS[lr.type] || lr.type) + ' — ' +
+      StaffSelf.formatDate(lr.startDate) + (lr.startDate !== lr.endDate ? ' – ' + StaffSelf.formatDate(lr.endDate) : '') +
+      '<div class="text-secondary small">' + escapeHtml(lr.reason) + '</div>';
+  }
+  if (item.requestType === 'INVENTORY_ADJUSTMENT' && item.stockAdjustmentRequest) {
+    var ar = item.stockAdjustmentRequest;
+    var delta = ar.quantityDelta > 0 ? '+' + ar.quantityDelta : String(ar.quantityDelta);
+    return (ar.item ? escapeHtml(ar.item.name) : 'Item') + ' — ' + delta +
+      '<div class="text-secondary small">' + escapeHtml(ar.reason) + '</div>';
+  }
+  if (item.requestType === 'STOCK_TRANSFER' && item.stockTransfer) {
+    var tr = item.stockTransfer;
+    var fromName = tr.fromItem ? escapeHtml(tr.fromItem.name) : 'Item';
+    var fromBranch = tr.fromItem && tr.fromItem.branch ? escapeHtml(tr.fromItem.branch.name) : '?';
+    var toBranch = tr.toBranch ? escapeHtml(tr.toBranch.name) : '?';
+    return fromName + ' × ' + tr.quantity +
+      '<div class="text-secondary small">' + fromBranch + ' → ' + toBranch + '</div>';
+  }
+  return '<span class="text-secondary">—</span>';
+}
+
+function approvalDomainId(item) {
+  if (item.requestType === 'LEAVE_REQUEST') return item.leaveRequest && item.leaveRequest.id;
+  if (item.requestType === 'INVENTORY_ADJUSTMENT') return item.stockAdjustmentRequest && item.stockAdjustmentRequest.id;
+  if (item.requestType === 'STOCK_TRANSFER') return item.stockTransfer && item.stockTransfer.id;
+  return null;
+}
+
+function renderApprovals() {
+  var container = document.getElementById('approvals-list-container');
+  if (!container) return;
+  if (!currentApprovals || !currentApprovals.length) {
+    container.innerHTML = '<div class="text-secondary small py-3">Nothing awaiting your approval right now.</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+    '<th>Type</th><th>Submitted By</th><th>Details</th><th>Branch</th><th></th>' +
+    '</tr></thead><tbody>' +
+    currentApprovals.map(function (item, idx) {
+      var submitter = item.submittedBy ? escapeHtml(item.submittedBy.name) : '—';
+      var branch = item.branch ? escapeHtml(item.branch.name) : '—';
+      return '<tr>' +
+        '<td><span class="bdg">' + (APPROVAL_TYPE_LABELS[item.requestType] || item.requestType) + '</span></td>' +
+        '<td>' + submitter + '</td>' +
+        '<td>' + approvalSummary(item) + '</td>' +
+        '<td class="text-secondary small">' + branch + '</td>' +
+        '<td class="text-nowrap">' +
+        '<button class="btn btn-gold btn-sm me-1" onclick="handleApprovalAction(' + idx + ', \'approve\')">Approve</button>' +
+        '<button class="btn btn-ghost btn-sm me-1" onclick="handleApprovalAction(' + idx + ', \'reject\')">Reject</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="handleApprovalAction(' + idx + ', \'reassign\')">Reassign</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+}
+
+async function handleApprovalAction(idx, action) {
+  var item = currentApprovals[idx];
+  if (!item) return;
+  var domainId = approvalDomainId(item);
+  if (!domainId) { alert('Could not resolve the underlying request — try refreshing.'); return; }
+
+  var fns = {
+    LEAVE_REQUEST: { approve: StaffSelf.approveLeaveRequest, reject: StaffSelf.rejectLeaveRequest, reassign: StaffSelf.reassignLeaveRequest },
+    INVENTORY_ADJUSTMENT: { approve: InventorySelf.approveAdjustment, reject: InventorySelf.rejectAdjustment, reassign: InventorySelf.reassignAdjustment },
+    STOCK_TRANSFER: { approve: InventorySelf.approveTransfer, reject: InventorySelf.rejectTransfer, reassign: InventorySelf.reassignTransfer },
+  };
+  var handlerSet = fns[item.requestType];
+  if (!handlerSet) { alert('Unsupported request type: ' + item.requestType); return; }
+
+  try {
+    if (action === 'approve') {
+      if (!confirm('Approve this request?')) return;
+      await handlerSet.approve(domainId);
+    } else if (action === 'reject') {
+      var reason = prompt('Reason for rejecting this request:');
+      if (!reason) return;
+      await handlerSet.reject(domainId, reason);
+    } else if (action === 'reassign') {
+      var toApproverId = prompt('Reassign to — enter the staffId of who should handle this next (find it in Admin → Staff):');
+      if (!toApproverId) return;
+      var reassignReason = prompt('Reason for reassigning this request:');
+      if (!reassignReason) return;
+      await handlerSet.reassign(domainId, toApproverId, reassignReason);
+    }
+    await loadMyApprovals();
+  } catch (err) {
+    alert(err.message || 'Action failed.');
+  }
+}
+
 // -- Inventory --
 
 var inventoryBranchesCache = null;
@@ -1165,8 +1291,8 @@ async function loadInventoryItems() {
         '<td>' + i.currentQuantity + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
         '<td>' + i.lowStockThreshold + '</td>' +
         '<td>' + statusBadge + '</td>' +
-        '<td><button class="btn btn-ghost btn-sm" onclick="promptReceiveGoods(\'' + i.id + '\', \'' + escapeHtml(i.name).replace(/'/g, "\\'") + '\')">Receive Goods</button></td>' +
-        '</tr>';
+        '<td><button class="btn btn-ghost btn-sm" onclick="promptReceiveGoods(\'' + i.id + '\', \'' + escapeHtml(i.name).replace(/'/g, "\\'") + '\')">Receive Goods</button> ' +
+        '<button class="btn btn-ghost btn-sm" onclick="promptRequestAdjustment(\'' + i.id + '\', \'' + escapeHtml(i.name).replace(/'/g, "\\'") + '\')">Request Adjustment</button></td>' + '</tr>';
     }).join('');
   }
 
@@ -1188,6 +1314,22 @@ async function promptReceiveGoods(itemId, itemName) {
     await loadInventoryItems();
   } catch (err) {
     alert(err.message || 'Failed to record goods received.');
+  }
+}
+
+async function promptRequestAdjustment(itemId, itemName) {
+  var deltaStr = prompt('Adjustment for "' + itemName + '" — use a negative number to reduce stock (e.g. -3), positive to add:');
+  if (deltaStr === null) return;
+  var delta = parseInt(deltaStr, 10);
+  if (!delta) { alert('Please enter a non-zero whole number.'); return; }
+  var reason = prompt('Reason for this adjustment (required):');
+  if (!reason) return;
+
+  try {
+    await InventorySelf.requestAdjustment(itemId, { quantityDelta: delta, reason: reason });
+    alert('Adjustment request submitted — it now needs approval before stock changes.');
+  } catch (err) {
+    alert(err.message || 'Failed to submit adjustment request.');
   }
 }
 
