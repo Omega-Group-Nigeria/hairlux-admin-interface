@@ -202,6 +202,7 @@
                                     <tr>
                                         <th>Name</th>
                                         <th>Address</th>
+                                        <th>Manager</th>
                                         <th>Status</th>
                                         <th>Created</th>
                                         <th class="w-1">Actions</th>
@@ -209,7 +210,7 @@
                                 </thead>
                                 <tbody id="branches-tbody">
                                     <tr>
-                                        <td colspan="5" class="text-center py-5">
+                                        <td colspan="6" class="text-center py-5">
                                             <div class="spinner-border text-primary"></div>
                                         </td>
                                     </tr>
@@ -217,6 +218,33 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branch manager modal -->
+    <div class="modal modal-blur fade" id="modal-branch-manager" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Appoint Branch Manager</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary small mb-3">Max one manager per branch. The staff member must already be
+                        assigned to this branch.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Staff member</label>
+                        <select class="form-select" id="manager-staff-select">
+                            <option value="">Loading staff…</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-danger d-none" id="manager-modal-error"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-set-manager">Appoint</button>
                 </div>
             </div>
         </div>
@@ -381,6 +409,7 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/services.js"></script>
     <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -453,6 +482,11 @@
                 items += '<a href="#" class="dropdown-item btn-branch-edit" data-id="' + id + '">Edit branch</a>';
                 items += '<a href="#" class="dropdown-item btn-branch-toggle" data-id="' + id + '" data-name="' + name + '" data-active="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close branch" : "Reopen branch") + '</a>';
                 items += '<div class="dropdown-divider"></div>';
+                items += '<a href="#" class="dropdown-item btn-branch-set-manager" data-id="' + id + '" data-name="' + name + '">' + (branch.manager ? "Change manager" : "Appoint manager") + '</a>';
+                if (branch.manager) {
+                    items += '<a href="#" class="dropdown-item btn-branch-remove-manager" data-id="' + id + '" data-name="' + name + '">Remove manager</a>';
+                }
+                items += '<div class="dropdown-divider"></div>';
                 items += '<a href="#" class="dropdown-item text-danger btn-branch-delete" data-id="' + id + '" data-name="' + name + '">Delete</a>';
             }
             return '<div class="dropdown">' +
@@ -468,6 +502,59 @@
                     popperConfig: { strategy: "fixed" },
                 });
             });
+        }
+
+        var _managerModalBranchId = null;
+
+        async function openManagerModal(branchId) {
+            _managerModalBranchId = branchId;
+            document.getElementById("manager-modal-error").classList.add("d-none");
+            var select = document.getElementById("manager-staff-select");
+            select.innerHTML = '<option value="">Loading staff…</option>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-branch-manager"));
+            modal.show();
+            try {
+                var result = await Staff.getAll({ locationId: branchId, limit: 100 });
+                var staffList = result.data || [];
+                if (!staffList.length) {
+                    select.innerHTML = '<option value="">No staff assigned to this branch</option>';
+                    return;
+                }
+                select.innerHTML = staffList.map(function (s) {
+                    return '<option value="' + escAttr(s.id) + '">' + esc(s.name) + (s.staffCode ? ' (' + esc(s.staffCode) + ')' : '') + '</option>';
+                }).join("");
+            } catch (e) {
+                select.innerHTML = '<option value="">Failed to load staff</option>';
+                document.getElementById("manager-modal-error").textContent = e.message || "Failed to load staff for this branch.";
+                document.getElementById("manager-modal-error").classList.remove("d-none");
+            }
+        }
+
+        async function submitSetManager() {
+            var staffId = document.getElementById("manager-staff-select").value;
+            var errEl = document.getElementById("manager-modal-error");
+            errEl.classList.add("d-none");
+            if (!staffId) {
+                errEl.textContent = "Please select a staff member.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            try {
+                await Branches.setManager(_managerModalBranchId, staffId);
+                bootstrap.Modal.getInstance(document.getElementById("modal-branch-manager")).hide();
+                flashPageAlert("success", "Branch manager appointed successfully.");
+                loadBranches();
+            } catch (e) {
+                errEl.textContent = e.message || "Failed to appoint manager.";
+                errEl.classList.remove("d-none");
+            }
+        }
+
+        function confirmRemoveManager(branchId, branchName) {
+            _pendingOp = { type: "remove-manager", id: branchId };
+            document.getElementById("confirm-title").textContent = "Remove Manager";
+            document.getElementById("confirm-msg").textContent = 'Remove the manager appointment for "' + branchName + '"? The branch will revert to unmanaged until a new manager is appointed.';
+            new bootstrap.Modal(document.getElementById("modal-confirm")).show();
         }
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -487,6 +574,7 @@
             document.getElementById("btn-add-branch").addEventListener("click", function () { openBranchModal(null); });
             document.getElementById("btn-save-branch").addEventListener("click", saveBranch);
             document.getElementById("btn-confirm-action").addEventListener("click", executeConfirmedOp);
+            document.getElementById("btn-confirm-set-manager").addEventListener("click", submitSetManager);
 
             var searchTimer;
             document.getElementById("filter-search").addEventListener("input", function () {
@@ -510,13 +598,18 @@
                 var editBtn = e.target.closest(".btn-branch-edit");
                 var toggleBtn = e.target.closest(".btn-branch-toggle");
                 var deleteBtn = e.target.closest(".btn-branch-delete");
-                if (!(servicesBtn || editBtn || toggleBtn || deleteBtn)) return;
+                var setManagerBtn = e.target.closest(".btn-branch-set-manager");
+                var removeManagerBtn = e.target.closest(".btn-branch-remove-manager");
+                if (!(servicesBtn || editBtn || toggleBtn || deleteBtn || setManagerBtn || removeManagerBtn)) return;
                 e.preventDefault();
                 if (servicesBtn) openServicesOffcanvas(servicesBtn.dataset.id, servicesBtn.dataset.name);
                 if (editBtn) openBranchModal(editBtn.dataset.id);
                 if (toggleBtn) confirmToggleBranch(toggleBtn.dataset.id, toggleBtn.dataset.name, toggleBtn.dataset.active === "true");
                 if (deleteBtn) confirmDeleteBranch(deleteBtn.dataset.id, deleteBtn.dataset.name);
+                if (setManagerBtn) openManagerModal(setManagerBtn.dataset.id);
+                if (removeManagerBtn) confirmRemoveManager(removeManagerBtn.dataset.id, removeManagerBtn.dataset.name);
             });
+
 
             var matrixSearchTimer;
             document.getElementById("matrix-search").addEventListener("input", function () {
@@ -588,20 +681,26 @@
                     flashPageAlert("success", "Branches refreshed.");
                 }
                 if (!_branches.length) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-5">No branches found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No branches found.</td></tr>';
                     return;
                 }
                 var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
                 tbody.innerHTML = _branches.map(function (b) {
-                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, canManage) + '</td></tr>';
+                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + formatManagerCell(b.manager) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, canManage) + '</td></tr>';
                 }).join("");
                 initBranchRowDropdowns();
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
                 document.getElementById("results-label").textContent = "Error";
                 flashPageAlert("danger", e.message || "Failed to load branches.");
             }
         }
+
+        function formatManagerCell(manager) {
+            if (!manager) return '<span class="text-secondary small">Unassigned</span>';
+            return '<span class="small">' + esc(manager.name) + '</span>';
+        }
+
 
         function formatBranchAddressCell(address) {
             var text = String(address || "").trim();
@@ -748,6 +847,10 @@
                 } else if (_pendingOp.type === "deleteBranch") {
                     await Branches.deleteBranch(_pendingOp.id);
                     flashPageAlert("success", "Branch deleted successfully.");
+                    loadBranches();
+                } else if (_pendingOp.type === "remove-manager") {
+                    await Branches.removeManager(_pendingOp.id);
+                    flashPageAlert("success", "Branch manager removed.");
                     loadBranches();
                 }
                 bootstrap.Modal.getInstance(document.getElementById("modal-confirm")).hide();

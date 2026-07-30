@@ -46,6 +46,58 @@ const InventorySelf = (function () {
         return jsonFetch('/staff/me/inventory-items/transfer-requests');
     }
 
+    async function approveTransfer(id) {
+        return jsonFetch('/staff/me/inventory-items/transfer-requests/' + id + '/approve', { method: 'PATCH' });
+    }
+
+    async function rejectTransfer(id, reason) {
+        return jsonFetch('/staff/me/inventory-items/transfer-requests/' + id + '/reject', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
+    }
+
+    async function reassignTransfer(id, toApproverId, reason) {
+        return jsonFetch('/staff/me/inventory-items/transfer-requests/' + id + '/reassign', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ toApproverId, reason }),
+        });
+    }
+
+    async function requestAdjustment(itemId, payload) {
+        return jsonFetch('/staff/me/inventory-items/' + itemId + '/adjust-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getAdjustmentRequests() {
+        return jsonFetch('/staff/me/inventory-items/adjustment-requests');
+    }
+
+    async function approveAdjustment(id) {
+        return jsonFetch('/staff/me/inventory-items/adjustment-requests/' + id + '/approve', { method: 'PATCH' });
+    }
+
+    async function rejectAdjustment(id, reason) {
+        return jsonFetch('/staff/me/inventory-items/adjustment-requests/' + id + '/reject', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
+    }
+
+    async function reassignAdjustment(id, toApproverId, reason) {
+        return jsonFetch('/staff/me/inventory-items/adjustment-requests/' + id + '/reassign', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ toApproverId, reason }),
+        });
+    }
+
     async function getBranches() {
         return jsonFetch('/staff/me/inventory-items/branches');
     }
@@ -57,7 +109,11 @@ const InventorySelf = (function () {
             body: JSON.stringify(payload),
         });
     }
-    // add getBranches to the returned object
-    return { getItems, receiveGoods, requestTransfer, getTransferRequests, getBranches, createItem, CATEGORY_LABELS };
+    return {
+        getItems, receiveGoods,
+        requestTransfer, getTransferRequests, approveTransfer, rejectTransfer, reassignTransfer,
+        requestAdjustment, getAdjustmentRequests, approveAdjustment, rejectAdjustment, reassignAdjustment,
+        getBranches, createItem, CATEGORY_LABELS,
+    };
 
 })();

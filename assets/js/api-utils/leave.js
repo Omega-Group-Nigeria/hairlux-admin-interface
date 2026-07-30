@@ -63,5 +63,16 @@ const LeaveRequests = (function () {
         return raw.data || raw;
     }
 
-    return { getAll, approve, reject, TYPE_LABELS, STATUS_COLORS, statusBadge, formatDate };
+    async function reassign(id, toApproverId, reason) {
+        const res = await Auth.fetch(`/admin/leave-requests/${id}/reassign`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ toApproverId, reason }),
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to reassign request');
+        return raw.data || raw;
+    }
+
+    return { getAll, approve, reject, reassign, TYPE_LABELS, STATUS_COLORS, statusBadge, formatDate };
 })();
