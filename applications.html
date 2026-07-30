@@ -853,7 +853,7 @@
         async function ensureStaff() {
             if (staffCache) return staffCache;
             try {
-                var result = await Staff.getAll({ limit: 100 });
+                var result = await Staff.getAll({ limit: 100, employmentStatus: 'ACTIVE' });
                 staffCache = result.data || (Array.isArray(result) ? result : []);
             } catch (err) {
                 staffCache = [];
@@ -874,7 +874,8 @@
                 '<option value="PASS">Pass</option><option value="FAIL">Fail</option><option value="HOLD">Hold</option>' +
                 '</select></div>' +
                 '<div class="col-12"><label class="form-label small mb-1">Interviewer</label>' +
-                '<select class="form-select form-select-sm" id="io-interviewer"><option value="">Select interviewer…</option>' + options + '</select></div>' +
+                '<input type="text" class="form-control form-control-sm mb-1" id="io-interviewer-search" placeholder="Search staff by name…">' +
+                '<select class="form-select form-select-sm" id="io-interviewer" size="5"><option value="">Select interviewer…</option>' + options + '</select></div>' +
                 '<div class="col-12"><label class="form-label small mb-1">Note (optional)</label>' +
                 '<textarea class="form-control form-control-sm" id="io-note" rows="2"></textarea></div>' +
                 '</div>' +
@@ -883,6 +884,21 @@
                 '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
                 '</div>' +
                 '</div>';
+            wireStaffSearchFilter('io-interviewer-search', 'io-interviewer');
+        }
+
+        /** Live client-side filter for any <select> populated from a staff list — reusable across forms. */
+        function wireStaffSearchFilter(searchInputId, selectId) {
+            var input = document.getElementById(searchInputId);
+            var select = document.getElementById(selectId);
+            if (!input || !select) return;
+            input.addEventListener('input', function () {
+                var q = this.value.trim().toLowerCase();
+                Array.prototype.forEach.call(select.options, function (opt) {
+                    if (!opt.value) { opt.hidden = false; return; } // always keep the placeholder visible
+                    opt.hidden = q && opt.textContent.toLowerCase().indexOf(q) === -1;
+                });
+            });
         }
 
         async function submitInterviewOutcome() {
