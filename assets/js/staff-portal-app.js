@@ -43,11 +43,14 @@ async function initStaffPortal() {
     loadInventoryDashboard(),
     loadLeaveRequests(),
     loadMyApprovals(),
+    loadSalonBookings(),
     loadCompensation(),
+    loadCommission(),
   ]);
 
   renderDashboard();
   renderOnboardingStatusStrip();
+  renderNotifications();
 }
 
 /**
@@ -640,6 +643,196 @@ function wireIdCardButton() {
   }
 }
 
+// -- Profile dropdown + self-edit ---------------------------------------------
+
+function toggleProfileDropdown() {
+  var menu = document.getElementById('profile-dd-menu');
+  if (!menu) return;
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function closeProfileDropdown() {
+  var menu = document.getElementById('profile-dd-menu');
+  if (menu) menu.style.display = 'none';
+}
+
+document.addEventListener('click', function (e) {
+  var wrap = document.getElementById('profile-dd-wrap');
+  if (wrap && !wrap.contains(e.target)) closeProfileDropdown();
+});
+
+function closeProfileModal() {
+  document.getElementById('profile-modal-overlay').style.display = 'none';
+}
+
+function showProfileModalError(message) {
+  var el = document.getElementById('pm-modal-error');
+  if (el) { el.textContent = message; el.style.display = 'block'; }
+}
+
+function openEditProfileModal() {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="pm-modal-error"></div>' +
+    '<h3>Edit Profile</h3>' +
+    '<div class="oc-modal-sub">Update your contact phone number. For other changes (name, email, branch), contact an administrator.</div>' +
+    '<div class="oc-field"><label>Phone Number</label><input type="tel" id="pm-field-phone" value="' + escapeHtml(currentStaff.phone || '') + '"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="pm-modal-submit-btn" onclick="submitEditProfile()">Save Changes</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function submitEditProfile() {
+  var phone = document.getElementById('pm-field-phone').value.trim();
+  var btn = document.getElementById('pm-modal-submit-btn');
+  btn.disabled = true;
+  var original = btn.textContent;
+  btn.textContent = 'Saving\u2026';
+  try {
+    await StaffSelf.updateMyProfile({ phone: phone });
+    currentStaff = await StaffSelf.getMe();
+    renderProfileScreen();
+    renderStaffChip();
+    closeProfileModal();
+  } catch (err) {
+    showProfileModalError(err.message || 'Could not save changes.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function openChangePasswordModal() {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="pm-modal-error"></div>' +
+    '<h3>Change Password</h3>' +
+    '<div class="oc-modal-sub">Minimum 8 characters, with an uppercase letter, a lowercase letter, and a number.</div>' +
+    '<div class="oc-field"><label>Current Password</label><input type="password" id="pm-field-current-password"></div>' +
+    '<div class="oc-field"><label>New Password</label><input type="password" id="pm-field-new-password"></div>' +
+    '<div class="oc-field"><label>Confirm New Password</label><input type="password" id="pm-field-confirm-password"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="pm-modal-submit-btn" onclick="submitChangePassword()">Update Password</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function submitChangePassword() {
+  var current = document.getElementById('pm-field-current-password').value;
+  var next = document.getElementById('pm-field-new-password').value;
+  var confirm = document.getElementById('pm-field-confirm-password').value;
+
+  if (!current || !next) { showProfileModalError('Both current and new password are required.'); return; }
+  if (next !== confirm) { showProfileModalError('New password and confirmation do not match.'); return; }
+
+  var btn = document.getElementById('pm-modal-submit-btn');
+  btn.disabled = true;
+  var original = btn.textContent;
+  btn.textContent = 'Updating\u2026';
+  try {
+    await StaffSelf.changePassword(current, next);
+    closeProfileModal();
+    alert('Password updated successfully.');
+  } catch (err) {
+    showProfileModalError(err.message || 'Could not update password.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+// -- Notifications (aggregated from Announcements + Directives + Approvals) ---
+
+function renderNotifications() {
+  var container = document.getElementById('notifications-list');
+  if (!container) return;
+
+  var items = [];
+
+  (currentAnnouncements || []).forEach(function (a) {
+    var fromName = a.createdBy ? [a.createdBy.firstName, a.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+    items.push({
+      unread: !a.isRead,
+      icon: '\uD83D\uDCE2',
+      title: 'Announcement: ' + a.title,
+      body: a.body,
+      meta: StaffSelf.timeAgo(a.createdAt) + ' \u00B7 From: ' + fromName,
+      sortAt: a.createdAt,
+      onClick: "show('announcements')",
+    });
+  });
+
+  (currentDirectives || []).forEach(function (d) {
+    var fromName = d.createdBy ? [d.createdBy.firstName, d.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+    var isPending = d.status !== 'COMPLETED';
+    items.push({
+      unread: isPending,
+      icon: isPending ? '\u26A0\uFE0F' : '\u2713',
+      title: (isPending ? 'Directive: ' : 'Completed: ') + d.title,
+      body: d.body,
+      meta: (isPending ? StaffSelf.timeAgo(d.createdAt) : 'Completed ' + StaffSelf.formatDate(d.respondedAt)) + ' \u00B7 From: ' + fromName,
+      sortAt: d.respondedAt || d.createdAt,
+      onClick: "show('tasks')",
+    });
+  });
+
+  (currentApprovals || []).forEach(function (item) {
+    items.push({
+      unread: true,
+      icon: '\u23F3',
+      title: 'Awaiting your approval: ' + (APPROVAL_TYPE_LABELS[item.requestType] || item.requestType),
+      body: item.submittedBy ? ('Submitted by ' + item.submittedBy.name) : '',
+      meta: 'Pending action',
+      sortAt: item.createdAt || new Date().toISOString(),
+      onClick: "show('approvals')",
+    });
+  });
+
+  items.sort(function (a, b) { return new Date(b.sortAt) - new Date(a.sortAt); });
+
+  var unreadCount = items.filter(function (i) { return i.unread; }).length;
+  var badge = document.getElementById('notif-count-badge');
+  var bellDot = document.querySelector('.ico-btn .ndot');
+  var sidebarBadge = document.querySelector('.sb-item[onclick*="notifications"] .bdg');
+  if (badge) {
+    badge.style.display = unreadCount > 0 ? '' : 'none';
+    badge.textContent = unreadCount + ' new';
+  }
+  if (bellDot) bellDot.style.display = unreadCount > 0 ? '' : 'none';
+  if (sidebarBadge) {
+    if (unreadCount === 0) sidebarBadge.remove();
+    else sidebarBadge.textContent = String(unreadCount);
+  }
+
+  if (!items.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No notifications right now.</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(function (i) {
+    return '<div class="notif' + (i.unread ? ' unread' : '') + '" style="cursor:pointer" onclick="' + i.onClick + '">' +
+      '<div class="ndot2' + (i.unread ? '' : ' read') + '"></div>' +
+      '<div>' +
+      '<div class="n-t">' + i.icon + ' ' + escapeHtml(i.title) + '</div>' +
+      '<div class="n-b">' + escapeHtml(i.body || '') + '</div>' +
+      '<div class="n-d">' + i.meta + '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+async function markAllNotificationsRead() {
+  var unreadAnnouncements = (currentAnnouncements || []).filter(function (a) { return !a.isRead; });
+  if (!unreadAnnouncements.length) return;
+  try {
+    await Promise.allSettled(unreadAnnouncements.map(function (a) { return StaffSelf.markAnnouncementRead(a.id); }));
+    await loadAnnouncements();
+    renderNotifications();
+  } catch (err) {
+    alert('Could not mark all as read: ' + err.message);
+  }
+}
+
 // -- Onboarding + Verification checklist (Profile) -----------------------------
 
 async function loadOnboarding() {
@@ -841,7 +1034,9 @@ async function loadAnnouncements() {
     .join('');
 
   announcements.filter((a) => !a.isRead).forEach((a) => StaffSelf.markAnnouncementRead(a.id).catch(() => { }));
+  renderNotifications();
 }
+
 
 // -- Directives / Tasks --
 
@@ -876,6 +1071,7 @@ async function loadDirectives() {
     '</div>' +
     '<div class="card"><div class="card-h"><h3>Tasks &amp; Directives</h3><span class="badge b-amber">' + pending.length + ' pending</span></div>' +
     '<div class="card-b">' + listHtml + '</div></div>';
+  renderNotifications();
 }
 
 function directiveRow(d) {
@@ -976,14 +1172,13 @@ function renderCheckinButton(todayRecord) {
 }
 
 async function handleAttendanceToggle() {
-  const btn = document.getElementById('attendance-toggle-btn');
-  const st = document.querySelectorAll('#attendance .info-item .val')[0];
-  const originalText = btn ? btn.textContent : '';
+  const tbBtn = document.getElementById('tb-cta');
+  const ciBtn = document.getElementById('ci-btn');
+  const tbOriginal = tbBtn ? tbBtn.textContent : '';
+  const ciOriginal = ciBtn ? ciBtn.textContent : '';
 
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '…';
-  }
+  if (tbBtn) { tbBtn.disabled = true; tbBtn.textContent = '…'; }
+  if (ciBtn) { ciBtn.style.pointerEvents = 'none'; ciBtn.textContent = '…'; }
 
   try {
     if (checkedInToday) {
@@ -993,12 +1188,22 @@ async function handleAttendanceToggle() {
     }
     await loadAttendance();
     renderDashboard();
+    // The topbar CTA's label is otherwise a static lookup by screen (see
+    // `ctas`) that has no idea whether the user is checked in -- override it
+    // here so it doesn't keep saying "Check In" right after a successful one.
+    if (tbBtn) {
+      const activeScreen = document.querySelector('.screen.active');
+      if (activeScreen && (activeScreen.id === 'dashboard' || activeScreen.id === 'attendance')) {
+        tbBtn.textContent = checkedInToday ? '⏵ Check Out' : '⏵ Check In';
+      }
+    }
   } catch (err) {
     alert(err.message);
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
+    if (tbBtn) tbBtn.textContent = tbOriginal;
+    if (ciBtn) ciBtn.textContent = ciOriginal;
+  } finally {
+    if (tbBtn) tbBtn.disabled = false;
+    if (ciBtn) ciBtn.style.pointerEvents = '';
   }
 }
 
@@ -1140,6 +1345,7 @@ async function loadMyApprovals() {
     currentApprovals = await StaffSelf.getPendingApprovals();
     renderApprovals();
     updateApprovalsBadge();
+    renderNotifications();
   } catch (err) {
     if (container) container.innerHTML = '<div class="text-danger small py-3">' + err.message + '</div>';
   }
@@ -1246,6 +1452,345 @@ async function handleApprovalAction(idx, action) {
     await loadMyApprovals();
   } catch (err) {
     alert(err.message || 'Action failed.');
+  }
+}
+
+// -- Salon Bookings --------------------------------------------------------
+var SB_STATUS_LABELS = {
+  SCHEDULED: 'Scheduled', IN_PROGRESS: 'In Progress', COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled', NO_SHOW: 'No-Show',
+};
+var sbServicesCache = null;
+var sbStaffCache = null;
+
+function sbFormatMoney(amount) {
+  if (amount == null) return '—';
+  return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function loadSalonBookings() {
+  var container = document.getElementById('bookings-list-container');
+  try {
+    var result = await SalonBookingsSelf.getAll({ limit: 30 });
+    var bookings = result.data || [];
+    if (!bookings.length) {
+      container.innerHTML = '<div class="text-secondary small py-3">No bookings yet for your branch.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+      '<th>Date / Time</th><th>Customer</th><th>Stylist</th><th>Services</th><th>Total</th><th>Status</th><th></th>' +
+      '</tr></thead><tbody>' +
+      bookings.map(function (b, idx) {
+        var services = (b.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
+        return '<tr>' +
+          '<td>' + StaffSelf.formatDate(b.bookingDate) + ' · ' + escapeHtml(b.bookingTime) + '</td>' +
+          '<td>' + escapeHtml(b.customerName) + '</td>' +
+          '<td>' + escapeHtml(b.assignedStaff ? b.assignedStaff.name : '—') + '</td>' +
+          '<td class="text-secondary small">' + (services || '—') + '</td>' +
+          '<td>' + sbFormatMoney(b.totalAmount) + '</td>' +
+          '<td><span class="bdg">' + (SB_STATUS_LABELS[b.status] || b.status) + '</span></td>' +
+          '<td class="text-nowrap">' + sbActionsHtml(b) + '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table></div>';
+
+    container.querySelectorAll('.btn-sb-start').forEach(function (btn) { btn.addEventListener('click', function () { sbStart(btn.dataset.id); }); });
+    container.querySelectorAll('.btn-sb-complete').forEach(function (btn) { btn.addEventListener('click', function () { sbComplete(btn.dataset.id); }); });
+    container.querySelectorAll('.btn-sb-cancel').forEach(function (btn) { btn.addEventListener('click', function () { sbCancel(btn.dataset.id); }); });
+    container.querySelectorAll('.btn-sb-no-show').forEach(function (btn) { btn.addEventListener('click', function () { sbNoShow(btn.dataset.id); }); });
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small py-3">' + err.message + '</div>';
+  }
+}
+
+function sbActionsHtml(b) {
+  if (b.status === 'SCHEDULED') {
+    return '<button class="btn btn-gold btn-sm me-1 btn-sb-start" data-id="' + b.id + '">Start</button>' +
+      '<button class="btn btn-ghost btn-sm me-1 btn-sb-cancel" data-id="' + b.id + '">Cancel</button>' +
+      '<button class="btn btn-ghost btn-sm btn-sb-no-show" data-id="' + b.id + '">No-Show</button>';
+  }
+  if (b.status === 'IN_PROGRESS') {
+    return '<button class="btn btn-gold btn-sm me-1 btn-sb-complete" data-id="' + b.id + '">Complete</button>' +
+      '<button class="btn btn-ghost btn-sm btn-sb-cancel" data-id="' + b.id + '">Cancel</button>';
+  }
+  return '';
+}
+
+async function sbStart(id) {
+  try { await SalonBookingsSelf.start(id); await loadSalonBookings(); } catch (err) { alert(err.message); }
+}
+
+async function sbComplete(id) {
+  if (!confirm('Complete this booking? This deducts inventory used and calculates commission.')) return;
+  try { await SalonBookingsSelf.complete(id); await loadSalonBookings(); } catch (err) { alert(err.message); }
+}
+
+async function sbCancel(id) {
+  var reason = prompt('Reason for cancelling this booking:');
+  if (!reason) return;
+  try { await SalonBookingsSelf.cancel(id, reason); await loadSalonBookings(); } catch (err) { alert(err.message); }
+}
+
+async function sbNoShow(id) {
+  var reason = prompt('Reason for marking this booking a no-show:');
+  if (!reason) return;
+  try { await SalonBookingsSelf.noShow(id, reason); await loadSalonBookings(); } catch (err) { alert(err.message); }
+}
+
+async function showBookingForm() {
+  var formContainer = document.getElementById('booking-form-container');
+  formContainer.style.display = 'block';
+  formContainer.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>';
+
+  try {
+    if (!sbStaffCache) {
+      var staffResult = await SalonBookingsSelf.getBranchStaff();
+      sbStaffCache = staffResult || [];
+    }
+    if (!sbServicesCache) {
+      var res = await Auth.fetch('/services?status=ACTIVE');
+      var raw = await res.json().catch(function () { return {}; });
+      sbServicesCache = Array.isArray(raw) ? raw : (raw.services || raw.data || []);
+    }
+  } catch (err) {
+    formContainer.innerHTML = '<div class="text-danger small">Failed to load form data: ' + err.message + '</div>';
+    return;
+  }
+
+  var staffOptions = '<option value="">Select stylist…</option>' + sbStaffCache.map(function (s) {
+    return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>';
+  }).join('');
+
+  formContainer.innerHTML =
+    '<div class="row g-2 mb-3">' +
+    '<div class="col-6"><label class="form-label small mb-1">Customer Name</label>' +
+    '<input type="text" class="input" id="sb-customer-name" placeholder="Ngozi Adeyemi"></div>' +
+    '<div class="col-6"><label class="form-label small mb-1">Customer Phone (optional)</label>' +
+    '<input type="text" class="input" id="sb-customer-phone" placeholder="+2348012345678"></div>' +
+    '<div class="col-6"><label class="form-label small mb-1">Assigned Stylist</label>' +
+    '<select class="input" id="sb-staff">' + staffOptions + '</select></div>' +
+    '<div class="col-6"></div>' +
+    '<div class="col-6"><label class="form-label small mb-1">Date</label>' +
+    '<input type="date" class="input" id="sb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
+    '<div class="col-6"><label class="form-label small mb-1">Time</label>' +
+    '<input type="time" class="input" id="sb-time"></div>' +
+    '</div>' +
+    '<div class="mb-2"><label class="form-label small mb-1">Services</label><div id="sb-service-lines"></div>' +
+    '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddServiceLine()">+ Add service</button></div>' +
+    '<div class="mb-2"><label class="form-label small mb-1">Products Used / Sold (optional)</label><div id="sb-item-lines"></div>' +
+    '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddItemLine()">+ Add item</button></div>' +
+    '<div class="mb-2"><label class="form-label small mb-1">Notes</label><textarea class="input" id="sb-notes" rows="2"></textarea></div>' +
+    '<div class="text-end fw-bold small mb-2" id="sb-estimated-total">Estimated total: —</div>' +
+    '<div class="flex gap2">' +
+    '<button class="btn btn-gold btn-sm" onclick="submitBookingForm()">Create Booking</button>' +
+    '<button class="btn btn-ghost btn-sm" onclick="cancelBookingForm()">Cancel</button>' +
+    '</div>';
+
+  window._sbInventoryItems = null;
+  sbAddServiceLine();
+}
+
+function cancelBookingForm() {
+  document.getElementById('booking-form-container').style.display = 'none';
+  document.getElementById('booking-form-container').innerHTML = '';
+}
+
+// -- Verify Reservation (staff, own branch only) -------------------------------
+
+var _sbVerifyBooking = null;
+
+function showVerifyReservationForm() {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="sbv-error" style="display:none"></div>' +
+    '<h3>Verify Reservation</h3>' +
+    '<div class="oc-modal-sub">Enter the code the customer presents on arrival.</div>' +
+    '<div class="oc-field"><label>Reservation Code</label><input type="text" id="sbv-code" style="text-transform:uppercase" placeholder="HLS-XXXXXX"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="sbv-lookup-btn" onclick="sbLookupReservationCode()">Look Up</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+  setTimeout(function () { var el = document.getElementById('sbv-code'); if (el) el.focus(); }, 100);
+}
+
+function sbShowVerifyError(message) {
+  var el = document.getElementById('sbv-error');
+  if (el) { el.textContent = message; el.style.display = 'block'; }
+}
+
+async function sbLookupReservationCode() {
+  var code = document.getElementById('sbv-code').value.trim().toUpperCase();
+  if (!code) { sbShowVerifyError('Enter a reservation code.'); return; }
+
+  var btn = document.getElementById('sbv-lookup-btn');
+  btn.disabled = true;
+  try {
+    var booking = await SalonBookingsSelf.verifyCode(code);
+    _sbVerifyBooking = booking;
+
+    var services = (booking.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
+
+    if (booking.reservationUsed) {
+      document.getElementById('profile-modal-box').innerHTML =
+        '<h3>Verify Reservation</h3>' +
+        '<div class="oc-modal-sub">' + escapeHtml(booking.customerName) + ' \u00B7 ' + (services || '\u2014') + '</div>' +
+        '<div style="color:var(--red);font-weight:700;margin:12px 0">This reservation has already been used.</div>' +
+        '<div class="oc-modal-actions"><button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Close</button></div>';
+      return;
+    }
+
+    if (!sbStaffCache) {
+      var staffResult = await SalonBookingsSelf.getBranchStaff();
+      sbStaffCache = staffResult || [];
+    }
+    var staffOptions = '<option value="">Select stylist\u2026</option>' + sbStaffCache.map(function (s) {
+      return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>';
+    }).join('');
+
+    document.getElementById('profile-modal-box').innerHTML =
+      '<div class="oc-modal-error" id="sbv-error" style="display:none"></div>' +
+      '<h3>Verify Reservation</h3>' +
+      '<div class="oc-modal-sub"><strong>' + escapeHtml(booking.customerName) + '</strong>' + (booking.customerPhone ? ' (' + escapeHtml(booking.customerPhone) + ')' : '') + '<br>' +
+      StaffSelf.formatDate(booking.bookingDate) + ' \u00B7 ' + escapeHtml(booking.bookingTime) + '<br>' +
+      (services || '\u2014') + ' \u2014 ' + sbFormatMoney(booking.totalAmount) + '</div>' +
+      '<div class="oc-field"><label>Assign Stylist</label><select id="sbv-staff">' + staffOptions + '</select></div>' +
+      '<div class="oc-modal-actions">' +
+      '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+      '<button class="btn btn-gold btn-sm" id="sbv-confirm-btn" onclick="sbConfirmVerification()">Confirm &amp; Assign</button>' +
+      '</div>';
+  } catch (err) {
+    sbShowVerifyError(err.message || 'Reservation not found.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function sbConfirmVerification() {
+  var staffId = document.getElementById('sbv-staff').value;
+  if (!staffId) { sbShowVerifyError('Please select a Stylist.'); return; }
+
+  var btn = document.getElementById('sbv-confirm-btn');
+  btn.disabled = true;
+  try {
+    await SalonBookingsSelf.confirmVerification(_sbVerifyBooking.id, staffId);
+    closeProfileModal();
+    await loadSalonBookings();
+  } catch (err) {
+    sbShowVerifyError(err.message || 'Failed to verify reservation.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function sbAddServiceLine() {
+  var container = document.getElementById('sb-service-lines');
+  var row = document.createElement('div');
+  row.style.display = 'grid';
+  row.style.gridTemplateColumns = '1fr 70px 32px';
+  row.style.gap = '8px';
+  row.style.marginBottom = '6px';
+  var options = '<option value="">Select service…</option>' + sbServicesCache.map(function (s) {
+    return '<option value="' + s.id + '" data-price="' + s.walkInPrice + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(s.walkInPrice) + '</option>';
+  }).join('');
+  row.innerHTML =
+    '<select class="input sb-service-select">' + options + '</select>' +
+    '<input type="number" min="1" value="1" class="input sb-qty">' +
+    '<button type="button" class="btn btn-ghost btn-sm sb-remove-line">&times;</button>';
+  container.appendChild(row);
+  row.querySelector('.sb-service-select').addEventListener('change', sbUpdateTotal);
+  row.querySelector('.sb-qty').addEventListener('input', sbUpdateTotal);
+  row.querySelector('.sb-remove-line').addEventListener('click', function () { row.remove(); sbUpdateTotal(); });
+  sbUpdateTotal();
+}
+
+async function sbAddItemLine() {
+  if (!window._sbInventoryItems) {
+    try {
+      var res = await InventorySelf.getItems();
+      window._sbInventoryItems = res.data || res || [];
+    } catch (err) { window._sbInventoryItems = []; }
+  }
+  var container = document.getElementById('sb-item-lines');
+  var row = document.createElement('div');
+  row.style.display = 'grid';
+  row.style.gridTemplateColumns = '1fr 70px 32px';
+  row.style.gap = '8px';
+  row.style.marginBottom = '6px';
+  var options = '<option value="">Select product…</option>' + window._sbInventoryItems.map(function (i) {
+    var label = i.category === 'FOR_SALE' ? (' — ' + sbFormatMoney(i.price)) : ' — not for sale';
+    return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + escapeHtml(i.name) + label + '</option>';
+  }).join('');
+  row.innerHTML =
+    '<select class="input sb-item-select">' + options + '</select>' +
+    '<input type="number" min="1" value="1" class="input sb-qty">' +
+    '<button type="button" class="btn btn-ghost btn-sm sb-remove-line">&times;</button>';
+  container.appendChild(row);
+  row.querySelector('.sb-item-select').addEventListener('change', sbUpdateTotal);
+  row.querySelector('.sb-qty').addEventListener('input', sbUpdateTotal);
+  row.querySelector('.sb-remove-line').addEventListener('click', function () { row.remove(); sbUpdateTotal(); });
+  sbUpdateTotal();
+}
+
+function sbUpdateTotal() {
+  var total = 0;
+  document.querySelectorAll('#sb-service-lines > div').forEach(function (row) {
+    var sel = row.querySelector('.sb-service-select');
+    var qty = Number(row.querySelector('.sb-qty').value) || 0;
+    var opt = sel.options[sel.selectedIndex];
+    if (opt && opt.value) total += Number(opt.dataset.price || 0) * qty;
+  });
+  document.querySelectorAll('#sb-item-lines > div').forEach(function (row) {
+    var sel = row.querySelector('.sb-item-select');
+    var qty = Number(row.querySelector('.sb-qty').value) || 0;
+    var opt = sel.options[sel.selectedIndex];
+    if (opt && opt.value && opt.dataset.sellable === '1') total += Number(opt.dataset.price || 0) * qty;
+  });
+  var el = document.getElementById('sb-estimated-total');
+  if (el) el.textContent = 'Estimated total: ' + sbFormatMoney(total);
+}
+
+async function submitBookingForm() {
+  var customerName = document.getElementById('sb-customer-name').value.trim();
+  var customerPhone = document.getElementById('sb-customer-phone').value.trim();
+  var assignedStaffId = document.getElementById('sb-staff').value;
+  var bookingDate = document.getElementById('sb-date').value;
+  var bookingTime = document.getElementById('sb-time').value;
+  var notes = document.getElementById('sb-notes').value.trim();
+
+  var services = [];
+  document.querySelectorAll('#sb-service-lines > div').forEach(function (row) {
+    var serviceId = row.querySelector('.sb-service-select').value;
+    var quantity = Number(row.querySelector('.sb-qty').value) || 1;
+    if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+  });
+
+  var inventoryItems = [];
+  document.querySelectorAll('#sb-item-lines > div').forEach(function (row) {
+    var itemId = row.querySelector('.sb-item-select').value;
+    var quantity = Number(row.querySelector('.sb-qty').value) || 1;
+    if (itemId) inventoryItems.push({ itemId: itemId, quantity: quantity });
+  });
+
+  if (!customerName || !assignedStaffId || !bookingDate || !bookingTime) {
+    alert('Customer name, Stylist, Date, and Time are all required.');
+    return;
+  }
+  if (!services.length) {
+    alert('At least one service is required.');
+    return;
+  }
+
+  try {
+    await SalonBookingsSelf.create({
+      customerName: customerName, customerPhone: customerPhone || undefined,
+      assignedStaffId: assignedStaffId, bookingDate: bookingDate, bookingTime: bookingTime,
+      services: services, inventoryItems: inventoryItems.length ? inventoryItems : undefined,
+      notes: notes || undefined,
+    });
+    cancelBookingForm();
+    await loadSalonBookings();
+  } catch (err) {
+    alert(err.message || 'Failed to create booking.');
   }
 }
 
@@ -1426,6 +1971,81 @@ async function loadCompensation() {
       '</div>' +
       (comp.compensationNote ? '<div class="text-secondary small mt3">' + escapeHtml(comp.compensationNote) + '</div>' : '') +
       '<div class="text-secondary small mt3">Effective from ' + effectiveDateStr + ' \u00b7 ' + escapeHtml(comp.role || '') + '</div>';
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
+}
+
+function sbMonthLabel(monthKey) {
+  var parts = monthKey.split('-');
+  var d = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+  return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+
+async function loadCommission() {
+  var container = document.getElementById('commission-content');
+  if (!container) return;
+  try {
+    var result = await SalonBookingsSelf.getMyCommission();
+    var data = result.data || result;
+
+    if (data.commissionRate == null) {
+      container.innerHTML =
+        '<div class="card"><div class="card-b">' +
+        '<div class="text-secondary">You\u2019re not currently set up for commission. If this role should earn commission, ask an admin to set your rate on your staff profile.</div>' +
+        '</div></div>';
+      return;
+    }
+
+    var ratePct = (data.commissionRate * 100).toFixed(1).replace(/\.0$/, '');
+
+    var statsHtml =
+      '<div class="g4 mb6">' +
+      '<div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">\uD83D\uDCB0</div>' +
+      '<div class="stat-lbl">Commission This Month</div><div class="stat-val">' + sbFormatMoney(data.thisMonthTotal) + '</div>' +
+      '<div class="stat-delta neu">' + data.bookingsThisMonth + ' booking' + (data.bookingsThisMonth === 1 ? '' : 's') + '</div></div>' +
+      '<div class="stat green"><div class="stat-ico" style="background:var(--green2)">\uD83D\uDCC8</div>' +
+      '<div class="stat-lbl">Commission Rate</div><div class="stat-val">' + ratePct + '%</div>' +
+      '<div class="stat-delta neu">Per completed booking</div></div>' +
+      '<div class="stat blue"><div class="stat-ico" style="background:var(--blue2)">\uD83D\uDCCA</div>' +
+      '<div class="stat-lbl">All-Time Commission</div><div class="stat-val">' + sbFormatMoney(data.allTimeTotal) + '</div>' +
+      '<div class="stat-delta neu">' + data.entries.length + ' booking' + (data.entries.length === 1 ? '' : 's') + ' total</div></div>' +
+      '</div>';
+
+    var maxMonth = data.monthlyBreakdown.reduce(function (max, m) { return Math.max(max, m.total); }, 0) || 1;
+    var breakdownHtml = data.monthlyBreakdown.length
+      ? data.monthlyBreakdown.map(function (m) {
+        var pct = Math.round((m.total / maxMonth) * 100);
+        return '<div style="margin-bottom:16px">' +
+          '<div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">' + sbMonthLabel(m.month) + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:var(--gold)">' + sbFormatMoney(m.total) + ' \u00B7 ' + m.count + ' booking' + (m.count === 1 ? '' : 's') + '</span></div>' +
+          '<div class="pbar"><span style="width:' + pct + '%"></span></div>' +
+          '</div>';
+      }).join('')
+      : '<div class="text-secondary small">No commission recorded yet.</div>';
+
+    var entriesHtml = data.entries.length
+      ? '<div class="tbl-wrap"><table><thead><tr>' +
+      '<th>Date</th><th>Customer</th><th>Services</th><th>Booking Total</th><th>Rate</th><th>Commission</th>' +
+      '</tr></thead><tbody>' +
+      data.entries.map(function (e) {
+        return '<tr>' +
+          '<td>' + (e.bookingDate ? StaffSelf.formatDate(e.bookingDate) : '\u2014') + '</td>' +
+          '<td>' + escapeHtml(e.customerName || '\u2014') + '</td>' +
+          '<td class="text-secondary small">' + escapeHtml((e.serviceNames || []).join(', ') || '\u2014') + '</td>' +
+          '<td>' + (e.bookingTotal != null ? sbFormatMoney(e.bookingTotal) : '\u2014') + '</td>' +
+          '<td>' + (e.rateApplied * 100).toFixed(1).replace(/\.0$/, '') + '%</td>' +
+          '<td style="font-weight:700;color:var(--green)">' + sbFormatMoney(e.amount) + '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table></div>'
+      : '<div class="text-secondary small">No completed bookings with commission yet.</div>';
+
+    container.innerHTML = statsHtml +
+      '<div class="g2 mb4">' +
+      '<div class="card"><div class="card-h"><h3>Monthly Breakdown</h3></div><div class="card-b">' + breakdownHtml + '</div></div>' +
+      '<div class="card"><div class="card-h"><h3>Recent Commission Entries</h3></div><div class="card-b">' + entriesHtml + '</div></div>' +
+      '</div>';
   } catch (err) {
     container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
   }

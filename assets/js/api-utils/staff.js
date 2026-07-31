@@ -162,6 +162,30 @@ const Staff = (() => {
         });
     }
 
+    async function transferBranch(id, payload) {
+        return jsonFetch("/admin/staff/" + id + "/transfer-branch", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getCodeHistory(id) {
+        return jsonFetch("/admin/staff/" + id + "/code-history");
+    }
+
+    async function getAdminAccess(id) {
+        return jsonFetch("/admin/staff/" + id + "/admin-access");
+    }
+
+    async function setAdminAccess(id, grant) {
+        return jsonFetch("/admin/staff/" + id + "/admin-access", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ grant: grant }),
+        });
+    }
+
     async function archive(id, payload) {
         return jsonFetch("/admin/staff/" + id + "/archive", {
             method: "POST",
@@ -284,6 +308,10 @@ const Staff = (() => {
         create,
         update,
         updateStatus,
+        transferBranch,
+        getCodeHistory,
+        getAdminAccess,
+        setAdminAccess,
         archive,
         restore,
         addHistory,

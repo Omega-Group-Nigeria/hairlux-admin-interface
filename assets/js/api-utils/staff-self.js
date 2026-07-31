@@ -16,6 +16,22 @@ const StaffSelf = (() => {
         return jsonFetch("/staff/me");
     }
 
+    async function updateMyProfile(payload) {
+        return jsonFetch("/staff/me/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function changePassword(currentPassword, newPassword) {
+        return jsonFetch("/user/password", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ currentPassword, newPassword }),
+        });
+    }
+
     // -- Onboarding ---------------------------------------------------------
     async function getOnboarding() {
         return jsonFetch("/staff/me/onboarding");
@@ -293,6 +309,8 @@ const StaffSelf = (() => {
 
     return {
         getMe,
+        updateMyProfile,
+        changePassword,
         getOnboarding,
         getDocuments,
         acknowledgeDocument,

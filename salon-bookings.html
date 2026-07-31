@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Salon Bookings</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .line-row {
+            display: grid;
+            grid-template-columns: 1fr 90px 90px 32px;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .line-row-total {
+            font-size: .85rem;
+            color: var(--tblr-secondary);
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Operations</div>
+                            <h2 class="page-title">Salon Bookings</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-primary me-2" id="btn-verify-reservation">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M9 11l3 3l8 -8" />
+                                    <path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9" />
+                                </svg>
+                                Verify Reservation
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-new-booking">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Booking
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Bookings</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                            <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="status-tabs">
+                                <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="SCHEDULED">Scheduled</a>
+                                </li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="IN_PROGRESS">In
+                                        Progress</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="COMPLETED">Completed</a>
+                                </li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="CANCELLED">Cancelled</a>
+                                </li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="NO_SHOW">No-Show</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="card-body border-bottom py-4">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="filter-branch" class="form-select form-select-sm">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Date</label>
+                                    <input type="date" id="filter-date" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                                        id="btn-clear-filters">Clear filters</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table card-table table-vcenter">
+                                <thead>
+                                    <tr>
+                                        <th>Date / Time</th>
+                                        <th>Customer</th>
+                                        <th>Stylist</th>
+                                        <th>Branch</th>
+                                        <th>Services</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bookings-tbody">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify Reservation modal -->
+    <div class="modal modal-blur fade" id="modal-verify-reservation" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Verify Reservation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="verify-error"></div>
+                    <div id="verify-code-entry">
+                        <label class="form-label">Reservation Code</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="verify-code-input" placeholder="HLS-XXXXXX"
+                                style="text-transform:uppercase">
+                            <button class="btn btn-primary" id="btn-lookup-code">Look Up</button>
+                        </div>
+                    </div>
+                    <div id="verify-result" style="display:none">
+                        <div class="mb-3">
+                            <div><strong>Customer:</strong> <span id="vr-customer"></span></div>
+                            <div><strong>Branch:</strong> <span id="vr-branch"></span></div>
+                            <div><strong>Date/Time:</strong> <span id="vr-datetime"></span></div>
+                            <div><strong>Services:</strong> <span id="vr-services"></span></div>
+                            <div><strong>Total:</strong> <span id="vr-total"></span></div>
+                            <div id="vr-already-used" class="text-danger fw-bold mt-2" style="display:none">This
+                                reservation
+                                has already been used.</div>
+                        </div>
+                        <div id="vr-assign-section">
+                            <label class="form-label">Assign Stylist</label>
+                            <select class="form-select" id="vr-staff-select"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-verify" style="display:none">Confirm
+                        &amp;
+                        Assign</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Booking modal -->
+    <div class="modal modal-blur fade" id="modal-new-booking" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Salon Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="booking-form-error"></div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Branch</label>
+                            <select class="form-select" id="nb-branch"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Assigned Stylist</label>
+                            <select class="form-select" id="nb-staff">
+                                <option value="">Select a branch first…</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" id="nb-customer-name" placeholder="Ngozi Adeyemi">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Customer Phone <span
+                                    class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="nb-customer-phone" placeholder="+2348012345678">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="nb-date">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Time</label>
+                            <input type="time" class="form-control" id="nb-time">
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">Services</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="nb-add-service">+ Add
+                                service</button>
+                        </div>
+                        <div id="nb-service-lines"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">Products Used / Sold <span
+                                    class="text-secondary small">(optional)</span></label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="nb-add-item">+ Add
+                                item</button>
+                        </div>
+                        <div id="nb-item-lines"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes <span class="text-secondary">(optional)</span></label>
+                        <textarea class="form-control" id="nb-notes" rows="2"></textarea>
+                    </div>
+
+                    <div class="text-end fw-bold" id="nb-estimated-total">Estimated total: —</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-submit-booking">Create Booking</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking detail modal -->
+    <div class="modal modal-blur fade" id="modal-booking-detail" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Booking Detail</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detail-body">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="modal-footer" id="detail-footer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reason modal (cancel / no-show) -->
+    <div class="modal modal-blur fade" id="modal-reason" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reason-modal-title">Cancel Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reason-error"></div>
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reason-text" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Back</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-reason">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/services.js"></script>
+    <script src="assets/js/api-utils/inventory.js"></script>
+    <script src="assets/js/api-utils/salon-bookings.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+    <script>
+        Auth.requireAuth();
+
+        var _bookings = [];
+        var _branches = [];
+        var _services = [];
+        var _statusFilter = '';
+        var _pendingReasonAction = null; // { type: 'cancel'|'no-show', id }
+
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadBranches();
+            loadServices();
+            loadBookings();
+
+            document.getElementById('status-tabs').addEventListener('click', function (e) {
+                var link = e.target.closest('[data-status]');
+                if (!link) return;
+                e.preventDefault();
+                document.querySelectorAll('#status-tabs .nav-link').forEach(function (el) { el.classList.remove('active'); });
+                link.classList.add('active');
+                _statusFilter = link.dataset.status;
+                loadBookings();
+            });
+
+            document.getElementById('filter-branch').addEventListener('change', loadBookings);
+            document.getElementById('filter-date').addEventListener('change', loadBookings);
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('filter-branch').value = '';
+                document.getElementById('filter-date').value = '';
+                loadBookings();
+            });
+
+            document.getElementById('btn-new-booking').addEventListener('click', openNewBookingModal);
+            document.getElementById('btn-verify-reservation').addEventListener('click', openVerifyModal);
+            document.getElementById('btn-lookup-code').addEventListener('click', lookupReservationCode);
+            document.getElementById('verify-code-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') lookupReservationCode(); });
+            document.getElementById('btn-confirm-verify').addEventListener('click', confirmVerification); document.getElementById('nb-branch').addEventListener('change', onBranchChangeInForm);
+            document.getElementById('nb-add-service').addEventListener('click', function () { addServiceLine(); });
+            document.getElementById('nb-add-item').addEventListener('click', function () { addItemLine(); });
+            document.getElementById('btn-submit-booking').addEventListener('click', submitNewBooking);
+            document.getElementById('btn-confirm-reason').addEventListener('click', submitReason);
+
+            document.getElementById('logout-btn').addEventListener('click', function (e) { e.preventDefault(); Auth.logout(); });
+        });
+
+        async function loadBranches() {
+            try {
+                _branches = await Branches.getBranches();
+                var filterSel = document.getElementById('filter-branch');
+                var formSel = document.getElementById('nb-branch');
+                var opts = _branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                filterSel.innerHTML = '<option value="">All branches</option>' + opts;
+                formSel.innerHTML = '<option value="">Select branch…</option>' + opts;
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadServices() {
+            try {
+                _services = await Services.getAll({ status: 'ACTIVE' });
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadBookings() {
+            var tbody = document.getElementById('bookings-tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            document.getElementById('results-label').textContent = 'Loading…';
+
+            try {
+                var params = {
+                    branchId: document.getElementById('filter-branch').value,
+                    date: document.getElementById('filter-date').value,
+                    status: _statusFilter,
+                    limit: 50,
+                };
+                var result = await SalonBookings.getAll(params);
+                _bookings = result.data || [];
+                document.getElementById('results-label').textContent = (result.meta ? result.meta.total : _bookings.length) + ' booking(s)';
+                renderBookings();
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
+                document.getElementById('results-label').textContent = 'Error';
+            }
+        }
+
+        function renderBookings() {
+            var tbody = document.getElementById('bookings-tbody');
+            if (!_bookings.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No bookings found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = _bookings.map(function (b) {
+                var services = (b.services || []).map(function (s) { return esc(s.service ? s.service.name : ''); }).join(', ');
+                var actions = actionsForBooking(b);
+                return '<tr>' +
+                    '<td>' + SalonBookings.formatDate(b.bookingDate) + ' · ' + esc(b.bookingTime) + '</td>' +
+                    '<td>' + esc(b.customerName) + (b.customerPhone ? '<div class="text-secondary small">' + esc(b.customerPhone) + '</div>' : '') + '</td>' +
+                    '<td>' + esc(b.assignedStaff ? b.assignedStaff.name : '—') + '</td>' +
+                    '<td>' + esc(b.branch ? b.branch.name : '—') + '</td>' +
+                    '<td class="text-secondary small">' + (services || '—') + '</td>' +
+                    '<td>' + SalonBookings.formatMoney(b.totalAmount) + '</td>' +
+                    '<td>' + SalonBookings.statusBadge(b.status) + '</td>' +
+                    '<td class="text-nowrap">' + actions + '</td>' +
+                    '</tr>';
+            }).join('');
+
+            tbody.querySelectorAll('.btn-view').forEach(function (btn) { btn.addEventListener('click', function () { openDetail(btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-start').forEach(function (btn) { btn.addEventListener('click', function () { doStart(btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-complete').forEach(function (btn) { btn.addEventListener('click', function () { doComplete(btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-cancel').forEach(function (btn) { btn.addEventListener('click', function () { openReasonModal('cancel', btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-no-show').forEach(function (btn) { btn.addEventListener('click', function () { openReasonModal('no-show', btn.dataset.id); }); });
+        }
+
+        function actionsForBooking(b) {
+            var view = '<button class="btn btn-sm btn-outline-secondary me-1 btn-view" data-id="' + b.id + '">View</button>';
+            if (b.status === 'SCHEDULED') {
+                return view +
+                    '<button class="btn btn-sm btn-outline-primary me-1 btn-start" data-id="' + b.id + '">Start</button>' +
+                    '<button class="btn btn-sm btn-outline-danger me-1 btn-cancel" data-id="' + b.id + '">Cancel</button>' +
+                    '<button class="btn btn-sm btn-outline-danger btn-no-show" data-id="' + b.id + '">No-Show</button>';
+            }
+            if (b.status === 'IN_PROGRESS') {
+                return view +
+                    '<button class="btn btn-sm btn-success me-1 btn-complete" data-id="' + b.id + '">Complete</button>' +
+                    '<button class="btn btn-sm btn-outline-danger btn-cancel" data-id="' + b.id + '">Cancel</button>';
+            }
+            return view;
+        }
+
+        async function doStart(id) {
+            try { await SalonBookings.start(id); loadBookings(); } catch (e) { alert(e.message); }
+        }
+
+        async function doComplete(id) {
+            if (!confirm('Complete this booking? This deducts inventory used and calculates commission.')) return;
+            try { await SalonBookings.complete(id); loadBookings(); } catch (e) { alert(e.message); }
+        }
+
+        function openReasonModal(type, id) {
+            _pendingReasonAction = { type: type, id: id };
+            document.getElementById('reason-modal-title').textContent = type === 'cancel' ? 'Cancel Booking' : 'Mark No-Show';
+            document.getElementById('reason-text').value = '';
+            document.getElementById('reason-error').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('modal-reason')).show();
+        }
+
+        async function submitReason() {
+            var reason = document.getElementById('reason-text').value.trim();
+            var errEl = document.getElementById('reason-error');
+            if (!reason) {
+                errEl.textContent = 'A reason is required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            try {
+                if (_pendingReasonAction.type === 'cancel') {
+                    await SalonBookings.cancel(_pendingReasonAction.id, reason);
+                } else {
+                    await SalonBookings.noShow(_pendingReasonAction.id, reason);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modal-reason')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Action failed.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        async function openDetail(id) {
+            var body = document.getElementById('detail-body');
+            var footer = document.getElementById('detail-footer');
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+            footer.innerHTML = '';
+            new bootstrap.Modal(document.getElementById('modal-booking-detail')).show();
+
+            try {
+                var b = await SalonBookings.getOne(id);
+                var servicesHtml = (b.services || []).map(function (s) {
+                    return '<tr><td>' + esc(s.service ? s.service.name : '') + '</td><td>' + s.quantity + '</td><td>' + SalonBookings.formatMoney(s.price) + '</td></tr>';
+                }).join('');
+                var itemsHtml = (b.inventoryItems || []).map(function (i) {
+                    return '<tr><td>' + esc(i.item ? i.item.name : '') + '</td><td>' + i.quantity + '</td><td>' + (i.unitPrice ? SalonBookings.formatMoney(i.unitPrice) : '<span class="text-secondary">not sold</span>') + '</td></tr>';
+                }).join('');
+                var commissionHtml = b.commission
+                    ? '<div class="mt-3"><strong>Commission:</strong> ' + SalonBookings.formatMoney(b.commission.amount) + ' (rate: ' + (Number(b.commission.rateApplied) * 100).toFixed(1) + '%)</div>'
+                    : '';
+
+                body.innerHTML =
+                    '<div class="row mb-3">' +
+                    '<div class="col-6"><strong>Customer:</strong> ' + esc(b.customerName) + (b.customerPhone ? ' (' + esc(b.customerPhone) + ')' : '') + '</div>' +
+                    '<div class="col-6"><strong>Stylist:</strong> ' + esc(b.assignedStaff ? b.assignedStaff.name : '—') + '</div>' +
+                    '<div class="col-6 mt-2"><strong>Branch:</strong> ' + esc(b.branch ? b.branch.name : '—') + '</div>' +
+                    '<div class="col-6 mt-2"><strong>Date/Time:</strong> ' + SalonBookings.formatDate(b.bookingDate) + ' · ' + esc(b.bookingTime) + '</div>' +
+                    '<div class="col-6 mt-2"><strong>Status:</strong> ' + SalonBookings.statusBadge(b.status) + '</div>' +
+                    '<div class="col-6 mt-2"><strong>Total:</strong> ' + SalonBookings.formatMoney(b.totalAmount) + '</div>' +
+                    '</div>' +
+                    '<h4>Services</h4>' +
+                    '<table class="table table-sm"><thead><tr><th>Service</th><th>Qty</th><th>Price</th></tr></thead><tbody>' + (servicesHtml || '<tr><td colspan="3" class="text-secondary">None</td></tr>') + '</tbody></table>' +
+                    '<h4 class="mt-3">Products Used / Sold</h4>' +
+                    '<table class="table table-sm"><thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead><tbody>' + (itemsHtml || '<tr><td colspan="3" class="text-secondary">None</td></tr>') + '</tbody></table>' +
+                    (b.notes ? '<div class="mt-2"><strong>Notes:</strong> ' + esc(b.notes) + '</div>' : '') +
+                    commissionHtml;
+
+                footer.innerHTML = actionsForBooking(b).replace(/btn-sm/g, 'btn-sm') + '<button type="button" class="btn" data-bs-dismiss="modal">Close</button>';
+                footer.querySelectorAll('.btn-view').forEach(function (el) { el.remove(); }); // already viewing
+                footer.querySelectorAll('.btn-start').forEach(function (btn) { btn.addEventListener('click', function () { doStart(id); bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); }); });
+                footer.querySelectorAll('.btn-complete').forEach(function (btn) { btn.addEventListener('click', function () { doComplete(id); bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); }); });
+                footer.querySelectorAll('.btn-cancel').forEach(function (btn) { btn.addEventListener('click', function () { bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); openReasonModal('cancel', id); }); });
+                footer.querySelectorAll('.btn-no-show').forEach(function (btn) { btn.addEventListener('click', function () { bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); openReasonModal('no-show', id); }); });
+            } catch (e) {
+                body.innerHTML = '<div class="text-danger">' + esc(e.message) + '</div>';
+            }
+        }
+
+        // ── New booking form ──────────────────────────────────────────────
+
+        // ── Verify Reservation ──────────────────────────────────────────────
+
+        var _verifyBooking = null;
+
+        function openVerifyModal() {
+            document.getElementById('verify-error').classList.add('d-none');
+            document.getElementById('verify-code-input').value = '';
+            document.getElementById('verify-code-entry').style.display = 'block';
+            document.getElementById('verify-result').style.display = 'none';
+            document.getElementById('btn-confirm-verify').style.display = 'none';
+            _verifyBooking = null;
+            new bootstrap.Modal(document.getElementById('modal-verify-reservation')).show();
+            setTimeout(function () { document.getElementById('verify-code-input').focus(); }, 300);
+        }
+
+        async function lookupReservationCode() {
+            var code = document.getElementById('verify-code-input').value.trim().toUpperCase();
+            var errEl = document.getElementById('verify-error');
+            errEl.classList.add('d-none');
+            if (!code) { errEl.textContent = 'Enter a reservation code.'; errEl.classList.remove('d-none'); return; }
+
+            try {
+                var booking = await SalonBookings.verifyCode(code);
+                _verifyBooking = booking;
+
+                var services = (booking.services || []).map(function (s) { return esc(s.service ? s.service.name : ''); }).join(', ');
+                document.getElementById('vr-customer').textContent = booking.customerName + (booking.customerPhone ? ' (' + booking.customerPhone + ')' : '');
+                document.getElementById('vr-branch').textContent = booking.branch ? booking.branch.name : '—';
+                document.getElementById('vr-datetime').textContent = SalonBookings.formatDate(booking.bookingDate) + ' · ' + booking.bookingTime;
+                document.getElementById('vr-services').textContent = services || '—';
+                document.getElementById('vr-total').textContent = SalonBookings.formatMoney(booking.totalAmount);
+
+                document.getElementById('verify-code-entry').style.display = 'none';
+                document.getElementById('verify-result').style.display = 'block';
+
+                if (booking.reservationUsed) {
+                    document.getElementById('vr-already-used').style.display = 'block';
+                    document.getElementById('vr-assign-section').style.display = 'none';
+                    document.getElementById('btn-confirm-verify').style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('vr-already-used').style.display = 'none';
+                document.getElementById('vr-assign-section').style.display = 'block';
+                document.getElementById('btn-confirm-verify').style.display = '';
+
+                var staffResult = await Staff.getAll({ locationId: booking.branchId, limit: 100 });
+                var staffList = staffResult.data || [];
+                document.getElementById('vr-staff-select').innerHTML = staffList.length
+                    ? '<option value="">Select stylist…</option>' + staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
+                    : '<option value="">No staff at this branch</option>';
+            } catch (e) {
+                errEl.textContent = e.message || 'Reservation not found.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        async function confirmVerification() {
+            var staffId = document.getElementById('vr-staff-select').value;
+            var errEl = document.getElementById('verify-error');
+            errEl.classList.add('d-none');
+            if (!staffId) { errEl.textContent = 'Please select a Stylist.'; errEl.classList.remove('d-none'); return; }
+
+            var btn = document.getElementById('btn-confirm-verify');
+            btn.disabled = true;
+            try {
+                await SalonBookings.confirmVerification(_verifyBooking.id, staffId);
+                bootstrap.Modal.getInstance(document.getElementById('modal-verify-reservation')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to verify reservation.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function openNewBookingModal() {
+            document.getElementById('booking-form-error').classList.add('d-none');
+            document.getElementById('nb-branch').value = '';
+            document.getElementById('nb-staff').innerHTML = '<option value="">Select a branch first…</option>';
+            document.getElementById('nb-customer-name').value = '';
+            document.getElementById('nb-customer-phone').value = '';
+            document.getElementById('nb-date').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('nb-time').value = '';
+            document.getElementById('nb-notes').value = '';
+            document.getElementById('nb-service-lines').innerHTML = '';
+            document.getElementById('nb-item-lines').innerHTML = '';
+            document.getElementById('nb-estimated-total').textContent = 'Estimated total: —';
+            window._nbInventoryItems = [];
+            addServiceLine();
+            new bootstrap.Modal(document.getElementById('modal-new-booking')).show();
+        }
+
+        async function onBranchChangeInForm() {
+            var branchId = document.getElementById('nb-branch').value;
+            var staffSel = document.getElementById('nb-staff');
+            staffSel.innerHTML = '<option value="">Loading…</option>';
+            window._nbInventoryItems = [];
+
+            if (!branchId) {
+                staffSel.innerHTML = '<option value="">Select a branch first…</option>';
+                return;
+            }
+
+            try {
+                var staffResult = await Staff.getAll({ locationId: branchId, limit: 100 });
+                var staffList = staffResult.data || [];
+                staffSel.innerHTML = staffList.length
+                    ? staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
+                    : '<option value="">No staff at this branch</option>';
+            } catch (e) { staffSel.innerHTML = '<option value="">Failed to load staff</option>'; }
+
+            try {
+                window._nbInventoryItems = await Inventory.getAll({ branchId, limit: 100 });
+                if (window._nbInventoryItems.data) window._nbInventoryItems = window._nbInventoryItems.data;
+            } catch (e) { window._nbInventoryItems = []; }
+
+            // Refresh any already-added item line dropdowns
+            document.querySelectorAll('#nb-item-lines .line-item-select').forEach(populateItemSelect);
+        }
+
+        function addServiceLine() {
+            var container = document.getElementById('nb-service-lines');
+            var row = document.createElement('div');
+            row.className = 'line-row';
+            var options = '<option value="">Select service…</option>' + _services.map(function (s) {
+                return '<option value="' + s.id + '" data-price="' + s.walkInPrice + '">' + esc(s.name) + ' — ' + SalonBookings.formatMoney(s.walkInPrice) + '</option>';
+            }).join('');
+            row.innerHTML =
+                '<select class="form-select form-select-sm line-service-select">' + options + '</select>' +
+                '<input type="number" min="1" value="1" class="form-control form-control-sm line-qty">' +
+                '<div class="line-row-total">—</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
+            container.appendChild(row);
+
+            row.querySelector('.line-service-select').addEventListener('change', updateEstimatedTotal);
+            row.querySelector('.line-qty').addEventListener('input', updateEstimatedTotal);
+            row.querySelector('.btn-remove-line').addEventListener('click', function () { row.remove(); updateEstimatedTotal(); });
+            updateEstimatedTotal();
+        }
+
+        function populateItemSelect(select) {
+            var current = select.value;
+            var items = window._nbInventoryItems || [];
+            select.innerHTML = '<option value="">Select product…</option>' + items.map(function (i) {
+                var priceLabel = i.category === 'FOR_SALE' ? (' — ' + SalonBookings.formatMoney(i.price)) : ' — not for sale';
+                return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + esc(i.name) + priceLabel + '</option>';
+            }).join('');
+            if (current) select.value = current;
+        }
+
+        function addItemLine() {
+            var container = document.getElementById('nb-item-lines');
+            var row = document.createElement('div');
+            row.className = 'line-row';
+            row.innerHTML =
+                '<select class="form-select form-select-sm line-item-select"></select>' +
+                '<input type="number" min="1" value="1" class="form-control form-control-sm line-qty">' +
+                '<div class="line-row-total">—</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
+            container.appendChild(row);
+            populateItemSelect(row.querySelector('.line-item-select'));
+
+            row.querySelector('.line-item-select').addEventListener('change', updateEstimatedTotal);
+            row.querySelector('.line-qty').addEventListener('input', updateEstimatedTotal);
+            row.querySelector('.btn-remove-line').addEventListener('click', function () { row.remove(); updateEstimatedTotal(); });
+            updateEstimatedTotal();
+        }
+
+        function updateEstimatedTotal() {
+            var total = 0;
+
+            document.querySelectorAll('#nb-service-lines .line-row').forEach(function (row) {
+                var sel = row.querySelector('.line-service-select');
+                var qty = Number(row.querySelector('.line-qty').value) || 0;
+                var opt = sel.options[sel.selectedIndex];
+                var price = opt ? Number(opt.dataset.price || 0) : 0;
+                var lineTotal = price * qty;
+                row.querySelector('.line-row-total').textContent = opt && opt.value ? SalonBookings.formatMoney(lineTotal) : '—';
+                total += lineTotal;
+            });
+
+            document.querySelectorAll('#nb-item-lines .line-row').forEach(function (row) {
+                var sel = row.querySelector('.line-item-select');
+                var qty = Number(row.querySelector('.line-qty').value) || 0;
+                var opt = sel.options[sel.selectedIndex];
+                var sellable = opt && opt.dataset.sellable === '1';
+                var price = opt && sellable ? Number(opt.dataset.price || 0) : 0;
+                var lineTotal = price * qty;
+                row.querySelector('.line-row-total').textContent = opt && opt.value ? (sellable ? SalonBookings.formatMoney(lineTotal) : 'not billed') : '—';
+                total += lineTotal;
+            });
+
+            document.getElementById('nb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(total);
+        }
+
+        async function submitNewBooking() {
+            var errEl = document.getElementById('booking-form-error');
+            errEl.classList.add('d-none');
+
+            var branchId = document.getElementById('nb-branch').value;
+            var assignedStaffId = document.getElementById('nb-staff').value;
+            var customerName = document.getElementById('nb-customer-name').value.trim();
+            var customerPhone = document.getElementById('nb-customer-phone').value.trim();
+            var bookingDate = document.getElementById('nb-date').value;
+            var bookingTime = document.getElementById('nb-time').value;
+            var notes = document.getElementById('nb-notes').value.trim();
+
+            var services = [];
+            document.querySelectorAll('#nb-service-lines .line-row').forEach(function (row) {
+                var serviceId = row.querySelector('.line-service-select').value;
+                var quantity = Number(row.querySelector('.line-qty').value) || 1;
+                if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+            });
+
+            var inventoryItems = [];
+            document.querySelectorAll('#nb-item-lines .line-row').forEach(function (row) {
+                var itemId = row.querySelector('.line-item-select').value;
+                var quantity = Number(row.querySelector('.line-qty').value) || 1;
+                if (itemId) inventoryItems.push({ itemId: itemId, quantity: quantity });
+            });
+
+            if (!branchId || !assignedStaffId || !customerName || !bookingDate || !bookingTime) {
+                errEl.textContent = 'Branch, Stylist, Customer Name, Date, and Time are all required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            if (!services.length) {
+                errEl.textContent = 'At least one service is required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            var payload = {
+                branchId: branchId, assignedStaffId: assignedStaffId,
+                customerName: customerName, customerPhone: customerPhone || undefined,
+                bookingDate: bookingDate, bookingTime: bookingTime,
+                services: services,
+                inventoryItems: inventoryItems.length ? inventoryItems : undefined,
+                notes: notes || undefined,
+            };
+
+            var btn = document.getElementById('btn-submit-booking');
+            btn.disabled = true;
+            try {
+                await SalonBookings.create(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-new-booking')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to create booking.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
