@@ -51,6 +51,19 @@ const Inventory = (function () {
         });
     }
 
+    async function update(id, payload) {
+        return jsonFetch(`/admin/inventory-items/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    function formatMoney(amount) {
+        if (amount == null) return '—';
+        return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     async function adjust(id, payload) {
         return jsonFetch(`/admin/inventory-items/${id}/adjust`, {
             method: 'POST',
@@ -95,10 +108,10 @@ const Inventory = (function () {
     }
 
     return {
-        getAll, getOne, create, adjust,
+        getAll, getOne, create, update, adjust,
         getAlerts, resolveAlert,
         getTransfers, approveTransfer, rejectTransfer,
         CATEGORY_LABELS, ALERT_STAGE_COLORS, TRANSFER_STATUS_COLORS,
-        statusBadge,
+        statusBadge, formatMoney,
     };
 })();

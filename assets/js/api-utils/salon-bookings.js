@@ -85,8 +85,21 @@ const SalonBookings = (function () {
         });
     }
 
+    async function verifyCode(code) {
+        return apiFetch(`/admin/salon-bookings/verify/${encodeURIComponent(code)}`);
+    }
+
+    async function confirmVerification(id, assignedStaffId) {
+        return apiFetch(`/admin/salon-bookings/${id}/verify`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assignedStaffId }),
+        });
+    }
+
     return {
         getAll, getOne, create, addInventoryItem, start, complete, cancel, noShow,
+        verifyCode, confirmVerification,
         statusBadge, formatMoney, formatDate,
     };
 })();

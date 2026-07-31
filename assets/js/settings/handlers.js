@@ -42,9 +42,8 @@
     // ── GET /user/profile ─────────────────────────────────────────────────
     async function loadProfile() {
         try {
-            var res = await Api.getProfile();
-            var raw = await res.json().catch(function () { return {}; });
-            State.profile = raw.data || raw;
+            var result = await Api.getProfile();
+            State.profile = result.data;
             populateUserInfo(State.profile);
             fillProfileForm(State.profile);
         } catch (err) {
@@ -63,10 +62,9 @@
                 lastName: document.getElementById('input-lastName').value.trim(),
                 phone: document.getElementById('input-phone').value.trim() || undefined,
             };
-            var res = await Api.updateProfile(body);
-            var raw = await res.json().catch(function () { return {}; });
-            if (!res.ok) throw new Error(raw.message || 'Update failed (' + res.status + ')');
-            State.profile = raw.data || State.profile;
+            var result = await Api.updateProfile(body);
+            if (!result.res.ok) throw new Error(result.message || 'Update failed (' + result.res.status + ')');
+            State.profile = result.data || State.profile;
             populateUserInfo(State.profile);
             localStorage.setItem('hairlux_user', JSON.stringify(State.profile));
             showAlert('success', 'Profile updated successfully.');
@@ -94,9 +92,8 @@
                 currentPassword: document.getElementById('input-currentPassword').value,
                 newPassword: newPwd,
             };
-            var res = await Api.changePassword(body);
-            var raw = await res.json().catch(function () { return {}; });
-            if (!res.ok) throw new Error(raw.message || 'Password change failed (' + res.status + ')');
+            var result = await Api.changePassword(body);
+            if (!result.res.ok) throw new Error(result.message || 'Password change failed (' + result.res.status + ')');
             showAlert('success', 'Password changed successfully.');
             document.getElementById('form-password').reset();
         } catch (err) {

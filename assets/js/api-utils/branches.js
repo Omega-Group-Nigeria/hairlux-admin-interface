@@ -123,6 +123,18 @@ const Branches = (() => {
         return apiFetch(`/admin/branches/${id}/manager`, { method: "DELETE" });
     }
 
+    async function getBusinessHours() {
+        const data = await apiFetch("/bookings/business-hours");
+        return Array.isArray(data) ? data : (data.hours || []);
+    }
+
+    async function setBusinessHours(hours) {
+        return apiFetch("/admin/bookings/business-hours", {
+            method: "POST",
+            body: JSON.stringify({ hours }),
+        });
+    }
+
     async function getBranchServices(branchId) {
         const data = await apiFetch(`/admin/branches/${branchId}/services`);
         return Array.isArray(data) ? data : (data.services || data.data || []);
@@ -183,6 +195,8 @@ const Branches = (() => {
         deleteBranch,
         setManager,
         removeManager,
+        getBusinessHours,
+        setBusinessHours,
         getBranchServices,
         setBranchServices,
         patchBranchServices,

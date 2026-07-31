@@ -148,6 +148,7 @@
                                             <th>Item</th>
                                             <th>Branch</th>
                                             <th>Category</th>
+                                            <th>Price</th>
                                             <th>Stock</th>
                                             <th>Threshold</th>
                                             <th>Status</th>
@@ -156,7 +157,7 @@
                                     </thead>
                                     <tbody id="items-tbody">
                                         <tr>
-                                            <td colspan="7" class="text-center py-5">
+                                            <td colspan="8" class="text-center py-5">
                                                 <div class="spinner-border text-primary"></div>
                                             </td>
                                         </tr>
@@ -279,6 +280,14 @@
                             <input type="number" class="form-control" id="ni-threshold" min="0" placeholder="5">
                         </div>
                     </div>
+                    <div class="mb-2">
+                        <label class="form-label" id="ni-price-label">Price <span class="text-danger"
+                                id="ni-price-required">*</span>
+                            <span class="text-secondary small" id="ni-price-hint">(required — item is For Sale)</span>
+                        </label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="ni-price"
+                            placeholder="e.g. 3500">
+                    </div>
                     <div class="mb-2"><label class="form-label">Expiry Date (optional)</label>
                         <input type="date" class="form-control" id="ni-expiry">
                     </div>
@@ -286,6 +295,53 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="btn-save-new-item">Create Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Edit Item Modal -->
+    <div class="modal modal-blur fade" id="modal-edit-item" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Inventory Item</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="edit-item-error"></div>
+                    <input type="hidden" id="ei-id">
+                    <div class="mb-2"><label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input class="form-control" id="ei-name">
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><label class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="ei-category">
+                                <option value="FOR_SALE">For Sale</option>
+                                <option value="INTERNAL_USE">Internal Use</option>
+                                <option value="STORAGE">Storage</option>
+                            </select>
+                        </div>
+                        <div class="col-6"><label class="form-label">Unit</label>
+                            <input class="form-control" id="ei-unit">
+                        </div>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Low Stock Threshold</label>
+                        <input type="number" class="form-control" id="ei-threshold" min="0">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" id="ei-price-label">Price <span class="text-danger"
+                                id="ei-price-required">*</span>
+                            <span class="text-secondary small" id="ei-price-hint">(required — item is For Sale)</span>
+                        </label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="ei-price">
+                    </div>
+                    <div class="mb-2"><label class="form-label">Expiry Date</label>
+                        <input type="date" class="form-control" id="ei-expiry">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-edit-item">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -400,14 +456,21 @@
 
             document.getElementById("btn-new-item").addEventListener("click", function () {
                 document.getElementById("new-item-error").classList.add("d-none");
-                ["ni-name", "ni-unit", "ni-quantity", "ni-threshold", "ni-expiry"].forEach(function (id) { document.getElementById(id).value = ""; });
+                ["ni-name", "ni-unit", "ni-quantity", "ni-threshold", "ni-price", "ni-expiry"].forEach(function (id) { document.getElementById(id).value = ""; });
                 document.getElementById("ni-category").value = "FOR_SALE";
+                updatePriceRequirement('ni-category', 'ni-price-hint', 'ni-price-required');
                 new bootstrap.Modal(document.getElementById("modal-new-item")).show();
             });
+            document.getElementById("ni-category").addEventListener("change", function () {
+                updatePriceRequirement('ni-category', 'ni-price-hint', 'ni-price-required');
+            });
+            document.getElementById("ei-category").addEventListener("change", function () {
+                updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
+            });
             document.getElementById("btn-save-new-item").addEventListener("click", submitNewItem);
+            document.getElementById("btn-save-edit-item").addEventListener("click", submitEditItem);
             document.getElementById("btn-save-adjust").addEventListener("click", submitAdjust);
             document.getElementById("btn-confirm-reject-transfer").addEventListener("click", submitRejectTransfer);
-
             document.getElementById("items-tbody").addEventListener("click", function (e) {
                 var btn = e.target.closest(".btn-adjust");
                 if (!btn) return;
@@ -485,7 +548,7 @@
                 document.getElementById("stat-out").textContent = outOfStock;
 
                 if (!items.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No items found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No items found.</td></tr>';
                     return;
                 }
                 tbody.innerHTML = items.map(function (i) {
@@ -493,17 +556,90 @@
                         '<td class="fw-semibold">' + escapeHtml(i.name) + '</td>' +
                         '<td>' + escapeHtml(i.branch ? i.branch.name : '—') + '</td>' +
                         '<td>' + (Inventory.CATEGORY_LABELS[i.category] || i.category) + '</td>' +
+                        '<td>' + (i.category === 'FOR_SALE' ? Inventory.formatMoney(i.price) : '<span class="text-secondary">—</span>') + '</td>' +
                         '<td>' + i.currentQuantity + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
                         '<td>' + i.lowStockThreshold + '</td>' +
                         '<td>' + Inventory.statusBadge(i) + '</td>' +
-                        '<td><button class="btn btn-sm btn-outline-secondary btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button></td>' +
+                        '<td class="text-nowrap"><button class="btn btn-sm btn-outline-secondary me-1 btn-edit-item" data-id="' + i.id + '">Edit</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button></td>' +
                         '</tr>';
                 }).join('');
+                _itemsCache = items;
+                tbody.querySelectorAll('.btn-edit-item').forEach(function (btn) {
+                    btn.addEventListener('click', function () { openEditItemModal(btn.dataset.id); });
+                });
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
                 document.getElementById("stat-total").textContent = "—";
                 document.getElementById("stat-low").textContent = "—";
                 document.getElementById("stat-out").textContent = "—";
+            }
+        }
+
+        var _itemsCache = [];
+
+        function updatePriceRequirement(categorySelectId, labelHintId, requiredMarkId) {
+            var category = document.getElementById(categorySelectId).value;
+            var isForSale = category === 'FOR_SALE';
+            document.getElementById(requiredMarkId).style.display = isForSale ? '' : 'none';
+            document.getElementById(labelHintId).textContent = isForSale ? '(required — item is For Sale)' : '(optional — not sellable)';
+        }
+
+        function openEditItemModal(id) {
+            var item = _itemsCache.find(function (i) { return i.id === id; });
+            if (!item) return;
+            document.getElementById('edit-item-error').classList.add('d-none');
+            document.getElementById('ei-id').value = item.id;
+            document.getElementById('ei-name').value = item.name;
+            document.getElementById('ei-category').value = item.category;
+            document.getElementById('ei-unit').value = item.unit || '';
+            document.getElementById('ei-threshold').value = item.lowStockThreshold;
+            document.getElementById('ei-price').value = item.price != null ? item.price : '';
+            document.getElementById('ei-expiry').value = item.expiryDate ? item.expiryDate.slice(0, 10) : '';
+            updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
+            new bootstrap.Modal(document.getElementById('modal-edit-item')).show();
+        }
+
+        async function submitEditItem() {
+            var id = document.getElementById('ei-id').value;
+            var name = document.getElementById('ei-name').value.trim();
+            var category = document.getElementById('ei-category').value;
+            var unit = document.getElementById('ei-unit').value.trim();
+            var threshold = document.getElementById('ei-threshold').value;
+            var price = document.getElementById('ei-price').value;
+            var expiry = document.getElementById('ei-expiry').value;
+            var errEl = document.getElementById('edit-item-error');
+            errEl.classList.add('d-none');
+
+            if (!name) {
+                errEl.textContent = 'Name is required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            if (category === 'FOR_SALE' && !price) {
+                errEl.textContent = 'Price is required for items in the For Sale category.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            var btn = document.getElementById('btn-save-edit-item');
+            btn.disabled = true;
+            try {
+                await Inventory.update(id, {
+                    name: name,
+                    category: category,
+                    unit: unit || undefined,
+                    lowStockThreshold: threshold ? Number(threshold) : undefined,
+                    price: price ? Number(price) : undefined,
+                    expiryDate: expiry || undefined,
+                });
+                bootstrap.Modal.getInstance(document.getElementById('modal-edit-item')).hide();
+                loadItems();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to update item.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
             }
         }
 
@@ -514,11 +650,17 @@
             var unit = document.getElementById("ni-unit").value.trim();
             var quantity = document.getElementById("ni-quantity").value;
             var threshold = document.getElementById("ni-threshold").value;
+            var price = document.getElementById("ni-price").value;
             var expiry = document.getElementById("ni-expiry").value;
             var errEl = document.getElementById("new-item-error");
 
             if (!branchId || !name) {
                 errEl.textContent = "Branch and name are required.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (category === 'FOR_SALE' && !price) {
+                errEl.textContent = "Price is required for items in the For Sale category.";
                 errEl.classList.remove("d-none");
                 return;
             }
@@ -533,6 +675,7 @@
                     unit: unit || undefined,
                     initialQuantity: quantity ? Number(quantity) : undefined,
                     lowStockThreshold: threshold ? Number(threshold) : undefined,
+                    price: price ? Number(price) : undefined,
                     expiryDate: expiry || undefined,
                 });
                 bootstrap.Modal.getInstance(document.getElementById("modal-new-item")).hide();
@@ -681,7 +824,7 @@
                 errEl.textContent = "A reason is required.";
                 errEl.classList.remove("d-none");
                 return;
-        }
+            }
             var btn = document.getElementById("btn-confirm-reject-transfer");
             btn.disabled = true;
             try {

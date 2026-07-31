@@ -79,6 +79,15 @@
                             <h2 class="page-title">Salon Bookings</h2>
                         </div>
                         <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-primary me-2" id="btn-verify-reservation">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M9 11l3 3l8 -8" />
+                                    <path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9" />
+                                </svg>
+                                Verify Reservation
+                            </button>
                             <button type="button" class="btn btn-primary" id="btn-new-booking">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -158,6 +167,51 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify Reservation modal -->
+    <div class="modal modal-blur fade" id="modal-verify-reservation" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Verify Reservation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="verify-error"></div>
+                    <div id="verify-code-entry">
+                        <label class="form-label">Reservation Code</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="verify-code-input" placeholder="HLS-XXXXXX"
+                                style="text-transform:uppercase">
+                            <button class="btn btn-primary" id="btn-lookup-code">Look Up</button>
+                        </div>
+                    </div>
+                    <div id="verify-result" style="display:none">
+                        <div class="mb-3">
+                            <div><strong>Customer:</strong> <span id="vr-customer"></span></div>
+                            <div><strong>Branch:</strong> <span id="vr-branch"></span></div>
+                            <div><strong>Date/Time:</strong> <span id="vr-datetime"></span></div>
+                            <div><strong>Services:</strong> <span id="vr-services"></span></div>
+                            <div><strong>Total:</strong> <span id="vr-total"></span></div>
+                            <div id="vr-already-used" class="text-danger fw-bold mt-2" style="display:none">This
+                                reservation
+                                has already been used.</div>
+                        </div>
+                        <div id="vr-assign-section">
+                            <label class="form-label">Assign Stylist</label>
+                            <select class="form-select" id="vr-staff-select"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-verify" style="display:none">Confirm
+                        &amp;
+                        Assign</button>
                 </div>
             </div>
         </div>
@@ -328,7 +382,10 @@
             });
 
             document.getElementById('btn-new-booking').addEventListener('click', openNewBookingModal);
-            document.getElementById('nb-branch').addEventListener('change', onBranchChangeInForm);
+            document.getElementById('btn-verify-reservation').addEventListener('click', openVerifyModal);
+            document.getElementById('btn-lookup-code').addEventListener('click', lookupReservationCode);
+            document.getElementById('verify-code-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') lookupReservationCode(); });
+            document.getElementById('btn-confirm-verify').addEventListener('click', confirmVerification); document.getElementById('nb-branch').addEventListener('change', onBranchChangeInForm);
             document.getElementById('nb-add-service').addEventListener('click', function () { addServiceLine(); });
             document.getElementById('nb-add-item').addEventListener('click', function () { addItemLine(); });
             document.getElementById('btn-submit-booking').addEventListener('click', submitNewBooking);
@@ -506,6 +563,83 @@
         }
 
         // ── New booking form ──────────────────────────────────────────────
+
+        // ── Verify Reservation ──────────────────────────────────────────────
+
+        var _verifyBooking = null;
+
+        function openVerifyModal() {
+            document.getElementById('verify-error').classList.add('d-none');
+            document.getElementById('verify-code-input').value = '';
+            document.getElementById('verify-code-entry').style.display = 'block';
+            document.getElementById('verify-result').style.display = 'none';
+            document.getElementById('btn-confirm-verify').style.display = 'none';
+            _verifyBooking = null;
+            new bootstrap.Modal(document.getElementById('modal-verify-reservation')).show();
+            setTimeout(function () { document.getElementById('verify-code-input').focus(); }, 300);
+        }
+
+        async function lookupReservationCode() {
+            var code = document.getElementById('verify-code-input').value.trim().toUpperCase();
+            var errEl = document.getElementById('verify-error');
+            errEl.classList.add('d-none');
+            if (!code) { errEl.textContent = 'Enter a reservation code.'; errEl.classList.remove('d-none'); return; }
+
+            try {
+                var booking = await SalonBookings.verifyCode(code);
+                _verifyBooking = booking;
+
+                var services = (booking.services || []).map(function (s) { return esc(s.service ? s.service.name : ''); }).join(', ');
+                document.getElementById('vr-customer').textContent = booking.customerName + (booking.customerPhone ? ' (' + booking.customerPhone + ')' : '');
+                document.getElementById('vr-branch').textContent = booking.branch ? booking.branch.name : '—';
+                document.getElementById('vr-datetime').textContent = SalonBookings.formatDate(booking.bookingDate) + ' · ' + booking.bookingTime;
+                document.getElementById('vr-services').textContent = services || '—';
+                document.getElementById('vr-total').textContent = SalonBookings.formatMoney(booking.totalAmount);
+
+                document.getElementById('verify-code-entry').style.display = 'none';
+                document.getElementById('verify-result').style.display = 'block';
+
+                if (booking.reservationUsed) {
+                    document.getElementById('vr-already-used').style.display = 'block';
+                    document.getElementById('vr-assign-section').style.display = 'none';
+                    document.getElementById('btn-confirm-verify').style.display = 'none';
+                    return;
+                }
+
+                document.getElementById('vr-already-used').style.display = 'none';
+                document.getElementById('vr-assign-section').style.display = 'block';
+                document.getElementById('btn-confirm-verify').style.display = '';
+
+                var staffResult = await Staff.getAll({ locationId: booking.branchId, limit: 100 });
+                var staffList = staffResult.data || [];
+                document.getElementById('vr-staff-select').innerHTML = staffList.length
+                    ? '<option value="">Select stylist…</option>' + staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
+                    : '<option value="">No staff at this branch</option>';
+            } catch (e) {
+                errEl.textContent = e.message || 'Reservation not found.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        async function confirmVerification() {
+            var staffId = document.getElementById('vr-staff-select').value;
+            var errEl = document.getElementById('verify-error');
+            errEl.classList.add('d-none');
+            if (!staffId) { errEl.textContent = 'Please select a Stylist.'; errEl.classList.remove('d-none'); return; }
+
+            var btn = document.getElementById('btn-confirm-verify');
+            btn.disabled = true;
+            try {
+                await SalonBookings.confirmVerification(_verifyBooking.id, staffId);
+                bootstrap.Modal.getInstance(document.getElementById('modal-verify-reservation')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to verify reservation.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
 
         async function openNewBookingModal() {
             document.getElementById('booking-form-error').classList.add('d-none');

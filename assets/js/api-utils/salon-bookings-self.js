@@ -67,5 +67,17 @@ const SalonBookingsSelf = (function () {
         });
     }
 
-    return { getAll, getOne, getBranchStaff, create, addInventoryItem, start, complete, cancel, noShow };
+    async function verifyCode(code) {
+        return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}`);
+    }
+
+    async function confirmVerification(id, assignedStaffId) {
+        return jsonFetch(`/staff/me/salon-bookings/${id}/verify`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ assignedStaffId }),
+        });
+    }
+
+    return { getAll, getOne, getBranchStaff, create, addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification };
 })();

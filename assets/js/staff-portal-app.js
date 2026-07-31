@@ -49,6 +49,7 @@ async function initStaffPortal() {
 
   renderDashboard();
   renderOnboardingStatusStrip();
+  renderNotifications();
 }
 
 /**
@@ -641,6 +642,191 @@ function wireIdCardButton() {
   }
 }
 
+// -- Profile dropdown + self-edit ---------------------------------------------
+
+function toggleProfileDropdown() {
+  var menu = document.getElementById('profile-dd-menu');
+  if (!menu) return;
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function closeProfileDropdown() {
+  var menu = document.getElementById('profile-dd-menu');
+  if (menu) menu.style.display = 'none';
+}
+
+document.addEventListener('click', function (e) {
+  var wrap = document.getElementById('profile-dd-wrap');
+  if (wrap && !wrap.contains(e.target)) closeProfileDropdown();
+});
+
+function closeProfileModal() {
+  document.getElementById('profile-modal-overlay').style.display = 'none';
+}
+
+function showProfileModalError(message) {
+  var el = document.getElementById('pm-modal-error');
+  if (el) { el.textContent = message; el.style.display = 'block'; }
+}
+
+function openEditProfileModal() {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="pm-modal-error"></div>' +
+    '<h3>Edit Profile</h3>' +
+    '<div class="oc-modal-sub">Update your contact phone number. For other changes (name, email, branch), contact an administrator.</div>' +
+    '<div class="oc-field"><label>Phone Number</label><input type="tel" id="pm-field-phone" value="' + escapeHtml(currentStaff.phone || '') + '"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="pm-modal-submit-btn" onclick="submitEditProfile()">Save Changes</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function submitEditProfile() {
+  var phone = document.getElementById('pm-field-phone').value.trim();
+  var btn = document.getElementById('pm-modal-submit-btn');
+  btn.disabled = true;
+  var original = btn.textContent;
+  btn.textContent = 'Saving\u2026';
+  try {
+    await StaffSelf.updateMyProfile({ phone: phone });
+    currentStaff = await StaffSelf.getMe();
+    renderProfileScreen();
+    renderStaffChip();
+    closeProfileModal();
+  } catch (err) {
+    showProfileModalError(err.message || 'Could not save changes.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function openChangePasswordModal() {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="pm-modal-error"></div>' +
+    '<h3>Change Password</h3>' +
+    '<div class="oc-modal-sub">Minimum 8 characters, with an uppercase letter, a lowercase letter, and a number.</div>' +
+    '<div class="oc-field"><label>Current Password</label><input type="password" id="pm-field-current-password"></div>' +
+    '<div class="oc-field"><label>New Password</label><input type="password" id="pm-field-new-password"></div>' +
+    '<div class="oc-field"><label>Confirm New Password</label><input type="password" id="pm-field-confirm-password"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="pm-modal-submit-btn" onclick="submitChangePassword()">Update Password</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function submitChangePassword() {
+  var current = document.getElementById('pm-field-current-password').value;
+  var next = document.getElementById('pm-field-new-password').value;
+  var confirm = document.getElementById('pm-field-confirm-password').value;
+
+  if (!current || !next) { showProfileModalError('Both current and new password are required.'); return; }
+  if (next !== confirm) { showProfileModalError('New password and confirmation do not match.'); return; }
+
+  var btn = document.getElementById('pm-modal-submit-btn');
+  btn.disabled = true;
+  var original = btn.textContent;
+  btn.textContent = 'Updating\u2026';
+  try {
+    await StaffSelf.changePassword(current, next);
+    closeProfileModal();
+    alert('Password updated successfully.');
+  } catch (err) {
+    showProfileModalError(err.message || 'Could not update password.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+// -- Notifications (aggregated from Announcements + Directives + Approvals) ---
+
+function renderNotifications() {
+  var container = document.getElementById('notifications-list');
+  if (!container) return;
+
+  var items = [];
+
+  (currentAnnouncements || []).forEach(function (a) {
+    var fromName = a.createdBy ? [a.createdBy.firstName, a.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+    items.push({
+      unread: !a.isRead,
+      icon: '\uD83D\uDCE2',
+      title: 'Announcement: ' + a.title,
+      body: a.body,
+      meta: StaffSelf.timeAgo(a.createdAt) + ' \u00B7 From: ' + fromName,
+      sortAt: a.createdAt,
+      onClick: "show('announcements')",
+    });
+  });
+
+  (currentDirectives || []).forEach(function (d) {
+    var fromName = d.createdBy ? [d.createdBy.firstName, d.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+    var isPending = d.status !== 'COMPLETED';
+    items.push({
+      unread: isPending,
+      icon: isPending ? '\u26A0\uFE0F' : '\u2713',
+      title: (isPending ? 'Directive: ' : 'Completed: ') + d.title,
+      body: d.body,
+      meta: (isPending ? StaffSelf.timeAgo(d.createdAt) : 'Completed ' + StaffSelf.formatDate(d.respondedAt)) + ' \u00B7 From: ' + fromName,
+      sortAt: d.respondedAt || d.createdAt,
+      onClick: "show('tasks')",
+    });
+  });
+
+  (currentApprovals || []).forEach(function (item) {
+    items.push({
+      unread: true,
+      icon: '\u23F3',
+      title: 'Awaiting your approval: ' + (APPROVAL_TYPE_LABELS[item.requestType] || item.requestType),
+      body: item.submittedBy ? ('Submitted by ' + item.submittedBy.name) : '',
+      meta: 'Pending action',
+      sortAt: item.createdAt || new Date().toISOString(),
+      onClick: "show('approvals')",
+    });
+  });
+
+  items.sort(function (a, b) { return new Date(b.sortAt) - new Date(a.sortAt); });
+
+  var unreadCount = items.filter(function (i) { return i.unread; }).length;
+  var badge = document.getElementById('notif-count-badge');
+  var bellDot = document.querySelector('.ico-btn .ndot');
+  if (badge) {
+    badge.style.display = unreadCount > 0 ? '' : 'none';
+    badge.textContent = unreadCount + ' new';
+  }
+  if (bellDot) bellDot.style.display = unreadCount > 0 ? '' : 'none';
+
+  if (!items.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No notifications right now.</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(function (i) {
+    return '<div class="notif' + (i.unread ? ' unread' : '') + '" style="cursor:pointer" onclick="' + i.onClick + '">' +
+      '<div class="ndot2' + (i.unread ? '' : ' read') + '"></div>' +
+      '<div>' +
+      '<div class="n-t">' + i.icon + ' ' + escapeHtml(i.title) + '</div>' +
+      '<div class="n-b">' + escapeHtml(i.body || '') + '</div>' +
+      '<div class="n-d">' + i.meta + '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+async function markAllNotificationsRead() {
+  var unreadAnnouncements = (currentAnnouncements || []).filter(function (a) { return !a.isRead; });
+  if (!unreadAnnouncements.length) return;
+  try {
+    await Promise.allSettled(unreadAnnouncements.map(function (a) { return StaffSelf.markAnnouncementRead(a.id); }));
+    await loadAnnouncements();
+    renderNotifications();
+  } catch (err) {
+    alert('Could not mark all as read: ' + err.message);
+  }
+}
+
 // -- Onboarding + Verification checklist (Profile) -----------------------------
 
 async function loadOnboarding() {
@@ -842,7 +1028,9 @@ async function loadAnnouncements() {
     .join('');
 
   announcements.filter((a) => !a.isRead).forEach((a) => StaffSelf.markAnnouncementRead(a.id).catch(() => { }));
+  renderNotifications();
 }
+
 
 // -- Directives / Tasks --
 
@@ -877,6 +1065,7 @@ async function loadDirectives() {
     '</div>' +
     '<div class="card"><div class="card-h"><h3>Tasks &amp; Directives</h3><span class="badge b-amber">' + pending.length + ' pending</span></div>' +
     '<div class="card-b">' + listHtml + '</div></div>';
+  renderNotifications();
 }
 
 function directiveRow(d) {
@@ -977,14 +1166,13 @@ function renderCheckinButton(todayRecord) {
 }
 
 async function handleAttendanceToggle() {
-  const btn = document.getElementById('attendance-toggle-btn');
-  const st = document.querySelectorAll('#attendance .info-item .val')[0];
-  const originalText = btn ? btn.textContent : '';
+  const tbBtn = document.getElementById('tb-cta');
+  const ciBtn = document.getElementById('ci-btn');
+  const tbOriginal = tbBtn ? tbBtn.textContent : '';
+  const ciOriginal = ciBtn ? ciBtn.textContent : '';
 
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '…';
-  }
+  if (tbBtn) { tbBtn.disabled = true; tbBtn.textContent = '…'; }
+  if (ciBtn) { ciBtn.style.pointerEvents = 'none'; ciBtn.textContent = '…'; }
 
   try {
     if (checkedInToday) {
@@ -994,12 +1182,22 @@ async function handleAttendanceToggle() {
     }
     await loadAttendance();
     renderDashboard();
+    // The topbar CTA's label is otherwise a static lookup by screen (see
+    // `ctas`) that has no idea whether the user is checked in -- override it
+    // here so it doesn't keep saying "Check In" right after a successful one.
+    if (tbBtn) {
+      const activeScreen = document.querySelector('.screen.active');
+      if (activeScreen && (activeScreen.id === 'dashboard' || activeScreen.id === 'attendance')) {
+        tbBtn.textContent = checkedInToday ? '⏵ Check Out' : '⏵ Check In';
+      }
+    }
   } catch (err) {
     alert(err.message);
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
+    if (tbBtn) tbBtn.textContent = tbOriginal;
+    if (ciBtn) ciBtn.textContent = ciOriginal;
+  } finally {
+    if (tbBtn) tbBtn.disabled = false;
+    if (ciBtn) ciBtn.style.pointerEvents = '';
   }
 }
 
@@ -1141,6 +1339,7 @@ async function loadMyApprovals() {
     currentApprovals = await StaffSelf.getPendingApprovals();
     renderApprovals();
     updateApprovalsBadge();
+    renderNotifications();
   } catch (err) {
     if (container) container.innerHTML = '<div class="text-danger small py-3">' + err.message + '</div>';
   }
@@ -1388,6 +1587,93 @@ async function showBookingForm() {
 function cancelBookingForm() {
   document.getElementById('booking-form-container').style.display = 'none';
   document.getElementById('booking-form-container').innerHTML = '';
+}
+
+// -- Verify Reservation (staff, own branch only) -------------------------------
+
+var _sbVerifyBooking = null;
+
+function showVerifyReservationForm() {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="sbv-error" style="display:none"></div>' +
+    '<h3>Verify Reservation</h3>' +
+    '<div class="oc-modal-sub">Enter the code the customer presents on arrival.</div>' +
+    '<div class="oc-field"><label>Reservation Code</label><input type="text" id="sbv-code" style="text-transform:uppercase" placeholder="HLS-XXXXXX"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="sbv-lookup-btn" onclick="sbLookupReservationCode()">Look Up</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+  setTimeout(function () { var el = document.getElementById('sbv-code'); if (el) el.focus(); }, 100);
+}
+
+function sbShowVerifyError(message) {
+  var el = document.getElementById('sbv-error');
+  if (el) { el.textContent = message; el.style.display = 'block'; }
+}
+
+async function sbLookupReservationCode() {
+  var code = document.getElementById('sbv-code').value.trim().toUpperCase();
+  if (!code) { sbShowVerifyError('Enter a reservation code.'); return; }
+
+  var btn = document.getElementById('sbv-lookup-btn');
+  btn.disabled = true;
+  try {
+    var booking = await SalonBookingsSelf.verifyCode(code);
+    _sbVerifyBooking = booking;
+
+    var services = (booking.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
+
+    if (booking.reservationUsed) {
+      document.getElementById('profile-modal-box').innerHTML =
+        '<h3>Verify Reservation</h3>' +
+        '<div class="oc-modal-sub">' + escapeHtml(booking.customerName) + ' \u00B7 ' + (services || '\u2014') + '</div>' +
+        '<div style="color:var(--red);font-weight:700;margin:12px 0">This reservation has already been used.</div>' +
+        '<div class="oc-modal-actions"><button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Close</button></div>';
+      return;
+    }
+
+    if (!sbStaffCache) {
+      var staffResult = await SalonBookingsSelf.getBranchStaff();
+      sbStaffCache = staffResult || [];
+    }
+    var staffOptions = '<option value="">Select stylist\u2026</option>' + sbStaffCache.map(function (s) {
+      return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>';
+    }).join('');
+
+    document.getElementById('profile-modal-box').innerHTML =
+      '<div class="oc-modal-error" id="sbv-error" style="display:none"></div>' +
+      '<h3>Verify Reservation</h3>' +
+      '<div class="oc-modal-sub"><strong>' + escapeHtml(booking.customerName) + '</strong>' + (booking.customerPhone ? ' (' + escapeHtml(booking.customerPhone) + ')' : '') + '<br>' +
+      StaffSelf.formatDate(booking.bookingDate) + ' \u00B7 ' + escapeHtml(booking.bookingTime) + '<br>' +
+      (services || '\u2014') + ' \u2014 ' + sbFormatMoney(booking.totalAmount) + '</div>' +
+      '<div class="oc-field"><label>Assign Stylist</label><select id="sbv-staff">' + staffOptions + '</select></div>' +
+      '<div class="oc-modal-actions">' +
+      '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+      '<button class="btn btn-gold btn-sm" id="sbv-confirm-btn" onclick="sbConfirmVerification()">Confirm &amp; Assign</button>' +
+      '</div>';
+  } catch (err) {
+    sbShowVerifyError(err.message || 'Reservation not found.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function sbConfirmVerification() {
+  var staffId = document.getElementById('sbv-staff').value;
+  if (!staffId) { sbShowVerifyError('Please select a Stylist.'); return; }
+
+  var btn = document.getElementById('sbv-confirm-btn');
+  btn.disabled = true;
+  try {
+    await SalonBookingsSelf.confirmVerification(_sbVerifyBooking.id, staffId);
+    closeProfileModal();
+    await loadSalonBookings();
+  } catch (err) {
+    sbShowVerifyError(err.message || 'Failed to verify reservation.');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function sbAddServiceLine() {
