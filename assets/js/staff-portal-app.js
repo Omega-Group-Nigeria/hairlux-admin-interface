@@ -45,6 +45,7 @@ async function initStaffPortal() {
     loadMyApprovals(),
     loadSalonBookings(),
     loadCompensation(),
+    loadCommission(),
   ]);
 
   renderDashboard();
@@ -793,11 +794,16 @@ function renderNotifications() {
   var unreadCount = items.filter(function (i) { return i.unread; }).length;
   var badge = document.getElementById('notif-count-badge');
   var bellDot = document.querySelector('.ico-btn .ndot');
+  var sidebarBadge = document.querySelector('.sb-item[onclick*="notifications"] .bdg');
   if (badge) {
     badge.style.display = unreadCount > 0 ? '' : 'none';
     badge.textContent = unreadCount + ' new';
   }
   if (bellDot) bellDot.style.display = unreadCount > 0 ? '' : 'none';
+  if (sidebarBadge) {
+    if (unreadCount === 0) sidebarBadge.remove();
+    else sidebarBadge.textContent = String(unreadCount);
+  }
 
   if (!items.length) {
     container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No notifications right now.</div>';
@@ -1965,6 +1971,81 @@ async function loadCompensation() {
       '</div>' +
       (comp.compensationNote ? '<div class="text-secondary small mt3">' + escapeHtml(comp.compensationNote) + '</div>' : '') +
       '<div class="text-secondary small mt3">Effective from ' + effectiveDateStr + ' \u00b7 ' + escapeHtml(comp.role || '') + '</div>';
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
+}
+
+function sbMonthLabel(monthKey) {
+  var parts = monthKey.split('-');
+  var d = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+  return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+}
+
+async function loadCommission() {
+  var container = document.getElementById('commission-content');
+  if (!container) return;
+  try {
+    var result = await SalonBookingsSelf.getMyCommission();
+    var data = result.data || result;
+
+    if (data.commissionRate == null) {
+      container.innerHTML =
+        '<div class="card"><div class="card-b">' +
+        '<div class="text-secondary">You\u2019re not currently set up for commission. If this role should earn commission, ask an admin to set your rate on your staff profile.</div>' +
+        '</div></div>';
+      return;
+    }
+
+    var ratePct = (data.commissionRate * 100).toFixed(1).replace(/\.0$/, '');
+
+    var statsHtml =
+      '<div class="g4 mb6">' +
+      '<div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">\uD83D\uDCB0</div>' +
+      '<div class="stat-lbl">Commission This Month</div><div class="stat-val">' + sbFormatMoney(data.thisMonthTotal) + '</div>' +
+      '<div class="stat-delta neu">' + data.bookingsThisMonth + ' booking' + (data.bookingsThisMonth === 1 ? '' : 's') + '</div></div>' +
+      '<div class="stat green"><div class="stat-ico" style="background:var(--green2)">\uD83D\uDCC8</div>' +
+      '<div class="stat-lbl">Commission Rate</div><div class="stat-val">' + ratePct + '%</div>' +
+      '<div class="stat-delta neu">Per completed booking</div></div>' +
+      '<div class="stat blue"><div class="stat-ico" style="background:var(--blue2)">\uD83D\uDCCA</div>' +
+      '<div class="stat-lbl">All-Time Commission</div><div class="stat-val">' + sbFormatMoney(data.allTimeTotal) + '</div>' +
+      '<div class="stat-delta neu">' + data.entries.length + ' booking' + (data.entries.length === 1 ? '' : 's') + ' total</div></div>' +
+      '</div>';
+
+    var maxMonth = data.monthlyBreakdown.reduce(function (max, m) { return Math.max(max, m.total); }, 0) || 1;
+    var breakdownHtml = data.monthlyBreakdown.length
+      ? data.monthlyBreakdown.map(function (m) {
+        var pct = Math.round((m.total / maxMonth) * 100);
+        return '<div style="margin-bottom:16px">' +
+          '<div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">' + sbMonthLabel(m.month) + '</span>' +
+          '<span style="font-size:12px;font-weight:700;color:var(--gold)">' + sbFormatMoney(m.total) + ' \u00B7 ' + m.count + ' booking' + (m.count === 1 ? '' : 's') + '</span></div>' +
+          '<div class="pbar"><span style="width:' + pct + '%"></span></div>' +
+          '</div>';
+      }).join('')
+      : '<div class="text-secondary small">No commission recorded yet.</div>';
+
+    var entriesHtml = data.entries.length
+      ? '<div class="tbl-wrap"><table><thead><tr>' +
+      '<th>Date</th><th>Customer</th><th>Services</th><th>Booking Total</th><th>Rate</th><th>Commission</th>' +
+      '</tr></thead><tbody>' +
+      data.entries.map(function (e) {
+        return '<tr>' +
+          '<td>' + (e.bookingDate ? StaffSelf.formatDate(e.bookingDate) : '\u2014') + '</td>' +
+          '<td>' + escapeHtml(e.customerName || '\u2014') + '</td>' +
+          '<td class="text-secondary small">' + escapeHtml((e.serviceNames || []).join(', ') || '\u2014') + '</td>' +
+          '<td>' + (e.bookingTotal != null ? sbFormatMoney(e.bookingTotal) : '\u2014') + '</td>' +
+          '<td>' + (e.rateApplied * 100).toFixed(1).replace(/\.0$/, '') + '%</td>' +
+          '<td style="font-weight:700;color:var(--green)">' + sbFormatMoney(e.amount) + '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table></div>'
+      : '<div class="text-secondary small">No completed bookings with commission yet.</div>';
+
+    container.innerHTML = statsHtml +
+      '<div class="g2 mb4">' +
+      '<div class="card"><div class="card-h"><h3>Monthly Breakdown</h3></div><div class="card-b">' + breakdownHtml + '</div></div>' +
+      '<div class="card"><div class="card-h"><h3>Recent Commission Entries</h3></div><div class="card-b">' + entriesHtml + '</div></div>' +
+      '</div>';
   } catch (err) {
     container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
   }

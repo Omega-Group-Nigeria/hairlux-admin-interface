@@ -27,6 +27,10 @@ const SalonBookingsSelf = (function () {
         return jsonFetch('/staff/me/salon-bookings/branch-staff');
     }
 
+    async function getMyCommission() {
+        return jsonFetch('/staff/me/salon-bookings/commission');
+    }
+
     async function create(payload) {
         return jsonFetch('/staff/me/salon-bookings', {
             method: 'POST',
@@ -79,5 +83,5 @@ const SalonBookingsSelf = (function () {
         });
     }
 
-    return { getAll, getOne, getBranchStaff, create, addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification };
+    return { getAll, getOne, getBranchStaff, getMyCommission, create, addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification };
 })();

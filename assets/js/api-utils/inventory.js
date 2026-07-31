@@ -101,6 +101,39 @@ const Inventory = (function () {
         });
     }
 
+    async function reassignTransfer(id, toApproverId, reason) {
+        return jsonFetch(`/admin/inventory-items/transfer-requests/${id}/reassign`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ toApproverId, reason }),
+        });
+    }
+
+    async function getAdjustmentRequests(branchId) {
+        const qs = branchId ? `?branchId=${branchId}` : '';
+        return jsonFetch(`/admin/inventory-items/adjustment-requests${qs}`);
+    }
+
+    async function approveAdjustment(id) {
+        return jsonFetch(`/admin/inventory-items/adjustment-requests/${id}/approve`, { method: 'PATCH' });
+    }
+
+    async function rejectAdjustment(id, reason) {
+        return jsonFetch(`/admin/inventory-items/adjustment-requests/${id}/reject`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
+    }
+
+    async function reassignAdjustment(id, toApproverId, reason) {
+        return jsonFetch(`/admin/inventory-items/adjustment-requests/${id}/reassign`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ toApproverId, reason }),
+        });
+    }
+
     function statusBadge(item) {
         if (item.currentQuantity <= 0) return '<span class="badge bg-danger-lt">Out of Stock</span>';
         if (item.currentQuantity <= item.lowStockThreshold) return '<span class="badge bg-warning-lt">Low</span>';
@@ -110,7 +143,8 @@ const Inventory = (function () {
     return {
         getAll, getOne, create, update, adjust,
         getAlerts, resolveAlert,
-        getTransfers, approveTransfer, rejectTransfer,
+        getTransfers, approveTransfer, rejectTransfer, reassignTransfer,
+        getAdjustmentRequests, approveAdjustment, rejectAdjustment, reassignAdjustment,
         CATEGORY_LABELS, ALERT_STAGE_COLORS, TRANSFER_STATUS_COLORS,
         statusBadge, formatMoney,
     };

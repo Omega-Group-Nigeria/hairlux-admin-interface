@@ -110,6 +110,9 @@
                         <li class="nav-item"><a href="#" class="nav-link" data-tab="transfers">Transfers <span
                                     class="badge bg-warning-lt ms-1" id="transfer-count-badge"
                                     style="display:none">0</span></a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" data-tab="adjustments">Adjustment Requests
+                                <span class="badge bg-warning-lt ms-1" id="adjustment-count-badge"
+                                    style="display:none">0</span></a></li>
                     </ul>
 
                     <!-- ITEMS TAB -->
@@ -220,6 +223,34 @@
                                     <tbody id="transfers-tbody">
                                         <tr>
                                             <td colspan="6" class="text-center py-5">
+                                                <div class="spinner-border text-primary"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ADJUSTMENT REQUESTS TAB -->
+                    <div id="tab-adjustments" style="display:none">
+                        <div class="card">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Branch</th>
+                                            <th>Requested By</th>
+                                            <th>Adjustment</th>
+                                            <th>Reason</th>
+                                            <th>Status</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adjustments-tbody">
+                                        <tr>
+                                            <td colspan="7" class="text-center py-5">
                                                 <div class="spinner-border text-primary"></div>
                                             </td>
                                         </tr>
@@ -397,9 +428,55 @@
         </div>
     </div>
 
+    <div class="modal modal-blur fade" id="modal-reject-adjustment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Adjustment Request</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reject-adjustment-error"></div>
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reject-adjustment-reason" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-reject-adjustment">Confirm
+                        Rejection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared reassign modal — used for both transfer and adjustment requests -->
+    <div class="modal modal-blur fade" id="modal-reassign-request" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reassign-request-title">Reassign Request</h5><button type="button"
+                        class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reassign-request-error"></div>
+                    <label class="form-label">Reassign To <span class="text-danger">*</span></label>
+                    <select class="form-select mb-3" id="reassign-request-staff"></select>
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reassign-request-reason" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-reassign-request">Confirm
+                        Reassignment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/api-utils/inventory.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
@@ -442,11 +519,12 @@
                 if (!tab) return;
                 document.querySelectorAll("#main-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 tab.classList.add("active");
-                ["items", "alerts", "transfers"].forEach(function (id) {
+                ["items", "alerts", "transfers", "adjustments"].forEach(function (id) {
                     document.getElementById("tab-" + id).style.display = id === tab.dataset.tab ? "" : "none";
                 });
                 if (tab.dataset.tab === "alerts") loadAlerts(false);
                 if (tab.dataset.tab === "transfers") loadTransfers();
+                if (tab.dataset.tab === "adjustments") loadAdjustmentRequests();
             });
 
             document.getElementById("filter-branch").addEventListener("change", loadItems);
@@ -488,7 +566,21 @@
                 if (approveBtn) { approveTransfer(approveBtn.dataset.id); return; }
                 var rejectBtn = e.target.closest(".btn-reject-transfer");
                 if (rejectBtn) { openRejectTransferModal(rejectBtn.dataset.id); return; }
+                var reassignBtn = e.target.closest(".btn-reassign-transfer");
+                if (reassignBtn) { openReassignModal("transfer", reassignBtn.dataset.id); return; }
             });
+
+            document.getElementById("adjustments-tbody").addEventListener("click", function (e) {
+                var approveBtn = e.target.closest(".btn-approve-adjustment");
+                if (approveBtn) { approveAdjustment(approveBtn.dataset.id); return; }
+                var rejectBtn = e.target.closest(".btn-reject-adjustment");
+                if (rejectBtn) { openRejectAdjustmentModal(rejectBtn.dataset.id); return; }
+                var reassignBtn = e.target.closest(".btn-reassign-adjustment");
+                if (reassignBtn) { openReassignModal("adjustment", reassignBtn.dataset.id); return; }
+            });
+
+            document.getElementById("btn-confirm-reject-adjustment").addEventListener("click", submitRejectAdjustment);
+            document.getElementById("btn-confirm-reassign-request").addEventListener("click", submitReassignRequest);
         });
 
         function escapeHtml(str) {
@@ -524,6 +616,14 @@
                 var tbadge = document.getElementById("transfer-count-badge");
                 if (pending.length) { tbadge.textContent = pending.length; tbadge.style.display = ""; }
                 else tbadge.style.display = "none";
+            } catch (err) { /* non-fatal */ }
+
+            try {
+                var adjustments = await Inventory.getAdjustmentRequests();
+                var pendingAdj = (adjustments.data || adjustments || []).filter(function (a) { return a.status === "PENDING"; });
+                var abadge = document.getElementById("adjustment-count-badge");
+                if (pendingAdj.length) { abadge.textContent = pendingAdj.length; abadge.style.display = ""; }
+                else abadge.style.display = "none";
             } catch (err) { /* non-fatal */ }
         }
 
@@ -782,7 +882,8 @@
                     var statusColor = Inventory.TRANSFER_STATUS_COLORS[t.status] || 'bg-secondary-lt';
                     var actions = t.status === 'PENDING'
                         ? '<button class="btn btn-sm btn-success me-1 btn-approve-transfer" data-id="' + t.id + '">Approve</button>' +
-                        '<button class="btn btn-sm btn-outline-danger btn-reject-transfer" data-id="' + t.id + '">Reject</button>'
+                        '<button class="btn btn-sm btn-outline-danger me-1 btn-reject-transfer" data-id="' + t.id + '">Reject</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-reassign-transfer" data-id="' + t.id + '">Reassign</button>'
                         : (t.rejectionReason ? '<span class="text-secondary small">' + escapeHtml(t.rejectionReason) + '</span>' : '');
                     return '<tr>' +
                         '<td class="fw-semibold">' + escapeHtml(t.fromItem ? t.fromItem.name : '—') + '</td>' +
@@ -834,6 +935,149 @@
                 refreshBadgeCounts();
             } catch (err) {
                 errEl.textContent = err.message || "Failed to reject transfer.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // -- Adjustment Requests --
+
+        async function loadAdjustmentRequests() {
+            var tbody = document.getElementById("adjustments-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await Inventory.getAdjustmentRequests();
+                var requests = result.data || result || [];
+                if (!requests.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No adjustment requests.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = requests.map(function (r) {
+                    var statusColor = Inventory.TRANSFER_STATUS_COLORS[r.status] || 'bg-secondary-lt';
+                    var delta = r.quantityDelta > 0 ? '+' + r.quantityDelta : String(r.quantityDelta);
+                    var deltaColor = r.quantityDelta > 0 ? 'text-success' : 'text-danger';
+                    var actions = r.status === 'PENDING'
+                        ? '<button class="btn btn-sm btn-success me-1 btn-approve-adjustment" data-id="' + r.id + '">Approve</button>' +
+                        '<button class="btn btn-sm btn-outline-danger me-1 btn-reject-adjustment" data-id="' + r.id + '">Reject</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-reassign-adjustment" data-id="' + r.id + '">Reassign</button>'
+                        : '';
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + escapeHtml(r.item ? r.item.name : '—') + '</td>' +
+                        '<td>' + escapeHtml(r.item && r.item.branch ? r.item.branch.name : '—') + '</td>' +
+                        '<td>' + escapeHtml(r.requestedBy ? r.requestedBy.name : '—') + '</td>' +
+                        '<td class="' + deltaColor + '" style="font-weight:600">' + delta + '</td>' +
+                        '<td class="text-secondary small">' + escapeHtml(r.reason || '—') + '</td>' +
+                        '<td><span class="badge ' + statusColor + '">' + r.status + '</span></td>' +
+                        '<td>' + actions + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+            }
+        }
+
+        async function approveAdjustment(id) {
+            if (!confirm("Approve this stock adjustment? The item's quantity will change immediately.")) return;
+            try {
+                await Inventory.approveAdjustment(id);
+                loadAdjustmentRequests();
+                loadItems();
+                refreshBadgeCounts();
+            } catch (err) {
+                alert(err.message || "Failed to approve adjustment.");
+            }
+        }
+
+        var _pendingRejectAdjustmentId = null;
+
+        function openRejectAdjustmentModal(id) {
+            _pendingRejectAdjustmentId = id;
+            document.getElementById("reject-adjustment-reason").value = "";
+            document.getElementById("reject-adjustment-error").classList.add("d-none");
+            new bootstrap.Modal(document.getElementById("modal-reject-adjustment")).show();
+        }
+
+        async function submitRejectAdjustment() {
+            var reason = document.getElementById("reject-adjustment-reason").value.trim();
+            var errEl = document.getElementById("reject-adjustment-error");
+            if (!reason) {
+                errEl.textContent = "A reason is required.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            var btn = document.getElementById("btn-confirm-reject-adjustment");
+            btn.disabled = true;
+            try {
+                await Inventory.rejectAdjustment(_pendingRejectAdjustmentId, reason);
+                bootstrap.Modal.getInstance(document.getElementById("modal-reject-adjustment")).hide();
+                loadAdjustmentRequests();
+                refreshBadgeCounts();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to reject adjustment.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // -- Shared Reassign (transfers + adjustments) --
+
+        var _pendingReassignType = null;
+        var _pendingReassignId = null;
+        var _reassignStaffLoaded = false;
+
+        async function openReassignModal(type, id) {
+            _pendingReassignType = type;
+            _pendingReassignId = id;
+            document.getElementById("reassign-request-title").textContent = type === "transfer" ? "Reassign Transfer" : "Reassign Adjustment Request";
+            document.getElementById("reassign-request-reason").value = "";
+            document.getElementById("reassign-request-error").classList.add("d-none");
+
+            var select = document.getElementById("reassign-request-staff");
+            select.innerHTML = '<option value="">Loading staff…</option>';
+            SearchableSelect.attach("reassign-request-staff");
+            SearchableSelect.refresh("reassign-request-staff");
+
+            new bootstrap.Modal(document.getElementById("modal-reassign-request")).show();
+
+            try {
+                var result = await Staff.getAll({ limit: 100 });
+                var staffList = result.data || [];
+                select.innerHTML = '<option value="">Select a staff member…</option>' + staffList.map(function (s) {
+                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
+                }).join('');
+                SearchableSelect.refresh("reassign-request-staff");
+            } catch (err) {
+                select.innerHTML = '<option value="">Failed to load staff</option>';
+                SearchableSelect.refresh("reassign-request-staff");
+            }
+        }
+
+        async function submitReassignRequest() {
+            var toApproverId = document.getElementById("reassign-request-staff").value;
+            var reason = document.getElementById("reassign-request-reason").value.trim();
+            var errEl = document.getElementById("reassign-request-error");
+            errEl.classList.add("d-none");
+
+            if (!toApproverId) { errEl.textContent = "Please select who to reassign to."; errEl.classList.remove("d-none"); return; }
+            if (!reason) { errEl.textContent = "A reason is required."; errEl.classList.remove("d-none"); return; }
+
+            var btn = document.getElementById("btn-confirm-reassign-request");
+            btn.disabled = true;
+            try {
+                if (_pendingReassignType === "transfer") {
+                    await Inventory.reassignTransfer(_pendingReassignId, toApproverId, reason);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-reassign-request")).hide();
+                    loadTransfers();
+                } else {
+                    await Inventory.reassignAdjustment(_pendingReassignId, toApproverId, reason);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-reassign-request")).hide();
+                    loadAdjustmentRequests();
+                }
+                refreshBadgeCounts();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to reassign.";
                 errEl.classList.remove("d-none");
             } finally {
                 btn.disabled = false;
