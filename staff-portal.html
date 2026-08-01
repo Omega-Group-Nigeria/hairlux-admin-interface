@@ -1693,6 +1693,8 @@
   <script src="./assets/js/api-utils/staff-self.js"></script>
   <script src="./assets/js/api-utils/inventory-self.js"></script>
   <script src="./assets/js/api-utils/salon-bookings-self.js"></script>
+  <script src="./assets/js/api-utils/product-sales.js"></script>
+  <script src="./assets/js/searchable-select.js"></script>
 
   <div class="oc-modal-overlay" id="onboarding-modal-overlay" style="display:none"
     onclick="if(event.target===this) closeOnboardingModal()">
@@ -1726,35 +1728,50 @@
         </div>
       </div>
 
-      <div class="sb-sec">My Workspace</div>
+      <div class="sb-sec">General</div>
       <div class="sb-item active" onclick="show('dashboard')"><span class="ico">🏠</span>Dashboard</div>
-      <div class="sb-item" onclick="show('onboarding')"><span class="ico">🚀</span>Complete Onboarding<span
-          class="bdg amber">!</span></div>
       <div class="sb-item" onclick="show('profile')"><span class="ico">👤</span>My Profile</div>
-      <div class="sb-item" onclick="show('agreements')"><span class="ico">📋</span>Documents & Agreements</div>
-
-      <div class="sb-sec">Daily Operations</div>
       <div class="sb-item" onclick="show('attendance')"><span class="ico">🕐</span>Attendance</div>
       <div class="sb-item" onclick="show('leave')"><span class="ico">🗓️</span>Leave & Permission</div>
-      <div class="sb-item" onclick="show('approvals')"><span class="ico">🗂️</span>My Approvals<span class="bdg amber"
-          id="approvals-badge" style="display:none">0</span></div>
-      <div class="sb-item" onclick="show('bookings')"><span class="ico">💇</span>Bookings</div>
-      <div class="sb-item" onclick="show('inventory')"><span class="ico">📦</span>Inventory</div>
-      <div class="sb-item" onclick="show('sales')"><span class="ico">💳</span>Sales & Bookings<span
-          class="bdg gold">4</span></div>
-      <div class="sb-item" onclick="show('commission')"><span class="ico">💰</span>My Commission</div>
       <div class="sb-item" onclick="show('payroll')"><span class="ico">🧾</span>Payslips & Payroll</div>
-      <div class="sb-sec">Communications</div>
       <div class="sb-item" onclick="show('announcements')"><span class="ico">📢</span>Announcements<span
-          class="bdg">2</span></div>
+          class="bdg">2</span>
+      </div>
       <div class="sb-item" onclick="show('tasks')"><span class="ico">✅</span>Tasks & Directives<span
           class="bdg amber">3</span></div>
       <div class="sb-item" onclick="show('notifications')"><span class="ico">🔔</span>Notifications<span
-          class="bdg">5</span></div>
+          class="bdg">5</span>
+      </div>
+
+      <div class="sb-sec">Profile</div>
+      <div class="sb-item" onclick="show('onboarding')"><span class="ico">🚀</span>Complete Onboarding<span
+          class="bdg amber">!</span></div>
+      <div class="sb-item" onclick="show('agreements')"><span class="ico">📋</span>Documents & Agreements</div>
+
+      <div id="sb-sec-manager" style="display:none">
+        <div class="sb-sec">Manager</div>
+        <div class="sb-item" onclick="show('approvals')"><span class="ico">🗂️</span>My Approvals<span class="bdg amber"
+            id="approvals-badge" style="display:none">0</span></div>
+      </div>
+
+      <div id="sb-sec-authorized" style="display:none">
+        <div class="sb-sec">Authorized Access</div>
+        <div class="sb-item" id="sb-nav-bookings" style="display:none" onclick="show('bookings')"><span
+            class="ico">💇</span>Bookings</div>
+        <div class="sb-item" id="sb-nav-inventory" style="display:none" onclick="show('inventory')"><span
+            class="ico">📦</span>Inventory</div>
+        <div class="sb-item" id="sb-nav-sales" style="display:none" onclick="show('sales')"><span
+            class="ico">💳</span>Sell
+          Products</div>
+      </div>
+
+      <div id="sb-sec-commission" style="display:none">
+        <div class="sb-sec">Commission</div>
+        <div class="sb-item" onclick="show('commission')"><span class="ico">💰</span>My Commission</div>
+      </div>
 
       <div class="sb-sec">Compliance</div>
       <div class="sb-item" onclick="show('audit-trail')"><span class="ico">🔍</span>Audit Trail</div>
-
 
       <div class="sb-footer">
         <div class="sb-logout" onclick="Auth.logout()"><span>🚪</span>Sign Out</div>
@@ -2524,207 +2541,57 @@
 
         <!-- ═══ SALES & BOOKINGS ═══ -->
         <div id="sales" class="screen">
-          <div class="g4 mb6">
-            <div class="stat gold">
-              <div class="stat-ico" style="background:rgba(157,130,72,.12)">💳</div>
-              <div class="stat-lbl">Today's Sales</div>
-              <div class="stat-val">₦48,500</div>
-              <div class="stat-delta up">↑ 4 bookings</div>
-            </div>
-            <div class="stat green">
-              <div class="stat-ico" style="background:var(--green2)">📋</div>
-              <div class="stat-lbl">Bookings Today</div>
-              <div class="stat-val">4</div>
-              <div class="stat-delta up">↑ 3 completed</div>
-            </div>
-            <div class="stat blue">
-              <div class="stat-ico" style="background:var(--blue2)">💵</div>
-              <div class="stat-lbl">My Commission (Today)</div>
-              <div class="stat-val">₦9,700</div>
-              <div class="stat-delta up">↑ 20%</div>
-            </div>
-            <div class="stat purple">
-              <div class="stat-ico" style="background:rgba(142,68,173,.12)">📅</div>
-              <div class="stat-lbl">Pending Bookings</div>
-              <div class="stat-val">1</div>
-              <div class="stat-delta amber">Awaiting</div>
+          <div class="g4 mb6" id="sale-stats">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary"></div>
             </div>
           </div>
 
-          <!-- Today's Bookings -->
           <div class="card mb4">
             <div class="card-h">
-              <h3>Today's Bookings — 14 July 2026</h3>
-              <div class="flex gap2">
-                <select class="input" style="width:auto;padding:6px 10px;font-size:11px">
-                  <option>All Status</option>
-                  <option>Completed</option>
-                  <option>In Progress</option>
-                  <option>Pending</option>
-                </select>
+              <h3>Sell a Product</h3>
+            </div>
+            <div class="card-b">
+              <div id="sale-lines"></div>
+              <button type="button" class="btn btn-ghost btn-sm mt-1" onclick="addSaleLine()">+ Add product</button>
+              <div class="row g-2 mt-3">
+                <div class="col-6"><label class="form-label small mb-1">Customer Name (optional)</label>
+                  <input type="text" class="input" id="sale-customer-name" placeholder="Ngozi Adeyemi">
+                </div>
+                <div class="col-6"><label class="form-label small mb-1">Customer Phone (optional)</label>
+                  <input type="text" class="input" id="sale-customer-phone" placeholder="+2348012345678">
+                </div>
               </div>
+              <div class="text-end fw-bold mt-3 mb-2" id="sale-total">Total: —</div>
+              <div id="sale-error" class="text-danger small mb-2" style="display:none"></div>
+              <button type="button" class="btn btn-gold" id="btn-submit-sale" onclick="submitProductSale()">Record
+                Sale</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h">
+              <h3>Recent Sales</h3>
             </div>
             <div class="tbl-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Booking ID</th>
-                    <th>Client</th>
-                    <th>Service</th>
-                    <th>Price</th>
-                    <th>Commission (20%)</th>
                     <th>Time</th>
-                    <th>Status</th>
-                    <th>Receipt</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Sold By</th>
+                    <th>Total</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody id="sales-tbody">
                   <tr>
-                    <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0441</td>
-                    <td>
-                      <div style="font-weight:600;color:var(--white)">Mrs. Tunde Bakare</div>
-                      <div style="font-size:10px;color:var(--muted)">Walk-in</div>
+                    <td colspan="5" class="text-center py-4">
+                      <div class="spinner-border text-primary"></div>
                     </td>
-                    <td>Full Colour Treatment</td>
-                    <td style="font-weight:700;color:var(--white)">₦18,000</td>
-                    <td style="font-weight:700;color:var(--green)">₦3,600</td>
-                    <td>09:00 AM</td>
-                    <td><span class="badge b-green">Completed</span></td>
-                    <td><button class="btn btn-ghost btn-sm">View</button></td>
-                  </tr>
-                  <tr>
-                    <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0442</td>
-                    <td>
-                      <div style="font-weight:600;color:var(--white)">Miss Adaeze Obi</div>
-                      <div style="font-size:10px;color:var(--muted)">Returning</div>
-                    </td>
-                    <td>Haircut & Style</td>
-                    <td style="font-weight:700;color:var(--white)">₦8,500</td>
-                    <td style="font-weight:700;color:var(--green)">₦1,700</td>
-                    <td>11:30 AM</td>
-                    <td><span class="badge b-green">Completed</span></td>
-                    <td><button class="btn btn-ghost btn-sm">View</button></td>
-                  </tr>
-                  <tr>
-                    <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0443</td>
-                    <td>
-                      <div style="font-weight:600;color:var(--white)">Mrs. Grace Iyanu</div>
-                      <div style="font-size:10px;color:var(--muted)">Membership</div>
-                    </td>
-                    <td>Deep Conditioning + Blowout</td>
-                    <td style="font-weight:700;color:var(--white)">₦12,000</td>
-                    <td style="font-weight:700;color:var(--green)">₦2,400</td>
-                    <td>2:00 PM</td>
-                    <td><span class="badge b-green">Completed</span></td>
-                    <td><button class="btn btn-ghost btn-sm">View</button></td>
-                  </tr>
-                  <tr>
-                    <td style="font-family:monospace;color:var(--gold);font-size:11px">BK-2026-0444</td>
-                    <td>
-                      <div style="font-weight:600;color:var(--white)">Miss Simi Adeleke</div>
-                      <div style="font-size:10px;color:var(--muted)">Walk-in</div>
-                    </td>
-                    <td>Scalp Treatment</td>
-                    <td style="font-weight:700;color:var(--white)">₦10,000</td>
-                    <td style="font-weight:700;color:var(--amber)">₦2,000</td>
-                    <td>4:30 PM</td>
-                    <td><span class="badge b-amber">In Progress</span></td>
-                    <td><button class="btn btn-ghost btn-sm">View</button></td>
                   </tr>
                 </tbody>
               </table>
-            </div>
-            <div
-              style="padding:14px 20px;border-top:1px solid var(--border);background:rgba(157,130,72,.05);display:flex;justify-content:space-between;align-items:center">
-              <span style="font-size:12px;color:var(--muted)">4 bookings today</span>
-              <div class="flex gap4">
-                <div style="text-align:right">
-                  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Total
-                    Sales</div>
-                  <div style="font-size:16px;font-weight:800;color:var(--white)">₦48,500</div>
-                </div>
-                <div style="text-align:right">
-                  <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">My
-                    Commission</div>
-                  <div style="font-size:16px;font-weight:800;color:var(--green)">₦9,700</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Monthly sales summary -->
-          <div class="g2">
-            <div class="card">
-              <div class="card-h">
-                <h3>Monthly Sales — July 2026</h3>
-              </div>
-              <div class="card-b">
-                <div style="margin-bottom:12px">
-                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Sales Target</span><span
-                      style="font-size:12px;font-weight:700;color:var(--gold)">₦300,000</span></div>
-                  <div class="pbar"><span style="width:62%"></span></div>
-                  <div style="font-size:11px;color:var(--muted);margin-top:4px">₦185,200 achieved — 62% of target</div>
-                </div>
-                <div class="divider"></div>
-                <div class="info-grid">
-                  <div class="info-item">
-                    <div class="lbl">Total Bookings</div>
-                    <div class="val">32</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="lbl">Completed</div>
-                    <div class="val" style="color:var(--green)">28</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="lbl">Services Revenue</div>
-                    <div class="val">₦165,000</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="lbl">Products Revenue</div>
-                    <div class="val">₦20,200</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="lbl">Avg Per Booking</div>
-                    <div class="val">₦5,782</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="lbl">Commission Earned</div>
-                    <div class="val" style="color:var(--green)">₦37,040</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-h">
-                <h3>Services Breakdown</h3>
-              </div>
-              <div class="card-b">
-                <div style="margin-bottom:14px">
-                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Full Colour
-                      Treatment</span><span style="font-size:11px;color:var(--gold)">10 × ₦18,000</span></div>
-                  <div class="pbar"><span style="width:75%"></span></div>
-                </div>
-                <div style="margin-bottom:14px">
-                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Haircut & Style</span><span
-                      style="font-size:11px;color:var(--gold)">8 × ₦8,500</span></div>
-                  <div class="pbar"><span style="width:55%"></span></div>
-                </div>
-                <div style="margin-bottom:14px">
-                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Deep
-                      Conditioning</span><span style="font-size:11px;color:var(--gold)">7 × ₦12,000</span></div>
-                  <div class="pbar"><span style="width:45%"></span></div>
-                </div>
-                <div style="margin-bottom:14px">
-                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Scalp Treatment</span><span
-                      style="font-size:11px;color:var(--gold)">5 × ₦10,000</span></div>
-                  <div class="pbar"><span style="width:32%"></span></div>
-                </div>
-                <div>
-                  <div class="flex aic jsb mb2"><span style="font-size:12px;font-weight:600">Other Services</span><span
-                      style="font-size:11px;color:var(--gold)">2 × various</span></div>
-                  <div class="pbar"><span style="width:12%"></span></div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -2928,15 +2795,15 @@
     };
 
     const ctas = {
-      'dashboard': '⏵ Check In',
-      'attendance': 'Check In',
-      'onboarding': 'Save Progress',
-      'inventory': '+ Log Entry',
-      'sales': '+ New Booking',
-      'commission': 'Export Report',
-      'payroll': 'Download Payslip',
-      'audit-trail': 'Export Log',
-    };
+        'dashboard': '⏵ Check In',
+        'attendance': 'Check In',
+        'onboarding': 'Save Progress',
+        'inventory': '+ Log Entry',
+        'sales': '+ Add Product',
+        'commission': 'Export Report',
+        'payroll': 'Download Payslip',
+        'audit-trail': 'Export Log',
+      };
 
 
     function toggleSidebar() {

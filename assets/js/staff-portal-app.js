@@ -33,6 +33,7 @@ async function initStaffPortal() {
 
   renderStaffChip();
   renderProfileScreen();
+  applyModuleVisibility();
 
   await Promise.allSettled([
     loadOnboarding(),
@@ -44,6 +45,7 @@ async function initStaffPortal() {
     loadLeaveRequests(),
     loadMyApprovals(),
     loadSalonBookings(),
+    loadSalesData(),
     loadCompensation(),
     loadCommission(),
   ]);
@@ -128,6 +130,42 @@ function renderStaffChip() {
   } else {
     console.warn('[staff-portal] global `pages` object not found -- greeting cannot be personalized');
   }
+}
+
+/**
+ * Shows/hides sidebar sections per staff eligibility — Manager (managedBranch
+ * set, or the staff-portal:approvals permission), Authorized Access
+ * (staff-portal:inventory / staff-portal:bookings permissions from their
+ * assigned role), Commission (commissionRate set). Permission strings ride
+ * on the same AdminRole system used for admin-portal access, so one role
+ * assignment governs both portals consistently.
+ */
+function applyModuleVisibility() {
+  var s = currentStaff || {};
+  var perms = s.permissions || [];
+  var hasPerm = function (p) { return perms.indexOf(p) !== -1; };
+
+  var isManager = !!s.managedBranch || hasPerm('staff-portal:approvals');
+  var hasBookingsAccess = hasPerm('staff-portal:bookings');
+  var hasInventoryAccess = hasPerm('staff-portal:inventory');
+  var hasSalesAccess = hasPerm('staff-portal:sales');
+  var hasCommission = s.commissionRate != null;
+
+  var managerSec = document.getElementById('sb-sec-manager');
+  if (managerSec) managerSec.style.display = isManager ? '' : 'none';
+
+  var bookingsNav = document.getElementById('sb-nav-bookings');
+  var inventoryNav = document.getElementById('sb-nav-inventory');
+  var salesNav = document.getElementById('sb-nav-sales');
+  if (bookingsNav) bookingsNav.style.display = hasBookingsAccess ? '' : 'none';
+  if (inventoryNav) inventoryNav.style.display = hasInventoryAccess ? '' : 'none';
+  if (salesNav) salesNav.style.display = hasSalesAccess ? '' : 'none';
+
+  var authorizedSec = document.getElementById('sb-sec-authorized');
+  if (authorizedSec) authorizedSec.style.display = (hasBookingsAccess || hasInventoryAccess || hasSalesAccess) ? '' : 'none';
+
+  var commissionSec = document.getElementById('sb-sec-commission');
+  if (commissionSec) commissionSec.style.display = hasCommission ? '' : 'none';
 }
 
 // -- Dashboard ----------------------------------------------------------------
@@ -338,9 +376,12 @@ function handleTopBarCta() {
     return;
   }
   if (screenId === 'inventory') {
-    const input = document.querySelector('#inventory input.input[placeholder*="Argan"]');
-    if (input) input.focus();
+    const registerCard = document.getElementById('inv-items-tbody');
+    if (registerCard) registerCard.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
+  }
+  if (screenId === 'sales') {
+    return addSaleLine();
   }
   console.warn('[staff-portal] No CTA action wired for screen:', screenId);
 }
@@ -1132,16 +1173,28 @@ async function loadAttendance() {
       .slice(0, 30)
       .map((r) => {
         const day = new Date(r.date).toLocaleDateString('en-GB', { weekday: 'long' });
-        const status = !r.checkOutAt
-          ? '<span class="badge b-amber">Open</span>'
-          : '<span class="badge b-green">Present</span>';
+        const statusBadgeClass = {
+          PRESENT: 'b-green',
+          LATE: 'b-amber',
+          ABSENT: 'b-red',
+          ON_LEAVE: 'b-blue',
+          APPROVED_PERMISSION: 'b-blue',
+          PUBLIC_HOLIDAY: 'b-blue',
+        }[r.status] || (r.checkOutAt ? 'b-green' : 'b-amber');
+        const statusLabel = r.status ? String(r.status).replace(/_/g, ' ') : (r.checkOutAt ? 'Present' : 'Open');
+        const status = '<span class="badge ' + statusBadgeClass + '">' + statusLabel + '</span>';
+        let lateDetail = '';
+        if (r.status === 'LATE' && r.lateMinutes) {
+          lateDetail = r.lateMinutes + ' min late';
+          if (r.latePenaltyAmount) lateDetail += ' · ' + sbFormatMoney(r.latePenaltyAmount) + ' penalty';
+        }
         const hours = r.checkOutAt
           ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
           : '\u2014';
         return (
           '<tr><td>' + StaffSelf.formatDate(r.date, { day: '2-digit', month: 'short' }) + '</td><td>' + day + '</td>' +
           '<td>' + StaffSelf.formatTime(r.checkInAt) + '</td><td>' + (r.checkOutAt ? StaffSelf.formatTime(r.checkOutAt) : '\u2014') + '</td>' +
-          '<td>' + hours + '</td><td>' + status + '</td></tr>'
+          '<td>' + hours + '</td><td>' + status + (lateDetail ? '<div class="text-secondary small mt-1">' + escapeHtml(lateDetail) + '</div>' : '') + '</td></tr>'
         );
       })
       .join('');
@@ -1548,7 +1601,8 @@ async function showBookingForm() {
       sbStaffCache = staffResult || [];
     }
     if (!sbServicesCache) {
-      var res = await Auth.fetch('/services?status=ACTIVE');
+      var sbBranchId = currentStaff.locationId || (currentStaff.location && currentStaff.location.id) || '';
+      var res = await Auth.fetch('/services?status=ACTIVE&bookingType=WALK_IN&branchId=' + encodeURIComponent(sbBranchId));
       var raw = await res.json().catch(function () { return {}; });
       sbServicesCache = Array.isArray(raw) ? raw : (raw.services || raw.data || []);
     }
@@ -1562,6 +1616,11 @@ async function showBookingForm() {
   }).join('');
 
   formContainer.innerHTML =
+    '<div class="row g-2 mb-2">' +
+    '<div class="col-12"><label class="form-label small mb-1">Look Up Existing Customer <span style="font-weight:400">(optional — search by name or phone)</span></label>' +
+    '<div style="position:relative"><input type="text" class="input" id="sb-customer-search" placeholder="Type a name or phone number…" autocomplete="off">' +
+    '<div class="ss-list" id="sb-customer-search-results" style="display:none"></div></div></div>' +
+    '</div>' +
     '<div class="row g-2 mb-3">' +
     '<div class="col-6"><label class="form-label small mb-1">Customer Name</label>' +
     '<input type="text" class="input" id="sb-customer-name" placeholder="Ngozi Adeyemi"></div>' +
@@ -1587,7 +1646,61 @@ async function showBookingForm() {
     '</div>';
 
   window._sbInventoryItems = null;
+  SearchableSelect.attach('sb-staff');
   sbAddServiceLine();
+  sbWireCustomerSearch();
+}
+
+var _sbCustomerSearchTimer = null;
+
+function sbWireCustomerSearch() {
+  var input = document.getElementById('sb-customer-search');
+  var results = document.getElementById('sb-customer-search-results');
+  if (!input || !results) return;
+
+  input.addEventListener('input', function () {
+    clearTimeout(_sbCustomerSearchTimer);
+    var q = input.value.trim();
+    if (!q) { results.style.display = 'none'; results.innerHTML = ''; return; }
+    _sbCustomerSearchTimer = setTimeout(function () { sbRunCustomerSearch(q, results); }, 300);
+  });
+
+  input.addEventListener('blur', function () {
+    setTimeout(function () { results.style.display = 'none'; }, 150);
+  });
+  input.addEventListener('focus', function () {
+    if (results.innerHTML) results.style.display = 'block';
+  });
+
+  results.addEventListener('mousedown', function (e) {
+    var item = e.target.closest('.ss-item');
+    if (!item) return;
+    e.preventDefault();
+    document.getElementById('sb-customer-name').value = item.dataset.name || '';
+    document.getElementById('sb-customer-phone').value = item.dataset.phone || '';
+    input.value = item.dataset.name || '';
+    results.style.display = 'none';
+  });
+}
+
+async function sbRunCustomerSearch(q, resultsEl) {
+  try {
+    var matches = await SalonBookingsSelf.searchCustomers(q);
+    if (!matches.length) {
+      resultsEl.innerHTML = '<div class="ss-empty">No matching customers</div>';
+    } else {
+      resultsEl.innerHTML = matches.map(function (m) {
+        return '<div class="ss-item" data-name="' + escapeHtml(m.name || '') + '" data-phone="' + escapeHtml(m.phone || '') + '">' +
+          '<div style="font-weight:600">' + escapeHtml(m.name || 'Unnamed') + '</div>' +
+          '<div class="text-secondary small">' + escapeHtml(m.phone || 'No phone on file') + (m.source === 'user' ? ' · Has an app account' : '') + '</div>' +
+          '</div>';
+      }).join('');
+    }
+    resultsEl.style.display = 'block';
+  } catch (err) {
+    resultsEl.innerHTML = '<div class="ss-empty">Search failed</div>';
+    resultsEl.style.display = 'block';
+  }
 }
 
 function cancelBookingForm() {
@@ -1690,7 +1803,8 @@ function sbAddServiceLine() {
   row.style.gap = '8px';
   row.style.marginBottom = '6px';
   var options = '<option value="">Select service…</option>' + sbServicesCache.map(function (s) {
-    return '<option value="' + s.id + '" data-price="' + s.walkInPrice + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(s.walkInPrice) + '</option>';
+    var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
+    return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(price) + '</option>';
   }).join('');
   row.innerHTML =
     '<select class="input sb-service-select">' + options + '</select>' +
@@ -2058,6 +2172,145 @@ async function loadInventoryDashboard() {
   var branchSelect = document.getElementById('inv-transfer-branch');
   branchSelect.innerHTML = '<option value="">Select branch…</option>' +
     branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
+}
+
+// -- Product Sales --------------------------------------------------------
+// Standalone retail sale — no service attached. Distinct from the Bookings
+// screen's "Products Used/Sold" lines, which always ride on a service
+// appointment; this is for a walk-in who just wants to buy something.
+
+var saleItemsCache = null;
+
+async function ensureSaleItemsLoaded() {
+  if (saleItemsCache) return saleItemsCache;
+  try {
+    var result = await InventorySelf.getItems({ category: 'FOR_SALE' });
+    saleItemsCache = result.data || result || [];
+  } catch (err) {
+    saleItemsCache = [];
+  }
+  return saleItemsCache;
+}
+
+function populateSaleItemSelect(select) {
+  var current = select.value;
+  var items = saleItemsCache || [];
+  select.innerHTML = '<option value="">Select product…</option>' + items.map(function (i) {
+    var price = i.price != null ? i.price : 0;
+    return '<option value="' + i.id + '" data-price="' + price + '" data-stock="' + i.currentQuantity + '">' + escapeHtml(i.name) + ' — ' + sbFormatMoney(price) + ' (' + i.currentQuantity + ' in stock)</option>';
+  }).join('');
+  if (current) select.value = current;
+}
+
+async function addSaleLine() {
+  await ensureSaleItemsLoaded();
+  var container = document.getElementById('sale-lines');
+  var row = document.createElement('div');
+  row.style.display = 'grid';
+  row.style.gridTemplateColumns = '1fr 70px 32px';
+  row.style.gap = '8px';
+  row.style.marginBottom = '6px';
+  row.innerHTML =
+    '<select class="input sale-item-select"></select>' +
+    '<input type="number" min="1" value="1" class="input sale-qty">' +
+    '<button type="button" class="btn btn-ghost btn-sm sale-remove-line">&times;</button>';
+  container.appendChild(row);
+  populateSaleItemSelect(row.querySelector('.sale-item-select'));
+  row.querySelector('.sale-item-select').addEventListener('change', updateSaleTotal);
+  row.querySelector('.sale-qty').addEventListener('input', updateSaleTotal);
+  row.querySelector('.sale-remove-line').addEventListener('click', function () { row.remove(); updateSaleTotal(); });
+  updateSaleTotal();
+}
+
+function updateSaleTotal() {
+  var total = 0;
+  document.querySelectorAll('#sale-lines > div').forEach(function (row) {
+    var sel = row.querySelector('.sale-item-select');
+    var qty = Number(row.querySelector('.sale-qty').value) || 0;
+    var opt = sel.options[sel.selectedIndex];
+    var price = opt ? Number(opt.dataset.price || 0) : 0;
+    total += price * qty;
+  });
+  var totalEl = document.getElementById('sale-total');
+  if (totalEl) totalEl.textContent = 'Total: ' + sbFormatMoney(total);
+}
+
+async function submitProductSale() {
+  var errorEl = document.getElementById('sale-error');
+  errorEl.style.display = 'none';
+
+  var lines = [];
+  document.querySelectorAll('#sale-lines > div').forEach(function (row) {
+    var sel = row.querySelector('.sale-item-select');
+    var qty = Number(row.querySelector('.sale-qty').value) || 0;
+    if (sel.value && qty > 0) lines.push({ itemId: sel.value, quantity: qty });
+  });
+
+  if (!lines.length) {
+    errorEl.textContent = 'Add at least one product.';
+    errorEl.style.display = '';
+    return;
+  }
+
+  var payload = {
+    items: lines,
+    customerName: document.getElementById('sale-customer-name').value.trim() || undefined,
+    customerPhone: document.getElementById('sale-customer-phone').value.trim() || undefined,
+  };
+
+  var btn = document.getElementById('btn-submit-sale');
+  btn.disabled = true;
+  try {
+    await ProductSalesSelf.create(payload);
+    document.getElementById('sale-lines').innerHTML = '';
+    document.getElementById('sale-customer-name').value = '';
+    document.getElementById('sale-customer-phone').value = '';
+    saleItemsCache = null; // stock levels changed — force a fresh fetch next time
+    updateSaleTotal();
+    await loadSalesData();
+  } catch (err) {
+    errorEl.textContent = err.message || 'Failed to record sale.';
+    errorEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function loadSalesData() {
+  var statsEl = document.getElementById('sale-stats');
+  var tbody = document.getElementById('sales-tbody');
+  if (!statsEl || !tbody) return;
+
+  try {
+    var todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    var result = await ProductSalesSelf.getAll({ from: todayStart.toISOString() });
+    var sales = result.data || result || [];
+
+    var todayTotal = sales.reduce(function (sum, s) { return sum + Number(s.totalAmount || 0); }, 0);
+
+    statsEl.innerHTML =
+      '<div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">💳</div>' +
+      '<div class="stat-lbl">Today\'s Sales</div><div class="stat-val">' + sbFormatMoney(todayTotal) + '</div>' +
+      '<div class="stat-delta neu">' + sales.length + ' sale' + (sales.length === 1 ? '' : 's') + '</div></div>';
+
+    tbody.innerHTML = sales.length
+      ? sales.map(function (s) {
+        var itemsLabel = (s.items || []).map(function (line) {
+          return (line.item ? line.item.name : '—') + ' ×' + line.quantity;
+        }).join(', ');
+        return '<tr>' +
+          '<td class="text-secondary small">' + new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</td>' +
+          '<td>' + escapeHtml(s.customerName || '—') + '</td>' +
+          '<td class="text-secondary small">' + escapeHtml(itemsLabel || '—') + '</td>' +
+          '<td>' + escapeHtml(s.soldBy ? s.soldBy.name : '—') + '</td>' +
+          '<td style="font-weight:700">' + sbFormatMoney(s.totalAmount) + '</td>' +
+          '</tr>';
+      }).join('')
+      : '<tr><td colspan="5" class="text-center text-secondary py-4">No sales yet today.</td></tr>';
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
+  }
 }
 
 // -- Small helpers --

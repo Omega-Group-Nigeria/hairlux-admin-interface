@@ -31,6 +31,11 @@ const SalonBookingsSelf = (function () {
         return jsonFetch('/staff/me/salon-bookings/commission');
     }
 
+    async function searchCustomers(q) {
+        if (!q) return [];
+        return jsonFetch('/staff/me/salon-bookings/customers/search?q=' + encodeURIComponent(q));
+    }
+
     async function create(payload) {
         return jsonFetch('/staff/me/salon-bookings', {
             method: 'POST',
@@ -83,5 +88,5 @@ const SalonBookingsSelf = (function () {
         });
     }
 
-    return { getAll, getOne, getBranchStaff, getMyCommission, create, addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification };
+    return { getAll, getOne, getBranchStaff, getMyCommission, searchCustomers, create, addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification };
 })();

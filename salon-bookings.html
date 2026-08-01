@@ -26,6 +26,39 @@
             color: var(--tblr-secondary);
             text-align: right;
         }
+
+        /* Customer lookup dropdown — mirrors searchable-select.js's injected
+           styles, added directly here since that script's attach() (which
+           normally injects this CSS as a side effect) is never called on
+           this page. */
+        .ss-list {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            max-height: 220px;
+            overflow-y: auto;
+            background: var(--tblr-bg-surface, #fff);
+            border: 1px solid var(--tblr-border-color, #dde1e6);
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+            z-index: 2000;
+            font-size: .875rem;
+        }
+
+        .ss-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .ss-item:hover {
+            background: var(--tblr-primary-lt, #f1f5f9);
+        }
+
+        .ss-empty {
+            padding: 8px 12px;
+            color: var(--tblr-secondary, #6c757d);
+        }
     </style>
 </head>
 
@@ -241,6 +274,19 @@
                         </div>
                     </div>
 
+                    <div class="row g-3 mb-2">
+                        <div class="col-12">
+                            <label class="form-label">Look Up Existing Customer <span class="text-secondary">(optional —
+                                    search by name or
+                                    phone)</span></label>
+                            <div style="position:relative">
+                                <input type="text" class="form-control" id="nb-customer-search"
+                                    placeholder="Type a name or phone number…" autocomplete="off">
+                                <div class="ss-list" id="nb-customer-search-results" style="display:none"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Customer Name</label>
@@ -349,6 +395,7 @@
     <script src="assets/js/tabler.min.js"></script>
     <script>
         Auth.requireAuth();
+        var bootstrap = window.tabler.bootstrap;
 
         var _bookings = [];
         var _branches = [];
@@ -385,7 +432,9 @@
             document.getElementById('btn-verify-reservation').addEventListener('click', openVerifyModal);
             document.getElementById('btn-lookup-code').addEventListener('click', lookupReservationCode);
             document.getElementById('verify-code-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') lookupReservationCode(); });
-            document.getElementById('btn-confirm-verify').addEventListener('click', confirmVerification); document.getElementById('nb-branch').addEventListener('change', onBranchChangeInForm);
+            document.getElementById('btn-confirm-verify').addEventListener('click', confirmVerification);
+            document.getElementById('nb-branch').addEventListener('change', onBranchChangeInForm);
+            wireCustomerSearch();
             document.getElementById('nb-add-service').addEventListener('click', function () { addServiceLine(); });
             document.getElementById('nb-add-item').addEventListener('click', function () { addItemLine(); });
             document.getElementById('btn-submit-booking').addEventListener('click', submitNewBooking);
@@ -405,9 +454,11 @@
             } catch (e) { console.error(e); }
         }
 
-        async function loadServices() {
+        async function loadServices(branchId) {
             try {
-                _services = await Services.getAll({ status: 'ACTIVE' });
+                _services = await Services.getAll(branchId
+                    ? { status: 'ACTIVE', branchId: branchId, bookingType: 'WALK_IN' }
+                    : { status: 'ACTIVE' });
             } catch (e) { console.error(e); }
         }
 
@@ -647,6 +698,8 @@
             document.getElementById('nb-staff').innerHTML = '<option value="">Select a branch first…</option>';
             document.getElementById('nb-customer-name').value = '';
             document.getElementById('nb-customer-phone').value = '';
+            document.getElementById('nb-customer-search').value = '';
+            document.getElementById('nb-customer-search-results').style.display = 'none';
             document.getElementById('nb-date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('nb-time').value = '';
             document.getElementById('nb-notes').value = '';
@@ -656,6 +709,57 @@
             window._nbInventoryItems = [];
             addServiceLine();
             new bootstrap.Modal(document.getElementById('modal-new-booking')).show();
+        }
+
+        var _customerSearchTimer = null;
+
+        function wireCustomerSearch() {
+            var input = document.getElementById('nb-customer-search');
+            var results = document.getElementById('nb-customer-search-results');
+
+            input.addEventListener('input', function () {
+                clearTimeout(_customerSearchTimer);
+                var q = input.value.trim();
+                if (!q) { results.style.display = 'none'; results.innerHTML = ''; return; }
+                _customerSearchTimer = setTimeout(function () { runCustomerSearch(q, results); }, 300);
+            });
+
+            input.addEventListener('blur', function () {
+                setTimeout(function () { results.style.display = 'none'; }, 150);
+            });
+            input.addEventListener('focus', function () {
+                if (results.innerHTML) results.style.display = 'block';
+            });
+
+            results.addEventListener('mousedown', function (e) {
+                var item = e.target.closest('.ss-item');
+                if (!item) return;
+                e.preventDefault();
+                document.getElementById('nb-customer-name').value = item.dataset.name || '';
+                document.getElementById('nb-customer-phone').value = item.dataset.phone || '';
+                input.value = item.dataset.name || '';
+                results.style.display = 'none';
+            });
+        }
+
+        async function runCustomerSearch(q, resultsEl) {
+            try {
+                var matches = await SalonBookings.searchCustomers(q);
+                if (!matches.length) {
+                    resultsEl.innerHTML = '<div class="ss-empty">No matching customers</div>';
+                } else {
+                    resultsEl.innerHTML = matches.map(function (m) {
+                        return '<div class="ss-item" data-name="' + esc(m.name || '') + '" data-phone="' + esc(m.phone || '') + '">' +
+                            '<div style="font-weight:600">' + esc(m.name || 'Unnamed') + '</div>' +
+                            '<div class="text-secondary small">' + esc(m.phone || 'No phone on file') + (m.source === 'user' ? ' · Has an app account' : '') + '</div>' +
+                            '</div>';
+                    }).join('');
+                }
+                resultsEl.style.display = 'block';
+            } catch (err) {
+                resultsEl.innerHTML = '<div class="ss-empty">Search failed</div>';
+                resultsEl.style.display = 'block';
+            }
         }
 
         async function onBranchChangeInForm() {
@@ -682,23 +786,34 @@
                 if (window._nbInventoryItems.data) window._nbInventoryItems = window._nbInventoryItems.data;
             } catch (e) { window._nbInventoryItems = []; }
 
-            // Refresh any already-added item line dropdowns
+            await loadServices(branchId);
+
+            // Refresh any already-added line dropdowns with branch-effective pricing
             document.querySelectorAll('#nb-item-lines .line-item-select').forEach(populateItemSelect);
+            document.querySelectorAll('#nb-service-lines .line-service-select').forEach(populateServiceSelect);
+            updateEstimatedTotal();
+        }
+
+        function populateServiceSelect(select) {
+            var current = select.value;
+            select.innerHTML = '<option value="">Select service…</option>' + _services.map(function (s) {
+                var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
+                return '<option value="' + s.id + '" data-price="' + price + '">' + esc(s.name) + ' — ' + SalonBookings.formatMoney(price) + '</option>';
+            }).join('');
+            if (current) select.value = current;
         }
 
         function addServiceLine() {
             var container = document.getElementById('nb-service-lines');
             var row = document.createElement('div');
             row.className = 'line-row';
-            var options = '<option value="">Select service…</option>' + _services.map(function (s) {
-                return '<option value="' + s.id + '" data-price="' + s.walkInPrice + '">' + esc(s.name) + ' — ' + SalonBookings.formatMoney(s.walkInPrice) + '</option>';
-            }).join('');
             row.innerHTML =
-                '<select class="form-select form-select-sm line-service-select">' + options + '</select>' +
+                '<select class="form-select form-select-sm line-service-select"></select>' +
                 '<input type="number" min="1" value="1" class="form-control form-control-sm line-qty">' +
                 '<div class="line-row-total">—</div>' +
                 '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
             container.appendChild(row);
+            populateServiceSelect(row.querySelector('.line-service-select'));
 
             row.querySelector('.line-service-select').addEventListener('change', updateEstimatedTotal);
             row.querySelector('.line-qty').addEventListener('input', updateEstimatedTotal);
