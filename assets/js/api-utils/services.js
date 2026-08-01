@@ -122,10 +122,11 @@ const Services = (() => {
     async function getAll(params = {}) {
         const q = new URLSearchParams();
         if (params.categoryId) q.set("categoryId", params.categoryId);
-        if (params.search)     q.set("search",     params.search);
-        if (params.status)     q.set("status",     params.status);
+        if (params.search) q.set("search", params.search);
+        if (params.status) q.set("status", params.status);
         if (params.bookingType) q.set("bookingType", params.bookingType);
-        const qs   = q.toString();
+        if (params.branchId) q.set("branchId", params.branchId);
+        const qs = q.toString();
         const data = await apiFetch("/services" + (qs ? "?" + qs : ""));
         return Array.isArray(data) ? data : (data.services || []);
     }

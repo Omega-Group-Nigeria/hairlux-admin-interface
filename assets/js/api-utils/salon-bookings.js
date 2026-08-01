@@ -89,6 +89,11 @@ const SalonBookings = (function () {
         return apiFetch(`/admin/salon-bookings/verify/${encodeURIComponent(code)}`);
     }
 
+    async function searchCustomers(q) {
+        if (!q) return [];
+        return apiFetch(`/admin/salon-bookings/customers/search?q=${encodeURIComponent(q)}`);
+    } 
+
     async function confirmVerification(id, assignedStaffId) {
         return apiFetch(`/admin/salon-bookings/${id}/verify`, {
             method: 'PATCH',
@@ -99,7 +104,7 @@ const SalonBookings = (function () {
 
     return {
         getAll, getOne, create, addInventoryItem, start, complete, cancel, noShow,
-        verifyCode, confirmVerification,
+        verifyCode, confirmVerification, searchCustomers,
         statusBadge, formatMoney, formatDate,
     };
 })();

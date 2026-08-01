@@ -230,10 +230,10 @@ const Roles = (() => {
      * Sends { adminRoleId } (UUID) per AssignAdminRoleDto.
      */
     async function updateRole(userId, adminRoleId) {
-        const res = await Auth.fetch('/admin/users/' + userId, {
-            method:  'PATCH',
+        const res = await Auth.fetch('/admin/users/' + userId + '/role', {
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ adminRoleId }),
+            body: JSON.stringify({ adminRoleId }),
         });
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || 'Failed to update role');

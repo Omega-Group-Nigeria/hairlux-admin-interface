@@ -335,6 +335,7 @@
         if (btnRefresh) btnRefresh.addEventListener('click', loadAdminUsers);
 
         // Confirm role change
+        // Confirm role change
         var btnConfirmRole = document.getElementById('btn-confirm-role-change');
         if (btnConfirmRole) {
             btnConfirmRole.addEventListener('click', async function () {
@@ -352,6 +353,96 @@
                     showAdminAlert('success', 'Role updated successfully.');
                 } catch (err) {
                     showAdminAlert('danger', err.message);
+                } finally {
+                    btn.disabled = false;
+                    if (spinner) spinner.classList.add('d-none');
+                }
+            });
+        }
+
+        // Open "Assign Role" (staff search) modal
+        var btnOpenAssignRole = document.getElementById('btn-open-assign-role');
+        if (btnOpenAssignRole) {
+            btnOpenAssignRole.addEventListener('click', async function () {
+                var errEl = document.getElementById('assign-role-staff-error');
+                if (errEl) errEl.classList.add('d-none');
+                document.getElementById('assign-role-grant-portal-login').checked = true;
+
+                var staffSelect = document.getElementById('assign-role-staff-select');
+                staffSelect.innerHTML = '<option value="">Loading staff…</option>';
+                var roleSelect = document.getElementById('assign-role-role-select');
+                roleSelect.innerHTML = '<option value="">Loading roles…</option>';
+
+                SearchableSelect.attach('assign-role-staff-select');
+                SearchableSelect.attach('assign-role-role-select');
+                SearchableSelect.refresh('assign-role-staff-select');
+                SearchableSelect.refresh('assign-role-role-select');
+
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-assign-role-staff')).show();
+
+                try {
+                    var staffResult = await Staff.getAll({ employmentStatus: 'ACTIVE', limit: 200 });
+                    var staffList = staffResult.data || [];
+                    staffSelect.innerHTML = staffList.length
+                        ? '<option value="">Select a staff member…</option>' + staffList.map(function (s) {
+                            return '<option value="' + s.id + '">' + _esc(s.name) + (s.staffCode ? ' (' + _esc(s.staffCode) + ')' : '') + '</option>';
+                        }).join('')
+                        : '<option value="">No active staff found</option>';
+                    SearchableSelect.refresh('assign-role-staff-select');
+                } catch (err) {
+                    staffSelect.innerHTML = '<option value="">Failed to load staff</option>';
+                    SearchableSelect.refresh('assign-role-staff-select');
+                }
+
+                try {
+                    var roles = State.rolesCache && State.rolesCache.length ? State.rolesCache : await Api.fetchRoles();
+                    roleSelect.innerHTML = roles.length
+                        ? '<option value="">Select a role…</option>' + roles.map(function (r) {
+                            return '<option value="' + _esc(r.id) + '">' + _esc(r.name) + '</option>';
+                        }).join('')
+                        : '<option value="" disabled selected>No roles yet — create one first</option>';
+                    SearchableSelect.refresh('assign-role-role-select');
+                } catch (err) {
+                    roleSelect.innerHTML = '<option value="">Failed to load roles</option>';
+                    SearchableSelect.refresh('assign-role-role-select');
+                }
+            });
+        }
+
+        // Confirm assign role (staff search)
+        var btnConfirmAssignRole = document.getElementById('btn-confirm-assign-role-staff');
+        if (btnConfirmAssignRole) {
+            btnConfirmAssignRole.addEventListener('click', async function () {
+                var errEl = document.getElementById('assign-role-staff-error');
+                errEl.classList.add('d-none');
+
+                var staffId = document.getElementById('assign-role-staff-select').value;
+                var adminRoleId = document.getElementById('assign-role-role-select').value;
+                var grantPortalLogin = document.getElementById('assign-role-grant-portal-login').checked;
+
+                if (!staffId) {
+                    errEl.textContent = 'Please select a staff member.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+                if (!adminRoleId) {
+                    errEl.textContent = 'Please select a role.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+
+                var spinner = document.getElementById('spinner-assign-role-staff');
+                var btn = this;
+                btn.disabled = true;
+                if (spinner) spinner.classList.remove('d-none');
+                try {
+                    await Staff.assignRole(staffId, adminRoleId, grantPortalLogin);
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-assign-role-staff')).hide();
+                    await loadAdminUsers();
+                    showAdminAlert('success', 'Role assigned successfully.');
+                } catch (err) {
+                    errEl.textContent = err.message || 'Failed to assign role.';
+                    errEl.classList.remove('d-none');
                 } finally {
                     btn.disabled = false;
                     if (spinner) spinner.classList.add('d-none');

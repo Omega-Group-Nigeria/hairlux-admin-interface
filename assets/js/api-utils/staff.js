@@ -174,16 +174,20 @@ const Staff = (() => {
         return jsonFetch("/admin/staff/" + id + "/code-history");
     }
 
-    async function getAdminAccess(id) {
-        return jsonFetch("/admin/staff/" + id + "/admin-access");
+    async function getRoleAssignment(id) {
+        return jsonFetch("/admin/staff/" + id + "/role-assignment");
     }
 
-    async function setAdminAccess(id, grant) {
-        return jsonFetch("/admin/staff/" + id + "/admin-access", {
+    async function assignRole(id, adminRoleId, grantPortalLogin) {
+        return jsonFetch("/admin/staff/" + id + "/role-assignment", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ grant: grant }),
+            body: JSON.stringify({ adminRoleId: adminRoleId, grantPortalLogin: grantPortalLogin }),
         });
+    }
+
+    async function removeRole(id) {
+        return jsonFetch("/admin/staff/" + id + "/role-assignment", { method: "DELETE" });
     }
 
     async function archive(id, payload) {
@@ -310,8 +314,9 @@ const Staff = (() => {
         updateStatus,
         transferBranch,
         getCodeHistory,
-        getAdminAccess,
-        setAdminAccess,
+        getRoleAssignment,
+        assignRole,
+        removeRole,
         archive,
         restore,
         addHistory,

@@ -429,17 +429,30 @@
                                                     permissions. Super Admin only.
                                                 </p>
                                             </div>
-                                            <button type="button" class="btn btn-primary btn-sm flex-shrink-0"
-                                                id="btn-open-create-admin">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="icon me-1">
-                                                    <path d="M12 5l0 14" />
-                                                    <path d="M5 12l14 0" />
-                                                </svg>
-                                                New Admin
-                                            </button>
+                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                                    id="btn-open-assign-role">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon me-1">
+                                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                                    </svg>
+                                                    Assign Role
+                                                </button>
+                                                <button type="button" class="btn btn-primary btn-sm"
+                                                    id="btn-open-create-admin">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon me-1">
+                                                        <path d="M12 5l0 14" />
+                                                        <path d="M5 12l14 0" />
+                                                    </svg>
+                                                    New Admin
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <!-- Section alert -->
@@ -742,6 +755,47 @@
     </div>
     <!-- ===== END MODAL: CHANGE ROLE ===== -->
 
+    <!-- ===== MODAL: ASSIGN ROLE (staff search) ===== -->
+    <div class="modal modal-blur fade" id="modal-assign-role-staff" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Role to Staff</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="assign-role-staff-error" class="alert alert-danger d-none py-2"></div>
+                    <label class="form-label required">Staff Member</label>
+                    <select class="form-select mb-3" id="assign-role-staff-select">
+                        <option value="">Loading staff…</option>
+                    </select>
+                    <label class="form-label required">Role</label>
+                    <select class="form-select mb-2" id="assign-role-role-select">
+                        <option value="">Loading roles…</option>
+                    </select>
+                    <div class="form-hint mb-3">Super Admin role cannot be assigned here.</div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="assign-role-grant-portal-login" checked>
+                        <label class="form-check-label" for="assign-role-grant-portal-login">Also grant admin dashboard
+                            login</label>
+                    </div>
+                    <div class="form-hint">Leave unchecked to apply this role's permissions inside the staff portal
+                        only.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-assign-role-staff">
+                        <span class="spinner-border spinner-border-sm me-1 d-none"
+                            id="spinner-assign-role-staff"></span>
+                        Assign Role
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: ASSIGN ROLE ===== -->
+     
     <!-- ===== MODAL: CREATE ROLE ===== -->
     <div class="modal modal-blur fade" id="modal-create-role" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
@@ -819,6 +873,8 @@
     <script src="assets/js/api-utils/users.js"></script>
     <script src="assets/js/api-utils/roles.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/searchable-select.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
 
     <!-- Settings page modules (order matters) -->
