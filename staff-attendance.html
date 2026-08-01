@@ -93,6 +93,8 @@
                             <h2 class="page-title">Attendance</h2>
                         </div>
                         <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" id="btn-open-late-penalty">Late
+                                Penalty Settings</button>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
                         </div>
                     </div>
@@ -205,6 +207,41 @@
         </div>
     </div>
 
+    <div class="modal modal-blur fade" id="late-penalty-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Late Penalty Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small">
+                        Grace-period minutes are set per branch (and can be overridden per staff member) — see
+                        Branches to adjust those. This only covers what's charged per minute once someone is late
+                        <em>beyond</em> the grace period.
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="lp-active">
+                        <label class="form-check-label" for="lp-active">Charge a late penalty</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount per minute late (₦)</label>
+                        <input type="number" min="0" step="0.01" class="form-control" id="lp-amount"
+                            placeholder="e.g. 100">
+                        <div class="form-hint">Deducted from salary — captured on each late check-in, ready for payroll
+                            to
+                            apply.</div>
+                    </div>
+                    <div id="lp-error" class="text-danger small" style="display:none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-late-penalty">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="./assets/js/api-utils/auth.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
@@ -284,7 +321,10 @@
 
                         var statusLabel = String(r.status || "").replace(/_/g, " ");
                         var statusDetail = "";
-                        if (r.status === "LATE" && r.lateMinutes) statusDetail = r.lateMinutes + " min late";
+                        if (r.status === "LATE" && r.lateMinutes) {
+                            statusDetail = r.lateMinutes + " min late";
+                            if (r.latePenaltyAmount) statusDetail += " · " + StaffOps.formatMoney(r.latePenaltyAmount) + " penalty";
+                        }
                         if (r.overtimeMinutes) statusDetail = (statusDetail ? statusDetail + " · " : "") + r.overtimeMinutes + " min OT";
 
                         var manualBadge = r.isManuallyAdjusted
@@ -332,6 +372,42 @@
             correctionModal.show();
         }
 
+        var latePenaltyModal;
+
+        async function openLatePenaltyModal() {
+            document.getElementById("lp-error").style.display = "none";
+            if (!latePenaltyModal) latePenaltyModal = new bootstrap.Modal(document.getElementById("late-penalty-modal"));
+            latePenaltyModal.show();
+
+            try {
+                var settings = await StaffOps.getLatePenaltySettings();
+                document.getElementById("lp-active").checked = !!(settings && settings.isActive);
+                document.getElementById("lp-amount").value = settings && settings.amountPerMinute != null ? settings.amountPerMinute : "";
+            } catch (e) {
+                document.getElementById("lp-active").checked = false;
+                document.getElementById("lp-amount").value = "";
+            }
+        }
+
+        async function saveLatePenaltySettings() {
+            var errorEl = document.getElementById("lp-error");
+            errorEl.style.display = "none";
+
+            var payload = {
+                isActive: document.getElementById("lp-active").checked,
+                amountPerMinute: Number(document.getElementById("lp-amount").value) || 0,
+            };
+
+            try {
+                await StaffOps.updateLatePenaltySettings(payload);
+                latePenaltyModal.hide();
+                flashPageAlert("success", "Late penalty settings saved.");
+            } catch (e) {
+                errorEl.textContent = e.message || "Failed to save settings.";
+                errorEl.style.display = "";
+            }
+        }
+
         document.getElementById("btn-save-correction").addEventListener("click", async function () {
             var reason = document.getElementById("correction-reason").value.trim();
             if (!reason) {
@@ -364,6 +440,8 @@
             });
 
             document.getElementById("btn-refresh").addEventListener("click", function () { loadAttendance({ notifySuccess: true }); });
+            document.getElementById("btn-open-late-penalty").addEventListener("click", openLatePenaltyModal);
+            document.getElementById("btn-save-late-penalty").addEventListener("click", saveLatePenaltySettings);
 
             document.getElementById("filter-date").addEventListener("change", function () {
                 listState.date = this.value;

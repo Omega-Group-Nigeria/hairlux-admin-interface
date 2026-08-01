@@ -1173,16 +1173,28 @@ async function loadAttendance() {
       .slice(0, 30)
       .map((r) => {
         const day = new Date(r.date).toLocaleDateString('en-GB', { weekday: 'long' });
-        const status = !r.checkOutAt
-          ? '<span class="badge b-amber">Open</span>'
-          : '<span class="badge b-green">Present</span>';
+        const statusBadgeClass = {
+          PRESENT: 'b-green',
+          LATE: 'b-amber',
+          ABSENT: 'b-red',
+          ON_LEAVE: 'b-blue',
+          APPROVED_PERMISSION: 'b-blue',
+          PUBLIC_HOLIDAY: 'b-blue',
+        }[r.status] || (r.checkOutAt ? 'b-green' : 'b-amber');
+        const statusLabel = r.status ? String(r.status).replace(/_/g, ' ') : (r.checkOutAt ? 'Present' : 'Open');
+        const status = '<span class="badge ' + statusBadgeClass + '">' + statusLabel + '</span>';
+        let lateDetail = '';
+        if (r.status === 'LATE' && r.lateMinutes) {
+          lateDetail = r.lateMinutes + ' min late';
+          if (r.latePenaltyAmount) lateDetail += ' · ' + sbFormatMoney(r.latePenaltyAmount) + ' penalty';
+        }
         const hours = r.checkOutAt
           ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
           : '\u2014';
         return (
           '<tr><td>' + StaffSelf.formatDate(r.date, { day: '2-digit', month: 'short' }) + '</td><td>' + day + '</td>' +
           '<td>' + StaffSelf.formatTime(r.checkInAt) + '</td><td>' + (r.checkOutAt ? StaffSelf.formatTime(r.checkOutAt) : '\u2014') + '</td>' +
-          '<td>' + hours + '</td><td>' + status + '</td></tr>'
+          '<td>' + hours + '</td><td>' + status + (lateDetail ? '<div class="text-secondary small mt-1">' + escapeHtml(lateDetail) + '</div>' : '') + '</td></tr>'
         );
       })
       .join('');

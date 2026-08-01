@@ -35,11 +35,17 @@ var NavConfig = window.NavConfig || (() => {
             id: "bookings",
             label: "Bookings",
             icon: "bookings",
-            permission: { type: "require", perm: "bookings:read" },
+            permission: {
+                type: "requireAny",
+                perms: ["bookings:read", "staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations"],
+            },
             children: [
                 { label: "Overview", href: "bookings.html" },
                 { label: "Verify Booking", href: "bookings/index.html" },
                 { label: "Calendar", href: "bookings/calendar.html" },
+                { label: "Salon Bookings", href: "salon-bookings.html" },
+                { label: "Inventory Items", href: "inventory-items.html" },
+                { label: "Inventory Log (Legacy)", href: "staff-inventory.html" },
             ],
         },
         {
@@ -141,9 +147,6 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Tasks & Directives", href: "staff-directives.html" },
                 { label: "Attendance", href: "staff-attendance.html" },
                 { label: "Leave Requests", href: "leave-requests.html" },
-                { label: "Salon Bookings", href: "salon-bookings.html" },
-                { label: "Inventory Log (Legacy)", href: "staff-inventory.html" },
-                { label: "Inventory Items", href: "inventory-items.html" },
             ],
         },
         {

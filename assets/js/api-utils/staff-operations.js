@@ -17,6 +17,17 @@ const StaffOps = (() => {
         });
     }
 
+    async function getLatePenaltySettings() {
+        return jsonFetch("/admin/attendance/late-penalty-settings");
+    }
+
+    async function updateLatePenaltySettings(payload) {
+        return jsonFetch("/admin/attendance/late-penalty-settings", {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+        });
+    }
+
     async function getAttendanceReport(params = {}) {
         const q = new URLSearchParams();
         if (params.date) q.set("date", params.date);
@@ -53,13 +64,21 @@ const StaffOps = (() => {
         return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
     }
 
+    function formatMoney(amount) {
+        if (amount == null) return "-";
+        return "₦" + Number(amount).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     return {
         getAttendanceReport,
         correctAttendance,
+        getLatePenaltySettings,
+        updateLatePenaltySettings,
         getInventoryDashboard,
         getInventoryEntries,
         LOW_STOCK_THRESHOLD,
         formatDate,
         formatTime,
+        formatMoney,
     };
 })();

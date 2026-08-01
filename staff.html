@@ -1038,6 +1038,17 @@
                     '<input type="number" min="0" max="100" step="0.1" class="form-control" id="sf-commission-rate" value="' + esc(commissionPercentValue) + '" placeholder="e.g. 15 for 15%">' +
                     '<div class="form-hint">Only relevant for commission-based roles (e.g. Stylists). Leave blank if this staff member earns no commission.</div>' +
                     '</div>' +
+                    '<div class="col-12">' +
+                    '<div class="form-check form-switch">' +
+                    '<input class="form-check-input" type="checkbox" id="sf-salary-first-month"' + (d.salaryOnlyFirstMonth ? ' checked' : '') + '>' +
+                    '<label class="form-check-label" for="sf-salary-first-month">Base salary in first month (plus commission), commission-only after</label>' +
+                    '</div>' +
+                    '<div class="form-hint">Data capture only for now \u2014 not yet applied by any payroll calculation.</div>' +
+                    '</div>' +
+                    '<div class="col-md-6"><label class="form-label" for="sf-grace-override">Personal Late Grace Period (minutes)</label>' +
+                    '<input type="number" min="0" step="1" class="form-control" id="sf-grace-override" value="' + esc(d.lateGracePeriodOverride != null ? d.lateGracePeriodOverride : '') + '" placeholder="Leave blank to use branch default">' +
+                    '<div class="form-hint">Overrides the branch\'s grace period for this staff member specifically. Leave blank to use the branch default.</div>' +
+                    '</div>' +
                     '<div class="col-12" id="sf-exit-fields-wrap">' +
                     '<div class="row g-3">' +
                     buildInput('col-md-6', 'Reason For Exit', 'sf-reason-for-exit', d.reasonForExit || '') +
@@ -1159,6 +1170,11 @@
                     exitDate: trimOrUndef(document.getElementById("sf-exit-date").value),
                     reportingToId: document.getElementById("sf-reporting-to-id").value || null,
                     commissionRate: commissionPercentInput ? (Number(commissionPercentInput) / 100) : null,
+                    salaryOnlyFirstMonth: document.getElementById("sf-salary-first-month").checked,
+                    lateGracePeriodOverride: (function () {
+                        var v = document.getElementById("sf-grace-override").value.trim();
+                        return v === "" ? null : Number(v);
+                    })(),
                 };
 
                 if (String(updatePayload.employmentStatus || "").toUpperCase() !== "EXITED") {
@@ -1326,6 +1342,8 @@
                         exitDate: (s.exitDate || "").slice(0, 10),
                         reportingToId: String(s.reportingToId || (s.reportingTo && s.reportingTo.id) || ""),
                         commissionRate: s.commissionRate,
+                        salaryOnlyFirstMonth: !!s.salaryOnlyFirstMonth,
+                        lateGracePeriodOverride: s.lateGracePeriodOverride,
                         roleOptions: assignableRoles,
                         currentAdminRoleId: currentAssignment.adminRoleId || "",
                         currentGrantPortalLogin: !!currentAssignment.hasAdminPortalLogin,
