@@ -59,7 +59,7 @@ function switchSection(section, updateHash) {
         headerBtn.classList.remove("d-none");
         headerBtn.textContent = "Add Region";
     }
-    refreshCurrentSection();
+    SP.Handlers.refreshCurrentSection();
 }
 
 function initProductRowDropdowns() {
