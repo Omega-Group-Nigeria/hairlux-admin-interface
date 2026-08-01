@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Inventory</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        table td { vertical-align: middle; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg></a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1" /></svg></a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Staff</div>
+                            <h2 class="page-title">Inventory</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert" class="alert d-none mb-3" role="alert"></div>
+
+                    <div class="alert alert-info mb-4">
+                        Prototype-level: totals are computed from the staff-logged received/sold entries below, not a maintained running balance.
+                        This is intentionally separate from the main Shop/Product inventory system elsewhere in the admin.
+                    </div>
+
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Products Tracked</div><div class="h1 mb-0" id="stat-total">—</div></div></div></div>
+                        <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Low Stock</div><div class="h1 mb-0 text-warning" id="stat-low">—</div></div></div></div>
+                        <div class="col-sm-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Out of Stock</div><div class="h1 mb-0 text-danger" id="stat-out">—</div></div></div></div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Stock by Branch</h3>
+                                <div class="d-flex align-items-center gap-2">
+                                    <select class="form-select form-select-sm" id="filter-branch" style="width:auto"><option value="">All branches</option></select>
+                                    <span class="text-secondary small" id="results-label">Loading…</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table">
+                                <thead><tr><th>Product</th><th>Branch</th><th>Current Total</th><th>Status</th></tr></thead>
+                                <tbody id="dashboard-tbody"><tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Log Entries</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table">
+                                <thead><tr><th>Product</th><th>Branch</th><th>Type</th><th>Qty</th><th>Logged By</th><th>Note</th><th>When</th></tr></thead>
+                                <tbody id="entries-tbody"><tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/api-utils/staff.js"></script>
+    <script src="./assets/js/api-utils/staff-operations.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var _locationId = "";
+        var pageAlertTimer = null;
+
+        function setPageAlert(type, message) {
+            var el = document.getElementById("page-alert");
+            if (!message) { el.className = "alert d-none mb-3"; el.textContent = ""; return; }
+            el.className = "alert alert-" + type + " mb-3";
+            el.textContent = message;
+        }
+
+        function flashPageAlert(type, message) {
+            if (pageAlertTimer) { clearTimeout(pageAlertTimer); pageAlertTimer = null; }
+            setPageAlert(type, message);
+            if (!message) return;
+            pageAlertTimer = setTimeout(function () { setPageAlert("", ""); pageAlertTimer = null; }, 5000);
+        }
+
+        function esc(s) {
+            return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function timeAgo(value) {
+            if (!value) return "-";
+            var d = new Date(value);
+            if (isNaN(d.getTime())) return "-";
+            var mins = Math.floor((Date.now() - d.getTime()) / 60000);
+            if (mins < 60) return mins + "m ago";
+            var hrs = Math.floor(mins / 60);
+            if (hrs < 24) return hrs + "h ago";
+            var days = Math.floor(hrs / 24);
+            if (days < 7) return days + "d ago";
+            return StaffOps.formatDate(value);
+        }
+
+        async function loadBranchFilter() {
+            try {
+                var branches = await Staff.getLocations();
+                document.getElementById("filter-branch").innerHTML =
+                    '<option value="">All branches</option>' +
+                    branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join("");
+            } catch (e) {
+                console.error("Failed to load branches", e);
+            }
+        }
+
+        async function loadDashboard(options) {
+            options = options || {};
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var totals = await StaffOps.getInventoryDashboard(_locationId || undefined);
+                var lowStock = totals.filter(function (t) { return t.total > 0 && t.total <= StaffOps.LOW_STOCK_THRESHOLD; });
+                var outOfStock = totals.filter(function (t) { return t.total <= 0; });
+
+                document.getElementById("stat-total").textContent = totals.length;
+                document.getElementById("stat-low").textContent = lowStock.length;
+                document.getElementById("stat-out").textContent = outOfStock.length;
+
+                var tbody = document.getElementById("dashboard-tbody");
+                if (!totals.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">No inventory logged yet.</td></tr>';
+                } else {
+                    tbody.innerHTML = totals
+                        .sort(function (a, b) { return a.productName.localeCompare(b.productName); })
+                        .map(function (t) {
+                            var statusBadge = t.total <= 0
+                                ? '<span class="badge bg-danger-lt">Out of Stock</span>'
+                                : t.total <= StaffOps.LOW_STOCK_THRESHOLD
+                                    ? '<span class="badge bg-warning-lt">Low</span>'
+                                    : '<span class="badge bg-success-lt">Good</span>';
+                            return '<tr><td class="fw-semibold">' + esc(t.productName) + '</td>' +
+                                '<td>' + esc(t.locationName) + '</td>' +
+                                '<td>' + t.total + ' units</td>' +
+                                '<td>' + statusBadge + '</td></tr>';
+                        }).join("");
+                }
+                document.getElementById("results-label").textContent = totals.length + " product(s) tracked";
+                if (options.notifySuccess) flashPageAlert("success", "Refreshed.");
+            } catch (e) {
+                document.getElementById("dashboard-tbody").innerHTML =
+                    '<tr><td colspan="4" class="text-center text-danger py-4">' + esc(e.message || "Failed to load inventory.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        async function loadEntries() {
+            try {
+                var entries = await StaffOps.getInventoryEntries({ locationId: _locationId || undefined });
+                var tbody = document.getElementById("entries-tbody");
+                if (!entries.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">No entries logged yet.</td></tr>';
+                } else {
+                    tbody.innerHTML = entries.map(function (e) {
+                        var typeBadge = e.type === "RECEIVED"
+                            ? '<span class="badge bg-success-lt">Received</span>'
+                            : '<span class="badge bg-secondary-lt">Sold</span>';
+                        return '<tr><td class="fw-semibold">' + esc(e.productName) + '</td>' +
+                            '<td>' + esc(e.location ? e.location.name : "-") + '</td>' +
+                            '<td>' + typeBadge + '</td>' +
+                            '<td>' + e.quantity + '</td>' +
+                            '<td>' + esc(e.staff ? e.staff.name : "-") + '</td>' +
+                            '<td class="text-secondary small">' + esc(e.note || "-") + '</td>' +
+                            '<td class="text-secondary small">' + timeAgo(e.createdAt) + '</td></tr>';
+                    }).join("");
+                }
+            } catch (e) {
+                document.getElementById("entries-tbody").innerHTML =
+                    '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || "Failed to load entries.") + '</td></tr>';
+            }
+        }
+
+        function loadAll(options) {
+            loadDashboard(options);
+            loadEntries();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuardForCurrentPage();
+                RBAC.applyNavVisibility();
+            });
+
+            document.getElementById("btn-refresh").addEventListener("click", function () { loadAll({ notifySuccess: true }); });
+            document.getElementById("filter-branch").addEventListener("change", function () {
+                _locationId = this.value;
+                loadAll();
+            });
+
+            loadBranchFilter();
+            loadAll();
+        });
+    </script>
+</body>
+</html>

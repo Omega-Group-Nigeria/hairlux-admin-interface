@@ -1,0 +1,1089 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Inventory Items</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Operations</div>
+                            <h2 class="page-title">Inventory Items</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
+                            <button type="button" class="btn btn-primary" id="btn-new-item">+ New Item</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <div class="row row-deck row-cards mb-4">
+                        <div class="col-sm-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader mb-2">Products Tracked</div>
+                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader mb-2">Low Stock</div>
+                                    <div class="h1 mb-0 text-warning" id="stat-low">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader mb-2">Out of Stock</div>
+                                    <div class="h1 mb-0 text-danger" id="stat-out">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs mb-3" id="main-tabs">
+                        <li class="nav-item"><a href="#" class="nav-link active" data-tab="items">Items</a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" data-tab="alerts">Low Stock Alerts <span
+                                    class="badge bg-danger-lt ms-1" id="alert-count-badge"
+                                    style="display:none">0</span></a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" data-tab="transfers">Transfers <span
+                                    class="badge bg-warning-lt ms-1" id="transfer-count-badge"
+                                    style="display:none">0</span></a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" data-tab="adjustments">Adjustment Requests
+                                <span class="badge bg-warning-lt ms-1" id="adjustment-count-badge"
+                                    style="display:none">0</span></a></li>
+                    </ul>
+
+                    <!-- ITEMS TAB -->
+                    <div id="tab-items">
+                        <div class="card">
+                            <div class="card-body border-bottom py-4">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label text-secondary small mb-1">Branch</label>
+                                        <select id="filter-branch" class="form-select form-select-sm">
+                                            <option value="">All branches</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label text-secondary small mb-1">Category</label>
+                                        <select id="filter-category" class="form-select form-select-sm">
+                                            <option value="">All categories</option>
+                                            <option value="FOR_SALE">For Sale</option>
+                                            <option value="INTERNAL_USE">Internal Use</option>
+                                            <option value="STORAGE">Storage</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="form-check mt-4">
+                                            <input class="form-check-input" type="checkbox" id="filter-low-stock">
+                                            <label class="form-check-label" for="filter-low-stock">Low stock
+                                                only</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Branch</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Stock</th>
+                                            <th>Threshold</th>
+                                            <th>Status</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="items-tbody">
+                                        <tr>
+                                            <td colspan="8" class="text-center py-5">
+                                                <div class="spinner-border text-primary"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ALERTS TAB -->
+                    <div id="tab-alerts" style="display:none">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-secondary active" data-resolved="false"
+                                        onclick="loadAlerts(false)">Open</button>
+                                    <button class="btn btn-sm btn-outline-secondary" data-resolved="true"
+                                        onclick="loadAlerts(true)">Resolved</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Branch</th>
+                                            <th>Current Stock</th>
+                                            <th>Triggered</th>
+                                            <th>Stage</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="alerts-tbody">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5">
+                                                <div class="spinner-border text-primary"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TRANSFERS TAB -->
+                    <div id="tab-transfers" style="display:none">
+                        <div class="card">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>From</th>
+                                            <th>To</th>
+                                            <th>Quantity</th>
+                                            <th>Status</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transfers-tbody">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5">
+                                                <div class="spinner-border text-primary"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ADJUSTMENT REQUESTS TAB -->
+                    <div id="tab-adjustments" style="display:none">
+                        <div class="card">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Branch</th>
+                                            <th>Requested By</th>
+                                            <th>Adjustment</th>
+                                            <th>Reason</th>
+                                            <th>Status</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adjustments-tbody">
+                                        <tr>
+                                            <td colspan="7" class="text-center py-5">
+                                                <div class="spinner-border text-primary"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">&copy; 2026 Hairlux Admin Panel</div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- New Item Modal -->
+    <div class="modal modal-blur fade" id="modal-new-item" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Inventory Item</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="new-item-error"></div>
+                    <div class="mb-2"><label class="form-label">Branch <span class="text-danger">*</span></label>
+                        <select class="form-select" id="ni-branch">
+                            <option value="">Select branch…</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input class="form-control" id="ni-name" placeholder="e.g. Argan Oil Shampoo 500ml">
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><label class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="ni-category">
+                                <option value="FOR_SALE">For Sale</option>
+                                <option value="INTERNAL_USE">Internal Use</option>
+                                <option value="STORAGE">Storage</option>
+                            </select>
+                        </div>
+                        <div class="col-6"><label class="form-label">Unit</label>
+                            <input class="form-control" id="ni-unit" placeholder="e.g. bottle">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><label class="form-label">Initial Quantity</label>
+                            <input type="number" class="form-control" id="ni-quantity" min="0" placeholder="0">
+                        </div>
+                        <div class="col-6"><label class="form-label">Low Stock Threshold</label>
+                            <input type="number" class="form-control" id="ni-threshold" min="0" placeholder="5">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" id="ni-price-label">Price <span class="text-danger"
+                                id="ni-price-required">*</span>
+                            <span class="text-secondary small" id="ni-price-hint">(required — item is For Sale)</span>
+                        </label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="ni-price"
+                            placeholder="e.g. 3500">
+                    </div>
+                    <div class="mb-2"><label class="form-label">Expiry Date (optional)</label>
+                        <input type="date" class="form-control" id="ni-expiry">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-new-item">Create Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Edit Item Modal -->
+    <div class="modal modal-blur fade" id="modal-edit-item" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Inventory Item</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="edit-item-error"></div>
+                    <input type="hidden" id="ei-id">
+                    <div class="mb-2"><label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input class="form-control" id="ei-name">
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6"><label class="form-label">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="ei-category">
+                                <option value="FOR_SALE">For Sale</option>
+                                <option value="INTERNAL_USE">Internal Use</option>
+                                <option value="STORAGE">Storage</option>
+                            </select>
+                        </div>
+                        <div class="col-6"><label class="form-label">Unit</label>
+                            <input class="form-control" id="ei-unit">
+                        </div>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Low Stock Threshold</label>
+                        <input type="number" class="form-control" id="ei-threshold" min="0">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" id="ei-price-label">Price <span class="text-danger"
+                                id="ei-price-required">*</span>
+                            <span class="text-secondary small" id="ei-price-hint">(required — item is For Sale)</span>
+                        </label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="ei-price">
+                    </div>
+                    <div class="mb-2"><label class="form-label">Expiry Date</label>
+                        <input type="date" class="form-control" id="ei-expiry">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-edit-item">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adjust Stock Modal -->
+    <div class="modal modal-blur fade" id="modal-adjust" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adjust Stock</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="adjust-error"></div>
+                    <p class="text-secondary small" id="adjust-item-label"></p>
+                    <div class="mb-2"><label class="form-label">Quantity Change <span
+                                class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="adj-delta" placeholder="e.g. -3 or 10">
+                    </div>
+                    <div class="mb-2"><label class="form-label">Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="adj-reason" rows="2"
+                            placeholder="Why is this adjustment being made?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-adjust">Save Adjustment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Transfer Modal -->
+    <div class="modal modal-blur fade" id="modal-reject-transfer" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Transfer</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reject-transfer-error"></div>
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reject-transfer-reason" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-reject-transfer">Confirm
+                        Rejection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-reject-adjustment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Adjustment Request</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reject-adjustment-error"></div>
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reject-adjustment-reason" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-reject-adjustment">Confirm
+                        Rejection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared reassign modal — used for both transfer and adjustment requests -->
+    <div class="modal modal-blur fade" id="modal-reassign-request" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reassign-request-title">Reassign Request</h5><button type="button"
+                        class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reassign-request-error"></div>
+                    <label class="form-label">Reassign To <span class="text-danger">*</span></label>
+                    <select class="form-select mb-3" id="reassign-request-staff"></select>
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reassign-request-reason" rows="2"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-reassign-request">Confirm
+                        Reassignment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/searchable-select.js"></script>
+    <script src="assets/js/api-utils/inventory.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var _pendingAdjustItemId = null;
+        var _pendingRejectTransferId = null;
+        var _branchesCache = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuardForCurrentPage();
+                RBAC.applyNavVisibility();
+            });
+
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                var role = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent = initials;
+                document.getElementById("navbar-user-name").textContent = fullName;
+                document.getElementById("navbar-user-role").textContent = role;
+                document.getElementById("dropdown-user-name").textContent = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) { e.preventDefault(); Auth.logout(); });
+
+            loadBranchOptions();
+            loadItems();
+            refreshBadgeCounts();
+
+            document.getElementById("main-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-tab]");
+                if (!tab) return;
+                document.querySelectorAll("#main-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                ["items", "alerts", "transfers", "adjustments"].forEach(function (id) {
+                    document.getElementById("tab-" + id).style.display = id === tab.dataset.tab ? "" : "none";
+                });
+                if (tab.dataset.tab === "alerts") loadAlerts(false);
+                if (tab.dataset.tab === "transfers") loadTransfers();
+                if (tab.dataset.tab === "adjustments") loadAdjustmentRequests();
+            });
+
+            document.getElementById("filter-branch").addEventListener("change", loadItems);
+            document.getElementById("filter-category").addEventListener("change", loadItems);
+            document.getElementById("filter-low-stock").addEventListener("change", loadItems);
+            document.getElementById("btn-refresh").addEventListener("click", function () { loadItems(); refreshBadgeCounts(); });
+
+            document.getElementById("btn-new-item").addEventListener("click", function () {
+                document.getElementById("new-item-error").classList.add("d-none");
+                ["ni-name", "ni-unit", "ni-quantity", "ni-threshold", "ni-price", "ni-expiry"].forEach(function (id) { document.getElementById(id).value = ""; });
+                document.getElementById("ni-category").value = "FOR_SALE";
+                updatePriceRequirement('ni-category', 'ni-price-hint', 'ni-price-required');
+                new bootstrap.Modal(document.getElementById("modal-new-item")).show();
+            });
+            document.getElementById("ni-category").addEventListener("change", function () {
+                updatePriceRequirement('ni-category', 'ni-price-hint', 'ni-price-required');
+            });
+            document.getElementById("ei-category").addEventListener("change", function () {
+                updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
+            });
+            document.getElementById("btn-save-new-item").addEventListener("click", submitNewItem);
+            document.getElementById("btn-save-edit-item").addEventListener("click", submitEditItem);
+            document.getElementById("btn-save-adjust").addEventListener("click", submitAdjust);
+            document.getElementById("btn-confirm-reject-transfer").addEventListener("click", submitRejectTransfer);
+            document.getElementById("items-tbody").addEventListener("click", function (e) {
+                var btn = e.target.closest(".btn-adjust");
+                if (!btn) return;
+                openAdjustModal(btn.dataset.id, btn.dataset.name);
+            });
+
+            document.getElementById("alerts-tbody").addEventListener("click", function (e) {
+                var btn = e.target.closest(".btn-resolve-alert");
+                if (!btn) return;
+                resolveAlert(btn.dataset.id);
+            });
+
+            document.getElementById("transfers-tbody").addEventListener("click", function (e) {
+                var approveBtn = e.target.closest(".btn-approve-transfer");
+                if (approveBtn) { approveTransfer(approveBtn.dataset.id); return; }
+                var rejectBtn = e.target.closest(".btn-reject-transfer");
+                if (rejectBtn) { openRejectTransferModal(rejectBtn.dataset.id); return; }
+                var reassignBtn = e.target.closest(".btn-reassign-transfer");
+                if (reassignBtn) { openReassignModal("transfer", reassignBtn.dataset.id); return; }
+            });
+
+            document.getElementById("adjustments-tbody").addEventListener("click", function (e) {
+                var approveBtn = e.target.closest(".btn-approve-adjustment");
+                if (approveBtn) { approveAdjustment(approveBtn.dataset.id); return; }
+                var rejectBtn = e.target.closest(".btn-reject-adjustment");
+                if (rejectBtn) { openRejectAdjustmentModal(rejectBtn.dataset.id); return; }
+                var reassignBtn = e.target.closest(".btn-reassign-adjustment");
+                if (reassignBtn) { openReassignModal("adjustment", reassignBtn.dataset.id); return; }
+            });
+
+            document.getElementById("btn-confirm-reject-adjustment").addEventListener("click", submitRejectAdjustment);
+            document.getElementById("btn-confirm-reassign-request").addEventListener("click", submitReassignRequest);
+        });
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        async function loadBranchOptions() {
+            try {
+                var branches = await Staff.getLocations();
+                _branchesCache = branches;
+                var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
+                document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
+                document.getElementById("ni-branch").innerHTML = '<option value="">Select branch…</option>' + opts;
+            } catch (err) {
+                console.error("Failed to load branches", err);
+            }
+        }
+
+        async function refreshBadgeCounts() {
+            try {
+                var alerts = await Inventory.getAlerts(undefined, false);
+                var alertList = alerts.data || alerts || [];
+                var badge = document.getElementById("alert-count-badge");
+                if (alertList.length) { badge.textContent = alertList.length; badge.style.display = ""; }
+                else badge.style.display = "none";
+            } catch (err) { /* non-fatal */ }
+
+            try {
+                var transfers = await Inventory.getTransfers();
+                var pending = (transfers.data || transfers || []).filter(function (t) { return t.status === "PENDING"; });
+                var tbadge = document.getElementById("transfer-count-badge");
+                if (pending.length) { tbadge.textContent = pending.length; tbadge.style.display = ""; }
+                else tbadge.style.display = "none";
+            } catch (err) { /* non-fatal */ }
+
+            try {
+                var adjustments = await Inventory.getAdjustmentRequests();
+                var pendingAdj = (adjustments.data || adjustments || []).filter(function (a) { return a.status === "PENDING"; });
+                var abadge = document.getElementById("adjustment-count-badge");
+                if (pendingAdj.length) { abadge.textContent = pendingAdj.length; abadge.style.display = ""; }
+                else abadge.style.display = "none";
+            } catch (err) { /* non-fatal */ }
+        }
+
+        // -- Items --
+
+        async function loadItems() {
+            var tbody = document.getElementById("items-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await Inventory.getAll({
+                    branchId: document.getElementById("filter-branch").value,
+                    category: document.getElementById("filter-category").value,
+                    lowStockOnly: document.getElementById("filter-low-stock").checked || undefined,
+                    limit: 100,
+                });
+                var items = result.data || [];
+
+                var outOfStock = items.filter(function (i) { return i.currentQuantity <= 0; }).length;
+                var lowStock = items.filter(function (i) { return i.currentQuantity > 0 && i.currentQuantity <= i.lowStockThreshold; }).length;
+                document.getElementById("stat-total").textContent = items.length;
+                document.getElementById("stat-low").textContent = lowStock;
+                document.getElementById("stat-out").textContent = outOfStock;
+
+                if (!items.length) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No items found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = items.map(function (i) {
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + escapeHtml(i.name) + '</td>' +
+                        '<td>' + escapeHtml(i.branch ? i.branch.name : '—') + '</td>' +
+                        '<td>' + (Inventory.CATEGORY_LABELS[i.category] || i.category) + '</td>' +
+                        '<td>' + (i.category === 'FOR_SALE' ? Inventory.formatMoney(i.price) : '<span class="text-secondary">—</span>') + '</td>' +
+                        '<td>' + i.currentQuantity + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
+                        '<td>' + i.lowStockThreshold + '</td>' +
+                        '<td>' + Inventory.statusBadge(i) + '</td>' +
+                        '<td class="text-nowrap"><button class="btn btn-sm btn-outline-secondary me-1 btn-edit-item" data-id="' + i.id + '">Edit</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button></td>' +
+                        '</tr>';
+                }).join('');
+                _itemsCache = items;
+                tbody.querySelectorAll('.btn-edit-item').forEach(function (btn) {
+                    btn.addEventListener('click', function () { openEditItemModal(btn.dataset.id); });
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+                document.getElementById("stat-total").textContent = "—";
+                document.getElementById("stat-low").textContent = "—";
+                document.getElementById("stat-out").textContent = "—";
+            }
+        }
+
+        var _itemsCache = [];
+
+        function updatePriceRequirement(categorySelectId, labelHintId, requiredMarkId) {
+            var category = document.getElementById(categorySelectId).value;
+            var isForSale = category === 'FOR_SALE';
+            document.getElementById(requiredMarkId).style.display = isForSale ? '' : 'none';
+            document.getElementById(labelHintId).textContent = isForSale ? '(required — item is For Sale)' : '(optional — not sellable)';
+        }
+
+        function openEditItemModal(id) {
+            var item = _itemsCache.find(function (i) { return i.id === id; });
+            if (!item) return;
+            document.getElementById('edit-item-error').classList.add('d-none');
+            document.getElementById('ei-id').value = item.id;
+            document.getElementById('ei-name').value = item.name;
+            document.getElementById('ei-category').value = item.category;
+            document.getElementById('ei-unit').value = item.unit || '';
+            document.getElementById('ei-threshold').value = item.lowStockThreshold;
+            document.getElementById('ei-price').value = item.price != null ? item.price : '';
+            document.getElementById('ei-expiry').value = item.expiryDate ? item.expiryDate.slice(0, 10) : '';
+            updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
+            new bootstrap.Modal(document.getElementById('modal-edit-item')).show();
+        }
+
+        async function submitEditItem() {
+            var id = document.getElementById('ei-id').value;
+            var name = document.getElementById('ei-name').value.trim();
+            var category = document.getElementById('ei-category').value;
+            var unit = document.getElementById('ei-unit').value.trim();
+            var threshold = document.getElementById('ei-threshold').value;
+            var price = document.getElementById('ei-price').value;
+            var expiry = document.getElementById('ei-expiry').value;
+            var errEl = document.getElementById('edit-item-error');
+            errEl.classList.add('d-none');
+
+            if (!name) {
+                errEl.textContent = 'Name is required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            if (category === 'FOR_SALE' && !price) {
+                errEl.textContent = 'Price is required for items in the For Sale category.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            var btn = document.getElementById('btn-save-edit-item');
+            btn.disabled = true;
+            try {
+                await Inventory.update(id, {
+                    name: name,
+                    category: category,
+                    unit: unit || undefined,
+                    lowStockThreshold: threshold ? Number(threshold) : undefined,
+                    price: price ? Number(price) : undefined,
+                    expiryDate: expiry || undefined,
+                });
+                bootstrap.Modal.getInstance(document.getElementById('modal-edit-item')).hide();
+                loadItems();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to update item.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function submitNewItem() {
+            var branchId = document.getElementById("ni-branch").value;
+            var name = document.getElementById("ni-name").value.trim();
+            var category = document.getElementById("ni-category").value;
+            var unit = document.getElementById("ni-unit").value.trim();
+            var quantity = document.getElementById("ni-quantity").value;
+            var threshold = document.getElementById("ni-threshold").value;
+            var price = document.getElementById("ni-price").value;
+            var expiry = document.getElementById("ni-expiry").value;
+            var errEl = document.getElementById("new-item-error");
+
+            if (!branchId || !name) {
+                errEl.textContent = "Branch and name are required.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (category === 'FOR_SALE' && !price) {
+                errEl.textContent = "Price is required for items in the For Sale category.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+
+            var btn = document.getElementById("btn-save-new-item");
+            btn.disabled = true;
+            try {
+                await Inventory.create({
+                    branchId: branchId,
+                    name: name,
+                    category: category,
+                    unit: unit || undefined,
+                    initialQuantity: quantity ? Number(quantity) : undefined,
+                    lowStockThreshold: threshold ? Number(threshold) : undefined,
+                    price: price ? Number(price) : undefined,
+                    expiryDate: expiry || undefined,
+                });
+                bootstrap.Modal.getInstance(document.getElementById("modal-new-item")).hide();
+                loadItems();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to create item.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function openAdjustModal(itemId, itemName) {
+            _pendingAdjustItemId = itemId;
+            document.getElementById("adjust-item-label").textContent = itemName;
+            document.getElementById("adj-delta").value = "";
+            document.getElementById("adj-reason").value = "";
+            document.getElementById("adjust-error").classList.add("d-none");
+            new bootstrap.Modal(document.getElementById("modal-adjust")).show();
+        }
+
+        async function submitAdjust() {
+            var delta = parseInt(document.getElementById("adj-delta").value, 10);
+            var reason = document.getElementById("adj-reason").value.trim();
+            var errEl = document.getElementById("adjust-error");
+
+            if (!delta || !reason) {
+                errEl.textContent = "A non-zero quantity change and a reason are both required.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+
+            var btn = document.getElementById("btn-save-adjust");
+            btn.disabled = true;
+            try {
+                await Inventory.adjust(_pendingAdjustItemId, { quantityDelta: delta, reason: reason });
+                bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
+                loadItems();
+                refreshBadgeCounts();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to adjust stock.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // -- Alerts --
+
+        async function loadAlerts(resolved) {
+            document.querySelectorAll('[data-resolved]').forEach(function (b) {
+                b.classList.toggle('active', b.dataset.resolved === String(resolved));
+            });
+            var tbody = document.getElementById("alerts-tbody");
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await Inventory.getAlerts(undefined, resolved);
+                var alerts = result.data || result || [];
+                if (!alerts.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' alerts.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = alerts.map(function (a) {
+                    var stageColor = Inventory.ALERT_STAGE_COLORS[a.currentStage] || 'bg-secondary-lt';
+                    var action = resolved ? '' : '<button class="btn btn-sm btn-success btn-resolve-alert" data-id="' + a.id + '">Resolve</button>';
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + escapeHtml(a.item ? a.item.name : '—') + '</td>' +
+                        '<td>' + escapeHtml(a.item && a.item.branch ? a.item.branch.name : '—') + '</td>' +
+                        '<td>' + (a.item ? a.item.currentQuantity : '—') + '</td>' +
+                        '<td class="text-secondary small">' + new Date(a.triggeredAt).toLocaleString() + '</td>' +
+                        '<td><span class="badge ' + stageColor + '">' + a.currentStage + '</span></td>' +
+                        '<td>' + action + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+            }
+        }
+
+        async function resolveAlert(id) {
+            if (!confirm("Mark this alert resolved?")) return;
+            try {
+                await Inventory.resolveAlert(id);
+                loadAlerts(false);
+                refreshBadgeCounts();
+            } catch (err) {
+                alert(err.message || "Failed to resolve alert.");
+            }
+        }
+
+        // -- Transfers --
+
+        async function loadTransfers() {
+            var tbody = document.getElementById("transfers-tbody");
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await Inventory.getTransfers();
+                var transfers = result.data || result || [];
+                if (!transfers.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No transfer requests.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = transfers.map(function (t) {
+                    var statusColor = Inventory.TRANSFER_STATUS_COLORS[t.status] || 'bg-secondary-lt';
+                    var actions = t.status === 'PENDING'
+                        ? '<button class="btn btn-sm btn-success me-1 btn-approve-transfer" data-id="' + t.id + '">Approve</button>' +
+                        '<button class="btn btn-sm btn-outline-danger me-1 btn-reject-transfer" data-id="' + t.id + '">Reject</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-reassign-transfer" data-id="' + t.id + '">Reassign</button>'
+                        : (t.rejectionReason ? '<span class="text-secondary small">' + escapeHtml(t.rejectionReason) + '</span>' : '');
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + escapeHtml(t.fromItem ? t.fromItem.name : '—') + '</td>' +
+                        '<td>' + escapeHtml(t.fromItem && t.fromItem.branch ? t.fromItem.branch.name : '—') + '</td>' +
+                        '<td>' + escapeHtml(t.toBranch ? t.toBranch.name : '—') + '</td>' +
+                        '<td>' + t.quantity + '</td>' +
+                        '<td><span class="badge ' + statusColor + '">' + t.status + '</span></td>' +
+                        '<td>' + actions + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+            }
+        }
+
+        async function approveTransfer(id) {
+            if (!confirm("Approve and execute this transfer? Stock will move immediately.")) return;
+            try {
+                await Inventory.approveTransfer(id);
+                loadTransfers();
+                loadItems();
+                refreshBadgeCounts();
+            } catch (err) {
+                alert(err.message || "Failed to approve transfer.");
+            }
+        }
+
+        function openRejectTransferModal(id) {
+            _pendingRejectTransferId = id;
+            document.getElementById("reject-transfer-reason").value = "";
+            document.getElementById("reject-transfer-error").classList.add("d-none");
+            new bootstrap.Modal(document.getElementById("modal-reject-transfer")).show();
+        }
+
+        async function submitRejectTransfer() {
+            var reason = document.getElementById("reject-transfer-reason").value.trim();
+            var errEl = document.getElementById("reject-transfer-error");
+            if (!reason) {
+                errEl.textContent = "A reason is required.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            var btn = document.getElementById("btn-confirm-reject-transfer");
+            btn.disabled = true;
+            try {
+                await Inventory.rejectTransfer(_pendingRejectTransferId, reason);
+                bootstrap.Modal.getInstance(document.getElementById("modal-reject-transfer")).hide();
+                loadTransfers();
+                refreshBadgeCounts();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to reject transfer.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // -- Adjustment Requests --
+
+        async function loadAdjustmentRequests() {
+            var tbody = document.getElementById("adjustments-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await Inventory.getAdjustmentRequests();
+                var requests = result.data || result || [];
+                if (!requests.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No adjustment requests.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = requests.map(function (r) {
+                    var statusColor = Inventory.TRANSFER_STATUS_COLORS[r.status] || 'bg-secondary-lt';
+                    var delta = r.quantityDelta > 0 ? '+' + r.quantityDelta : String(r.quantityDelta);
+                    var deltaColor = r.quantityDelta > 0 ? 'text-success' : 'text-danger';
+                    var actions = r.status === 'PENDING'
+                        ? '<button class="btn btn-sm btn-success me-1 btn-approve-adjustment" data-id="' + r.id + '">Approve</button>' +
+                        '<button class="btn btn-sm btn-outline-danger me-1 btn-reject-adjustment" data-id="' + r.id + '">Reject</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-reassign-adjustment" data-id="' + r.id + '">Reassign</button>'
+                        : '';
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + escapeHtml(r.item ? r.item.name : '—') + '</td>' +
+                        '<td>' + escapeHtml(r.item && r.item.branch ? r.item.branch.name : '—') + '</td>' +
+                        '<td>' + escapeHtml(r.requestedBy ? r.requestedBy.name : '—') + '</td>' +
+                        '<td class="' + deltaColor + '" style="font-weight:600">' + delta + '</td>' +
+                        '<td class="text-secondary small">' + escapeHtml(r.reason || '—') + '</td>' +
+                        '<td><span class="badge ' + statusColor + '">' + r.status + '</span></td>' +
+                        '<td>' + actions + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+            }
+        }
+
+        async function approveAdjustment(id) {
+            if (!confirm("Approve this stock adjustment? The item's quantity will change immediately.")) return;
+            try {
+                await Inventory.approveAdjustment(id);
+                loadAdjustmentRequests();
+                loadItems();
+                refreshBadgeCounts();
+            } catch (err) {
+                alert(err.message || "Failed to approve adjustment.");
+            }
+        }
+
+        var _pendingRejectAdjustmentId = null;
+
+        function openRejectAdjustmentModal(id) {
+            _pendingRejectAdjustmentId = id;
+            document.getElementById("reject-adjustment-reason").value = "";
+            document.getElementById("reject-adjustment-error").classList.add("d-none");
+            new bootstrap.Modal(document.getElementById("modal-reject-adjustment")).show();
+        }
+
+        async function submitRejectAdjustment() {
+            var reason = document.getElementById("reject-adjustment-reason").value.trim();
+            var errEl = document.getElementById("reject-adjustment-error");
+            if (!reason) {
+                errEl.textContent = "A reason is required.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            var btn = document.getElementById("btn-confirm-reject-adjustment");
+            btn.disabled = true;
+            try {
+                await Inventory.rejectAdjustment(_pendingRejectAdjustmentId, reason);
+                bootstrap.Modal.getInstance(document.getElementById("modal-reject-adjustment")).hide();
+                loadAdjustmentRequests();
+                refreshBadgeCounts();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to reject adjustment.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // -- Shared Reassign (transfers + adjustments) --
+
+        var _pendingReassignType = null;
+        var _pendingReassignId = null;
+        var _reassignStaffLoaded = false;
+
+        async function openReassignModal(type, id) {
+            _pendingReassignType = type;
+            _pendingReassignId = id;
+            document.getElementById("reassign-request-title").textContent = type === "transfer" ? "Reassign Transfer" : "Reassign Adjustment Request";
+            document.getElementById("reassign-request-reason").value = "";
+            document.getElementById("reassign-request-error").classList.add("d-none");
+
+            var select = document.getElementById("reassign-request-staff");
+            select.innerHTML = '<option value="">Loading staff…</option>';
+            SearchableSelect.attach("reassign-request-staff");
+            SearchableSelect.refresh("reassign-request-staff");
+
+            new bootstrap.Modal(document.getElementById("modal-reassign-request")).show();
+
+            try {
+                var result = await Staff.getAll({ limit: 100 });
+                var staffList = result.data || [];
+                select.innerHTML = '<option value="">Select a staff member…</option>' + staffList.map(function (s) {
+                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
+                }).join('');
+                SearchableSelect.refresh("reassign-request-staff");
+            } catch (err) {
+                select.innerHTML = '<option value="">Failed to load staff</option>';
+                SearchableSelect.refresh("reassign-request-staff");
+            }
+        }
+
+        async function submitReassignRequest() {
+            var toApproverId = document.getElementById("reassign-request-staff").value;
+            var reason = document.getElementById("reassign-request-reason").value.trim();
+            var errEl = document.getElementById("reassign-request-error");
+            errEl.classList.add("d-none");
+
+            if (!toApproverId) { errEl.textContent = "Please select who to reassign to."; errEl.classList.remove("d-none"); return; }
+            if (!reason) { errEl.textContent = "A reason is required."; errEl.classList.remove("d-none"); return; }
+
+            var btn = document.getElementById("btn-confirm-reassign-request");
+            btn.disabled = true;
+            try {
+                if (_pendingReassignType === "transfer") {
+                    await Inventory.reassignTransfer(_pendingReassignId, toApproverId, reason);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-reassign-request")).hide();
+                    loadTransfers();
+                } else {
+                    await Inventory.reassignAdjustment(_pendingReassignId, toApproverId, reason);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-reassign-request")).hide();
+                    loadAdjustmentRequests();
+                }
+                refreshBadgeCounts();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to reassign.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

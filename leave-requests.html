@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Leave Requests</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .type-lbl {
+            font-size: .8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Human Resources</div>
+                            <h2 class="page-title">Leave &amp; Permission Requests</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Requests</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                            <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="status-tabs">
+                                <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="PENDING">Pending</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="APPROVED">Approved</a>
+                                </li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="REJECTED">Rejected</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="card-body border-bottom py-4">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <label class="form-label text-secondary small mb-1">Request Type</label>
+                                    <select id="filter-type" class="form-select form-select-sm">
+                                        <option value="">All types</option>
+                                        <option value="ANNUAL_LEAVE">Annual Leave</option>
+                                        <option value="SICK_LEAVE">Sick Leave</option>
+                                        <option value="CASUAL_LEAVE">Casual Leave</option>
+                                        <option value="DAY_OFF">Day Off</option>
+                                        <option value="PERMISSION_LATE_ARRIVAL">Permission — Late Arrival</option>
+                                        <option value="PERMISSION_EARLY_DEPARTURE">Permission — Early Departure</option>
+                                        <option value="OVERTIME_REQUEST">Overtime Request</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">Per page</label>
+                                    <select id="filter-limit" class="form-select form-select-sm">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-secondary w-100" id="btn-clear">Clear
+                                        filters</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter table-hover card-table" id="leave-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Staff</th>
+                                            <th>Type</th>
+                                            <th>Dates</th>
+                                            <th>Reason</th>
+                                            <th>Status</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leave-tbody">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card-footer d-flex align-items-center">
+                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">&copy; 2026 Hairlux Admin Panel</div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Reject modal -->
+    <!-- Reject modal -->
+    <div class="modal modal-blur fade" id="modal-reject" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reject-error"></div>
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reject-reason" rows="3"
+                        placeholder="Why is this request being rejected?"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-reject">Confirm Rejection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reassign modal -->
+    <div class="modal modal-blur fade" id="modal-reassign" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reassign Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reassign-error"></div>
+                    <label class="form-label">Reassign to</label>
+                    <select class="form-select mb-3" id="reassign-staff-select">
+                        <option value="">Loading staff…</option>
+                    </select>
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="reassign-reason" rows="3"
+                        placeholder="Why is this being handed off?"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-reassign">Confirm
+                        Reassignment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/leave.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var state = { page: 1, limit: 20, status: '', type: '', totalPages: 1 };
+        var _pendingRejectId = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuardForCurrentPage();
+                RBAC.applyNavVisibility();
+            });
+
+            var user = Auth.getUser();
+            if (user) {
+                var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
+                var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
+                var role = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent = initials;
+                document.getElementById("navbar-user-name").textContent = fullName;
+                document.getElementById("navbar-user-role").textContent = role;
+                document.getElementById("dropdown-user-name").textContent = fullName;
+                document.getElementById("dropdown-user-email").textContent = user.email || "";
+            }
+            document.getElementById("logout-btn").addEventListener("click", function (e) { e.preventDefault(); Auth.logout(); });
+
+            loadRequests();
+
+            document.getElementById("status-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-status]");
+                if (!tab) return;
+                document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                state.status = tab.dataset.status;
+                state.page = 1;
+                loadRequests();
+            });
+
+            document.getElementById("filter-type").addEventListener("change", function () {
+                state.type = this.value; state.page = 1; loadRequests();
+            });
+            document.getElementById("filter-limit").addEventListener("change", function () {
+                state.limit = parseInt(this.value, 10); state.page = 1; loadRequests();
+            });
+            document.getElementById("btn-clear").addEventListener("click", function () {
+                document.getElementById("filter-type").value = "";
+                document.getElementById("filter-limit").value = "20";
+                document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
+                state = { page: 1, limit: 20, status: '', type: '', totalPages: 1 };
+                loadRequests();
+            });
+            document.getElementById("btn-refresh").addEventListener("click", loadRequests);
+
+            document.getElementById("pagination-btns").addEventListener("click", function (e) {
+                e.preventDefault();
+                var a = e.target.closest("a[data-page]");
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > state.totalPages) return;
+                state.page = p;
+                loadRequests();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            document.getElementById("leave-tbody").addEventListener("click", function (e) {
+                var approveBtn = e.target.closest(".btn-approve");
+                if (approveBtn) { handleApprove(approveBtn.dataset.id); return; }
+                var rejectBtn = e.target.closest(".btn-reject");
+                if (rejectBtn) { openRejectModal(rejectBtn.dataset.id); return; }
+                var reassignBtn = e.target.closest(".btn-reassign");
+                if (reassignBtn) { openReassignModal(reassignBtn.dataset.id); return; }
+            });
+
+            document.getElementById("btn-confirm-reject").addEventListener("click", submitReject);
+            document.getElementById("btn-confirm-reassign").addEventListener("click", submitReassign);
+        });
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        async function loadRequests() {
+            var tbody = document.getElementById("leave-tbody");
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var result = await LeaveRequests.getAll({
+                    page: state.page, limit: state.limit, status: state.status, type: state.type,
+                });
+                var rows = result.data || (Array.isArray(result) ? result : []);
+                var meta = result.meta || {};
+                state.totalPages = meta.totalPages || 1;
+                var count = meta.total ?? rows.length;
+                document.getElementById("results-label").textContent = count + " request" + (count !== 1 ? "s" : "") + " found";
+                renderTable(rows);
+                renderPagination(meta);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load requests.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        function renderTable(rows) {
+            var tbody = document.getElementById("leave-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No leave requests found.</td></tr>';
+                return;
+            }
+            var permissionTypes = ['PERMISSION_LATE_ARRIVAL', 'PERMISSION_EARLY_DEPARTURE'];
+            tbody.innerHTML = rows.map(function (r) {
+                var staffName = r.staff ? r.staff.name : '—';
+                var staffCode = r.staff ? r.staff.staffCode : '';
+                var dates = LeaveRequests.formatDate(r.startDate) + (r.startDate !== r.endDate ? ' – ' + LeaveRequests.formatDate(r.endDate) : '');
+                if (permissionTypes.indexOf(r.type) !== -1 && r.startTime) {
+                    dates += ' <span class="text-secondary">(' + r.startTime + (r.endTime ? '–' + r.endTime : '') + ')</span>';
+                }
+                var actions = '';
+                if (r.status === 'PENDING') {
+                    actions =
+                        '<button class="btn btn-sm btn-success me-1 btn-approve" data-id="' + r.id + '">Approve</button>' +
+                        '<button class="btn btn-sm btn-outline-danger me-1 btn-reject" data-id="' + r.id + '">Reject</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-reassign" data-id="' + r.id + '">Reassign</button>';
+                } else if (r.status === 'REJECTED' && r.rejectionReason) {
+                    actions = '<span class="text-secondary small">' + escapeHtml(r.rejectionReason) + '</span>';
+                } else if (r.status === 'APPROVED' && r.approvedAt) {
+                    actions = '<span class="text-secondary small">' + LeaveRequests.formatDate(r.approvedAt) + '</span>';
+                }
+                return '<tr>' +
+                    '<td><div class="fw-semibold">' + escapeHtml(staffName) + '</div><div class="text-secondary small">' + escapeHtml(staffCode) + '</div></td>' +
+                    '<td class="type-lbl">' + (LeaveRequests.TYPE_LABELS[r.type] || r.type) + '</td>' +
+                    '<td class="text-nowrap">' + dates + '</td>' +
+                    '<td class="text-secondary small" style="max-width:220px;white-space:normal">' + escapeHtml(r.reason) + '</td>' +
+                    '<td>' + LeaveRequests.statusBadge(r.status) + '</td>' +
+                    '<td>' + actions + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function renderPagination(meta) {
+            var total = meta.total || 0, page = meta.page || state.page;
+            var limit = meta.limit || state.limit, pages = meta.totalPages || 1;
+            var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
+            document.getElementById("pagination-info").textContent = total ? "Showing " + from + "–" + to + " of " + total : "No results";
+            var ul = document.getElementById("pagination-btns");
+            ul.innerHTML = '';
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
+            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+            for (var p = start; p <= end; p++) {
+                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
+        }
+
+        async function handleApprove(id) {
+            if (!confirm('Approve this request?')) return;
+            try {
+                await LeaveRequests.approve(id);
+                loadRequests();
+            } catch (err) {
+                alert(err.message || 'Failed to approve request.');
+            }
+        }
+
+        function openRejectModal(id) {
+            _pendingRejectId = id;
+            document.getElementById('reject-reason').value = '';
+            document.getElementById('reject-error').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('modal-reject')).show();
+        }
+
+        async function submitReject() {
+            var reason = document.getElementById('reject-reason').value.trim();
+            var errEl = document.getElementById('reject-error');
+            if (!reason) {
+                errEl.textContent = 'A reason is required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = document.getElementById('btn-confirm-reject');
+            btn.disabled = true;
+            try {
+                await LeaveRequests.reject(_pendingRejectId, reason);
+                bootstrap.Modal.getInstance(document.getElementById('modal-reject')).hide();
+                loadRequests();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to reject request.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        var _pendingReassignId = null;
+
+        async function openReassignModal(id) {
+            _pendingReassignId = id;
+            document.getElementById('reassign-reason').value = '';
+            document.getElementById('reassign-error').classList.add('d-none');
+            var select = document.getElementById('reassign-staff-select');
+            select.innerHTML = '<option value="">Loading staff…</option>';
+            new bootstrap.Modal(document.getElementById('modal-reassign')).show();
+            try {
+                var result = await Staff.getAll({ limit: 100 });
+                var staffList = result.data || [];
+                select.innerHTML = '<option value="">Select a staff member…</option>' + staffList.map(function (s) {
+                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
+                }).join('');
+            } catch (err) {
+                select.innerHTML = '<option value="">Failed to load staff</option>';
+            }
+        }
+
+        async function submitReassign() {
+            var toApproverId = document.getElementById('reassign-staff-select').value;
+            var reason = document.getElementById('reassign-reason').value.trim();
+            var errEl = document.getElementById('reassign-error');
+            errEl.classList.add('d-none');
+            if (!toApproverId) {
+                errEl.textContent = 'Please select who to reassign this to.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            if (!reason) {
+                errEl.textContent = 'A reason is required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = document.getElementById('btn-confirm-reassign');
+            btn.disabled = true;
+            try {
+                await LeaveRequests.reassign(_pendingReassignId, toApproverId, reason);
+                bootstrap.Modal.getInstance(document.getElementById('modal-reassign')).hide();
+                loadRequests();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to reassign request.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

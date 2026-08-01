@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Attendance</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        table td {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"><svg
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1">
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg></a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"><svg
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1" />
+                            </svg></a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Staff</div>
+                            <h2 class="page-title">Attendance</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert" class="alert d-none mb-3" role="alert"></div>
+
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Attendance Records</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="card-body border-bottom py-4">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">Date</label>
+                                    <input type="date" class="form-control form-control-sm" id="filter-date">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select class="form-select form-select-sm" id="filter-branch">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">Staff member</label>
+                                    <select class="form-select form-select-sm" id="filter-staff">
+                                        <option value="">All staff</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-sm btn-secondary"
+                                        id="btn-clear-filters">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Staff</th>
+                                        <th>Branch</th>
+                                        <th>Date</th>
+                                        <th>Check In</th>
+                                        <th>Check Out</th>
+                                        <th>Hours</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-tbody">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="correction-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Correct Attendance Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Check In</label>
+                        <input type="datetime-local" class="form-control" id="correction-checkin">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Check Out</label>
+                        <input type="datetime-local" class="form-control" id="correction-checkout">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="correction-status">
+                            <option value="">— no change —</option>
+                            <option value="PRESENT">Present</option>
+                            <option value="LATE">Late</option>
+                            <option value="ABSENT">Absent</option>
+                            <option value="ON_LEAVE">On Leave</option>
+                            <option value="APPROVED_PERMISSION">Approved Permission</option>
+                            <option value="PUBLIC_HOLIDAY">Public Holiday</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="correction-reason" rows="2"
+                            placeholder="Required — why is this being corrected?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-correction">Save Correction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/api-utils/staff.js"></script>
+    <script src="./assets/js/api-utils/staff-operations.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var listState = { date: "", locationId: "", staffId: "" };
+        var pageAlertTimer = null;
+
+        function setPageAlert(type, message) {
+            var el = document.getElementById("page-alert");
+            if (!message) { el.className = "alert d-none mb-3"; el.textContent = ""; return; }
+            el.className = "alert alert-" + type + " mb-3";
+            el.textContent = message;
+        }
+
+        function flashPageAlert(type, message) {
+            if (pageAlertTimer) { clearTimeout(pageAlertTimer); pageAlertTimer = null; }
+            setPageAlert(type, message);
+            if (!message) return;
+            pageAlertTimer = setTimeout(function () { setPageAlert("", ""); pageAlertTimer = null; }, 5000);
+        }
+
+        function esc(s) {
+            return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        async function loadFilterOptions() {
+            try {
+                var branches = await Staff.getLocations();
+                document.getElementById("filter-branch").innerHTML =
+                    '<option value="">All branches</option>' +
+                    branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join("");
+            } catch (e) {
+                console.error("Failed to load branches", e);
+            }
+
+            try {
+                var result = await Staff.getAll({ limit: 100 });
+                document.getElementById("filter-staff").innerHTML =
+                    '<option value="">All staff</option>' +
+                    result.data.map(function (s) { return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + '</option>'; }).join("");
+            } catch (e) {
+                console.error("Failed to load staff", e);
+            }
+        }
+
+        async function loadAttendance(options) {
+            options = options || {};
+            document.getElementById("results-label").textContent = "Loading…";
+            try {
+                var result = await StaffOps.getAttendanceReport(listState);
+                var records = result.data;
+                var tbody = document.getElementById("attendance-tbody");
+                if (!records.length) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No attendance records match your filters.</td></tr>';
+                } else {
+                    tbody.innerHTML = records.map(function (r) {
+                        var hours = r.checkOutAt
+                            ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
+                            : "—";
+
+                        var statusBadgeClass = {
+                            PRESENT: "bg-success-lt",
+                            LATE: "bg-warning-lt",
+                            ABSENT: "bg-danger-lt",
+                            ON_LEAVE: "bg-azure-lt",
+                            APPROVED_PERMISSION: "bg-azure-lt",
+                            PUBLIC_HOLIDAY: "bg-secondary-lt",
+                        }[r.status] || "bg-secondary-lt";
+
+                        var statusLabel = String(r.status || "").replace(/_/g, " ");
+                        var statusDetail = "";
+                        if (r.status === "LATE" && r.lateMinutes) statusDetail = r.lateMinutes + " min late";
+                        if (r.overtimeMinutes) statusDetail = (statusDetail ? statusDetail + " · " : "") + r.overtimeMinutes + " min OT";
+
+                        var manualBadge = r.isManuallyAdjusted
+                            ? '<div><span class="badge bg-orange-lt mt-1">Manually adjusted</span></div>'
+                            : '<div><span class="badge bg-green-lt mt-1">GPS-verified</span></div>';
+
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(r.staff ? r.staff.name : "-") + ' <span class="text-secondary small">(' + esc(r.staff ? r.staff.staffCode : "-") + ')</span></td>' +
+                            '<td>' + esc(r.location ? r.location.name : "-") + '</td>' +
+                            '<td>' + StaffOps.formatDate(r.date) + '</td>' +
+                            '<td>' + StaffOps.formatTime(r.checkInAt) + '</td>' +
+                            '<td>' + (r.checkOutAt ? StaffOps.formatTime(r.checkOutAt) : "—") + '</td>' +
+                            '<td>' + hours + '</td>' +
+                            '<td><span class="badge ' + statusBadgeClass + '">' + esc(statusLabel) + '</span>' +
+                            (statusDetail ? '<div class="text-secondary small mt-1">' + esc(statusDetail) + '</div>' : '') +
+                            manualBadge +
+                            '</td>' +
+                            '<td><button type="button" class="btn btn-sm btn-outline-secondary btn-correct" data-id="' + r.id + '">Correct</button></td>' +
+                            '</tr>';
+                    }).join("");
+
+                    document.querySelectorAll(".btn-correct").forEach(function (btn) {
+                        btn.addEventListener("click", function () { openCorrectionModal(this.dataset.id); });
+                    });
+                }
+                document.getElementById("results-label").textContent = records.length + " record(s)";
+                if (options.notifySuccess) flashPageAlert("success", "Refreshed.");
+            } catch (e) {
+                document.getElementById("attendance-tbody").innerHTML =
+                    '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || "Failed to load attendance.") + '</td></tr>';
+                document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        var correctionModal;
+        var correctionRecordId = null;
+
+        function openCorrectionModal(recordId) {
+            correctionRecordId = recordId;
+            document.getElementById("correction-checkin").value = "";
+            document.getElementById("correction-checkout").value = "";
+            document.getElementById("correction-status").value = "";
+            document.getElementById("correction-reason").value = "";
+            if (!correctionModal) correctionModal = new bootstrap.Modal(document.getElementById("correction-modal"));
+            correctionModal.show();
+        }
+
+        document.getElementById("btn-save-correction").addEventListener("click", async function () {
+            var reason = document.getElementById("correction-reason").value.trim();
+            if (!reason) {
+                flashPageAlert("danger", "A reason is required to save a correction.");
+                return;
+            }
+
+            var payload = { reason: reason };
+            var checkInVal = document.getElementById("correction-checkin").value;
+            var checkOutVal = document.getElementById("correction-checkout").value;
+            var statusVal = document.getElementById("correction-status").value;
+            if (checkInVal) payload.checkInAt = new Date(checkInVal).toISOString();
+            if (checkOutVal) payload.checkOutAt = new Date(checkOutVal).toISOString();
+            if (statusVal) payload.status = statusVal;
+
+            try {
+                await StaffOps.correctAttendance(correctionRecordId, payload);
+                correctionModal.hide();
+                flashPageAlert("success", "Attendance record corrected.");
+                loadAttendance();
+            } catch (e) {
+                flashPageAlert("danger", e.message || "Failed to save correction.");
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuardForCurrentPage();
+                RBAC.applyNavVisibility();
+            });
+
+            document.getElementById("btn-refresh").addEventListener("click", function () { loadAttendance({ notifySuccess: true }); });
+
+            document.getElementById("filter-date").addEventListener("change", function () {
+                listState.date = this.value;
+                loadAttendance();
+            });
+            document.getElementById("filter-branch").addEventListener("change", function () {
+                listState.locationId = this.value;
+                loadAttendance();
+            });
+            document.getElementById("filter-staff").addEventListener("change", function () {
+                listState.staffId = this.value;
+                loadAttendance();
+            });
+            document.getElementById("btn-clear-filters").addEventListener("click", function () {
+                document.getElementById("filter-date").value = "";
+                document.getElementById("filter-branch").value = "";
+                document.getElementById("filter-staff").value = "";
+                listState = { date: "", locationId: "", staffId: "" };
+                loadAttendance();
+            });
+
+            loadFilterOptions();
+            loadAttendance();
+        });
+    </script>
+</body>
+
+</html>

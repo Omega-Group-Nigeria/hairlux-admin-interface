@@ -1,0 +1,1561 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Beauticians</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        #beauticians-table td, #reviews-table td { vertical-align: middle; }
+        .beautician-row { cursor: pointer; }
+        .beautician-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
+        .perf-label { font-size: .75rem; color: var(--tblr-secondary); margin-bottom: 2px; }
+        .perf-value { font-size: 1.5rem; font-weight: 700; }
+        #section-settings .card { height: 100%; }
+        #section-settings .card-body { flex: 1 1 auto; }
+        .settings-scoring-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+        @media (max-width: 575.98px) { .settings-scoring-grid { grid-template-columns: 1fr; } }
+        .settings-scoring-box {
+            border: 1px solid var(--tblr-border-color);
+            border-radius: var(--tblr-border-radius, 6px);
+            background: var(--tblr-bg-surface-secondary, var(--tblr-bg-surface));
+            padding: .65rem .75rem;
+        }
+        .settings-scoring-label {
+            font-size: .75rem;
+            color: var(--tblr-secondary);
+            margin-bottom: .25rem;
+        }
+        .settings-scoring-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.2;
+        }
+        .settings-hint-btn { line-height: 1; vertical-align: middle; opacity: .65; }
+        .settings-hint-btn:hover, .settings-hint-btn:focus { opacity: 1; }
+        .settings-hint-btn .icon { display: block; }
+        .popover.settings-field-popover { max-width: min(320px, calc(100vw - 2rem)); }
+        .popover.settings-field-popover .popover-body { font-size: .8125rem; line-height: 1.45; }
+        .payout-row td { vertical-align: middle; }
+        .daily-pool-stat { min-width: 0; }
+        .daily-pool-stat .stat-label { font-size: .75rem; color: var(--tblr-secondary); margin-bottom: .15rem; }
+        .daily-pool-stat .stat-value { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+        .daily-pool-progress { height: .5rem; }
+        .daily-pool-progress.near-cap .progress-bar { background-color: var(--tblr-warning); }
+        .daily-pool-progress.at-cap .progress-bar { background-color: var(--tblr-danger); }
+        .service-check-label { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
+        .service-check-label:hover { color: var(--tblr-primary); }
+        .detail-section + .detail-section { border-top: 1px solid var(--tblr-border-color); padding-top: 1rem; margin-top: 1rem; }
+        .btn-view-photo-avatar { cursor: pointer; }
+        .btn-view-photo-avatar:hover { opacity: .9; }
+        #modal-photo-img { max-height: 70vh; width: auto; max-width: 100%; object-fit: contain; }
+
+        /* ── Beautician detail offcanvas ── */
+        #offcanvas-detail .offcanvas-body {
+            padding: 1.25rem 1.5rem 1.75rem;
+            background: var(--tblr-bg-surface-secondary, #f6f8fb);
+        }
+        #offcanvas-detail .offcanvas-header { background: var(--tblr-bg-surface, #fff); }
+        #offcanvas-detail-actions { background: var(--tblr-bg-surface, #fff); }
+        .detail-stack { display: flex; flex-direction: column; gap: 1rem; }
+        .detail-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        @media (min-width: 992px) {
+            .detail-grid-2 { grid-template-columns: 1fr 1fr; }
+        }
+        .detail-card {
+            background: var(--tblr-bg-surface, #fff);
+            border: 1px solid var(--tblr-border-color);
+            border-radius: .65rem;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+            overflow: hidden;
+        }
+        .detail-card-hero {
+            border: 1px solid var(--tblr-border-color);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
+        }
+        .detail-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            flex-wrap: wrap;
+            padding: .7rem 1rem;
+            border-bottom: 1px solid var(--tblr-border-color);
+            background: var(--tblr-bg-surface, #fff);
+        }
+        .detail-card-title {
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--tblr-secondary);
+            margin: 0;
+        }
+        .detail-card-title .detail-count {
+            font-weight: 500;
+            letter-spacing: normal;
+            text-transform: none;
+            opacity: .85;
+        }
+        .detail-card-body { padding: 1rem 1.1rem 1.1rem; }
+        .detail-card-hero .detail-card-body { padding: 1.15rem 1.25rem; }
+        .detail-field-label {
+            font-size: .72rem;
+            color: var(--tblr-secondary);
+            margin-bottom: .2rem;
+        }
+        .detail-field-value { font-size: .9rem; line-height: 1.4; }
+        .detail-metric {
+            border: 1px solid var(--tblr-border-color);
+            border-radius: .5rem;
+            padding: .7rem .8rem;
+            background: var(--tblr-bg-surface-secondary, #f6f8fb);
+            height: 100%;
+        }
+        .detail-metric-label {
+            font-size: .72rem;
+            color: var(--tblr-secondary);
+            margin-bottom: .25rem;
+        }
+        .detail-metric-value {
+            font-size: 1.35rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.15;
+        }
+        .detail-prose {
+            white-space: pre-wrap;
+            font-size: .875rem;
+            line-height: 1.5;
+        }
+        .detail-services-scroll {
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .detail-services-scroll .service-row:last-child { border-bottom: 0 !important; }
+        .detail-job-row:last-child { border-bottom: 0 !important; }
+        .detail-cert-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+        .detail-hero-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.15rem;
+            flex-wrap: wrap;
+        }
+        .detail-hero-meta { flex: 1 1 16rem; min-width: 0; }
+        .detail-hero-side {
+            text-align: right;
+            margin-left: auto;
+            min-width: 9rem;
+        }
+        .detail-hero-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .35rem;
+            margin-top: .75rem;
+        }
+        .detail-reviews-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: .75rem;
+        }
+        @media (min-width: 576px) {
+            .detail-reviews-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 900px) {
+            .detail-reviews-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        .detail-review-item {
+            border: 1px solid var(--tblr-border-color);
+            border-radius: .5rem;
+            padding: .75rem .85rem;
+            background: var(--tblr-bg-surface-secondary, #f6f8fb);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            height: 100%;
+        }
+        .detail-review-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: .5rem;
+        }
+        .detail-review-comment {
+            display: -webkit-box;
+            -webkit-line-clamp: 5;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            font-size: .8125rem;
+        }
+        .detail-review-stars { letter-spacing: .05em; color: #f59f00; font-size: .9rem; }
+        .detail-review-stars .star-empty { color: var(--tblr-secondary); opacity: .35; }
+        .detail-reviews-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            align-items: end;
+            margin-bottom: .85rem;
+        }
+        .detail-reviews-toolbar .form-label {
+            font-size: .72rem;
+            color: var(--tblr-secondary);
+            margin-bottom: .15rem;
+        }
+        .detail-reviews-list { min-height: 4rem; }
+        .detail-reviews-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            margin-top: .85rem;
+            padding-top: .75rem;
+            border-top: 1px solid var(--tblr-border-color);
+        }
+        /* Keep light wrappers non-spacing when nested inside cards */
+        .detail-section-heading { display: none; }
+        .detail-subsection { margin: 0; }
+        .detail-heavy-box { /* content lives in card body */ }
+
+        #modal-cert-body { min-height: 280px; }
+        #modal-cert-loading { min-height: 240px; }
+        #modal-cert-img { max-height: 70vh; width: auto; max-width: 100%; object-fit: contain; }
+        #modal-cert-frame { height: 70vh; border: 0; }
+
+        /* KYC intro video player modal */
+        #modal-kyc-video-preview .modal-body { overflow: hidden; }
+        .kyc-video-stage {
+            position: relative;
+            background: #0b0f14;
+            min-height: 240px;
+            max-height: min(58vh, 480px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kyc-video-el {
+            display: block;
+            width: 100%;
+            max-height: min(58vh, 480px);
+            background: #000;
+            outline: none;
+        }
+        .kyc-video-el.is-hidden { visibility: hidden; }
+        .kyc-video-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            background: rgba(11, 15, 20, 0.72);
+            z-index: 2;
+        }
+        .kyc-video-overlay.d-none { display: none !important; }
+        .kyc-video-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .75rem;
+            color: #e5e7eb;
+            text-align: center;
+        }
+        .kyc-video-loading .spinner-border {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-width: .2em;
+            color: #fff;
+        }
+        .kyc-video-error-panel {
+            max-width: 22rem;
+            width: 100%;
+            text-align: center;
+            color: #f3f4f6;
+        }
+        .kyc-video-error-icon {
+            width: 2.75rem;
+            height: 2.75rem;
+            margin: 0 auto .75rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(220, 53, 69, 0.2);
+            color: #f87171;
+        }
+        .kyc-video-error-title {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: .35rem;
+        }
+        .kyc-video-error-msg {
+            font-size: .8125rem;
+            line-height: 1.45;
+            color: #d1d5db;
+            margin-bottom: 0;
+        }
+        .kyc-video-controls {
+            background: #111827;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: .9rem 1.1rem 1rem;
+        }
+        .kyc-video-seek-row {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            margin-bottom: .85rem;
+            min-width: 0;
+        }
+        .kyc-video-seek-row .kyc-video-time {
+            color: #d1d5db;
+            font-size: .75rem;
+            font-variant-numeric: tabular-nums;
+            font-family: var(--tblr-font-monospace, ui-monospace, monospace);
+            flex-shrink: 0;
+            min-width: 2.4rem;
+        }
+        .kyc-video-seek-row .kyc-video-time-end { text-align: right; }
+        .kyc-video-seek {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 1.25rem;
+            margin: 0;
+            cursor: pointer;
+        }
+        .kyc-video-main-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: .75rem;
+            min-width: 0;
+        }
+        .kyc-video-volume-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: .45rem;
+            min-width: 0;
+        }
+        .kyc-video-play-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kyc-video-main-spacer { min-width: 0; }
+        .kyc-video-ctrl-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            padding: 0;
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+        .kyc-video-play-btn {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+        .kyc-video-volume {
+            width: 6.5rem;
+            max-width: 100%;
+            min-width: 3.5rem;
+            height: 1.25rem;
+            margin: 0;
+            cursor: pointer;
+        }
+        .kyc-video-controls.is-disabled {
+            opacity: .55;
+            pointer-events: none;
+        }
+        .kyc-video-controls .form-range::-webkit-slider-runnable-track {
+            height: .28rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.22);
+        }
+        .kyc-video-controls .form-range::-moz-range-track {
+            height: .28rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.22);
+        }
+        .kyc-video-controls .form-range::-webkit-slider-thumb {
+            margin-top: -.32rem;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.35);
+        }
+        .kyc-video-controls .form-range::-moz-range-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: 0 0 0 3px rgba(32, 107, 196, 0.35);
+        }
+        @media (max-width: 420px) {
+            .kyc-video-volume { width: 4.25rem; }
+            .kyc-video-main-row { gap: .4rem; }
+        }
+        /* Searchable dropdown picker (beautician assign + service rate override) */
+        .svc-beautician-picker,
+        .scr-service-picker { position: relative; }
+        .svc-beautician-picker-toggle,
+        .scr-service-picker-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            min-height: calc(1.4285714em + .875rem + 2px);
+            padding: .4375rem .75rem;
+            font-size: .875rem;
+            line-height: 1.4285714;
+            color: var(--tblr-body-color);
+            background-color: var(--tblr-bg-forms, var(--tblr-bg-surface));
+            border: 1px solid var(--tblr-border-color);
+            border-radius: var(--tblr-border-radius, .25rem);
+            text-align: left;
+        }
+        .svc-beautician-picker-toggle:disabled,
+        .scr-service-picker-toggle:disabled { opacity: .65; cursor: not-allowed; }
+        .svc-beautician-picker-toggle::after,
+        .scr-service-picker-toggle::after {
+            content: '';
+            width: .55rem;
+            height: .55rem;
+            margin-left: .75rem;
+            border-right: 2px solid var(--tblr-secondary);
+            border-bottom: 2px solid var(--tblr-secondary);
+            transform: rotate(45deg) translateY(-2px);
+            flex-shrink: 0;
+        }
+        .svc-beautician-picker-menu,
+        .scr-service-picker-menu {
+            width: 100%;
+            padding: 0;
+            overflow: hidden;
+        }
+        .svc-beautician-picker-search,
+        .scr-service-picker-search {
+            padding: .5rem;
+            border-bottom: 1px solid var(--tblr-border-color);
+            background: var(--tblr-bg-surface);
+        }
+        .svc-beautician-picker-list,
+        .scr-service-picker-list {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .svc-beautician-option .option-meta,
+        .scr-service-option .option-meta {
+            font-size: .75rem;
+            color: var(--tblr-secondary);
+        }
+        .svc-beautician-option.active,
+        .scr-service-option.active {
+            background-color: var(--tblr-primary-lt);
+            color: var(--tblr-primary);
+        }
+        /* Allow searchable picker menu to extend past modal body */
+        #modal-service-commission .modal-body { overflow: visible; }
+        #modal-service-commission .modal-content { overflow: visible; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
+                        </a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown" aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1 me-2"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1 me-2"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /><path d="M9 12h12l-3 -3" /><path d="M18 15l3 -3" /></svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav links -->
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Provider Operations</div>
+                            <h2 class="page-title">Beauticians</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex align-items-center gap-2">
+                            <label class="form-label text-secondary small mb-0" for="perf-period-days">Period (days):</label>
+                            <select id="perf-period-days" class="form-select form-select-sm" style="width:auto">
+                                <option value="7">Last 7 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                                <option value="365">Last year</option>
+                            </select>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert" class="alert alert-danger d-none mb-3" role="alert"></div>
+
+                    <!-- Performance summary (always visible above tabs) -->
+                    <div id="perf-summary" class="mb-4">
+                        <div class="row row-deck row-cards" id="perf-cards">
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card"><div class="card-body"><div class="perf-label">Active Beauticians</div><div class="perf-value" id="perf-active">—</div></div></div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card"><div class="card-body"><div class="perf-label">Online Now</div><div class="perf-value" id="perf-online">—</div></div></div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card"><div class="card-body"><div class="perf-label">Completed Jobs</div><div class="perf-value" id="perf-jobs">—</div></div></div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card"><div class="card-body"><div class="perf-label">Fill Rate</div><div class="perf-value" id="perf-fill-rate">—</div></div></div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card"><div class="card-body"><div class="perf-label">Avg Rating</div><div class="perf-value" id="perf-avg-rating">—</div></div></div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card"><div class="card-body"><div class="perf-label">KYC Pass Rate</div><div class="perf-value" id="perf-kyc-rate">—</div></div></div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <div class="card"><div class="card-body"><div class="perf-label">Profile Approval Rate</div><div class="perf-value" id="perf-profile-rate">—</div></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sub-nav tabs -->
+                    <ul class="nav nav-tabs mb-3" id="section-tabs">
+                        <li class="nav-item"><a class="nav-link active" href="#" data-section="list">List</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="reviews">Profile Reviews</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="services">Services</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="service-rates">Service Rates</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="settings">Settings</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="payouts">Payouts</a></li>
+                    </ul>
+
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- SECTION: BEAUTICIANS LIST                                   -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="section-list">
+                        <div class="card">
+                            <div class="card-header d-block pb-0">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h3 class="card-title mb-0">Beauticians</h3>
+                                    <span class="text-secondary small" id="list-results-label">Loading…</span>
+                                </div>
+                            </div>
+                            <div class="card-body border-bottom py-4">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-12 col-md-3">
+                                        <label class="form-label text-secondary small mb-1">Search</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                            </span>
+                                            <input type="text" id="list-search" class="form-control" placeholder="Name, email or phone…">
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <label class="form-label text-secondary small mb-1">KYC Status</label>
+                                        <select id="list-kyc-status" class="form-select form-select-sm">
+                                            <option value="">All KYC</option>
+                                            <option value="PENDING">Pending</option>
+                                            <option value="IN_PROGRESS">In Progress</option>
+                                            <option value="VERIFIED">Verified</option>
+                                            <option value="REJECTED">Rejected</option>
+                                            <option value="SUSPENDED">Suspended</option>
+                                            <option value="NEEDS_REVIEW">Needs Review</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <label class="form-label text-secondary small mb-1">Profile</label>
+                                        <select id="list-profile-status" class="form-select form-select-sm">
+                                            <option value="">All Profiles</option>
+                                            <option value="NOT_SUBMITTED">Not Submitted</option>
+                                            <option value="AWAITING_VIDEO">Awaiting Video</option>
+                                            <option value="PENDING_REVIEW">Pending Review</option>
+                                            <option value="APPROVED">Approved</option>
+                                            <option value="REJECTED">Rejected</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <label class="form-label text-secondary small mb-1">Availability</label>
+                                        <select id="list-avail-status" class="form-select form-select-sm">
+                                            <option value="">All</option>
+                                            <option value="ONLINE">Online</option>
+                                            <option value="OFFLINE">Offline</option>
+                                            <option value="ON_JOB">On Job</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-1">
+                                        <label class="form-label text-secondary small mb-1">Rating ≥</label>
+                                        <input type="number" id="list-rating-min" class="form-control form-control-sm" min="0" max="5" step="0.5" placeholder="0">
+                                    </div>
+                                    <div class="col-6 col-md-auto">
+                                        <button type="button" class="btn btn-sm btn-secondary w-100" id="btn-list-clear">Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover table-nowrap card-table" id="beauticians-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-1 text-secondary">#</th>
+                                                <th>Name</th>
+                                                <th>KYC</th>
+                                                <th>Profile</th>
+                                                <th>Availability</th>
+                                                <th>Rating</th>
+                                                <th>Jobs</th>
+                                                <th>Earnings</th>
+                                                <th>Status</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="list-tbody">
+                                            <tr>
+                                                <td colspan="10" class="text-center py-5">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex align-items-center">
+                                <p class="m-0 text-secondary small" id="list-pagination-info">—</p>
+                                <ul class="pagination m-0 ms-auto" id="list-pagination-btns"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- SECTION: PROFILE REVIEWS                                    -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="section-reviews" class="d-none">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Pending Profile Reviews</h3>
+                                <div class="card-actions">
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-auto">
+                                            <label class="form-label text-secondary small mb-0">Min days ago:</label>
+                                        </div>
+                                        <div class="col-auto">
+                                            <input type="number" id="reviews-days-min" class="form-control form-control-sm" style="width:80px" min="0" placeholder="0">
+                                        </div>
+                                        <div class="col-auto">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-reviews-apply">Apply</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-nowrap card-table" id="reviews-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-1">#</th>
+                                                <th>Name</th>
+                                                <th>Date of Birth</th>
+                                                <th>Specialties</th>
+                                                <th>Experience</th>
+                                                <th>KYC Status</th>
+                                                <th>Portfolio</th>
+                                                <th>Submitted</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reviews-tbody">
+                                            <tr>
+                                                <td colspan="9" class="text-center py-5">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex align-items-center">
+                                <p class="m-0 text-secondary small" id="reviews-pagination-info">—</p>
+                                <ul class="pagination m-0 ms-auto" id="reviews-pagination-btns"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- SECTION: SERVICES                                           -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="section-services" class="d-none">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Service Assignment</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3 align-items-end mb-4">
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label text-secondary small mb-1" for="svc-beautician-toggle">Select Beautician</label>
+                                        <div class="dropdown svc-beautician-picker" id="svc-beautician-picker">
+                                            <input type="hidden" id="svc-beautician-select" value="">
+                                            <button type="button" class="svc-beautician-picker-toggle" id="svc-beautician-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                                <span id="svc-beautician-label" class="text-secondary">— Select a beautician —</span>
+                                            </button>
+                                            <div class="dropdown-menu svc-beautician-picker-menu">
+                                                <div class="svc-beautician-picker-search">
+                                                    <input type="search" id="svc-beautician-search" class="form-control form-control-sm" placeholder="Search name, email or phone…" autocomplete="off">
+                                                </div>
+                                                <div id="svc-beautician-list" class="svc-beautician-picker-list">
+                                                    <div class="text-center text-secondary py-3 small">Open to load beauticians</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-svc-load">Load Services</button>
+                                    </div>
+                                </div>
+                                <div id="svc-assignment-area" class="d-none">
+                                    <hr>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <h4 class="mb-0">Assign Home-Service Services</h4>
+                                        <div>
+                                            <span class="text-secondary small me-2" id="svc-count-label">0 selected</span>
+                                            <button type="button" class="btn btn-primary btn-sm" id="btn-svc-save">Save Assignments</button>
+                                        </div>
+                                    </div>
+                                    <label id="svc-select-all-wrap" class="service-check-label fw-semibold border-bottom pb-2 mb-2 d-none">
+                                        <input type="checkbox" class="form-check-input" id="svc-select-all">
+                                        <span>Select All</span>
+                                    </label>
+                                    <div id="svc-catalog-list" class="border rounded p-3">
+                                        <div class="text-center text-secondary py-4">Select a beautician and click "Load Services"</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- SECTION: SETTINGS                                           -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="section-settings" class="d-none">
+                        <div class="row g-4 align-items-stretch">
+                            <div class="col-12 col-xl-6 d-flex">
+                                <div class="card flex-fill" id="card-home-service-settings">
+                                    <div class="card-header" style="display: grid;">
+                                        <h3 class="card-title mb-0">Home Service Settings</h3>
+                                        <div class="card-subtitle text-secondary small mt-1">Payout, arrival &amp; no-show</div>
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="alert alert-success d-none" id="settings-success"></div>
+                                        <div class="alert alert-danger d-none" id="settings-error"></div>
+                                        <div class="row g-3">
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="payoutMode">Payout Mode</label>
+                                                <select class="form-select" id="set-payout-mode">
+                                                    <option value="MANUAL">Manual</option>
+                                                    <option value="AUTO">Auto</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="dailyPayoutLimit">Daily Payout Limit (NGN)</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₦</span>
+                                                    <input type="number" class="form-control" id="set-daily-payout-limit" min="0" step="1000" placeholder="e.g. 500000">
+                                                </div>
+                                                <label class="form-check form-switch mt-2 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="set-daily-payout-unlimited">
+                                                    <span class="form-check-label" data-field-hint="dailyPayoutUnlimited">Unlimited (no daily cap)</span>
+                                                </label>
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="arrivalVerificationExpiryMinutes">Arrival Verification Expiry (min)</label>
+                                                <input type="number" class="form-control" id="set-arrival-expiry" min="1">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="serviceCompletionBufferMinutes">Service Completion Buffer (min)</label>
+                                                <input type="number" class="form-control" id="set-completion-buffer" min="1">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="arrivalGeoFenceMeters">GeoFence (meters)</label>
+                                                <input type="number" class="form-control" id="set-geo-fence" min="1">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="noShowSuspendThreshold">No-Show Suspend Threshold</label>
+                                                <input type="number" class="form-control" id="set-no-show-threshold" min="1">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="noShowWindowDays">No-Show Window (days)</label>
+                                                <input type="number" class="form-control" id="set-no-show-window" min="1">
+                                            </div>
+                                            <div class="col-12 col-sm-6 d-flex align-items-end">
+                                                <label class="form-check form-switch mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="set-kyc-auto">
+                                                    <span class="form-check-label" data-field-hint="kycAutoApprove">Auto-Approve KYC</span>
+                                                </label>
+                                            </div>
+                                            <div class="col-12 col-sm-6 d-flex align-items-end">
+                                                <label class="form-check form-switch mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="set-no-show-penalty">
+                                                    <span class="form-check-label" data-field-hint="noShowPenaltyEnabled">No-Show Penalty Enabled</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button type="button" class="btn btn-primary" id="btn-settings-save">Save Home Service Settings</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-xl-6 d-flex">
+                                <div class="card flex-fill" id="card-dispatch-settings">
+                                    <div class="card-header" style="display: grid;">
+                                        <h3 class="card-title">Dispatch Engine Settings</h3>
+                                        <div class="card-subtitle text-secondary small mt-1">Matching radius, offer timing &amp; candidate filters</div>
+                                    </div>
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="alert alert-success d-none" id="dispatch-settings-success"></div>
+                                        <div class="alert alert-danger d-none" id="dispatch-settings-error"></div>
+                                        <div class="alert alert-info py-2 small d-none d-flex align-items-start gap-2" id="dispatch-env-overrides">
+                                            <span class="flex-fill" id="dispatch-env-overrides-text"></span>
+                                            <span data-field-hint="envOverrides"></span>
+                                        </div>
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <div class="text-secondary small fw-semibold mb-1">Tier 1 — nearest</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" data-field-hint="tier1Radius">Radius (km)</label>
+                                                <input type="number" class="form-control" id="dispatch-tier-1-radius" min="1" max="100">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" data-field-hint="tier1OfferTtl">Offer TTL (sec)</label>
+                                                <input type="number" class="form-control" id="dispatch-tier-1-ttl" min="10" max="300">
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="text-secondary small fw-semibold mb-1">Tier 2 — wider</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" data-field-hint="tier2Radius">Radius (km)</label>
+                                                <input type="number" class="form-control" id="dispatch-tier-2-radius" min="1" max="100">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" data-field-hint="tier2OfferTtl">Offer TTL (sec)</label>
+                                                <input type="number" class="form-control" id="dispatch-tier-2-ttl" min="10" max="300">
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="text-secondary small fw-semibold mb-1">Tier 3 — widest</div>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" data-field-hint="tier3Radius">Radius (km)</label>
+                                                <input type="number" class="form-control" id="dispatch-tier-3-radius" min="1" max="100">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" data-field-hint="tier3OfferTtl">Offer TTL (sec)</label>
+                                                <input type="number" class="form-control" id="dispatch-tier-3-ttl" min="10" max="300">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="interTierDelaySeconds">Inter-tier delay (sec)</label>
+                                                <input type="number" class="form-control" id="dispatch-inter-tier-delay" min="0" max="600">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="locationStalenessMinutes">Location staleness (min)</label>
+                                                <input type="number" class="form-control" id="dispatch-location-staleness" min="1" max="60">
+                                            </div>
+                                            <div class="col-12 col-sm-6">
+                                                <label class="form-label" data-field-hint="locationRematchMinDistanceM">Location rematch distance (m)</label>
+                                                <input type="number" class="form-control" id="dispatch-location-rematch" min="50" max="10000">
+                                            </div>
+                                            <div class="col-12 d-flex align-items-end">
+                                                <label class="form-check form-switch mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="dispatch-wake-exhausted">
+                                                    <span class="form-check-label" data-field-hint="wakeExhaustedOnOnlineEnabled">Wake exhausted on beautician online</span>
+                                                </label>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="text-secondary small fw-semibold mb-1">Scoring weights <span class="fw-normal">(read-only)</span></div>
+                                                <div class="settings-scoring-grid">
+                                                    <div class="settings-scoring-box">
+                                                        <div class="settings-scoring-label" data-field-hint="scoringWeightDistance">Distance</div>
+                                                        <div class="settings-scoring-value" id="dispatch-weight-distance">—</div>
+                                                    </div>
+                                                    <div class="settings-scoring-box">
+                                                        <div class="settings-scoring-label" data-field-hint="scoringWeightRating">Rating</div>
+                                                        <div class="settings-scoring-value" id="dispatch-weight-rating">—</div>
+                                                    </div>
+                                                    <div class="settings-scoring-box">
+                                                        <div class="settings-scoring-label" data-field-hint="scoringWeightAcceptance">Acceptance weight</div>
+                                                        <div class="settings-scoring-value" id="dispatch-weight-acceptance">—</div>
+                                                    </div>
+                                                    <div class="settings-scoring-box">
+                                                        <div class="settings-scoring-label" data-field-hint="scoringWeightIdle">Idle minutes</div>
+                                                        <div class="settings-scoring-value" id="dispatch-weight-idle">—</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button type="button" class="btn btn-primary" id="btn-dispatch-settings-save">Save Dispatch Settings</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- SECTION: SERVICE RATES (default + per-service overrides)    -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="section-service-rates" class="d-none">
+                        <!-- Platform default (GET/PUT /admin/settings/home-service → commissionRate) -->
+                        <div class="card mb-3" id="card-default-beautician-share">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-0">Default Beautician Share</h3>
+                                    <div class="card-subtitle text-secondary small mt-1">
+                                        Platform default take-home % for home-service lines without a custom override
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success d-none" id="scr-default-success"></div>
+                                <div class="alert alert-danger d-none" id="scr-default-error"></div>
+                                <div class="mb-0">
+                                    <label class="form-label" for="scr-default-rate" data-field-hint="commissionRate">Beautician share</label>
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <div class="input-group" style="max-width: 12rem;">
+                                            <input type="number" class="form-control" id="scr-default-rate" min="0" max="100" step="0.1" placeholder="e.g. 70">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" id="btn-scr-default-save">Save Default Share</button>
+                                    </div>
+                                    <div class="form-hint mt-1">Applies to all services without an override below</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Per-service overrides -->
+                        <div class="card" id="card-service-commission-rates">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-0">Service Rate Overrides</h3>
+                                    <div class="card-subtitle text-secondary small mt-1">
+                                        Custom beautician share for specific catalog services. Exceptions only — everything else uses the default above.
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button type="button" class="btn btn-primary btn-sm" id="btn-scr-add" data-bs-toggle="modal" data-bs-target="#modal-service-commission">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                                        Add Override
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success d-none" id="scr-success"></div>
+                                <div class="alert alert-danger d-none" id="scr-error"></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover card-table mb-0" id="scr-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Service</th>
+                                                <th class="w-1 text-nowrap">Share</th>
+                                                <th class="text-nowrap">Amount &amp; earnings</th>
+                                                <th class="w-1 text-nowrap">Updated</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="scr-tbody">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-secondary py-4">Loading…</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <!-- SECTION: PAYOUTS                                            -->
+                    <!-- ──────────────────────────────────────────────────────────── -->
+                    <div id="section-payouts" class="d-none">
+                        <!-- Daily payout pool -->
+                        <div class="card mb-3" id="card-daily-payout-pool">
+                            <div class="card-header">
+                                <div>
+                                    <h3 class="card-title mb-0">Daily Payout Pool</h3>
+                                    <div class="card-subtitle text-secondary small mt-1">
+                                        Platform-wide cap for beautician withdrawals today
+                                        <span class="text-secondary">· Africa/Lagos midnight</span>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-daily-pool-refresh" title="Refresh pool usage">
+                                        Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success d-none" id="daily-pool-success"></div>
+                                <div class="alert alert-danger d-none" id="daily-pool-error"></div>
+
+                                <div class="row g-3 align-items-end mb-3" id="daily-pool-stats">
+                                    <div class="col-6 col-md-3 daily-pool-stat">
+                                        <div class="stat-label">Used today</div>
+                                        <div class="stat-value text-primary" id="daily-pool-used">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 daily-pool-stat">
+                                        <div class="stat-label">Remaining</div>
+                                        <div class="stat-value" id="daily-pool-remaining">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 daily-pool-stat">
+                                        <div class="stat-label">Daily limit</div>
+                                        <div class="stat-value" id="daily-pool-limit">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 daily-pool-stat">
+                                        <div class="stat-label">Status</div>
+                                        <div class="stat-value" id="daily-pool-status-badge">
+                                            <span class="badge bg-secondary-lt">Loading…</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="progress daily-pool-progress" id="daily-pool-progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                            <div class="progress-bar" id="daily-pool-progress-bar" style="width: 0%"></div>
+                                        </div>
+                                        <div class="text-secondary small mt-1" id="daily-pool-day-meta">Day starts at —</div>
+                                    </div>
+                                </div>
+
+                                <div id="daily-pool-manage" class="border-top pt-3 d-none">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-12 col-md-5">
+                                            <label class="form-label" for="pool-limit-input">Set daily limit (NGN)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">₦</span>
+                                                <input type="number" class="form-control" id="pool-limit-input" min="0" step="1000" placeholder="e.g. 500000">
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-4 d-flex align-items-end">
+                                            <label class="form-check form-switch mb-2">
+                                                <input class="form-check-input" type="checkbox" id="pool-limit-unlimited">
+                                                <span class="form-check-label">Unlimited (no cap)</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-12 col-md-3">
+                                            <button type="button" class="btn btn-primary w-100" id="btn-daily-pool-save">Save limit</button>
+                                        </div>
+                                    </div>
+                                    <div class="form-hint mt-2 mb-0">
+                                        Counts PENDING, PROCESSING, and COMPLETED payouts across all beauticians. Send unlimited to clear the cap.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Payout Requests</h3>
+                                <div class="card-actions d-flex align-items-center gap-3">
+                                    <select id="payouts-status-filter" class="form-select form-select-sm" style="width:auto;min-width:10rem">
+                                        <option value="">All statuses</option>
+                                        <option value="PENDING">Pending</option>
+                                        <option value="PROCESSING">Processing</option>
+                                        <option value="COMPLETED">Completed</option>
+                                        <option value="REJECTED">Rejected</option>
+                                        <option value="CANCELLED">Cancelled</option>
+                                    </select>
+                                    <span class="text-secondary small" id="payouts-count-label">Loading…</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-nowrap card-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-1">#</th>
+                                                <th>Beautician</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th>Bank</th>
+                                                <th>Account</th>
+                                                <th>Requested</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="payouts-tbody">
+                                            <tr>
+                                                <td colspan="8" class="text-center py-5">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center">
+                        <div class="col-12 text-secondary">
+                            &copy; 2026 Hairlux Admin Panel
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- ── PROFILE PHOTO PREVIEW MODAL ── -->
+    <!-- Add / Edit service commission override -->
+    <div class="modal modal-blur fade" id="modal-service-commission" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scr-modal-title">Add Service Override</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="form-service-commission" novalidate>
+                    <div class="modal-body">
+                        <div class="alert alert-danger d-none" id="scr-modal-error" role="alert"></div>
+                        <p class="text-secondary small mb-3">
+                            Rate is the <strong>beautician take-home share</strong> of that service’s home-service line amount
+                            (e.g. 3% means ₦30,000 on a ₦1,000,000 line). Multi-service jobs blend rates per line.
+                        </p>
+                        <div class="mb-3" id="scr-service-select-wrap">
+                            <label class="form-label required" for="scr-service-toggle">Service</label>
+                            <div class="dropdown scr-service-picker" id="scr-service-picker">
+                                <input type="hidden" id="scr-service-select" value="">
+                                <button type="button" class="scr-service-picker-toggle" id="scr-service-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                    <span id="scr-service-label" class="text-secondary">— Select a service —</span>
+                                </button>
+                                <div class="dropdown-menu scr-service-picker-menu">
+                                    <div class="scr-service-picker-search">
+                                        <input type="search" id="scr-service-search" class="form-control form-control-sm" placeholder="Search service name…" autocomplete="off">
+                                    </div>
+                                    <div id="scr-service-list" class="scr-service-picker-list">
+                                        <div class="text-center text-secondary py-3 small">Open to load services</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-hint">Only services without an existing override are listed when adding</div>
+                        </div>
+                        <div class="mb-0 d-none" id="scr-service-name-wrap">
+                            <label class="form-label">Service</label>
+                            <div class="form-control-plaintext fw-semibold" id="scr-service-name-display">—</div>
+                        </div>
+                        <div class="mb-0 mt-3">
+                            <label class="form-label required" for="scr-rate-input">Beautician share (%)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="scr-rate-input" inputmode="decimal" autocomplete="off" placeholder="e.g. 3" maxlength="6" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-hint">Numbers only, 0–100</div>
+                            <div id="scr-earnings-preview" class="border rounded p-2 mt-2 d-none" style="background: var(--tblr-bg-surface-secondary, var(--tblr-bg-surface));">
+                                <div class="text-secondary small mb-1">Earnings preview</div>
+                                <div class="small">
+                                    Service amount: <strong id="scr-preview-amount">—</strong>
+                                    <span class="text-secondary mx-1">·</span>
+                                    Beautician earns: <strong class="text-success" id="scr-preview-earn">—</strong>
+                                    <span class="text-secondary" id="scr-preview-pct"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="scr-edit-service-id" value="">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-scr-save">Save Override</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-photo-preview" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-photo-title">Profile Photo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center bg-dark-lt p-3">
+                    <img id="modal-photo-img" src="" alt="" class="rounded">
+                </div>
+                <div class="modal-footer">
+                    <a id="modal-photo-open" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Open in new tab</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CERTIFICATION PREVIEW MODAL ── -->
+    <div class="modal modal-blur fade" id="modal-cert-preview" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-cert-title">Certification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center bg-dark-lt p-3 d-flex align-items-center justify-content-center" id="modal-cert-body">
+                    <div id="modal-cert-loading" class="d-flex align-items-center justify-content-center w-100">
+                        <div class="spinner-border text-primary" role="status" aria-label="Loading certification"></div>
+                    </div>
+                    <img id="modal-cert-img" src="" alt="" class="rounded d-none">
+                    <iframe id="modal-cert-frame" class="w-100 rounded d-none" title="Certification preview"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <a id="modal-cert-open" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Open in new tab</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── KYC INTRO VIDEO PLAYER MODAL ── -->
+    <div class="modal modal-blur fade" id="modal-kyc-video-preview" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-kyc-video-title">Intro video</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-dark p-0">
+                    <div class="kyc-video-stage">
+                        <video
+                            id="modal-kyc-video"
+                            class="kyc-video-el"
+                            playsinline
+                            preload="auto"
+                            controlslist="nodownload noremoteplayback"
+                            disablepictureinpicture
+                            referrerpolicy="no-referrer"
+                        ></video>
+                        <div class="kyc-video-overlay" id="kyc-video-loading" role="status" aria-live="polite">
+                            <div class="kyc-video-loading">
+                                <div class="spinner-border" role="status" aria-hidden="true"></div>
+                                <div class="small" id="kyc-video-loading-msg">Preparing video…</div>
+                            </div>
+                        </div>
+                        <div class="kyc-video-overlay d-none" id="kyc-video-error" role="alert" aria-live="assertive">
+                            <div class="kyc-video-error-panel">
+                                <div class="kyc-video-error-icon" aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                </div>
+                                <div class="kyc-video-error-title" id="kyc-video-error-title">Could not load video</div>
+                                <p class="kyc-video-error-msg" id="kyc-video-error-msg">Something went wrong while fetching this intro video.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kyc-video-controls is-disabled" id="kyc-video-controls">
+                        <div class="kyc-video-seek-row">
+                            <span class="kyc-video-time" id="kyc-video-current">0:00</span>
+                            <input type="range" class="form-range kyc-video-seek" id="kyc-video-seek" min="0" max="0" step="0.1" value="0" disabled aria-label="Seek">
+                            <span class="kyc-video-time kyc-video-time-end" id="kyc-video-duration">0:00</span>
+                        </div>
+                        <div class="kyc-video-main-row">
+                            <div class="kyc-video-volume-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-light kyc-video-ctrl-btn" id="kyc-video-mute" aria-label="Mute" disabled>
+                                    <svg id="kyc-video-icon-volume" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 8a5 5 0 0 1 0 8"/><path d="M17.7 5a9 9 0 0 1 0 14"/><path d="M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5"/></svg>
+                                    <svg id="kyc-video-icon-mute" class="d-none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15h-2a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h2l3.5 -4.5a.8 .8 0 0 1 1.5 .5v14a.8 .8 0 0 1 -1.5 .5l-3.5 -4.5"/><path d="M16 10l4 4m0 -4l-4 4"/></svg>
+                                </button>
+                                <label class="visually-hidden" for="kyc-video-volume">Volume</label>
+                                <input type="range" class="form-range kyc-video-volume" id="kyc-video-volume" min="0" max="1" step="0.05" value="0.85" disabled aria-label="Volume">
+                            </div>
+                            <div class="kyc-video-play-wrap">
+                                <button type="button" class="btn btn-light kyc-video-ctrl-btn kyc-video-play-btn" id="kyc-video-play-pause" aria-label="Play" disabled>
+                                    <svg id="kyc-video-icon-play" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M8 5v14l11 -7z"/></svg>
+                                    <svg id="kyc-video-icon-pause" class="d-none" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M6 5h4v14h-4zm8 0h4v14h-4z"/></svg>
+                                </button>
+                            </div>
+                            <div class="kyc-video-main-spacer" aria-hidden="true"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── ACCOUNT SUSPEND / REACTIVATE MODAL ── -->
+    <div class="modal modal-blur fade" id="modal-profile-reject" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject profile / video</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="profile-reject-id" value="">
+                    <div class="alert alert-danger d-none py-2" id="profile-reject-error" role="alert"></div>
+                    <p class="text-secondary small mb-3">
+                        Review the intro video and profile materials first. Rejection clears the stored video key; choose how far to roll the beautician back.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label required" for="profile-reject-reason">Reason</label>
+                        <textarea id="profile-reject-reason" class="form-control" rows="3" placeholder="Why this submission was not accepted…" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="profile-reject-notes">Notes <span class="text-secondary fw-normal">(optional)</span></label>
+                        <textarea id="profile-reject-notes" class="form-control" rows="2" placeholder="Extra feedback shown with the reason…"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Reject scope</label>
+                        <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="profile-reject-scope" value="FULL" class="form-selectgroup-input" checked>
+                                <span class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <span class="me-3">
+                                        <span class="form-selectgroup-check"></span>
+                                    </span>
+                                    <span>
+                                        <strong>Full profile</strong>
+                                        <span class="d-block text-secondary small">Status → REJECTED · profile editable · resubmit profile + video</span>
+                                    </span>
+                                </span>
+                            </label>
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="profile-reject-scope" value="VIDEO_ONLY" class="form-selectgroup-input">
+                                <span class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <span class="me-3">
+                                        <span class="form-selectgroup-check"></span>
+                                    </span>
+                                    <span>
+                                        <strong>Video only</strong>
+                                        <span class="d-block text-secondary small">Status → AWAITING_VIDEO · profile stays locked · re-upload video only</span>
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="form-hint mt-2" id="profile-reject-scope-hint">
+                            Full reject: beautician can edit profile fields, then resubmit profile and a new video (status → REJECTED).
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="profile-reject-submit">Reject submission</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-account-suspend" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="account-suspend-title">Suspend Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="account-suspend-id" value="">
+                    <input type="hidden" id="account-suspend-new-active" value="">
+                    <p class="mb-2" id="account-suspend-lead"></p>
+                    <p class="text-secondary small mb-0" id="account-suspend-note"></p>
+                    <div class="alert alert-danger d-none mt-3 mb-0" id="account-suspend-error" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="account-suspend-submit">Suspend Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DISPATCH SUSPEND (PROBATION) MODAL ── -->
+    <div class="modal modal-blur fade" id="modal-dispatch-suspend" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Suspend Dispatch Matching</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary small mb-3">
+                        Removes the beautician from job matching, cancels pending offers, and emails them.
+                        This does <strong>not</strong> deactivate their account.
+                    </p>
+                    <input type="hidden" id="dispatch-suspend-id" value="">
+                    <div class="mb-3">
+                        <label class="form-label" for="dispatch-suspend-reason">Reason</label>
+                        <textarea class="form-control" id="dispatch-suspend-reason" rows="2" maxlength="500" placeholder="e.g. Multiple low ratings this week"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Duration</label>
+                        <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="dispatch-suspend-mode" value="indefinite" class="form-selectgroup-input" checked>
+                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <div class="me-3"><span class="form-selectgroup-check"></span></div>
+                                    <div>
+                                        <div class="font-weight-medium">Indefinite</div>
+                                        <div class="text-secondary small">Stays suspended until manually resumed</div>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="dispatch-suspend-mode" value="hours" class="form-selectgroup-input">
+                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <div class="me-3"><span class="form-selectgroup-check"></span></div>
+                                    <div class="flex-fill">
+                                        <div class="font-weight-medium">Timed (hours)</div>
+                                        <div class="text-secondary small">Auto-resumes after the duration (1–720 hours)</div>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="form-selectgroup-item flex-fill">
+                                <input type="radio" name="dispatch-suspend-mode" value="until" class="form-selectgroup-input">
+                                <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <div class="me-3"><span class="form-selectgroup-check"></span></div>
+                                    <div>
+                                        <div class="font-weight-medium">Until date &amp; time</div>
+                                        <div class="text-secondary small">Auto-resumes at the chosen time</div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3 d-none" id="dispatch-suspend-hours-wrap">
+                        <label class="form-label" for="dispatch-suspend-hours">Duration (hours)</label>
+                        <input type="number" class="form-control" id="dispatch-suspend-hours" min="1" max="720" step="1" value="72" placeholder="1–720">
+                        <div class="form-hint">Common: 24 (1 day), 72 (3 days), 168 (1 week). Max 720 (30 days).</div>
+                    </div>
+                    <div class="mb-0 d-none" id="dispatch-suspend-until-wrap">
+                        <label class="form-label" for="dispatch-suspend-until">Resume at</label>
+                        <input type="datetime-local" class="form-control" id="dispatch-suspend-until">
+                    </div>
+                    <div class="alert alert-danger d-none mt-3 mb-0" id="dispatch-suspend-error" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="dispatch-suspend-submit">Suspend Dispatch Matching</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── BEAUTICIAN DETAIL OFFCANVAS ── -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-detail" data-bs-scroll="true" style="width:1120px;max-width:100vw;">
+        <div class="offcanvas-header border-bottom px-4 py-3">
+            <h5 class="offcanvas-title">Beautician Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="px-4 pt-3 d-none" id="offcanvas-detail-alert-wrap">
+            <div id="offcanvas-detail-alert" class="alert alert-danger mb-0 py-2" role="alert"></div>
+        </div>
+        <div class="offcanvas-body" id="offcanvas-detail-body">
+            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+        </div>
+        <div class="border-top px-4 py-3 d-flex gap-2 flex-wrap align-items-center" id="offcanvas-detail-actions"></div>
+    </div>
+
+    <!-- ── BOOTSTRAP / VENDOR SCRIPTS ── -->
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/services.js"></script>
+    <script src="assets/js/api-utils/beauticians.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- Beauticians page modules (order matters) -->
+    <script src="assets/js/beauticians/state.js"></script>
+    <script src="assets/js/beauticians/utils.js"></script>
+    <script src="assets/js/beauticians/api.js"></script>
+    <script src="assets/js/beauticians/ui.js"></script>
+    <script src="assets/js/beauticians/handlers.js"></script>
+    <script src="assets/js/beauticians/index.js"></script>
+
+</body>
+
+</html>

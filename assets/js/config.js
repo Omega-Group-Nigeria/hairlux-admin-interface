@@ -5,8 +5,12 @@
  */
 
 // API base URL (no trailing slash)
-window.API_BASE = "https://hairlux-api-production.up.railway.app";
+window.API_BASE = "https://dev-hairlux-api-production.up.railway.app";
 // window.API_BASE = "http://localhost:3000"; // local
+
+// Cloudinary cloud_name (used by other admin features e.g. image upload helpers — not KYC video)
+// window.CLOUDINARY_CLOUD_NAME = "your_cloud_name";
+window.CLOUDINARY_CLOUD_NAME = "dkudoqsvl";
 
 (function setupBackdropCleanup() {
 	function removeAll(selector) {

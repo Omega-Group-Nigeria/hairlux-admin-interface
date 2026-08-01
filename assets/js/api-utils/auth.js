@@ -14,7 +14,10 @@ const Auth = (() => {
   const REFRESH_KEY = "hairlux_refresh_token";
   const USER_KEY    = "hairlux_user";
 
-  const ALLOWED_ROLES = ["ADMIN", "SUPER_ADMIN"];
+  const ROLE_REQUIREMENTS = {
+  admin: ["ADMIN", "SUPER_ADMIN"],
+  staff: ["STAFF"],
+  };
 
   function getBase() {
     return (window.API_BASE || "").replace(/\/$/, "");
@@ -84,7 +87,14 @@ const Auth = (() => {
 
   // ─── POST /auth/login ─────────────────────────────────────────────────────────
 
-  async function login(email, password) {
+  /**
+   * @param {string} email
+   * @param {string} password
+   * @param {'admin'|'staff'} [loginType='admin']
+   *   Which login tab was used — determines which role(s) are acceptable
+   *   for this session and produces a tab-specific error otherwise.
+   */
+  async function login(email, password, loginType = "admin") {
     const res = await fetch(`${getBase()}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -104,17 +114,32 @@ const Auth = (() => {
 
     // Unwrap { success, data: { user, accessToken, ... } }
     const payload = raw.data || raw;
-    const role    = payload.user?.role || payload.role || "";
 
-    if (!ALLOWED_ROLES.includes(role)) {
-      throw new Error("Access denied. You are not authorized to access the admin panel.");
+    // `roles` is the union of the account's legacy single role plus every
+    // UserRoleAssignment row (e.g. a customer who was later hired shows up
+    // as ["USER", "STAFF"]). Falls back to the single `role` field for
+    // backward compatibility if the backend hasn't shipped `roles` yet —
+    // that fallback only ever satisfies the "admin" tab correctly; a
+    // dual-role account won't be recognized as staff until the backend
+    // actually returns the array.
+    const roles = payload.user?.roles || payload.roles ||
+      [payload.user?.role || payload.role || ""];
+
+    const required = ROLE_REQUIREMENTS[loginType] || ROLE_REQUIREMENTS.admin;
+    const allowed  = roles.some((r) => required.includes(r));
+
+    if (!allowed) {
+      const other = loginType === "admin" ? "staff" : "admin";
+      throw new Error(
+        `This account doesn't have ${loginType} access. If you're ${other === "staff" ? "a hired team member" : "an administrator"}, try the "For ${other === "staff" ? "Staff" : "Admin"}" tab instead.`
+      );
     }
 
     saveSession(raw);
     return raw;
   }
 
-  // ─── POST /auth/refresh ───────────────────────────────────────────────────────
+  // ─── POST /auth/refresh-token ────────────────────────────────────────────────
 
   /**
    * Exchange the stored refresh token for a fresh access/refresh token pair.
@@ -125,7 +150,7 @@ const Auth = (() => {
     const refreshToken = getRefreshToken();
     if (!refreshToken) throw new Error("No refresh token stored.");
 
-    const res = await fetch(`${getBase()}/auth/refresh`, {
+    const res = await fetch(`${getBase()}/auth/refresh-token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),

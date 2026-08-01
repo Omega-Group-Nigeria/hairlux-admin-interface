@@ -3,35 +3,22 @@
  * Role-Based Access Control helper.
  *
  * Depends on auth.js being loaded first (uses Auth.fetch).
- * Load after auth.js on every protected page.
+ * Load after auth.js and nav-config.js on every protected page.
  *
  * Usage in every protected page:
  *
  *   // 1. Outside DOMContentLoaded — sync guard from localStorage
  *   RBAC.loadFromStorage();
- *   RBAC.applyPageGuard('bookings:read'); // or array / null / true for superOnly
+ *   RBAC.applyPageGuard('bookings:read'); // or array / null
+ *   RBAC.applyPageGuardForCurrentPage();  // reads rule from NavConfig for this page
  *
- *   // 2. Inside DOMContentLoaded — re-hydrate from server then apply nav
+ *   // 2. Inside DOMContentLoaded — re-hydrate from server then refresh nav
  *   RBAC.fetchMe().then(function() { RBAC.applyNavVisibility(); });
+ *
+ * Nav visibility is applied synchronously from localStorage whenever the sidebar
+ * renders (see layout.js). fetchMe only updates permissions when the API responds.
  */
 const RBAC = (() => {
-
-    // ── Hide nav immediately to prevent permission flash ──────────────────────
-    // Injected as early as possible (when rbac.js is parsed). Removed only
-    // after applyNavVisibility() has applied the correct show/hide state.
-    (function () {
-        var s = document.createElement('style');
-        s.id = 'rbac-nav-cloak';
-        s.textContent = '.navbar-nav > .nav-item { visibility: hidden !important; }';
-        var target = document.head || document.documentElement;
-        if (target) {
-            target.appendChild(s);
-        } else {
-            document.addEventListener('DOMContentLoaded', function () {
-                (document.head || document.documentElement).appendChild(s);
-            });
-        }
-    }());
 
     // ── In-memory state (re-seeded on every page) ─────────────────────────────
     let _role        = null;   // 'ADMIN' | 'SUPER_ADMIN' | null
@@ -119,26 +106,13 @@ const RBAC = (() => {
 
     // ── Nav visibility ────────────────────────────────────────────────────────
 
-    /**
-     * Maps a page filename (e.g. "bookings.html") to a visibility rule.
-     *   require    — user must have the single permission
-     *   requireAny — user must have at least one of the listed permissions
-     *
-     * This covers the canonical nav order:
-     *   Dashboard → Bookings → Payments → Users → Services → Referrals → Discounts → Careers → Staff
-     */
-    const _NAV_MAP = {
-        'index.html':     { type: 'require',    perm:  'analytics:read' },
-        'bookings.html':  { type: 'require',    perm:  'bookings:read' },
-        'payments.html':  { type: 'require',    perm:  'users:view_wallet' },
-        'users.html':     { type: 'require',    perm:  'users:read' },
-        'services.html':  { type: 'requireAny', perms: ['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories'] },
-        'referrals.html': { type: 'require',    perm:  'referrals:read' },
-        'referral-campaigns.html': { type: 'require', perm: 'referrals:read' },
-        'discounts.html': { type: 'require',    perm:  'discounts:read' },
-        'careers.html':   { type: 'require',    perm:  'jobs:read' },
-        'staff.html':     { type: 'requireAny', perms: ['staff:read', 'staff:create', 'staff:update', 'staff:archive', 'staff:manage_status', 'staff:manage_locations'] },
-    };
+    /** Page permission rules — sourced from NavConfig (nav-config.js). */
+    function _getNavMap() {
+        if (typeof NavConfig !== 'undefined' && NavConfig.buildPagePermissionMap) {
+            return NavConfig.buildPagePermissionMap();
+        }
+        return {};
+    }
 
     /**
      * Returns the filename of the first page in the nav order that the current
@@ -146,9 +120,12 @@ const RBAC = (() => {
      * Falls back to 'settings.html' if nothing matches.
      */
     function getFirstAccessiblePage() {
-        var order = ['bookings.html', 'payments.html', 'users.html', 'services.html', 'referrals.html', 'discounts.html', 'careers.html', 'staff.html'];
+        var order = (typeof NavConfig !== 'undefined' && NavConfig.getAccessiblePageOrder)
+            ? NavConfig.getAccessiblePageOrder()
+            : [];
+        var navMap = _getNavMap();
         for (var i = 0; i < order.length; i++) {
-            var rule = _NAV_MAP[order[i]];
+            var rule = navMap[order[i]];
             if (!rule) continue;
             var allowed = rule.type === 'require'
                 ? can(rule.perm)
@@ -166,36 +143,76 @@ const RBAC = (() => {
      * (../page.html) without any per-page HTML changes.
      */
     function applyNavVisibility() {
-        document.querySelectorAll('.navbar-nav > .nav-item').forEach(function (li) {
-            // Collect all hrefs inside this nav item (covers dropdown children too).
+        var sidebar = document.getElementById('app-sidebar');
+        if (!sidebar) return;
+
+        var navMap = _getNavMap();
+        sidebar.querySelectorAll(':scope > .nav-item').forEach(function (li) {
             var hrefs = Array.from(li.querySelectorAll('a[href]'))
                 .map(function (a) { return a.getAttribute('href') || ''; });
 
-            // Normalise: strip leading "./" or "../" and keep just the filename.
             var pages = hrefs
-                .map(function (h) { return h.replace(/^(\.\.\/|\.\/)+/, ''); })
+                .map(function (h) {
+                    return h.replace(/^(\.\.\/|\.\/)+/, '').split('#')[0].split('?')[0];
+                })
                 .filter(Boolean);
 
-            // Find the first matching rule.
             var rule = null;
             for (var i = 0; i < pages.length; i++) {
-                if (_NAV_MAP[pages[i]]) { rule = _NAV_MAP[pages[i]]; break; }
+                if (navMap[pages[i]]) { rule = navMap[pages[i]]; break; }
             }
-            if (!rule) return; // no rule → always visible (e.g. settings link)
+            if (!rule) {
+                li.style.display = '';
+                li.style.visibility = 'visible';
+                return;
+            }
 
             var allowed = rule.type === 'require'
                 ? can(rule.perm)
                 : rule.perms.some(function (p) { return can(p); });
 
             li.style.display = allowed ? '' : 'none';
+            li.style.visibility = allowed ? 'visible' : 'hidden';
         });
 
-        // Remove the cloak so the now-correct nav becomes visible all at once.
+        // Legacy: remove old cloak if present from a cached script.
         var cloak = document.getElementById('rbac-nav-cloak');
         if (cloak) cloak.parentNode.removeChild(cloak);
     }
 
+    /** Apply cached permissions to the sidebar (safe to call before fetchMe). */
+    function syncNavFromCache() {
+        loadFromStorage();
+        applyNavVisibility();
+    }
+
     // ── Page guard ────────────────────────────────────────────────────────────
+
+    function _ruleToGuardPermission(rule) {
+        if (!rule) return null;
+        return rule.type === 'require' ? rule.perm : rule.perms;
+    }
+
+    /**
+     * Return the permission guard value for a page filename (e.g. 'shop.html').
+     * Matches the rule used by applyNavVisibility / getFirstAccessiblePage.
+     * @returns {string|string[]|null}
+     */
+    function getPagePermissions(pageFile) {
+        return _ruleToGuardPermission(_getNavMap()[pageFile]);
+    }
+
+    function getCurrentPageFile() {
+        return window.location.pathname.split('/').pop() || 'index.html';
+    }
+
+    /**
+     * Apply the page guard for the current URL's filename using NavConfig.
+     * Pages without a nav rule pass null (session-only access).
+     */
+    function applyPageGuardForCurrentPage(superOnly) {
+        return applyPageGuard(getPagePermissions(getCurrentPageFile()), superOnly);
+    }
 
     /**
      * Verify the current user has the required permission(s) and redirect if not.
@@ -247,7 +264,7 @@ const RBAC = (() => {
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
-    return {
+    var api = {
         hydrate,
         loadFromStorage,
         fetchMe,
@@ -256,7 +273,22 @@ const RBAC = (() => {
         getRole,
         getFirstAccessiblePage,
         getPermissions,
+        getPagePermissions,
+        getCurrentPageFile,
         applyNavVisibility,
+        syncNavFromCache,
         applyPageGuard,
+        applyPageGuardForCurrentPage,
     };
+
+    // Sidebar may render before or after rbac.js — keep trying until it exists.
+    function _bootstrapNav() {
+        if (document.getElementById('app-sidebar')) {
+            syncNavFromCache();
+        }
+    }
+    _bootstrapNav();
+    document.addEventListener('DOMContentLoaded', _bootstrapNav);
+
+    return api;
 })();

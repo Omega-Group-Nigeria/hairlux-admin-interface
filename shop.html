@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Shop</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <link href="assets/styles/dropzone.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .product-thumb { width: 48px; height: 48px; object-fit: contain; border-radius: 6px; background: var(--tblr-bg-surface-secondary); flex-shrink: 0; }
+        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+        table td { vertical-align: middle; }
+        .order-row { cursor: pointer; }
+        .order-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
+        .product-images-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .product-image-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--tblr-border-color);
+            background: var(--tblr-bg-surface-secondary);
+        }
+        .product-image-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .product-image-card.is-removed img { filter: grayscale(0.8); }
+        .product-image-card.is-new { box-shadow: inset 0 0 0 2px var(--tblr-success); }
+        .product-image-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            font-size: 0.625rem;
+            padding: 0.2em 0.45em;
+            z-index: 1;
+        }
+        .product-image-remove {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.72);
+            color: #fff;
+            z-index: 2;
+            cursor: pointer;
+            transition: background .15s, transform .15s;
+        }
+        .product-image-remove:hover:not(:disabled) {
+            background: rgba(214, 57, 57, 0.92);
+            transform: scale(1.05);
+        }
+        .product-image-remove.is-undo {
+            background: rgba(245, 159, 0, 0.92);
+        }
+        .product-image-remove:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        #dz-product-images {
+            border: 2px dashed var(--tblr-border-color);
+            border-radius: 8px;
+            min-height: 96px;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            padding: 0;
+            overflow: hidden;
+        }
+        #dz-product-images .dz-message {
+            margin: 1.6rem 0;
+            text-align: center;
+            color: var(--tblr-secondary);
+            pointer-events: none;
+            font-size: 0.875rem;
+        }
+        #dz-product-images.dz-drag-hover {
+            border-color: var(--tblr-primary);
+            background: var(--tblr-primary-lt);
+        }
+        .products-actions-cell { overflow: visible; }
+        .products-actions-cell .dropdown-menu { z-index: 1055; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
+                        </a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown" aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">E-commerce</div>
+                            <h2 class="page-title">Shop</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
+                            <button type="button" class="btn btn-primary d-none" id="btn-header-action">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="shop-page-alert" class="alert d-none mb-3" role="alert"></div>
+                    <ul class="nav nav-tabs mb-3" id="section-tabs">
+                        <li class="nav-item"><a class="nav-link active" href="#" data-section="products">Products</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="categories">Categories</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="delivery">Delivery Regions</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="orders">Orders</a></li>
+                    </ul>
+
+                    <!-- PRODUCTS -->
+                    <div id="section-products">
+                        <div class="row row-deck row-cards mb-4">
+                            <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader mb-2">Total Products</div><div class="h1 mb-0" id="stat-products-total">—</div></div></div></div>
+                            <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader mb-2">Active</div><div class="h1 mb-0" id="stat-products-active">—</div></div></div></div>
+                            <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader mb-2">Inactive</div><div class="h1 mb-0" id="stat-products-inactive">—</div></div></div></div>
+                            <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader mb-2">Categories</div><div class="h1 mb-0" id="stat-products-categories">—</div></div></div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header d-block pb-0">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h3 class="card-title mb-0">Products</h3>
+                                    <span class="text-secondary small" id="products-results-label">Loading…</span>
+                                </div>
+                                <ul class="nav nav-tabs card-header-tabs" id="product-status-tabs">
+                                    <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-status="ACTIVE">Active</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-status="INACTIVE">Inactive</a></li>
+                                </ul>
+                            </div>
+                            <div class="card-body border-bottom py-4">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label text-secondary small mb-1">Search</label>
+                                        <input type="text" id="product-filter-search" class="form-control form-control-sm" placeholder="Product name…">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label text-secondary small mb-1">Category</label>
+                                        <select id="product-filter-category" class="form-select form-select-sm"><option value="">All categories</option></select>
+                                    </div>
+                                    <div class="col-6 col-md-auto">
+                                        <button type="button" class="btn btn-sm btn-secondary" id="btn-product-clear">Clear</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover card-table">
+                                        <thead><tr><th class="w-1"></th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th class="w-1">Actions</th></tr></thead>
+                                        <tbody id="products-tbody"><tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer text-secondary small" id="products-pagination">—</div>
+                        </div>
+                    </div>
+
+                    <!-- CATEGORIES -->
+                    <div id="section-categories" class="d-none">
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title">Product Categories</h3></div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead><tr><th>Name</th><th>Description</th><th class="text-center">Products</th><th class="w-1">Actions</th></tr></thead>
+                                    <tbody id="categories-tbody"><tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DELIVERY -->
+                    <div id="section-delivery" class="d-none">
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title">Delivery Regions &amp; Fees</h3></div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead><tr><th>Name</th><th>State</th><th>Fee</th><th>Status</th><th class="w-1">Actions</th></tr></thead>
+                                    <tbody id="delivery-tbody"><tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ORDERS -->
+                    <div id="section-orders" class="d-none">
+                        <div class="row row-deck row-cards mb-4">
+                            <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader mb-2">Total Orders</div><div class="h1 mb-0" id="stat-orders-total">—</div></div></div></div>
+                            <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader mb-2">Pending Fulfilment</div><div class="h1 mb-0" id="stat-orders-pending">—</div></div></div></div>
+                            <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader mb-2">Shipped</div><div class="h1 mb-0" id="stat-orders-shipped">—</div></div></div></div>
+                            <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader mb-2">Delivered</div><div class="h1 mb-0" id="stat-orders-delivered">—</div></div></div></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header d-block pb-0">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h3 class="card-title mb-0">Orders</h3>
+                                    <span class="text-secondary small" id="orders-results-label">Loading…</span>
+                                </div>
+                                <ul class="nav nav-tabs card-header-tabs" id="order-status-tabs">
+                                    <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-status="CONFIRMED">Confirmed</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-status="PROCESSING">Processing</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-status="SHIPPED">Shipped</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-status="DELIVERED">Delivered</a></li>
+                                    <li class="nav-item"><a href="#" class="nav-link" data-status="CANCELLED">Cancelled</a></li>
+                                </ul>
+                            </div>
+                            <div class="card-body border-bottom py-4">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label text-secondary small mb-1">Search</label>
+                                        <input type="text" id="order-filter-search" class="form-control form-control-sm" placeholder="Order code…">
+                                    </div>
+                                    <div class="col-6 col-md-3"><label class="form-label text-secondary small mb-1">From</label><input type="date" id="order-filter-start" class="form-control form-control-sm"></div>
+                                    <div class="col-6 col-md-3"><label class="form-label text-secondary small mb-1">To</label><input type="date" id="order-filter-end" class="form-control form-control-sm"></div>
+                                    <div class="col-6 col-md-auto"><button type="button" class="btn btn-sm btn-secondary" id="btn-order-clear">Clear</button></div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter table-hover card-table">
+                                        <thead><tr><th>Order Code</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+                                        <tbody id="orders-tbody"><tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl"><div class="row text-center"><div class="col-12 text-secondary">&copy; 2026 Hairlux Admin Panel</div></div></div>
+            </footer>
+        </div>
+    </div>
+
+        <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/shop.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
+    <script src="assets/js/shop-product-images.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+
+    <!-- Shop page modules (order matters) -->
+    <script src="assets/js/shop/state.js"></script>
+    <script src="assets/js/shop/utils.js"></script>
+    <script src="assets/js/shop/api.js"></script>
+    <script src="assets/js/shop/ui.js"></script>
+    <script src="assets/js/shop/handlers.js"></script>
+    <script src="assets/js/shop/index.js"></script>
+
+</body>
+</html>
