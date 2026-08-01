@@ -327,6 +327,7 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/roles.js"></script>
     <script src="assets/js/searchable-select.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
@@ -471,8 +472,8 @@
                 var editBtn = e.target.closest(".btn-oc-edit");
                 var statusBtn = e.target.closest(".btn-oc-status");
                 var transferBtn = e.target.closest(".btn-oc-transfer");
-                var grantAdminBtn = e.target.closest(".btn-oc-grant-admin");
-                var revokeAdminBtn = e.target.closest(".btn-oc-revoke-admin");
+                var assignRoleBtn = e.target.closest(".btn-oc-assign-role");
+                var removeRoleBtn = e.target.closest(".btn-oc-remove-role");
                 var archiveBtn = e.target.closest(".btn-oc-archive");
                 var restoreBtn = e.target.closest(".btn-oc-restore");
                 var addHistoryBtn = e.target.closest(".btn-oc-add-history");
@@ -480,8 +481,8 @@
                 if (editBtn) return handleEditStaff(editBtn.dataset.id);
                 if (statusBtn) return handleStatusStaff(statusBtn.dataset.id);
                 if (transferBtn) return handleTransferBranch(transferBtn.dataset.id);
-                if (grantAdminBtn) return handleSetAdminAccess(grantAdminBtn.dataset.id, true);
-                if (revokeAdminBtn) return handleSetAdminAccess(revokeAdminBtn.dataset.id, false);
+                if (assignRoleBtn) return handleAssignRole(assignRoleBtn.dataset.id);
+                if (removeRoleBtn) return handleRemoveRole(removeRoleBtn.dataset.id);
                 if (archiveBtn) return handleArchiveStaff(archiveBtn.dataset.id);
                 if (restoreBtn) return handleRestoreStaff(restoreBtn.dataset.id);
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
@@ -828,8 +829,7 @@
                 var directivesResult = await Staff.getDirectives(id).catch(function () { return null; });
                 var passportPhotoResult = await Staff.getPassportPhotoUrl(id).catch(function () { return null; });
                 var passportPhotoUrl = passportPhotoResult && passportPhotoResult.viewUrl;
-                var adminAccess = await Staff.getAdminAccess(id).catch(function () { return { hasAdminAccess: false, linkedToUserAccount: false }; });
-
+                var roleAssignment = await Staff.getRoleAssignment(id).catch(function () { return { adminRoleId: null, adminRoleName: null, hasAdminPortalLogin: false, linkedToUserAccount: false }; });
                 var history = s.histories || s.employmentHistory || s.history || [];
                 var employmentStartDate = s.employmentStartDate || s.startDate || null;
                 if (!employmentStartDate && history.length) {
@@ -852,8 +852,7 @@
                     '<dt class="col-5 text-secondary">Date of Birth</dt><dd class="col-7">' + esc(Staff.formatDate(s.dateOfBirth || s.birthDate || s.dob)) + '</dd>' +
                     '<dt class="col-5 text-secondary">Employment Start</dt><dd class="col-7">' + esc(Staff.formatDate(employmentStartDate || '-')) + '</dd>' +
                     '<dt class="col-5 text-secondary">Commission Rate</dt><dd class="col-7">' + (s.commissionRate != null ? esc((Number(s.commissionRate) * 100).toFixed(1)) + '%' : '<span class="text-secondary">Not set</span>') + '</dd>' +
-                    '<dt class="col-5 text-secondary">Admin Portal Access</dt><dd class="col-7">' + (adminAccess.hasAdminAccess ? '<span class="badge bg-success-lt">Granted</span>' : '<span class="badge bg-secondary-lt">Not granted</span>') + '</dd>' +
-                    '<dt class="col-5 text-secondary">Created</dt><dd class="col-7">' + esc(Staff.formatDate(s.createdAt)) + '</dd>' +
+                    '<dt class="col-5 text-secondary">Assigned Role</dt><dd class="col-7">' + (roleAssignment.adminRoleId ? '<span class="badge bg-success-lt">' + esc(roleAssignment.adminRoleName || 'Assigned') + '</span>' + (roleAssignment.hasAdminPortalLogin ? ' <span class="badge bg-azure-lt">+ Admin Portal Login</span>' : ' <span class="text-secondary small">(staff portal only)</span>') : '<span class="badge bg-secondary-lt">No role assigned</span>') + '</dd>' + '<dt class="col-5 text-secondary">Created</dt><dd class="col-7">' + esc(Staff.formatDate(s.createdAt)) + '</dd>' +
                     '</dl>' +
                     '<div class="mb-3">' +
                     '<div class="fw-semibold mb-1">Onboarding Checklist</div>' +
@@ -893,10 +892,11 @@
                     }).join('') : '<div class="text-secondary small">No employment history yet.</div>') +
                     '</div>';
 
-                var adminAccessBtnHtml = adminAccess.linkedToUserAccount
-                    ? (adminAccess.hasAdminAccess
-                        ? '<button class="btn btn-outline-danger btn-oc-revoke-admin" data-id="' + esc(s.id) + '">Revoke Admin Access</button>'
-                        : '<button class="btn btn-outline-dark btn-oc-grant-admin" data-id="' + esc(s.id) + '">Grant Admin Access</button>')
+                var adminAccessBtnHtml = roleAssignment.linkedToUserAccount
+                    ? (roleAssignment.adminRoleId
+                        ? '<button class="btn btn-outline-dark btn-oc-assign-role" data-id="' + esc(s.id) + '">Change Role</button>' +
+                        '<button class="btn btn-outline-danger btn-oc-remove-role" data-id="' + esc(s.id) + '">Remove Role</button>'
+                        : '<button class="btn btn-outline-dark btn-oc-assign-role" data-id="' + esc(s.id) + '">Assign Role</button>')
                     : '';
 
                 actions.innerHTML =
@@ -1020,12 +1020,14 @@
             if (action.type === "update") {
                 var managerOptions = resolveManagerOptions(action.staffId, d.reportingToId);
                 var commissionPercentValue = (d.commissionRate != null && d.commissionRate !== '') ? (Number(d.commissionRate) * 100) : '';
+                var permissionRoleOpts = (d.roleOptions || []).map(function (r) { return { value: r.id, label: r.name }; });
                 form.innerHTML =
                     buildInput('col-md-6', 'Full Name', 'sf-name', d.name || '') +
                     buildInput('col-md-6', 'Email', 'sf-email', d.email || '', 'email') +
                     buildPhoneInput('col-md-6', 'Phone', 'sf-phone', normalizePhoneInput(d.phone || ''), '+2348012345678') +
                     buildInput('col-md-6', 'Date of Birth', 'sf-dob', d.dateOfBirth || '', 'date') +
-                    buildInput('col-md-4', 'Current Role', 'sf-current-role', d.currentRole || '') +
+                    buildInput('col-md-4', 'Job Title', 'sf-current-role', d.currentRole || '') +
+                    buildOptionSelect('col-md-4', 'Current Role', 'sf-permission-role-id', String(d.currentAdminRoleId || ''), permissionRoleOpts, 'No role assigned', false) +
                     '<div class="col-md-4"><label class="form-label">Branch</label>' +
                     '<input type="text" class="form-control" value="' + esc(d.locationName || '\u2014') + '" disabled>' +
                     '<div class="form-hint">Use "Transfer Branch" to move this staff member \u2014 it issues a new Staff ID and keeps history intact.</div>' +
@@ -1044,6 +1046,7 @@
                     '</div>';
                 attachPhoneInputGuard('sf-phone');
                 wireExitFieldsToggle('sf-employment-status', 'sf-exit-fields-wrap');
+                SearchableSelect.attach('sf-permission-role-id');
                 return;
             }
 
@@ -1069,6 +1072,22 @@
                     '<div class="col-12"><label class="form-label" for="sf-transfer-reason">Reason</label><textarea class="form-control" id="sf-transfer-reason" rows="2" placeholder="Why is this staff member transferring branches?"></textarea></div>' +
                     '<div class="col-12"><div class="alert alert-warning mb-0 small">A new branch-coded Staff ID will be issued automatically. The current ID (<strong>' + esc(d.currentStaffCode || '') + '</strong>) will be retired and can never be reassigned to anyone else.</div></div>';
                 SearchableSelect.attach('sf-transfer-location-id');
+                return;
+            }
+
+            if (action.type === "assign-role") {
+                var roleOpts = (d.roleOptions || []).map(function (r) { return { value: r.id, label: r.name }; });
+                form.innerHTML =
+                    '<div class="col-12"><div class="alert alert-info mb-0">The permission set applies wherever anything checks permissions — admin portal (if login is granted below) and staff portal alike.</div></div>' +
+                    buildOptionSelect('col-12', 'Permission Set', 'sf-assign-role-id', String(d.currentAdminRoleId || ''), roleOpts, 'Select a role…', true) +
+                    '<div class="col-12">' +
+                    '<div class="form-check form-switch">' +
+                    '<input class="form-check-input" type="checkbox" id="sf-grant-portal-login"' + (d.currentGrantPortalLogin ? ' checked' : '') + '>' +
+                    '<label class="form-check-label" for="sf-grant-portal-login">Also grant admin dashboard login</label>' +
+                    '</div>' +
+                    '<div class="form-hint">Leave unchecked to apply this role\'s permissions inside the staff portal only, with no admin dashboard access.</div>' +
+                    '</div>';
+                SearchableSelect.attach('sf-assign-role-id');
                 return;
             }
 
@@ -1172,6 +1191,13 @@
                 return transferPayload;
             }
 
+            if (actionType === "assign-role") {
+                return {
+                    adminRoleId: document.getElementById("sf-assign-role-id").value,
+                    grantPortalLogin: document.getElementById("sf-grant-portal-login").checked,
+                };
+            }
+
             if (actionType === "archive") {
                 var archivePayload = {
                     archivedAt: trimOrUndef(document.getElementById("sf-archived-at").value),
@@ -1235,14 +1261,30 @@
                     return;
                 }
             }
+            if (_staffFormAction.type === "assign-role") {
+                if (!payload.adminRoleId) {
+                    errorEl.textContent = "Please select a permission set.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
+            }
 
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Submitting...';
             try {
                 if (_staffFormAction.type === "create") await Staff.create(payload);
-                else if (_staffFormAction.type === "update") await Staff.update(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "update") {
+                    await Staff.update(_staffFormAction.staffId, payload);
+                    var selectedPermissionRoleId = document.getElementById("sf-permission-role-id").value;
+                    if (selectedPermissionRoleId) {
+                        var preserveGrantPortalLogin = !!(_staffFormAction.data && _staffFormAction.data.currentGrantPortalLogin);
+                        await Staff.assignRole(_staffFormAction.staffId, selectedPermissionRoleId, preserveGrantPortalLogin);
+                    }
+                }
                 else if (_staffFormAction.type === "status") await Staff.updateStatus(_staffFormAction.staffId, payload);
-                else if (_staffFormAction.type === "transfer") await Staff.transferBranch(_staffFormAction.staffId, payload); else if (_staffFormAction.type === "archive") await Staff.archive(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "transfer") await Staff.transferBranch(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "assign-role") await Staff.assignRole(_staffFormAction.staffId, payload.adminRoleId, payload.grantPortalLogin);
+                else if (_staffFormAction.type === "archive") await Staff.archive(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "add-history") await Staff.addHistory(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "edit-history") await Staff.updateHistory(_staffFormAction.staffId, _staffFormAction.historyId, payload);
 
@@ -1264,6 +1306,9 @@
                 await ensureLocationsLoaded();
                 await ensureStaffOptionsLoaded();
                 var s = await Staff.getOne(id);
+                var allRoles = await Roles.fetchRoles().catch(function () { return []; });
+                var assignableRoles = (allRoles || []).filter(function (r) { return String(r.name || '').toLowerCase().indexOf('super admin') === -1; });
+                var currentAssignment = await Staff.getRoleAssignment(id).catch(function () { return {}; });
                 openStaffFormModal({
                     type: "update",
                     staffId: id,
@@ -1281,6 +1326,9 @@
                         exitDate: (s.exitDate || "").slice(0, 10),
                         reportingToId: String(s.reportingToId || (s.reportingTo && s.reportingTo.id) || ""),
                         commissionRate: s.commissionRate,
+                        roleOptions: assignableRoles,
+                        currentAdminRoleId: currentAssignment.adminRoleId || "",
+                        currentGrantPortalLogin: !!currentAssignment.hasAdminPortalLogin,
                     }
                 });
             } catch (err) {
@@ -1322,17 +1370,33 @@
             }
         }
 
-        async function handleSetAdminAccess(id, grant) {
-            var confirmMsg = grant
-                ? "Grant this staff member admin portal access? They will be able to log into the admin dashboard. Their staff-portal access is unaffected either way."
-                : "Revoke this staff member's admin portal access? They will lose the ability to log into the admin dashboard.";
-            if (!confirm(confirmMsg)) return;
-
+        async function handleAssignRole(id) {
             try {
-                await Staff.setAdminAccess(id, grant);
+                var roles = await Roles.fetchRoles();
+                var current = await Staff.getRoleAssignment(id).catch(function () { return {}; });
+                openStaffFormModal({
+                    type: "assign-role",
+                    staffId: id,
+                    title: current.adminRoleId ? "Change Role" : "Assign Role",
+                    help: "Choose which permission set this staff member should have.",
+                    data: {
+                        roleOptions: roles || [],
+                        currentAdminRoleId: current.adminRoleId || "",
+                        currentGrantPortalLogin: !!current.hasAdminPortalLogin,
+                    }
+                });
+            } catch (err) {
+                alert(err.message || "Failed to load roles.");
+            }
+        }
+
+        async function handleRemoveRole(id) {
+            if (!confirm("Remove this staff member's role assignment? They will lose their assigned permissions and any admin dashboard login. Their staff-portal access is otherwise unaffected.")) return;
+            try {
+                await Staff.removeRole(id);
                 await openStaffDetail(id);
             } catch (err) {
-                alert(err.message || "Failed to update admin access.");
+                alert(err.message || "Failed to remove role.");
             }
         }
 

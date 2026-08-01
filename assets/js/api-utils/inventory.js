@@ -84,6 +84,18 @@ const Inventory = (function () {
         return jsonFetch(`/admin/inventory-items/alerts/low-stock/${id}/resolve`, { method: 'PATCH' });
     }
 
+    async function getExpiryAlerts(branchId, resolved) {
+        const q = new URLSearchParams();
+        if (branchId) q.set('branchId', branchId);
+        if (resolved !== undefined) q.set('resolved', String(resolved));
+        const qs = q.toString() ? '?' + q.toString() : '';
+        return jsonFetch(`/admin/inventory-items/alerts/expiry${qs}`);
+    }
+
+    async function resolveExpiryAlert(id) {
+        return jsonFetch(`/admin/inventory-items/alerts/expiry/${id}/resolve`, { method: 'PATCH' });
+    }
+
     async function getTransfers(branchId) {
         const qs = branchId ? `?branchId=${branchId}` : '';
         return jsonFetch(`/admin/inventory-items/transfer-requests${qs}`);
@@ -143,6 +155,7 @@ const Inventory = (function () {
     return {
         getAll, getOne, create, update, adjust,
         getAlerts, resolveAlert,
+        getExpiryAlerts, resolveExpiryAlert,
         getTransfers, approveTransfer, rejectTransfer, reassignTransfer,
         getAdjustmentRequests, approveAdjustment, rejectAdjustment, reassignAdjustment,
         CATEGORY_LABELS, ALERT_STAGE_COLORS, TRANSFER_STATUS_COLORS,
