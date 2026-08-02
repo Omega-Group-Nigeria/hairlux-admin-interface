@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Suppliers &amp; Vendors</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Contacts</div>
+                            <h2 class="page-title" id="page-title-text">Suppliers</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-primary" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                <span id="btn-new-label">New Supplier</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All <span id="list-title-text">Suppliers</span></h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Contact Person</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                        <th class="text-center">Items Supplied</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">New Supplier</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="f-name"
+                            placeholder="e.g. Beauty Supplies Nigeria Ltd">
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Contact Person</label>
+                            <input type="text" class="form-control" id="f-contact-person">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="f-phone">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="f-email">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-control" id="f-address">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="f-notes" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3" id="f-active-wrap" style="display:none">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="f-active" checked>
+                            <label class="form-check-label" for="f-active">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Linked Items Modal -->
+    <div class="modal modal-blur fade" id="modal-items" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Items Supplied</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="items-list"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/suppliers.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var supplierType = new URLSearchParams(location.search).get('type') === 'VENDOR' ? 'VENDOR' : 'SUPPLIER';
+        var typeLabel = supplierType === 'VENDOR' ? 'Vendor' : 'Supplier';
+        var editingId = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            RBAC.applyPageGuard('suppliers:read');
+
+            document.getElementById('page-title-text').textContent = typeLabel + 's';
+            document.getElementById('list-title-text').textContent = typeLabel + 's';
+            document.getElementById('btn-new-label').textContent = 'New ' + typeLabel;
+            document.title = 'Hairlux Admin — ' + typeLabel + 's';
+
+            document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-save').addEventListener('click', save);
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var list = await Suppliers.getAll(supplierType);
+                document.getElementById('results-label').textContent = list.length + ' ' + typeLabel.toLowerCase() + (list.length === 1 ? '' : 's');
+                tbody.innerHTML = list.length
+                    ? list.map(function (s) {
+                        var statusBadge = s.isActive
+                            ? '<span class="badge bg-green-lt">Active</span>'
+                            : '<span class="badge bg-secondary-lt">Inactive</span>';
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(s.name) + '</td>' +
+                            '<td>' + esc(s.contactPerson || '\u2014') + '</td>' +
+                            '<td>' + esc(s.phone || '\u2014') + '</td>' +
+                            '<td>' + esc(s.email || '\u2014') + '</td>' +
+                            '<td class="text-center"><a href="#" onclick="viewItems(\'' + s.id + '\');return false;">' + (s._count ? s._count.inventoryItems : 0) + '</a></td>' +
+                            '<td>' + statusBadge + '</td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + s.id + '\')">Edit</button>' +
+                            '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + s.id + '\')">Delete</button>' +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + typeLabel.toLowerCase() + 's yet.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function openForm(id) {
+            editingId = id;
+            document.getElementById('form-error').classList.add('d-none');
+            document.getElementById('modal-form-title').textContent = id ? ('Edit ' + typeLabel) : ('New ' + typeLabel);
+            document.getElementById('f-active-wrap').style.display = id ? 'block' : 'none';
+
+            if (id) {
+                try {
+                    var s = await Suppliers.getOne(id);
+                    document.getElementById('f-name').value = s.name || '';
+                    document.getElementById('f-contact-person').value = s.contactPerson || '';
+                    document.getElementById('f-phone').value = s.phone || '';
+                    document.getElementById('f-email').value = s.email || '';
+                    document.getElementById('f-address').value = s.address || '';
+                    document.getElementById('f-notes').value = s.notes || '';
+                    document.getElementById('f-active').checked = !!s.isActive;
+                } catch (e) {
+                    alert(e.message || 'Failed to load.');
+                    return;
+                }
+            } else {
+                ['f-name', 'f-contact-person', 'f-phone', 'f-email', 'f-address', 'f-notes'].forEach(function (id) {
+                    document.getElementById(id).value = '';
+                });
+            }
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+            var name = document.getElementById('f-name').value.trim();
+            if (!name) { errEl.textContent = 'Name is required.'; errEl.classList.remove('d-none'); return; }
+
+            var payload = {
+                type: supplierType,
+                name: name,
+                contactPerson: document.getElementById('f-contact-person').value.trim() || undefined,
+                phone: document.getElementById('f-phone').value.trim() || undefined,
+                email: document.getElementById('f-email').value.trim() || undefined,
+                address: document.getElementById('f-address').value.trim() || undefined,
+                notes: document.getElementById('f-notes').value.trim() || undefined,
+            };
+            if (editingId) payload.isActive = document.getElementById('f-active').checked;
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                if (editingId) await Suppliers.update(editingId, payload);
+                else await Suppliers.create(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function remove(id) {
+            if (!confirm('Delete this ' + typeLabel.toLowerCase() + '?')) return;
+            try {
+                await Suppliers.remove(id);
+                load();
+            } catch (e) {
+                alert(e.message || 'Failed to delete.');
+            }
+        }
+
+        async function viewItems(id) {
+            var list = document.getElementById('items-list');
+            list.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+            new bootstrap.Modal(document.getElementById('modal-items')).show();
+            try {
+                var s = await Suppliers.getOne(id);
+                var items = s.inventoryItems || [];
+                list.innerHTML = items.length
+                    ? '<table class="table table-sm"><thead><tr><th>Item</th><th>Branch</th><th>Category</th><th class="text-end">Stock</th></tr></thead><tbody>' +
+                    items.map(function (i) {
+                        return '<tr><td>' + esc(i.name) + '</td><td>' + esc(i.branch ? i.branch.name : '\u2014') + '</td><td>' + esc(i.category) + '</td><td class="text-end">' + i.currentQuantity + '</td></tr>';
+                    }).join('') + '</tbody></table>'
+                    : '<div class="text-secondary text-center py-4">No items linked to this ' + typeLabel.toLowerCase() + ' yet.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
+            }
+        }
+    </script>
+</body>
+
+</html>

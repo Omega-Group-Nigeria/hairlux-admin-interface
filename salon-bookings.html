@@ -618,6 +618,8 @@
         // ── Verify Reservation ──────────────────────────────────────────────
 
         var _verifyBooking = null;
+        var _verifySource = null;
+        var _verifyCode = null;
 
         function openVerifyModal() {
             document.getElementById('verify-error').classList.add('d-none');
@@ -626,6 +628,8 @@
             document.getElementById('verify-result').style.display = 'none';
             document.getElementById('btn-confirm-verify').style.display = 'none';
             _verifyBooking = null;
+            _verifySource = null;
+            _verifyCode = null;
             new bootstrap.Modal(document.getElementById('modal-verify-reservation')).show();
             setTimeout(function () { document.getElementById('verify-code-input').focus(); }, 300);
         }
@@ -637,14 +641,29 @@
             if (!code) { errEl.textContent = 'Enter a reservation code.'; errEl.classList.remove('d-none'); return; }
 
             try {
-                var booking = await SalonBookings.verifyCode(code);
+                var result = await SalonBookings.verifyCode(code);
+                var source = result.source;
+                var booking = result.booking;
                 _verifyBooking = booking;
+                _verifySource = source;
+                _verifyCode = code;
 
-                var services = (booking.services || []).map(function (s) { return esc(s.service ? s.service.name : ''); }).join(', ');
-                document.getElementById('vr-customer').textContent = booking.customerName + (booking.customerPhone ? ' (' + booking.customerPhone + ')' : '');
-                document.getElementById('vr-branch').textContent = booking.branch ? booking.branch.name : '—';
+                var isLegacy = source === 'booking';
+                var customerName = isLegacy
+                    ? (booking.guestName || (booking.user ? (booking.user.firstName + ' ' + booking.user.lastName) : ''))
+                    : booking.customerName;
+                var customerPhone = isLegacy
+                    ? (booking.guestPhone || (booking.user ? booking.user.phone : ''))
+                    : booking.customerPhone;
+                var branchName = booking.branch ? booking.branch.name : '—';
+                var servicesLabel = isLegacy
+                    ? (booking.services || []).map(function (s) { return esc(s.name || ''); }).join(', ')
+                    : (booking.services || []).map(function (s) { return esc(s.service ? s.service.name : ''); }).join(', ');
+
+                document.getElementById('vr-customer').textContent = customerName + (customerPhone ? ' (' + customerPhone + ')' : '');
+                document.getElementById('vr-branch').textContent = branchName;
                 document.getElementById('vr-datetime').textContent = SalonBookings.formatDate(booking.bookingDate) + ' · ' + booking.bookingTime;
-                document.getElementById('vr-services').textContent = services || '—';
+                document.getElementById('vr-services').textContent = servicesLabel || '—';
                 document.getElementById('vr-total').textContent = SalonBookings.formatMoney(booking.totalAmount);
 
                 document.getElementById('verify-code-entry').style.display = 'none';
@@ -658,10 +677,11 @@
                 }
 
                 document.getElementById('vr-already-used').style.display = 'none';
-                document.getElementById('vr-assign-section').style.display = 'block';
                 document.getElementById('btn-confirm-verify').style.display = '';
+                document.getElementById('vr-assign-section').style.display = 'block';
 
-                var staffResult = await Staff.getAll({ locationId: booking.branchId, limit: 100 });
+                var pickerBranchId = booking.branchId || (booking.branch && booking.branch.id);
+                var staffResult = await Staff.getAll({ locationId: pickerBranchId, limit: 100 });
                 var staffList = staffResult.data || [];
                 document.getElementById('vr-staff-select').innerHTML = staffList.length
                     ? '<option value="">Select stylist…</option>' + staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
@@ -673,15 +693,16 @@
         }
 
         async function confirmVerification() {
-            var staffId = document.getElementById('vr-staff-select').value;
             var errEl = document.getElementById('verify-error');
             errEl.classList.add('d-none');
+
+            var staffId = document.getElementById('vr-staff-select').value;
             if (!staffId) { errEl.textContent = 'Please select a Stylist.'; errEl.classList.remove('d-none'); return; }
 
             var btn = document.getElementById('btn-confirm-verify');
             btn.disabled = true;
             try {
-                await SalonBookings.confirmVerification(_verifyBooking.id, staffId);
+                await SalonBookings.confirmVerification(_verifyCode, staffId);
                 bootstrap.Modal.getInstance(document.getElementById('modal-verify-reservation')).hide();
                 loadBookings();
             } catch (e) {
@@ -701,7 +722,7 @@
             document.getElementById('nb-customer-search').value = '';
             document.getElementById('nb-customer-search-results').style.display = 'none';
             document.getElementById('nb-date').value = new Date().toISOString().slice(0, 10);
-            document.getElementById('nb-time').value = '';
+            document.getElementById('nb-time').value = new Date().toTimeString().slice(0, 5);
             document.getElementById('nb-notes').value = '';
             document.getElementById('nb-service-lines').innerHTML = '';
             document.getElementById('nb-item-lines').innerHTML = '';
@@ -746,7 +767,7 @@
             try {
                 var matches = await SalonBookings.searchCustomers(q);
                 if (!matches.length) {
-                    resultsEl.innerHTML = '<div class="ss-empty">No matching customers</div>';
+                    resultsEl.innerHTML = '<div class="ss-empty">No matching customers \u2014 just fill in their name and phone below.</div>';
                 } else {
                     resultsEl.innerHTML = matches.map(function (m) {
                         return '<div class="ss-item" data-name="' + esc(m.name || '') + '" data-phone="' + esc(m.phone || '') + '">' +
