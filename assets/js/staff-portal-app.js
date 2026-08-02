@@ -376,9 +376,7 @@ function handleTopBarCta() {
     return;
   }
   if (screenId === 'inventory') {
-    const registerCard = document.getElementById('inv-items-tbody');
-    if (registerCard) registerCard.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return;
+    return showNewInventoryItemForm();
   }
   if (screenId === 'sales') {
     return addSaleLine();
@@ -1632,7 +1630,7 @@ async function showBookingForm() {
     '<div class="col-6"><label class="form-label small mb-1">Date</label>' +
     '<input type="date" class="input" id="sb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Time</label>' +
-    '<input type="time" class="input" id="sb-time"></div>' +
+    '<input type="time" class="input" id="sb-time" value="' + new Date().toTimeString().slice(0, 5) + '"></div>' +
     '</div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Services</label><div id="sb-service-lines"></div>' +
     '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddServiceLine()">+ Add service</button></div>' +
@@ -1687,7 +1685,7 @@ async function sbRunCustomerSearch(q, resultsEl) {
   try {
     var matches = await SalonBookingsSelf.searchCustomers(q);
     if (!matches.length) {
-      resultsEl.innerHTML = '<div class="ss-empty">No matching customers</div>';
+      resultsEl.innerHTML = '<div class="ss-empty">No matching customers \u2014 just fill in their name and phone below.</div>';
     } else {
       resultsEl.innerHTML = matches.map(function (m) {
         return '<div class="ss-item" data-name="' + escapeHtml(m.name || '') + '" data-phone="' + escapeHtml(m.phone || '') + '">' +
@@ -1711,6 +1709,8 @@ function cancelBookingForm() {
 // -- Verify Reservation (staff, own branch only) -------------------------------
 
 var _sbVerifyBooking = null;
+var _sbVerifySource = null;
+var _sbVerifyCode = null;
 
 function showVerifyReservationForm() {
   document.getElementById('profile-modal-box').innerHTML =
@@ -1726,6 +1726,68 @@ function showVerifyReservationForm() {
   setTimeout(function () { var el = document.getElementById('sbv-code'); if (el) el.focus(); }, 100);
 }
 
+// -- New Inventory Item (staff, own branch only) --------------------------------
+
+function showNewInventoryItemForm() {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="nii-error" style="display:none"></div>' +
+    '<h3>Log New Item</h3>' +
+    '<div class="oc-modal-sub">Adds a new item to your own branch\'s stock register.</div>' +
+    '<div class="oc-field"><label>Name</label><input type="text" id="nii-name" placeholder="e.g. Argan Oil Shampoo 500ml"></div>' +
+    '<div class="oc-field"><label>Category</label><select id="nii-category" onchange="niiUpdatePriceVisibility()">' +
+    '<option value="FOR_SALE">For Sale</option><option value="INTERNAL_USE">Internal Use</option><option value="STORAGE">Storage</option>' +
+    '</select></div>' +
+    '<div class="oc-field"><label>Unit</label><input type="text" id="nii-unit" placeholder="e.g. bottle"></div>' +
+    '<div class="oc-field"><label>Initial Quantity</label><input type="number" min="0" id="nii-quantity" value="0"></div>' +
+    '<div class="oc-field"><label>Low Stock Threshold</label><input type="number" min="0" id="nii-threshold" value="5"></div>' +
+    '<div class="oc-field" id="nii-price-field"><label>Price (\u20a6)</label><input type="number" min="0" step="0.01" id="nii-price" placeholder="Required for For Sale items"></div>' +
+    '<div class="oc-field"><label>Expiry Date (optional)</label><input type="date" id="nii-expiry"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="nii-save-btn" onclick="submitNewInventoryItem()">Save</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+  setTimeout(function () { var el = document.getElementById('nii-name'); if (el) el.focus(); }, 100);
+}
+
+function niiUpdatePriceVisibility() {
+  var field = document.getElementById('nii-price-field');
+  if (field) field.style.display = document.getElementById('nii-category').value === 'FOR_SALE' ? '' : 'none';
+}
+
+async function submitNewInventoryItem() {
+  var errEl = document.getElementById('nii-error');
+  errEl.style.display = 'none';
+
+  var name = document.getElementById('nii-name').value.trim();
+  var category = document.getElementById('nii-category').value;
+  var price = document.getElementById('nii-price').value;
+
+  if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = ''; return; }
+  if (category === 'FOR_SALE' && !price) { errEl.textContent = 'Price is required for items in the For Sale category.'; errEl.style.display = ''; return; }
+
+  var btn = document.getElementById('nii-save-btn');
+  btn.disabled = true;
+  try {
+    await InventorySelf.createItem({
+      name: name,
+      category: category,
+      unit: document.getElementById('nii-unit').value.trim() || undefined,
+      initialQuantity: Number(document.getElementById('nii-quantity').value) || 0,
+      lowStockThreshold: Number(document.getElementById('nii-threshold').value) || 5,
+      price: price ? Number(price) : undefined,
+      expiryDate: document.getElementById('nii-expiry').value || undefined,
+    });
+    closeProfileModal();
+    await loadInventoryItems();
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to create item.';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function sbShowVerifyError(message) {
   var el = document.getElementById('sbv-error');
   if (el) { el.textContent = message; el.style.display = 'block'; }
@@ -1738,15 +1800,28 @@ async function sbLookupReservationCode() {
   var btn = document.getElementById('sbv-lookup-btn');
   btn.disabled = true;
   try {
-    var booking = await SalonBookingsSelf.verifyCode(code);
+    var result = await SalonBookingsSelf.verifyCode(code);
+    var source = result.source;
+    var booking = result.booking;
     _sbVerifyBooking = booking;
+    _sbVerifySource = source;
+    _sbVerifyCode = code;
 
-    var services = (booking.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
+    var isLegacy = source === 'booking';
+    var customerName = isLegacy
+      ? (booking.guestName || (booking.user ? (booking.user.firstName + ' ' + booking.user.lastName) : ''))
+      : booking.customerName;
+    var customerPhone = isLegacy
+      ? (booking.guestPhone || (booking.user ? booking.user.phone : ''))
+      : booking.customerPhone;
+    var services = isLegacy
+      ? (booking.services || []).map(function (s) { return escapeHtml(s.name || ''); }).join(', ')
+      : (booking.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
 
     if (booking.reservationUsed) {
       document.getElementById('profile-modal-box').innerHTML =
         '<h3>Verify Reservation</h3>' +
-        '<div class="oc-modal-sub">' + escapeHtml(booking.customerName) + ' \u00B7 ' + (services || '\u2014') + '</div>' +
+        '<div class="oc-modal-sub">' + escapeHtml(customerName || '') + ' \u00B7 ' + (services || '\u2014') + '</div>' +
         '<div style="color:var(--red);font-weight:700;margin:12px 0">This reservation has already been used.</div>' +
         '<div class="oc-modal-actions"><button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Close</button></div>';
       return;
@@ -1763,7 +1838,7 @@ async function sbLookupReservationCode() {
     document.getElementById('profile-modal-box').innerHTML =
       '<div class="oc-modal-error" id="sbv-error" style="display:none"></div>' +
       '<h3>Verify Reservation</h3>' +
-      '<div class="oc-modal-sub"><strong>' + escapeHtml(booking.customerName) + '</strong>' + (booking.customerPhone ? ' (' + escapeHtml(booking.customerPhone) + ')' : '') + '<br>' +
+      '<div class="oc-modal-sub"><strong>' + escapeHtml(customerName || '') + '</strong>' + (customerPhone ? ' (' + escapeHtml(customerPhone) + ')' : '') + '<br>' +
       StaffSelf.formatDate(booking.bookingDate) + ' \u00B7 ' + escapeHtml(booking.bookingTime) + '<br>' +
       (services || '\u2014') + ' \u2014 ' + sbFormatMoney(booking.totalAmount) + '</div>' +
       '<div class="oc-field"><label>Assign Stylist</label><select id="sbv-staff">' + staffOptions + '</select></div>' +
@@ -1785,7 +1860,7 @@ async function sbConfirmVerification() {
   var btn = document.getElementById('sbv-confirm-btn');
   btn.disabled = true;
   try {
-    await SalonBookingsSelf.confirmVerification(_sbVerifyBooking.id, staffId);
+    await SalonBookingsSelf.confirmVerification(_sbVerifyCode, staffId);
     closeProfileModal();
     await loadSalonBookings();
   } catch (err) {
