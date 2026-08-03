@@ -33,7 +33,8 @@ const SearchableSelect = (function () {
     }
 
     function openList(state) {
-        renderList(state, state.input.value);
+       
+        renderList(state, '');
         state.list.style.display = state.list.children.length ? 'block' : 'none';
     }
 

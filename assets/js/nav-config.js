@@ -72,6 +72,16 @@ var NavConfig = window.NavConfig || (() => {
             ],
         },
         {
+            id: "payroll",
+            label: "Payroll",
+            icon: "users",
+            href: "payroll.html",
+            permission: {
+                type: "requireAny",
+                perms: ["payroll:read", "payroll:manage"],
+            },
+        },
+        {
             id: "services",
             label: "Services",
             icon: "services",
