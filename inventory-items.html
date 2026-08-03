@@ -341,6 +341,11 @@
                             <input class="form-control" id="ni-unit" placeholder="e.g. bottle">
                         </div>
                     </div>
+                    <div class="mb-2"><label class="form-label">Supplier / Vendor</label>
+                        <select class="form-select" id="ni-supplier">
+                            <option value="">None</option>
+                        </select>
+                    </div>
                     <div class="row g-2 mb-2">
                         <div class="col-6"><label class="form-label">Initial Quantity</label>
                             <input type="number" class="form-control" id="ni-quantity" min="0" placeholder="0">
@@ -393,6 +398,11 @@
                         <div class="col-6"><label class="form-label">Unit</label>
                             <input class="form-control" id="ei-unit">
                         </div>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Supplier / Vendor</label>
+                        <select class="form-select" id="ei-supplier">
+                            <option value="">None</option>
+                        </select>
                     </div>
                     <div class="mb-2"><label class="form-label">Low Stock Threshold</label>
                         <input type="number" class="form-control" id="ei-threshold" min="0">
@@ -516,6 +526,7 @@
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/api-utils/inventory.js"></script>
+    <script src="assets/js/api-utils/suppliers.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
     <script>
@@ -548,6 +559,7 @@
             document.getElementById("logout-btn").addEventListener("click", function (e) { e.preventDefault(); Auth.logout(); });
 
             loadBranchOptions();
+            loadSupplierOptions();
             loadItems();
             refreshBadgeCounts();
 
@@ -557,7 +569,7 @@
                 if (!tab) return;
                 document.querySelectorAll("#main-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 tab.classList.add("active");
-               ["items", "alerts", "expiry", "transfers", "adjustments"].forEach(function (id) {
+                ["items", "alerts", "expiry", "transfers", "adjustments"].forEach(function (id) {
                     document.getElementById("tab-" + id).style.display = id === tab.dataset.tab ? "" : "none";
                 });
                 if (tab.dataset.tab === "alerts") loadAlerts(false);
@@ -635,33 +647,46 @@
         }
 
         async function loadBranchOptions() {
-            try {
-                var branches = await Staff.getLocations();
-                _branchesCache = branches;
-                var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
-                document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
-                document.getElementById("ni-branch").innerHTML = '<option value="">Select branch…</option>' + opts;
-            } catch (err) {
-                console.error("Failed to load branches", err);
+                try {
+                    var branches = await Staff.getLocations();
+                    _branchesCache = branches;
+                    var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
+                    document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
+                    document.getElementById("ni-branch").innerHTML = '<option value="">Select branch…</option>' + opts;
+                } catch (err) {
+                    console.error("Failed to load branches", err);
+                }
             }
-        }
+
+            async function loadSupplierOptions() {
+                try {
+                    var suppliers = await Suppliers.getAll(undefined, true);
+                    var opts = suppliers.map(function (s) {
+                        return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.type === 'VENDOR' ? ' (Vendor)' : ' (Supplier)') + '</option>';
+                    }).join('');
+                    document.getElementById("ni-supplier").innerHTML = '<option value="">None</option>' + opts;
+                    document.getElementById("ei-supplier").innerHTML = '<option value="">None</option>' + opts;
+                } catch (err) {
+                    console.error("Failed to load suppliers", err);
+                }
+            }
 
         async function refreshBadgeCounts() {
-                try {
-                    var alerts = await Inventory.getAlerts(undefined, false);
-                    var alertList = alerts.data || alerts || [];
-                    var badge = document.getElementById("alert-count-badge");
-                    if (alertList.length) { badge.textContent = alertList.length; badge.style.display = ""; }
-                    else badge.style.display = "none";
-                } catch (err) { /* non-fatal */ }
+            try {
+                var alerts = await Inventory.getAlerts(undefined, false);
+                var alertList = alerts.data || alerts || [];
+                var badge = document.getElementById("alert-count-badge");
+                if (alertList.length) { badge.textContent = alertList.length; badge.style.display = ""; }
+                else badge.style.display = "none";
+            } catch (err) { /* non-fatal */ }
 
-                try {
-                    var expiryAlerts = await Inventory.getExpiryAlerts(undefined, false);
-                    var expiryList = expiryAlerts.data || expiryAlerts || [];
-                    var expiryBadge = document.getElementById("expiry-count-badge");
-                    if (expiryList.length) { expiryBadge.textContent = expiryList.length; expiryBadge.style.display = ""; }
-                    else expiryBadge.style.display = "none";
-                } catch (err) { /* non-fatal */ }
+            try {
+                var expiryAlerts = await Inventory.getExpiryAlerts(undefined, false);
+                var expiryList = expiryAlerts.data || expiryAlerts || [];
+                var expiryBadge = document.getElementById("expiry-count-badge");
+                if (expiryList.length) { expiryBadge.textContent = expiryList.length; expiryBadge.style.display = ""; }
+                else expiryBadge.style.display = "none";
+            } catch (err) { /* non-fatal */ }
 
             try {
                 var transfers = await Inventory.getTransfers();
@@ -749,6 +774,7 @@
             document.getElementById('ei-threshold').value = item.lowStockThreshold;
             document.getElementById('ei-price').value = item.price != null ? item.price : '';
             document.getElementById('ei-expiry').value = item.expiryDate ? item.expiryDate.slice(0, 10) : '';
+            document.getElementById('ei-supplier').value = item.supplierId || (item.supplier ? item.supplier.id : '') || '';
             updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
             new bootstrap.Modal(document.getElementById('modal-edit-item')).show();
         }
@@ -785,6 +811,7 @@
                     lowStockThreshold: threshold ? Number(threshold) : undefined,
                     price: price ? Number(price) : undefined,
                     expiryDate: expiry || undefined,
+                    supplierId: document.getElementById('ei-supplier').value || null,
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modal-edit-item')).hide();
                 loadItems();
@@ -830,6 +857,7 @@
                     lowStockThreshold: threshold ? Number(threshold) : undefined,
                     price: price ? Number(price) : undefined,
                     expiryDate: expiry || undefined,
+                    supplierId: document.getElementById("ni-supplier").value || undefined,
                 });
                 bootstrap.Modal.getInstance(document.getElementById("modal-new-item")).hide();
                 loadItems();

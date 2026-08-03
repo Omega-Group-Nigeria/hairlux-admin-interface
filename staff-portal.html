@@ -1692,6 +1692,8 @@
   <script src="./assets/js/api-utils/auth.js"></script>
   <script src="./assets/js/api-utils/staff-self.js"></script>
   <script src="./assets/js/api-utils/inventory-self.js"></script>
+  <script src="./assets/js/api-utils/suppliers-self.js"></script>
+  <script src="./assets/js/api-utils/payroll-self.js"></script>
   <script src="./assets/js/api-utils/salon-bookings-self.js"></script>
   <script src="./assets/js/api-utils/product-sales.js"></script>
   <script src="./assets/js/searchable-select.js"></script>
@@ -1770,8 +1772,15 @@
         <div class="sb-item" onclick="show('commission')"><span class="ico">💰</span>My Commission</div>
       </div>
 
-      <div class="sb-sec">Compliance</div>
-      <div class="sb-item" onclick="show('audit-trail')"><span class="ico">🔍</span>Audit Trail</div>
+      <div class="sb-sec">Payroll</div>
+      <div class="sb-item" onclick="show('payroll')"><span class="ico">🏦</span>My Payroll</div>
+
+      <!-- Compliance section hidden until Audit Trail (its only current item)
+                 is fully implemented — remove this wrapper once it's ready. -->
+      <div style="display:none">
+        <div class="sb-sec">Compliance</div>
+        <div class="sb-item" onclick="show('audit-trail')"><span class="ico">🔍</span>Audit Trail</div>
+      </div>
 
       <div class="sb-footer">
         <div class="sb-logout" onclick="Auth.logout()"><span>🚪</span>Sign Out</div>
@@ -2148,47 +2157,47 @@
               <div class="card-b" style="text-align:center;padding:32px">
                 <div style="font-size:48px;font-weight:800;color:var(--white);letter-spacing:-.02em" id="clk">08:47 AM
                 </div>
-                <div style="font-size:13px;color:var(--muted);margin-bottom:28px">Monday, 14 July 2026 · Academy Branch
+                <div style="font-size:13px;color:var(--muted);margin-bottom:28px" id="clk-date">Loading…
                 </div>
                 <div class="ci-btn" id="ci-btn" onclick="handleAttendanceToggle()">⏵</div>
                 <div style="font-size:12px;color:var(--muted)" id="ci-status">Tap to Check In</div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-h">
-                <h3>This Week</h3>
-              </div>
-              <div class="card-b">
-                <div class="week-dots mb4">
-                  <div class="wd">
-                    <div class="day">Mon</div>
-                    <div class="dot ok">✓</div>
-                  </div>
-                  <div class="wd">
-                    <div class="day">Tue</div>
-                    <div class="dot ok">✓</div>
-                  </div>
-                  <div class="wd">
-                    <div class="day">Wed</div>
-                    <div class="dot ok">✓</div>
-                  </div>
-                  <div class="wd">
-                    <div class="day">Thu</div>
-                    <div class="dot late">L</div>
-                  </div>
-                  <div class="wd">
-                    <div class="day">Fri</div>
-                    <div class="dot today">—</div>
-                  </div>
-                  <div class="wd">
-                    <div class="day">Sat</div>
-                    <div class="dot off">–</div>
-                  </div>
-                  <div class="wd">
-                    <div class="day">Sun</div>
-                    <div class="dot off">–</div>
-                  </div>
                 </div>
+                </div>
+                <div class="card">
+                  <div class="card-h">
+                    <h3>This Week</h3>
+                  </div>
+                  <div class="card-b">
+                    <div class="week-dots mb4">
+                      <div class="wd">
+                        <div class="day">Mon</div>
+                        <div class="dot off" id="wd-0">–</div>
+                      </div>
+                      <div class="wd">
+                        <div class="day">Tue</div>
+                        <div class="dot off" id="wd-1">–</div>
+                      </div>
+                      <div class="wd">
+                        <div class="day">Wed</div>
+                        <div class="dot off" id="wd-2">–</div>
+                      </div>
+                      <div class="wd">
+                        <div class="day">Thu</div>
+                        <div class="dot off" id="wd-3">–</div>
+                      </div>
+                      <div class="wd">
+                        <div class="day">Fri</div>
+                        <div class="dot off" id="wd-4">–</div>
+                      </div>
+                      <div class="wd">
+                        <div class="day">Sat</div>
+                        <div class="dot off" id="wd-5">–</div>
+                      </div>
+                      <div class="wd">
+                        <div class="day">Sun</div>
+                        <div class="dot off" id="wd-6">–</div>
+                      </div>
+                    </div>
                 <div class="divider"></div>
                 <div class="info-grid">
                   <div class="info-item">
@@ -2607,19 +2616,104 @@
 
         <!-- ═══ PAYROLL ═══ -->
         <div id="payroll" class="screen">
+          <div class="g4 mb6">
+            <div class="stat gold">
+              <div class="stat-lbl">Wallet Balance</div>
+              <div class="stat-val" id="pr-wallet-balance">—</div>
+              <div class="stat-delta neu" id="pr-payday-status">Checking Payday status…</div>
+            </div>
+            <div class="stat green">
+              <div class="stat-lbl">Available to Withdraw</div>
+              <div class="stat-val" id="pr-available-balance">—</div>
+            </div>
+            <div class="stat blue">
+              <div class="stat-lbl">Pending Withdrawals</div>
+              <div class="stat-val" id="pr-pending-balance">—</div>
+            </div>
+          </div>
+        
+          <div class="card mb4">
+            <div class="card-h">
+              <h3>Withdraw</h3>
+            </div>
+            <div class="card-b">
+              <div id="pr-withdraw-error" class="text-danger small mb-2" style="display:none"></div>
+              <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+                <div class="oc-field" style="margin-bottom:0;flex:1;min-width:180px">
+                  <label>Amount (₦)</label>
+                  <input type="number" min="1" step="0.01" id="pr-withdraw-amount" placeholder="e.g. 20000">
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="prWithdrawMax()">Withdraw All</button>
+                <button class="btn btn-gold btn-sm" id="pr-withdraw-btn" onclick="prSubmitWithdrawal()">Withdraw</button>
+              </div>
+              <div class="text-secondary small mt3" id="pr-withdraw-hint"></div>
+            </div>
+          </div>
+        
+          <div class="card mb4">
+            <div class="card-h">
+              <h3>Bank Account</h3>
+            </div>
+            <div class="card-b" id="pr-bank-content">
+              <div class="text-secondary small">Loading…</div>
+            </div>
+          </div>
+        
           <div class="card mb4">
             <div class="card-h">
               <h3>My Compensation</h3>
             </div>
-            <div class="card-b">
-              <div class="alert"
-                style="background:rgba(157,130,72,.08);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--muted)">
-                This shows your base salary and allowances from your offer letter. Full payslips, commission breakdowns,
-                and deductions aren't built yet — this is a partial view, not a complete payroll record.
-              </div>
-              <div id="comp-content">
-                <div class="text-secondary small">Loading…</div>
-              </div>
+            <div class="card-b" id="pr-comp-content">
+              <div class="text-secondary small">Loading…</div>
+            </div>
+          </div>
+        
+          <div class="card mb4">
+            <div class="card-h">
+              <h3>Withdrawal History</h3>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="pr-withdrawals-tbody">
+                  <tr>
+                    <td colspan="3" class="text-center py-4">
+                      <div class="spinner-border text-primary"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        
+          <div class="card">
+            <div class="card-h">
+              <h3>Payslips</h3>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Gross Pay</th>
+                    <th>Deductions</th>
+                    <th>Net Pay</th>
+                  </tr>
+                </thead>
+                <tbody id="pr-payslips-tbody">
+                  <tr>
+                    <td colspan="4" class="text-center py-4">
+                      <div class="spinner-border text-primary"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -2795,15 +2889,15 @@
     };
 
     const ctas = {
-        'dashboard': '⏵ Check In',
-        'attendance': 'Check In',
-        'onboarding': 'Save Progress',
-        'inventory': '+ Log Entry',
-        'sales': '+ Add Product',
-        'commission': 'Export Report',
-        'payroll': 'Download Payslip',
-        'audit-trail': 'Export Log',
-      };
+      'dashboard': '⏵ Check In',
+      'attendance': 'Check In',
+      'onboarding': 'Save Progress',
+      'inventory': '+ Log Entry',
+      'sales': '+ Add Product',
+      'commission': 'Export Report',
+      'payroll': 'View Payslips',
+      'audit-trail': 'Export Log',
+    };
 
 
     function toggleSidebar() {

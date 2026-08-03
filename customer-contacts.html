@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Customer Contacts</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Contacts</div>
+                            <h2 class="page-title">Customer Contacts</h2>
+                        </div>
+                        <div class="col-auto ms-auto" style="min-width:280px">
+                            <input type="text" class="form-control" id="search-input"
+                                placeholder="Search by name or phone…">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Branch</label>
+                                    <select class="form-select form-select-sm" id="filter-branch">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">From</label>
+                                    <input type="date" class="form-control form-control-sm" id="filter-date-from">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">To</label>
+                                    <input type="date" class="form-control form-control-sm" id="filter-date-to">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Account</label>
+                                    <select class="form-select form-select-sm" id="filter-account">
+                                        <option value="">Any</option>
+                                        <option value="true">Has app account</option>
+                                        <option value="false">Walk-in only</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Min. Bookings</label>
+                                    <input type="number" min="0" class="form-control form-control-sm"
+                                        id="filter-min-bookings" placeholder="e.g. 3">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small mb-1">Min. Spend (\u20a6)</label>
+                                    <input type="number" min="0" class="form-control form-control-sm"
+                                        id="filter-min-spend" placeholder="e.g. 50000">
+                                </div>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    id="btn-clear-filters">Clear Filters</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Customers</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                        <th>Account</th>
+                                        <th>Branches Visited</th>
+                                        <th class="text-center">Bookings</th>
+                                        <th class="text-end">Total Spend</th>
+                                        <th>Last Visit</th>
+                                        <th>Added</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="9" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                id="btn-prev">Previous</button>
+                            <span class="text-secondary small" id="page-label"></span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-next">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/salon-bookings.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+    <script>
+        var currentPage = 1;
+        var currentQuery = '';
+        var searchTimer = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            RBAC.applyPageGuard('bookings:read');
+
+            document.getElementById('search-input').addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                var q = this.value;
+                searchTimer = setTimeout(function () {
+                    currentQuery = q;
+                    currentPage = 1;
+                    load();
+                }, 300);
+            });
+            ['filter-branch', 'filter-date-from', 'filter-date-to', 'filter-account', 'filter-min-bookings', 'filter-min-spend'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', function () { currentPage = 1; load(); });
+            });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('filter-branch').value = '';
+                document.getElementById('filter-date-from').value = '';
+                document.getElementById('filter-date-to').value = '';
+                document.getElementById('filter-account').value = '';
+                document.getElementById('filter-min-bookings').value = '';
+                document.getElementById('filter-min-spend').value = '';
+                currentPage = 1;
+                load();
+            });
+            document.getElementById('btn-prev').addEventListener('click', function () {
+                if (currentPage > 1) { currentPage--; load(); }
+            });
+            document.getElementById('btn-next').addEventListener('click', function () {
+                currentPage++; load();
+            });
+
+            loadBranchOptions();
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function formatMoney(amount) {
+            return '\u20a6' + Number(amount || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function loadBranchOptions() {
+            try {
+                var branches = await Staff.getLocations();
+                var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                document.getElementById('filter-branch').innerHTML = '<option value="">All branches</option>' + opts;
+            } catch (err) {
+                console.error('Failed to load branches', err);
+            }
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await SalonBookings.findAllCustomers({
+                    q: currentQuery,
+                    branchId: document.getElementById('filter-branch').value,
+                    dateFrom: document.getElementById('filter-date-from').value,
+                    dateTo: document.getElementById('filter-date-to').value,
+                    hasAccount: document.getElementById('filter-account').value,
+                    minBookings: document.getElementById('filter-min-bookings').value,
+                    minSpend: document.getElementById('filter-min-spend').value,
+                    page: currentPage,
+                    limit: 20,
+                });
+                var customers = result.data || [];
+                var meta = result.meta || { total: customers.length, totalPages: 1 };
+
+                document.getElementById('results-label').textContent = meta.total + ' customer' + (meta.total === 1 ? '' : 's');
+                document.getElementById('page-label').textContent = 'Page ' + currentPage + ' of ' + (meta.totalPages || 1);
+                document.getElementById('btn-prev').disabled = currentPage <= 1;
+                document.getElementById('btn-next').disabled = currentPage >= (meta.totalPages || 1);
+
+                tbody.innerHTML = customers.length
+                    ? customers.map(function (c) {
+                        var accountBadge = c.userId
+                            ? '<span class="badge bg-blue-lt">Has app account</span>'
+                            : '<span class="text-secondary small">Walk-in only</span>';
+                        var branches = (c.branches || []).join(', ') || '\u2014';
+                        var lastVisit = c.lastBookingDate
+                            ? new Date(c.lastBookingDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                            : '\u2014';
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(c.name) + '</td>' +
+                            '<td>' + esc(c.phone) + '</td>' +
+                            '<td>' + esc(c.email || '\u2014') + '</td>' +
+                            '<td>' + accountBadge + '</td>' +
+                            '<td class="text-secondary small">' + esc(branches) + '</td>' +
+                            '<td class="text-center">' + (c.bookingCount || 0) + '</td>' +
+                            '<td class="text-end">' + formatMoney(c.totalSpend) + '</td>' +
+                            '<td class="text-secondary small">' + lastVisit + '</td>' +
+                            '<td class="text-secondary small">' + new Date(c.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="9" class="text-center text-secondary py-5">No customers found.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>

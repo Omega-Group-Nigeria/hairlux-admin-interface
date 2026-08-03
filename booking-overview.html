@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Booking Overview</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Operations</div>
+                            <h2 class="page-title">Booking Overview</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <a href="./salon-bookings.html" class="btn btn-outline-primary">Go to Salon Bookings</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Summary cards -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Bookings</div>
+                                    <div class="h2 mb-0" id="ov-total">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Revenue</div>
+                                    <div class="h2 mb-0" id="ov-revenue">—</div>
+                                    <div class="text-secondary small">Completed bookings only</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Completed</div>
+                                    <div class="h2 mb-0 text-green" id="ov-completed">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Pending</div>
+                                    <div class="h2 mb-0 text-amber" id="ov-pending">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Cancelled</div>
+                                    <div class="h2 mb-0 text-red" id="ov-cancelled">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label">Date From</label>
+                                    <input type="date" class="form-control" id="ov-date-from">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Date To</label>
+                                    <input type="date" class="form-control" id="ov-date-to">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Branch</label>
+                                    <select class="form-select" id="ov-branch">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Source</label>
+                                    <select class="form-select" id="ov-source">
+                                        <option value="all">All bookings</option>
+                                        <option value="booking">Customer-booked (Website/App)</option>
+                                        <option value="salon_booking">Staff-created (walk-in)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-primary flex-fill"
+                                        id="btn-apply-filters">Apply</button>
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        id="btn-reset-filters">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bookings table -->
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Bookings</h3>
+                                <span class="text-secondary small" id="ov-results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Customer</th>
+                                        <th>Branch</th>
+                                        <th>Stylist</th>
+                                        <th>Source</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Amount</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ov-tbody">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/salon-bookings.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var isSuperAdmin = false;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var user = Auth.getUser();
+            isSuperAdmin = !!(user && user.role === 'SUPER_ADMIN');
+
+            document.getElementById('btn-apply-filters').addEventListener('click', loadOverview);
+            document.getElementById('btn-reset-filters').addEventListener('click', function () {
+                document.getElementById('ov-date-from').value = '';
+                document.getElementById('ov-date-to').value = '';
+                document.getElementById('ov-branch').value = '';
+                document.getElementById('ov-source').value = 'all';
+                loadOverview();
+            });
+
+            loadBranchFilter();
+            loadOverview();
+        });
+
+        async function loadBranchFilter() {
+            try {
+                var result = await Branches.getBranches();
+                var branches = result.data || result || [];
+                var select = document.getElementById('ov-branch');
+                branches.forEach(function (b) {
+                    var opt = document.createElement('option');
+                    opt.value = b.id;
+                    opt.textContent = b.name;
+                    select.appendChild(opt);
+                });
+            } catch (e) { /* non-fatal — branch filter just stays at "All branches" */ }
+        }
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function statusBadgeClass(bucket) {
+            return { completed: 'bg-green-lt', pending: 'bg-amber-lt', cancelled: 'bg-red-lt' }[bucket] || 'bg-secondary-lt';
+        }
+
+        async function loadOverview() {
+            var tbody = document.getElementById('ov-tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            document.getElementById('ov-results-label').textContent = 'Loading…';
+
+            var params = {
+                dateFrom: document.getElementById('ov-date-from').value || undefined,
+                dateTo: document.getElementById('ov-date-to').value || undefined,
+                branchId: document.getElementById('ov-branch').value || undefined,
+                source: document.getElementById('ov-source').value || 'all',
+            };
+
+            try {
+                var result = await SalonBookings.getOverview(params);
+                var summary = result.summary;
+                var bookings = result.bookings || [];
+
+                document.getElementById('ov-total').textContent = summary.totalBookings;
+                document.getElementById('ov-revenue').textContent = SalonBookings.formatMoney(summary.totalRevenue);
+                document.getElementById('ov-completed').textContent = summary.completed;
+                document.getElementById('ov-pending').textContent = summary.pending;
+                document.getElementById('ov-cancelled').textContent = summary.cancelled;
+                document.getElementById('ov-results-label').textContent = bookings.length + ' booking' + (bookings.length === 1 ? '' : 's');
+
+                tbody.innerHTML = bookings.length
+                    ? bookings.map(function (b) {
+                        var sourceLabel = b.source === 'booking' ? 'Customer-booked' : 'Staff-created';
+                        var deleteBtn = (isSuperAdmin && b.source === 'salon_booking')
+                            ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteBooking(\'' + b.id + '\', \'' + b.bucket + '\')">Delete</button>'
+                            : '';
+                        return '<tr>' +
+                            '<td>' + SalonBookings.formatDate(b.bookingDate) + '</td>' +
+                            '<td>' + esc(b.customerName || '\u2014') + '</td>' +
+                            '<td>' + esc(b.branchName || '\u2014') + '</td>' +
+                            '<td>' + esc(b.staffName || '\u2014') + '</td>' +
+                            '<td><span class="text-secondary small">' + sourceLabel + '</span></td>' +
+                            '<td><span class="badge ' + statusBadgeClass(b.bucket) + '">' + esc(b.status.replace(/_/g, ' ')) + '</span></td>' +
+                            '<td class="text-end">' + SalonBookings.formatMoney(b.totalAmount) + '</td>' +
+                            '<td>' + deleteBtn + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="8" class="text-center text-secondary py-5">No bookings match these filters.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                document.getElementById('ov-results-label').textContent = '';
+            }
+        }
+
+        async function deleteBooking(id, bucket) {
+            var warning = bucket === 'completed'
+                ? 'This booking is COMPLETED — stock and commission have already been recorded and will NOT be automatically reversed. Delete anyway?'
+                : 'Permanently delete this booking? This cannot be undone.';
+            if (!confirm(warning)) return;
+
+            try {
+                await SalonBookings.deleteBooking(id);
+                loadOverview();
+            } catch (e) {
+                alert(e.message || 'Failed to delete booking.');
+            }
+        }
+    </script>
+</body>
+
+</html>

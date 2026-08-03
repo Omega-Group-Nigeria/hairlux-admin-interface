@@ -44,6 +44,7 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Verify Booking", href: "bookings/index.html" },
                 { label: "Calendar", href: "bookings/calendar.html" },
                 { label: "Salon Bookings", href: "salon-bookings.html" },
+                { label: "Booking Overview", href: "booking-overview.html" },
                 { label: "Inventory Items", href: "inventory-items.html" },
                 { label: "Inventory Log (Legacy)", href: "staff-inventory.html" },
             ],
@@ -56,11 +57,29 @@ var NavConfig = window.NavConfig || (() => {
             permission: { type: "require", perm: "users:view_wallet" },
         },
         {
-            id: "users",
-            label: "Users",
+            id: "contacts",
+            label: "Contacts",
             icon: "users",
-            href: "users.html",
-            permission: { type: "require", perm: "users:read" },
+            permission: {
+                type: "requireAny",
+                perms: ["users:read", "bookings:read", "suppliers:read"],
+            },
+            children: [
+                { label: "Users", href: "users.html" },
+                { label: "Customer Contacts", href: "customer-contacts.html" },
+                { label: "Suppliers", href: "suppliers.html" },
+                { label: "Vendors", href: "vendors.html" },
+            ],
+        },
+        {
+            id: "payroll",
+            label: "Payroll",
+            icon: "users",
+            href: "payroll.html",
+            permission: {
+                type: "requireAny",
+                perms: ["payroll:read", "payroll:manage"],
+            },
         },
         {
             id: "services",

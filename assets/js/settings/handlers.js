@@ -381,7 +381,7 @@
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-assign-role-staff')).show();
 
                 try {
-                    var staffResult = await Staff.getAll({ employmentStatus: 'ACTIVE', limit: 200 });
+                    var staffResult = await Staff.getAll({ employmentStatus: 'ACTIVE', limit: 100 });
                     var staffList = staffResult.data || [];
                     staffSelect.innerHTML = staffList.length
                         ? '<option value="">Select a staff member…</option>' + staffList.map(function (s) {

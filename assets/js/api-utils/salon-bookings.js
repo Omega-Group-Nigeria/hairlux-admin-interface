@@ -89,13 +89,35 @@ const SalonBookings = (function () {
         return apiFetch(`/admin/salon-bookings/verify/${encodeURIComponent(code)}`);
     }
 
+    async function findAllCustomers(params = {}) {
+        const q = new URLSearchParams();
+        Object.keys(params).forEach((k) => {
+            if (params[k] !== undefined && params[k] !== null && params[k] !== '') q.set(k, params[k]);
+        });
+        const qs = q.toString() ? '?' + q.toString() : '';
+        return apiFetch(`/admin/salon-bookings/customers${qs}`);
+    }
+
     async function searchCustomers(q) {
         if (!q) return [];
         return apiFetch(`/admin/salon-bookings/customers/search?q=${encodeURIComponent(q)}`);
-    } 
+    }
 
-    async function confirmVerification(id, assignedStaffId) {
-        return apiFetch(`/admin/salon-bookings/${id}/verify`, {
+    async function getOverview(params = {}) {
+        const q = new URLSearchParams();
+        Object.keys(params).forEach((k) => {
+            if (params[k] !== undefined && params[k] !== null && params[k] !== '') q.set(k, params[k]);
+        });
+        const qs = q.toString() ? '?' + q.toString() : '';
+        return apiFetch(`/admin/salon-bookings/overview${qs}`);
+    }
+
+    async function deleteBooking(id) {
+        return apiFetch(`/admin/salon-bookings/${id}`, { method: 'DELETE' });
+    }
+
+    async function confirmVerification(code, assignedStaffId) {
+        return apiFetch(`/admin/salon-bookings/verify/${encodeURIComponent(code)}/confirm`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ assignedStaffId }),
@@ -104,7 +126,7 @@ const SalonBookings = (function () {
 
     return {
         getAll, getOne, create, addInventoryItem, start, complete, cancel, noShow,
-        verifyCode, confirmVerification, searchCustomers,
+        verifyCode, confirmVerification, searchCustomers, findAllCustomers, getOverview, deleteBooking,
         statusBadge, formatMoney, formatDate,
     };
 })();

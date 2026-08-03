@@ -46,7 +46,7 @@ async function initStaffPortal() {
     loadMyApprovals(),
     loadSalonBookings(),
     loadSalesData(),
-    loadCompensation(),
+    loadPayrollSection(),
     loadCommission(),
   ]);
 
@@ -376,12 +376,15 @@ function handleTopBarCta() {
     return;
   }
   if (screenId === 'inventory') {
-    const registerCard = document.getElementById('inv-items-tbody');
-    if (registerCard) registerCard.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return;
+    return showNewInventoryItemForm();
   }
   if (screenId === 'sales') {
     return addSaleLine();
+  }
+  if (screenId === 'payroll') {
+    const payslipsTable = document.getElementById('pr-payslips-tbody');
+    if (payslipsTable) payslipsTable.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
   }
   console.warn('[staff-portal] No CTA action wired for screen:', screenId);
 }
@@ -1147,6 +1150,61 @@ async function handleDirectiveStatus(directiveId, status) {
 
 // -- Attendance --
 
+function renderClkDateAndWeek() {
+  const dateEl = document.getElementById('clk-date');
+  if (dateEl) {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const branch = currentStaff && currentStaff.location ? currentStaff.location.name : '';
+    dateEl.textContent = branch ? (dateStr + ' \u00b7 ' + branch) : dateStr;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const mondayOffset = (today.getDay() + 6) % 7; // getDay(): Sun=0..Sat=6 -> Mon=0..Sun=6
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - mondayOffset);
+
+  const byDate = {};
+  (currentAttendance || []).forEach((r) => {
+    if (r.date) byDate[String(r.date).slice(0, 10)] = r;
+  });
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const dot = document.getElementById('wd-' + i);
+    if (!dot) continue;
+
+    const dStr = d.toISOString().slice(0, 10);
+    const record = byDate[dStr];
+
+    dot.className = 'dot off';
+    dot.textContent = '\u2013';
+
+    if (d.getTime() === today.getTime()) {
+      if (record && record.status === 'LATE') { dot.className = 'dot late'; dot.textContent = 'L'; }
+      else if (record && record.status === 'ABSENT') { dot.className = 'dot absent'; dot.textContent = '\u2715'; }
+      else if (record) { dot.className = 'dot ok'; dot.textContent = '\u2713'; }
+      else { dot.className = 'dot today'; dot.textContent = '\u2014'; }
+    } else if (d.getTime() > today.getTime()) {
+      dot.className = 'dot off';
+      dot.textContent = '\u2013';
+    } else if (record) {
+      if (record.status === 'LATE') { dot.className = 'dot late'; dot.textContent = 'L'; }
+      else if (record.status === 'ABSENT') { dot.className = 'dot absent'; dot.textContent = '\u2715'; }
+      else if (record.status === 'ON_LEAVE' || record.status === 'APPROVED_PERMISSION' || record.status === 'PUBLIC_HOLIDAY') {
+        dot.className = 'dot off'; dot.textContent = '\u2013';
+      } else {
+        dot.className = 'dot ok'; dot.textContent = '\u2713';
+      }
+    }
+    // Past day with no record at all: left as neutral 'off' — could be a
+    // non-working day or genuinely unrecorded; no way to tell them apart
+    // from here, and showing "absent" would risk being wrong.
+  }
+}
+
 async function loadAttendance() {
   try {
     currentAttendance = await StaffSelf.getAttendance();
@@ -1161,6 +1219,7 @@ async function loadAttendance() {
   const today = history.find((r) => (r.date || '').slice(0, 10) === todayStr);
   checkedInToday = !!(today && !today.checkOutAt);
   renderCheckinButton(today);
+  renderClkDateAndWeek();
 
   const checkInEl = document.querySelectorAll('#attendance .info-item .val')[0];
   const checkOutEl = document.querySelectorAll('#attendance .info-item .val')[1];
@@ -1632,7 +1691,7 @@ async function showBookingForm() {
     '<div class="col-6"><label class="form-label small mb-1">Date</label>' +
     '<input type="date" class="input" id="sb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Time</label>' +
-    '<input type="time" class="input" id="sb-time"></div>' +
+    '<input type="time" class="input" id="sb-time" value="' + new Date().toTimeString().slice(0, 5) + '"></div>' +
     '</div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Services</label><div id="sb-service-lines"></div>' +
     '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddServiceLine()">+ Add service</button></div>' +
@@ -1687,7 +1746,7 @@ async function sbRunCustomerSearch(q, resultsEl) {
   try {
     var matches = await SalonBookingsSelf.searchCustomers(q);
     if (!matches.length) {
-      resultsEl.innerHTML = '<div class="ss-empty">No matching customers</div>';
+      resultsEl.innerHTML = '<div class="ss-empty">No matching customers \u2014 just fill in their name and phone below.</div>';
     } else {
       resultsEl.innerHTML = matches.map(function (m) {
         return '<div class="ss-item" data-name="' + escapeHtml(m.name || '') + '" data-phone="' + escapeHtml(m.phone || '') + '">' +
@@ -1711,6 +1770,8 @@ function cancelBookingForm() {
 // -- Verify Reservation (staff, own branch only) -------------------------------
 
 var _sbVerifyBooking = null;
+var _sbVerifySource = null;
+var _sbVerifyCode = null;
 
 function showVerifyReservationForm() {
   document.getElementById('profile-modal-box').innerHTML =
@@ -1726,6 +1787,89 @@ function showVerifyReservationForm() {
   setTimeout(function () { var el = document.getElementById('sbv-code'); if (el) el.focus(); }, 100);
 }
 
+// -- New Inventory Item (staff, own branch only) --------------------------------
+
+var _supplierOptionsCache = null;
+
+async function showNewInventoryItemForm() {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="nii-error" style="display:none"></div>' +
+    '<h3>Log New Item</h3>' +
+    '<div class="oc-modal-sub">Adds a new item to your own branch\'s stock register.</div>' +
+    '<div class="oc-field"><label>Name</label><input type="text" id="nii-name" placeholder="e.g. Argan Oil Shampoo 500ml"></div>' +
+    '<div style="display:flex;gap:12px">' +
+    '<div class="oc-field" style="flex:1"><label>Category</label><select id="nii-category" onchange="niiUpdatePriceVisibility()">' +
+    '<option value="FOR_SALE">For Sale</option><option value="INTERNAL_USE">Internal Use</option><option value="STORAGE">Storage</option>' +
+    '</select></div>' +
+    '<div class="oc-field" style="flex:1"><label>Unit</label><input type="text" id="nii-unit" placeholder="e.g. bottle"></div>' +
+    '</div>' +
+    '<div class="oc-field"><label>Supplier / Vendor</label><select id="nii-supplier"><option value="">None</option></select></div>' +
+    '<div style="display:flex;gap:12px">' +
+    '<div class="oc-field" style="flex:1"><label>Initial Quantity</label><input type="number" min="0" id="nii-quantity" value="0"></div>' +
+    '<div class="oc-field" style="flex:1"><label>Low Stock Threshold</label><input type="number" min="0" id="nii-threshold" value="5"></div>' +
+    '</div>' +
+    '<div class="oc-field" id="nii-price-field"><label>Price (\u20a6)</label><input type="number" min="0" step="0.01" id="nii-price" placeholder="Required for For Sale items"></div>' +
+    '<div class="oc-field"><label>Expiry Date (optional)</label><input type="date" id="nii-expiry"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="nii-save-btn" onclick="submitNewInventoryItem()">Save</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+  setTimeout(function () { var el = document.getElementById('nii-name'); if (el) el.focus(); }, 100);
+
+  if (!_supplierOptionsCache) {
+    try {
+      var suppliers = await SuppliersSelf.getAll();
+      _supplierOptionsCache = suppliers.map(function (s) {
+        return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.type === 'VENDOR' ? ' (Vendor)' : ' (Supplier)') + '</option>';
+      }).join('');
+    } catch (err) {
+      _supplierOptionsCache = '';
+    }
+  }
+  var supplierSelect = document.getElementById('nii-supplier');
+  if (supplierSelect) supplierSelect.innerHTML = '<option value="">None</option>' + _supplierOptionsCache;
+}
+
+function niiUpdatePriceVisibility() {
+  var field = document.getElementById('nii-price-field');
+  if (field) field.style.display = document.getElementById('nii-category').value === 'FOR_SALE' ? '' : 'none';
+}
+
+async function submitNewInventoryItem() {
+  var errEl = document.getElementById('nii-error');
+  errEl.style.display = 'none';
+
+  var name = document.getElementById('nii-name').value.trim();
+  var category = document.getElementById('nii-category').value;
+  var price = document.getElementById('nii-price').value;
+
+  if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = ''; return; }
+  if (category === 'FOR_SALE' && !price) { errEl.textContent = 'Price is required for items in the For Sale category.'; errEl.style.display = ''; return; }
+
+  var btn = document.getElementById('nii-save-btn');
+  btn.disabled = true;
+  try {
+    await InventorySelf.createItem({
+      name: name,
+      category: category,
+      unit: document.getElementById('nii-unit').value.trim() || undefined,
+      supplierId: document.getElementById('nii-supplier').value || undefined,
+      initialQuantity: Number(document.getElementById('nii-quantity').value) || 0,
+      lowStockThreshold: Number(document.getElementById('nii-threshold').value) || 5,
+      price: price ? Number(price) : undefined,
+      expiryDate: document.getElementById('nii-expiry').value || undefined,
+    });
+    closeProfileModal();
+    await loadInventoryItems();
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to create item.';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function sbShowVerifyError(message) {
   var el = document.getElementById('sbv-error');
   if (el) { el.textContent = message; el.style.display = 'block'; }
@@ -1738,15 +1882,28 @@ async function sbLookupReservationCode() {
   var btn = document.getElementById('sbv-lookup-btn');
   btn.disabled = true;
   try {
-    var booking = await SalonBookingsSelf.verifyCode(code);
+    var result = await SalonBookingsSelf.verifyCode(code);
+    var source = result.source;
+    var booking = result.booking;
     _sbVerifyBooking = booking;
+    _sbVerifySource = source;
+    _sbVerifyCode = code;
 
-    var services = (booking.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
+    var isLegacy = source === 'booking';
+    var customerName = isLegacy
+      ? (booking.guestName || (booking.user ? (booking.user.firstName + ' ' + booking.user.lastName) : ''))
+      : booking.customerName;
+    var customerPhone = isLegacy
+      ? (booking.guestPhone || (booking.user ? booking.user.phone : ''))
+      : booking.customerPhone;
+    var services = isLegacy
+      ? (booking.services || []).map(function (s) { return escapeHtml(s.name || ''); }).join(', ')
+      : (booking.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
 
     if (booking.reservationUsed) {
       document.getElementById('profile-modal-box').innerHTML =
         '<h3>Verify Reservation</h3>' +
-        '<div class="oc-modal-sub">' + escapeHtml(booking.customerName) + ' \u00B7 ' + (services || '\u2014') + '</div>' +
+        '<div class="oc-modal-sub">' + escapeHtml(customerName || '') + ' \u00B7 ' + (services || '\u2014') + '</div>' +
         '<div style="color:var(--red);font-weight:700;margin:12px 0">This reservation has already been used.</div>' +
         '<div class="oc-modal-actions"><button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Close</button></div>';
       return;
@@ -1763,7 +1920,7 @@ async function sbLookupReservationCode() {
     document.getElementById('profile-modal-box').innerHTML =
       '<div class="oc-modal-error" id="sbv-error" style="display:none"></div>' +
       '<h3>Verify Reservation</h3>' +
-      '<div class="oc-modal-sub"><strong>' + escapeHtml(booking.customerName) + '</strong>' + (booking.customerPhone ? ' (' + escapeHtml(booking.customerPhone) + ')' : '') + '<br>' +
+      '<div class="oc-modal-sub"><strong>' + escapeHtml(customerName || '') + '</strong>' + (customerPhone ? ' (' + escapeHtml(customerPhone) + ')' : '') + '<br>' +
       StaffSelf.formatDate(booking.bookingDate) + ' \u00B7 ' + escapeHtml(booking.bookingTime) + '<br>' +
       (services || '\u2014') + ' \u2014 ' + sbFormatMoney(booking.totalAmount) + '</div>' +
       '<div class="oc-field"><label>Assign Stylist</label><select id="sbv-staff">' + staffOptions + '</select></div>' +
@@ -1785,7 +1942,7 @@ async function sbConfirmVerification() {
   var btn = document.getElementById('sbv-confirm-btn');
   btn.disabled = true;
   try {
-    await SalonBookingsSelf.confirmVerification(_sbVerifyBooking.id, staffId);
+    await SalonBookingsSelf.confirmVerification(_sbVerifyCode, staffId);
     closeProfileModal();
     await loadSalonBookings();
   } catch (err) {
@@ -2063,30 +2220,254 @@ async function loadTransferRequests() {
   }
 }
 
-async function loadCompensation() {
-  var container = document.getElementById('comp-content');
-  try {
-    var result = await StaffSelf.getCompensation();
-    var comp = result.data || result;
+async function loadPayrollSection() {
+  await Promise.allSettled([
+    prLoadWallet(),
+    prLoadBankAccount(),
+    prLoadCompensation(),
+    prLoadPayslips(),
+    prLoadWithdrawals(),
+  ]);
+}
 
-    if (!comp) {
-      container.innerHTML = '<div class="text-secondary small">No compensation record found — this may apply to staff added before the recruitment system was in use.</div>';
+async function prLoadWallet() {
+  try {
+    var wallet = await PayrollSelf.getWallet();
+    document.getElementById('pr-wallet-balance').textContent = sbFormatMoney(wallet.balance);
+    document.getElementById('pr-available-balance').textContent = sbFormatMoney(wallet.availableBalance != null ? wallet.availableBalance : wallet.balance);
+    document.getElementById('pr-pending-balance').textContent = sbFormatMoney(wallet.pendingWithdrawals || 0);
+
+    var statusEl = document.getElementById('pr-payday-status');
+    var hintEl = document.getElementById('pr-withdraw-hint');
+    if (wallet.releaseActive) {
+      statusEl.textContent = 'Payday is ON \u2014 withdrawals available';
+      hintEl.textContent = '';
+    } else {
+      statusEl.textContent = 'Payday is OFF \u2014 withdrawals locked';
+      hintEl.textContent = 'Withdrawals open once management switches Payday on.';
+    }
+  } catch (err) {
+    document.getElementById('pr-wallet-balance').textContent = '\u2014';
+  }
+}
+
+async function prLoadCompensation() {
+  var container = document.getElementById('pr-comp-content');
+  try {
+    var comp = await PayrollSelf.getCompensation();
+    if (comp.currentBaseSalary == null) {
+      container.innerHTML = '<div class="text-secondary small">No compensation on file yet — check with an admin.</div>';
+      return;
+    }
+    container.innerHTML =
+      '<div class="g2">' +
+      '<div class="stat green"><div class="stat-lbl">Base Salary</div><div class="stat-val">' + sbFormatMoney(comp.currentBaseSalary) + '</div><div class="stat-delta neu">Monthly</div></div>' +
+      (comp.currentAllowances
+        ? '<div class="stat gold"><div class="stat-lbl">Allowances</div><div class="stat-val">' + sbFormatMoney(comp.currentAllowances) + '</div><div class="stat-delta neu">Monthly</div></div>'
+        : '<div class="stat"><div class="stat-lbl">Allowances</div><div class="stat-val">\u2014</div></div>') +
+      '</div>';
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
+}
+
+async function prLoadBankAccount() {
+  var container = document.getElementById('pr-bank-content');
+  try {
+    var account = await PayrollSelf.getBankAccount();
+    if (!account) {
+      container.innerHTML = prBankAccountForm();
+      prWireBankAccountForm();
       return;
     }
 
-    var effectiveDateStr = comp.effectiveDate ? StaffSelf.formatDate(comp.effectiveDate) : '—';
+    var pendingNote = account.pendingRequestedAt
+      ? '<div class="text-secondary small mt3">A change to <strong>' + escapeHtml(account.pendingBankName || '') + ' \u2014 ' + escapeHtml(account.pendingAccountNumber || '') + '</strong> is awaiting admin approval.</div>'
+      : '';
 
     container.innerHTML =
-      '<div class="g2">' +
-      '<div class="stat green"><div class="stat-lbl">Base Salary</div><div class="stat-val">\u20a6' + Number(comp.baseSalary).toLocaleString() + '</div><div class="stat-delta neu">Monthly</div></div>' +
-      (comp.allowances
-        ? '<div class="stat gold"><div class="stat-lbl">Allowances</div><div class="stat-val">\u20a6' + Number(comp.allowances).toLocaleString() + '</div><div class="stat-delta neu">Monthly</div></div>'
-        : '<div class="stat"><div class="stat-lbl">Allowances</div><div class="stat-val">\u2014</div></div>') +
-      '</div>' +
-      (comp.compensationNote ? '<div class="text-secondary small mt3">' + escapeHtml(comp.compensationNote) + '</div>' : '') +
-      '<div class="text-secondary small mt3">Effective from ' + effectiveDateStr + ' \u00b7 ' + escapeHtml(comp.role || '') + '</div>';
+      '<div><strong>' + escapeHtml(account.bankName) + '</strong><br>' +
+      '<span class="text-secondary small">' + escapeHtml(account.accountNumber) + ' \u00b7 ' + escapeHtml(account.accountName) + '</span></div>' +
+      pendingNote +
+      '<button class="btn btn-ghost btn-sm mt3" onclick="prShowBankChangeForm()">' + (account.pendingRequestedAt ? 'Submit a Different Change' : 'Request a Change') + '</button>' +
+      '<div id="pr-bank-form-wrap"></div>';
   } catch (err) {
-    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+    container.innerHTML = prBankAccountForm();
+    prWireBankAccountForm();
+  }
+}
+
+function prBankAccountForm() {
+  return '<div id="pr-bank-form-wrap">' +
+    '<div class="text-secondary small mb-2">No bank account on file yet — add one to enable withdrawals.</div>' +
+    '<div id="pr-bank-error" class="text-danger small mb-2" style="display:none"></div>' +
+    '<div class="oc-field"><label>Bank</label><select id="pr-bank-select"><option value="">Loading banks\u2026</option></select></div>' +
+    '<div class="oc-field"><label>Account Number</label><input type="text" id="pr-bank-account-number" maxlength="10" placeholder="0123456789"></div>' +
+    '<div id="pr-bank-resolved" class="small mb-2" style="display:none"></div>' +
+    '<button class="btn btn-gold btn-sm" id="pr-bank-save-btn" onclick="prSubmitBankAccount()" disabled>Save Bank Account</button>' +
+    '</div>';
+}
+
+function prShowBankChangeForm() {
+  document.getElementById('pr-bank-form-wrap').innerHTML =
+    '<div class="text-danger small mb-2" id="pr-bank-error" style="display:none"></div>' +
+    '<div class="oc-field"><label>New Bank</label><select id="pr-bank-select"><option value="">Loading banks\u2026</option></select></div>' +
+    '<div class="oc-field"><label>New Account Number</label><input type="text" id="pr-bank-account-number" maxlength="10" placeholder="0123456789"></div>' +
+    '<div id="pr-bank-resolved" class="small mb-2" style="display:none"></div>' +
+    '<div class="text-secondary small mb-2">Changes require admin approval before they take effect.</div>' +
+    '<button class="btn btn-gold btn-sm" id="pr-bank-save-btn" onclick="prSubmitBankAccount()" disabled>Submit Change Request</button>';
+  prWireBankAccountForm();
+}
+
+var _prBanksCache = null;
+var _prResolveTimer = null;
+var _prResolvedOk = false;
+
+async function prWireBankAccountForm() {
+  var select = document.getElementById('pr-bank-select');
+  if (!select) return;
+  if (!_prBanksCache) {
+    try {
+      var banks = await PayrollSelf.listBanks();
+      _prBanksCache = banks.slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
+    } catch (err) {
+      _prBanksCache = [];
+    }
+  }
+  select.innerHTML = '<option value="">Select bank\u2026</option>' + _prBanksCache.map(function (b) {
+    return '<option value="' + b.code + '">' + escapeHtml(b.name) + '</option>';
+  }).join('');
+
+  var numberInput = document.getElementById('pr-bank-account-number');
+  select.addEventListener('change', prTriggerResolve);
+  numberInput.addEventListener('input', function () {
+    clearTimeout(_prResolveTimer);
+    _prResolveTimer = setTimeout(prTriggerResolve, 400);
+  });
+}
+
+async function prTriggerResolve() {
+  var bankCode = document.getElementById('pr-bank-select').value;
+  var accountNumber = document.getElementById('pr-bank-account-number').value.trim();
+  var resolvedEl = document.getElementById('pr-bank-resolved');
+  var saveBtn = document.getElementById('pr-bank-save-btn');
+  var errEl = document.getElementById('pr-bank-error');
+
+  _prResolvedOk = false;
+  if (saveBtn) saveBtn.disabled = true;
+
+  if (!bankCode || accountNumber.length !== 10) {
+    resolvedEl.style.display = 'none';
+    return;
+  }
+
+  resolvedEl.style.display = '';
+  resolvedEl.className = 'small mb-2 text-secondary';
+  resolvedEl.textContent = 'Checking account\u2026';
+
+  try {
+    var resolved = await PayrollSelf.resolveAccount(bankCode, accountNumber);
+    resolvedEl.className = 'small mb-2';
+    if (resolved.nameMatches) {
+      resolvedEl.style.color = 'var(--green, #2ecc71)';
+      resolvedEl.textContent = '\u2713 ' + resolved.accountName;
+      _prResolvedOk = true;
+      if (saveBtn) saveBtn.disabled = false;
+      if (errEl) errEl.style.display = 'none';
+    } else {
+      resolvedEl.style.color = 'var(--red, #e5484d)';
+      resolvedEl.textContent = '\u26a0 ' + resolved.accountName + ' \u2014 this doesn\'t match your name on file. Salary can only be paid into an account in your own name.';
+      _prResolvedOk = false;
+      if (saveBtn) saveBtn.disabled = true;
+    }
+  } catch (err) {
+    resolvedEl.style.display = 'none';
+    if (errEl) { errEl.textContent = err.message || 'Could not verify this account.'; errEl.style.display = ''; }
+  }
+}
+
+async function prSubmitBankAccount() {
+  var errEl = document.getElementById('pr-bank-error');
+  if (errEl) { errEl.style.display = 'none'; }
+  var bankCode = document.getElementById('pr-bank-select').value;
+  var accountNumber = document.getElementById('pr-bank-account-number').value.trim();
+
+  if (!bankCode || accountNumber.length !== 10 || !_prResolvedOk) {
+    if (errEl) { errEl.textContent = 'Select a bank and enter an account number that resolves successfully first.'; errEl.style.display = ''; }
+    return;
+  }
+
+  var btn = document.getElementById('pr-bank-save-btn');
+  if (btn) btn.disabled = true;
+  try {
+    await PayrollSelf.submitBankAccount({ bankCode: bankCode, accountNumber: accountNumber });
+    await prLoadBankAccount();
+  } catch (err) {
+    if (errEl) { errEl.textContent = err.message || 'Failed to save bank account.'; errEl.style.display = ''; }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function prLoadPayslips() {
+  var tbody = document.getElementById('pr-payslips-tbody');
+  try {
+    var payslips = await PayrollSelf.getPayslips();
+    tbody.innerHTML = payslips.length
+      ? payslips.map(function (p) {
+        var period = p.payrollPeriod ? p.payrollPeriod.label : '\u2014';
+        return '<tr><td>' + escapeHtml(period) + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td></tr>';
+      }).join('')
+      : '<tr><td colspan="4" class="text-center text-secondary py-4">No payslips yet.</td></tr>';
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
+  }
+}
+
+async function prLoadWithdrawals() {
+  var tbody = document.getElementById('pr-withdrawals-tbody');
+  try {
+    var withdrawals = await PayrollSelf.listWithdrawals();
+    tbody.innerHTML = withdrawals.length
+      ? withdrawals.map(function (w) {
+        return '<tr><td>' + new Date(w.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + '</td><td>' + sbFormatMoney(w.amount) + '</td><td>' + escapeHtml(w.status) + '</td></tr>';
+      }).join('')
+      : '<tr><td colspan="3" class="text-center text-secondary py-4">No withdrawals yet.</td></tr>';
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
+  }
+}
+
+async function prWithdrawMax() {
+  try {
+    var wallet = await PayrollSelf.getWallet();
+    var available = wallet.availableBalance != null ? wallet.availableBalance : wallet.balance;
+    document.getElementById('pr-withdraw-amount').value = available;
+  } catch (err) { /* ignore */ }
+}
+
+async function prSubmitWithdrawal() {
+  var errEl = document.getElementById('pr-withdraw-error');
+  errEl.style.display = 'none';
+  var amount = Number(document.getElementById('pr-withdraw-amount').value);
+
+  if (!amount || amount <= 0) {
+    errEl.textContent = 'Enter a valid amount.';
+    errEl.style.display = '';
+    return;
+  }
+
+  var btn = document.getElementById('pr-withdraw-btn');
+  btn.disabled = true;
+  try {
+    await PayrollSelf.requestWithdrawal(amount);
+    document.getElementById('pr-withdraw-amount').value = '';
+    await Promise.allSettled([prLoadWallet(), prLoadWithdrawals()]);
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to submit withdrawal.';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
   }
 }
 

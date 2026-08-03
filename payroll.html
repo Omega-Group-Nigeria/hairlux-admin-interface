@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Payroll</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Human Resources</div>
+                            <h2 class="page-title">Payroll</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex align-items-center gap-3">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="payday-switch"
+                                    style="width:3rem;height:1.5rem">
+                                <label class="form-check-label fw-bold" for="payday-switch" id="payday-label">Payday:
+                                    Loading…</label>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="btn-new-period">+ New Payroll
+                                Period</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Dashboard stats -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Outstanding Wallet Balances</div>
+                                    <div class="h2 mb-0" id="stat-outstanding">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Pending Withdrawals</div>
+                                    <div class="h2 mb-0 text-amber" id="stat-pending">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Withdrawn</div>
+                                    <div class="h2 mb-0 text-green" id="stat-withdrawn">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Failed Withdrawals</div>
+                                    <div class="h2 mb-0 text-red" id="stat-failed">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Payroll periods -->
+                        <div class="col-lg-7">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="card-title">Payroll Periods</h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Period</th>
+                                                <th>Status</th>
+                                                <th class="text-center">Payslips</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="periods-tbody">
+                                            <tr>
+                                                <td colspan="4" class="text-center py-5">
+                                                    <div class="spinner-border text-primary"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending bank changes -->
+                        <div class="col-lg-5">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="card-title">Staff Bank Account Lookup</h3>
+                                </div>
+                                <div class="card-body">
+                                    <select class="form-select form-select-sm mb-2" id="bank-lookup-staff">
+                                        <option value="">Select a staff member…</option>
+                                    </select>
+                                    <div id="bank-lookup-result"></div>
+                                </div>
+                            </div>
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="card-title">Bank Account Changes Awaiting Approval</h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Staff</th>
+                                                <th>New Account</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bank-changes-tbody">
+                                            <tr>
+                                                <td colspan="3" class="text-center text-secondary py-4">Loading…</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Withdrawal history -->
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h3 class="card-title mb-0">Withdrawal / Transaction History</h3>
+                        <select class="form-select form-select-sm" style="max-width:180px"
+                            id="withdrawal-status-filter">
+                            <option value="">All statuses</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="PROCESSING">Processing</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="FAILED">Failed</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Amount</th>
+                                    <th>Bank</th>
+                                    <th>Status</th>
+                                    <th>Requested</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawals-tbody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="spinner-border text-primary"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- New Period Modal -->
+    <div class="modal modal-blur fade" id="modal-new-period" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Payroll Period</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="np-error"></div>
+                    <div class="mb-3"><label class="form-label">Label</label>
+                        <input type="text" class="form-control" id="np-label" placeholder="e.g. August 2026">
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label">Period Start</label>
+                            <input type="date" class="form-control" id="np-start">
+                        </div>
+                        <div class="col-6"><label class="form-label">Period End</label>
+                            <input type="date" class="form-control" id="np-end">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-period">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Detail Modal -->
+    <div class="modal modal-blur fade" id="modal-period-detail" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detail-title">Payroll Period</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="detail-actions" class="mb-3 d-flex gap-2"></div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th class="text-end">Base</th>
+                                    <th class="text-end">Commission Paid</th>
+                                    <th class="text-end">Bonus</th>
+                                    <th class="text-end">Deductions</th>
+                                    <th class="text-end">Tax</th>
+                                    <th class="text-end">Pension</th>
+                                    <th class="text-end">Net Pay</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detail-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Adjustment Modal -->
+    <div class="modal modal-blur fade" id="modal-adjustment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Bonus / Deduction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="adj-error"></div>
+                    <div class="mb-2"><label class="form-label">Staff Member</label>
+                        <select class="form-select" id="adj-staff">
+                            <option value="">Select…</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Type</label>
+                        <select class="form-select" id="adj-type">
+                            <option value="BONUS">Bonus</option>
+                            <option value="DEDUCTION">Deduction</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Category</label>
+                        <select class="form-select" id="adj-category">
+                            <optgroup label="Bonuses">
+                                <option>Performance Bonus</option>
+                                <option>Sales Incentive</option>
+                                <option>Appreciation Bonus</option>
+                                <option>Special Reward</option>
+                            </optgroup>
+                            <optgroup label="Deductions">
+                                <option>Loan Repayment</option>
+                                <option>Damage Charges</option>
+                                <option>Cash Shortages</option>
+                                <option>Administrative Penalty</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Amount (\u20a6)</label>
+                        <input type="number" min="0.01" step="0.01" class="form-control" id="adj-amount">
+                    </div>
+                    <div class="mb-2"><label class="form-label">Reason</label>
+                        <textarea class="form-control" id="adj-reason" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-adjustment">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/payroll.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var currentPeriodId = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            RBAC.applyPageGuardForCurrentPage();
+
+            document.getElementById('btn-new-period').addEventListener('click', function () {
+                document.getElementById('np-error').classList.add('d-none');
+                document.getElementById('np-label').value = '';
+                document.getElementById('np-start').value = '';
+                document.getElementById('np-end').value = '';
+                new bootstrap.Modal(document.getElementById('modal-new-period')).show();
+            });
+            document.getElementById('btn-save-period').addEventListener('click', saveNewPeriod);
+            document.getElementById('payday-switch').addEventListener('change', togglePayday);
+            document.getElementById('btn-save-adjustment').addEventListener('click', saveAdjustment);
+            document.getElementById('withdrawal-status-filter').addEventListener('change', loadWithdrawals);
+            document.getElementById('bank-lookup-staff').addEventListener('change', loadBankLookupResult);
+
+            loadDashboard();
+            loadSettings();
+            loadPeriods();
+            loadBankChanges();
+            loadWithdrawals();
+            loadBankLookupStaffOptions();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        async function loadDashboard() {
+            try {
+                var stats = await Payroll.getDashboard();
+                document.getElementById('stat-outstanding').textContent = Payroll.formatMoney(stats.outstandingWalletBalance);
+                document.getElementById('stat-pending').textContent = Payroll.formatMoney(stats.pendingWithdrawals);
+                document.getElementById('stat-withdrawn').textContent = Payroll.formatMoney(stats.totalWithdrawn);
+                document.getElementById('stat-failed').textContent = stats.failedWithdrawals;
+            } catch (e) { /* non-fatal */ }
+        }
+
+        async function loadSettings() {
+            try {
+                var settings = await Payroll.getSettings();
+                document.getElementById('payday-switch').checked = !!settings.releaseActive;
+                document.getElementById('payday-label').textContent = 'Payday: ' + (settings.releaseActive ? 'ON' : 'OFF');
+            } catch (e) { /* non-fatal */ }
+        }
+
+        async function togglePayday() {
+            var checkbox = document.getElementById('payday-switch');
+            var active = checkbox.checked;
+            var confirmMsg = active
+                ? 'Turn Payday ON? Every staff member with a wallet balance will be able to withdraw immediately.'
+                : 'Turn Payday OFF? All withdrawals will be locked until switched back on.';
+            if (!confirm(confirmMsg)) { checkbox.checked = !active; return; }
+
+            try {
+                await Payroll.setReleaseActive(active);
+                document.getElementById('payday-label').textContent = 'Payday: ' + (active ? 'ON' : 'OFF');
+            } catch (e) {
+                alert(e.message || 'Failed to update Payday setting.');
+                checkbox.checked = !active;
+            }
+        }
+
+        async function loadPeriods() {
+            var tbody = document.getElementById('periods-tbody');
+            try {
+                var periods = await Payroll.listPeriods();
+                tbody.innerHTML = periods.length
+                    ? periods.map(function (p) {
+                        var statusBadge = { DRAFT: 'bg-secondary-lt', AWAITING_RELEASE: 'bg-amber-lt', RELEASED: 'bg-green-lt' }[p.status] || 'bg-secondary-lt';
+                        var actions = '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewPeriod(\'' + p.id + '\')">View</button>';
+                        if (p.status === 'DRAFT') {
+                            actions += '<button class="btn btn-sm btn-primary" onclick="runGenerate(\'' + p.id + '\')">Generate</button>';
+                        } else if (p.status === 'AWAITING_RELEASE') {
+                            actions += '<button class="btn btn-sm btn-success" onclick="runApprove(\'' + p.id + '\')">Approve</button>';
+                        }
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(p.label) + '<div class="text-secondary small">' + Payroll.formatDate(p.periodStart) + ' \u2013 ' + Payroll.formatDate(p.periodEnd) + '</div></td>' +
+                            '<td><span class="badge ' + statusBadge + '">' + p.status.replace(/_/g, ' ') + '</span></td>' +
+                            '<td class="text-center">' + (p._count ? p._count.payslips : 0) + '</td>' +
+                            '<td class="text-nowrap">' + actions + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="4" class="text-center text-secondary py-5">No payroll periods yet.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function saveNewPeriod() {
+            var errEl = document.getElementById('np-error');
+            errEl.classList.add('d-none');
+            var label = document.getElementById('np-label').value.trim();
+            var start = document.getElementById('np-start').value;
+            var end = document.getElementById('np-end').value;
+            if (!label || !start || !end) { errEl.textContent = 'All fields are required.'; errEl.classList.remove('d-none'); return; }
+
+            try {
+                await Payroll.createPeriod({ label: label, periodStart: start, periodEnd: end });
+                bootstrap.Modal.getInstance(document.getElementById('modal-new-period')).hide();
+                loadPeriods();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to create period.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        async function runGenerate(id) {
+            if (!confirm('Generate payroll for this period? This calculates every active staff member\'s payslip and credits their wallet (still locked until Payday is on).')) return;
+            try {
+                await Payroll.generatePayroll(id);
+                loadPeriods();
+                loadDashboard();
+            } catch (e) {
+                alert(e.message || 'Failed to generate payroll.');
+            }
+        }
+
+        async function runApprove(id) {
+            if (!confirm('Approve this payroll period? This is your formal sign-off that the run is correct.')) return;
+            try {
+                await Payroll.approvePeriod(id);
+                loadPeriods();
+            } catch (e) {
+                alert(e.message || 'Failed to approve period.');
+            }
+        }
+
+        async function viewPeriod(id) {
+            currentPeriodId = id;
+            var tbody = document.getElementById('detail-tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById('modal-period-detail')).show();
+
+            try {
+                var period = await Payroll.getPeriod(id);
+                document.getElementById('detail-title').textContent = period.label + ' \u2014 ' + period.status.replace(/_/g, ' ');
+
+                var actions = document.getElementById('detail-actions');
+                actions.innerHTML = period.status === 'DRAFT'
+                    ? '<button class="btn btn-sm btn-outline-primary" onclick="openAdjustmentModal()">+ Add Bonus / Deduction</button>'
+                    : '';
+
+                var payslips = period.payslips || [];
+                tbody.innerHTML = payslips.length
+                    ? payslips.map(function (p) {
+                        var deductions = Number(p.totalDeductions) - Number(p.taxDeduction) - Number(p.pensionDeduction);
+                        return '<tr>' +
+                            '<td>' + esc(p.staff.name) + '<div class="text-secondary small">' + esc(p.staff.staffCode || '') + '</div></td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.baseSalary) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.commissionPaid) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.bonusTotal) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(deductions) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.taxDeduction) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.pensionDeduction) + '</td>' +
+                            '<td class="text-end fw-bold">' + Payroll.formatMoney(p.netPay) + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="8" class="text-center text-secondary py-4">No payslips yet \u2014 generate this period first.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        var staffOptionsCache = null;
+
+        async function ensureStaffOptions() {
+            if (!staffOptionsCache) {
+                try {
+                    var result = await Staff.getAll({ employmentStatus: 'ACTIVE', limit: 100 });
+                    var staffList = result.data || [];
+                    staffOptionsCache = staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+                } catch (e) { staffOptionsCache = ''; }
+            }
+            return staffOptionsCache;
+        }
+
+        async function openAdjustmentModal() {
+            document.getElementById('adj-error').classList.add('d-none');
+            document.getElementById('adj-amount').value = '';
+            document.getElementById('adj-reason').value = '';
+
+            var opts = await ensureStaffOptions();
+            document.getElementById('adj-staff').innerHTML = '<option value="">Select…</option>' + opts;
+            new bootstrap.Modal(document.getElementById('modal-adjustment')).show();
+        }
+
+        async function loadBankLookupStaffOptions() {
+            var opts = await ensureStaffOptions();
+            document.getElementById('bank-lookup-staff').innerHTML = '<option value="">Select a staff member…</option>' + opts;
+        }
+
+        async function loadBankLookupResult() {
+            var staffId = document.getElementById('bank-lookup-staff').value;
+            var resultEl = document.getElementById('bank-lookup-result');
+            if (!staffId) { resultEl.innerHTML = ''; return; }
+
+            resultEl.innerHTML = '<div class="text-secondary small">Loading…</div>';
+            try {
+                var account = await Payroll.getBankAccount(staffId);
+                if (!account) {
+                    resultEl.innerHTML = '<div class="text-secondary small">No bank account on file for this staff member.</div>';
+                    return;
+                }
+                var verifiedBadge = account.verified
+                    ? '<span class="badge bg-green-lt">Verified</span>'
+                    : '<span class="badge bg-secondary-lt">Not verified</span>';
+                var pendingNote = account.pendingRequestedAt
+                    ? '<div class="text-secondary small mt-2">Pending change to <strong>' + esc(account.pendingBankName || '') + ' \u2014 ' + esc(account.pendingAccountNumber || '') + '</strong>, awaiting approval below.</div>'
+                    : '';
+                resultEl.innerHTML =
+                    '<div class="mt-2"><strong>' + esc(account.bankName) + '</strong> ' + verifiedBadge + '<br>' +
+                    '<span class="text-secondary small">' + esc(account.accountNumber) + ' \u00b7 ' + esc(account.accountName) + '</span></div>' +
+                    pendingNote;
+            } catch (e) {
+                resultEl.innerHTML = '<div class="text-danger small">' + esc(e.message || 'Failed to load.') + '</div>';
+            }
+        }
+
+        async function saveAdjustment() {
+            var errEl = document.getElementById('adj-error');
+            errEl.classList.add('d-none');
+            var staffId = document.getElementById('adj-staff').value;
+            var amount = document.getElementById('adj-amount').value;
+            var reason = document.getElementById('adj-reason').value.trim();
+
+            if (!staffId || !amount || !reason) { errEl.textContent = 'All fields are required.'; errEl.classList.remove('d-none'); return; }
+
+            try {
+                await Payroll.createAdjustment(currentPeriodId, {
+                    staffId: staffId,
+                    type: document.getElementById('adj-type').value,
+                    category: document.getElementById('adj-category').value,
+                    amount: Number(amount),
+                    reason: reason,
+                });
+                bootstrap.Modal.getInstance(document.getElementById('modal-adjustment')).hide();
+                viewPeriod(currentPeriodId);
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save adjustment.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        async function loadBankChanges() {
+            var tbody = document.getElementById('bank-changes-tbody');
+            try {
+                var changes = await Payroll.listPendingBankChanges();
+                tbody.innerHTML = changes.length
+                    ? changes.map(function (c) {
+                        return '<tr>' +
+                            '<td>' + esc(c.staff.name) + '</td>' +
+                            '<td>' + esc(c.pendingBankName || '') + '<br><span class="text-secondary small">' + esc(c.pendingAccountNumber || '') + ' \u2014 ' + esc(c.pendingAccountName || '') + '</span></td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-success me-1" onclick="approveBankChange(\'' + c.staffId + '\')">Approve</button>' +
+                            '<button class="btn btn-sm btn-outline-danger" onclick="rejectBankChange(\'' + c.staffId + '\')">Reject</button>' +
+                            '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="3" class="text-center text-secondary py-4">Nothing pending.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function approveBankChange(staffId) {
+            try { await Payroll.approveBankChange(staffId); loadBankChanges(); }
+            catch (e) { alert(e.message || 'Failed to approve.'); }
+        }
+
+        async function rejectBankChange(staffId) {
+            try { await Payroll.rejectBankChange(staffId); loadBankChanges(); }
+            catch (e) { alert(e.message || 'Failed to reject.'); }
+        }
+
+        async function loadWithdrawals() {
+            var tbody = document.getElementById('withdrawals-tbody');
+            var status = document.getElementById('withdrawal-status-filter').value;
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var list = await Payroll.listWithdrawals(status);
+                var statusBadge = { COMPLETED: 'bg-green-lt', PROCESSING: 'bg-blue-lt', PENDING: 'bg-amber-lt', FAILED: 'bg-red-lt', REJECTED: 'bg-red-lt', CANCELLED: 'bg-secondary-lt' };
+                tbody.innerHTML = list.length
+                    ? list.map(function (w) {
+                        return '<tr>' +
+                            '<td>' + esc(w.staff.name) + '</td>' +
+                            '<td>' + Payroll.formatMoney(w.amount) + '</td>' +
+                            '<td>' + esc(w.accountName || '') + '<br><span class="text-secondary small">' + esc(w.accountNumber) + '</span></td>' +
+                            '<td><span class="badge ' + (statusBadge[w.status] || 'bg-secondary-lt') + '">' + w.status + '</span></td>' +
+                            '<td class="text-secondary small">' + Payroll.formatDate(w.createdAt) + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="5" class="text-center text-secondary py-5">No withdrawals found.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>

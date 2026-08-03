@@ -80,8 +80,8 @@ const SalonBookingsSelf = (function () {
         return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}`);
     }
 
-    async function confirmVerification(id, assignedStaffId) {
-        return jsonFetch(`/staff/me/salon-bookings/${id}/verify`, {
+    async function confirmVerification(code, assignedStaffId) {
+        return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}/confirm`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ assignedStaffId }),
