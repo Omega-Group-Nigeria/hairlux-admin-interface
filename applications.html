@@ -671,12 +671,17 @@
             if (a.portfolioUrl && a.portfolioUrl !== 'string') docLinks.push('<a href="' + a.portfolioUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Portfolio</a>');
             if (docLinks.length) docsBlock = '<div class="detail-lbl">Documents</div><div class="detail-val d-flex gap-2">' + docLinks.join('') + '</div>';
 
+            var ninPhotoBlock = a.ninPhotoUrl
+                ? '<div class="text-center mb-3"><img src="' + a.ninPhotoUrl + '" alt="NIN photo" style="width:96px;height:96px;object-fit:cover;border-radius:50%;border:2px solid var(--tblr-border-color)"><div class="text-secondary small mt-1">Photo from NIN verification</div></div>'
+                : '';
+
             body.innerHTML =
                 '<div class="d-flex align-items-start justify-content-between mb-3">' +
                 '<div><div class="h3 mb-0">' + name + '</div>' +
                 '<div class="app-code text-secondary">' + a.applicationCode + '</div></div>' +
                 Applications.statusBadge(a.status) +
                 '</div>' +
+                ninPhotoBlock +
                 employedBlock + notSelectedBlock +
                 '<div class="row">' +
                 '<div class="col-6">' + field('Phone', a.phone) + '</div>' +
