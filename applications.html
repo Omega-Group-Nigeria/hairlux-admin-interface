@@ -671,12 +671,17 @@
             if (a.portfolioUrl && a.portfolioUrl !== 'string') docLinks.push('<a href="' + a.portfolioUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Portfolio</a>');
             if (docLinks.length) docsBlock = '<div class="detail-lbl">Documents</div><div class="detail-val d-flex gap-2">' + docLinks.join('') + '</div>';
 
+            var ninPhotoBlock = a.ninPhotoDownloadUrl
+                ? '<div class="text-center mb-3"><img src="' + a.ninPhotoDownloadUrl + '" alt="NIN photo" style="width:96px;height:96px;object-fit:cover;border-radius:50%;border:2px solid var(--tblr-border-color)"><div class="text-secondary small mt-1">Photo from NIN verification</div></div>'
+                : '';
+
             body.innerHTML =
                 '<div class="d-flex align-items-start justify-content-between mb-3">' +
                 '<div><div class="h3 mb-0">' + name + '</div>' +
                 '<div class="app-code text-secondary">' + a.applicationCode + '</div></div>' +
                 Applications.statusBadge(a.status) +
                 '</div>' +
+                ninPhotoBlock +
                 employedBlock + notSelectedBlock +
                 '<div class="row">' +
                 '<div class="col-6">' + field('Phone', a.phone) + '</div>' +
@@ -865,41 +870,70 @@
             var actions = document.getElementById('offcanvas-detail-actions');
             actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
             var staff = await ensureStaff();
-            var options = staff.map(function (s) { return '<option value="' + s.id + '">' + Staff.fullName(s) + '</option>'; }).join('');
+            var options = staff.map(function (s) {
+                return '<option value="' + s.id + '">' + Staff.fullName(s) + '</option>';
+            }).join('');
+
             actions.innerHTML =
                 '<div class="w-100">' +
                 '<div class="row g-2 mb-2">' +
-                '<div class="col-12"><label class="form-label small mb-1">Outcome</label>' +
+                '<div class="col-12">' +
+                '<label class="form-label small mb-1">Outcome</label>' +
                 '<select class="form-select form-select-sm" id="io-outcome">' +
-                '<option value="PASS">Pass</option><option value="FAIL">Fail</option><option value="HOLD">Hold</option>' +
-                '</select></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Interviewer</label>' +
+                '<option value="PASS">Pass</option>' +
+                '<option value="FAIL">Fail</option>' +
+                '<option value="HOLD">Hold</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="col-12">' +
+                '<label class="form-label small mb-1">Interviewer</label>' +
                 '<input type="text" class="form-control form-control-sm mb-1" id="io-interviewer-search" placeholder="Search staff by name…">' +
-                '<select class="form-select form-select-sm" id="io-interviewer" size="5"><option value="">Select interviewer…</option>' + options + '</select></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Note (optional)</label>' +
-                '<textarea class="form-control form-control-sm" id="io-note" rows="2"></textarea></div>' +
+                '<select class="form-select form-select-sm" id="io-interviewer">' +
+                '<option value="">Select interviewer…</option>' + options +
+                '</select>' +
+                '</div>' +
+                '<div class="col-12">' +
+                '<label class="form-label small mb-1">Note (optional)</label>' +
+                '<textarea class="form-control form-control-sm" id="io-note" rows="2"></textarea>' +
+                '</div>' +
                 '</div>' +
                 '<div class="d-flex gap-2">' +
                 '<button class="btn btn-sm btn-primary flex-fill" onclick="submitInterviewOutcome()">Save</button>' +
                 '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
                 '</div>' +
                 '</div>';
+
             wireStaffSearchFilter('io-interviewer-search', 'io-interviewer');
         }
 
-        /** Live client-side filter for any <select> populated from a staff list — reusable across forms. */
+
         function wireStaffSearchFilter(searchInputId, selectId) {
-            var input = document.getElementById(searchInputId);
-            var select = document.getElementById(selectId);
-            if (!input || !select) return;
-            input.addEventListener('input', function () {
-                var q = this.value.trim().toLowerCase();
-                Array.prototype.forEach.call(select.options, function (opt) {
-                    if (!opt.value) { opt.hidden = false; return; } // always keep the placeholder visible
-                    opt.hidden = q && opt.textContent.toLowerCase().indexOf(q) === -1;
+                var input = document.getElementById(searchInputId);
+                var select = document.getElementById(selectId);
+                if (!input || !select) return;
+
+                // Save initial master options list once if not already saved
+                if (!select._masterOptions) {
+                    select._masterOptions = Array.from(select.options).map(function (opt) {
+                        return { value: opt.value, text: opt.textContent };
+                    });
+                }
+
+                input.addEventListener('input', function () {
+                    var q = this.value.trim().toLowerCase();
+
+                    // Filter options based on query
+                    var filtered = select._masterOptions.filter(function (opt) {
+                        if (!opt.value) return true; // keep placeholder
+                        return !q || opt.text.toLowerCase().indexOf(q) !== -1;
+                    });
+
+                    // Re-render select options
+                    select.innerHTML = filtered.map(function (opt) {
+                        return '<option value="' + opt.value + '">' + opt.text + '</option>';
+                    }).join('');
                 });
-            });
-        }
+            }
 
         async function submitInterviewOutcome() {
             var outcome = document.getElementById('io-outcome').value;
