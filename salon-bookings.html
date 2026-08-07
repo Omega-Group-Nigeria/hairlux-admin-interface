@@ -722,6 +722,7 @@
             document.getElementById('nb-customer-search').value = '';
             document.getElementById('nb-customer-search-results').style.display = 'none';
             document.getElementById('nb-date').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('nb-date').min = new Date().toISOString().slice(0, 10);
             document.getElementById('nb-time').value = new Date().toTimeString().slice(0, 5);
             document.getElementById('nb-notes').value = '';
             document.getElementById('nb-service-lines').innerHTML = '';
@@ -925,6 +926,11 @@
 
             if (!branchId || !assignedStaffId || !customerName || !bookingDate || !bookingTime) {
                 errEl.textContent = 'Branch, Stylist, Customer Name, Date, and Time are all required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            if (new Date(bookingDate + 'T' + bookingTime + ':00') < new Date()) {
+                errEl.textContent = 'Booking date/time cannot be in the past.';
                 errEl.classList.remove('d-none');
                 return;
             }
