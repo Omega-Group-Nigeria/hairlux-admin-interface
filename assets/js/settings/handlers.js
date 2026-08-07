@@ -275,7 +275,63 @@
                 document.querySelectorAll('.admin-tab-pane').forEach(function (p) { p.classList.add('d-none'); });
                 var pane = document.getElementById('admin-tab-' + a.dataset.adminTab);
                 if (pane) pane.classList.remove('d-none');
+                if (a.dataset.adminTab === 'audit-log' && typeof loadAuditLog === 'function') loadAuditLog();
             });
+        }
+
+        var btnRefreshAuditLog = document.getElementById('btn-refresh-audit-log');
+        if (btnRefreshAuditLog) btnRefreshAuditLog.addEventListener('click', function () { loadAuditLog(); });
+
+        async function loadAuditLog() {
+            var tbody = document.getElementById('audit-log-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+
+            try {
+                var result = await Roles.getAuditLog({ limit: 50 });
+                var entries = result.data || [];
+
+                var actionLabels = {
+                    ROLE_CREATED: 'Role created',
+                    ROLE_UPDATED: 'Role updated',
+                    ROLE_DELETED: 'Role deleted',
+                    PERMISSIONS_CHANGED: 'Permissions changed',
+                    USER_ROLE_ASSIGNED: 'Primary role assigned',
+                    USER_ROLE_ADDED: 'Secondary role added',
+                    USER_ROLE_REMOVED: 'Secondary role removed',
+                };
+
+                tbody.innerHTML = entries.length
+                    ? entries.map(function (e) {
+                        var actorName = e.actor ? (e.actor.firstName + ' ' + e.actor.lastName) : '\u2014';
+                        var targetName = e.targetUser ? (e.targetUser.firstName + ' ' + e.targetUser.lastName) : '\u2014';
+                        var when = new Date(e.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
+                        var details = '';
+                        if (e.action === 'PERMISSIONS_CHANGED') {
+                            var beforeCount = (e.before || []).length;
+                            var afterCount = (e.after || []).length;
+                            details = beforeCount + ' \u2192 ' + afterCount + ' permission(s)';
+                        } else if (e.action === 'ROLE_UPDATED' && e.before && e.after) {
+                            var changes = [];
+                            if (e.before.name !== e.after.name) changes.push('name: "' + e.before.name + '" \u2192 "' + e.after.name + '"');
+                            if (e.before.isActive !== e.after.isActive) changes.push('active: ' + e.before.isActive + ' \u2192 ' + e.after.isActive);
+                            details = changes.join(', ') || '\u2014';
+                        } else if (e.action === 'USER_ROLE_ASSIGNED' && e.after) {
+                            details = 'Assigned "' + (e.after.name || '') + '"' + (e.before ? ' (was "' + e.before.name + '")' : '');
+                        }
+                        return '<tr>' +
+                            '<td class="text-secondary small">' + when + '</td>' +
+                            '<td>' + (actionLabels[e.action] || e.action) + '</td>' +
+                            '<td>' + _esc(e.roleName) + '</td>' +
+                            '<td>' + _esc(targetName) + '</td>' +
+                            '<td>' + _esc(actorName) + '</td>' +
+                            '<td class="text-secondary small">' + _esc(details) + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="6" class="text-center text-secondary py-4">No changes recorded yet.</td></tr>';
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + _esc(err.message || 'Failed to load.') + '</td></tr>';
+            }
         }
 
         // Open create admin modal
@@ -335,7 +391,6 @@
         if (btnRefresh) btnRefresh.addEventListener('click', loadAdminUsers);
 
         // Confirm role change
-        // Confirm role change
         var btnConfirmRole = document.getElementById('btn-confirm-role-change');
         if (btnConfirmRole) {
             btnConfirmRole.addEventListener('click', async function () {
@@ -360,6 +415,109 @@
             });
         }
 
+        // View Users button — everyone holding this role, primary or secondary
+        var btnViewRoleUsers = document.getElementById('btn-view-role-users');
+        if (btnViewRoleUsers) {
+            btnViewRoleUsers.addEventListener('click', async function () {
+                if (!State.permRole) return;
+                var role = State.rolesCache.find(function (r) { return r.id === State.permRole; });
+                document.getElementById('vru-role-name').textContent = role ? role.name : '—';
+                var contentEl = document.getElementById('vru-content');
+                contentEl.innerHTML = '<div class="text-secondary small">Loading…</div>';
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-view-role-users')).show();
+
+                try {
+                    var data = await Roles.getRoleUsers(State.permRole);
+                    var primary = data.primary || [];
+                    var secondary = data.secondary || [];
+
+                    if (!primary.length && !secondary.length) {
+                        contentEl.innerHTML = '<div class="text-secondary small">No one currently holds this role.</div>';
+                        return;
+                    }
+
+                    var rows = primary.map(function (u) {
+                        return '<tr><td>' + _esc(u.firstName + ' ' + u.lastName) + '</td><td class="text-secondary small">' + _esc(u.email) + '</td><td><span class="badge bg-blue-lt">Primary</span></td></tr>';
+                    }).concat(secondary.map(function (u) {
+                        return '<tr><td>' + _esc(u.firstName + ' ' + u.lastName) + '</td><td class="text-secondary small">' + _esc(u.email) + '</td><td><span class="badge bg-purple-lt">Secondary</span></td></tr>';
+                    })).join('');
+
+                    contentEl.innerHTML = '<div class="table-responsive"><table class="table table-sm table-vcenter mb-0">' +
+                        '<thead><tr><th>Name</th><th>Email</th><th>Held As</th></tr></thead>' +
+                        '<tbody>' + rows + '</tbody></table></div>';
+                } catch (err) {
+                    contentEl.innerHTML = '<div class="text-danger small">' + _esc(err.message || 'Failed to load.') + '</div>';
+                }
+            });
+        }
+
+        // ── Secondary roles (multi-role support) ──────────────────────────────
+
+        window.loadSecondaryRoles = async function (userId) {
+            var listEl = document.getElementById('secondary-roles-list');
+            var selectEl = document.getElementById('secondary-role-select');
+            if (!listEl) return;
+            listEl.innerHTML = '<div class="text-secondary small">Loading…</div>';
+
+            try {
+                var data = await Roles.getUserRoles(userId);
+                var additional = data.additional || [];
+
+                listEl.innerHTML = additional.length
+                    ? additional.map(function (r) {
+                        return '<span class="badge bg-blue-lt me-1 mb-1 d-inline-flex align-items-center">' +
+                            _esc(r.name) +
+                            '<a href="#" class="ms-2 text-danger" data-remove-secondary-role="' + r.id + '" title="Remove">&times;</a>' +
+                            '</span>';
+                    }).join('')
+                    : '<div class="text-secondary small">No secondary roles.</div>';
+
+                // Populate the "add" dropdown with roles the user doesn't already hold
+                var heldIds = additional.map(function (r) { return r.id; });
+                if (data.primary) heldIds.push(data.primary.id);
+                var available = (State.rolesCache || []).filter(function (r) { return heldIds.indexOf(r.id) === -1; });
+                selectEl.innerHTML = '<option value="">Add a secondary role…</option>' +
+                    available.map(function (r) { return '<option value="' + r.id + '">' + _esc(r.name) + '</option>'; }).join('');
+            } catch (err) {
+                listEl.innerHTML = '<div class="text-danger small">' + _esc(err.message || 'Failed to load.') + '</div>';
+            }
+        };
+
+        var btnAddSecondaryRole = document.getElementById('btn-add-secondary-role');
+        if (btnAddSecondaryRole) {
+            btnAddSecondaryRole.addEventListener('click', async function () {
+                var userId = document.getElementById('role-change-user-id').value;
+                var adminRoleId = document.getElementById('secondary-role-select').value;
+                if (!adminRoleId) return;
+                this.disabled = true;
+                try {
+                    await Roles.addUserRole(userId, adminRoleId);
+                    await window.loadSecondaryRoles(userId);
+                } catch (err) {
+                    showAdminAlert('danger', err.message);
+                } finally {
+                    this.disabled = false;
+                }
+            });
+        }
+
+        var secondaryRolesList = document.getElementById('secondary-roles-list');
+        if (secondaryRolesList) {
+            secondaryRolesList.addEventListener('click', async function (e) {
+                var link = e.target.closest('[data-remove-secondary-role]');
+                if (!link) return;
+                e.preventDefault();
+                var userId = document.getElementById('role-change-user-id').value;
+                var adminRoleId = link.dataset.removeSecondaryRole;
+                try {
+                    await Roles.removeUserRole(userId, adminRoleId);
+                    await window.loadSecondaryRoles(userId);
+                } catch (err) {
+                    showAdminAlert('danger', err.message);
+                }
+            });
+        }
+
         // Open "Assign Role" (staff search) modal
         var btnOpenAssignRole = document.getElementById('btn-open-assign-role');
         if (btnOpenAssignRole) {
@@ -367,6 +525,10 @@
                 var errEl = document.getElementById('assign-role-staff-error');
                 if (errEl) errEl.classList.add('d-none');
                 document.getElementById('assign-role-grant-portal-login').checked = true;
+                document.getElementById('assign-role-mode-primary').checked = true;
+                document.getElementById('assign-role-current-status').innerHTML = '';
+                document.getElementById('assign-role-overwrite-warning').classList.add('d-none');
+                updateAssignRolePortalLoginVisibility();
 
                 var staffSelect = document.getElementById('assign-role-staff-select');
                 staffSelect.innerHTML = '<option value="">Loading staff…</option>';
@@ -409,6 +571,61 @@
             });
         }
 
+        function updateAssignRolePortalLoginVisibility() {
+            var mode = document.querySelector('input[name="assign-role-mode"]:checked');
+            var isSecondary = mode && mode.value === 'secondary';
+            var wrap = document.getElementById('assign-role-portal-login-wrap');
+            var hint = document.getElementById('assign-role-portal-login-hint');
+            if (wrap) wrap.classList.toggle('d-none', isSecondary);
+            if (hint) hint.classList.toggle('d-none', isSecondary);
+        }
+
+        document.querySelectorAll('input[name="assign-role-mode"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                updateAssignRolePortalLoginVisibility();
+                updateAssignRoleOverwriteWarning();
+            });
+        });
+
+        var _assignRoleCurrentAssignment = null;
+
+        function updateAssignRoleOverwriteWarning() {
+            var mode = document.querySelector('input[name="assign-role-mode"]:checked');
+            var warnEl = document.getElementById('assign-role-overwrite-warning');
+            if (!warnEl) return;
+            if (mode && mode.value === 'primary' && _assignRoleCurrentAssignment && _assignRoleCurrentAssignment.adminRoleName) {
+                warnEl.textContent = 'This will REPLACE their current primary role ("' + _assignRoleCurrentAssignment.adminRoleName + '") — that role\'s permissions will no longer apply once this is saved.';
+                warnEl.classList.remove('d-none');
+            } else {
+                warnEl.classList.add('d-none');
+            }
+        }
+
+        var assignRoleStaffSelect = document.getElementById('assign-role-staff-select');
+        if (assignRoleStaffSelect) {
+            assignRoleStaffSelect.addEventListener('change', async function () {
+                var staffId = this.value;
+                var statusEl = document.getElementById('assign-role-current-status');
+                _assignRoleCurrentAssignment = null;
+                if (!staffId) { statusEl.innerHTML = ''; updateAssignRoleOverwriteWarning(); return; }
+
+                statusEl.innerHTML = 'Checking current roles…';
+                try {
+                    var assignment = await Staff.getRoleAssignment(staffId);
+                    _assignRoleCurrentAssignment = assignment;
+                    var parts = [];
+                    if (assignment.adminRoleName) parts.push(assignment.adminRoleName + ' (primary)');
+                    (assignment.secondaryRoles || []).forEach(function (r) { parts.push(r.name + ' (secondary)'); });
+                    statusEl.innerHTML = parts.length
+                        ? 'Currently has: ' + parts.join(', ') + '.'
+                        : 'No role currently assigned.';
+                } catch (err) {
+                    statusEl.innerHTML = '';
+                }
+                updateAssignRoleOverwriteWarning();
+            });
+        }
+
         // Confirm assign role (staff search)
         var btnConfirmAssignRole = document.getElementById('btn-confirm-assign-role-staff');
         if (btnConfirmAssignRole) {
@@ -419,6 +636,8 @@
                 var staffId = document.getElementById('assign-role-staff-select').value;
                 var adminRoleId = document.getElementById('assign-role-role-select').value;
                 var grantPortalLogin = document.getElementById('assign-role-grant-portal-login').checked;
+                var modeEl = document.querySelector('input[name="assign-role-mode"]:checked');
+                var mode = modeEl ? modeEl.value : 'primary';
 
                 if (!staffId) {
                     errEl.textContent = 'Please select a staff member.';
@@ -431,12 +650,16 @@
                     return;
                 }
 
+                if (mode === 'primary' && _assignRoleCurrentAssignment && _assignRoleCurrentAssignment.adminRoleName) {
+                    if (!confirm('This replaces their current role ("' + _assignRoleCurrentAssignment.adminRoleName + '") — continue?')) return;
+                }
+
                 var spinner = document.getElementById('spinner-assign-role-staff');
                 var btn = this;
                 btn.disabled = true;
                 if (spinner) spinner.classList.remove('d-none');
                 try {
-                    await Staff.assignRole(staffId, adminRoleId, grantPortalLogin);
+                    await Staff.assignRole(staffId, adminRoleId, grantPortalLogin, mode);
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-assign-role-staff')).hide();
                     await loadAdminUsers();
                     showAdminAlert('success', 'Role assigned successfully.');
@@ -532,6 +755,67 @@
                     showAdminAlert('danger', err.message);
                 } finally {
                     btn.disabled = false;
+                }
+            });
+        }
+
+        // Edit role button — opens the modal pre-filled with the currently selected role
+        var btnEditRole = document.getElementById('btn-edit-role');
+        if (btnEditRole) {
+            btnEditRole.addEventListener('click', function () {
+                if (!State.permRole) return;
+                var role = State.rolesCache.find(function (r) { return r.id === State.permRole; });
+                if (!role) return;
+                document.getElementById('er-role-id').value = role.id;
+                document.getElementById('er-name').value = role.name;
+                document.getElementById('er-description').value = role.description || '';
+                document.getElementById('er-active').checked = role.isActive !== false;
+                var alertEl = document.getElementById('modal-edit-role-alert');
+                if (alertEl) alertEl.classList.add('d-none');
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-edit-role')).show();
+            });
+        }
+
+        var formEditRole = document.getElementById('form-edit-role');
+        if (formEditRole) {
+            formEditRole.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                var roleId = document.getElementById('er-role-id').value;
+                var name = document.getElementById('er-name').value;
+                var description = document.getElementById('er-description').value;
+                var isActive = document.getElementById('er-active').checked;
+                var alertEl = document.getElementById('modal-edit-role-alert');
+                var alertMsg = document.getElementById('modal-edit-role-alert-msg');
+                var submitBtn = document.getElementById('btn-submit-edit-role');
+                var spinner = document.getElementById('spinner-edit-role');
+
+                if (!name || !name.trim()) {
+                    if (alertEl && alertMsg) {
+                        alertEl.className = 'alert alert-danger mx-3 mt-3 mb-0 py-2';
+                        alertMsg.textContent = 'Role name is required.';
+                        alertEl.classList.remove('d-none');
+                    }
+                    return;
+                }
+
+                if (submitBtn) submitBtn.disabled = true;
+                if (spinner) spinner.classList.remove('d-none');
+                try {
+                    await Roles.editRole(roleId, { name: name, description: description, isActive: isActive });
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-edit-role')).hide();
+                    await populateRoleSelects(); // refreshes State.rolesCache
+                    await renderPermRoleSelector();
+                    await renderPermMatrix();
+                    showAdminAlert('success', 'Role updated successfully.');
+                } catch (err) {
+                    if (alertEl && alertMsg) {
+                        alertEl.className = 'alert alert-danger mx-3 mt-3 mb-0 py-2';
+                        alertMsg.textContent = err.message;
+                        alertEl.classList.remove('d-none');
+                    }
+                } finally {
+                    if (submitBtn) submitBtn.disabled = false;
+                    if (spinner) spinner.classList.add('d-none');
                 }
             });
         }

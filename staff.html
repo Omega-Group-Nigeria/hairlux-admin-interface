@@ -733,26 +733,33 @@
             var rows = items.map(function (item) {
                 var label = ONBOARDING_ITEM_LABELS[item.type] || item.type;
 
+                // Built once, used by both the "approved" and "pending review" rows below —
+                // what was submitted doesn't change once it's approved, so there's no reason
+                // an admin should lose the ability to see it again after approving.
+                var submittedHtml;
+                if (item.type === 'PASSPORT_PHOTO') {
+                    submittedHtml = passportPhotoUrl
+                        ? '<a href="' + esc(passportPhotoUrl) + '" target="_blank" rel="noopener">View uploaded photo</a>'
+                        : '<span class="text-secondary">Photo submitted, but the view link failed to load.</span>';
+                } else {
+                    var fields = ONBOARDING_SUBMISSION_FIELDS[item.type] || [];
+                    submittedHtml = fields.map(function (pair) {
+                        return '<div><span class="text-secondary">' + esc(pair[0]) + ':</span> ' + esc((staffRecord && staffRecord[pair[1]]) || '-') + '</div>';
+                    }).join('');
+                }
+
                 if (item.isComplete) {
-                    return '<div class="d-flex align-items-center justify-content-between py-1">' +
+                    return '<div class="py-2 border-bottom">' +
+                        '<div class="d-flex align-items-center justify-content-between mb-1">' +
                         '<div><span class="text-success me-2">\u2713</span>' + esc(label) +
                         '<div class="text-secondary small ms-4">Approved ' + esc(Staff.formatDate(item.completedAt)) + '</div></div>' +
                         '<button class="btn btn-xs btn-outline-secondary btn-onboarding-toggle" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '" data-next="false">Reopen</button>' +
+                        '</div>' +
+                        '<div class="small ms-4">' + submittedHtml + '</div>' +
                         '</div>';
                 }
 
                 if (item.reviewStatus === 'SUBMITTED') {
-                    var submittedHtml;
-                    if (item.type === 'PASSPORT_PHOTO') {
-                        submittedHtml = passportPhotoUrl
-                            ? '<a href="' + esc(passportPhotoUrl) + '" target="_blank" rel="noopener">View uploaded photo</a>'
-                            : '<span class="text-secondary">Photo submitted, but the view link failed to load.</span>';
-                    } else {
-                        var fields = ONBOARDING_SUBMISSION_FIELDS[item.type] || [];
-                        submittedHtml = fields.map(function (pair) {
-                            return '<div><span class="text-secondary">' + esc(pair[0]) + ':</span> ' + esc((staffRecord && staffRecord[pair[1]]) || '-') + '</div>';
-                        }).join('');
-                    }
                     return '<div class="py-2 border-bottom">' +
                         '<div class="d-flex align-items-center justify-content-between mb-1">' +
                         '<div><span class="text-warning me-2">\u23F3</span>' + esc(label) + ' <span class="badge bg-warning-lt">Pending review</span></div>' +

@@ -119,8 +119,12 @@
         if (!roles.length) {
             sel.innerHTML = '<span class="text-secondary small fst-italic me-2">No roles defined.</span>' + addBtn;
             var deleteBtn = document.getElementById('btn-delete-role');
+            var editBtn = document.getElementById('btn-edit-role');
+            var viewUsersBtn = document.getElementById('btn-view-role-users');
             var saveBtn = document.getElementById('btn-save-perms');
             if (deleteBtn) deleteBtn.classList.add('d-none');
+            if (editBtn) editBtn.classList.add('d-none');
+            if (viewUsersBtn) viewUsersBtn.classList.add('d-none');
             if (saveBtn) saveBtn.classList.add('d-none');
         } else {
             sel.innerHTML = roles.map(function (r) {
@@ -129,8 +133,12 @@
                     '" data-perm-role="' + _esc(r.id) + '">' + _esc(r.name) + '</button>';
             }).join('') + addBtn;
             var deleteBtn = document.getElementById('btn-delete-role');
+            var editBtn = document.getElementById('btn-edit-role');
+            var viewUsersBtn = document.getElementById('btn-view-role-users');
             var saveBtn = document.getElementById('btn-save-perms');
             if (deleteBtn) deleteBtn.classList.remove('d-none');
+            if (editBtn) editBtn.classList.remove('d-none');
+            if (viewUsersBtn) viewUsersBtn.classList.remove('d-none');
             if (saveBtn) saveBtn.classList.remove('d-none');
         }
 
@@ -224,6 +232,7 @@
                     var matchedRole = State.rolesCache.find(function (r) { return r.name === currentRoleName; });
                     if (matchedRole) sel.value = matchedRole.id;
                 }
+                if (typeof loadSecondaryRoles === 'function') loadSecondaryRoles(uid);
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-change-role')).show();
             } else if (action === 'toggle-status') {
                 var newStatus = el.dataset.newStatus;

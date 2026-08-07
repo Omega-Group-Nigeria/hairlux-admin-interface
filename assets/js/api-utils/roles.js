@@ -13,11 +13,11 @@ const Roles = (() => {
     const COLORS_KEY = 'hairlux_role_colors';
 
     function _loadColorCache() {
-        try { return JSON.parse(localStorage.getItem(COLORS_KEY) || '{}'); } catch(e) { return {}; }
+        try { return JSON.parse(localStorage.getItem(COLORS_KEY) || '{}'); } catch (e) { return {}; }
     }
 
     function _saveColorCache(map) {
-        try { localStorage.setItem(COLORS_KEY, JSON.stringify(map)); } catch(e) {}
+        try { localStorage.setItem(COLORS_KEY, JSON.stringify(map)); } catch (e) { }
     }
 
     function _removeRoleColor(roleId) {
@@ -44,7 +44,7 @@ const Roles = (() => {
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || 'Failed to load roles');
         var colorMap = _loadColorCache();
-        _rolesCache = (raw.data || []).map(function(r) {
+        _rolesCache = (raw.data || []).map(function (r) {
             return Object.assign({}, r, { color: colorMap[r.id] || 'secondary' });
         });
         return _rolesCache;
@@ -62,9 +62,9 @@ const Roles = (() => {
         var body = { name: upperName };
         if (description) body.description = description;
         const res = await Auth.fetch('/admin/roles', {
-            method:  'POST',
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(body),
+            body: JSON.stringify(body),
         });
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || 'Failed to create role');
@@ -81,6 +81,27 @@ const Roles = (() => {
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || 'Failed to delete role');
         _removeRoleColor(roleId);
+        return raw.data || raw;
+    }
+
+    /**
+     * PATCH /admin/roles/{id}
+     * Edits the role itself — name/description/isActive. NOT to be confused
+     * with updateRole() below, which assigns a role TO a user.
+     */
+    async function editRole(roleId, changes) {
+        if (!roleId) throw new Error('Role ID required.');
+        var body = {};
+        if (changes.name !== undefined) body.name = (changes.name || '').trim().toUpperCase();
+        if (changes.description !== undefined) body.description = changes.description;
+        if (changes.isActive !== undefined) body.isActive = changes.isActive;
+        const res = await Auth.fetch('/admin/roles/' + roleId, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to update role');
         return raw.data || raw;
     }
 
@@ -108,9 +129,9 @@ const Roles = (() => {
      */
     async function setPermissions(roleId, permissions) {
         const res = await Auth.fetch('/admin/roles/' + roleId + '/permissions', {
-            method:  'PUT',
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ permissions: permissions }),
+            body: JSON.stringify({ permissions: permissions }),
         });
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || 'Failed to save permissions');
@@ -138,7 +159,7 @@ const Roles = (() => {
         if (!nameOrKey) return '—';
         if (nameOrKey === 'SUPER_ADMIN') return 'Super Admin';
         // Format ALL_CAPS → Title Case for readability
-        return nameOrKey.replace(/_/g, ' ').replace(/\w\S*/g, function(w) {
+        return nameOrKey.replace(/_/g, ' ').replace(/\w\S*/g, function (w) {
             return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
         });
     }
@@ -151,7 +172,7 @@ const Roles = (() => {
         if (!nameOrIdOrKey) return 'secondary';
         if (nameOrIdOrKey === 'SUPER_ADMIN') return 'danger';
         // Try to find in cached roles by id first, then by name
-        var found = _rolesCache.find(function(r) {
+        var found = _rolesCache.find(function (r) {
             return r.id === nameOrIdOrKey || r.name === nameOrIdOrKey;
         });
         return found ? (found.color || 'secondary') : 'secondary';
@@ -163,7 +184,7 @@ const Roles = (() => {
     }
 
     function _esc(s) {
-        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     // ── Admin user API calls ──────────────────────────────────────────────────
@@ -188,10 +209,10 @@ const Roles = (() => {
             resSuperAdmin.json().catch(() => ({})),
         ]);
 
-        if (!resAdmin.ok)      throw new Error(rawAdmin.message      || 'Failed to load admin users');
+        if (!resAdmin.ok) throw new Error(rawAdmin.message || 'Failed to load admin users');
         if (!resSuperAdmin.ok) throw new Error(rawSuper.message || 'Failed to load super admin users');
 
-        const adminUsers = Array.isArray(rawAdmin.data)      ? rawAdmin.data      : [];
+        const adminUsers = Array.isArray(rawAdmin.data) ? rawAdmin.data : [];
         const superUsers = Array.isArray(rawSuper.data) ? rawSuper.data : [];
 
         return superUsers.concat(adminUsers);
@@ -204,9 +225,9 @@ const Roles = (() => {
      */
     async function createAdmin(data) {
         const res = await Auth.fetch('/admin/users', {
-            method:  'POST',
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(data),
+            body: JSON.stringify(data),
         });
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || 'Failed to create admin user');
@@ -216,9 +237,9 @@ const Roles = (() => {
     /** PUT /admin/users/{id}/status */
     async function updateStatus(userId, status) {
         const res = await Auth.fetch('/admin/users/' + userId + '/status', {
-            method:  'PUT',
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ status }),
+            body: JSON.stringify({ status }),
         });
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || 'Failed to update status');
@@ -240,12 +261,79 @@ const Roles = (() => {
         return raw.data || raw;
     }
 
+    /**
+     * GET /admin/roles/users/{userId}
+     * Returns { primary, additional[] } — the user's primary role plus every secondary role.
+     */
+    async function getUserRoles(userId) {
+        const res = await Auth.fetch('/admin/roles/users/' + userId);
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to load user roles');
+        return raw.data || raw;
+    }
+
+    /**
+     * POST /admin/roles/users/{userId}/{adminRoleId}
+     * Grants an additional role on top of the user's existing primary role.
+     */
+    async function addUserRole(userId, adminRoleId) {
+        const res = await Auth.fetch('/admin/roles/users/' + userId + '/' + adminRoleId, {
+            method: 'POST',
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to add role');
+        return raw.data || raw;
+    }
+
+    /**
+     * DELETE /admin/roles/users/{userId}/{adminRoleId}
+     * Removes a secondary role — does not affect the user's primary role.
+     */
+    async function removeUserRole(userId, adminRoleId) {
+        const res = await Auth.fetch('/admin/roles/users/' + userId + '/' + adminRoleId, {
+            method: 'DELETE',
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to remove role');
+        return raw.data || raw;
+    }
+
+    /**
+     * GET /admin/roles/audit-log/all
+     * Optional filters: { adminRoleId, targetUserId, page, limit }
+     */
+    async function getAuditLog(params) {
+        params = params || {};
+        const q = new URLSearchParams();
+        Object.keys(params).forEach((k) => {
+            if (params[k] !== undefined && params[k] !== null && params[k] !== '') q.set(k, params[k]);
+        });
+        const qs = q.toString() ? '?' + q.toString() : '';
+        const res = await Auth.fetch('/admin/roles/audit-log/all' + qs);
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to load audit log');
+        return raw.data || raw;
+    }
+
+    /**
+     * GET /admin/roles/{id}/users
+     * Everyone holding this role, whether as primary or secondary.
+     */
+    async function getRoleUsers(roleId) {
+        if (!roleId) throw new Error('Role ID required.');
+        const res = await Auth.fetch('/admin/roles/' + roleId + '/users');
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to load role users');
+        return raw.data || raw;
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     return {
         // Roles
         fetchRoles,
         createRole,
+        editRole,
         deleteRole,
         // Permissions
         fetchPermissionCatalogue,
@@ -260,6 +348,11 @@ const Roles = (() => {
         createAdmin,
         updateStatus,
         updateRole,
+        // Secondary roles & audit log
+        getUserRoles,
+        addUserRole,
+        removeUserRole,
+        getAuditLog,
+        getRoleUsers,
     };
-
 })();
