@@ -16,10 +16,16 @@
     <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
     <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <!-- Quill rich text editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
         .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
         table td { vertical-align: middle; }
+        /* ── Quill overrides ───────────────────────────────────── */
+        .ql-container { min-height: 120px; font-family: inherit; font-size: 0.875rem; }
+        .ql-toolbar { border-color: var(--tblr-border-color) !important; border-radius: var(--tblr-border-radius) var(--tblr-border-radius) 0 0; }
+        .ql-container.ql-snow { border-color: var(--tblr-border-color) !important; border-radius: 0 0 var(--tblr-border-radius) var(--tblr-border-radius); }
     </style>
 </head>
 
@@ -125,7 +131,13 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="announcement-body">Message <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="announcement-body" rows="4" maxlength="5000" placeholder="e.g. All branches will be closed on Friday for the public holiday."></textarea>
+                        <div id="announcement-quill-editor"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="announcement-expires">Expires <span class="text-muted">(optional)</span></label>
+                        <input type="date" class="form-control" id="announcement-expires">
+                        <div class="form-hint">After this date, this announcement stops appearing in the staff portal. Leave blank for no
+                            expiry.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Audience <span class="text-danger">*</span></label>
@@ -157,6 +169,8 @@
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-comms.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
+    <!-- Quill rich text editor -->
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
 
@@ -252,43 +266,67 @@
             }
         }
 
-        function onTargetChange() {
-            var target = document.getElementById("announcement-target").value;
-            document.getElementById("announcement-branch-wrap").classList.toggle("d-none", target !== "BRANCH");
-            document.getElementById("announcement-staff-wrap").classList.toggle("d-none", target !== "INDIVIDUAL");
-            if (target === "BRANCH") ensureBranchesLoaded();
-            if (target === "INDIVIDUAL") ensureStaffLoaded();
-        }
-
-        function openAnnouncementModal() {
-            if (!RBAC.can(StaffComms.PERMISSIONS.MANAGE)) return;
-            document.getElementById("modal-announcement-error").classList.add("d-none");
-            document.getElementById("announcement-title").value = "";
-            document.getElementById("announcement-body").value = "";
-            document.getElementById("announcement-target").value = "ALL";
-            onTargetChange();
-            new bootstrap.Modal(document.getElementById("modal-announcement")).show();
-        }
-
-        async function saveAnnouncement() {
-            var errEl = document.getElementById("modal-announcement-error");
-            errEl.classList.add("d-none");
-
-            var title = document.getElementById("announcement-title").value.trim();
-            var body = document.getElementById("announcement-body").value.trim();
-            var target = document.getElementById("announcement-target").value;
-            var payload = { title: title, body: body, target: target };
-
-            if (!title) { errEl.textContent = "Title is required."; errEl.classList.remove("d-none"); return; }
-            if (!body) { errEl.textContent = "Message is required."; errEl.classList.remove("d-none"); return; }
-            if (target === "BRANCH") {
-                payload.targetLocationId = document.getElementById("announcement-branch").value;
-                if (!payload.targetLocationId) { errEl.textContent = "Select a branch."; errEl.classList.remove("d-none"); return; }
+        var _annQuill = null;
+            function _initAnnouncementQuill() {
+                if (_annQuill) return;
+                _annQuill = new Quill('#announcement-quill-editor', {
+                    theme: 'snow',
+                    placeholder: 'e.g. All branches will be closed on Friday for the public holiday.',
+                    modules: {
+                        toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link'], ['clean']],
+                    },
+                });
             }
-            if (target === "INDIVIDUAL") {
-                payload.targetStaffId = document.getElementById("announcement-staff").value;
-                if (!payload.targetStaffId) { errEl.textContent = "Select a staff member."; errEl.classList.remove("d-none"); return; }
+
+            function onTargetChange() {
+                var target = document.getElementById("announcement-target").value;
+                document.getElementById("announcement-branch-wrap").classList.toggle("d-none", target !== "BRANCH");
+                document.getElementById("announcement-staff-wrap").classList.toggle("d-none", target !== "INDIVIDUAL");
+                if (target === "BRANCH") ensureBranchesLoaded();
+                if (target === "INDIVIDUAL") ensureStaffLoaded();
             }
+
+            function openAnnouncementModal() {
+                if (!RBAC.can(StaffComms.PERMISSIONS.MANAGE)) return;
+                document.getElementById("modal-announcement-error").classList.add("d-none");
+                document.getElementById("announcement-title").value = "";
+                document.getElementById("announcement-expires").value = "";
+                document.getElementById("announcement-target").value = "ALL";
+                onTargetChange();
+                new bootstrap.Modal(document.getElementById("modal-announcement")).show();
+                // Quill needs its container visible to size correctly, so init/clear
+                // right as the modal opens rather than on page load.
+                _initAnnouncementQuill();
+                _annQuill.setContents([]);
+            }
+
+            async function saveAnnouncement() {
+                var errEl = document.getElementById("modal-announcement-error");
+                errEl.classList.add("d-none");
+
+                var title = document.getElementById("announcement-title").value.trim();
+                var bodyHtml = _annQuill ? _annQuill.root.innerHTML.trim() : "";
+                var bodyText = _annQuill ? _annQuill.getText().trim() : "";
+                var target = document.getElementById("announcement-target").value;
+                var expiresDate = document.getElementById("announcement-expires").value;
+                var payload = { title: title, body: bodyHtml, target: target };
+                if (expiresDate) {
+                    // End of the selected day, in the browser's local time — matches
+                    // how a person reading "expires on the 31st" would expect it to
+                    // still be visible for the whole of that day.
+                    payload.expiresAt = new Date(expiresDate + 'T23:59:59').toISOString();
+                }
+
+                if (!title) { errEl.textContent = "Title is required."; errEl.classList.remove("d-none"); return; }
+                if (!bodyText) { errEl.textContent = "Message is required."; errEl.classList.remove("d-none"); return; }
+                if (target === "BRANCH") {
+                    payload.targetLocationId = document.getElementById("announcement-branch").value;
+                    if (!payload.targetLocationId) { errEl.textContent = "Select a branch."; errEl.classList.remove("d-none"); return; }
+                }
+                if (target === "INDIVIDUAL") {
+                    payload.targetStaffId = document.getElementById("announcement-staff").value;
+                    if (!payload.targetStaffId) { errEl.textContent = "Select a staff member."; errEl.classList.remove("d-none"); return; }
+                }
 
             var btn = document.getElementById("btn-save-announcement");
             btn.disabled = true;

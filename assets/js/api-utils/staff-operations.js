@@ -61,7 +61,7 @@ const StaffOps = (() => {
         if (!value) return "-";
         const d = new Date(value);
         if (Number.isNaN(d.getTime())) return "-";
-        return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+        return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" });
     }
 
     function formatMoney(amount) {

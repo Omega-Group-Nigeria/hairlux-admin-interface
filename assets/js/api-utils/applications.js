@@ -187,16 +187,15 @@ const Applications = (() => {
   function formatDate(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' });
   }
 
   function formatDateTime(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
-      ', ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' });
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' }) +
+      ', ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
   }
-
   async function getReport() {
     const res = await Auth.fetch('/admin/applications/report');
     const raw = await res.json().catch(() => ({}));

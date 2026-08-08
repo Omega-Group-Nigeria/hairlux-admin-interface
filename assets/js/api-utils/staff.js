@@ -178,11 +178,11 @@ const Staff = (() => {
         return jsonFetch("/admin/staff/" + id + "/role-assignment");
     }
 
-    async function assignRole(id, adminRoleId, grantPortalLogin) {
+    async function assignRole(id, adminRoleId, grantPortalLogin, mode) {
         return jsonFetch("/admin/staff/" + id + "/role-assignment", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ adminRoleId: adminRoleId, grantPortalLogin: grantPortalLogin }),
+            body: JSON.stringify({ adminRoleId: adminRoleId, grantPortalLogin: grantPortalLogin, mode: mode || 'primary' }),
         });
     }
 

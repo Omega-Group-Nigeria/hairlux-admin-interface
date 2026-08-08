@@ -146,10 +146,16 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2 d-flex gap-2">
-                                    <button type="button" class="btn btn-primary flex-fill"
-                                        id="btn-apply-filters">Apply</button>
-                                    <button type="button" class="btn btn-outline-secondary"
-                                        id="btn-reset-filters">Reset</button>
+                                    <button type="button" class="btn btn-outline-secondary flex-fill" id="btn-refresh-overview"
+                                        title="Reload with current filters">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                                            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                            <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                        </svg>
+                                        Refresh
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" id="btn-reset-filters">Reset</button>
                                 </div>
                             </div>
                         </div>
@@ -206,7 +212,11 @@
             var user = Auth.getUser();
             isSuperAdmin = !!(user && user.role === 'SUPER_ADMIN');
 
-            document.getElementById('btn-apply-filters').addEventListener('click', loadOverview);
+            document.getElementById('btn-refresh-overview').addEventListener('click', loadOverview);
+            document.getElementById('ov-date-from').addEventListener('change', loadOverview);
+            document.getElementById('ov-date-to').addEventListener('change', loadOverview);
+            document.getElementById('ov-branch').addEventListener('change', loadOverview);
+            document.getElementById('ov-source').addEventListener('change', loadOverview);
             document.getElementById('btn-reset-filters').addEventListener('click', function () {
                 document.getElementById('ov-date-from').value = '';
                 document.getElementById('ov-date-to').value = '';

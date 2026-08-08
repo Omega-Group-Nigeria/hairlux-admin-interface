@@ -900,6 +900,31 @@ function renderOnboardingBadge() {
     const remaining = currentOnboarding.items.filter((i) => !i.isComplete).length;
     sidebarBadge.textContent = String(remaining);
   }
+  applyPayrollGate();
+}
+
+/**
+ * Payslips & Payroll stays locked until onboarding is fully complete --
+ * which, since checkAndCompletePolicyAcknowledgment auto-completes the
+ * POLICY_ACKNOWLEDGMENT item only once every active company document has
+ * been acknowledged, and every other item requires admin approval to
+ * become complete, onboardingComplete === true already means everything
+ * has been signed, submitted, and approved. One gate, not three.
+ */
+function applyPayrollGate() {
+  const unlocked = !!(currentOnboarding && currentOnboarding.onboardingComplete);
+  ['sb-payroll-item', 'sb-payroll-item-2'].forEach((id) => {
+    const item = document.getElementById(id);
+    if (item) item.classList.toggle('sb-locked', !unlocked);
+  });
+}
+
+function handlePayrollNavClick() {
+  if (!currentOnboarding || !currentOnboarding.onboardingComplete) {
+    alert('Payslips & Payroll unlocks once your onboarding checklist -- including all Documents & Agreements -- is complete and approved. Open "Complete Onboarding" to see what\'s left.');
+    return;
+  }
+  show('payroll');
 }
 
 function renderVerificationChecklist() {

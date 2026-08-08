@@ -123,6 +123,11 @@
                         <div class="card">
                             <div class="card-body border-bottom py-4">
                                 <div class="row g-2 align-items-end">
+                                    <div class="col-12 col-md-3">
+                                        <label class="form-label text-secondary small mb-1">Search</label>
+                                        <input type="text" id="filter-search" class="form-control form-control-sm"
+                                            placeholder="Search by item name…">
+                                    </div>
                                     <div class="col-6 col-md-3">
                                         <label class="form-label text-secondary small mb-1">Branch</label>
                                         <select id="filter-branch" class="form-select form-select-sm">
@@ -581,6 +586,11 @@
             document.getElementById("filter-branch").addEventListener("change", loadItems);
             document.getElementById("filter-category").addEventListener("change", loadItems);
             document.getElementById("filter-low-stock").addEventListener("change", loadItems);
+            var _searchDebounce;
+            document.getElementById("filter-search").addEventListener("input", function () {
+                clearTimeout(_searchDebounce);
+                _searchDebounce = setTimeout(loadItems, 300);
+            });
             document.getElementById("btn-refresh").addEventListener("click", function () { loadItems(); refreshBadgeCounts(); });
 
             document.getElementById("btn-new-item").addEventListener("click", function () {
@@ -647,29 +657,29 @@
         }
 
         async function loadBranchOptions() {
-                try {
-                    var branches = await Staff.getLocations();
-                    _branchesCache = branches;
-                    var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
-                    document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
-                    document.getElementById("ni-branch").innerHTML = '<option value="">Select branch…</option>' + opts;
-                } catch (err) {
-                    console.error("Failed to load branches", err);
-                }
+            try {
+                var branches = await Staff.getLocations();
+                _branchesCache = branches;
+                var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
+                document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
+                document.getElementById("ni-branch").innerHTML = '<option value="">Select branch…</option>' + opts;
+            } catch (err) {
+                console.error("Failed to load branches", err);
             }
+        }
 
-            async function loadSupplierOptions() {
-                try {
-                    var suppliers = await Suppliers.getAll(undefined, true);
-                    var opts = suppliers.map(function (s) {
-                        return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.type === 'VENDOR' ? ' (Vendor)' : ' (Supplier)') + '</option>';
-                    }).join('');
-                    document.getElementById("ni-supplier").innerHTML = '<option value="">None</option>' + opts;
-                    document.getElementById("ei-supplier").innerHTML = '<option value="">None</option>' + opts;
-                } catch (err) {
-                    console.error("Failed to load suppliers", err);
-                }
+        async function loadSupplierOptions() {
+            try {
+                var suppliers = await Suppliers.getAll(undefined, true);
+                var opts = suppliers.map(function (s) {
+                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.type === 'VENDOR' ? ' (Vendor)' : ' (Supplier)') + '</option>';
+                }).join('');
+                document.getElementById("ni-supplier").innerHTML = '<option value="">None</option>' + opts;
+                document.getElementById("ei-supplier").innerHTML = '<option value="">None</option>' + opts;
+            } catch (err) {
+                console.error("Failed to load suppliers", err);
             }
+        }
 
         async function refreshBadgeCounts() {
             try {
@@ -712,6 +722,7 @@
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var result = await Inventory.getAll({
+                    search: document.getElementById("filter-search").value.trim() || undefined,
                     branchId: document.getElementById("filter-branch").value,
                     category: document.getElementById("filter-category").value,
                     lowStockOnly: document.getElementById("filter-low-stock").checked || undefined,
