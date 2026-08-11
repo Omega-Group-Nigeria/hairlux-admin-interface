@@ -227,7 +227,45 @@ const Beauticians = (() => {
         });
     }
 
-    // ── 5b. Dispatch settings ──────────────────────────────────────────────────
+    // ── 5b. Per-beautician commission overrides ───────────────────────────────
+    // Admin-set personal commission override for home-service earnings. Wins over
+    // the per-service override and the HomeServiceSettings.commissionRate default.
+    // Rates are take-home fraction (0–1). See beautician-commission-rates.md
+
+    /**
+     * GET /admin/settings/beautician-commission-rates
+     * Returns only beauticians with an explicit override.
+     * @returns {Promise<Array<{beauticianUserId:string, beauticianName:string, commissionRate:number, updatedAt:string}>>}
+     */
+    async function listBeauticianCommissionRates() {
+        const data = await apiFetch('/admin/settings/beautician-commission-rates');
+        return Array.isArray(data) ? data : firstArray(data && data.items, data && data.rates);
+    }
+
+    /**
+     * PUT /admin/settings/beautician-commission-rates/:beauticianUserId
+     * Upsert override. commissionRate must be 0–1 (beautician take-home share).
+     */
+    async function setBeauticianCommissionRate(beauticianUserId, commissionRate) {
+        return apiFetch('/admin/settings/beautician-commission-rates/' + encodeURIComponent(beauticianUserId), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commissionRate }),
+        });
+    }
+
+    /**
+     * DELETE /admin/settings/beautician-commission-rates/:beauticianUserId
+     * Removes override so the beautician falls back to the service override,
+     * then the platform default beautician share.
+     */
+    async function deleteBeauticianCommissionRate(beauticianUserId) {
+        return apiFetch('/admin/settings/beautician-commission-rates/' + encodeURIComponent(beauticianUserId), {
+            method: 'DELETE',
+        });
+    }
+
+    // ── 5c. Dispatch settings ──────────────────────────────────────────────────
 
     async function getDispatchSettings() {
         return apiFetch('/admin/settings/dispatch');
@@ -462,6 +500,9 @@ const Beauticians = (() => {
         listServiceCommissionRates,
         setServiceCommissionRate,
         deleteServiceCommissionRate,
+        listBeauticianCommissionRates,
+        setBeauticianCommissionRate,
+        deleteBeauticianCommissionRate,
         getDispatchSettings,
         updateDispatchSettings,
         updateDispatch,

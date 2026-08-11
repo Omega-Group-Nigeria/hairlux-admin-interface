@@ -1409,6 +1409,77 @@ function showScrAlert(type, message) {
         setTimeout(function () { ok.classList.add('d-none'); }, 3000);
     }
 }
+function showBcrAlert(type, message) {
+    var ok = document.getElementById('bcr-success');
+    var err = document.getElementById('bcr-error');
+    if (!ok || !err) return;
+    ok.classList.add('d-none');
+    err.classList.add('d-none');
+    if (!message) return;
+    var el = type === 'success' ? ok : err;
+    el.textContent = message;
+    el.classList.remove('d-none');
+    if (type === 'success') {
+        setTimeout(function () { ok.classList.add('d-none'); }, 3000);
+    }
+}
+function renderBeauticianRateRows(rows, byUserId) {
+    var tbody = document.getElementById('bcr-tbody');
+    var canManage = RBAC.can('settings:manage');
+    if (!rows || !rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No beauticians found.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = rows.map(function (b, i) {
+        var userId = Beauticians.beauticianUserId(b);
+        var name = Beauticians.fullName(b);
+        var email = (b.user && b.user.email) || '';
+        var phone = (b.user && b.user.phone) || '';
+        var meta = [email, phone].filter(Boolean).join(' · ');
+        var override = userId ? (byUserId || {})[userId] : null;
+        var rateLabel;
+        if (override && override.commissionRate != null) {
+            var pct = formatCommissionLabel(override.commissionRate);
+            rateLabel = '<span class="badge bg-azure-lt" title="Personal override">' + escHtml(pct != null ? pct + '%' : '—') + '</span>';
+        } else {
+            rateLabel = '<span class="text-secondary">Platform default</span>';
+        }
+        var updated = override && override.updatedAt
+            ? escHtml(Beauticians.formatDateTime(override.updatedAt))
+            : '<span class="text-secondary">—</span>';
+
+        var actions;
+        if (!userId) {
+            actions = '<span class="text-secondary small">No user id</span>';
+        } else if (canManage) {
+            actions = '<div class="btn-list flex-nowrap justify-content-end">' +
+                '<button type="button" class="btn btn-sm btn-ghost-primary btn-bcr-set"' +
+                ' data-user-id="' + escHtml(userId) + '"' +
+                ' data-name="' + escHtml(name) + '"' +
+                ' data-rate="' + escHtml(override && override.commissionRate != null ? String(override.commissionRate) : '') + '"' +
+                '>' + (override ? 'Edit Rate' : 'Set Rate') + '</button>' +
+                (override
+                    ? '<button type="button" class="btn btn-sm btn-ghost-danger btn-bcr-remove"' +
+                        ' data-user-id="' + escHtml(userId) + '"' +
+                        ' data-name="' + escHtml(name) + '">Remove</button>'
+                    : '') +
+              '</div>';
+        } else {
+            actions = '';
+        }
+        return '<tr>' +
+            '<td class="text-secondary small">' + ((State.bcr.page - 1) * State.bcr.limit + i + 1) + '</td>' +
+            '<td><div class="fw-semibold">' + escHtml(name) + '</div>' +
+            (meta ? '<div class="text-secondary small">' + escHtml(meta) + '</div>' : '') +
+            (userId ? '<div class="font-monospace text-secondary small">' + escHtml(userId) + '</div>' : '') +
+            '</td>' +
+            '<td>' + Beauticians.kycBadge(b.kycStatus) + '</td>' +
+            '<td class="text-nowrap">' + rateLabel + '</td>' +
+            '<td class="text-secondary text-nowrap small">' + updated + '</td>' +
+            '<td class="text-end">' + actions + '</td>' +
+            '</tr>';
+    }).join('');
+}
 function renderServiceCommissionRows(rows) {
     var tbody = document.getElementById('scr-tbody');
     var canManage = RBAC.can('settings:manage');
@@ -1675,6 +1746,8 @@ function renderDailyPoolStats(pool) {
         updateSvcSelectedCount: updateSvcSelectedCount,
         showScrDefaultAlert: showScrDefaultAlert,
         showScrAlert: showScrAlert,
+        showBcrAlert: showBcrAlert,
+        renderBeauticianRateRows: renderBeauticianRateRows,
         renderServiceCommissionRows: renderServiceCommissionRows,
         getScrServiceId: getScrServiceId,
         setScrServiceLabel: setScrServiceLabel,

@@ -5,8 +5,8 @@
  */
 
 // API base URL (no trailing slash)
-window.API_BASE = "https://api.hairlux.com.ng";
-// window.API_BASE = "http://localhost:3000"; // local
+// window.API_BASE = "https://api.hairlux.com.ng";
+window.API_BASE = "http://localhost:3000"; // local
 
 // Cloudinary cloud_name (used by other admin features e.g. image upload helpers — not KYC video)
 // window.CLOUDINARY_CLOUD_NAME = "your_cloud_name";

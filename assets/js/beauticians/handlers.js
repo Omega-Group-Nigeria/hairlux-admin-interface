@@ -17,6 +17,7 @@
 
     // Utils aliases (original bare-call style)
     var showAlert = Utils.showAlert;
+    var showToast = Utils.showToast;
     var clearOffcanvasAlert = Utils.clearOffcanvasAlert;
     var setSaveButtonState = Utils.setSaveButtonState;
     var canAccessSection = Utils.canAccessSection;
@@ -79,6 +80,8 @@
     var openScrModalForAdd = UI.openScrModalForAdd;
     var openScrModalForEdit = UI.openScrModalForEdit;
     var renderDailyPoolStats = UI.renderDailyPoolStats;
+    var showBcrAlert = UI.showBcrAlert;
+    var renderBeauticianRateRows = UI.renderBeauticianRateRows;
 
 
 
@@ -94,6 +97,7 @@ function refreshCurrentSection() {
     else if (State.activeSection === 'reviews') loadReviews();
     else if (State.activeSection === 'services') loadBeauticianOptions();
     else if (State.activeSection === 'service-rates') loadServiceCommissionRates();
+    else if (State.activeSection === 'beautician-rates') loadBeauticianRates();
     else if (State.activeSection === 'settings') loadSettings();
     else if (State.activeSection === 'payouts') loadPayouts();
 }
@@ -1106,6 +1110,124 @@ async function removeServiceCommissionOverride(serviceId, serviceName) {
     }
 }
 
+// ── Beautician commission rates tab (per-beautician overwrides) ──────────
+
+async function loadBeauticianRates() {
+    var canManage = RBAC.can('settings:manage');
+    document.getElementById('bcr-success').classList.add('d-none');
+    document.getElementById('bcr-error').classList.add('d-none');
+    document.getElementById('bcr-search').disabled = !RBAC.can('settings:read') && !canManage;
+    document.getElementById('bcr-tbody').innerHTML =
+        '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+    document.getElementById('bcr-results-label').textContent = 'Loading…';
+
+    try {
+        var results = await Promise.all([
+            Api.listBeauticians({
+                page: State.bcr.page,
+                limit: State.bcr.limit,
+                search: State.bcr.search,
+            }),
+            Api.listBeauticianCommissionRates().catch(function () { return []; }),
+        ]);
+        var listResult = results[0];
+        var rows = listResult.data || [];
+        var meta = listResult.meta || {};
+        State.bcr.totalPages = meta.totalPages || 1;
+        var overrides = (results[1] || []).slice().sort(function (a, b) {
+            return String(a.beauticianName || '').localeCompare(String(b.beauticianName || ''));
+        });
+        State.bcr.overrides = overrides;
+        var byUserId = {};
+        overrides.forEach(function (o) {
+            if (o && o.beauticianUserId) byUserId[o.beauticianUserId] = o;
+        });
+        State.bcr.rows = rows || [];
+        var count = meta.total ?? rows.length;
+        document.getElementById('bcr-results-label').textContent = count + ' beautician' + (count !== 1 ? 's' : '') + ' found';
+        renderBeauticianRateRows(rows, byUserId);
+        renderPagination('bcr', meta);
+    } catch (err) {
+        document.getElementById('bcr-tbody').innerHTML =
+            '<tr><td colspan="6" class="text-center text-danger py-4">' + (err.message || 'Failed to load.') + '</td></tr>';
+        document.getElementById('bcr-results-label').textContent = 'Error';
+        showBcrAlert('error', err.message || 'Failed to load beauticians');
+        showToast(err.message || 'Failed to load beauticians', 'danger');
+    }
+}
+
+var bcrTargetUserId = null;
+var bcrTargetName = '';
+
+function openBcrRateModal(beauticianUserId, beauticianName, currentRate) {
+    bcrTargetUserId = beauticianUserId || '';
+    bcrTargetName = beauticianName || '';
+    document.getElementById('bcr-modal-user-id').value = bcrTargetUserId;
+    document.getElementById('bcr-modal-name').textContent = bcrTargetName || 'Selected beautician';
+    document.getElementById('bcr-modal-rate').value =
+        currentRate != null && currentRate !== '' ? sanitizePercentInputValue(String(commissionRateToPercent(currentRate))) : '';
+    document.getElementById('bcr-modal-error').classList.add('d-none');
+    document.getElementById('bcr-modal-error').textContent = '';
+    document.getElementById('btn-bcr-save').disabled = false;
+    document.getElementById('btn-bcr-save').innerHTML = 'Save Rate';
+    getBootstrap().Modal.getOrCreateInstance(document.getElementById('modal-beautician-commission')).show();
+}
+
+async function saveBeauticianCommissionRate(e) {
+    e.preventDefault();
+    if (!RBAC.can('settings:manage')) return;
+    var errEl = document.getElementById('bcr-modal-error');
+    errEl.classList.add('d-none');
+    var userId = bcrTargetUserId || document.getElementById('bcr-modal-user-id').value;
+    var rateEl = document.getElementById('bcr-modal-rate');
+    rateEl.value = sanitizePercentInputValue(rateEl.value);
+    var pctRaw = rateEl.value;
+    var rate = commissionPercentToRate(pctRaw);
+
+    if (!userId) {
+        errEl.textContent = 'Missing beautician user id.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+    if (pctRaw === '' || rate == null || rate < 0 || rate > 1) {
+        errEl.textContent = 'Enter a beautician share between 0 and 100%.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    var btn = document.getElementById('btn-bcr-save');
+    var prevLabel = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving…';
+    try {
+        await Api.setBeauticianCommissionRate(userId, rate);
+        getBootstrap().Modal.getInstance(document.getElementById('modal-beautician-commission')).hide();
+        showToast('Beautician commission override saved', 'success');
+        await loadBeauticianRates();
+    } catch (err) {
+        errEl.textContent = err.message || 'Failed to save override';
+        errEl.classList.remove('d-none');
+        showToast(err.message || 'Failed to save override', 'danger');
+        btn.disabled = false;
+        btn.innerHTML = prevLabel;
+    }
+}
+
+async function removeBeauticianCommissionRate(beauticianUserId, beauticianName) {
+    if (!RBAC.can('settings:manage') || !beauticianUserId) return;
+    var label = beauticianName || 'this beautician';
+    if (!window.confirm('Remove the personal commission override for "' + label + '"? They will use the service override, then the platform default beautician share.')) {
+        return;
+    }
+    try {
+        await Api.deleteBeauticianCommissionRate(beauticianUserId);
+        showToast('Override removed — beautician uses platform default', 'success');
+        await loadBeauticianRates();
+    } catch (err) {
+        showToast(err.message || 'Failed to remove override', 'danger');
+    }
+}
+
 async function loadDailyPayoutPool() {
     document.getElementById('daily-pool-error').classList.add('d-none');
     if (!RBAC.can('beauticians:process_payouts')) {
@@ -1511,6 +1633,67 @@ function init() {
         openScrModalForAdd();
     });
 
+    // ── Beautician commission rates tab ─────────────────────────────────────
+    var bcrSearchTimer;
+    document.getElementById('bcr-search').addEventListener('input', function () {
+        clearTimeout(bcrSearchTimer);
+        var val = this.value.trim();
+        bcrSearchTimer = setTimeout(function () {
+            State.bcr.search = val;
+            State.bcr.page = 1;
+            loadBeauticianRates();
+        }, 400);
+    });
+    document.getElementById('btn-bcr-clear').addEventListener('click', function () {
+        document.getElementById('bcr-search').value = '';
+        State.bcr.search = '';
+        State.bcr.page = 1;
+        loadBeauticianRates();
+    });
+    document.getElementById('bcr-pagination-btns').addEventListener('click', function (e) {
+        e.preventDefault();
+        var a = e.target.closest('a[data-page]');
+        if (!a) return;
+        var p = parseInt(a.dataset.page, 10);
+        if (p < 1 || p > State.bcr.totalPages) return;
+        State.bcr.page = p;
+        loadBeauticianRates();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('bcr-tbody').addEventListener('click', function (e) {
+        var setBtn = e.target.closest('.btn-bcr-set');
+        if (setBtn) {
+            openBcrRateModal(setBtn.dataset.userId, setBtn.dataset.name, setBtn.dataset.rate);
+            return;
+        }
+        var removeBtn = e.target.closest('.btn-bcr-remove');
+        if (removeBtn) {
+            removeBeauticianCommissionRate(removeBtn.dataset.userId, removeBtn.dataset.name);
+        }
+    });
+    document.getElementById('bcr-modal-rate').addEventListener('input', function (e) {
+        this.value = sanitizePercentInputValue(this.value);
+    });
+    document.getElementById('bcr-modal-rate').addEventListener('paste', function (e) {
+        e.preventDefault();
+        var text = (e.clipboardData || window.clipboardData).getData('text') || '';
+        this.value = sanitizePercentInputValue(text);
+    });
+    document.getElementById('bcr-modal-rate').addEventListener('keydown', function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        var allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowed.indexOf(e.key) !== -1) return;
+        if (e.key === '.' && e.target.value.indexOf('.') === -1) return;
+        if (/^\d$/.test(e.key)) return;
+        e.preventDefault();
+    });
+    document.getElementById('form-beautician-commission').addEventListener('submit', saveBeauticianCommissionRate);
+    document.getElementById('modal-beautician-commission').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('bcr-modal-rate').value = '';
+        document.getElementById('bcr-modal-error').classList.add('d-none');
+        document.getElementById('bcr-modal-error').textContent = '';
+    });
+
     // ── Payouts ───────────────────────────────────────────────────────────
     document.getElementById('payouts-status-filter').addEventListener('change', function () {
         State.payouts.status = this.value;
@@ -1630,6 +1813,10 @@ function init() {
         initScrServicePicker: initScrServicePicker,
         saveServiceCommissionOverride: saveServiceCommissionOverride,
         removeServiceCommissionOverride: removeServiceCommissionOverride,
+        loadBeauticianRates: loadBeauticianRates,
+        openBcrRateModal: openBcrRateModal,
+        saveBeauticianCommissionRate: saveBeauticianCommissionRate,
+        removeBeauticianCommissionRate: removeBeauticianCommissionRate,
         loadDailyPayoutPool: loadDailyPayoutPool,
         saveDailyPayoutLimit: saveDailyPayoutLimit,
         loadPayouts: loadPayouts,
