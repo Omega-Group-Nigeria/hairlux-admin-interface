@@ -230,6 +230,24 @@ const Staff = (() => {
         return jsonFetch("/admin/staff/" + id + "/onboarding");
     }
 
+    async function getWorkCalendar(id) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id);
+    }
+
+    async function setWorkCalendar(id, payload) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function applyWorkCalendarDefault(id, overwrite) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id + "/apply-business-hours-default?overwrite=" + (overwrite ? "true" : "false"), {
+            method: "POST",
+        });
+    }
+
     async function getOnboardingSummary() {
         return jsonFetch("/admin/staff/onboarding-summary");
     }
@@ -323,6 +341,7 @@ const Staff = (() => {
         updateHistory,
         removeHistory,
         getOnboarding,
+        getWorkCalendar, setWorkCalendar, applyWorkCalendarDefault,
         getOnboardingSummary,
         updateOnboardingItem,
         getDocumentStatus,

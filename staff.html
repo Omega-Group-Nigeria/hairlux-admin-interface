@@ -324,6 +324,35 @@
         </div>
     </div>
 
+    <div class="modal modal-blur fade" id="modal-work-calendar" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Work Calendar — <span id="wc-staff-name">—</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="modal-wc-error"></div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="text-secondary small">Each day can be a full working day, a half day with its own
+                            hours,
+                            or an off day.</div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-wc-apply-default">Apply
+                            Company Default</button>
+                    </div>
+                    <div id="wc-days-body"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-submit-work-calendar">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-work-calendar"></span>
+                        Save Calendar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
@@ -496,9 +525,11 @@
                 var onboardingToggle = e.target.closest(".btn-onboarding-toggle");
                 var onboardingApprove = e.target.closest(".btn-onboarding-approve");
                 var onboardingReject = e.target.closest(".btn-onboarding-reject");
+                var editWorkCalendar = e.target.closest(".btn-edit-work-calendar");
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
                 if (editHist) return handleEditHistory(editHist.dataset.staffId, editHist.dataset.historyId);
                 if (delHist) return handleDeleteHistory(delHist.dataset.staffId, delHist.dataset.historyId);
+                if (editWorkCalendar) return openWorkCalendarModal(editWorkCalendar.dataset.id, editWorkCalendar.dataset.name);
                 if (onboardingToggle) {
                     return handleToggleOnboardingItem(
                         onboardingToggle.dataset.staffId,
@@ -802,6 +833,231 @@
             }).join('');
         }
 
+        var DAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        var DAY_TYPE_BADGE = { WORKING: 'bg-success-lt', HALF_DAY: 'bg-warning-lt', OFF: 'bg-secondary-lt' };
+
+        function renderWorkCalendarSummary(calendar) {
+            if (!calendar || !calendar.days) {
+                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load work calendar.</div>';
+            }
+            var anyConfigured = calendar.days.some(function (d) { return d.configured; });
+            var rows = calendar.days.map(function (d) {
+                var badgeClass = DAY_TYPE_BADGE[d.dayType] || 'bg-secondary-lt';
+                var times = d.dayType !== 'OFF' ? (esc(d.resumeTime) + ' – ' + esc(d.closingTime)) : '';
+                var altNote = d.alternatesBiweekly ? ' <span class="text-secondary">(alternate)</span>' : '';
+                return '<div class="d-flex align-items-center justify-content-between small py-1">' +
+                    '<span>' + DAY_SHORT_NAMES[d.dayOfWeek] + '</span>' +
+                    '<span><span class="badge ' + badgeClass + '">' + esc(d.dayType.replace('_', ' ')) + '</span>' + altNote + ' <span class="text-secondary ms-1">' + times + '</span></span>' +
+                    '</div>';
+            }).join('');
+            var note = anyConfigured
+                ? ''
+                : '<div class="text-secondary small mt-1">Nothing configured yet — showing the company default schedule.</div>';
+            return rows + note;
+        }
+
+        var _wcStaffId = null;
+
+        // Mirrors the backend's exact epoch/algorithm (staff-work-calendar.service.ts)
+        // so "Week A"/"Week B" in this preview always agrees with what actually
+        // gets applied server-side.
+        var WC_BIWEEKLY_EPOCH_MS = new Date('2024-01-01T00:00:00+01:00').getTime();
+
+        function wcWeekParityForDateStr(dateStr) {
+            var weeksSinceEpoch = Math.floor((new Date(dateStr + 'T00:00:00+01:00').getTime() - WC_BIWEEKLY_EPOCH_MS) / (7 * 24 * 60 * 60 * 1000));
+            return ((weeksSinceEpoch % 2) + 2) % 2;
+        }
+
+        function wcNextOccurrenceDates(dayOfWeek, count) {
+            var results = [];
+            var d = new Date();
+            d.setHours(12, 0, 0, 0); // avoid DST/midnight edge issues in this browser-local preview
+            var diff = (dayOfWeek - d.getDay() + 7) % 7;
+            d.setDate(d.getDate() + diff);
+            for (var i = 0; i < count; i++) {
+                results.push(new Date(d));
+                d.setDate(d.getDate() + 7);
+            }
+            return results;
+        }
+
+        function wcFormatPreviewDate(d) {
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        }
+
+        function renderAltPreview(row) {
+            var dayOfWeek = Number(row.dataset.day);
+            var mainType = row.querySelector('.wc-day-type').value;
+            var parity = Number(row.querySelector('.wc-alt-parity').value);
+            var altType = row.querySelector('.wc-alt-type').value;
+            var dates = wcNextOccurrenceDates(dayOfWeek, 4);
+
+            var items = dates.map(function (d) {
+                var dateStr = d.toISOString().slice(0, 10);
+                var thisParity = wcWeekParityForDateStr(dateStr);
+                var effectiveType = (thisParity === parity) ? mainType : altType;
+                var badgeClass = DAY_TYPE_BADGE[effectiveType] || 'bg-secondary-lt';
+                return '<span class="badge ' + badgeClass + ' me-1">' + wcFormatPreviewDate(d) + ': ' + esc(effectiveType.replace('_', ' ')) + '</span>';
+            }).join('');
+
+            var previewEl = row.querySelector('.wc-alt-preview');
+            if (previewEl) previewEl.innerHTML = '<div class="text-secondary small mt-1">Next 4: ' + items + '</div>';
+        }
+
+        function renderWorkCalendarRow(d) {
+            var isOff = d.dayType === 'OFF';
+            var alt = !!d.alternatesBiweekly;
+            return '<div class="border rounded p-2 mb-2 wc-day-row" data-day="' + d.dayOfWeek + '">' +
+                '<div class="row g-2 align-items-center">' +
+                '<div class="col-2"><span class="fw-semibold small">' + DAY_SHORT_NAMES[d.dayOfWeek] + '</span></div>' +
+                '<div class="col-3">' +
+                '<select class="form-select form-select-sm wc-day-type">' +
+                '<option value="WORKING"' + (d.dayType === 'WORKING' ? ' selected' : '') + '>Working</option>' +
+                '<option value="HALF_DAY"' + (d.dayType === 'HALF_DAY' ? ' selected' : '') + '>Half Day</option>' +
+                '<option value="OFF"' + (isOff ? ' selected' : '') + '>Off</option>' +
+                '</select></div>' +
+                '<div class="col-3 wc-times" style="' + (isOff ? 'display:none' : '') + '">' +
+                '<input type="time" class="form-control form-control-sm wc-resume" value="' + esc(d.resumeTime || '') + '">' +
+                '</div>' +
+                '<div class="col-3 wc-times" style="' + (isOff ? 'display:none' : '') + '">' +
+                '<input type="time" class="form-control form-control-sm wc-closing" value="' + esc(d.closingTime || '') + '">' +
+                '</div>' +
+                '<div class="col-1 text-center">' +
+                '<input type="checkbox" class="form-check-input wc-alt-check" title="Alternates every other week"' + (alt ? ' checked' : '') + '>' +
+                '</div>' +
+                '</div>' +
+                '<div class="row g-2 align-items-center mt-1 wc-alt-fields" style="' + (alt ? '' : 'display:none') + '">' +
+                '<div class="col-2"></div>' +
+                '<div class="col-4"><select class="form-select form-select-sm wc-alt-parity">' +
+                '<option value="0"' + (d.activeWeekParity === 0 ? ' selected' : '') + '>Applies on Week A</option>' +
+                '<option value="1"' + (d.activeWeekParity === 1 ? ' selected' : '') + '>Applies on Week B</option>' +
+                '</select></div>' +
+                '<div class="col-6"><select class="form-select form-select-sm wc-alt-type">' +
+                '<option value="OFF"' + (d.alternateDayType === 'OFF' ? ' selected' : '') + '>Otherwise: Off</option>' +
+                '<option value="WORKING"' + (d.alternateDayType === 'WORKING' ? ' selected' : '') + '>Otherwise: Working</option>' +
+                '<option value="HALF_DAY"' + (d.alternateDayType === 'HALF_DAY' ? ' selected' : '') + '>Otherwise: Half Day</option>' +
+                '</select></div>' +
+                '</div>' +
+                '<div class="row mt-1 wc-alt-preview-row" style="' + (alt ? '' : 'display:none') + '">' +
+                '<div class="col-12 wc-alt-preview"></div>' +
+                '</div>' +
+                '</div>';
+        }
+
+        function bindWorkCalendarRowEvents() {
+            document.querySelectorAll('#wc-days-body .wc-day-row').forEach(function (row) {
+                var typeSelect = row.querySelector('.wc-day-type');
+                var timeFields = row.querySelectorAll('.wc-times');
+                var altCheck = row.querySelector('.wc-alt-check');
+                var altFields = row.querySelector('.wc-alt-fields');
+                var altPreviewRow = row.querySelector('.wc-alt-preview-row');
+                var altParitySelect = row.querySelector('.wc-alt-parity');
+                var altTypeSelect = row.querySelector('.wc-alt-type');
+
+                function refreshPreview() {
+                    if (altCheck.checked) renderAltPreview(row);
+                }
+
+                typeSelect.addEventListener('change', function () {
+                    var off = typeSelect.value === 'OFF';
+                    timeFields.forEach(function (el) { el.style.display = off ? 'none' : ''; });
+                    refreshPreview();
+                });
+                altCheck.addEventListener('change', function () {
+                    var show = altCheck.checked;
+                    altFields.style.display = show ? '' : 'none';
+                    altPreviewRow.style.display = show ? '' : 'none';
+                    refreshPreview();
+                });
+                altParitySelect.addEventListener('change', refreshPreview);
+                altTypeSelect.addEventListener('change', refreshPreview);
+
+                refreshPreview(); // show it immediately for rows that already have alternation configured
+            });
+        }
+
+        async function openWorkCalendarModal(staffId, staffName) {
+            _wcStaffId = staffId;
+            document.getElementById('wc-staff-name').textContent = staffName || '—';
+            document.getElementById('modal-wc-error').classList.add('d-none');
+            document.getElementById('wc-days-body').innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+            new bootstrap.Modal(document.getElementById('modal-work-calendar')).show();
+
+            try {
+                var calendar = await Staff.getWorkCalendar(staffId);
+                document.getElementById('wc-days-body').innerHTML = calendar.days.map(renderWorkCalendarRow).join('');
+                bindWorkCalendarRowEvents();
+            } catch (err) {
+                document.getElementById('wc-days-body').innerHTML = '<div class="alert alert-danger py-2 px-3 small">Failed to load calendar.</div>';
+            }
+        }
+
+        function readWorkCalendarForm() {
+            var days = [];
+            document.querySelectorAll('#wc-days-body .wc-day-row').forEach(function (row) {
+                var dayOfWeek = Number(row.dataset.day);
+                var dayType = row.querySelector('.wc-day-type').value;
+                var alt = row.querySelector('.wc-alt-check').checked;
+                var day = { dayOfWeek: dayOfWeek, dayType: dayType };
+                if (dayType !== 'OFF') {
+                    day.resumeTime = row.querySelector('.wc-resume').value;
+                    day.closingTime = row.querySelector('.wc-closing').value;
+                }
+                if (alt) {
+                    day.alternatesBiweekly = true;
+                    day.activeWeekParity = Number(row.querySelector('.wc-alt-parity').value);
+                    day.alternateDayType = row.querySelector('.wc-alt-type').value;
+                }
+                days.push(day);
+            });
+            return days;
+        }
+
+        document.getElementById('btn-submit-work-calendar').addEventListener('click', async function () {
+            var errEl = document.getElementById('modal-wc-error');
+            errEl.classList.add('d-none');
+            var days = readWorkCalendarForm();
+
+            for (var i = 0; i < days.length; i++) {
+                if (days[i].dayType !== 'OFF' && (!days[i].resumeTime || !days[i].closingTime)) {
+                    errEl.textContent = DAY_SHORT_NAMES[days[i].dayOfWeek] + ': resume and closing time are required unless the day is Off.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+            }
+
+            var btn = this;
+            var spinner = document.getElementById('spinner-work-calendar');
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+
+            try {
+                await Staff.setWorkCalendar(_wcStaffId, { days: days });
+                bootstrap.Modal.getInstance(document.getElementById('modal-work-calendar')).hide();
+                if (_currentStaffId === _wcStaffId) openStaffDetail(_currentStaffId);
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to save calendar.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        document.getElementById('btn-wc-apply-default').addEventListener('click', async function () {
+            if (!_wcStaffId) return;
+            var errEl = document.getElementById('modal-wc-error');
+            errEl.classList.add('d-none');
+            try {
+                var calendar = await Staff.applyWorkCalendarDefault(_wcStaffId, false);
+                document.getElementById('wc-days-body').innerHTML = calendar.days.map(renderWorkCalendarRow).join('');
+                bindWorkCalendarRowEvents();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to apply default.';
+                errEl.classList.remove('d-none');
+            }
+        });
+
         function renderDirectivesSection(directives) {
             if (!directives) {
                 return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load tasks.</div>';
@@ -837,7 +1093,7 @@
                 var passportPhotoResult = await Staff.getPassportPhotoUrl(id).catch(function () { return null; });
                 var passportPhotoUrl = passportPhotoResult && passportPhotoResult.viewUrl;
                 var roleAssignment = await Staff.getRoleAssignment(id).catch(function () { return { adminRoleId: null, adminRoleName: null, hasAdminPortalLogin: false, linkedToUserAccount: false }; });
-                var history = s.histories || s.employmentHistory || s.history || [];
+                var workCalendarResult = await Staff.getWorkCalendar(id).catch(function () { return null; }); var history = s.histories || s.employmentHistory || s.history || [];
                 var employmentStartDate = s.employmentStartDate || s.startDate || null;
                 if (!employmentStartDate && history.length) {
                     employmentStartDate = history
@@ -868,6 +1124,13 @@
                     '<div class="mb-3">' +
                     '<div class="fw-semibold mb-1">Company Documents</div>' +
                     renderDocumentsSection(documentsResult) +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Work Calendar</div>' +
+                    '<button class="btn btn-xs btn-outline-primary btn-edit-work-calendar" data-id="' + esc(s.id) + '" data-name="' + esc(Staff.fullName(s)) + '">Edit</button>' +
+                    '</div>' +
+                    '<div id="work-calendar-summary">' + renderWorkCalendarSummary(workCalendarResult) + '</div>' +
                     '</div>' +
                     '<div class="mb-3">' +
                     '<div class="fw-semibold mb-1">Tasks &amp; Directives</div>' +

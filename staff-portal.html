@@ -1262,6 +1262,33 @@
       font-weight: 600
     }
 
+    /* Renders sanitized announcement body HTML from the admin's rich-text
+       editor — default browser paragraph/list margins read as too loose
+       against this UI's tighter spacing, and default link blue is hard to
+       read on the dark banner background. */
+    .ann-body {
+      font-size: 12px;
+      color: var(--on-dark-text);
+      line-height: 1.5
+    }
+
+    .ann-body p {
+      margin-bottom: 8px
+    }
+
+    .ann-body p:last-child {
+      margin-bottom: 0
+    }
+
+    .ann-body ul,
+    .ann-body ol {
+      margin: 0 0 8px 18px
+    }
+
+    .ann-body a {
+      color: var(--gold2)
+    }
+
     .banner.urgent {
       border-color: rgba(231, 76, 60, .3);
       background: linear-gradient(135deg, rgba(231, 76, 60, .08), rgba(22, 22, 22, .95))
@@ -1568,6 +1595,46 @@
       font-weight: 500
     }
 
+    /* ── RESPONSIVE GRIDS ──
+       .g2/.g3/.g4/.info-grid are fixed 2/3/4-column grids with zero media
+       query coverage — on a phone screen they never reshape, they just
+       squeeze every column into a cramped single row. This is the root
+       cause of the "stacky, forced into one row" symptom across nearly
+       every screen in the portal (dashboard, onboarding, profile,
+       attendance, inventory, sales, payroll, audit trail all use these
+       classes for their stat cards and layout). Matches the sidebar's
+       existing 900px tablet breakpoint, with an additional 560px phone
+       breakpoint for a full single-column collapse. */
+    @media (max-width: 900px) {
+      .g4 {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .g3 {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+
+    @media (max-width: 560px) {
+
+      .g2,
+      .g3,
+      .g4,
+      .info-grid {
+        grid-template-columns: 1fr
+      }
+
+      .prof-hero {
+        flex-wrap: wrap;
+        gap: 16px
+      }
+
+      .prof-stats {
+        flex-wrap: wrap;
+        gap: 16px
+      }
+    }
+
     /* ── UPLOAD ── */
     .upload {
       border: 2px dashed var(--border);
@@ -1717,6 +1784,47 @@
     onclick="if(event.target===this) closeProfileModal()">
     <div class="oc-modal-box" id="profile-modal-box"></div>
   </div>
+  <div id="sb-print-receipt" style="display:none">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:20px;font-weight:800;">Hairlux Salon &amp; Spa</div>
+      <div style="font-size:12px;color:#555;">Booking Receipt</div>
+    </div>
+    <div class="pr-row"><span class="pr-label">Booking ID</span><span id="sb-pr-booking-code"></span></div>
+    <div class="pr-row"><span class="pr-label">Date / Time</span><span id="sb-pr-datetime"></span></div>
+    <div class="pr-row"><span class="pr-label">Customer</span><span id="sb-pr-customer"></span></div>
+    <div class="pr-row"><span class="pr-label">Stylist</span><span id="sb-pr-stylist"></span></div>
+    <div class="pr-row"><span class="pr-label">Branch</span><span id="sb-pr-branch"></span></div>
+    <div class="pr-row"><span class="pr-label">Service(s)</span><span id="sb-pr-services"></span></div>
+    <div class="pr-row"><span class="pr-label">Amount</span><span id="sb-pr-amount"></span></div>
+    <div class="pr-row"><span class="pr-label">Status</span><span id="sb-pr-status"></span></div>
+  </div>
+
+  <style>
+    @media print {
+      body>div:not(#sb-print-receipt) {
+        display: none !important;
+      }
+
+      #sb-print-receipt {
+        display: block !important;
+        padding: 24px;
+      }
+
+      #sb-print-receipt .pr-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+      }
+
+      #sb-print-receipt .pr-label {
+        color: #555;
+        font-weight: 600;
+      }
+    }
+  </style>
+
   <script>Auth.requireAuth();</script>
 
   <div id="screen-staff-app" style="display:flex;width:100%">
@@ -2169,43 +2277,43 @@
                 </div>
                 <div class="ci-btn" id="ci-btn" onclick="handleAttendanceToggle()">⏵</div>
                 <div style="font-size:12px;color:var(--muted)" id="ci-status">Tap to Check In</div>
-                </div>
-                </div>
-                <div class="card">
-                  <div class="card-h">
-                    <h3>This Week</h3>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-h">
+                <h3>This Week</h3>
+              </div>
+              <div class="card-b">
+                <div class="week-dots mb4">
+                  <div class="wd">
+                    <div class="day">Mon</div>
+                    <div class="dot off" id="wd-0">–</div>
                   </div>
-                  <div class="card-b">
-                    <div class="week-dots mb4">
-                      <div class="wd">
-                        <div class="day">Mon</div>
-                        <div class="dot off" id="wd-0">–</div>
-                      </div>
-                      <div class="wd">
-                        <div class="day">Tue</div>
-                        <div class="dot off" id="wd-1">–</div>
-                      </div>
-                      <div class="wd">
-                        <div class="day">Wed</div>
-                        <div class="dot off" id="wd-2">–</div>
-                      </div>
-                      <div class="wd">
-                        <div class="day">Thu</div>
-                        <div class="dot off" id="wd-3">–</div>
-                      </div>
-                      <div class="wd">
-                        <div class="day">Fri</div>
-                        <div class="dot off" id="wd-4">–</div>
-                      </div>
-                      <div class="wd">
-                        <div class="day">Sat</div>
-                        <div class="dot off" id="wd-5">–</div>
-                      </div>
-                      <div class="wd">
-                        <div class="day">Sun</div>
-                        <div class="dot off" id="wd-6">–</div>
-                      </div>
-                    </div>
+                  <div class="wd">
+                    <div class="day">Tue</div>
+                    <div class="dot off" id="wd-1">–</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Wed</div>
+                    <div class="dot off" id="wd-2">–</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Thu</div>
+                    <div class="dot off" id="wd-3">–</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Fri</div>
+                    <div class="dot off" id="wd-4">–</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Sat</div>
+                    <div class="dot off" id="wd-5">–</div>
+                  </div>
+                  <div class="wd">
+                    <div class="day">Sun</div>
+                    <div class="dot off" id="wd-6">–</div>
+                  </div>
+                </div>
                 <div class="divider"></div>
                 <div class="info-grid">
                   <div class="info-item">
@@ -2342,6 +2450,15 @@
         <!-- ═══ SALON BOOKINGS ═══ -->
 
         <div id="bookings" class="screen">
+          <div class="card mb4" id="sb-performance-card">
+            <div class="card-h">
+              <h3>Today's Stylist Performance</h3>
+            </div>
+            <div class="card-b" id="sb-performance-container">
+              <div class="text-secondary small">Loading…</div>
+            </div>
+          </div>
+
           <div class="card mb4">
             <div class="card-h">
               <h3>Salon Bookings — My Branch</h3>
@@ -2351,14 +2468,34 @@
               </div>
             </div>
             <div class="card-b" id="booking-form-container" style="display:none"></div>
+            <div class="card-b" style="padding-bottom:0">
+              <div class="row g-2 mb-2">
+                <div class="col-8">
+                  <input type="text" class="input" id="sb-search"
+                    placeholder="Search by Booking ID, customer name or phone…">
+                </div>
+                <div class="col-4">
+                  <select class="input" id="sb-limit">
+                    <option value="10">10 per page</option>
+                    <option value="25">25 per page</option>
+                    <option value="50" selected>50 per page</option>
+                    <option value="100">100 per page</option>
+                  </select>
+                </div>
+              </div>
+            </div>
             <div class="card-b" id="bookings-list-container">
               <div class="text-center py-4">
                 <div class="spinner-border text-primary" role="status"></div>
               </div>
             </div>
+            <div class="card-b flex jsb aic" style="padding-top:0">
+              <button class="btn btn-ghost btn-sm" id="sb-prev-page">Previous</button>
+              <span class="text-secondary small" id="sb-page-label"></span>
+              <button class="btn btn-ghost btn-sm" id="sb-next-page">Next</button>
+            </div>
           </div>
         </div>
-
 
         <!-- ═══ INVENTORY ═══ -->
         <div id="inventory" class="screen">
@@ -2639,7 +2776,7 @@
               <div class="stat-val" id="pr-pending-balance">—</div>
             </div>
           </div>
-        
+
           <div class="card mb4">
             <div class="card-h">
               <h3>Withdraw</h3>
@@ -2652,12 +2789,13 @@
                   <input type="number" min="1" step="0.01" id="pr-withdraw-amount" placeholder="e.g. 20000">
                 </div>
                 <button class="btn btn-ghost btn-sm" onclick="prWithdrawMax()">Withdraw All</button>
-                <button class="btn btn-gold btn-sm" id="pr-withdraw-btn" onclick="prSubmitWithdrawal()">Withdraw</button>
+                <button class="btn btn-gold btn-sm" id="pr-withdraw-btn"
+                  onclick="prSubmitWithdrawal()">Withdraw</button>
               </div>
               <div class="text-secondary small mt3" id="pr-withdraw-hint"></div>
             </div>
           </div>
-        
+
           <div class="card mb4">
             <div class="card-h">
               <h3>Bank Account</h3>
@@ -2666,7 +2804,7 @@
               <div class="text-secondary small">Loading…</div>
             </div>
           </div>
-        
+
           <div class="card mb4">
             <div class="card-h">
               <h3>My Compensation</h3>
@@ -2675,7 +2813,7 @@
               <div class="text-secondary small">Loading…</div>
             </div>
           </div>
-        
+
           <div class="card mb4">
             <div class="card-h">
               <h3>Withdrawal History</h3>
@@ -2699,7 +2837,7 @@
               </table>
             </div>
           </div>
-        
+
           <div class="card">
             <div class="card-h">
               <h3>Payslips</h3>

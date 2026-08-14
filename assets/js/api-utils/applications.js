@@ -196,14 +196,32 @@ const Applications = (() => {
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' }) +
       ', ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
   }
-  async function getReport() {
-    const res = await Auth.fetch('/admin/applications/report');
+  /**
+   * Recruitment report — filterable by date range, role, status, and branch.
+   * @param {object} opts  { dateFrom?, dateTo?, appliedRole?, status?, preferredLocationId? }
+   */
+  async function getReport({ dateFrom, dateTo, appliedRole, status, preferredLocationId } = {}) {
+    const params = new URLSearchParams();
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    if (appliedRole) params.set('appliedRole', appliedRole);
+    if (status) params.set('status', status);
+    if (preferredLocationId) params.set('preferredLocationId', preferredLocationId);
+    const qs = params.toString() ? '?' + params.toString() : '';
+    const res = await Auth.fetch(`/admin/applications/report${qs}`);
+    const raw = await res.json().catch(() => ({}));
+    return raw.data || raw;
+  }
+
+  /** Distinct appliedRole values across all applications — powers the report's Role filter dropdown. */
+  async function getDistinctRoles() {
+    const res = await Auth.fetch('/admin/applications/report/roles');
     const raw = await res.json().catch(() => ({}));
     return raw.data || raw;
   }
 
   return {
-    getAll, getOne, updateStatus, scheduleInterview, convertToStaff, getLocations, getReport,
+    getAll, getOne, updateStatus, scheduleInterview, convertToStaff, getLocations, getReport, getDistinctRoles,
     recordInterviewOutcome, recordEmploymentApproval, generateOfferLetter,   // ← add
     STATUS_ORDER, STATUS_LABELS, STATUS_COLORS, NEXT_STATUS,
     statusBadge, formatDate, formatDateTime,

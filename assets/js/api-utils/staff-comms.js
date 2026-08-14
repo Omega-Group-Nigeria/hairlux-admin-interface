@@ -23,6 +23,18 @@ const StaffComms = (() => {
         });
     }
 
+    async function updateAnnouncement(id, payload) {
+        return jsonFetch("/admin/announcements/" + id, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function deleteAnnouncement(id) {
+        return jsonFetch("/admin/announcements/" + id, { method: "DELETE" });
+    }
+
     async function getAllAnnouncements() {
         return jsonFetch("/admin/announcements");
     }
@@ -75,6 +87,8 @@ const StaffComms = (() => {
     return {
         PERMISSIONS,
         createAnnouncement,
+        updateAnnouncement,
+        deleteAnnouncement,
         getAllAnnouncements,
         createDirective,
         getAllDirectives,

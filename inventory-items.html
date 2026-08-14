@@ -431,6 +431,41 @@
         </div>
     </div>
 
+    <!-- Movement History Modal -->
+    <div class="modal modal-blur fade" id="modal-history" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Movement History — <span id="history-item-name">—</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter mb-0">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Type</th>
+                                    <th>Change</th>
+                                    <th>By</th>
+                                    <th>Reason / Reference</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-secondary py-4">Loading…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Adjust Stock Modal -->
     <div class="modal modal-blur fade" id="modal-adjust" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -750,12 +785,16 @@
                         '<td>' + i.lowStockThreshold + '</td>' +
                         '<td>' + Inventory.statusBadge(i) + '</td>' +
                         '<td class="text-nowrap"><button class="btn btn-sm btn-outline-secondary me-1 btn-edit-item" data-id="' + i.id + '">Edit</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button></td>' +
+                        '<button class="btn btn-sm btn-outline-secondary me-1 btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-history" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">History</button></td>' +
                         '</tr>';
                 }).join('');
                 _itemsCache = items;
                 tbody.querySelectorAll('.btn-edit-item').forEach(function (btn) {
                     btn.addEventListener('click', function () { openEditItemModal(btn.dataset.id); });
+                });
+                tbody.querySelectorAll('.btn-history').forEach(function (btn) {
+                    btn.addEventListener('click', function () { openHistoryModal(btn.dataset.id, btn.dataset.name); });
                 });
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
@@ -774,7 +813,39 @@
             document.getElementById(labelHintId).textContent = isForSale ? '(required — item is For Sale)' : '(optional — not sellable)';
         }
 
-        function openEditItemModal(id) {
+        async function openHistoryModal(id, name) {
+                document.getElementById("history-item-name").textContent = name || "—";
+                var tbody = document.getElementById("history-tbody");
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+                new bootstrap.Modal(document.getElementById("modal-history")).show();
+
+                try {
+                    var result = await Inventory.getMovementHistory(id, { limit: 100 });
+                    var entries = result.data || [];
+
+                    tbody.innerHTML = entries.length
+                        ? entries.map(function (m) {
+                            var when = new Date(m.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
+                            var typeLabel = Inventory.MOVEMENT_TYPE_LABELS[m.type] || m.type;
+                            var change = (m.quantityDelta > 0 ? '+' : '') + m.quantityDelta;
+                            var changeClass = m.quantityDelta > 0 ? 'text-success' : (m.quantityDelta < 0 ? 'text-danger' : '');
+                            var by = m.performedBy ? escapeHtml(m.performedBy.name) : '<span class="text-secondary">Admin</span>';
+                            var refText = m.reason ? escapeHtml(m.reason) : (m.referenceId ? '<span class="text-secondary small">Ref: ' + escapeHtml(m.referenceId) + '</span>' : '—');
+                            return '<tr>' +
+                                '<td class="text-secondary small">' + when + '</td>' +
+                                '<td>' + escapeHtml(typeLabel) + '</td>' +
+                                '<td class="' + changeClass + '">' + change + '</td>' +
+                                '<td>' + by + '</td>' +
+                                '<td class="small">' + refText + '</td>' +
+                                '</tr>';
+                        }).join('')
+                        : '<tr><td colspan="5" class="text-center text-secondary py-4">No movements recorded yet.</td></tr>';
+                } catch (err) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+                }
+            }
+
+            function openEditItemModal(id) {
             var item = _itemsCache.find(function (i) { return i.id === id; });
             if (!item) return;
             document.getElementById('edit-item-error').classList.add('d-none');

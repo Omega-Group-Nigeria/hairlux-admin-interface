@@ -82,6 +82,16 @@ var NavConfig = window.NavConfig || (() => {
             },
         },
         {
+            id: "branch-finance",
+            label: "Branch Finance",
+            icon: "payments",
+            href: "branch-finance.html",
+            permission: {
+                type: "requireAny",
+                perms: ["branch_finance:read", "branch_finance:reconcile"],
+            },
+        },
+        {
             id: "services",
             label: "Services",
             icon: "services",

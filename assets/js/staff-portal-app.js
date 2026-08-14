@@ -45,14 +45,60 @@ async function initStaffPortal() {
     loadLeaveRequests(),
     loadMyApprovals(),
     loadSalonBookings(),
+    loadTodayStylistPerformance(),
     loadSalesData(),
     loadPayrollSection(),
     loadCommission(),
   ]);
 
+  sbWireSearchAndPagination();
   renderDashboard();
   renderOnboardingStatusStrip();
   renderNotifications();
+}
+
+function sbWireSearchAndPagination() {
+  var searchInput = document.getElementById('sb-search');
+  var limitSelect = document.getElementById('sb-limit');
+  var prevBtn = document.getElementById('sb-prev-page');
+  var nextBtn = document.getElementById('sb-next-page');
+  if (!searchInput || searchInput.dataset.wired) return; // avoid double-binding if this ever gets called twice
+
+  searchInput.dataset.wired = '1';
+  searchInput.addEventListener('input', function () {
+    clearTimeout(sbSearchTimer);
+    var val = searchInput.value;
+    sbSearchTimer = setTimeout(function () { sbSearch = val; sbPage = 1; loadSalonBookings(); }, 300);
+  });
+  limitSelect.addEventListener('change', function () { sbLimit = Number(limitSelect.value); sbPage = 1; loadSalonBookings(); });
+  prevBtn.addEventListener('click', function () { if (sbPage > 1) { sbPage--; loadSalonBookings(); } });
+  nextBtn.addEventListener('click', function () { if (sbPage < sbTotalPages) { sbPage++; loadSalonBookings(); } });
+}
+
+/** Today's Stylist Performance — branch-scoped, today only, never historical. */
+async function loadTodayStylistPerformance() {
+  var container = document.getElementById('sb-performance-container');
+  if (!container) return;
+  try {
+    var rows = await SalonBookingsSelf.getTodayStylistPerformance();
+    if (!rows.length) {
+      container.innerHTML = '<div class="text-secondary small">No completed services yet today.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+      '<th>Stylist</th><th>Completed Services</th><th>Total Generated</th>' +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr>' +
+          '<td>' + escapeHtml(r.staffName) + '</td>' +
+          '<td>' + r.completedServices + '</td>' +
+          '<td style="font-weight:700;color:var(--green)">' + sbFormatMoney(r.totalGenerated) + '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
 }
 
 /**
@@ -244,10 +290,14 @@ function renderDashboard() {
     let previewHtml = '';
     if (topAnnouncement) {
       const fromName = topAnnouncement.createdBy ? [topAnnouncement.createdBy.firstName, topAnnouncement.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+      // topAnnouncement.body is server-sanitized HTML from the admin's rich-text
+      // editor (already e.g. "<p>...</p>"), not plain text -- rendered directly,
+      // not escaped, and without an extra wrapping <p> since the body supplies
+      // its own block-level tags already.
       previewHtml +=
         '<div class="banner"><div class="tag">\uD83D\uDCE2 Management \u2014 ' +
         (topAnnouncement.target === 'ALL' ? 'All Staff' : topAnnouncement.target === 'BRANCH' ? 'Your Branch' : 'You') +
-        '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3><p>' + escapeHtml(topAnnouncement.body) + '</p>' +
+        '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3><div class="ann-body">' + topAnnouncement.body + '</div>' +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(topAnnouncement.createdAt) + '</div></div>';
     }
     if (topDirective) {
@@ -1090,12 +1140,14 @@ async function loadAnnouncements() {
     .map((a) => {
       const targetLabel = a.target === 'ALL' ? 'All Staff' : a.target === 'BRANCH' ? 'Your Branch' : 'Just You';
       const fromName = a.createdBy ? [a.createdBy.firstName, a.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+      // a.body is server-sanitized HTML, not plain text (see note above) --
+      // rendered directly, no escaping, no extra wrapping <p>.
       return (
         '<div class="banner" data-announcement-id="' + a.id + '" ' +
         (a.isRead ? '' : 'style="border-color:var(--gold)"') + '>' +
         '<div class="tag">\uD83D\uDCE2 ' + targetLabel + (a.isRead ? '' : ' \u00B7 New') + '</div>' +
         '<h3>' + escapeHtml(a.title) + '</h3>' +
-        '<p>' + escapeHtml(a.body) + '</p>' +
+        '<div class="ann-body">' + a.body + '</div>' +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(a.createdAt) + '</div>' +
         '</div>'
       );
@@ -1599,27 +1651,47 @@ var SB_STATUS_LABELS = {
 };
 var sbServicesCache = null;
 var sbStaffCache = null;
+var sbSearch = '';
+var sbSearchTimer = null;
+var sbPage = 1;
+var sbLimit = 50;
+var sbTotalPages = 1;
+var sbEditingBookingId = null;
+var sbAddServiceBookingId = null;
 
 function sbFormatMoney(amount) {
   if (amount == null) return '—';
   return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+var sbBookingsCache = [];
+
 async function loadSalonBookings() {
   var container = document.getElementById('bookings-list-container');
   try {
-    var result = await SalonBookingsSelf.getAll({ limit: 30 });
+    var result = await SalonBookingsSelf.getAll({ search: sbSearch, page: sbPage, limit: sbLimit });
     var bookings = result.data || [];
+    sbBookingsCache = bookings;
+    var meta = result.meta || {};
+    sbTotalPages = meta.totalPages || 1;
+    var pageLabel = document.getElementById('sb-page-label');
+    if (pageLabel) pageLabel.textContent = 'Page ' + sbPage + ' of ' + sbTotalPages;
+    var prevBtn = document.getElementById('sb-prev-page');
+    var nextBtn = document.getElementById('sb-next-page');
+    if (prevBtn) prevBtn.disabled = sbPage <= 1;
+    if (nextBtn) nextBtn.disabled = sbPage >= sbTotalPages;
+
     if (!bookings.length) {
-      container.innerHTML = '<div class="text-secondary small py-3">No bookings yet for your branch.</div>';
+      container.innerHTML = '<div class="text-secondary small py-3">No bookings found.</div>';
       return;
     }
     container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
-      '<th>Date / Time</th><th>Customer</th><th>Stylist</th><th>Services</th><th>Total</th><th>Status</th><th></th>' +
+      '<th>Booking ID</th><th>Date / Time</th><th>Customer</th><th>Stylist</th><th>Service</th><th>Amount</th><th>Status</th><th></th>' +
       '</tr></thead><tbody>' +
       bookings.map(function (b, idx) {
         var services = (b.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
         return '<tr>' +
+          '<td style="font-family:monospace;font-size:12px">' + escapeHtml(b.bookingCode || '—') + '</td>' +
           '<td>' + StaffSelf.formatDate(b.bookingDate) + ' · ' + escapeHtml(b.bookingTime) + '</td>' +
           '<td>' + escapeHtml(b.customerName) + '</td>' +
           '<td>' + escapeHtml(b.assignedStaff ? b.assignedStaff.name : '—') + '</td>' +
@@ -1634,23 +1706,40 @@ async function loadSalonBookings() {
     container.querySelectorAll('.btn-sb-start').forEach(function (btn) { btn.addEventListener('click', function () { sbStart(btn.dataset.id); }); });
     container.querySelectorAll('.btn-sb-complete').forEach(function (btn) { btn.addEventListener('click', function () { sbComplete(btn.dataset.id); }); });
     container.querySelectorAll('.btn-sb-cancel').forEach(function (btn) { btn.addEventListener('click', function () { sbCancel(btn.dataset.id); }); });
-    container.querySelectorAll('.btn-sb-no-show').forEach(function (btn) { btn.addEventListener('click', function () { sbNoShow(btn.dataset.id); }); });
+    container.querySelectorAll('.btn-sb-edit').forEach(function (btn) { btn.addEventListener('click', function () { sbOpenEditOrAddService(btn.dataset.id); }); });
+    container.querySelectorAll('.btn-sb-print').forEach(function (btn) { btn.addEventListener('click', function () { sbPrintBooking(btn.dataset.id); }); });
   } catch (err) {
     container.innerHTML = '<div class="text-danger small py-3">' + err.message + '</div>';
   }
 }
 
+/**
+ * Fixed action set per status, matching the current spec exactly:
+ * Scheduled = View/Edit/Start/Cancel/Print, In Progress = View/Edit/Complete/Print,
+ * Completed = View/Edit/Print. No-Show isn't part of this spec's action list for
+ * any status anymore — dropped here to match, though the backend endpoint
+ * stays untouched. Cancel is Scheduled-only now — the previous version let
+ * an In Progress booking be cancelled too, which the backend's
+ * assertCancellable() no longer permits; this was a real bug, not a style choice.
+ * "View" has no dedicated screen here (this list already shows the full
+ * row), so it isn't a separate button — Edit doubles as the detail view
+ * for a Completed booking (opens Add Service, which shows all the same info).
+ */
 function sbActionsHtml(b) {
+  var edit = '<button class="btn btn-ghost btn-sm me-1 btn-sb-edit" data-id="' + b.id + '">Edit</button>';
+  var print = '<button class="btn btn-ghost btn-sm btn-sb-print" data-id="' + b.id + '">Print</button>';
   if (b.status === 'SCHEDULED') {
-    return '<button class="btn btn-gold btn-sm me-1 btn-sb-start" data-id="' + b.id + '">Start</button>' +
+    return edit +
+      '<button class="btn btn-gold btn-sm me-1 btn-sb-start" data-id="' + b.id + '">Start</button>' +
       '<button class="btn btn-ghost btn-sm me-1 btn-sb-cancel" data-id="' + b.id + '">Cancel</button>' +
-      '<button class="btn btn-ghost btn-sm btn-sb-no-show" data-id="' + b.id + '">No-Show</button>';
+      print;
   }
   if (b.status === 'IN_PROGRESS') {
-    return '<button class="btn btn-gold btn-sm me-1 btn-sb-complete" data-id="' + b.id + '">Complete</button>' +
-      '<button class="btn btn-ghost btn-sm btn-sb-cancel" data-id="' + b.id + '">Cancel</button>';
+    return edit +
+      '<button class="btn btn-gold btn-sm me-1 btn-sb-complete" data-id="' + b.id + '">Complete</button>' +
+      print;
   }
-  return '';
+  return edit + print;
 }
 
 async function sbStart(id) {
@@ -1665,7 +1754,15 @@ async function sbComplete(id) {
 async function sbCancel(id) {
   var reason = prompt('Reason for cancelling this booking:');
   if (!reason) return;
-  try { await SalonBookingsSelf.cancel(id, reason); await loadSalonBookings(); } catch (err) { alert(err.message); }
+  try {
+    await SalonBookingsSelf.cancel(id, reason);
+    await loadSalonBookings();
+  } catch (err) {
+    // Backend enforces the real rule (assertCancellable — Scheduled only);
+    // this just surfaces whatever message it sends back, e.g. when
+    // something calls sbCancel for an In Progress booking some other way.
+    alert(err.message);
+  }
 }
 
 async function sbNoShow(id) {
@@ -1790,6 +1887,197 @@ async function sbRunCustomerSearch(q, resultsEl) {
 function cancelBookingForm() {
   document.getElementById('booking-form-container').style.display = 'none';
   document.getElementById('booking-form-container').innerHTML = '';
+}
+
+/** Routes to the right modal — full Edit for Scheduled/In Progress, the narrower Add Service flow for Completed. */
+async function sbOpenEditOrAddService(id) {
+  var b = (sbBookingsCache || []).find(function (x) { return x.id === id; }) || await SalonBookingsSelf.getOne(id);
+  if (b.status === 'COMPLETED') {
+    sbOpenAddServiceModal(b);
+  } else {
+    sbOpenEditModal(b);
+  }
+}
+
+function sbEditLine(container, serviceId, quantity) {
+  var row = document.createElement('div');
+  row.style.display = 'grid';
+  row.style.gridTemplateColumns = '1fr 70px 32px';
+  row.style.gap = '8px';
+  row.style.marginBottom = '6px';
+  var options = '<option value="">Select service…</option>' + (sbServicesCache || []).map(function (s) {
+    var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
+    return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(price) + '</option>';
+  }).join('');
+  row.innerHTML =
+    '<select class="input sb-eb-service-select">' + options + '</select>' +
+    '<input type="number" min="1" value="' + (quantity || 1) + '" class="input sb-eb-qty">' +
+    '<button type="button" class="btn btn-ghost btn-sm sb-eb-remove-line">&times;</button>';
+  container.appendChild(row);
+  var sel = row.querySelector('.sb-eb-service-select');
+  if (serviceId) sel.value = serviceId;
+  row.querySelector('.sb-eb-remove-line').addEventListener('click', function () { row.remove(); });
+  return row;
+}
+
+async function sbOpenEditModal(b) {
+  sbEditingBookingId = b.id;
+
+  if (!sbServicesCache) {
+    try {
+      var res = await Auth.fetch('/services?status=ACTIVE&bookingType=WALK_IN&branchId=' + encodeURIComponent(currentStaff.locationId || (currentStaff.location && currentStaff.location.id) || ''));
+      var raw = await res.json().catch(function () { return {}; });
+      sbServicesCache = Array.isArray(raw) ? raw : (raw.services || raw.data || []);
+    } catch (err) { sbServicesCache = []; }
+  }
+  if (!sbStaffCache) {
+    try { sbStaffCache = await SalonBookingsSelf.getBranchStaff() || []; } catch (err) { sbStaffCache = []; }
+  }
+
+  var staffOptions = '<option value="">Select stylist…</option>' + sbStaffCache.map(function (s) {
+    var sel = s.id === b.assignedStaffId ? ' selected' : '';
+    return '<option value="' + s.id + '"' + sel + '>' + escapeHtml(s.name) + '</option>';
+  }).join('');
+
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="sbeb-error" style="display:none"></div>' +
+    '<h3>Edit Booking — ' + escapeHtml(b.bookingCode || '') + '</h3>' +
+    '<div class="oc-field"><label>Customer Name</label><input type="text" id="sbeb-customer-name" value="' + escapeHtml(b.customerName || '') + '"></div>' +
+    '<div class="oc-field"><label>Customer Phone</label><input type="text" id="sbeb-customer-phone" value="' + escapeHtml(b.customerPhone || '') + '"></div>' +
+    '<div class="oc-field"><label>Assigned Stylist</label><select id="sbeb-staff">' + staffOptions + '</select></div>' +
+    '<div style="display:flex;gap:12px">' +
+    '<div class="oc-field" style="flex:1"><label>Date</label><input type="date" id="sbeb-date" value="' + (b.bookingDate || '').slice(0, 10) + '"></div>' +
+    '<div class="oc-field" style="flex:1"><label>Time</label><input type="time" id="sbeb-time" value="' + escapeHtml(b.bookingTime || '') + '"></div>' +
+    '</div>' +
+    '<label class="label">Services</label><div id="sbeb-service-lines"></div>' +
+    '<button type="button" class="btn btn-ghost btn-sm mt2" onclick="sbAddEditServiceLine()">+ Add service</button>' +
+    '<div class="oc-field mt3"><label>Notes</label><textarea class="input" id="sbeb-notes" rows="2">' + escapeHtml(b.notes || '') + '</textarea></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="sbeb-submit-btn" onclick="sbSubmitEditBooking()">Save Changes</button>' +
+    '</div>';
+
+  var lineContainer = document.getElementById('sbeb-service-lines');
+  (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
+    sbEditLine(lineContainer, line.service ? line.service.id : undefined, line.quantity);
+  });
+
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+function sbAddEditServiceLine() {
+  sbEditLine(document.getElementById('sbeb-service-lines'));
+}
+
+async function sbSubmitEditBooking() {
+  var errEl = document.getElementById('sbeb-error');
+  errEl.style.display = 'none';
+
+  var services = [];
+  document.querySelectorAll('#sbeb-service-lines > div').forEach(function (row) {
+    var serviceId = row.querySelector('.sb-eb-service-select').value;
+    var quantity = Number(row.querySelector('.sb-eb-qty').value) || 1;
+    if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+  });
+  if (!services.length) {
+    errEl.textContent = 'At least one service is required.';
+    errEl.style.display = '';
+    return;
+  }
+
+  var payload = {
+    customerName: document.getElementById('sbeb-customer-name').value.trim() || undefined,
+    customerPhone: document.getElementById('sbeb-customer-phone').value.trim() || undefined,
+    assignedStaffId: document.getElementById('sbeb-staff').value || undefined,
+    bookingDate: document.getElementById('sbeb-date').value || undefined,
+    bookingTime: document.getElementById('sbeb-time').value || undefined,
+    notes: document.getElementById('sbeb-notes').value.trim(),
+    services: services,
+  };
+
+  var btn = document.getElementById('sbeb-submit-btn');
+  btn.disabled = true;
+  try {
+    await SalonBookingsSelf.editBooking(sbEditingBookingId, payload);
+    closeProfileModal();
+    await loadSalonBookings();
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to save changes.';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function sbOpenAddServiceModal(b) {
+  sbAddServiceBookingId = b.id;
+
+  if (!sbServicesCache) {
+    try {
+      var res = await Auth.fetch('/services?status=ACTIVE&bookingType=WALK_IN&branchId=' + encodeURIComponent(currentStaff.locationId || (currentStaff.location && currentStaff.location.id) || ''));
+      var raw = await res.json().catch(function () { return {}; });
+      sbServicesCache = Array.isArray(raw) ? raw : (raw.services || raw.data || []);
+    } catch (err) { sbServicesCache = []; }
+  }
+
+  var options = '<option value="">Select service…</option>' + (sbServicesCache || []).map(function (s) {
+    var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
+    return '<option value="' + s.id + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(price) + '</option>';
+  }).join('');
+
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="sbas-error" style="display:none"></div>' +
+    '<h3>Add Service — ' + escapeHtml(b.bookingCode || '') + '</h3>' +
+    '<div class="oc-modal-sub">This booking is Completed — its existing services can\'t be changed. This only adds a new one.</div>' +
+    '<div class="oc-field"><label>Service</label><select id="sbas-service">' + options + '</select></div>' +
+    '<div class="oc-field"><label>Quantity</label><input type="number" min="1" value="1" id="sbas-qty"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="sbas-submit-btn" onclick="sbSubmitAddService()">Add Service</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function sbSubmitAddService() {
+  var errEl = document.getElementById('sbas-error');
+  errEl.style.display = 'none';
+  var serviceId = document.getElementById('sbas-service').value;
+  var quantity = Number(document.getElementById('sbas-qty').value) || 1;
+  if (!serviceId) {
+    errEl.textContent = 'Please select a service.';
+    errEl.style.display = '';
+    return;
+  }
+  var btn = document.getElementById('sbas-submit-btn');
+  btn.disabled = true;
+  try {
+    await SalonBookingsSelf.addServiceToCompletedBooking(sbAddServiceBookingId, { serviceId: serviceId, quantity: quantity });
+    closeProfileModal();
+    await loadSalonBookings();
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to add service.';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function sbPrintBooking(id) {
+  try {
+    var b = (sbBookingsCache || []).find(function (x) { return x.id === id; }) || await SalonBookingsSelf.getOne(id);
+    var services = (b.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
+    document.getElementById('sb-pr-booking-code').textContent = b.bookingCode || '—';
+    document.getElementById('sb-pr-datetime').textContent = StaffSelf.formatDate(b.bookingDate) + ' · ' + (b.bookingTime || '');
+    document.getElementById('sb-pr-customer').textContent = (b.customerName || '—') + (b.customerPhone ? ' (' + b.customerPhone + ')' : '');
+    document.getElementById('sb-pr-stylist').textContent = b.assignedStaff ? b.assignedStaff.name : '—';
+    document.getElementById('sb-pr-branch').textContent = currentStaff.location ? currentStaff.location.name : '—';
+    document.getElementById('sb-pr-services').textContent = services || '—';
+    document.getElementById('sb-pr-amount').textContent = sbFormatMoney(b.totalAmount);
+    document.getElementById('sb-pr-status').textContent = String(b.status || '').replace(/_/g, ' ');
+    window.print();
+  } catch (err) {
+    alert(err.message || 'Could not prepare receipt for printing.');
+  }
 }
 
 // -- Verify Reservation (staff, own branch only) -------------------------------
