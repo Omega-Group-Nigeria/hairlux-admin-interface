@@ -69,6 +69,14 @@ const Inventory = (function () {
         });
     }
 
+    async function createBulk(payload) {
+        return jsonFetch('/admin/inventory-items/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
     async function update(id, payload) {
         return jsonFetch(`/admin/inventory-items/${id}`, {
             method: 'PATCH',
@@ -171,7 +179,7 @@ const Inventory = (function () {
     }
 
     return {
-        getAll, getOne, create, update, adjust,
+        getAll, getOne, create, createBulk, update, adjust,
         getMovementHistory, MOVEMENT_TYPE_LABELS,
         getAlerts, resolveAlert,
         getExpiryAlerts, resolveExpiryAlert,

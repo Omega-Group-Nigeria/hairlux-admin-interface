@@ -127,9 +127,26 @@ const SalonBookings = (function () {
         return apiFetch(`/admin/salon-bookings/customers/${id}/profile`);
     }
 
+    async function getCustomerClassificationSettings() {
+        return apiFetch('/admin/salon-bookings/customers/classification-settings');
+    }
+
+    async function updateCustomerClassificationSettings(payload) {
+        return apiFetch('/admin/salon-bookings/customers/classification-settings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
     async function searchCustomers(q) {
         if (!q) return [];
         return apiFetch(`/admin/salon-bookings/customers/search?q=${encodeURIComponent(q)}`);
+    }
+
+    async function checkPhoneMatch(phone) {
+        if (!phone) return { hasMatch: false };
+        return apiFetch(`/admin/salon-bookings/customers/check-phone?phone=${encodeURIComponent(phone)}`);
     }
 
     async function getOverview(params = {}) {
@@ -156,8 +173,9 @@ const SalonBookings = (function () {
     return {
         getAll, getOne, create, editBooking, addServiceToCompletedBooking,
         addInventoryItem, start, complete, cancel, noShow,
-        verifyCode, confirmVerification, searchCustomers, findAllCustomers,
+        verifyCode, confirmVerification, searchCustomers, checkPhoneMatch, findAllCustomers,
         getCustomerContactsPerformance, getCustomerProfile,
+        getCustomerClassificationSettings, updateCustomerClassificationSettings,
         getOverview, deleteBooking,
         statusBadge, formatMoney, formatDate,
     };

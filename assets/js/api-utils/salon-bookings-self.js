@@ -36,6 +36,11 @@ const SalonBookingsSelf = (function () {
         return jsonFetch('/staff/me/salon-bookings/customers/search?q=' + encodeURIComponent(q));
     }
 
+    async function checkPhoneMatch(phone) {
+        if (!phone) return { hasMatch: false };
+        return jsonFetch('/staff/me/salon-bookings/customers/check-phone?phone=' + encodeURIComponent(phone));
+    }
+
     async function create(payload) {
         return jsonFetch('/staff/me/salon-bookings', {
             method: 'POST',
@@ -109,7 +114,7 @@ const SalonBookingsSelf = (function () {
     }
 
     return {
-        getAll, getOne, getBranchStaff, getMyCommission, searchCustomers,
+        getAll, getOne, getBranchStaff, getMyCommission, searchCustomers, checkPhoneMatch,
         create, editBooking, addServiceToCompletedBooking, getTodayStylistPerformance,
         addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification,
     }; 

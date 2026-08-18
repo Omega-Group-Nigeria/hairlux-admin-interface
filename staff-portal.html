@@ -378,6 +378,45 @@
       color: var(--ink)
     }
 
+    .sb-item-parent {
+      justify-content: space-between
+    }
+
+    .sb-chevron {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold);
+      transition: transform .18s;
+      margin-left: auto;
+      line-height: 1
+    }
+
+    .sb-item-parent.open .sb-chevron {
+      transform: rotate(180deg)
+    }
+
+    .sb-subgroup {
+      display: none;
+      overflow: hidden;
+      height: auto;
+      flex-shrink: 0
+    }
+
+    .sb-subgroup.open {
+      display: flex;
+      flex-direction: column
+    }
+
+    .sb-subitem {
+      padding-left: 30px;
+      font-size: 12.5px
+    }
+
+    .sb-subitem .ico {
+      font-size: 10px;
+      opacity: .6
+    }
+
     .sb-footer {
       margin-top: auto;
       position: sticky;
@@ -1785,42 +1824,94 @@
     <div class="oc-modal-box" id="profile-modal-box"></div>
   </div>
   <div id="sb-print-receipt" style="display:none">
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="font-size:20px;font-weight:800;">Hairlux Salon &amp; Spa</div>
-      <div style="font-size:12px;color:#555;">Booking Receipt</div>
+    <div class="pr-center">
+      <div style="font-weight:700">HAIRLUX SALON &amp; SPA</div>
+      <div id="sb-pr-branch"></div>
+      <div>Booking Receipt</div>
     </div>
-    <div class="pr-row"><span class="pr-label">Booking ID</span><span id="sb-pr-booking-code"></span></div>
-    <div class="pr-row"><span class="pr-label">Date / Time</span><span id="sb-pr-datetime"></span></div>
-    <div class="pr-row"><span class="pr-label">Customer</span><span id="sb-pr-customer"></span></div>
-    <div class="pr-row"><span class="pr-label">Stylist</span><span id="sb-pr-stylist"></span></div>
-    <div class="pr-row"><span class="pr-label">Branch</span><span id="sb-pr-branch"></span></div>
-    <div class="pr-row"><span class="pr-label">Service(s)</span><span id="sb-pr-services"></span></div>
-    <div class="pr-row"><span class="pr-label">Amount</span><span id="sb-pr-amount"></span></div>
-    <div class="pr-row"><span class="pr-label">Status</span><span id="sb-pr-status"></span></div>
+    <div class="pr-divider"></div>
+    <div class="pr-row"><span class="pr-label">Booking ID</span><span class="pr-value" id="sb-pr-booking-code"></span>
+    </div>
+    <div class="pr-row"><span class="pr-label">Date/Time</span><span class="pr-value" id="sb-pr-datetime"></span></div>
+    <div class="pr-row"><span class="pr-label">Customer</span><span class="pr-value" id="sb-pr-customer"></span></div>
+    <div class="pr-row"><span class="pr-label">Stylist</span><span class="pr-value" id="sb-pr-stylist"></span></div>
+    <div class="pr-row"><span class="pr-label">Served by</span><span class="pr-value" id="sb-pr-served-by"></span></div>
+    <div class="pr-divider"></div>
+    <div id="sb-pr-services-list"></div>
+    <div class="pr-divider"></div>
+    <div class="pr-total-row"><span>TOTAL</span><span id="sb-pr-amount"></span></div>
+    <div class="pr-row"><span class="pr-label">Status</span><span class="pr-value" id="sb-pr-status"></span></div>
+    <div class="pr-divider"></div>
+    <div class="pr-footer">
+      <div>Thank you for choosing Hairlux!</div>
+      <div>We look forward to seeing you again.</div>
+    </div>
   </div>
 
   <style>
     @media print {
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+
       body>div:not(#sb-print-receipt) {
         display: none !important;
       }
 
       #sb-print-receipt {
         display: block !important;
-        padding: 24px;
+        width: 80mm;
+        padding: 3mm;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 11px;
+        color: #000;
+        line-height: 1.5;
+      }
+
+      #sb-print-receipt .pr-center {
+        text-align: center;
+      }
+
+      #sb-print-receipt .pr-divider {
+        border-top: 1px dashed #000;
+        margin: 6px 0;
       }
 
       #sb-print-receipt .pr-row {
         display: flex;
         justify-content: space-between;
-        padding: 6px 0;
-        border-bottom: 1px solid #ddd;
-        font-size: 14px;
+        gap: 8px;
+        padding: 1px 0;
       }
 
       #sb-print-receipt .pr-label {
-        color: #555;
-        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      #sb-print-receipt .pr-value {
+        text-align: right;
+        word-break: break-word;
+      }
+
+      #sb-print-receipt .pr-service-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 1px 0;
+      }
+
+      #sb-print-receipt .pr-total-row {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 700;
+        font-size: 13px;
+        padding: 4px 0;
+      }
+
+      #sb-print-receipt .pr-footer {
+        text-align: center;
+        margin-top: 10px;
+        font-size: 10px;
       }
     }
   </style>
@@ -1850,7 +1941,16 @@
 
       <div class="sb-sec">General</div>
       <div class="sb-item active" onclick="show('dashboard')"><span class="ico">🏠</span>Dashboard</div>
-      <div class="sb-item" onclick="show('profile')"><span class="ico">👤</span>My Profile</div>
+      <div class="sb-item sb-item-parent" id="sb-profile-toggle">
+        <span class="ico">👤</span>My Profile<span class="sb-chevron">▾</span>
+      </div>
+      <div class="sb-subgroup" id="sb-profile-subgroup">
+        <div class="sb-item sb-subitem" onclick="show('profile')"><span class="ico">•</span>Profile Overview</div>
+        <div class="sb-item sb-subitem" onclick="show('onboarding')"><span class="ico">•</span>Complete Onboarding<span
+            class="bdg amber">!</span></div>
+        <div class="sb-item sb-subitem" onclick="show('agreements')"><span class="ico">•</span>Documents &
+          Agreements</div>
+      </div>
       <div class="sb-item" onclick="show('attendance')"><span class="ico">🕐</span>Attendance</div>
       <div class="sb-item" onclick="show('leave')"><span class="ico">🗓️</span>Leave & Permission</div>
       <div class="sb-item" id="sb-payroll-item" onclick="handlePayrollNavClick()"><span class="ico">🧾</span>Payslips &
@@ -1863,11 +1963,6 @@
       <div class="sb-item" onclick="show('notifications')"><span class="ico">🔔</span>Notifications<span
           class="bdg">5</span>
       </div>
-
-      <div class="sb-sec">Profile</div>
-      <div class="sb-item" onclick="show('onboarding')"><span class="ico">🚀</span>Complete Onboarding<span
-          class="bdg amber">!</span></div>
-      <div class="sb-item" onclick="show('agreements')"><span class="ico">📋</span>Documents & Agreements</div>
 
       <div id="sb-sec-manager" style="display:none">
         <div class="sb-sec">Manager</div>
@@ -2816,6 +2911,16 @@
 
           <div class="card mb4">
             <div class="card-h">
+              <h3>Fines This Period</h3>
+              <span class="badge b-amber" id="pr-fines-period-label"></span>
+            </div>
+            <div class="card-b" id="pr-fines-content">
+              <div class="text-secondary small">Loading…</div>
+            </div>
+          </div>
+
+          <div class="card mb4">
+            <div class="card-h">
               <h3>Withdrawal History</h3>
             </div>
             <div class="tbl-wrap">
@@ -2850,6 +2955,7 @@
                     <th>Gross Pay</th>
                     <th>Deductions</th>
                     <th>Net Pay</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="pr-payslips-tbody">
@@ -3056,25 +3162,51 @@
       document.getElementById('sb-backdrop').classList.remove('open');
     }
 
-    function show(id) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      const el = document.getElementById(id);
-      if (el) el.classList.add('active');
-      document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
-      const p = pages[id];
-      if (p) {
-        document.getElementById('page-h1').textContent = p[0];
-        document.getElementById('bc-page').textContent = p[1];
-        document.getElementById('tb-cta').textContent = ctas[id] || '⏵ Check In';
-      }
-      document.querySelectorAll('.sb-item').forEach(item => {
-        const oc = item.getAttribute('onclick') || '';
-        if (oc.includes("'" + id + "'") || oc.includes('"' + id + '"')) { item.classList.add('active'); }
-      });
-      closeSidebar();
+    var PROFILE_GROUP_SCREENS = ['profile', 'onboarding', 'agreements'];
+
+    function toggleProfileNavGroup(forceOpen) {
+      const toggle = document.getElementById('sb-profile-toggle');
+      const subgroup = document.getElementById('sb-profile-subgroup');
+      if (!toggle || !subgroup) return;
+      const isOpen = subgroup.style.display === 'block';
+      const shouldOpen = forceOpen !== undefined ? forceOpen : !isOpen;
+      toggle.classList.toggle('open', shouldOpen);
+      subgroup.style.display = shouldOpen ? 'block' : 'none';
     }
 
 
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var toggle = document.getElementById('sb-profile-toggle');
+      if (toggle) {
+        toggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          toggleProfileNavGroup();
+        });
+      }
+    });
+
+    function show(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+        document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+        const p = pages[id];
+        if (p) {
+          document.getElementById('page-h1').textContent = p[0];
+          document.getElementById('bc-page').textContent = p[1];
+          document.getElementById('tb-cta').textContent = ctas[id] || '⏵ Check In';
+        }
+        document.querySelectorAll('.sb-item').forEach(item => {
+          const oc = item.getAttribute('onclick') || '';
+          if (oc.includes("'" + id + "'") || oc.includes('"' + id + '"')) { item.classList.add('active'); }
+        });
+        closeSidebar();
+
+        if (id === 'dashboard' && typeof loadOnboarding === 'function') {
+          loadOnboarding().then(() => { if (typeof renderDashboard === 'function') renderDashboard(); });
+        }
+      }
     function startClock() {
       function upd() {
         const now = new Date(), h = now.getHours(), m = now.getMinutes();

@@ -4,6 +4,7 @@
  */
 
 let currentStaff = null;
+let currentAddressVerification = null;
 let currentOnboarding = null;
 let currentDocuments = null;
 let currentAnnouncements = [];
@@ -16,6 +17,7 @@ const ONBOARDING_ITEM_LABELS = {
   EMERGENCY_CONTACT: 'Emergency Contact',
   REFERENCE_CHECK: 'Reference Check',
   ADDRESS_VERIFICATION: 'Address Verification',
+  PHYSICAL_ADDRESS_VERIFICATION: 'Physical Address Verification',
   PASSPORT_PHOTO: 'Passport Photo',
   POLICY_ACKNOWLEDGMENT: 'Policy Acknowledgment',
 };
@@ -486,6 +488,8 @@ const ONBOARDING_FORM_CONFIG = {
 function openOnboardingSubmitModal(type) {
   if (type === 'PASSPORT_PHOTO') return openPassportPhotoModal();
 
+  if (type === 'PHYSICAL_ADDRESS_VERIFICATION' && currentAddressVerification) return openAddressVerificationModal();
+
   const config = ONBOARDING_FORM_CONFIG[type];
   if (!config) return;
 
@@ -585,6 +589,130 @@ async function submitPassportPhotoForm() {
     renderDashboard();
   } catch (err) {
     showOnboardingModalError(err.message || 'Could not upload. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function openAddressVerificationModal() {
+  const av = currentAddressVerification;
+  document.getElementById('onboarding-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="oc-modal-error"></div>' +
+    '<h3>Physical Address Verification</h3>' +
+    '<div class="oc-modal-sub">QoreID field agents will visit within 24-48 hours to confirm this address. Fill in every field accurately -- an agent physically checks against what you enter here.</div>' +
+
+    '<div class="oc-field"><label>Street</label><input type="text" id="av-street" value="' + escapeHtml((av && av.street) || '') + '"></div>' +
+    '<div class="oc-field"><label>City</label><input type="text" id="av-city" value="' + escapeHtml((av && av.city) || '') + '"></div>' +
+    '<div class="oc-field"><label>LGA (Local Government Area)</label><input type="text" id="av-lga" value="' + escapeHtml((av && av.lgaName) || '') + '"></div>' +
+    '<div class="oc-field"><label>State</label><input type="text" id="av-state" value="' + escapeHtml((av && av.stateName) || '') + '"></div>' +
+    '<div class="oc-field"><label>Landmark <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
+    '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
+    '<div class="oc-field"><label>Description</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
+
+    '<div class="oc-field">' +
+    '<label>Location</label>' +
+    '<div class="flex aic gap3" style="margin-bottom:6px;">' +
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="captureAddressVerificationLocation()">\ud83d\udccd Use My Current Location</button>' +
+    '<span id="av-location-status" style="font-size:11px;color:var(--muted)"></span>' +
+    '</div>' +
+    '<div class="flex aic gap3">' +
+    '<input type="number" step="any" id="av-latitude" placeholder="Latitude" value="' + ((av && av.latitude) || '') + '" style="flex:1">' +
+    '<input type="number" step="any" id="av-longitude" placeholder="Longitude" value="' + ((av && av.longitude) || '') + '" style="flex:1">' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--muted);margin-top:4px;">Use the button if you\'re at the address now, or enter coordinates manually.</div>' +
+    '</div>' +
+
+    '<div class="oc-field"><label>Building Type</label><select id="av-building-description">' +
+    ['Residential', 'Commercial'].map((o) => '<option value="' + o + '"' + (av && av.buildingDescription === o ? ' selected' : '') + '>' + o + '</option>').join('') +
+    '</select></div>' +
+    '<div class="oc-field"><label>Building Status</label><select id="av-building-status">' +
+    ['Completed', 'Painted', 'Completed and Painted'].map((o) => '<option value="' + o + '"' + (av && av.buildingStatus === o ? ' selected' : '') + '>' + o + '</option>').join('') +
+    '</select></div>' +
+    '<div class="oc-field"><label>Building Structure</label><select id="av-building-type">' +
+    ['Multi-story', 'Flats & Apartment', 'Bungalow', 'Office Complex'].map((o) => '<option value="' + o + '"' + (av && av.buildingType === o ? ' selected' : '') + '>' + o + '</option>').join('') +
+    '</select></div>' +
+    '<div class="oc-field"><label>Building Colour</label><input type="text" id="av-building-colour" placeholder="e.g. Blue" value="' + escapeHtml((av && av.buildingColour) || '') + '"></div>' +
+    '<div class="oc-field"><label><input type="checkbox" id="av-has-gate-and-fence"' + (av && av.hasGateAndFence ? ' checked' : '') + '> Property has both a gate and a fence</label></div>' +
+
+    '<div class="oc-field"><label>Photos <span style="color:var(--muted)">(optional, but strengthen the verification)</span></label>' +
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">House photo</div><input type="file" id="av-photo1" accept="image/jpeg,image/png">' +
+    '<div style="font-size:11px;color:var(--muted);margin:6px 0 4px;">House number photo</div><input type="file" id="av-photo2" accept="image/jpeg,image/png">' +
+    '<div style="font-size:11px;color:var(--muted);margin:6px 0 4px;">Nearest landmark photo</div><input type="file" id="av-photo3" accept="image/jpeg,image/png">' +
+    '</div>' +
+
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeOnboardingModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="oc-modal-submit-btn" onclick="submitAddressVerificationForm()">Submit</button>' +
+    '</div>';
+
+  document.getElementById('onboarding-modal-overlay').style.display = 'flex';
+}
+
+function captureAddressVerificationLocation() {
+  const statusEl = document.getElementById('av-location-status');
+  if (!navigator.geolocation) {
+    statusEl.textContent = 'Geolocation not supported on this device -- enter coordinates manually.';
+    return;
+  }
+  statusEl.textContent = 'Getting your location\u2026';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      document.getElementById('av-latitude').value = pos.coords.latitude;
+      document.getElementById('av-longitude').value = pos.coords.longitude;
+      statusEl.textContent = 'Location captured.';
+    },
+    (err) => {
+      statusEl.textContent = 'Could not get your location (' + err.message + ') -- enter coordinates manually.';
+    },
+    { enableHighAccuracy: true, timeout: 15000 },
+  );
+}
+
+async function submitAddressVerificationForm() {
+  const val = (id) => document.getElementById(id).value.trim();
+  const street = val('av-street'), city = val('av-city'), lga = val('av-lga'), state = val('av-state');
+  const generalDescription = val('av-general-description');
+  const latitude = val('av-latitude'), longitude = val('av-longitude');
+  const buildingColour = val('av-building-colour');
+
+  if (!street || !city || !lga || !state) { showOnboardingModalError('Street, City, LGA, and State are all required.'); return; }
+  if (!generalDescription) { showOnboardingModalError('Please add a short description to help the field agent locate the address.'); return; }
+  if (!latitude || !longitude) { showOnboardingModalError('Location is required -- use the button or enter coordinates manually.'); return; }
+  if (!buildingColour) { showOnboardingModalError('Please enter the building colour.'); return; }
+
+  const formData = new FormData();
+  formData.append('street', street);
+  formData.append('city', city);
+  formData.append('lgaName', lga);
+  formData.append('stateName', state);
+  const landmark = val('av-landmark'); if (landmark) formData.append('landmark', landmark);
+  const houseNumber = val('av-house-number'); if (houseNumber) formData.append('houseNumber', houseNumber);
+  formData.append('generalDescription', generalDescription);
+  formData.append('latitude', latitude);
+  formData.append('longitude', longitude);
+  formData.append('buildingDescription', document.getElementById('av-building-description').value);
+  formData.append('buildingStatus', document.getElementById('av-building-status').value);
+  formData.append('buildingType', document.getElementById('av-building-type').value);
+  formData.append('buildingColour', buildingColour);
+  formData.append('hasGateAndFence', document.getElementById('av-has-gate-and-fence').checked ? 'true' : 'false');
+
+  ['av-photo1', 'av-photo2', 'av-photo3'].forEach((id, i) => {
+    const file = document.getElementById(id).files[0];
+    if (file) formData.append('photo' + (i + 1), file);
+  });
+
+  const btn = document.getElementById('oc-modal-submit-btn');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Submitting\u2026';
+  try {
+    await StaffSelf.submitAddressVerification(formData);
+    closeOnboardingModal();
+    await loadOnboarding();
+    renderDashboard();
+  } catch (err) {
+    showOnboardingModalError(err.message || 'Could not submit. Please try again.');
   } finally {
     btn.disabled = false;
     btn.textContent = original;
@@ -937,6 +1065,7 @@ async function loadOnboarding() {
     console.error('Failed to load onboarding', err);
     return;
   }
+  currentAddressVerification = await StaffSelf.getAddressVerification().catch(() => null);
   renderOnboardingBadge();
   renderVerificationChecklist();
 }
@@ -969,12 +1098,66 @@ function applyPayrollGate() {
   });
 }
 
-function handlePayrollNavClick() {
+async function handlePayrollNavClick() {
+  // Deliberately re-fetches fresh rather than trusting currentOnboarding
+  // as-is -- that variable is only ever populated once, at initial app
+  // load, and nothing in this app's navigation re-syncs it automatically.
+  // An admin action that changes onboarding-complete status (e.g.
+  // requesting address verification) while a staff member's session is
+  // already open would otherwise leave this gate checking stale, boot-time
+  // data for the rest of the session.
+  try {
+    currentOnboarding = await StaffSelf.getOnboarding();
+  } catch (err) {
+    console.error('[staff-portal] failed to refresh onboarding status before payroll gate check', err);
+    // Fall through to whatever's already in memory rather than block
+    // entirely on a transient network error.
+  }
+
   if (!currentOnboarding || !currentOnboarding.onboardingComplete) {
     alert('Payslips & Payroll unlocks once your onboarding checklist -- including all Documents & Agreements -- is complete and approved. Open "Complete Onboarding" to see what\'s left.');
+    renderOnboardingBadge();
     return;
   }
   show('payroll');
+}
+
+function renderAddressVerificationRow(label) {
+  const av = currentAddressVerification;
+  if (av.status === 'VERIFIED') {
+    return (
+      '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--green2);border-radius:var(--r2)">' +
+      '<span style="color:var(--green);font-size:18px">\u2713</span>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">Verified ' + StaffSelf.formatDate(av.resultReceivedAt) + '</div></div>' +
+      '<span class="badge b-green">Complete</span></div>'
+    );
+  }
+  if (av.status === 'SUBMITTED') {
+    return (
+      '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--amber2, rgba(184,121,10,.10));border-radius:var(--r2)">' +
+      '<span style="color:var(--amber);font-size:18px">\u23F3</span>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">Submitted ' + StaffSelf.formatDate(av.submittedAt) + ' \u2014 verification in progress (24-48h)</div></div></div>'
+    );
+  }
+  if (av.status === 'REJECTED' || av.status === 'FAILED') {
+    return (
+      '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--red2);border-radius:var(--r2)">' +
+      '<span style="color:var(--red);font-size:18px">\u2717</span>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:11px;color:var(--red)">' + (av.status === 'REJECTED' ? 'Could not be verified' : 'Verification failed') + ' \u2014 contact your admin</div></div>' +
+      '<button class="btn btn-gold btn-sm" onclick="openOnboardingSubmitModal(\'PHYSICAL_ADDRESS_VERIFICATION\')">Resubmit</button></div>'
+    );
+  }
+  // REQUESTED -- nothing submitted yet
+  return (
+    '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--red2);border-radius:var(--r2)">' +
+    '<span style="color:var(--red);font-size:18px">\u2717</span>' +
+    '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+    '<div style="font-size:11px;color:var(--red)">Your admin has requested this -- not yet submitted</div></div>' +
+    '<button class="btn btn-gold btn-sm" onclick="openOnboardingSubmitModal(\'PHYSICAL_ADDRESS_VERIFICATION\')">Submit</button></div>'
+  );
 }
 
 function renderVerificationChecklist() {
@@ -984,6 +1167,14 @@ function renderVerificationChecklist() {
     .filter((i) => i.type !== 'POLICY_ACKNOWLEDGMENT')
     .map((item) => {
       const label = ONBOARDING_ITEM_LABELS[item.type] || item.type;
+
+      // PHYSICAL_ADDRESS_VERIFICATION only ever appears in the items list
+      // at all once an admin has requested it (see backend upsert in
+      // requestVerification) -- the currentAddressVerification check here
+      // is mostly redundant with that but kept as a defensive guard.
+      if (item.type === 'PHYSICAL_ADDRESS_VERIFICATION' && currentAddressVerification) {
+        return renderAddressVerificationRow(label);
+      }
 
       if (item.isComplete) {
         return (
@@ -1195,8 +1386,16 @@ async function loadDirectives() {
   renderNotifications();
 }
 
+function directiveIsOverdue(d) {
+  return !!(d.dueDate && d.status !== 'COMPLETED' && new Date(d.dueDate) < new Date());
+}
+
 function directiveRow(d) {
   const fromName = d.createdBy ? [d.createdBy.firstName, d.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+  const dueLine = d.dueDate
+    ? ' \u00B7 <span' + (directiveIsOverdue(d) ? ' style="color:var(--red);font-weight:700"' : '') + '>Due ' + StaffSelf.formatDate(d.dueDate) + (directiveIsOverdue(d) ? ' (overdue)' : '') + '</span>'
+    : '';
+
   if (d.status === 'COMPLETED') {
     return (
       '<div class="task done"><div class="task-chk checked">\u2713</div><div style="flex:1">' +
@@ -1204,13 +1403,14 @@ function directiveRow(d) {
       '<div class="task-due">Completed ' + StaffSelf.formatDate(d.respondedAt) + '</div></div></div>'
     );
   }
+  var isUrgent = d.status === 'PENDING' || directiveIsOverdue(d);
   const nextAction = d.status === 'PENDING'
     ? '<button class="btn btn-ghost btn-sm" onclick="handleDirectiveStatus(\'' + d.id + '\',\'ACKNOWLEDGED\')">Acknowledge</button>'
-    : '<button class="btn btn-gold btn-sm" onclick="handleDirectiveStatus(\'' + d.id + '\',\'COMPLETED\')">Mark Done</button>';
+    : '<button class="btn btn-gold btn-sm" onclick="openMarkCompleteModal(\'' + d.id + '\')">Mark Done</button>';
   return (
-    '<div class="task' + (d.status === 'PENDING' ? ' urgent' : '') + '"><div class="task-chk">' + (d.status === 'PENDING' ? '!' : '\u2192') + '</div>' +
+    '<div class="task' + (isUrgent ? ' urgent' : '') + '"><div class="task-chk">' + (d.status === 'PENDING' ? '!' : '\u2192') + '</div>' +
     '<div style="flex:1"><div class="task-title">' + escapeHtml(d.title) + '</div>' +
-    '<div class="task-due">' + escapeHtml(d.body) + ' \u00B7 From ' + escapeHtml(fromName) + '</div></div>' +
+    '<div class="task-due">' + escapeHtml(d.body) + ' \u00B7 From ' + escapeHtml(fromName) + dueLine + '</div></div>' +
     nextAction + '</div>'
   );
 }
@@ -1222,6 +1422,65 @@ async function handleDirectiveStatus(directiveId, status) {
     renderDashboard();
   } catch (err) {
     alert('Could not update task: ' + err.message);
+  }
+}
+
+/**
+ * "Mark Done" now opens this instead of firing the status update directly
+ * — evidence is optional, so Skip goes straight to the same
+ * handleDirectiveStatus path as before; attaching a file uploads it first,
+ * then marks the task Completed right after.
+ */
+function openMarkCompleteModal(directiveId) {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="mc-modal-error" style="display:none"></div>' +
+    '<h3>Mark Task Complete</h3>' +
+    '<div class="oc-modal-sub">You can optionally attach a photo as proof of completion.</div>' +
+    '<div class="oc-field"><label>Evidence (optional)</label><input type="file" id="mc-field-evidence" accept="image/jpeg,image/png"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" id="mc-skip-btn" onclick="submitMarkComplete(\'' + directiveId + '\', true)">Skip &amp; Mark Done</button>' +
+    '<button class="btn btn-gold btn-sm" id="mc-modal-submit-btn" onclick="submitMarkComplete(\'' + directiveId + '\', false)">Attach &amp; Mark Done</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function submitMarkComplete(directiveId, skipEvidence) {
+  var errEl = document.getElementById('mc-modal-error');
+  var fileInput = document.getElementById('mc-field-evidence');
+  var file = !skipEvidence && fileInput.files && fileInput.files[0];
+
+  if (!skipEvidence && !file) {
+    // Neither button explicitly says "no file chosen" is an error — Skip
+    // exists for that. Attach & Mark Done with nothing selected just
+    // behaves like Skip rather than blocking the user.
+    skipEvidence = true;
+  }
+  if (file && !['image/jpeg', 'image/png'].includes(file.type)) {
+    errEl.textContent = 'Only JPEG or PNG images are accepted.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var btn = skipEvidence ? document.getElementById('mc-skip-btn') : document.getElementById('mc-modal-submit-btn');
+  var otherBtn = skipEvidence ? document.getElementById('mc-modal-submit-btn') : document.getElementById('mc-skip-btn');
+  btn.disabled = true;
+  otherBtn.disabled = true;
+  var original = btn.textContent;
+  btn.textContent = file ? 'Uploading\u2026' : 'Saving\u2026';
+  try {
+    if (file) {
+      await StaffSelf.submitDirectiveEvidence(directiveId, file);
+    }
+    await StaffSelf.updateDirectiveStatus(directiveId, 'COMPLETED');
+    closeProfileModal();
+    await loadDirectives();
+    renderDashboard();
+  } catch (err) {
+    errEl.textContent = err.message || 'Could not complete this task.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    otherBtn.disabled = false;
+    btn.textContent = original;
   }
 }
 
@@ -1323,6 +1582,11 @@ async function loadAttendance() {
         if (r.status === 'LATE' && r.lateMinutes) {
           lateDetail = r.lateMinutes + ' min late';
           if (r.latePenaltyAmount) lateDetail += ' · ' + sbFormatMoney(r.latePenaltyAmount) + ' penalty';
+        } else if (r.status === 'ABSENT' && r.absentFeeAmount) {
+          // absentFeeAmount is frozen the moment ABSENT is recorded (same
+          // convention as latePenaltyAmount at check-in) — visible here the
+          // very next time this screen loads, no need to wait for payroll.
+          lateDetail = sbFormatMoney(r.absentFeeAmount) + ' absent fee';
         }
         const hours = r.checkOutAt
           ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
@@ -1806,7 +2070,12 @@ async function showBookingForm() {
     '<div class="col-6"><label class="form-label small mb-1">Customer Name</label>' +
     '<input type="text" class="input" id="sb-customer-name" placeholder="Ngozi Adeyemi"></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Customer Phone (optional)</label>' +
-    '<input type="text" class="input" id="sb-customer-phone" placeholder="+2348012345678"></div>' +
+    '<input type="text" class="input" id="sb-customer-phone" placeholder="+2348012345678">' +
+    '<div id="sb-phone-match-prompt" class="d-none mt-1" style="font-size:12px;background:rgba(184,121,10,.10);border:1px solid rgba(184,121,10,.3);border-radius:6px;padding:8px 10px;">' +
+    '<span id="sb-phone-match-text"></span>' +
+    '<div class="mt-1"><button type="button" class="btn btn-gold btn-sm me-1" id="sb-phone-match-yes">Yes, link it</button>' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="sb-phone-match-no">No</button></div>' +
+    '</div></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Assigned Stylist</label>' +
     '<select class="input" id="sb-staff">' + staffOptions + '</select></div>' +
     '<div class="col-6"></div>' +
@@ -1830,6 +2099,7 @@ async function showBookingForm() {
   SearchableSelect.attach('sb-staff');
   sbAddServiceLine();
   sbWireCustomerSearch();
+  sbWirePhoneMatchCheck();
 }
 
 var _sbCustomerSearchTimer = null;
@@ -1887,6 +2157,51 @@ async function sbRunCustomerSearch(q, resultsEl) {
 function cancelBookingForm() {
   document.getElementById('booking-form-container').style.display = 'none';
   document.getElementById('booking-form-container').innerHTML = '';
+}
+
+var _sbLinkToVerifiedUser = false;
+var _sbPhoneMatchLastChecked = '';
+
+function sbWirePhoneMatchCheck() {
+  _sbLinkToVerifiedUser = false;
+  _sbPhoneMatchLastChecked = '';
+  var phoneInput = document.getElementById('sb-customer-phone');
+  var promptEl = document.getElementById('sb-phone-match-prompt');
+  if (!phoneInput || !promptEl) return;
+
+  phoneInput.addEventListener('blur', async function () {
+    var phone = phoneInput.value.trim();
+    if (!phone || phone === _sbPhoneMatchLastChecked) return;
+    _sbPhoneMatchLastChecked = phone;
+    _sbLinkToVerifiedUser = false;
+    promptEl.classList.add('d-none');
+
+    try {
+      var result = await SalonBookingsSelf.checkPhoneMatch(phone);
+      if (result.hasMatch) {
+        document.getElementById('sb-phone-match-text').textContent =
+          'This number matches ' + result.accountName + '\u2019s verified account. Link this visit to their account?';
+        promptEl.classList.remove('d-none');
+      }
+    } catch (e) {
+      // Non-critical -- booking creation still works without this check succeeding.
+    }
+  });
+
+  phoneInput.addEventListener('input', function () {
+    _sbLinkToVerifiedUser = false;
+    _sbPhoneMatchLastChecked = '';
+    promptEl.classList.add('d-none');
+  });
+
+  document.getElementById('sb-phone-match-yes').addEventListener('click', function () {
+    _sbLinkToVerifiedUser = true;
+    promptEl.classList.add('d-none');
+  });
+  document.getElementById('sb-phone-match-no').addEventListener('click', function () {
+    _sbLinkToVerifiedUser = false;
+    promptEl.classList.add('d-none');
+  });
 }
 
 /** Routes to the right modal — full Edit for Scheduled/In Progress, the narrower Add Service flow for Completed. */
@@ -2065,13 +2380,24 @@ async function sbSubmitAddService() {
 async function sbPrintBooking(id) {
   try {
     var b = (sbBookingsCache || []).find(function (x) { return x.id === id; }) || await SalonBookingsSelf.getOne(id);
-    var services = (b.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
     document.getElementById('sb-pr-booking-code').textContent = b.bookingCode || '—';
     document.getElementById('sb-pr-datetime').textContent = StaffSelf.formatDate(b.bookingDate) + ' · ' + (b.bookingTime || '');
     document.getElementById('sb-pr-customer').textContent = (b.customerName || '—') + (b.customerPhone ? ' (' + b.customerPhone + ')' : '');
     document.getElementById('sb-pr-stylist').textContent = b.assignedStaff ? b.assignedStaff.name : '—';
-    document.getElementById('sb-pr-branch').textContent = currentStaff.location ? currentStaff.location.name : '—';
-    document.getElementById('sb-pr-services').textContent = services || '—';
+    document.getElementById('sb-pr-branch').textContent = currentStaff.location ? currentStaff.location.name : '';
+    // Same convention as the Admin receipt: createdBy is only set when a
+    // staff member entered the booking directly, so a customer's own
+    // self-service reservation reads as "Online booking" rather than blank.
+    document.getElementById('sb-pr-served-by').textContent = b.createdBy ? b.createdBy.name : 'Online booking';
+    var servicesContainer = document.getElementById('sb-pr-services-list');
+    var services = b.services || [];
+    servicesContainer.innerHTML = services.length
+      ? services.map(function (s) {
+        var name = escapeHtml(s.service ? s.service.name : 'Service');
+        var qty = s.quantity && s.quantity > 1 ? ' x' + s.quantity : '';
+        return '<div class="pr-service-line"><span>' + name + qty + '</span></div>';
+      }).join('')
+      : '<div class="pr-service-line"><span>—</span></div>';
     document.getElementById('sb-pr-amount').textContent = sbFormatMoney(b.totalAmount);
     document.getElementById('sb-pr-status').textContent = String(b.status || '').replace(/_/g, ' ');
     window.print();
@@ -2367,6 +2693,7 @@ async function submitBookingForm() {
   try {
     await SalonBookingsSelf.create({
       customerName: customerName, customerPhone: customerPhone || undefined,
+      linkToVerifiedUser: _sbLinkToVerifiedUser || undefined,
       assignedStaffId: assignedStaffId, bookingDate: bookingDate, bookingTime: bookingTime,
       services: services, inventoryItems: inventoryItems.length ? inventoryItems : undefined,
       notes: notes || undefined,
@@ -2538,9 +2865,46 @@ async function loadPayrollSection() {
     prLoadWallet(),
     prLoadBankAccount(),
     prLoadCompensation(),
+    prLoadFines(),
     prLoadPayslips(),
     prLoadWithdrawals(),
   ]);
+}
+
+/** Running late-penalty + absent-fee total for the in-progress payroll period — visible before payroll actually runs, matching exactly what payroll will eventually sum. */
+async function prLoadFines() {
+  var container = document.getElementById('pr-fines-content');
+  var labelEl = document.getElementById('pr-fines-period-label');
+  try {
+    var fines = await PayrollSelf.getCurrentFines();
+    if (labelEl) labelEl.textContent = fines.periodLabel + (fines.isDraftPeriod ? '' : ' (est.)');
+
+    if (!fines.total) {
+      container.innerHTML = '<div class="text-secondary small">No fines recorded this period.</div>';
+      return;
+    }
+
+    var rows = (fines.records || []).map(function (r) {
+      var amount = r.status === 'ABSENT' ? r.absentFeeAmount : r.latePenaltyAmount;
+      var detail = r.status === 'ABSENT'
+        ? 'Absent fee'
+        : (r.lateMinutes ? r.lateMinutes + ' min late' : 'Late penalty');
+      return '<div class="d-flex justify-content-between border-bottom py-2">' +
+        '<div><span class="badge ' + (r.status === 'ABSENT' ? 'b-red' : 'b-amber') + ' me-2">' + r.status + '</span>' +
+        '<span class="text-secondary small">' + StaffSelf.formatDate(r.date, { day: '2-digit', month: 'short' }) + ' \u2014 ' + detail + '</span></div>' +
+        '<div class="fw-semibold">' + sbFormatMoney(amount) + '</div></div>';
+    }).join('');
+
+    container.innerHTML =
+      '<div class="d-flex justify-content-between mb-3">' +
+      '<div><div class="text-secondary small">Late Penalties</div><div class="fw-semibold">' + sbFormatMoney(fines.latePenaltyTotal) + '</div></div>' +
+      '<div><div class="text-secondary small">Absent Fees</div><div class="fw-semibold">' + sbFormatMoney(fines.absentFeeTotal) + '</div></div>' +
+      '<div><div class="text-secondary small">Total</div><div class="fw-bold" style="color:var(--red)">' + sbFormatMoney(fines.total) + '</div></div>' +
+      '</div>' +
+      rows;
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
 }
 
 async function prLoadWallet() {
@@ -2729,11 +3093,29 @@ async function prLoadPayslips() {
     tbody.innerHTML = payslips.length
       ? payslips.map(function (p) {
         var period = p.payrollPeriod ? p.payrollPeriod.label : '\u2014';
-        return '<tr><td>' + escapeHtml(period) + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td></tr>';
+        return '<tr><td>' + escapeHtml(period) + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td>' +
+          '<td><button class="btn btn-ghost btn-sm pr-download-payslip" data-id="' + p.id + '">Download</button></td></tr>';
       }).join('')
-      : '<tr><td colspan="4" class="text-center text-secondary py-4">No payslips yet.</td></tr>';
+      : '<tr><td colspan="5" class="text-center text-secondary py-4">No payslips yet.</td></tr>';
+    tbody.querySelectorAll('.pr-download-payslip').forEach(function (btn) {
+      btn.addEventListener('click', function () { prDownloadPayslip(btn.dataset.id, btn); });
+    });
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
+  }
+}
+
+async function prDownloadPayslip(id, btn) {
+  var original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '\u2026';
+  try {
+    await PayrollSelf.downloadPayslip(id);
+  } catch (err) {
+    alert('Could not download payslip: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
   }
 }
 

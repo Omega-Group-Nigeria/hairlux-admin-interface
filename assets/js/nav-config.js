@@ -67,6 +67,7 @@ var NavConfig = window.NavConfig || (() => {
             children: [
                 { label: "Users", href: "users.html" },
                 { label: "Customer Contacts", href: "customer-contacts.html" },
+                { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html" },
                 { label: "Suppliers", href: "suppliers.html" },
                 { label: "Vendors", href: "vendors.html" },
             ],
@@ -79,16 +80,6 @@ var NavConfig = window.NavConfig || (() => {
             permission: {
                 type: "requireAny",
                 perms: ["payroll:read", "payroll:manage"],
-            },
-        },
-        {
-            id: "branch-finance",
-            label: "Branch Finance",
-            icon: "payments",
-            href: "branch-finance.html",
-            permission: {
-                type: "requireAny",
-                perms: ["branch_finance:read", "branch_finance:reconcile"],
             },
         },
         {
@@ -105,8 +96,17 @@ var NavConfig = window.NavConfig || (() => {
             id: "branches",
             label: "Branches",
             icon: "branches",
-            href: "branches.html",
-            permission: { type: "requireAny", perms: ["branches:read", "branches:manage"] },
+            // Permission set now covers both nested pages — Branches itself
+            // and Branch Finance (formerly its own top-level item) — since
+            // the group's visibility gates access to both.
+            permission: {
+                type: "requireAny",
+                perms: ["branches:read", "branches:manage", "branch_finance:read", "branch_finance:reconcile"],
+            },
+            children: [
+                { label: "Overview", href: "branches.html" },
+                { label: "Branch Finance", href: "branch-finance.html" },
+            ],
         },
         {
             id: "shop",

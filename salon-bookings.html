@@ -68,32 +68,77 @@
             display: none;
         }
 
+        /* POS/thermal receipt format — 80mm is the common thermal roll
+           width; monospace + tight spacing matches what an actual receipt
+           printer produces, rather than the earlier A4-style layout. */
         @media print {
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+
             body>.page {
                 display: none !important;
             }
 
             #print-receipt {
                 display: block !important;
-                padding: 24px;
+                width: 80mm;
+                padding: 3mm;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                color: #000;
+                line-height: 1.5;
             }
 
             #print-receipt .pr-logo {
-                height: 48px;
-                margin-bottom: 8px;
+                height: 36px;
+                margin-bottom: 4px;
+            }
+
+            #print-receipt .pr-center {
+                text-align: center;
+            }
+
+            #print-receipt .pr-divider {
+                border-top: 1px dashed #000;
+                margin: 6px 0;
             }
 
             #print-receipt .pr-row {
                 display: flex;
                 justify-content: space-between;
-                padding: 6px 0;
-                border-bottom: 1px solid #ddd;
-                font-size: 14px;
+                gap: 8px;
+                padding: 1px 0;
             }
 
             #print-receipt .pr-label {
-                color: #555;
-                font-weight: 600;
+                white-space: nowrap;
+            }
+
+            #print-receipt .pr-value {
+                text-align: right;
+                word-break: break-word;
+            }
+
+            #print-receipt .pr-service-line {
+                display: flex;
+                justify-content: space-between;
+                padding: 1px 0;
+            }
+
+            #print-receipt .pr-total-row {
+                display: flex;
+                justify-content: space-between;
+                font-weight: 700;
+                font-size: 13px;
+                padding: 4px 0;
+            }
+
+            #print-receipt .pr-footer {
+                text-align: center;
+                margin-top: 10px;
+                font-size: 10px;
             }
         }
     </style>
@@ -355,6 +400,16 @@
                             <label class="form-label">Customer Phone <span
                                     class="text-secondary">(optional)</span></label>
                             <input type="text" class="form-control" id="nb-customer-phone" placeholder="+2348012345678">
+                            <div id="nb-phone-match-prompt" class="alert alert-warning py-2 px-3 mt-2 d-none"
+                                style="font-size:13px;">
+                                <span id="nb-phone-match-text"></span>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-primary me-1"
+                                        id="nb-phone-match-yes">Yes, link it</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="nb-phone-match-no">No</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -534,18 +589,30 @@
 
     <!-- Print receipt — populated by JS right before window.print(), never shown on screen -->
     <div id="print-receipt">
-        <div style="text-align:center;margin-bottom:20px;">
+        <div class="pr-center">
             <img src="assets/img/logo-side-black.png" class="pr-logo" alt="Hairlux">
-            <div style="font-size:12px;color:#555;">Hairlux Salon &amp; Spa — Booking Receipt</div>
+            <div>HAIRLUX SALON &amp; SPA</div>
+            <div id="pr-branch"></div>
+            <div>Booking Receipt</div>
         </div>
-        <div class="pr-row"><span class="pr-label">Booking ID</span><span id="pr-booking-code"></span></div>
-        <div class="pr-row"><span class="pr-label">Date / Time</span><span id="pr-datetime"></span></div>
-        <div class="pr-row"><span class="pr-label">Customer</span><span id="pr-customer"></span></div>
-        <div class="pr-row"><span class="pr-label">Stylist</span><span id="pr-stylist"></span></div>
-        <div class="pr-row"><span class="pr-label">Branch</span><span id="pr-branch"></span></div>
-        <div class="pr-row"><span class="pr-label">Service(s)</span><span id="pr-services"></span></div>
-        <div class="pr-row"><span class="pr-label">Amount</span><span id="pr-amount"></span></div>
-        <div class="pr-row"><span class="pr-label">Status</span><span id="pr-status"></span></div>
+        <div class="pr-divider"></div>
+        <div class="pr-row"><span class="pr-label">Booking ID</span><span class="pr-value" id="pr-booking-code"></span>
+        </div>
+        <div class="pr-row"><span class="pr-label">Date/Time</span><span class="pr-value" id="pr-datetime"></span></div>
+        <div class="pr-row"><span class="pr-label">Customer</span><span class="pr-value" id="pr-customer"></span></div>
+        <div class="pr-row"><span class="pr-label">Stylist</span><span class="pr-value" id="pr-stylist"></span></div>
+        <div class="pr-row"><span class="pr-label">Served by</span><span class="pr-value" id="pr-served-by"></span>
+        </div>
+        <div class="pr-divider"></div>
+        <div id="pr-services-list"></div>
+        <div class="pr-divider"></div>
+        <div class="pr-total-row"><span>TOTAL</span><span id="pr-amount"></span></div>
+        <div class="pr-row"><span class="pr-label">Status</span><span class="pr-value" id="pr-status"></span></div>
+        <div class="pr-divider"></div>
+        <div class="pr-footer">
+            <div>Thank you for choosing Hairlux!</div>
+            <div>We look forward to seeing you again.</div>
+        </div>
     </div>
 
     <script src="assets/js/api-utils/auth.js"></script>
@@ -778,6 +845,28 @@
             }
         }
 
+        /**
+             * The Booking Detail modal's footer needs flat, directly-clickable
+             * buttons (Start/Cancel/etc. as plain <button>s the existing
+             * querySelectorAll wiring below can find and attach handlers to) —
+             * not the three-dot dropdown used in the table rows, which would be
+             * an awkward extra click inside an already-open modal. Mirrors
+             * actionsDropdown's exact status logic, just rendered as a flat
+             * button row instead of a dropdown menu. View/Edit/Print aren't
+             * included here: View is redundant (the modal itself is the view),
+             * Edit and Print aren't wired to this modal's footer.
+             */
+        function footerActionsForBooking(b) {
+            if (b.status === 'SCHEDULED') {
+                return '<button class="btn btn-sm btn-outline-primary me-1 btn-start" data-id="' + b.id + '">Start</button>' +
+                    '<button class="btn btn-sm btn-outline-danger btn-cancel" data-id="' + b.id + '">Cancel</button>';
+            }
+            if (b.status === 'IN_PROGRESS') {
+                return '<button class="btn btn-sm btn-success btn-complete" data-id="' + b.id + '">Complete</button>';
+            }
+            return '';
+        }
+
         async function openDetail(id) {
             var body = document.getElementById('detail-body');
             var footer = document.getElementById('detail-footer');
@@ -813,12 +902,10 @@
                     (b.notes ? '<div class="mt-2"><strong>Notes:</strong> ' + esc(b.notes) + '</div>' : '') +
                     commissionHtml;
 
-                footer.innerHTML = actionsForBooking(b).replace(/btn-sm/g, 'btn-sm') + '<button type="button" class="btn" data-bs-dismiss="modal">Close</button>';
-                footer.querySelectorAll('.btn-view').forEach(function (el) { el.remove(); }); // already viewing
+                footer.innerHTML = footerActionsForBooking(b) + '<button type="button" class="btn" data-bs-dismiss="modal">Close</button>';
                 footer.querySelectorAll('.btn-start').forEach(function (btn) { btn.addEventListener('click', function () { doStart(id); bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); }); });
                 footer.querySelectorAll('.btn-complete').forEach(function (btn) { btn.addEventListener('click', function () { doComplete(id); bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); }); });
                 footer.querySelectorAll('.btn-cancel').forEach(function (btn) { btn.addEventListener('click', function () { bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); openReasonModal('cancel', id); }); });
-                footer.querySelectorAll('.btn-no-show').forEach(function (btn) { btn.addEventListener('click', function () { bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); openReasonModal('no-show', id); }); });
             } catch (e) {
                 body.innerHTML = '<div class="text-danger">' + esc(e.message) + '</div>';
             }
@@ -931,6 +1018,9 @@
             document.getElementById('nb-customer-name').value = '';
             document.getElementById('nb-customer-phone').value = '';
             document.getElementById('nb-customer-search').value = '';
+            document.getElementById('nb-phone-match-prompt').classList.add('d-none');
+            _nbLinkToVerifiedUser = false;
+            _nbPhoneMatchLastChecked = '';
             document.getElementById('nb-customer-search-results').style.display = 'none';
             document.getElementById('nb-date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('nb-date').min = new Date().toISOString().slice(0, 10);
@@ -1110,177 +1200,229 @@
         }
 
         /** Routes to the right modal — full Edit for Scheduled/In Progress, the narrower Add Service flow for Completed. */
-            async function openEditOrAddService(id) {
-                var b = _bookings.find(function (x) { return x.id === id; }) || await SalonBookings.getOne(id);
-                if (b.status === 'COMPLETED') {
-                    openAddServiceModal(b);
-                } else {
-                    openEditModal(b);
-                }
+        async function openEditOrAddService(id) {
+            var b = _bookings.find(function (x) { return x.id === id; }) || await SalonBookings.getOne(id);
+            if (b.status === 'COMPLETED') {
+                openAddServiceModal(b);
+            } else {
+                openEditModal(b);
             }
+        }
 
-            function edLine(container, serviceId, quantity) {
-                var row = document.createElement('div');
-                row.className = 'line-row';
-                row.innerHTML =
-                    '<select class="form-select form-select-sm line-service-select"></select>' +
-                    '<input type="number" min="1" value="' + (quantity || 1) + '" class="form-control form-control-sm line-qty">' +
-                    '<div class="line-row-total">—</div>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
-                container.appendChild(row);
+        function edLine(container, serviceId, quantity) {
+            var row = document.createElement('div');
+            row.className = 'line-row';
+            row.innerHTML =
+                '<select class="form-select form-select-sm line-service-select"></select>' +
+                '<input type="number" min="1" value="' + (quantity || 1) + '" class="form-control form-control-sm line-qty">' +
+                '<div class="line-row-total">—</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
+            container.appendChild(row);
+            var sel = row.querySelector('.line-service-select');
+            populateServiceSelect(sel);
+            if (serviceId) sel.value = serviceId;
+
+            sel.addEventListener('change', updateEditEstimatedTotal);
+            row.querySelector('.line-qty').addEventListener('input', updateEditEstimatedTotal);
+            row.querySelector('.btn-remove-line').addEventListener('click', function () { row.remove(); updateEditEstimatedTotal(); });
+            return row;
+        }
+
+        function addEditServiceLine() { edLine(document.getElementById('eb-service-lines')); updateEditEstimatedTotal(); }
+
+        function updateEditEstimatedTotal() {
+            var total = 0;
+            document.querySelectorAll('#eb-service-lines .line-row').forEach(function (row) {
                 var sel = row.querySelector('.line-service-select');
-                populateServiceSelect(sel);
-                if (serviceId) sel.value = serviceId;
+                var qty = Number(row.querySelector('.line-qty').value) || 0;
+                var opt = sel.options[sel.selectedIndex];
+                var price = opt ? Number(opt.dataset.price || 0) : 0;
+                var lineTotal = price * qty;
+                row.querySelector('.line-row-total').textContent = opt && opt.value ? SalonBookings.formatMoney(lineTotal) : '—';
+                total += lineTotal;
+            });
+            document.getElementById('eb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(total);
+        }
 
-                sel.addEventListener('change', updateEditEstimatedTotal);
-                row.querySelector('.line-qty').addEventListener('input', updateEditEstimatedTotal);
-                row.querySelector('.btn-remove-line').addEventListener('click', function () { row.remove(); updateEditEstimatedTotal(); });
-                return row;
+        async function openEditModal(b) {
+            _editingBookingId = b.id;
+            document.getElementById('edit-booking-error').classList.add('d-none');
+            document.getElementById('eb-booking-code').textContent = b.bookingCode || '';
+            document.getElementById('eb-customer-name').value = b.customerName || '';
+            document.getElementById('eb-customer-phone').value = b.customerPhone || '';
+            document.getElementById('eb-date').value = (b.bookingDate || '').slice(0, 10);
+            document.getElementById('eb-date').min = new Date().toISOString().slice(0, 10);
+            document.getElementById('eb-time').value = b.bookingTime || '';
+            document.getElementById('eb-notes').value = b.notes || '';
+            document.getElementById('eb-service-lines').innerHTML = '';
+
+            await loadServices(b.branchId || (b.branch && b.branch.id));
+
+            var staffSel = document.getElementById('eb-staff');
+            staffSel.innerHTML = '<option value="">Loading…</option>';
+            try {
+                var staffResult = await Staff.getAll({ locationId: b.branchId || (b.branch && b.branch.id), limit: 100 });
+                var staffList = staffResult.data || [];
+                staffSel.innerHTML = staffList.length
+                    ? staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
+                    : '<option value="">No staff at this branch</option>';
+                if (b.assignedStaffId) staffSel.value = b.assignedStaffId;
+            } catch (e) { staffSel.innerHTML = '<option value="">Failed to load staff</option>'; }
+
+            var container = document.getElementById('eb-service-lines');
+            (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
+                edLine(container, line.service ? line.service.id : undefined, line.quantity);
+            });
+            updateEditEstimatedTotal();
+
+            new bootstrap.Modal(document.getElementById('modal-edit-booking')).show();
+        }
+
+        async function submitEditBooking() {
+            var errEl = document.getElementById('edit-booking-error');
+            errEl.classList.add('d-none');
+
+            var services = [];
+            document.querySelectorAll('#eb-service-lines .line-row').forEach(function (row) {
+                var serviceId = row.querySelector('.line-service-select').value;
+                var quantity = Number(row.querySelector('.line-qty').value) || 1;
+                if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+            });
+            if (!services.length) {
+                errEl.textContent = 'At least one service is required.';
+                errEl.classList.remove('d-none');
+                return;
             }
 
-            function addEditServiceLine() { edLine(document.getElementById('eb-service-lines')); updateEditEstimatedTotal(); }
+            var payload = {
+                customerName: document.getElementById('eb-customer-name').value.trim() || undefined,
+                customerPhone: document.getElementById('eb-customer-phone').value.trim() || undefined,
+                assignedStaffId: document.getElementById('eb-staff').value || undefined,
+                bookingDate: document.getElementById('eb-date').value || undefined,
+                bookingTime: document.getElementById('eb-time').value || undefined,
+                notes: document.getElementById('eb-notes').value.trim(),
+                services: services,
+            };
 
-            function updateEditEstimatedTotal() {
-                var total = 0;
-                document.querySelectorAll('#eb-service-lines .line-row').forEach(function (row) {
-                    var sel = row.querySelector('.line-service-select');
-                    var qty = Number(row.querySelector('.line-qty').value) || 0;
-                    var opt = sel.options[sel.selectedIndex];
-                    var price = opt ? Number(opt.dataset.price || 0) : 0;
-                    var lineTotal = price * qty;
-                    row.querySelector('.line-row-total').textContent = opt && opt.value ? SalonBookings.formatMoney(lineTotal) : '—';
-                    total += lineTotal;
-                });
-                document.getElementById('eb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(total);
+            var btn = document.getElementById('btn-submit-edit-booking');
+            btn.disabled = true;
+            try {
+                await SalonBookings.editBooking(_editingBookingId, payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-edit-booking')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save changes.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
             }
+        }
 
-            async function openEditModal(b) {
-                _editingBookingId = b.id;
-                document.getElementById('edit-booking-error').classList.add('d-none');
-                document.getElementById('eb-booking-code').textContent = b.bookingCode || '';
-                document.getElementById('eb-customer-name').value = b.customerName || '';
-                document.getElementById('eb-customer-phone').value = b.customerPhone || '';
-                document.getElementById('eb-date').value = (b.bookingDate || '').slice(0, 10);
-                document.getElementById('eb-date').min = new Date().toISOString().slice(0, 10);
-                document.getElementById('eb-time').value = b.bookingTime || '';
-                document.getElementById('eb-notes').value = b.notes || '';
-                document.getElementById('eb-service-lines').innerHTML = '';
+        async function openAddServiceModal(b) {
+            _addServiceBookingId = b.id;
+            document.getElementById('add-service-error').classList.add('d-none');
+            document.getElementById('as-booking-code').textContent = b.bookingCode || '';
+            document.getElementById('as-quantity').value = 1;
+            await loadServices(b.branchId || (b.branch && b.branch.id));
+            populateServiceSelect(document.getElementById('as-service-select'));
+            new bootstrap.Modal(document.getElementById('modal-add-service')).show();
+        }
 
-                await loadServices(b.branchId || (b.branch && b.branch.id));
-
-                var staffSel = document.getElementById('eb-staff');
-                staffSel.innerHTML = '<option value="">Loading…</option>';
-                try {
-                    var staffResult = await Staff.getAll({ locationId: b.branchId || (b.branch && b.branch.id), limit: 100 });
-                    var staffList = staffResult.data || [];
-                    staffSel.innerHTML = staffList.length
-                        ? staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
-                        : '<option value="">No staff at this branch</option>';
-                    if (b.assignedStaffId) staffSel.value = b.assignedStaffId;
-                } catch (e) { staffSel.innerHTML = '<option value="">Failed to load staff</option>'; }
-
-                var container = document.getElementById('eb-service-lines');
-                (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
-                    edLine(container, line.service ? line.service.id : undefined, line.quantity);
-                });
-                updateEditEstimatedTotal();
-
-                new bootstrap.Modal(document.getElementById('modal-edit-booking')).show();
+        async function submitAddService() {
+            var errEl = document.getElementById('add-service-error');
+            errEl.classList.add('d-none');
+            var serviceId = document.getElementById('as-service-select').value;
+            var quantity = Number(document.getElementById('as-quantity').value) || 1;
+            if (!serviceId) {
+                errEl.textContent = 'Please select a service.';
+                errEl.classList.remove('d-none');
+                return;
             }
+            var btn = document.getElementById('btn-submit-add-service');
+            btn.disabled = true;
+            try {
+                await SalonBookings.addServiceToCompletedBooking(_addServiceBookingId, { serviceId: serviceId, quantity: quantity });
+                bootstrap.Modal.getInstance(document.getElementById('modal-add-service')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to add service.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
 
-            async function submitEditBooking() {
-                var errEl = document.getElementById('edit-booking-error');
-                errEl.classList.add('d-none');
+        async function printBooking(id) {
+            try {
+                var b = _bookings.find(function (x) { return x.id === id; }) || await SalonBookings.getOne(id);
+                document.getElementById('pr-booking-code').textContent = b.bookingCode || '—';
+                document.getElementById('pr-datetime').textContent = SalonBookings.formatDate(b.bookingDate) + ' · ' + (b.bookingTime || '');
+                document.getElementById('pr-customer').textContent = (b.customerName || '—') + (b.customerPhone ? ' (' + b.customerPhone + ')' : '');
+                document.getElementById('pr-stylist').textContent = b.assignedStaff ? b.assignedStaff.name : '—';
+                document.getElementById('pr-branch').textContent = b.branch ? b.branch.name : '';
+                // createdBy is only set when a staff member entered the
+                // booking directly — a customer's own self-service
+                // reservation has no staff "author" to credit, so this
+                // reads honestly as "Online booking" rather than blank
+                // or a misleading name.
+                document.getElementById('pr-served-by').textContent = b.createdBy ? b.createdBy.name : 'Online booking';
+                var servicesContainer = document.getElementById('pr-services-list');
+                var services = b.services || [];
+                servicesContainer.innerHTML = services.length
+                    ? services.map(function (s) {
+                        var name = esc(s.service ? s.service.name : 'Service');
+                        var qty = s.quantity && s.quantity > 1 ? ' x' + s.quantity : '';
+                        return '<div class="pr-service-line"><span>' + name + qty + '</span></div>';
+                    }).join('')
+                    : '<div class="pr-service-line"><span>—</span></div>';
+                document.getElementById('pr-amount').textContent = SalonBookings.formatMoney(b.totalAmount);
+                document.getElementById('pr-status').textContent = String(b.status || '').replace(/_/g, ' ');
+                window.print();
+            } catch (e) {
+                alert(e.message || 'Could not prepare receipt for printing.');
+            }
+        }
 
-                var services = [];
-                document.querySelectorAll('#eb-service-lines .line-row').forEach(function (row) {
-                    var serviceId = row.querySelector('.line-service-select').value;
-                    var quantity = Number(row.querySelector('.line-qty').value) || 1;
-                    if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
-                });
-                if (!services.length) {
-                    errEl.textContent = 'At least one service is required.';
-                    errEl.classList.remove('d-none');
-                    return;
+        var _nbLinkToVerifiedUser = false;
+        var _nbPhoneMatchLastChecked = '';
+
+        async function nbCheckPhoneMatch() {
+            var phone = document.getElementById('nb-customer-phone').value.trim();
+            var promptEl = document.getElementById('nb-phone-match-prompt');
+            if (!phone || phone === _nbPhoneMatchLastChecked) return;
+            _nbPhoneMatchLastChecked = phone;
+            _nbLinkToVerifiedUser = false;
+            promptEl.classList.add('d-none');
+
+            try {
+                var result = await SalonBookings.checkPhoneMatch(phone);
+                if (result.hasMatch) {
+                    document.getElementById('nb-phone-match-text').textContent =
+                        'This number matches ' + result.accountName + '\u2019s verified account. Link this visit to their account?';
+                    promptEl.classList.remove('d-none');
                 }
-
-                var payload = {
-                    customerName: document.getElementById('eb-customer-name').value.trim() || undefined,
-                    customerPhone: document.getElementById('eb-customer-phone').value.trim() || undefined,
-                    assignedStaffId: document.getElementById('eb-staff').value || undefined,
-                    bookingDate: document.getElementById('eb-date').value || undefined,
-                    bookingTime: document.getElementById('eb-time').value || undefined,
-                    notes: document.getElementById('eb-notes').value.trim(),
-                    services: services,
-                };
-
-                var btn = document.getElementById('btn-submit-edit-booking');
-                btn.disabled = true;
-                try {
-                    await SalonBookings.editBooking(_editingBookingId, payload);
-                    bootstrap.Modal.getInstance(document.getElementById('modal-edit-booking')).hide();
-                    loadBookings();
-                } catch (e) {
-                    errEl.textContent = e.message || 'Failed to save changes.';
-                    errEl.classList.remove('d-none');
-                } finally {
-                    btn.disabled = false;
-                }
+            } catch (e) {
+                // Non-critical -- booking creation still works without this check succeeding.
             }
+        }
 
-            async function openAddServiceModal(b) {
-                _addServiceBookingId = b.id;
-                document.getElementById('add-service-error').classList.add('d-none');
-                document.getElementById('as-booking-code').textContent = b.bookingCode || '';
-                document.getElementById('as-quantity').value = 1;
-                await loadServices(b.branchId || (b.branch && b.branch.id));
-                populateServiceSelect(document.getElementById('as-service-select'));
-                new bootstrap.Modal(document.getElementById('modal-add-service')).show();
-            }
+        document.getElementById('nb-customer-phone').addEventListener('blur', nbCheckPhoneMatch);
+        // Any further edit to the phone invalidates whatever was last confirmed/checked.
+        document.getElementById('nb-customer-phone').addEventListener('input', function () {
+            _nbLinkToVerifiedUser = false;
+            _nbPhoneMatchLastChecked = '';
+            document.getElementById('nb-phone-match-prompt').classList.add('d-none');
+        });
+        document.getElementById('nb-phone-match-yes').addEventListener('click', function () {
+            _nbLinkToVerifiedUser = true;
+            document.getElementById('nb-phone-match-prompt').classList.add('d-none');
+        });
+        document.getElementById('nb-phone-match-no').addEventListener('click', function () {
+            _nbLinkToVerifiedUser = false;
+            document.getElementById('nb-phone-match-prompt').classList.add('d-none');
+        });
 
-            async function submitAddService() {
-                var errEl = document.getElementById('add-service-error');
-                errEl.classList.add('d-none');
-                var serviceId = document.getElementById('as-service-select').value;
-                var quantity = Number(document.getElementById('as-quantity').value) || 1;
-                if (!serviceId) {
-                    errEl.textContent = 'Please select a service.';
-                    errEl.classList.remove('d-none');
-                    return;
-                }
-                var btn = document.getElementById('btn-submit-add-service');
-                btn.disabled = true;
-                try {
-                    await SalonBookings.addServiceToCompletedBooking(_addServiceBookingId, { serviceId: serviceId, quantity: quantity });
-                    bootstrap.Modal.getInstance(document.getElementById('modal-add-service')).hide();
-                    loadBookings();
-                } catch (e) {
-                    errEl.textContent = e.message || 'Failed to add service.';
-                    errEl.classList.remove('d-none');
-                } finally {
-                    btn.disabled = false;
-                }
-            }
-
-            async function printBooking(id) {
-                try {
-                    var b = _bookings.find(function (x) { return x.id === id; }) || await SalonBookings.getOne(id);
-                    var services = (b.services || []).map(function (s) { return esc(s.service ? s.service.name : ''); }).join(', ');
-                    document.getElementById('pr-booking-code').textContent = b.bookingCode || '—';
-                    document.getElementById('pr-datetime').textContent = SalonBookings.formatDate(b.bookingDate) + ' · ' + (b.bookingTime || '');
-                    document.getElementById('pr-customer').textContent = (b.customerName || '—') + (b.customerPhone ? ' (' + b.customerPhone + ')' : '');
-                    document.getElementById('pr-stylist').textContent = b.assignedStaff ? b.assignedStaff.name : '—';
-                    document.getElementById('pr-branch').textContent = b.branch ? b.branch.name : '—';
-                    document.getElementById('pr-services').textContent = services || '—';
-                    document.getElementById('pr-amount').textContent = SalonBookings.formatMoney(b.totalAmount);
-                    document.getElementById('pr-status').textContent = String(b.status || '').replace(/_/g, ' ');
-                    window.print();
-                } catch (e) {
-                    alert(e.message || 'Could not prepare receipt for printing.');
-                }
-            }
-
-            async function submitNewBooking() {
+        async function submitNewBooking() {
             var errEl = document.getElementById('booking-form-error');
             errEl.classList.add('d-none');
 
@@ -1325,6 +1467,7 @@
             var payload = {
                 branchId: branchId, assignedStaffId: assignedStaffId,
                 customerName: customerName, customerPhone: customerPhone || undefined,
+                linkToVerifiedUser: _nbLinkToVerifiedUser || undefined,
                 bookingDate: bookingDate, bookingTime: bookingTime,
                 services: services,
                 inventoryItems: inventoryItems.length ? inventoryItems : undefined,

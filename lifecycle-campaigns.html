@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Lifecycle Campaigns</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Contacts</div>
+                            <h2 class="page-title">Lifecycle Campaigns</h2>
+                            <div class="text-secondary small mt-1">Automated messages sent when a customer's
+                                lifecycle stage changes (e.g. Active → At Risk).</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-primary" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Templates</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Target Lifecycle</th>
+                                        <th>Channel</th>
+                                        <th>Status</th>
+                                        <th>Delay</th>
+                                        <th>Cooldown</th>
+                                        <th>Message Preview</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">New Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Target Lifecycle</label>
+                            <select class="form-select" id="f-target-lifecycle">
+                                <option value="NEW">New</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="AT_RISK">At Risk</option>
+                                <option value="DORMANT">Dormant</option>
+                                <option value="INACTIVE">Inactive</option>
+                                <option value="NEVER_VISITED">Never Visited</option>
+                            </select>
+                            <div class="form-hint">The customer's stage <strong>after</strong> the transition — a
+                                message is triggered the moment someone lands here.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Channel</label>
+                            <select class="form-select" id="f-channel">
+                                <option value="EMAIL">Email</option>
+                                <option value="SMS">SMS</option>
+                                <option value="PUSH">Push Notification</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="f-subject-wrap">
+                        <label class="form-label">Subject <span class="text-secondary">(Email only)</span></label>
+                        <input type="text" class="form-control" id="f-subject" placeholder="We miss you at Hairlux!">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" id="f-body" rows="4"
+                            placeholder="Hi {{firstName}}, it's been a while since your last visit on {{lastVisitDate}} — we'd love to see you again!"></textarea>
+                        <div class="form-hint">Available placeholders: <code>{{firstName}}</code>,
+                            <code>{{lastName}}</code>, <code>{{lastVisitDate}}</code>.
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Delay (days)</label>
+                            <input type="number" min="0" class="form-control" id="f-delay-days" value="0">
+                            <div class="form-hint">Days to wait after the transition before sending.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cooldown (days)</label>
+                            <input type="number" min="0" class="form-control" id="f-cooldown-days" value="30">
+                            <div class="form-hint">Minimum gap before this template can send to the same person
+                                again.</div>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="f-enabled" checked>
+                        <label class="form-check-label" for="f-enabled">Enabled</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/lifecycle-campaigns.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var editingId = null;
+        var editingHasFixedKey = false; // true when editing -- target/channel become read-only, see openForm()
+
+        var LIFECYCLE_LABELS = {
+            NEW: 'New', ACTIVE: 'Active', AT_RISK: 'At Risk', DORMANT: 'Dormant',
+            INACTIVE: 'Inactive', NEVER_VISITED: 'Never Visited',
+        };
+        var CHANNEL_LABELS = { EMAIL: 'Email', SMS: 'SMS', PUSH: 'Push' };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            RBAC.applyPageGuard('lifecycle_campaigns:read');
+
+            document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('f-channel').addEventListener('change', syncSubjectVisibility);
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function syncSubjectVisibility() {
+            var isEmail = document.getElementById('f-channel').value === 'EMAIL';
+            document.getElementById('f-subject-wrap').style.display = isEmail ? 'block' : 'none';
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var list = await LifecycleCampaigns.getAll();
+                document.getElementById('results-label').textContent = list.length + ' template' + (list.length === 1 ? '' : 's');
+                tbody.innerHTML = list.length
+                    ? list.map(function (t) {
+                        var statusBadge = t.isEnabled
+                            ? '<span class="badge bg-green-lt">Enabled</span>'
+                            : '<span class="badge bg-secondary-lt">Disabled</span>';
+                        var preview = (t.subject ? '<strong>' + esc(t.subject) + '</strong> — ' : '') + esc((t.bodyTemplate || '').slice(0, 60)) + (t.bodyTemplate && t.bodyTemplate.length > 60 ? '…' : '');
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(LIFECYCLE_LABELS[t.targetLifecycle] || t.targetLifecycle) + '</td>' +
+                            '<td>' + esc(CHANNEL_LABELS[t.channel] || t.channel) + '</td>' +
+                            '<td>' + statusBadge + '</td>' +
+                            '<td>' + t.delayDays + ' day' + (t.delayDays === 1 ? '' : 's') + '</td>' +
+                            '<td>' + t.cooldownDays + ' day' + (t.cooldownDays === 1 ? '' : 's') + '</td>' +
+                            '<td class="text-secondary small" style="max-width:280px;">' + preview + '</td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + t.id + '\')">Edit</button>' +
+                            '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + t.id + '\')">Delete</button>' +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="7" class="text-center text-secondary py-5">No templates yet — nothing sends until at least one is created.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function openForm(id) {
+            editingId = id;
+            editingHasFixedKey = !!id;
+            document.getElementById('form-error').classList.add('d-none');
+            document.getElementById('modal-form-title').textContent = id ? 'Edit Template' : 'New Template';
+            document.getElementById('f-target-lifecycle').disabled = editingHasFixedKey;
+            document.getElementById('f-channel').disabled = editingHasFixedKey;
+
+            if (id) {
+                try {
+                    var t = await LifecycleCampaigns.getOne(id);
+                    document.getElementById('f-target-lifecycle').value = t.targetLifecycle;
+                    document.getElementById('f-channel').value = t.channel;
+                    document.getElementById('f-subject').value = t.subject || '';
+                    document.getElementById('f-body').value = t.bodyTemplate || '';
+                    document.getElementById('f-delay-days').value = t.delayDays;
+                    document.getElementById('f-cooldown-days').value = t.cooldownDays;
+                    document.getElementById('f-enabled').checked = !!t.isEnabled;
+                } catch (e) {
+                    alert(e.message || 'Failed to load.');
+                    return;
+                }
+            } else {
+                document.getElementById('f-target-lifecycle').value = 'AT_RISK';
+                document.getElementById('f-channel').value = 'EMAIL';
+                document.getElementById('f-subject').value = '';
+                document.getElementById('f-body').value = '';
+                document.getElementById('f-delay-days').value = 0;
+                document.getElementById('f-cooldown-days').value = 30;
+                document.getElementById('f-enabled').checked = true;
+            }
+            syncSubjectVisibility();
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+            var body = document.getElementById('f-body').value.trim();
+            if (!body) { errEl.textContent = 'Message body is required.'; errEl.classList.remove('d-none'); return; }
+
+            var payload = {
+                bodyTemplate: body,
+                subject: document.getElementById('f-subject').value.trim() || undefined,
+                delayDays: Number(document.getElementById('f-delay-days').value) || 0,
+                cooldownDays: Number(document.getElementById('f-cooldown-days').value) || 0,
+                isEnabled: document.getElementById('f-enabled').checked,
+            };
+            if (!editingHasFixedKey) {
+                payload.targetLifecycle = document.getElementById('f-target-lifecycle').value;
+                payload.channel = document.getElementById('f-channel').value;
+            }
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                if (editingId) await LifecycleCampaigns.update(editingId, payload);
+                else await LifecycleCampaigns.create(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function remove(id) {
+            if (!confirm('Delete this template? Any customer currently mid-cooldown for it keeps that history, but this template will never send again.')) return;
+            try {
+                await LifecycleCampaigns.remove(id);
+                load();
+            } catch (e) {
+                alert(e.message || 'Failed to delete.');
+            }
+        }
+    </script>
+</body>
+
+</html>

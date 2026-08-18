@@ -268,6 +268,26 @@ const Staff = (() => {
         return jsonFetch("/admin/staff/" + id + "/directives");
     }
 
+    async function setCompensation(id, payload) {
+        return jsonFetch("/admin/payroll/staff/" + id + "/compensation", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getCompensationHistory(id) {
+        return jsonFetch("/admin/payroll/staff/" + id + "/compensation/history");
+    }
+
+    async function requestAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification/request", { method: "POST" });
+    }
+
+    async function getAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification");
+    }
+
     async function getPassportPhotoUrl(id) {
         return jsonFetch("/admin/staff/" + id + "/passport-photo");
     }
@@ -346,6 +366,8 @@ const Staff = (() => {
         updateOnboardingItem,
         getDocumentStatus,
         getDirectives,
+        setCompensation, getCompensationHistory,
+        requestAddressVerification, getAddressVerification,
         getPassportPhotoUrl,
         idCardUrl,
         downloadIdCard,

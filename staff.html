@@ -526,6 +526,10 @@
                 var onboardingApprove = e.target.closest(".btn-onboarding-approve");
                 var onboardingReject = e.target.closest(".btn-onboarding-reject");
                 var editWorkCalendar = e.target.closest(".btn-edit-work-calendar");
+                var setCompensationBtn = e.target.closest(".btn-oc-set-compensation");
+                var requestAddressVerificationBtn = e.target.closest(".btn-oc-request-address-verification");
+                if (setCompensationBtn) return handleSetCompensation(setCompensationBtn.dataset.id);
+                if (requestAddressVerificationBtn) return handleRequestAddressVerification(requestAddressVerificationBtn.dataset.id);
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
                 if (editHist) return handleEditHistory(editHist.dataset.staffId, editHist.dataset.historyId);
                 if (delHist) return handleDeleteHistory(delHist.dataset.staffId, delHist.dataset.historyId);
@@ -733,6 +737,7 @@
             EMERGENCY_CONTACT: 'Emergency Contact',
             REFERENCE_CHECK: 'Reference Check',
             ADDRESS_VERIFICATION: 'Address Verification',
+            PHYSICAL_ADDRESS_VERIFICATION: 'Physical Address Verification',
             PASSPORT_PHOTO: 'Passport Photo',
             POLICY_ACKNOWLEDGMENT: 'Policy Acknowledgment',
         };
@@ -757,7 +762,14 @@
             if (!onboarding) {
                 return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load onboarding checklist.</div>';
             }
-            var items = onboarding.items || [];
+            // PHYSICAL_ADDRESS_VERIFICATION deliberately excluded here --
+            // it's a separate, selective (admin-requested-only) track with
+            // its own dedicated section below (renderAddressVerificationStatus),
+            // never the generic Approve/Reject flow this checklist uses.
+            // Approving it generically here would bypass QoreID entirely --
+            // marking it verified with no actual physical check having
+            // happened.
+            var items = (onboarding.items || []).filter(function (i) { return i.type !== 'PHYSICAL_ADDRESS_VERIFICATION'; });
             var doneCount = items.filter(function (i) { return i.isComplete; }).length;
             var pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
 
@@ -1058,6 +1070,32 @@
             }
         });
 
+        var ADDRESS_VERIFICATION_BADGE = {
+            REQUESTED: 'bg-secondary-lt', SUBMITTED: 'bg-warning-lt',
+            VERIFIED: 'bg-success-lt', REJECTED: 'bg-danger-lt', FAILED: 'bg-danger-lt',
+        };
+        var ADDRESS_VERIFICATION_LABEL = {
+            REQUESTED: 'Awaiting staff submission', SUBMITTED: 'In progress (24-48h)',
+            VERIFIED: 'Verified', REJECTED: 'Rejected', FAILED: 'Failed',
+        };
+
+        function renderAddressVerificationStatus(av) {
+            if (!av) {
+                return '<div class="text-secondary small">Not yet requested.</div>';
+            }
+            var badgeClass = ADDRESS_VERIFICATION_BADGE[av.status] || 'bg-secondary-lt';
+            var label = ADDRESS_VERIFICATION_LABEL[av.status] || av.status;
+            var html = '<div class="small mb-1"><span class="badge ' + badgeClass + '">' + esc(label) + '</span></div>';
+            if (av.status === 'SUBMITTED' && av.street) {
+                html += '<div class="text-secondary small">' + esc([av.street, av.city, av.stateName].filter(Boolean).join(', ')) + '</div>';
+                html += '<div class="text-secondary small">Submitted ' + esc(Staff.formatDate(av.submittedAt)) + '</div>';
+            }
+            if ((av.status === 'VERIFIED' || av.status === 'REJECTED') && av.reportUrl) {
+                html += '<div class="small mt-1"><a href="' + esc(av.reportUrl) + '" target="_blank" rel="noopener">View QoreID report</a></div>';
+            }
+            return html;
+        }
+
         function renderDirectivesSection(directives) {
             if (!directives) {
                 return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load tasks.</div>';
@@ -1093,7 +1131,10 @@
                 var passportPhotoResult = await Staff.getPassportPhotoUrl(id).catch(function () { return null; });
                 var passportPhotoUrl = passportPhotoResult && passportPhotoResult.viewUrl;
                 var roleAssignment = await Staff.getRoleAssignment(id).catch(function () { return { adminRoleId: null, adminRoleName: null, hasAdminPortalLogin: false, linkedToUserAccount: false }; });
-                var workCalendarResult = await Staff.getWorkCalendar(id).catch(function () { return null; }); var history = s.histories || s.employmentHistory || s.history || [];
+                var workCalendarResult = await Staff.getWorkCalendar(id).catch(function () { return null; });
+                var compensationHistory = await Staff.getCompensationHistory(id).catch(function () { return []; });
+                var addressVerification = await Staff.getAddressVerification(id).catch(function () { return null; });
+                var history = s.histories || s.employmentHistory || s.history || [];
                 var employmentStartDate = s.employmentStartDate || s.startDate || null;
                 if (!employmentStartDate && history.length) {
                     employmentStartDate = history
@@ -1135,6 +1176,40 @@
                     '<div class="mb-3">' +
                     '<div class="fw-semibold mb-1">Tasks &amp; Directives</div>' +
                     renderDirectivesSection(directivesResult) +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Compensation</div>' +
+                    '<button class="btn btn-xs btn-outline-primary btn-oc-set-compensation" data-id="' + esc(s.id) + '">Set</button>' +
+                    '</div>' +
+                    '<div class="small mb-2">' +
+                    (s.currentBaseSalary != null
+                        ? 'Base: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentBaseSalary) : ('\u20a6' + Number(s.currentBaseSalary).toLocaleString())) + '</strong>' +
+                        (s.currentAllowances != null ? ' &middot; Allowances: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentAllowances) : ('\u20a6' + Number(s.currentAllowances).toLocaleString())) + '</strong>' : '')
+                        : '<span class="text-secondary">Not set yet.</span>') +
+                    '</div>' +
+                    (compensationHistory.length
+                        ? '<div class="d-flex flex-column gap-1">' +
+                        compensationHistory.map(function (c) {
+                            var changedByName = c.changedBy ? c.changedBy.name : 'System';
+                            return '<div class="history-item">' +
+                                '<div class="fw-semibold small">' + esc(Staff.formatMoney ? Staff.formatMoney(c.baseSalary) : ('\u20a6' + Number(c.baseSalary).toLocaleString())) +
+                                (c.allowances != null ? ' + ' + esc(Staff.formatMoney ? Staff.formatMoney(c.allowances) : ('\u20a6' + Number(c.allowances).toLocaleString())) + ' allowances' : '') + '</div>' +
+                                '<div class="text-secondary small">Effective ' + esc(Staff.formatDate(c.effectiveDate)) + ' &middot; Set by ' + esc(changedByName) + '</div>' +
+                                (c.note ? '<div class="text-secondary small">' + esc(c.note) + '</div>' : '') +
+                                '</div>';
+                        }).join('') +
+                        '</div>'
+                        : '<div class="text-secondary small">No compensation history yet.</div>') +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Address Verification</div>' +
+                    (!addressVerification || addressVerification.status === 'FAILED' || addressVerification.status === 'REJECTED'
+                        ? '<button class="btn btn-xs btn-outline-primary btn-oc-request-address-verification" data-id="' + esc(s.id) + '">' + (addressVerification ? 'Re-request' : 'Request') + '</button>'
+                        : '') +
+                    '</div>' +
+                    (renderAddressVerificationStatus(addressVerification)) +
                     '</div>' +
                     '<div class="d-flex align-items-center justify-content-between mb-2">' +
                     '<div class="fw-semibold">Employment History</div>' +
@@ -1356,6 +1431,21 @@
                 return;
             }
 
+            if (action.type === "compensation") {
+                form.innerHTML =
+                    (d.currentBaseSalary != null
+                        ? '<div class="col-12"><div class="alert alert-info mb-0">Current: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(d.currentBaseSalary) : ('\u20a6' + Number(d.currentBaseSalary).toLocaleString())) + '</strong>' +
+                        (d.currentAllowances != null ? ' + <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(d.currentAllowances) : ('\u20a6' + Number(d.currentAllowances).toLocaleString())) + '</strong> allowances' : '') + '</div></div>'
+                        : '<div class="col-12"><div class="alert alert-info mb-0">No compensation set yet for this staff member.</div></div>') +
+                    buildInput('col-md-6', 'Base Salary (\u20a6)', 'sf-comp-base-salary', d.currentBaseSalary != null ? d.currentBaseSalary : '', 'number') +
+                    buildInput('col-md-6', 'Allowances (\u20a6)', 'sf-comp-allowances', d.currentAllowances != null ? d.currentAllowances : '', 'number') +
+                    buildInput('col-md-6', 'Effective Date', 'sf-comp-effective-date', new Date().toISOString().slice(0, 10), 'date') +
+                    '<div class="col-md-6"></div>' +
+                    '<div class="col-12"><label class="form-label" for="sf-comp-note">Note</label><textarea class="form-control" id="sf-comp-note" rows="2" placeholder="e.g. Annual review — 10% increase"></textarea></div>' +
+                    '<div class="col-12"><div class="form-hint">This is the ongoing figure Payroll reads from — distinct from the original offer letter, which is a one-time pre-hire snapshot. Every change is recorded in this staff member\'s compensation history.</div></div>';
+                return;
+            }
+
             if (action.type === "assign-role") {
                 var roleOpts = (d.roleOptions || []).map(function (r) { return { value: r.id, label: r.name }; });
                 form.innerHTML =
@@ -1477,6 +1567,19 @@
                 return transferPayload;
             }
 
+            if (actionType === "compensation") {
+                var baseSalaryInput = document.getElementById("sf-comp-base-salary").value;
+                var allowancesInput = document.getElementById("sf-comp-allowances").value;
+                var compPayload = {
+                    baseSalary: baseSalaryInput === "" ? undefined : Number(baseSalaryInput),
+                    allowances: allowancesInput === "" ? undefined : Number(allowancesInput),
+                    effectiveDate: trimOrUndef(document.getElementById("sf-comp-effective-date").value),
+                    note: trimOrUndef(document.getElementById("sf-comp-note").value),
+                };
+                Object.keys(compPayload).forEach(function (k) { if (compPayload[k] === undefined) delete compPayload[k]; });
+                return compPayload;
+            }
+
             if (actionType === "assign-role") {
                 return {
                     adminRoleId: document.getElementById("sf-assign-role-id").value,
@@ -1547,6 +1650,18 @@
                     return;
                 }
             }
+            if (_staffFormAction.type === "compensation") {
+                if (payload.baseSalary == null || isNaN(payload.baseSalary) || payload.baseSalary < 0) {
+                    errorEl.textContent = "Please enter a valid base salary.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
+                if (!payload.effectiveDate) {
+                    errorEl.textContent = "Please select an effective date.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
+            }
             if (_staffFormAction.type === "assign-role") {
                 if (!payload.adminRoleId) {
                     errorEl.textContent = "Please select a permission set.";
@@ -1569,6 +1684,7 @@
                 }
                 else if (_staffFormAction.type === "status") await Staff.updateStatus(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "transfer") await Staff.transferBranch(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "compensation") await Staff.setCompensation(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "assign-role") await Staff.assignRole(_staffFormAction.staffId, payload.adminRoleId, payload.grantPortalLogin);
                 else if (_staffFormAction.type === "archive") await Staff.archive(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "add-history") await Staff.addHistory(_staffFormAction.staffId, payload);
@@ -1655,6 +1771,34 @@
                 });
             } catch (err) {
                 alert(err.message || "Failed to load staff for transfer");
+            }
+        }
+
+        async function handleSetCompensation(id) {
+            try {
+                var s = await Staff.getOne(id);
+                openStaffFormModal({
+                    type: "compensation",
+                    staffId: id,
+                    title: "Set Compensation — " + Staff.fullName(s),
+                    help: "Sets the ongoing base salary and allowances Payroll reads from. Every change is recorded in this staff member's compensation history.",
+                    data: {
+                        currentBaseSalary: s.currentBaseSalary,
+                        currentAllowances: s.currentAllowances,
+                    }
+                });
+            } catch (err) {
+                alert(err.message || "Failed to load staff for compensation update");
+            }
+        }
+
+        async function handleRequestAddressVerification(id) {
+            if (!confirm("Request Physical Address Verification for this staff member? They'll see this pending request on their Staff Portal and need to submit their address details there. QoreID's field agents then verify it physically, typically within 24-48 hours.")) return;
+            try {
+                await Staff.requestAddressVerification(id);
+                if (_currentStaffId === id) await openStaffDetail(id);
+            } catch (err) {
+                alert(err.message || "Failed to request address verification");
             }
         }
 
