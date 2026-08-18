@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Branch Finance</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Operations</div>
+                            <h2 class="page-title">Branch Finance</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-3" id="bf-branch-wrap">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="bf-branch" class="form-select form-select-sm">
+                                        <option value="">Select a branch…</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">From</label>
+                                    <input type="date" id="bf-date-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">To</label>
+                                    <input type="date" id="bf-date-to" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-md-3 d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary flex-fill"
+                                        id="btn-bf-refresh">Refresh</button>
+                                    <button type="button" class="btn btn-primary flex-fill" id="btn-bf-reconcile">Submit
+                                        Cash Count</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bf-error" class="alert alert-danger d-none"></div>
+
+                    <!-- Totals -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Walk-in Bookings</div>
+                                    <div class="h3 mb-0" id="bf-total-salon">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Self-Service Bookings</div>
+                                    <div class="h3 mb-0" id="bf-total-selfservice">—</div>
+                                    <div class="text-secondary small" id="bf-total-wallet-note">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Product Sales</div>
+                                    <div class="h3 mb-0" id="bf-total-products">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Revenue</div>
+                                    <div class="h3 mb-0 text-green" id="bf-total-revenue">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Expected Cash</div>
+                                    <div class="h3 mb-0" id="bf-total-cash">—</div>
+                                    <div class="text-secondary small">Excludes wallet payments</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Day-by-day table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Daily Breakdown</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Walk-in</th>
+                                        <th>Self-Service</th>
+                                        <th>Products</th>
+                                        <th>Total Revenue</th>
+                                        <th>Expected Cash</th>
+                                        <th>Stock Received</th>
+                                        <th>Stock Transfers</th>
+                                        <th>Cash Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bf-tbody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-secondary py-4">Loading…</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash Reconciliation Modal -->
+    <div class="modal modal-blur fade" id="modal-reconcile" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Submit Cash Count</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div id="reconcile-error" class="alert alert-danger d-none mx-3 mt-3 mb-0 py-2"></div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="rec-date">
+                    </div>
+                    <div class="mb-3" id="rec-expected-wrap">
+                        <div class="text-secondary small">Expected cash for this date</div>
+                        <div class="h3 mb-0" id="rec-expected">—</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">Cash Counted</label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="rec-cash-counted"
+                            placeholder="0.00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes <span class="text-muted">(optional — explain any
+                                variance)</span></label>
+                        <textarea class="form-control" id="rec-notes" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-submit-reconcile">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-reconcile"></span>
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/branch-finance.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+
+        var isAdmin = false;
+        var lockedBranchId = null;
+        var _lastSummary = null;
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = (s === null || s === undefined) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function todayStr() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        async function init() {
+            var user = Auth.getUser();
+            isAdmin = !!(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
+
+            // No default dates -- an empty filter means "all time", matching
+            // Booking Overview's own behavior when no date filter is applied.
+
+            var branchWrap = document.getElementById('bf-branch-wrap');
+            if (isAdmin) {
+                try {
+                    var branches = await Branches.getBranches();
+                    var sel = document.getElementById('bf-branch');
+                    sel.innerHTML = '<option value="">All Branches</option>' +
+                        branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                } catch (err) {
+                    document.getElementById('bf-error').textContent = 'Failed to load branches.';
+                    document.getElementById('bf-error').classList.remove('d-none');
+                }
+                loadSummary(); // All Branches, All Time by default
+            } else {
+                // Non-admin: locked to their own branch, resolved server-side —
+                // just hide the picker and load immediately.
+                branchWrap.classList.add('d-none');
+                loadSummary();
+            }
+        }
+
+        async function loadSummary() {
+            var branchId = isAdmin ? document.getElementById('bf-branch').value : undefined;
+
+            var dateFrom = document.getElementById('bf-date-from').value;
+            var dateTo = document.getElementById('bf-date-to').value;
+            var errEl = document.getElementById('bf-error');
+            errEl.classList.add('d-none');
+
+            var tbody = document.getElementById('bf-tbody');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+
+            try {
+                console.log('[branch-finance] requesting summary with', { branchId: branchId || '(none — All Branches)', dateFrom: dateFrom || '(none — all time)', dateTo: dateTo || '(none — all time)' });
+                var summary = await BranchFinance.getDailySummary({ branchId: branchId, dateFrom: dateFrom, dateTo: dateTo });
+                console.log('[branch-finance] server responded with', {
+                    resolvedBranchId: summary.branchId,
+                    allBranches: summary.allBranches,
+                    dayCount: (summary.days || []).length,
+                    totals: summary.totals,
+                });
+                _lastSummary = summary;
+                lockedBranchId = summary.branchId;
+                renderTotals(summary.totals);
+                renderTable(summary.days);
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to load summary.';
+                errEl.classList.remove('d-none');
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">Failed to load.</td></tr>';
+            }
+        }
+
+        function renderTotals(t) {
+            document.getElementById('bf-total-salon').textContent = BranchFinance.formatMoney(t.salonBookingRevenue);
+            document.getElementById('bf-total-selfservice').textContent = BranchFinance.formatMoney(t.selfServiceBookingRevenue);
+            document.getElementById('bf-total-wallet-note').textContent = t.selfServiceWalletRevenue > 0
+                ? ('Incl. ' + BranchFinance.formatMoney(t.selfServiceWalletRevenue) + ' via wallet')
+                : 'No wallet payments';
+            document.getElementById('bf-total-products').textContent = BranchFinance.formatMoney(t.productSaleRevenue);
+            document.getElementById('bf-total-revenue').textContent = BranchFinance.formatMoney(t.totalRevenue);
+            document.getElementById('bf-total-cash').textContent = BranchFinance.formatMoney(t.expectedCash);
+        }
+
+        function renderTable(days) {
+            var tbody = document.getElementById('bf-tbody');
+            if (!days.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-4">No data for this range.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = days.map(function (d) {
+                var cashCell = d.reconciliation
+                    ? BranchFinance.formatMoney(d.reconciliation.cashCounted) +
+                    '<div class="small ' + (d.reconciliation.variance === 0 ? 'text-secondary' : (d.reconciliation.variance > 0 ? 'text-success' : 'text-danger')) + '">' +
+                    (d.reconciliation.variance > 0 ? '+' : '') + BranchFinance.formatMoney(d.reconciliation.variance) + ' variance</div>'
+                    : '<span class="text-secondary small">Not submitted</span>';
+                return '<tr>' +
+                    '<td>' + esc(d.date) + '</td>' +
+                    '<td>' + BranchFinance.formatMoney(d.salonBookingRevenue) + '<div class="text-secondary small">' + d.salonBookingCount + ' booking(s)</div></td>' +
+                    '<td>' + BranchFinance.formatMoney(d.selfServiceBookingRevenue) + '<div class="text-secondary small">' + d.selfServiceBookingCount + ' booking(s)</div></td>' +
+                    '<td>' + BranchFinance.formatMoney(d.productSaleRevenue) + '<div class="text-secondary small">' + d.productSaleCount + ' sale(s)</div></td>' +
+                    '<td class="fw-semibold">' + BranchFinance.formatMoney(d.totalRevenue) + '</td>' +
+                    '<td>' + BranchFinance.formatMoney(d.expectedCash) + '</td>' +
+                    '<td>' + d.stockReceived + '</td>' +
+                    '<td>' + '<span class="text-success">+' + d.stockTransferredIn + '</span> / <span class="text-danger">-' + d.stockTransferredOut + '</span></td>' +
+                    '<td>' + cashCell + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        document.getElementById('btn-bf-refresh').addEventListener('click', loadSummary);
+        document.getElementById('bf-branch').addEventListener('change', function () {
+                var opt = this.options[this.selectedIndex];
+                console.log('[branch-finance] branch switched ->', {
+                    name: opt ? opt.textContent : '(All Branches)',
+                    id: this.value || '(none — All Branches)',
+                });
+                loadSummary();
+            });
+
+        document.getElementById('btn-bf-reconcile').addEventListener('click', async function () {
+            if (isAdmin && !document.getElementById('bf-branch').value) {
+                var errEl = document.getElementById('bf-error');
+                errEl.textContent = 'A cash count is per branch — select a specific branch first (not "All Branches").';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            document.getElementById('reconcile-error').classList.add('d-none');
+            document.getElementById('rec-date').value = todayStr();
+            document.getElementById('rec-cash-counted').value = '';
+            document.getElementById('rec-notes').value = '';
+            await loadExpectedForDate();
+            new bootstrap.Modal(document.getElementById('modal-reconcile')).show();
+        });
+
+        document.getElementById('rec-date').addEventListener('change', loadExpectedForDate);
+
+        async function loadExpectedForDate() {
+            var date = document.getElementById('rec-date').value;
+            var expectedEl = document.getElementById('rec-expected');
+            expectedEl.textContent = 'Loading…';
+            try {
+                var branchId = isAdmin ? document.getElementById('bf-branch').value : undefined;
+                var summary = await BranchFinance.getDailySummary({ branchId: branchId, dateFrom: date, dateTo: date });
+                expectedEl.textContent = BranchFinance.formatMoney(summary.totals.expectedCash);
+            } catch (err) {
+                expectedEl.textContent = '—';
+            }
+        }
+
+        document.getElementById('btn-submit-reconcile').addEventListener('click', async function () {
+            var errEl = document.getElementById('reconcile-error');
+            errEl.classList.add('d-none');
+            var date = document.getElementById('rec-date').value;
+            var cashCounted = document.getElementById('rec-cash-counted').value;
+            var notes = document.getElementById('rec-notes').value.trim();
+
+            if (!date) { errEl.textContent = 'Date is required.'; errEl.classList.remove('d-none'); return; }
+            if (cashCounted === '' || isNaN(Number(cashCounted)) || Number(cashCounted) < 0) {
+                errEl.textContent = 'Enter a valid cash amount.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            var btn = this;
+            var spinner = document.getElementById('spinner-reconcile');
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+
+            try {
+                var payload = { date: date, cashCounted: Number(cashCounted), notes: notes || undefined };
+                if (isAdmin) payload.branchId = document.getElementById('bf-branch').value;
+                await BranchFinance.submitReconciliation(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-reconcile')).hide();
+                loadSummary();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to submit.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        init();
+    </script>
+</body>
+
+</html>

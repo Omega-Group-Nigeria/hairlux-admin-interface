@@ -780,10 +780,14 @@
             }
         }
 
+        function isJobPublished(job) {
+            return job.status === 'PUBLISHED';
+        }
+
         // ── Stats ──────────────────────────────────────────────────────
         function updateStats() {
             const total = _allJobs.length;
-            const published = _allJobs.filter(j => j.isActive).length;
+            const published = _allJobs.filter(j => isJobPublished(j)).length;
             const drafts = total - published;
             document.getElementById('stat-total').textContent = total;
             document.getElementById('stat-published').textContent = published;
@@ -813,7 +817,7 @@
 
             container.innerHTML = jobs.map(job => `
             <div class="job-row${_editingId === job.id ? ' active' : ''}" data-id="${job.id}">
-                <span class="job-status-dot ${job.isActive ? 'published' : 'draft'}" title="${job.isActive ? 'Published' : 'Draft'}"></span>
+                <span class="job-status-dot ${isJobPublished(job) ? 'published' : 'draft'}" title="${isJobPublished(job) ? 'Published' : 'Draft'}"></span>
                 <div class="flex-fill min-w-0">
                     <div class="job-row-title text-truncate">${_esc(job.title)}</div>
                     <div class="job-row-meta">${_esc(job.location || '—')}</div>
@@ -824,8 +828,8 @@
                 </div>
                 <div class="job-row-actions">
                     ${RBAC.can('jobs:toggle') ? `<button class="btn btn-sm btn-ghost-secondary p-1 btn-toggle-pub" data-id="${job.id}"
-                        title="${job.isActive ? 'Unpublish' : 'Publish'}">
-                        ${job.isActive
+                        title="${isJobPublished(job) ? 'Unpublish' : 'Publish'}">
+                        ${isJobPublished(job)
                         ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.584 10.587a2 2 0 0 0 2.828 2.83"/><path d="M9.363 5.365a9.466 9.466 0 0 1 2.637-.365c4 0 7.333 2.333 10 7c-.778 1.361 -1.612 2.524 -2.503 3.488m-2.14 1.861c-1.631 1.1 -3.415 1.651 -5.357 1.651c-4 0 -7.333 -2.333 -10 -7c1.369 -2.395 2.913 -4.175 4.632 -5.341"/></svg>`
                         : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>`
                     }
@@ -853,12 +857,14 @@
                     try {
                         const updated = await Jobs.toggle(id);
                         const idx = _allJobs.findIndex(j => j.id === id);
-                        if (idx !== -1) _allJobs[idx].isActive = updated.isActive ?? !_allJobs[idx].isActive;
+                        // Use the real, persisted status the backend just
+                        // returned directly -- no local flip/guess needed.
+                        if (idx !== -1) _allJobs[idx].status = updated.status;
                         updateStats();
                         renderJobList();
                         // If currently editing this job, update the toggle in form
                         if (_editingId === id) {
-                            document.getElementById('job-is-active').checked = _allJobs[idx].isActive;
+                            document.getElementById('job-is-active').checked = isJobPublished(_allJobs[idx]);
                         }
                     } catch (err) {
                         alert(err.message);
@@ -889,7 +895,7 @@
             });
             document.getElementById('job-closing-date').value = job && job.closingDate
                 ? job.closingDate.slice(0, 10) : '';
-            document.getElementById('job-is-active').checked = job ? !!job.isActive : false;
+            document.getElementById('job-is-active').checked = job ? isJobPublished(job) : false;
 
             // Quill content
             if (_quill) {

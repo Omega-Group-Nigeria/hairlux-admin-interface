@@ -36,12 +36,37 @@ const SalonBookingsSelf = (function () {
         return jsonFetch('/staff/me/salon-bookings/customers/search?q=' + encodeURIComponent(q));
     }
 
+    async function checkPhoneMatch(phone) {
+        if (!phone) return { hasMatch: false };
+        return jsonFetch('/staff/me/salon-bookings/customers/check-phone?phone=' + encodeURIComponent(phone));
+    }
+
     async function create(payload) {
         return jsonFetch('/staff/me/salon-bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
         });
+    }
+
+    async function editBooking(id, payload) {
+        return jsonFetch(`/staff/me/salon-bookings/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function addServiceToCompletedBooking(id, payload) {
+        return jsonFetch(`/staff/me/salon-bookings/${id}/add-service`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getTodayStylistPerformance() {
+        return jsonFetch('/staff/me/salon-bookings/performance/today');
     }
 
     async function addInventoryItem(id, payload) {
@@ -88,5 +113,9 @@ const SalonBookingsSelf = (function () {
         });
     }
 
-    return { getAll, getOne, getBranchStaff, getMyCommission, searchCustomers, create, addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification };
+    return {
+        getAll, getOne, getBranchStaff, getMyCommission, searchCustomers, checkPhoneMatch,
+        create, editBooking, addServiceToCompletedBooking, getTodayStylistPerformance,
+        addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification,
+    }; 
 })();

@@ -19,58 +19,197 @@
     <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
-        .booking-row { cursor: pointer; }
-        .booking-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
-        #bookings-table td { vertical-align: middle; }
-        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
-        .hours-table th, .hours-table td { vertical-align: middle; }
-        .hours-time { max-width: 120px; }
-        .exception-time { max-width: 140px; }
-        .exception-card { border: 1px solid var(--tblr-border-color); border-radius: 6px; padding: .75rem; }
+
+        .booking-row {
+            cursor: pointer;
+        }
+
+        .booking-row:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        #bookings-table td {
+            vertical-align: middle;
+        }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        .hours-table th,
+        .hours-table td {
+            vertical-align: middle;
+        }
+
+        .hours-time {
+            max-width: 120px;
+        }
+
+        .exception-time {
+            max-width: 140px;
+        }
+
+        .exception-card {
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 6px;
+            padding: .75rem;
+        }
+
         /* Booking table */
-        .res-code { font-family: var(--tblr-font-monospace, monospace); font-size: .8rem; font-weight: 600; letter-spacing: .02em; }
-        .svc-list { list-style: none; padding: 0; margin: 0; }
-        .svc-list li { display: flex; justify-content: space-between; align-items: center;
-            padding: 2px 0; border-bottom: 1px solid var(--tblr-border-color-translucent); }
-        .svc-list li:last-child { border-bottom: none; }
-        .svc-list li .svc-name { font-size: .82rem; }
-        .svc-list li .svc-meta { font-size: .75rem; color: var(--tblr-secondary); white-space: nowrap; margin-left: 8px; }
-        #bookings-table { table-layout: auto; }
-        #bookings-table td.td-services { min-width: 200px; white-space: normal; }
+        .res-code {
+            font-family: var(--tblr-font-monospace, monospace);
+            font-size: .8rem;
+            font-weight: 600;
+            letter-spacing: .02em;
+        }
+
+        .svc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .svc-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 0;
+            border-bottom: 1px solid var(--tblr-border-color-translucent);
+        }
+
+        .svc-list li:last-child {
+            border-bottom: none;
+        }
+
+        .svc-list li .svc-name {
+            font-size: .82rem;
+        }
+
+        .svc-list li .svc-meta {
+            font-size: .75rem;
+            color: var(--tblr-secondary);
+            white-space: nowrap;
+            margin-left: 8px;
+        }
+
+        #bookings-table {
+            table-layout: auto;
+        }
+
+        #bookings-table td.td-services {
+            min-width: 200px;
+            white-space: normal;
+        }
+
         /* Calendar */
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-        .cal-day-header { text-align: center; font-size: .75rem; font-weight: 600; padding: 4px 0; color: var(--tblr-secondary); text-transform: uppercase; }
-        .cal-day { min-height: 80px; border: 1px solid var(--tblr-border-color); border-radius: 4px; padding: 4px; font-size: .75rem; }
-        .cal-day.other-month { opacity: .35; }
-        .cal-day.today { border-color: var(--tblr-primary); }
-        .cal-day-num { font-weight: 600; margin-bottom: 2px; }
-        .cal-event { border-radius: 3px; padding: 1px 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .7rem; cursor: pointer; }
-        .cal-event-PENDING { background: var(--tblr-warning-lt); color: var(--tblr-warning); }
-        .cal-event-CONFIRMED { background: var(--tblr-primary-lt); color: var(--tblr-primary); }
-        .cal-event-IN_PROGRESS { background: #fff3cd; color: #d97706; }
-        .cal-event-COMPLETED { background: var(--tblr-success-lt); color: var(--tblr-success); }
-        .cal-event-CANCELLED { background: var(--tblr-danger-lt); color: var(--tblr-danger); }
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .cal-day-header {
+            text-align: center;
+            font-size: .75rem;
+            font-weight: 600;
+            padding: 4px 0;
+            color: var(--tblr-secondary);
+            text-transform: uppercase;
+        }
+
+        .cal-day {
+            min-height: 80px;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 4px;
+            padding: 4px;
+            font-size: .75rem;
+        }
+
+        .cal-day.other-month {
+            opacity: .35;
+        }
+
+        .cal-day.today {
+            border-color: var(--tblr-primary);
+        }
+
+        .cal-day-num {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .cal-event {
+            border-radius: 3px;
+            padding: 1px 4px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: .7rem;
+            cursor: pointer;
+        }
+
+        .cal-event-PENDING {
+            background: var(--tblr-warning-lt);
+            color: var(--tblr-warning);
+        }
+
+        .cal-event-CONFIRMED {
+            background: var(--tblr-primary-lt);
+            color: var(--tblr-primary);
+        }
+
+        .cal-event-IN_PROGRESS {
+            background: #fff3cd;
+            color: #d97706;
+        }
+
+        .cal-event-COMPLETED {
+            background: var(--tblr-success-lt);
+            color: var(--tblr-success);
+        }
+
+        .cal-event-CANCELLED {
+            background: var(--tblr-danger-lt);
+            color: var(--tblr-danger);
+        }
+
         /* Reservation badge */
-        .badge-used { background: var(--tblr-secondary-lt); color: var(--tblr-secondary); }
-        .badge-valid { background: var(--tblr-success-lt); color: var(--tblr-success); }
+        .badge-used {
+            background: var(--tblr-secondary-lt);
+            color: var(--tblr-secondary);
+        }
+
+        .badge-valid {
+            background: var(--tblr-success-lt);
+            color: var(--tblr-success);
+        }
 
         /* ── Booking detail offcanvas (aligned with beautician detail) ── */
         #offcanvas-detail {
             max-width: 100vw;
             overflow-x: hidden;
         }
+
         #offcanvas-detail .offcanvas-body {
             padding: 1.25rem 1.5rem 1.75rem;
             background: var(--tblr-bg-surface-secondary, #f6f8fb);
             overflow-x: hidden;
             max-width: 100%;
         }
-        #offcanvas-detail .offcanvas-header { background: var(--tblr-bg-surface, #fff); }
+
+        #offcanvas-detail .offcanvas-header {
+            background: var(--tblr-bg-surface, #fff);
+        }
+
         #offcanvas-detail-actions {
             background: var(--tblr-bg-surface, #fff);
             max-width: 100%;
             overflow-x: hidden;
         }
+
         .detail-stack {
             display: flex;
             flex-direction: column;
@@ -79,6 +218,7 @@
             max-width: 100%;
             overflow-x: hidden;
         }
+
         .detail-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr);
@@ -86,9 +226,13 @@
             min-width: 0;
             max-width: 100%;
         }
+
         @media (min-width: 576px) {
-            .detail-grid-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+            .detail-grid-2 {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            }
         }
+
         .detail-card {
             background: var(--tblr-bg-surface, #fff);
             border: 1px solid var(--tblr-border-color);
@@ -98,10 +242,12 @@
             min-width: 0;
             max-width: 100%;
         }
+
         .detail-card-hero {
             border: 1px solid var(--tblr-border-color);
             box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
         }
+
         .detail-card-header {
             display: flex;
             align-items: center;
@@ -113,6 +259,7 @@
             background: var(--tblr-bg-surface, #fff);
             min-width: 0;
         }
+
         .detail-card-title {
             font-size: .7rem;
             font-weight: 700;
@@ -123,19 +270,25 @@
             min-width: 0;
             overflow-wrap: anywhere;
         }
+
         .detail-card-title .detail-count {
             font-weight: 500;
             letter-spacing: normal;
             text-transform: none;
             opacity: .85;
         }
+
         .detail-card-body {
             padding: 1rem 1.1rem 1.1rem;
             min-width: 0;
             max-width: 100%;
             overflow-x: hidden;
         }
-        .detail-card-hero .detail-card-body { padding: 1.15rem 1.25rem; }
+
+        .detail-card-hero .detail-card-body {
+            padding: 1.15rem 1.25rem;
+        }
+
         /* Bootstrap columns inside cards must shrink, not overflow */
         .detail-card .row {
             margin-left: 0;
@@ -143,17 +296,20 @@
             max-width: 100%;
             --tblr-gutter-x: .75rem;
         }
-        .detail-card .row > [class*="col"] {
+
+        .detail-card .row>[class*="col"] {
             min-width: 0;
             max-width: 100%;
             padding-left: calc(var(--tblr-gutter-x, .75rem) * .5);
             padding-right: calc(var(--tblr-gutter-x, .75rem) * .5);
         }
+
         .detail-field-label {
             font-size: .72rem;
             color: var(--tblr-secondary);
             margin-bottom: .2rem;
         }
+
         .detail-field-value {
             font-size: .9rem;
             line-height: 1.4;
@@ -162,17 +318,20 @@
             overflow-wrap: anywhere;
             word-break: break-word;
         }
+
         .detail-field-value .badge {
             white-space: normal;
             text-align: left;
             max-width: 100%;
         }
+
         .detail-metric-list {
             display: flex;
             flex-direction: column;
             gap: .55rem;
             min-width: 0;
         }
+
         .detail-metric {
             border: 1px solid var(--tblr-border-color);
             border-radius: .5rem;
@@ -182,11 +341,13 @@
             max-width: 100%;
             overflow: hidden;
         }
+
         .detail-metric-label {
             font-size: .72rem;
             color: var(--tblr-secondary);
             margin-bottom: .25rem;
         }
+
         .detail-metric-value {
             font-size: .95rem;
             font-weight: 600;
@@ -197,10 +358,12 @@
             overflow-wrap: anywhere;
             word-break: break-word;
         }
+
         .detail-metric-value .badge {
             white-space: normal;
             max-width: 100%;
         }
+
         .detail-prose {
             white-space: pre-wrap;
             overflow-wrap: anywhere;
@@ -209,6 +372,7 @@
             line-height: 1.5;
             max-width: 100%;
         }
+
         .detail-hero-layout {
             display: flex;
             align-items: flex-start;
@@ -216,7 +380,13 @@
             flex-wrap: wrap;
             min-width: 0;
         }
-        .detail-hero-meta { flex: 1 1 12rem; min-width: 0; max-width: 100%; }
+
+        .detail-hero-meta {
+            flex: 1 1 12rem;
+            min-width: 0;
+            max-width: 100%;
+        }
+
         .detail-hero-side {
             text-align: right;
             margin-left: auto;
@@ -224,12 +394,14 @@
             min-width: 0;
             max-width: 100%;
         }
+
         .detail-hero-side .fs-3,
         .detail-hero-meta .fs-3 {
             font-size: clamp(1.1rem, 3.5vw, 1.5rem) !important;
             overflow-wrap: anywhere;
             word-break: break-word;
         }
+
         .detail-hero-badges {
             display: flex;
             flex-wrap: wrap;
@@ -237,7 +409,12 @@
             margin-top: .65rem;
             min-width: 0;
         }
-        .detail-hero-badges .badge { white-space: normal; max-width: 100%; }
+
+        .detail-hero-badges .badge {
+            white-space: normal;
+            max-width: 100%;
+        }
+
         .detail-service-row {
             display: flex;
             justify-content: space-between;
@@ -247,30 +424,44 @@
             border-bottom: 1px solid var(--tblr-border-color);
             min-width: 0;
         }
-        .detail-service-row > span:first-child {
+
+        .detail-service-row>span:first-child {
             min-width: 0;
             flex: 1 1 auto;
             overflow-wrap: anywhere;
             word-break: break-word;
         }
-        .detail-service-row > span:last-child {
+
+        .detail-service-row>span:last-child {
             flex: 0 1 auto;
             min-width: 0;
             text-align: right;
             white-space: normal;
         }
-        .detail-service-row:last-child { border-bottom: 0; }
+
+        .detail-service-row:last-child {
+            border-bottom: 0;
+        }
+
         .detail-trace-event {
             min-width: 0;
             flex-wrap: wrap;
         }
-        .detail-trace-event:last-child { border-bottom: 0 !important; }
-        .detail-trace-events { max-width: 100%; }
+
+        .detail-trace-event:last-child {
+            border-bottom: 0 !important;
+        }
+
+        .detail-trace-events {
+            max-width: 100%;
+        }
+
         .detail-alert-wrap {
             min-width: 0;
             max-width: 100%;
             overflow: hidden;
         }
+
         .detail-alert-wrap .alert {
             border-radius: .5rem;
             margin-bottom: 0;
@@ -278,6 +469,7 @@
             overflow-wrap: anywhere;
             word-break: break-word;
         }
+
         .detail-review-stars {
             letter-spacing: .06em;
             color: #f59f00;
@@ -285,10 +477,12 @@
             line-height: 1;
             white-space: nowrap;
         }
+
         .detail-review-stars .star-empty {
             color: var(--tblr-secondary);
             opacity: .35;
         }
+
         .detail-rating-row {
             display: flex;
             flex-wrap: wrap;
@@ -296,6 +490,7 @@
             gap: .5rem .65rem;
             min-width: 0;
         }
+
         #offcanvas-detail .table-responsive {
             max-width: 100%;
         }
@@ -310,16 +505,15 @@
         <!-- ===== NAVBAR ===== -->
         <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
             <div class="container-xl">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
-                    aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <!-- Logo -->
                 <a href="./index.html" class="navbar-brand navbar-brand-autodark">
                     <!-- <span class="fw-bold fs-3">Hairlux</span> -->
-                     <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
                 </a>
 
                 <!-- Right-side controls -->
@@ -331,7 +525,8 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon icon-1">
-                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
                             </svg>
                         </a>
                         <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
@@ -340,12 +535,13 @@
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon icon-1">
                                 <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
                             </svg>
                         </a>
                     </div>
 
-                    
+
 
                     <!-- User menu -->
                     <div class="nav-item dropdown">
@@ -360,15 +556,17 @@
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
                             <div class="dropdown-header">
                                 <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
-                               <div class="text-secondary small text-truncate d-block"  id="dropdown-user-email">admin.email</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
                             </div>
                             <div class="dropdown-divider"></div>
-                            
+
                             <a href="./settings.html" class="dropdown-item">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon icon-1 me-2">
-                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path
+                                        d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
                                     <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
                                 </svg>
                                 Settings
@@ -378,7 +576,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon icon-1 me-2">
-                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path
+                                        d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
                                     <path d="M9 12h12l-3 -3" />
                                     <path d="M18 15l3 -3" />
                                 </svg>
@@ -412,23 +611,34 @@
                         <div class="col-auto ms-auto d-flex flex-wrap gap-2 align-items-center">
                             <!-- Stats date range dropdown -->
                             <div class="dropdown">
-                                <button type="button" class="btn btn-outline-secondary dropdown-toggle" id="btn-stat-range" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
-                                        <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
-                                        <path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" />
+                                <button type="button" class="btn btn-outline-secondary dropdown-toggle"
+                                    id="btn-stat-range" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                    aria-expanded="false">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="icon me-1">
+                                        <path
+                                            d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                        <path d="M16 3l0 4" />
+                                        <path d="M8 3l0 4" />
+                                        <path d="M4 11l16 0" />
                                     </svg>
                                     <span id="stat-range-label">Stats: All time</span>
                                 </button>
                                 <div class="dropdown-menu p-3" style="min-width:300px">
                                     <div class="mb-2 fw-semibold small">Filter stats by date range</div>
                                     <div class="d-flex align-items-center gap-2 mb-2">
-                                        <input type="date" id="stat-start" class="form-control form-control-sm" placeholder="From">
+                                        <input type="date" id="stat-start" class="form-control form-control-sm"
+                                            placeholder="From">
                                         <span class="text-secondary">–</span>
-                                        <input type="date" id="stat-end" class="form-control form-control-sm" placeholder="To">
+                                        <input type="date" id="stat-end" class="form-control form-control-sm"
+                                            placeholder="To">
                                     </div>
                                     <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-sm btn-primary flex-fill" id="btn-stat-apply">Apply</button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-stat-clear">All time</button>
+                                        <button type="button" class="btn btn-sm btn-primary flex-fill"
+                                            id="btn-stat-apply">Apply</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            id="btn-stat-clear">All time</button>
                                     </div>
                                 </div>
                             </div>
@@ -493,7 +703,8 @@
                                         <span class="badge bg-warning-lt">Needs action</span>
                                     </div>
                                     <div class="h1 mb-0" id="stat-pending">—</div>
-                                    <div class="text-secondary small mt-1">Match exhausted: <span id="stat-match-exhausted" class="fw-semibold">—</span></div>
+                                    <div class="text-secondary small mt-1">Match exhausted: <span
+                                            id="stat-match-exhausted" class="fw-semibold">—</span></div>
                                 </div>
                             </div>
                         </div>
@@ -523,11 +734,16 @@
                             <ul class="nav nav-tabs card-header-tabs" id="status-tabs">
                                 <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
                                 <li class="nav-item"><a href="#" class="nav-link" data-status="PENDING">Pending</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="PENDING_ASSIGNMENT">Awaiting Assign</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="CONFIRMED">Confirmed</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="IN_PROGRESS">In Progress</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="COMPLETED">Completed</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="CANCELLED">Cancelled</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link"
+                                        data-status="PENDING_ASSIGNMENT">Awaiting Assign</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="CONFIRMED">Confirmed</a>
+                                </li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="IN_PROGRESS">In
+                                        Progress</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="COMPLETED">Completed</a>
+                                </li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="CANCELLED">Cancelled</a>
+                                </li>
                             </ul>
                         </div>
 
@@ -539,9 +755,11 @@
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <circle cx="10" cy="10" r="7" />
+                                                <path d="M21 21l-6 -6" />
+                                            </svg>
                                         </span>
                                         <input type="text" id="filter-search" class="form-control"
                                             placeholder="Name or email…">
@@ -564,8 +782,8 @@
                                     </select>
                                 </div>
                                 <div class="col-6 col-md-auto">
-                                    <button type="button" class="btn btn-sm btn-secondary w-100"
-                                        id="btn-clear">Clear filters</button>
+                                    <button type="button" class="btn btn-sm btn-secondary w-100" id="btn-clear">Clear
+                                        filters</button>
                                 </div>
                             </div>
                         </div>
@@ -573,8 +791,7 @@
                         <!-- Table -->
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-vcenter table-hover card-table"
-                                    id="bookings-table">
+                                <table class="table table-vcenter table-hover card-table" id="bookings-table">
                                     <thead>
                                         <tr>
                                             <th class="w-1 text-secondary">#</th>
@@ -630,6 +847,7 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/beauticians.js"></script>
     <script src="assets/js/api-utils/bookings.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/force-assign-modal.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
@@ -676,7 +894,8 @@
                                     </table>
                                 </div>
                                 <div class="d-flex justify-content-end">
-                                    <button type="submit" class="btn btn-primary" id="btn-save-hours">Save Hours</button>
+                                    <button type="submit" class="btn btn-primary" id="btn-save-hours">Save
+                                        Hours</button>
                                 </div>
                             </form>
                         </div>
@@ -689,10 +908,18 @@
                                         <input type="date" name="date" class="form-control" required>
                                     </div>
                                     <div class="col-md-3">
+                                        <label class="form-label">Branch</label>
+                                        <select name="branchId" id="exception-branch" class="form-select">
+                                            <option value="">Company-wide (all branches)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
                                         <label class="form-label">Closed?</label>
                                         <div class="form-check form-switch mt-1">
-                                            <input class="form-check-input" type="checkbox" id="exception-closed" checked>
-                                            <label class="form-check-label" for="exception-closed">Closed for the day</label>
+                                            <input class="form-check-input" type="checkbox" id="exception-closed"
+                                                checked>
+                                            <label class="form-check-label" for="exception-closed">Closed for the
+                                                day</label>
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -705,10 +932,12 @@
                                     </div>
                                     <div class="col-md-8">
                                         <label class="form-label">Reason</label>
-                                        <input type="text" name="reason" class="form-control" placeholder="Holiday, maintenance, special hours">
+                                        <input type="text" name="reason" class="form-control"
+                                            placeholder="Holiday, maintenance, special hours">
                                     </div>
                                     <div class="col-md-4 text-end">
-                                        <button type="submit" class="btn btn-success" id="btn-create-exception">Add Exception</button>
+                                        <button type="submit" class="btn btn-success" id="btn-create-exception">Add
+                                            Exception</button>
                                     </div>
                                 </div>
                                 <div id="exception-alert" class="alert d-none mt-3 mb-0" role="alert"></div>
@@ -745,7 +974,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-warning" id="btn-retry-matching-confirm">Retry Matching</button>
+                    <button type="button" class="btn btn-warning" id="btn-retry-matching-confirm">Retry
+                        Matching</button>
                 </div>
             </div>
         </div>
@@ -760,11 +990,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-secondary small mb-3">Bypass dispatch matching and assign a beautician directly. Pending offers will be cancelled.</p>
+                    <p class="text-secondary small mb-3">Bypass dispatch matching and assign a beautician directly.
+                        Pending offers will be cancelled.</p>
                     <div class="row g-2 mb-3">
                         <div class="col-md-8">
                             <label class="form-label" for="force-assign-search">Search</label>
-                            <input type="search" id="force-assign-search" class="form-control" placeholder="Search by name, email, or phone…" autocomplete="off">
+                            <input type="search" id="force-assign-search" class="form-control"
+                                placeholder="Search by name, email, or phone…" autocomplete="off">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="force-assign-availability">Availability</label>
@@ -776,8 +1008,10 @@
                             </select>
                         </div>
                     </div>
-                    <div id="force-assign-selected" class="force-assign-selected-banner d-none py-2 px-3 mb-3 small rounded"></div>
-                    <div id="force-assign-list" class="list-group list-group-flush border rounded" style="min-height: 200px; max-height: 360px; overflow-y: auto;">
+                    <div id="force-assign-selected"
+                        class="force-assign-selected-banner d-none py-2 px-3 mb-3 small rounded"></div>
+                    <div id="force-assign-list" class="list-group list-group-flush border rounded"
+                        style="min-height: 200px; max-height: 360px; overflow-y: auto;">
                         <div class="list-group-item text-center text-secondary py-5">Loading beauticians…</div>
                     </div>
                     <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
@@ -796,13 +1030,16 @@
     </div>
 
     <!-- BOOKING DETAIL OFFCANVAS -->
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-detail" data-bs-scroll="true" style="width:720px;max-width:100vw;">
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-detail" data-bs-scroll="true"
+        style="width:720px;max-width:100vw;">
         <div class="offcanvas-header border-bottom px-4 py-3">
             <h5 class="offcanvas-title">Booking Details</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body" id="offcanvas-detail-body">
-            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
         </div>
         <div class="border-top p-3 d-flex gap-2 flex-wrap align-items-center" id="offcanvas-detail-actions"></div>
     </div>
@@ -822,7 +1059,7 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             // ── RBAC: re-hydrate from server, apply guard + nav ────────────
-            RBAC.fetchMe().then(function() {
+            RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuard('bookings:read');
                 RBAC.applyNavVisibility();
             });
@@ -868,9 +1105,9 @@
             // ── Clear filters ───────────────────────────────────────────────
             document.getElementById("btn-clear").addEventListener("click", function () {
                 document.getElementById("filter-search").value = "";
-                document.getElementById("filter-start").value  = "";
-                document.getElementById("filter-end").value    = "";
-                document.getElementById("filter-limit").value  = "20";
+                document.getElementById("filter-start").value = "";
+                document.getElementById("filter-end").value = "";
+                document.getElementById("filter-limit").value = "20";
                 document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
                 state.page = 1; state.limit = 20; state.status = "";
@@ -887,7 +1124,7 @@
             });
             document.getElementById("btn-stat-clear").addEventListener("click", function () {
                 document.getElementById("stat-start").value = "";
-                document.getElementById("stat-end").value   = "";
+                document.getElementById("stat-end").value = "";
                 var dd = bootstrap.Dropdown.getOrCreateInstance(document.getElementById("btn-stat-range"));
                 dd.hide();
                 loadStats();
@@ -924,7 +1161,20 @@
             document.getElementById("modal-business-hours").addEventListener("show.bs.modal", function () {
                 loadBusinessHours();
                 loadBusinessExceptions();
+                loadExceptionBranchOptions();
             });
+
+            // ── Deep link support: bookings.html#exceptions opens the modal
+            // straight to the Exceptions tab, e.g. linked from the Attendance
+            // page's "Manage Public Holidays" shortcut ──────────────────────
+            if (window.location.hash === "#exceptions") {
+                document.getElementById("modal-business-hours").addEventListener("shown.bs.modal", function onShown() {
+                    var tab = new bootstrap.Tab(document.getElementById("tab-exceptions-btn"));
+                    tab.show();
+                    this.removeEventListener("shown.bs.modal", onShown);
+                });
+                new bootstrap.Modal(document.getElementById("modal-business-hours")).show();
+            }
 
             // ── Business hours form: save ────────────────────────────────────
             document.getElementById("form-business-hours").addEventListener("submit", async function (e) {
@@ -937,9 +1187,9 @@
                 try {
                     var rows = document.querySelectorAll("#hours-table-body tr[data-day]");
                     var hours = Array.from(rows).map(function (row) {
-                        var day       = row.dataset.day;
-                        var isOpen    = row.querySelector(".toggle-open").checked;
-                        var openTime  = row.querySelector(".open-time").value;
+                        var day = row.dataset.day;
+                        var isOpen = row.querySelector(".toggle-open").checked;
+                        var openTime = row.querySelector(".open-time").value;
                         var closeTime = row.querySelector(".close-time").value;
                         return { dayOfWeek: parseInt(day, 10), isOpen: isOpen, openTime: openTime || null, closeTime: closeTime || null };
                     });
@@ -960,19 +1210,21 @@
             document.getElementById("form-exception").addEventListener("submit", async function (e) {
                 e.preventDefault();
                 var alertEl = document.getElementById("exception-alert");
-                var btn     = document.getElementById("btn-create-exception");
+                var btn = document.getElementById("btn-create-exception");
                 alertEl.className = "alert d-none";
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Adding\u2026';
                 try {
-                    var fd       = new FormData(this);
+                    var fd = new FormData(this);
                     var isClosed = document.getElementById("exception-closed").checked;
-                    var payload  = {
-                        date:      fd.get("date"),
-                        isClosed:  isClosed,
-                        openTime:  isClosed ? null : (fd.get("openTime") || null),
+                    var branchId = fd.get("branchId") || undefined;
+                    var payload = {
+                        date: fd.get("date"),
+                        branchId: branchId,
+                        isClosed: isClosed,
+                        openTime: isClosed ? null : (fd.get("openTime") || null),
                         closeTime: isClosed ? null : (fd.get("closeTime") || null),
-                        reason:    fd.get("reason") || null,
+                        reason: fd.get("reason") || null,
                     };
                     await Bookings.createBusinessException(payload);
                     alertEl.className = "alert alert-success";
@@ -1011,9 +1263,9 @@
         async function loadStats() {
             try {
                 var start = document.getElementById("stat-start").value;
-                var end   = document.getElementById("stat-end").value;
+                var end = document.getElementById("stat-end").value;
                 // Update period badge labels
-                var _MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                var _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                 function _fmtStatDate(iso) {
                     if (!iso) return "…";
                     var p = iso.split("-");
@@ -1029,10 +1281,10 @@
                 // Update dropdown button label
                 var rangeBtn = document.getElementById("stat-range-label");
                 if (rangeBtn) rangeBtn.textContent = (start || end) ? ("Stats: " + _fmtStatDate(start) + " – " + _fmtStatDate(end)) : "Stats: All time";
-                var data  = await Bookings.getStats(start || undefined, end || undefined);
-                document.getElementById("stat-total").textContent     = (data.overview && data.overview.totalBookings != null) ? data.overview.totalBookings : (data.total ?? data.totalBookings ?? "\u2014");
-                document.getElementById("stat-revenue").textContent   = Bookings.formatMoney((data.overview && data.overview.totalRevenue != null) ? data.overview.totalRevenue : (data.revenue ?? data.totalRevenue ?? 0));
-                document.getElementById("stat-pending").textContent   = (data.byStatus && data.byStatus.pending != null) ? data.byStatus.pending : (data.pending ?? "\u2014");
+                var data = await Bookings.getStats(start || undefined, end || undefined);
+                document.getElementById("stat-total").textContent = (data.overview && data.overview.totalBookings != null) ? data.overview.totalBookings : (data.total ?? data.totalBookings ?? "\u2014");
+                document.getElementById("stat-revenue").textContent = Bookings.formatMoney((data.overview && data.overview.totalRevenue != null) ? data.overview.totalRevenue : (data.revenue ?? data.totalRevenue ?? 0));
+                document.getElementById("stat-pending").textContent = (data.byStatus && data.byStatus.pending != null) ? data.byStatus.pending : (data.pending ?? "\u2014");
                 document.getElementById("stat-match-exhausted").textContent = (data.dispatch && data.dispatch.matchExhaustedCount != null)
                     ? data.dispatch.matchExhaustedCount
                     : "\u2014";
@@ -1074,26 +1326,26 @@
                 return;
             }
             tbody.innerHTML = rows.map(function (b, i) {
-                var customer  = b.user || b.customer || {};
-                var custName  = customer.firstName
+                var customer = b.user || b.customer || {};
+                var custName = customer.firstName
                     ? customer.firstName + " " + customer.lastName
                     : (b.guestName || customer.name || "\u2014");
-                var custSub   = customer.email
+                var custSub = customer.email
                     ? '<div class="text-secondary small mt-1">' + customer.email + '</div>'
                     : (b.guestPhone ? '<div class="text-secondary small mt-1">' + b.guestPhone + '</div>' : "");
 
                 // Reservation code cell
-                var resCode  = b.reservationCode || "\u2014";
-                var resUsed  = b.reservationUsed;
+                var resCode = b.reservationCode || "\u2014";
+                var resUsed = b.reservationUsed;
                 var resBadge = resUsed
                     ? '<span class="badge bg-secondary-lt ms-1" style="font-size:.65rem">used</span>'
                     : "";
-                var resCell  = '<div class="res-code">' + resCode + resBadge + '</div>' +
-                               '<div class="text-secondary small mt-1">' + custName + '</div>' + custSub;
+                var resCell = '<div class="res-code">' + resCode + resBadge + '</div>' +
+                    '<div class="text-secondary small mt-1">' + custName + '</div>' + custSub;
 
                 // Services stacked list
                 var services = b.services || (b.service ? [b.service] : []);
-                var svcCell  = services.length
+                var svcCell = services.length
                     ? '<ul class="svc-list">' + services.map(function (s) {
                         var dur = s.duration ? Math.round(s.duration / 60) + 'h' + (s.duration % 60 ? (s.duration % 60) + 'm' : '') : null;
                         // Fix duration display: show in minutes if < 60
@@ -1121,9 +1373,9 @@
                 var branchCell = Bookings.formatBranchTableCell(b);
 
                 var dateTime = Bookings.formatDateTime(b.bookingDate || b.date, b.bookingTime || b.time);
-                var amount   = Bookings.formatMoney(b.totalAmount ?? b.amount ?? b.price ?? 0);
-                var status   = b.status || "PENDING";
-                var id       = b.id || "";
+                var amount = Bookings.formatMoney(b.totalAmount ?? b.amount ?? b.price ?? 0);
+                var status = b.status || "PENDING";
+                var id = b.id || "";
 
                 return '<tr class="booking-row" data-id="' + id + '">' +
                     '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
@@ -1205,8 +1457,8 @@
             return '<section class="detail-card' + extraClass + '">' +
                 (title
                     ? '<div class="detail-card-header">' +
-                        '<div class="detail-card-title">' + escHtml(title) + countHtml + "</div>" +
-                      "</div>"
+                    '<div class="detail-card-title">' + escHtml(title) + countHtml + "</div>" +
+                    "</div>"
                     : "") +
                 '<div class="detail-card-body">' + innerHtml + "</div>" +
                 "</section>";
@@ -1321,7 +1573,7 @@
                         : "") +
                     (mapsUrl
                         ? '<div class="col-12"><a class="btn btn-sm btn-outline-primary" href="' + escHtml(mapsUrl) +
-                            '" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></div>'
+                        '" target="_blank" rel="noopener noreferrer">Open in Google Maps</a></div>'
                         : "") +
                     "</div>";
             } else {
@@ -1408,9 +1660,9 @@
         // ── Open detail offcanvas ─────────────────────────────────────────────────
         async function openDetail(id) {
             if (!id) return;
-            var body    = document.getElementById("offcanvas-detail-body");
+            var body = document.getElementById("offcanvas-detail-body");
             var actions = document.getElementById("offcanvas-detail-actions");
-            body.innerHTML    = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
             actions.innerHTML = "";
             var oc = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("offcanvas-detail"));
             oc.show();
@@ -1444,8 +1696,8 @@
         // ── Build action buttons ────────────────────────────────────────────────
         function buildDetailActions(b) {
             var html = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="offcanvas">Close</button>';
-            var bookingType  = b.bookingType || "";
-            var safeId   = (b.id || "").replace(/'/g, "\\'");
+            var bookingType = b.bookingType || "";
+            var safeId = (b.id || "").replace(/'/g, "\\'");
             var safeCode = (b.reservationCode || "").replace(/'/g, "\\'");
             if (bookingType === "WALK_IN") {
                 if (!b.reservationUsed && RBAC.can('bookings:verify_reservation')) {
@@ -1460,14 +1712,14 @@
                 if (Bookings.canAdminForceAssign(b)) {
                     html += '<button class="btn btn-primary" onclick="openForceAssignModal(\'' + safeId + '\')">Force Assign</button>';
                 }
-                var homeTransitions = { PENDING_ASSIGNMENT: ["CANCELLED"], PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
+                var homeTransitions = { PENDING_ASSIGNMENT: ["CANCELLED"], PENDING: ["CONFIRMED", "CANCELLED"], CONFIRMED: ["IN_PROGRESS", "CANCELLED"], IN_PROGRESS: ["COMPLETED", "CANCELLED"] };
                 var homeNexts = homeTransitions[b.status] || [];
                 homeNexts.forEach(function (s) {
                     var col = { CONFIRMED: "primary", IN_PROGRESS: "warning", COMPLETED: "success", CANCELLED: "danger" }[s] || "secondary";
                     html += '<button class="btn btn-' + col + '" onclick="handleDetailAction(\'' + safeId + '\',\'status\',\'' + s + '\',null)">' + s.replace(/_/g, " ") + '</button>';
                 });
             } else if (RBAC.can('bookings:update_status')) {
-                var transitions = { PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
+                var transitions = { PENDING: ["CONFIRMED", "CANCELLED"], CONFIRMED: ["IN_PROGRESS", "CANCELLED"], IN_PROGRESS: ["COMPLETED", "CANCELLED"] };
                 var nexts = transitions[b.status] || [];
                 nexts.forEach(function (s) {
                     var col = { CONFIRMED: "primary", IN_PROGRESS: "warning", COMPLETED: "success", CANCELLED: "danger" }[s] || "secondary";
@@ -1551,10 +1803,10 @@
             var tbody = document.getElementById("hours-table-body");
             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>';
             try {
-                var data  = await Bookings.getBusinessHours();
+                var data = await Bookings.getBusinessHours();
                 var hours = data.hours || data || [];
                 if (!Array.isArray(hours) || !hours.length) {
-                    hours = [0,1,2,3,4,5,6].map(function (d) {
+                    hours = [0, 1, 2, 3, 4, 5, 6].map(function (d) {
                         return { dayOfWeek: d, isOpen: d >= 1 && d <= 5, openTime: "09:00", closeTime: "18:00" };
                     });
                 }
@@ -1573,11 +1825,30 @@
             }
         }
 
+        var _exceptionBranchesLoaded = false;
+
+        async function loadExceptionBranchOptions() {
+            if (_exceptionBranchesLoaded) return;
+            try {
+                var branches = await Branches.getBranches();
+                var sel = document.getElementById("exception-branch");
+                branches.forEach(function (b) {
+                    var opt = document.createElement("option");
+                    opt.value = b.id;
+                    opt.textContent = b.name;
+                    sel.appendChild(opt);
+                });
+                _exceptionBranchesLoaded = true;
+            } catch (err) {
+                // Leave just the "Company-wide" option if this fails — not fatal to the form.
+            }
+        }
+
         async function loadBusinessExceptions() {
             var list = document.getElementById("exceptions-list");
             list.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></div>';
             try {
-                var data       = await Bookings.getBusinessExceptions();
+                var data = await Bookings.getBusinessExceptions();
                 var exceptions = data.exceptions || data || [];
                 if (!Array.isArray(exceptions) || !exceptions.length) {
                     list.innerHTML = '<div class="text-secondary small text-center py-2">No exceptions set.</div>';
@@ -1587,8 +1858,12 @@
                     var detail = ex.isClosed
                         ? '<span class="badge bg-danger-lt">Closed</span>'
                         : '<span class="text-secondary small">' + (ex.openTime || "") + ' \u2013 ' + (ex.closeTime || "") + '</span>';
+                    var branchLabel = ex.branch
+                        ? '<span class="badge bg-azure-lt">' + ex.branch.name + '</span>'
+                        : '<span class="badge bg-secondary-lt">Company-wide</span>';
                     return '<div class="exception-card d-flex align-items-center gap-3">' +
                         '<div class="fw-semibold">' + (ex.date || "") + '</div>' +
+                        '<div>' + branchLabel + '</div>' +
                         '<div>' + detail + '</div>' +
                         (ex.reason ? '<div class="text-secondary small flex-fill">' + ex.reason + '</div>' : '<div class="flex-fill"></div>') +
                         '<button class="btn btn-sm btn-outline-danger btn-delete-exception" data-id="' + ex.id + '">Delete</button>' +
@@ -1598,6 +1873,7 @@
                 list.innerHTML = '<div class="text-danger small py-2">' + (err.message || "Failed to load exceptions.") + '</div>';
             }
         }
+
     </script>
 </body>
 

@@ -43,8 +43,34 @@ const Inventory = (function () {
         return jsonFetch(`/admin/inventory-items/${id}`);
     }
 
+    async function getMovementHistory(id, params = {}) {
+        const q = new URLSearchParams();
+        Object.keys(params).forEach((k) => {
+            if (params[k] !== undefined && params[k] !== null && params[k] !== '') q.set(k, params[k]);
+        });
+        const qs = q.toString() ? '?' + q.toString() : '';
+        return jsonFetch(`/admin/inventory-items/${id}/movements${qs}`);
+    }
+
+    const MOVEMENT_TYPE_LABELS = {
+        RECEIVED: 'Goods Received',
+        SOLD: 'Sold',
+        CONSUMED: 'Consumed',
+        ADJUSTMENT: 'Manual Adjustment',
+        TRANSFER_OUT: 'Transfer Out',
+        TRANSFER_IN: 'Transfer In',
+    };
+
     async function create(payload) {
         return jsonFetch('/admin/inventory-items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function createBulk(payload) {
+        return jsonFetch('/admin/inventory-items/bulk', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -153,7 +179,8 @@ const Inventory = (function () {
     }
 
     return {
-        getAll, getOne, create, update, adjust,
+        getAll, getOne, create, createBulk, update, adjust,
+        getMovementHistory, MOVEMENT_TYPE_LABELS,
         getAlerts, resolveAlert,
         getExpiryAlerts, resolveExpiryAlert,
         getTransfers, approveTransfer, rejectTransfer, reassignTransfer,

@@ -72,6 +72,21 @@ const StaffSelf = (() => {
         });
     }
 
+    async function submitDirectiveEvidence(directiveId, file) {
+        const base = (window.API_BASE || "").replace(/\/$/, "");
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch(base + "/staff/me/directives/" + directiveId + "/evidence", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + Auth.getToken() },
+            body: formData,
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || `Upload failed (${res.status})`);
+        return raw.data !== undefined ? raw.data : raw;
+    }
+
     // -- Attendance -------------------------------------------------------------
     function getCurrentPosition() {
         function attempt(options) {
@@ -238,6 +253,28 @@ const StaffSelf = (() => {
         return jsonFetch("/staff/me/onboarding/passport-photo");
     }
 
+    async function getAddressVerification() {
+        return jsonFetch("/staff/me/address-verification");
+    }
+
+    /**
+     * Same reasoning as uploadPassportPhoto above -- bypasses Auth.fetch
+     * to avoid its forced Content-Type: application/json breaking the
+     * multipart boundary. formData is built by the caller (many text
+     * fields plus up to 3 optional photos).
+     */
+    async function submitAddressVerification(formData) {
+        const base = (window.API_BASE || "").replace(/\/$/, "");
+        const res = await fetch(base + "/staff/me/address-verification/submit", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + Auth.getToken() },
+            body: formData,
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || `Submission failed (${res.status})`);
+        return raw.data !== undefined ? raw.data : raw;
+    }
+
     async function getInventoryDashboard() {
         return jsonFetch("/staff/me/inventory/dashboard");
     }
@@ -318,6 +355,7 @@ const StaffSelf = (() => {
         markAnnouncementRead,
         getDirectives,
         updateDirectiveStatus,
+        submitDirectiveEvidence,
         checkIn,
         checkOut,
         getAttendance,
@@ -328,6 +366,8 @@ const StaffSelf = (() => {
         submitReference,
         uploadPassportPhoto,
         getMyPassportPhoto,
+        getAddressVerification, 
+        submitAddressVerification,
         getInventoryDashboard,
         getInventoryEntries,
         idCardUrl,

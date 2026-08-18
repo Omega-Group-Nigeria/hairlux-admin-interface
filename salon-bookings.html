@@ -59,6 +59,88 @@
             padding: 8px 12px;
             color: var(--tblr-secondary, #6c757d);
         }
+
+        /* Print receipt — hidden on screen, the only thing visible when
+           printing. Tabler's own d-print-none utility hides the page chrome
+           (navbar etc.) already; this adds the reverse for the receipt
+           itself, since it starts out hidden on screen by default. */
+        #print-receipt {
+            display: none;
+        }
+
+        /* POS/thermal receipt format — 80mm is the common thermal roll
+           width; monospace + tight spacing matches what an actual receipt
+           printer produces, rather than the earlier A4-style layout. */
+        @media print {
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+
+            body>.page {
+                display: none !important;
+            }
+
+            #print-receipt {
+                display: block !important;
+                width: 80mm;
+                padding: 3mm;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                color: #000;
+                line-height: 1.5;
+            }
+
+            #print-receipt .pr-logo {
+                height: 36px;
+                margin-bottom: 4px;
+            }
+
+            #print-receipt .pr-center {
+                text-align: center;
+            }
+
+            #print-receipt .pr-divider {
+                border-top: 1px dashed #000;
+                margin: 6px 0;
+            }
+
+            #print-receipt .pr-row {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 1px 0;
+            }
+
+            #print-receipt .pr-label {
+                white-space: nowrap;
+            }
+
+            #print-receipt .pr-value {
+                text-align: right;
+                word-break: break-word;
+            }
+
+            #print-receipt .pr-service-line {
+                display: flex;
+                justify-content: space-between;
+                padding: 1px 0;
+            }
+
+            #print-receipt .pr-total-row {
+                display: flex;
+                justify-content: space-between;
+                font-weight: 700;
+                font-size: 13px;
+                padding: 4px 0;
+            }
+
+            #print-receipt .pr-footer {
+                text-align: center;
+                margin-top: 10px;
+                font-size: 10px;
+            }
+        }
     </style>
 </head>
 
@@ -159,19 +241,33 @@
 
                         <div class="card-body border-bottom py-4">
                             <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-secondary small mb-1">Search</label>
+                                    <input type="text" id="filter-search" class="form-control form-control-sm"
+                                        placeholder="Booking ID, customer name or phone…">
+                                </div>
                                 <div class="col-6 col-md-3">
                                     <label class="form-label text-secondary small mb-1">Branch</label>
                                     <select id="filter-branch" class="form-select form-select-sm">
                                         <option value="">All branches</option>
                                     </select>
                                 </div>
-                                <div class="col-6 col-md-3">
+                                <div class="col-6 col-md-2">
                                     <label class="form-label text-secondary small mb-1">Date</label>
                                     <input type="date" id="filter-date" class="form-control form-control-sm">
                                 </div>
-                                <div class="col-6 col-md-3">
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label text-secondary small mb-1">Per page</label>
+                                    <select id="filter-limit" class="form-select form-select-sm">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50" selected>50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-1">
                                     <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                                        id="btn-clear-filters">Clear filters</button>
+                                        id="btn-clear-filters">Clear</button>
                                 </div>
                             </div>
                         </div>
@@ -180,24 +276,32 @@
                             <table class="table card-table table-vcenter">
                                 <thead>
                                     <tr>
+                                        <th>Booking ID</th>
                                         <th>Date / Time</th>
                                         <th>Customer</th>
                                         <th>Stylist</th>
                                         <th>Branch</th>
-                                        <th>Services</th>
-                                        <th>Total</th>
+                                        <th>Service</th>
+                                        <th>Amount</th>
                                         <th>Status</th>
                                         <th class="w-1">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="bookings-tbody">
                                     <tr>
-                                        <td colspan="8" class="text-center py-5">
+                                        <td colspan="9" class="text-center py-5">
                                             <div class="spinner-border text-primary"></div>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                id="btn-prev-page">Previous</button>
+                            <span class="text-secondary small" id="page-label"></span>
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                id="btn-next-page">Next</button>
                         </div>
                     </div>
                 </div>
@@ -296,6 +400,16 @@
                             <label class="form-label">Customer Phone <span
                                     class="text-secondary">(optional)</span></label>
                             <input type="text" class="form-control" id="nb-customer-phone" placeholder="+2348012345678">
+                            <div id="nb-phone-match-prompt" class="alert alert-warning py-2 px-3 mt-2 d-none"
+                                style="font-size:13px;">
+                                <span id="nb-phone-match-text"></span>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-primary me-1"
+                                        id="nb-phone-match-yes">Yes, link it</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="nb-phone-match-no">No</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -364,6 +478,94 @@
         </div>
     </div>
 
+    <!-- Edit Booking modal — Scheduled / In Progress only -->
+    <div class="modal modal-blur fade" id="modal-edit-booking" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Booking — <span id="eb-booking-code"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="edit-booking-error"></div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" id="eb-customer-name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Customer Phone</label>
+                            <input type="text" class="form-control" id="eb-customer-phone">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Assigned Stylist</label>
+                            <select class="form-select" id="eb-staff"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="eb-date">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Time</label>
+                            <input type="time" class="form-control" id="eb-time">
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">Services</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="eb-add-service">+ Add
+                                service</button>
+                        </div>
+                        <div id="eb-service-lines"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="eb-notes" rows="2"></textarea>
+                    </div>
+
+                    <div class="text-end fw-bold" id="eb-estimated-total">Estimated total: —</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-submit-edit-booking">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Service modal — Completed bookings only -->
+    <div class="modal modal-blur fade" id="modal-add-service" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Service — <span id="as-booking-code"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="add-service-error"></div>
+                    <div class="alert alert-info small mb-3">This booking is Completed — its existing services can't be
+                        changed. This only adds a new one.</div>
+                    <label class="form-label">Service</label>
+                    <select class="form-select mb-3" id="as-service-select"></select>
+                    <label class="form-label">Quantity</label>
+                    <input type="number" min="1" value="1" class="form-control" id="as-quantity">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-submit-add-service">Add Service</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Reason modal (cancel / no-show) -->
     <div class="modal modal-blur fade" id="modal-reason" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -385,6 +587,34 @@
         </div>
     </div>
 
+    <!-- Print receipt — populated by JS right before window.print(), never shown on screen -->
+    <div id="print-receipt">
+        <div class="pr-center">
+            <img src="assets/img/logo-side-black.png" class="pr-logo" alt="Hairlux">
+            <div>HAIRLUX SALON &amp; SPA</div>
+            <div id="pr-branch"></div>
+            <div>Booking Receipt</div>
+        </div>
+        <div class="pr-divider"></div>
+        <div class="pr-row"><span class="pr-label">Booking ID</span><span class="pr-value" id="pr-booking-code"></span>
+        </div>
+        <div class="pr-row"><span class="pr-label">Date/Time</span><span class="pr-value" id="pr-datetime"></span></div>
+        <div class="pr-row"><span class="pr-label">Customer</span><span class="pr-value" id="pr-customer"></span></div>
+        <div class="pr-row"><span class="pr-label">Stylist</span><span class="pr-value" id="pr-stylist"></span></div>
+        <div class="pr-row"><span class="pr-label">Served by</span><span class="pr-value" id="pr-served-by"></span>
+        </div>
+        <div class="pr-divider"></div>
+        <div id="pr-services-list"></div>
+        <div class="pr-divider"></div>
+        <div class="pr-total-row"><span>TOTAL</span><span id="pr-amount"></span></div>
+        <div class="pr-row"><span class="pr-label">Status</span><span class="pr-value" id="pr-status"></span></div>
+        <div class="pr-divider"></div>
+        <div class="pr-footer">
+            <div>Thank you for choosing Hairlux!</div>
+            <div>We look forward to seeing you again.</div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
@@ -402,6 +632,13 @@
         var _services = [];
         var _statusFilter = '';
         var _pendingReasonAction = null; // { type: 'cancel'|'no-show', id }
+        var _search = '';
+        var _searchTimer = null;
+        var _page = 1;
+        var _limit = 50;
+        var _totalPages = 1;
+        var _editingBookingId = null;
+        var _addServiceBookingId = null;
 
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
@@ -420,13 +657,33 @@
                 loadBookings();
             });
 
-            document.getElementById('filter-branch').addEventListener('change', loadBookings);
-            document.getElementById('filter-date').addEventListener('change', loadBookings);
+            document.getElementById('filter-branch').addEventListener('change', function () { _page = 1; loadBookings(); });
+            document.getElementById('filter-date').addEventListener('change', function () { _page = 1; loadBookings(); });
+            document.getElementById('filter-search').addEventListener('input', function () {
+                clearTimeout(_searchTimer);
+                var val = this.value;
+                _searchTimer = setTimeout(function () { _search = val; _page = 1; loadBookings(); }, 300);
+            });
+            document.getElementById('filter-limit').addEventListener('change', function () {
+                _limit = Number(this.value); _page = 1; loadBookings();
+            });
+            document.getElementById('btn-prev-page').addEventListener('click', function () {
+                if (_page > 1) { _page--; loadBookings(); }
+            });
+            document.getElementById('btn-next-page').addEventListener('click', function () {
+                if (_page < _totalPages) { _page++; loadBookings(); }
+            });
             document.getElementById('btn-clear-filters').addEventListener('click', function () {
                 document.getElementById('filter-branch').value = '';
                 document.getElementById('filter-date').value = '';
+                document.getElementById('filter-search').value = '';
+                document.getElementById('filter-limit').value = '50';
+                _search = ''; _limit = 50; _page = 1;
                 loadBookings();
             });
+            document.getElementById('eb-add-service').addEventListener('click', function () { addEditServiceLine(); });
+            document.getElementById('btn-submit-edit-booking').addEventListener('click', submitEditBooking);
+            document.getElementById('btn-submit-add-service').addEventListener('click', submitAddService);
 
             document.getElementById('btn-new-booking').addEventListener('click', openNewBookingModal);
             document.getElementById('btn-verify-reservation').addEventListener('click', openVerifyModal);
@@ -464,7 +721,7 @@
 
         async function loadBookings() {
             var tbody = document.getElementById('bookings-tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             document.getElementById('results-label').textContent = 'Loading…';
 
             try {
@@ -472,14 +729,21 @@
                     branchId: document.getElementById('filter-branch').value,
                     date: document.getElementById('filter-date').value,
                     status: _statusFilter,
-                    limit: 50,
+                    search: _search,
+                    page: _page,
+                    limit: _limit,
                 };
                 var result = await SalonBookings.getAll(params);
                 _bookings = result.data || [];
-                document.getElementById('results-label').textContent = (result.meta ? result.meta.total : _bookings.length) + ' booking(s)';
+                var meta = result.meta || {};
+                _totalPages = meta.totalPages || 1;
+                document.getElementById('results-label').textContent = (meta.total != null ? meta.total : _bookings.length) + ' booking(s)';
+                document.getElementById('page-label').textContent = 'Page ' + _page + ' of ' + _totalPages;
+                document.getElementById('btn-prev-page').disabled = _page <= 1;
+                document.getElementById('btn-next-page').disabled = _page >= _totalPages;
                 renderBookings();
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
                 document.getElementById('results-label').textContent = 'Error';
             }
         }
@@ -487,13 +751,13 @@
         function renderBookings() {
             var tbody = document.getElementById('bookings-tbody');
             if (!_bookings.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No bookings found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No bookings found.</td></tr>';
                 return;
             }
-            tbody.innerHTML = _bookings.map(function (b) {
+            tbody.innerHTML = _bookings.map(function (b, i) {
                 var services = (b.services || []).map(function (s) { return esc(s.service ? s.service.name : ''); }).join(', ');
-                var actions = actionsForBooking(b);
                 return '<tr>' +
+                    '<td class="font-monospace small">' + esc(b.bookingCode || '—') + '</td>' +
                     '<td>' + SalonBookings.formatDate(b.bookingDate) + ' · ' + esc(b.bookingTime) + '</td>' +
                     '<td>' + esc(b.customerName) + (b.customerPhone ? '<div class="text-secondary small">' + esc(b.customerPhone) + '</div>' : '') + '</td>' +
                     '<td>' + esc(b.assignedStaff ? b.assignedStaff.name : '—') + '</td>' +
@@ -501,31 +765,45 @@
                     '<td class="text-secondary small">' + (services || '—') + '</td>' +
                     '<td>' + SalonBookings.formatMoney(b.totalAmount) + '</td>' +
                     '<td>' + SalonBookings.statusBadge(b.status) + '</td>' +
-                    '<td class="text-nowrap">' + actions + '</td>' +
+                    '<td>' + actionsDropdown(b, i) + '</td>' +
                     '</tr>';
             }).join('');
 
-            tbody.querySelectorAll('.btn-view').forEach(function (btn) { btn.addEventListener('click', function () { openDetail(btn.dataset.id); }); });
-            tbody.querySelectorAll('.btn-start').forEach(function (btn) { btn.addEventListener('click', function () { doStart(btn.dataset.id); }); });
-            tbody.querySelectorAll('.btn-complete').forEach(function (btn) { btn.addEventListener('click', function () { doComplete(btn.dataset.id); }); });
-            tbody.querySelectorAll('.btn-cancel').forEach(function (btn) { btn.addEventListener('click', function () { openReasonModal('cancel', btn.dataset.id); }); });
-            tbody.querySelectorAll('.btn-no-show').forEach(function (btn) { btn.addEventListener('click', function () { openReasonModal('no-show', btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-view').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); openDetail(btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-edit').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); openEditOrAddService(btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-start').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); doStart(btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-complete').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); doComplete(btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-cancel').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); openReasonModal('cancel', btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-print').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); printBooking(btn.dataset.id); }); });
         }
 
-        function actionsForBooking(b) {
-            var view = '<button class="btn btn-sm btn-outline-secondary me-1 btn-view" data-id="' + b.id + '">View</button>';
+        /**
+         * Three-dot dropdown, actions exactly per status per the current
+         * spec: Scheduled = View/Edit/Start/Cancel/Print, In Progress =
+         * View/Edit/Complete/Print, Completed = View/Edit/Print. No-Show
+         * isn't part of this spec's action list for any status — the
+         * backend endpoint is untouched, just not surfaced here. `i` makes
+         * each row's dropdown menu ID unique.
+         */
+        function actionsDropdown(b, i) {
+            var items = '<a class="dropdown-item btn-view" href="#" data-id="' + b.id + '">View</a>';
+            items += '<a class="dropdown-item btn-edit" href="#" data-id="' + b.id + '">Edit</a>';
             if (b.status === 'SCHEDULED') {
-                return view +
-                    '<button class="btn btn-sm btn-outline-primary me-1 btn-start" data-id="' + b.id + '">Start</button>' +
-                    '<button class="btn btn-sm btn-outline-danger me-1 btn-cancel" data-id="' + b.id + '">Cancel</button>' +
-                    '<button class="btn btn-sm btn-outline-danger btn-no-show" data-id="' + b.id + '">No-Show</button>';
+                items += '<a class="dropdown-item btn-start" href="#" data-id="' + b.id + '">Start</a>';
+                items += '<a class="dropdown-item text-danger btn-cancel" href="#" data-id="' + b.id + '">Cancel</a>';
+            } else if (b.status === 'IN_PROGRESS') {
+                items += '<a class="dropdown-item btn-complete" href="#" data-id="' + b.id + '">Complete</a>';
             }
-            if (b.status === 'IN_PROGRESS') {
-                return view +
-                    '<button class="btn btn-sm btn-success me-1 btn-complete" data-id="' + b.id + '">Complete</button>' +
-                    '<button class="btn btn-sm btn-outline-danger btn-cancel" data-id="' + b.id + '">Cancel</button>';
-            }
-            return view;
+            items += '<a class="dropdown-item btn-print" href="#" data-id="' + b.id + '">Print</a>';
+
+            var menuId = 'row-actions-' + i;
+            return '<div class="dropdown">' +
+                '<button class="btn btn-sm btn-icon btn-ghost-secondary" data-bs-toggle="dropdown" aria-expanded="false">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
+                '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/><circle cx="12" cy="5" r="1"/>' +
+                '</svg></button>' +
+                '<div class="dropdown-menu dropdown-menu-end" id="' + menuId + '">' + items + '</div>' +
+                '</div>';
         }
 
         async function doStart(id) {
@@ -567,6 +845,28 @@
             }
         }
 
+        /**
+             * The Booking Detail modal's footer needs flat, directly-clickable
+             * buttons (Start/Cancel/etc. as plain <button>s the existing
+             * querySelectorAll wiring below can find and attach handlers to) —
+             * not the three-dot dropdown used in the table rows, which would be
+             * an awkward extra click inside an already-open modal. Mirrors
+             * actionsDropdown's exact status logic, just rendered as a flat
+             * button row instead of a dropdown menu. View/Edit/Print aren't
+             * included here: View is redundant (the modal itself is the view),
+             * Edit and Print aren't wired to this modal's footer.
+             */
+        function footerActionsForBooking(b) {
+            if (b.status === 'SCHEDULED') {
+                return '<button class="btn btn-sm btn-outline-primary me-1 btn-start" data-id="' + b.id + '">Start</button>' +
+                    '<button class="btn btn-sm btn-outline-danger btn-cancel" data-id="' + b.id + '">Cancel</button>';
+            }
+            if (b.status === 'IN_PROGRESS') {
+                return '<button class="btn btn-sm btn-success btn-complete" data-id="' + b.id + '">Complete</button>';
+            }
+            return '';
+        }
+
         async function openDetail(id) {
             var body = document.getElementById('detail-body');
             var footer = document.getElementById('detail-footer');
@@ -602,12 +902,10 @@
                     (b.notes ? '<div class="mt-2"><strong>Notes:</strong> ' + esc(b.notes) + '</div>' : '') +
                     commissionHtml;
 
-                footer.innerHTML = actionsForBooking(b).replace(/btn-sm/g, 'btn-sm') + '<button type="button" class="btn" data-bs-dismiss="modal">Close</button>';
-                footer.querySelectorAll('.btn-view').forEach(function (el) { el.remove(); }); // already viewing
+                footer.innerHTML = footerActionsForBooking(b) + '<button type="button" class="btn" data-bs-dismiss="modal">Close</button>';
                 footer.querySelectorAll('.btn-start').forEach(function (btn) { btn.addEventListener('click', function () { doStart(id); bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); }); });
                 footer.querySelectorAll('.btn-complete').forEach(function (btn) { btn.addEventListener('click', function () { doComplete(id); bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); }); });
                 footer.querySelectorAll('.btn-cancel').forEach(function (btn) { btn.addEventListener('click', function () { bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); openReasonModal('cancel', id); }); });
-                footer.querySelectorAll('.btn-no-show').forEach(function (btn) { btn.addEventListener('click', function () { bootstrap.Modal.getInstance(document.getElementById('modal-booking-detail')).hide(); openReasonModal('no-show', id); }); });
             } catch (e) {
                 body.innerHTML = '<div class="text-danger">' + esc(e.message) + '</div>';
             }
@@ -720,6 +1018,9 @@
             document.getElementById('nb-customer-name').value = '';
             document.getElementById('nb-customer-phone').value = '';
             document.getElementById('nb-customer-search').value = '';
+            document.getElementById('nb-phone-match-prompt').classList.add('d-none');
+            _nbLinkToVerifiedUser = false;
+            _nbPhoneMatchLastChecked = '';
             document.getElementById('nb-customer-search-results').style.display = 'none';
             document.getElementById('nb-date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('nb-date').min = new Date().toISOString().slice(0, 10);
@@ -898,6 +1199,229 @@
             document.getElementById('nb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(total);
         }
 
+        /** Routes to the right modal — full Edit for Scheduled/In Progress, the narrower Add Service flow for Completed. */
+        async function openEditOrAddService(id) {
+            var b = _bookings.find(function (x) { return x.id === id; }) || await SalonBookings.getOne(id);
+            if (b.status === 'COMPLETED') {
+                openAddServiceModal(b);
+            } else {
+                openEditModal(b);
+            }
+        }
+
+        function edLine(container, serviceId, quantity) {
+            var row = document.createElement('div');
+            row.className = 'line-row';
+            row.innerHTML =
+                '<select class="form-select form-select-sm line-service-select"></select>' +
+                '<input type="number" min="1" value="' + (quantity || 1) + '" class="form-control form-control-sm line-qty">' +
+                '<div class="line-row-total">—</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
+            container.appendChild(row);
+            var sel = row.querySelector('.line-service-select');
+            populateServiceSelect(sel);
+            if (serviceId) sel.value = serviceId;
+
+            sel.addEventListener('change', updateEditEstimatedTotal);
+            row.querySelector('.line-qty').addEventListener('input', updateEditEstimatedTotal);
+            row.querySelector('.btn-remove-line').addEventListener('click', function () { row.remove(); updateEditEstimatedTotal(); });
+            return row;
+        }
+
+        function addEditServiceLine() { edLine(document.getElementById('eb-service-lines')); updateEditEstimatedTotal(); }
+
+        function updateEditEstimatedTotal() {
+            var total = 0;
+            document.querySelectorAll('#eb-service-lines .line-row').forEach(function (row) {
+                var sel = row.querySelector('.line-service-select');
+                var qty = Number(row.querySelector('.line-qty').value) || 0;
+                var opt = sel.options[sel.selectedIndex];
+                var price = opt ? Number(opt.dataset.price || 0) : 0;
+                var lineTotal = price * qty;
+                row.querySelector('.line-row-total').textContent = opt && opt.value ? SalonBookings.formatMoney(lineTotal) : '—';
+                total += lineTotal;
+            });
+            document.getElementById('eb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(total);
+        }
+
+        async function openEditModal(b) {
+            _editingBookingId = b.id;
+            document.getElementById('edit-booking-error').classList.add('d-none');
+            document.getElementById('eb-booking-code').textContent = b.bookingCode || '';
+            document.getElementById('eb-customer-name').value = b.customerName || '';
+            document.getElementById('eb-customer-phone').value = b.customerPhone || '';
+            document.getElementById('eb-date').value = (b.bookingDate || '').slice(0, 10);
+            document.getElementById('eb-date').min = new Date().toISOString().slice(0, 10);
+            document.getElementById('eb-time').value = b.bookingTime || '';
+            document.getElementById('eb-notes').value = b.notes || '';
+            document.getElementById('eb-service-lines').innerHTML = '';
+
+            await loadServices(b.branchId || (b.branch && b.branch.id));
+
+            var staffSel = document.getElementById('eb-staff');
+            staffSel.innerHTML = '<option value="">Loading…</option>';
+            try {
+                var staffResult = await Staff.getAll({ locationId: b.branchId || (b.branch && b.branch.id), limit: 100 });
+                var staffList = staffResult.data || [];
+                staffSel.innerHTML = staffList.length
+                    ? staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
+                    : '<option value="">No staff at this branch</option>';
+                if (b.assignedStaffId) staffSel.value = b.assignedStaffId;
+            } catch (e) { staffSel.innerHTML = '<option value="">Failed to load staff</option>'; }
+
+            var container = document.getElementById('eb-service-lines');
+            (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
+                edLine(container, line.service ? line.service.id : undefined, line.quantity);
+            });
+            updateEditEstimatedTotal();
+
+            new bootstrap.Modal(document.getElementById('modal-edit-booking')).show();
+        }
+
+        async function submitEditBooking() {
+            var errEl = document.getElementById('edit-booking-error');
+            errEl.classList.add('d-none');
+
+            var services = [];
+            document.querySelectorAll('#eb-service-lines .line-row').forEach(function (row) {
+                var serviceId = row.querySelector('.line-service-select').value;
+                var quantity = Number(row.querySelector('.line-qty').value) || 1;
+                if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+            });
+            if (!services.length) {
+                errEl.textContent = 'At least one service is required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            var payload = {
+                customerName: document.getElementById('eb-customer-name').value.trim() || undefined,
+                customerPhone: document.getElementById('eb-customer-phone').value.trim() || undefined,
+                assignedStaffId: document.getElementById('eb-staff').value || undefined,
+                bookingDate: document.getElementById('eb-date').value || undefined,
+                bookingTime: document.getElementById('eb-time').value || undefined,
+                notes: document.getElementById('eb-notes').value.trim(),
+                services: services,
+            };
+
+            var btn = document.getElementById('btn-submit-edit-booking');
+            btn.disabled = true;
+            try {
+                await SalonBookings.editBooking(_editingBookingId, payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-edit-booking')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save changes.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function openAddServiceModal(b) {
+            _addServiceBookingId = b.id;
+            document.getElementById('add-service-error').classList.add('d-none');
+            document.getElementById('as-booking-code').textContent = b.bookingCode || '';
+            document.getElementById('as-quantity').value = 1;
+            await loadServices(b.branchId || (b.branch && b.branch.id));
+            populateServiceSelect(document.getElementById('as-service-select'));
+            new bootstrap.Modal(document.getElementById('modal-add-service')).show();
+        }
+
+        async function submitAddService() {
+            var errEl = document.getElementById('add-service-error');
+            errEl.classList.add('d-none');
+            var serviceId = document.getElementById('as-service-select').value;
+            var quantity = Number(document.getElementById('as-quantity').value) || 1;
+            if (!serviceId) {
+                errEl.textContent = 'Please select a service.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = document.getElementById('btn-submit-add-service');
+            btn.disabled = true;
+            try {
+                await SalonBookings.addServiceToCompletedBooking(_addServiceBookingId, { serviceId: serviceId, quantity: quantity });
+                bootstrap.Modal.getInstance(document.getElementById('modal-add-service')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to add service.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function printBooking(id) {
+            try {
+                var b = _bookings.find(function (x) { return x.id === id; }) || await SalonBookings.getOne(id);
+                document.getElementById('pr-booking-code').textContent = b.bookingCode || '—';
+                document.getElementById('pr-datetime').textContent = SalonBookings.formatDate(b.bookingDate) + ' · ' + (b.bookingTime || '');
+                document.getElementById('pr-customer').textContent = (b.customerName || '—') + (b.customerPhone ? ' (' + b.customerPhone + ')' : '');
+                document.getElementById('pr-stylist').textContent = b.assignedStaff ? b.assignedStaff.name : '—';
+                document.getElementById('pr-branch').textContent = b.branch ? b.branch.name : '';
+                // createdBy is only set when a staff member entered the
+                // booking directly — a customer's own self-service
+                // reservation has no staff "author" to credit, so this
+                // reads honestly as "Online booking" rather than blank
+                // or a misleading name.
+                document.getElementById('pr-served-by').textContent = b.createdBy ? b.createdBy.name : 'Online booking';
+                var servicesContainer = document.getElementById('pr-services-list');
+                var services = b.services || [];
+                servicesContainer.innerHTML = services.length
+                    ? services.map(function (s) {
+                        var name = esc(s.service ? s.service.name : 'Service');
+                        var qty = s.quantity && s.quantity > 1 ? ' x' + s.quantity : '';
+                        return '<div class="pr-service-line"><span>' + name + qty + '</span></div>';
+                    }).join('')
+                    : '<div class="pr-service-line"><span>—</span></div>';
+                document.getElementById('pr-amount').textContent = SalonBookings.formatMoney(b.totalAmount);
+                document.getElementById('pr-status').textContent = String(b.status || '').replace(/_/g, ' ');
+                window.print();
+            } catch (e) {
+                alert(e.message || 'Could not prepare receipt for printing.');
+            }
+        }
+
+        var _nbLinkToVerifiedUser = false;
+        var _nbPhoneMatchLastChecked = '';
+
+        async function nbCheckPhoneMatch() {
+            var phone = document.getElementById('nb-customer-phone').value.trim();
+            var promptEl = document.getElementById('nb-phone-match-prompt');
+            if (!phone || phone === _nbPhoneMatchLastChecked) return;
+            _nbPhoneMatchLastChecked = phone;
+            _nbLinkToVerifiedUser = false;
+            promptEl.classList.add('d-none');
+
+            try {
+                var result = await SalonBookings.checkPhoneMatch(phone);
+                if (result.hasMatch) {
+                    document.getElementById('nb-phone-match-text').textContent =
+                        'This number matches ' + result.accountName + '\u2019s verified account. Link this visit to their account?';
+                    promptEl.classList.remove('d-none');
+                }
+            } catch (e) {
+                // Non-critical -- booking creation still works without this check succeeding.
+            }
+        }
+
+        document.getElementById('nb-customer-phone').addEventListener('blur', nbCheckPhoneMatch);
+        // Any further edit to the phone invalidates whatever was last confirmed/checked.
+        document.getElementById('nb-customer-phone').addEventListener('input', function () {
+            _nbLinkToVerifiedUser = false;
+            _nbPhoneMatchLastChecked = '';
+            document.getElementById('nb-phone-match-prompt').classList.add('d-none');
+        });
+        document.getElementById('nb-phone-match-yes').addEventListener('click', function () {
+            _nbLinkToVerifiedUser = true;
+            document.getElementById('nb-phone-match-prompt').classList.add('d-none');
+        });
+        document.getElementById('nb-phone-match-no').addEventListener('click', function () {
+            _nbLinkToVerifiedUser = false;
+            document.getElementById('nb-phone-match-prompt').classList.add('d-none');
+        });
+
         async function submitNewBooking() {
             var errEl = document.getElementById('booking-form-error');
             errEl.classList.add('d-none');
@@ -943,6 +1467,7 @@
             var payload = {
                 branchId: branchId, assignedStaffId: assignedStaffId,
                 customerName: customerName, customerPhone: customerPhone || undefined,
+                linkToVerifiedUser: _nbLinkToVerifiedUser || undefined,
                 bookingDate: bookingDate, bookingTime: bookingTime,
                 services: services,
                 inventoryItems: inventoryItems.length ? inventoryItems : undefined,

@@ -230,6 +230,24 @@ const Staff = (() => {
         return jsonFetch("/admin/staff/" + id + "/onboarding");
     }
 
+    async function getWorkCalendar(id) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id);
+    }
+
+    async function setWorkCalendar(id, payload) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function applyWorkCalendarDefault(id, overwrite) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id + "/apply-business-hours-default?overwrite=" + (overwrite ? "true" : "false"), {
+            method: "POST",
+        });
+    }
+
     async function getOnboardingSummary() {
         return jsonFetch("/admin/staff/onboarding-summary");
     }
@@ -248,6 +266,26 @@ const Staff = (() => {
 
     async function getDirectives(id) {
         return jsonFetch("/admin/staff/" + id + "/directives");
+    }
+
+    async function setCompensation(id, payload) {
+        return jsonFetch("/admin/payroll/staff/" + id + "/compensation", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getCompensationHistory(id) {
+        return jsonFetch("/admin/payroll/staff/" + id + "/compensation/history");
+    }
+
+    async function requestAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification/request", { method: "POST" });
+    }
+
+    async function getAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification");
     }
 
     async function getPassportPhotoUrl(id) {
@@ -323,10 +361,13 @@ const Staff = (() => {
         updateHistory,
         removeHistory,
         getOnboarding,
+        getWorkCalendar, setWorkCalendar, applyWorkCalendarDefault,
         getOnboardingSummary,
         updateOnboardingItem,
         getDocumentStatus,
         getDirectives,
+        setCompensation, getCompensationHistory,
+        requestAddressVerification, getAddressVerification,
         getPassportPhotoUrl,
         idCardUrl,
         downloadIdCard,

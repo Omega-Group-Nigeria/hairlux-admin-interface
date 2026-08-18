@@ -210,6 +210,9 @@
                 if (section === 'business-hours') {
                     loadBusinessHours();
                 }
+                if (section === 'customer-classification') {
+                    loadCustomerClassificationSettings();
+                }
             });
         });
 
@@ -220,6 +223,11 @@
         var saveBizHoursBtn = document.getElementById('btn-save-business-hours');
         if (saveBizHoursBtn) {
             saveBizHoursBtn.addEventListener('click', submitBusinessHours);
+        }
+
+        var saveCustomerClassificationBtn = document.getElementById('btn-save-customer-classification');
+        if (saveCustomerClassificationBtn) {
+            saveCustomerClassificationBtn.addEventListener('click', submitCustomerClassificationSettings);
         }
 
         async function loadBusinessHours() {
@@ -260,6 +268,67 @@
                 showAlert('danger', err.message || 'Failed to save business hours.');
             } finally {
                 setSpinner('spinner-business-hours', false);
+            }
+        }
+
+        async function loadCustomerClassificationSettings() {
+            var errEl = document.getElementById('cc-settings-error');
+            if (errEl) errEl.classList.add('d-none');
+            try {
+                var s = await SalonBookings.getCustomerClassificationSettings();
+                document.getElementById('cc-premium-spend').value = s.premiumSpendThreshold;
+                document.getElementById('cc-vip-spend').value = s.vipSpendThreshold;
+                document.getElementById('cc-new-age').value = s.newAccountAgeDays;
+                document.getElementById('cc-new-visits').value = s.newVisitCountThreshold;
+                document.getElementById('cc-active-days').value = s.activeDaysThreshold;
+                document.getElementById('cc-at-risk-days').value = s.atRiskDaysThreshold;
+                document.getElementById('cc-dormant-days').value = s.dormantDaysThreshold;
+            } catch (err) {
+                if (errEl) {
+                    errEl.textContent = err.message || 'Failed to load classification settings.';
+                    errEl.classList.remove('d-none');
+                }
+            }
+        }
+
+        async function submitCustomerClassificationSettings() {
+            var errEl = document.getElementById('cc-settings-error');
+            errEl.classList.add('d-none');
+
+            var payload = {
+                premiumSpendThreshold: Number(document.getElementById('cc-premium-spend').value),
+                vipSpendThreshold: Number(document.getElementById('cc-vip-spend').value),
+                newAccountAgeDays: Number(document.getElementById('cc-new-age').value),
+                newVisitCountThreshold: Number(document.getElementById('cc-new-visits').value),
+                activeDaysThreshold: Number(document.getElementById('cc-active-days').value),
+                atRiskDaysThreshold: Number(document.getElementById('cc-at-risk-days').value),
+                dormantDaysThreshold: Number(document.getElementById('cc-dormant-days').value),
+            };
+
+            if (payload.vipSpendThreshold <= payload.premiumSpendThreshold) {
+                errEl.textContent = 'VIP threshold must be greater than the Premium threshold.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            if (payload.atRiskDaysThreshold <= payload.activeDaysThreshold || payload.dormantDaysThreshold <= payload.atRiskDaysThreshold) {
+                errEl.textContent = 'Each lifecycle day threshold must be greater than the one before it (Active < At Risk < Dormant).';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            setSpinner('spinner-customer-classification', true);
+            try {
+                await SalonBookings.updateCustomerClassificationSettings(payload);
+                var savedBadge = document.getElementById('cc-settings-saved');
+                if (savedBadge) {
+                    savedBadge.classList.remove('d-none');
+                    setTimeout(function () { savedBadge.classList.add('d-none'); }, 2500);
+                }
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to save classification settings.';
+                errEl.classList.remove('d-none');
+            } finally {
+                setSpinner('spinner-customer-classification', false);
             }
         }
 

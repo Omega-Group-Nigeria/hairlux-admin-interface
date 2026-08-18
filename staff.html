@@ -324,6 +324,35 @@
         </div>
     </div>
 
+    <div class="modal modal-blur fade" id="modal-work-calendar" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Work Calendar — <span id="wc-staff-name">—</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="modal-wc-error"></div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="text-secondary small">Each day can be a full working day, a half day with its own
+                            hours,
+                            or an off day.</div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-wc-apply-default">Apply
+                            Company Default</button>
+                    </div>
+                    <div id="wc-days-body"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-submit-work-calendar">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-work-calendar"></span>
+                        Save Calendar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
@@ -496,9 +525,15 @@
                 var onboardingToggle = e.target.closest(".btn-onboarding-toggle");
                 var onboardingApprove = e.target.closest(".btn-onboarding-approve");
                 var onboardingReject = e.target.closest(".btn-onboarding-reject");
+                var editWorkCalendar = e.target.closest(".btn-edit-work-calendar");
+                var setCompensationBtn = e.target.closest(".btn-oc-set-compensation");
+                var requestAddressVerificationBtn = e.target.closest(".btn-oc-request-address-verification");
+                if (setCompensationBtn) return handleSetCompensation(setCompensationBtn.dataset.id);
+                if (requestAddressVerificationBtn) return handleRequestAddressVerification(requestAddressVerificationBtn.dataset.id);
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
                 if (editHist) return handleEditHistory(editHist.dataset.staffId, editHist.dataset.historyId);
                 if (delHist) return handleDeleteHistory(delHist.dataset.staffId, delHist.dataset.historyId);
+                if (editWorkCalendar) return openWorkCalendarModal(editWorkCalendar.dataset.id, editWorkCalendar.dataset.name);
                 if (onboardingToggle) {
                     return handleToggleOnboardingItem(
                         onboardingToggle.dataset.staffId,
@@ -702,6 +737,7 @@
             EMERGENCY_CONTACT: 'Emergency Contact',
             REFERENCE_CHECK: 'Reference Check',
             ADDRESS_VERIFICATION: 'Address Verification',
+            PHYSICAL_ADDRESS_VERIFICATION: 'Physical Address Verification',
             PASSPORT_PHOTO: 'Passport Photo',
             POLICY_ACKNOWLEDGMENT: 'Policy Acknowledgment',
         };
@@ -726,7 +762,14 @@
             if (!onboarding) {
                 return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load onboarding checklist.</div>';
             }
-            var items = onboarding.items || [];
+            // PHYSICAL_ADDRESS_VERIFICATION deliberately excluded here --
+            // it's a separate, selective (admin-requested-only) track with
+            // its own dedicated section below (renderAddressVerificationStatus),
+            // never the generic Approve/Reject flow this checklist uses.
+            // Approving it generically here would bypass QoreID entirely --
+            // marking it verified with no actual physical check having
+            // happened.
+            var items = (onboarding.items || []).filter(function (i) { return i.type !== 'PHYSICAL_ADDRESS_VERIFICATION'; });
             var doneCount = items.filter(function (i) { return i.isComplete; }).length;
             var pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
 
@@ -802,6 +845,257 @@
             }).join('');
         }
 
+        var DAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        var DAY_TYPE_BADGE = { WORKING: 'bg-success-lt', HALF_DAY: 'bg-warning-lt', OFF: 'bg-secondary-lt' };
+
+        function renderWorkCalendarSummary(calendar) {
+            if (!calendar || !calendar.days) {
+                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load work calendar.</div>';
+            }
+            var anyConfigured = calendar.days.some(function (d) { return d.configured; });
+            var rows = calendar.days.map(function (d) {
+                var badgeClass = DAY_TYPE_BADGE[d.dayType] || 'bg-secondary-lt';
+                var times = d.dayType !== 'OFF' ? (esc(d.resumeTime) + ' – ' + esc(d.closingTime)) : '';
+                var altNote = d.alternatesBiweekly ? ' <span class="text-secondary">(alternate)</span>' : '';
+                return '<div class="d-flex align-items-center justify-content-between small py-1">' +
+                    '<span>' + DAY_SHORT_NAMES[d.dayOfWeek] + '</span>' +
+                    '<span><span class="badge ' + badgeClass + '">' + esc(d.dayType.replace('_', ' ')) + '</span>' + altNote + ' <span class="text-secondary ms-1">' + times + '</span></span>' +
+                    '</div>';
+            }).join('');
+            var note = anyConfigured
+                ? ''
+                : '<div class="text-secondary small mt-1">Nothing configured yet — showing the company default schedule.</div>';
+            return rows + note;
+        }
+
+        var _wcStaffId = null;
+
+        // Mirrors the backend's exact epoch/algorithm (staff-work-calendar.service.ts)
+        // so "Week A"/"Week B" in this preview always agrees with what actually
+        // gets applied server-side.
+        var WC_BIWEEKLY_EPOCH_MS = new Date('2024-01-01T00:00:00+01:00').getTime();
+
+        function wcWeekParityForDateStr(dateStr) {
+            var weeksSinceEpoch = Math.floor((new Date(dateStr + 'T00:00:00+01:00').getTime() - WC_BIWEEKLY_EPOCH_MS) / (7 * 24 * 60 * 60 * 1000));
+            return ((weeksSinceEpoch % 2) + 2) % 2;
+        }
+
+        function wcNextOccurrenceDates(dayOfWeek, count) {
+            var results = [];
+            var d = new Date();
+            d.setHours(12, 0, 0, 0); // avoid DST/midnight edge issues in this browser-local preview
+            var diff = (dayOfWeek - d.getDay() + 7) % 7;
+            d.setDate(d.getDate() + diff);
+            for (var i = 0; i < count; i++) {
+                results.push(new Date(d));
+                d.setDate(d.getDate() + 7);
+            }
+            return results;
+        }
+
+        function wcFormatPreviewDate(d) {
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        }
+
+        function renderAltPreview(row) {
+            var dayOfWeek = Number(row.dataset.day);
+            var mainType = row.querySelector('.wc-day-type').value;
+            var parity = Number(row.querySelector('.wc-alt-parity').value);
+            var altType = row.querySelector('.wc-alt-type').value;
+            var dates = wcNextOccurrenceDates(dayOfWeek, 4);
+
+            var items = dates.map(function (d) {
+                var dateStr = d.toISOString().slice(0, 10);
+                var thisParity = wcWeekParityForDateStr(dateStr);
+                var effectiveType = (thisParity === parity) ? mainType : altType;
+                var badgeClass = DAY_TYPE_BADGE[effectiveType] || 'bg-secondary-lt';
+                return '<span class="badge ' + badgeClass + ' me-1">' + wcFormatPreviewDate(d) + ': ' + esc(effectiveType.replace('_', ' ')) + '</span>';
+            }).join('');
+
+            var previewEl = row.querySelector('.wc-alt-preview');
+            if (previewEl) previewEl.innerHTML = '<div class="text-secondary small mt-1">Next 4: ' + items + '</div>';
+        }
+
+        function renderWorkCalendarRow(d) {
+            var isOff = d.dayType === 'OFF';
+            var alt = !!d.alternatesBiweekly;
+            return '<div class="border rounded p-2 mb-2 wc-day-row" data-day="' + d.dayOfWeek + '">' +
+                '<div class="row g-2 align-items-center">' +
+                '<div class="col-2"><span class="fw-semibold small">' + DAY_SHORT_NAMES[d.dayOfWeek] + '</span></div>' +
+                '<div class="col-3">' +
+                '<select class="form-select form-select-sm wc-day-type">' +
+                '<option value="WORKING"' + (d.dayType === 'WORKING' ? ' selected' : '') + '>Working</option>' +
+                '<option value="HALF_DAY"' + (d.dayType === 'HALF_DAY' ? ' selected' : '') + '>Half Day</option>' +
+                '<option value="OFF"' + (isOff ? ' selected' : '') + '>Off</option>' +
+                '</select></div>' +
+                '<div class="col-3 wc-times" style="' + (isOff ? 'display:none' : '') + '">' +
+                '<input type="time" class="form-control form-control-sm wc-resume" value="' + esc(d.resumeTime || '') + '">' +
+                '</div>' +
+                '<div class="col-3 wc-times" style="' + (isOff ? 'display:none' : '') + '">' +
+                '<input type="time" class="form-control form-control-sm wc-closing" value="' + esc(d.closingTime || '') + '">' +
+                '</div>' +
+                '<div class="col-1 text-center">' +
+                '<input type="checkbox" class="form-check-input wc-alt-check" title="Alternates every other week"' + (alt ? ' checked' : '') + '>' +
+                '</div>' +
+                '</div>' +
+                '<div class="row g-2 align-items-center mt-1 wc-alt-fields" style="' + (alt ? '' : 'display:none') + '">' +
+                '<div class="col-2"></div>' +
+                '<div class="col-4"><select class="form-select form-select-sm wc-alt-parity">' +
+                '<option value="0"' + (d.activeWeekParity === 0 ? ' selected' : '') + '>Applies on Week A</option>' +
+                '<option value="1"' + (d.activeWeekParity === 1 ? ' selected' : '') + '>Applies on Week B</option>' +
+                '</select></div>' +
+                '<div class="col-6"><select class="form-select form-select-sm wc-alt-type">' +
+                '<option value="OFF"' + (d.alternateDayType === 'OFF' ? ' selected' : '') + '>Otherwise: Off</option>' +
+                '<option value="WORKING"' + (d.alternateDayType === 'WORKING' ? ' selected' : '') + '>Otherwise: Working</option>' +
+                '<option value="HALF_DAY"' + (d.alternateDayType === 'HALF_DAY' ? ' selected' : '') + '>Otherwise: Half Day</option>' +
+                '</select></div>' +
+                '</div>' +
+                '<div class="row mt-1 wc-alt-preview-row" style="' + (alt ? '' : 'display:none') + '">' +
+                '<div class="col-12 wc-alt-preview"></div>' +
+                '</div>' +
+                '</div>';
+        }
+
+        function bindWorkCalendarRowEvents() {
+            document.querySelectorAll('#wc-days-body .wc-day-row').forEach(function (row) {
+                var typeSelect = row.querySelector('.wc-day-type');
+                var timeFields = row.querySelectorAll('.wc-times');
+                var altCheck = row.querySelector('.wc-alt-check');
+                var altFields = row.querySelector('.wc-alt-fields');
+                var altPreviewRow = row.querySelector('.wc-alt-preview-row');
+                var altParitySelect = row.querySelector('.wc-alt-parity');
+                var altTypeSelect = row.querySelector('.wc-alt-type');
+
+                function refreshPreview() {
+                    if (altCheck.checked) renderAltPreview(row);
+                }
+
+                typeSelect.addEventListener('change', function () {
+                    var off = typeSelect.value === 'OFF';
+                    timeFields.forEach(function (el) { el.style.display = off ? 'none' : ''; });
+                    refreshPreview();
+                });
+                altCheck.addEventListener('change', function () {
+                    var show = altCheck.checked;
+                    altFields.style.display = show ? '' : 'none';
+                    altPreviewRow.style.display = show ? '' : 'none';
+                    refreshPreview();
+                });
+                altParitySelect.addEventListener('change', refreshPreview);
+                altTypeSelect.addEventListener('change', refreshPreview);
+
+                refreshPreview(); // show it immediately for rows that already have alternation configured
+            });
+        }
+
+        async function openWorkCalendarModal(staffId, staffName) {
+            _wcStaffId = staffId;
+            document.getElementById('wc-staff-name').textContent = staffName || '—';
+            document.getElementById('modal-wc-error').classList.add('d-none');
+            document.getElementById('wc-days-body').innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+            new bootstrap.Modal(document.getElementById('modal-work-calendar')).show();
+
+            try {
+                var calendar = await Staff.getWorkCalendar(staffId);
+                document.getElementById('wc-days-body').innerHTML = calendar.days.map(renderWorkCalendarRow).join('');
+                bindWorkCalendarRowEvents();
+            } catch (err) {
+                document.getElementById('wc-days-body').innerHTML = '<div class="alert alert-danger py-2 px-3 small">Failed to load calendar.</div>';
+            }
+        }
+
+        function readWorkCalendarForm() {
+            var days = [];
+            document.querySelectorAll('#wc-days-body .wc-day-row').forEach(function (row) {
+                var dayOfWeek = Number(row.dataset.day);
+                var dayType = row.querySelector('.wc-day-type').value;
+                var alt = row.querySelector('.wc-alt-check').checked;
+                var day = { dayOfWeek: dayOfWeek, dayType: dayType };
+                if (dayType !== 'OFF') {
+                    day.resumeTime = row.querySelector('.wc-resume').value;
+                    day.closingTime = row.querySelector('.wc-closing').value;
+                }
+                if (alt) {
+                    day.alternatesBiweekly = true;
+                    day.activeWeekParity = Number(row.querySelector('.wc-alt-parity').value);
+                    day.alternateDayType = row.querySelector('.wc-alt-type').value;
+                }
+                days.push(day);
+            });
+            return days;
+        }
+
+        document.getElementById('btn-submit-work-calendar').addEventListener('click', async function () {
+            var errEl = document.getElementById('modal-wc-error');
+            errEl.classList.add('d-none');
+            var days = readWorkCalendarForm();
+
+            for (var i = 0; i < days.length; i++) {
+                if (days[i].dayType !== 'OFF' && (!days[i].resumeTime || !days[i].closingTime)) {
+                    errEl.textContent = DAY_SHORT_NAMES[days[i].dayOfWeek] + ': resume and closing time are required unless the day is Off.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+            }
+
+            var btn = this;
+            var spinner = document.getElementById('spinner-work-calendar');
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+
+            try {
+                await Staff.setWorkCalendar(_wcStaffId, { days: days });
+                bootstrap.Modal.getInstance(document.getElementById('modal-work-calendar')).hide();
+                if (_currentStaffId === _wcStaffId) openStaffDetail(_currentStaffId);
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to save calendar.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        document.getElementById('btn-wc-apply-default').addEventListener('click', async function () {
+            if (!_wcStaffId) return;
+            var errEl = document.getElementById('modal-wc-error');
+            errEl.classList.add('d-none');
+            try {
+                var calendar = await Staff.applyWorkCalendarDefault(_wcStaffId, false);
+                document.getElementById('wc-days-body').innerHTML = calendar.days.map(renderWorkCalendarRow).join('');
+                bindWorkCalendarRowEvents();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to apply default.';
+                errEl.classList.remove('d-none');
+            }
+        });
+
+        var ADDRESS_VERIFICATION_BADGE = {
+            REQUESTED: 'bg-secondary-lt', SUBMITTED: 'bg-warning-lt',
+            VERIFIED: 'bg-success-lt', REJECTED: 'bg-danger-lt', FAILED: 'bg-danger-lt',
+        };
+        var ADDRESS_VERIFICATION_LABEL = {
+            REQUESTED: 'Awaiting staff submission', SUBMITTED: 'In progress (24-48h)',
+            VERIFIED: 'Verified', REJECTED: 'Rejected', FAILED: 'Failed',
+        };
+
+        function renderAddressVerificationStatus(av) {
+            if (!av) {
+                return '<div class="text-secondary small">Not yet requested.</div>';
+            }
+            var badgeClass = ADDRESS_VERIFICATION_BADGE[av.status] || 'bg-secondary-lt';
+            var label = ADDRESS_VERIFICATION_LABEL[av.status] || av.status;
+            var html = '<div class="small mb-1"><span class="badge ' + badgeClass + '">' + esc(label) + '</span></div>';
+            if (av.status === 'SUBMITTED' && av.street) {
+                html += '<div class="text-secondary small">' + esc([av.street, av.city, av.stateName].filter(Boolean).join(', ')) + '</div>';
+                html += '<div class="text-secondary small">Submitted ' + esc(Staff.formatDate(av.submittedAt)) + '</div>';
+            }
+            if ((av.status === 'VERIFIED' || av.status === 'REJECTED') && av.reportUrl) {
+                html += '<div class="small mt-1"><a href="' + esc(av.reportUrl) + '" target="_blank" rel="noopener">View QoreID report</a></div>';
+            }
+            return html;
+        }
+
         function renderDirectivesSection(directives) {
             if (!directives) {
                 return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load tasks.</div>';
@@ -837,6 +1131,9 @@
                 var passportPhotoResult = await Staff.getPassportPhotoUrl(id).catch(function () { return null; });
                 var passportPhotoUrl = passportPhotoResult && passportPhotoResult.viewUrl;
                 var roleAssignment = await Staff.getRoleAssignment(id).catch(function () { return { adminRoleId: null, adminRoleName: null, hasAdminPortalLogin: false, linkedToUserAccount: false }; });
+                var workCalendarResult = await Staff.getWorkCalendar(id).catch(function () { return null; });
+                var compensationHistory = await Staff.getCompensationHistory(id).catch(function () { return []; });
+                var addressVerification = await Staff.getAddressVerification(id).catch(function () { return null; });
                 var history = s.histories || s.employmentHistory || s.history || [];
                 var employmentStartDate = s.employmentStartDate || s.startDate || null;
                 if (!employmentStartDate && history.length) {
@@ -870,8 +1167,49 @@
                     renderDocumentsSection(documentsResult) +
                     '</div>' +
                     '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Work Calendar</div>' +
+                    '<button class="btn btn-xs btn-outline-primary btn-edit-work-calendar" data-id="' + esc(s.id) + '" data-name="' + esc(Staff.fullName(s)) + '">Edit</button>' +
+                    '</div>' +
+                    '<div id="work-calendar-summary">' + renderWorkCalendarSummary(workCalendarResult) + '</div>' +
+                    '</div>' +
+                    '<div class="mb-3">' +
                     '<div class="fw-semibold mb-1">Tasks &amp; Directives</div>' +
                     renderDirectivesSection(directivesResult) +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Compensation</div>' +
+                    '<button class="btn btn-xs btn-outline-primary btn-oc-set-compensation" data-id="' + esc(s.id) + '">Set</button>' +
+                    '</div>' +
+                    '<div class="small mb-2">' +
+                    (s.currentBaseSalary != null
+                        ? 'Base: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentBaseSalary) : ('\u20a6' + Number(s.currentBaseSalary).toLocaleString())) + '</strong>' +
+                        (s.currentAllowances != null ? ' &middot; Allowances: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentAllowances) : ('\u20a6' + Number(s.currentAllowances).toLocaleString())) + '</strong>' : '')
+                        : '<span class="text-secondary">Not set yet.</span>') +
+                    '</div>' +
+                    (compensationHistory.length
+                        ? '<div class="d-flex flex-column gap-1">' +
+                        compensationHistory.map(function (c) {
+                            var changedByName = c.changedBy ? c.changedBy.name : 'System';
+                            return '<div class="history-item">' +
+                                '<div class="fw-semibold small">' + esc(Staff.formatMoney ? Staff.formatMoney(c.baseSalary) : ('\u20a6' + Number(c.baseSalary).toLocaleString())) +
+                                (c.allowances != null ? ' + ' + esc(Staff.formatMoney ? Staff.formatMoney(c.allowances) : ('\u20a6' + Number(c.allowances).toLocaleString())) + ' allowances' : '') + '</div>' +
+                                '<div class="text-secondary small">Effective ' + esc(Staff.formatDate(c.effectiveDate)) + ' &middot; Set by ' + esc(changedByName) + '</div>' +
+                                (c.note ? '<div class="text-secondary small">' + esc(c.note) + '</div>' : '') +
+                                '</div>';
+                        }).join('') +
+                        '</div>'
+                        : '<div class="text-secondary small">No compensation history yet.</div>') +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Address Verification</div>' +
+                    (!addressVerification || addressVerification.status === 'FAILED' || addressVerification.status === 'REJECTED'
+                        ? '<button class="btn btn-xs btn-outline-primary btn-oc-request-address-verification" data-id="' + esc(s.id) + '">' + (addressVerification ? 'Re-request' : 'Request') + '</button>'
+                        : '') +
+                    '</div>' +
+                    (renderAddressVerificationStatus(addressVerification)) +
                     '</div>' +
                     '<div class="d-flex align-items-center justify-content-between mb-2">' +
                     '<div class="fw-semibold">Employment History</div>' +
@@ -1093,6 +1431,21 @@
                 return;
             }
 
+            if (action.type === "compensation") {
+                form.innerHTML =
+                    (d.currentBaseSalary != null
+                        ? '<div class="col-12"><div class="alert alert-info mb-0">Current: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(d.currentBaseSalary) : ('\u20a6' + Number(d.currentBaseSalary).toLocaleString())) + '</strong>' +
+                        (d.currentAllowances != null ? ' + <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(d.currentAllowances) : ('\u20a6' + Number(d.currentAllowances).toLocaleString())) + '</strong> allowances' : '') + '</div></div>'
+                        : '<div class="col-12"><div class="alert alert-info mb-0">No compensation set yet for this staff member.</div></div>') +
+                    buildInput('col-md-6', 'Base Salary (\u20a6)', 'sf-comp-base-salary', d.currentBaseSalary != null ? d.currentBaseSalary : '', 'number') +
+                    buildInput('col-md-6', 'Allowances (\u20a6)', 'sf-comp-allowances', d.currentAllowances != null ? d.currentAllowances : '', 'number') +
+                    buildInput('col-md-6', 'Effective Date', 'sf-comp-effective-date', new Date().toISOString().slice(0, 10), 'date') +
+                    '<div class="col-md-6"></div>' +
+                    '<div class="col-12"><label class="form-label" for="sf-comp-note">Note</label><textarea class="form-control" id="sf-comp-note" rows="2" placeholder="e.g. Annual review — 10% increase"></textarea></div>' +
+                    '<div class="col-12"><div class="form-hint">This is the ongoing figure Payroll reads from — distinct from the original offer letter, which is a one-time pre-hire snapshot. Every change is recorded in this staff member\'s compensation history.</div></div>';
+                return;
+            }
+
             if (action.type === "assign-role") {
                 var roleOpts = (d.roleOptions || []).map(function (r) { return { value: r.id, label: r.name }; });
                 form.innerHTML =
@@ -1214,6 +1567,19 @@
                 return transferPayload;
             }
 
+            if (actionType === "compensation") {
+                var baseSalaryInput = document.getElementById("sf-comp-base-salary").value;
+                var allowancesInput = document.getElementById("sf-comp-allowances").value;
+                var compPayload = {
+                    baseSalary: baseSalaryInput === "" ? undefined : Number(baseSalaryInput),
+                    allowances: allowancesInput === "" ? undefined : Number(allowancesInput),
+                    effectiveDate: trimOrUndef(document.getElementById("sf-comp-effective-date").value),
+                    note: trimOrUndef(document.getElementById("sf-comp-note").value),
+                };
+                Object.keys(compPayload).forEach(function (k) { if (compPayload[k] === undefined) delete compPayload[k]; });
+                return compPayload;
+            }
+
             if (actionType === "assign-role") {
                 return {
                     adminRoleId: document.getElementById("sf-assign-role-id").value,
@@ -1284,6 +1650,18 @@
                     return;
                 }
             }
+            if (_staffFormAction.type === "compensation") {
+                if (payload.baseSalary == null || isNaN(payload.baseSalary) || payload.baseSalary < 0) {
+                    errorEl.textContent = "Please enter a valid base salary.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
+                if (!payload.effectiveDate) {
+                    errorEl.textContent = "Please select an effective date.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
+            }
             if (_staffFormAction.type === "assign-role") {
                 if (!payload.adminRoleId) {
                     errorEl.textContent = "Please select a permission set.";
@@ -1306,6 +1684,7 @@
                 }
                 else if (_staffFormAction.type === "status") await Staff.updateStatus(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "transfer") await Staff.transferBranch(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "compensation") await Staff.setCompensation(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "assign-role") await Staff.assignRole(_staffFormAction.staffId, payload.adminRoleId, payload.grantPortalLogin);
                 else if (_staffFormAction.type === "archive") await Staff.archive(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "add-history") await Staff.addHistory(_staffFormAction.staffId, payload);
@@ -1392,6 +1771,34 @@
                 });
             } catch (err) {
                 alert(err.message || "Failed to load staff for transfer");
+            }
+        }
+
+        async function handleSetCompensation(id) {
+            try {
+                var s = await Staff.getOne(id);
+                openStaffFormModal({
+                    type: "compensation",
+                    staffId: id,
+                    title: "Set Compensation — " + Staff.fullName(s),
+                    help: "Sets the ongoing base salary and allowances Payroll reads from. Every change is recorded in this staff member's compensation history.",
+                    data: {
+                        currentBaseSalary: s.currentBaseSalary,
+                        currentAllowances: s.currentAllowances,
+                    }
+                });
+            } catch (err) {
+                alert(err.message || "Failed to load staff for compensation update");
+            }
+        }
+
+        async function handleRequestAddressVerification(id) {
+            if (!confirm("Request Physical Address Verification for this staff member? They'll see this pending request on their Staff Portal and need to submit their address details there. QoreID's field agents then verify it physically, typically within 24-48 hours.")) return;
+            try {
+                await Staff.requestAddressVerification(id);
+                if (_currentStaffId === id) await openStaffDetail(id);
+            } catch (err) {
+                alert(err.message || "Failed to request address verification");
             }
         }
 

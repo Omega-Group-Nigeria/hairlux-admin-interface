@@ -326,10 +326,20 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="new-item-error"></div>
-                    <div class="mb-2"><label class="form-label">Branch <span class="text-danger">*</span></label>
-                        <select class="form-select" id="ni-branch">
-                            <option value="">Select branch…</option>
-                        </select>
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="form-label mb-0">Branches <span class="text-danger">*</span></label>
+                            <label class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="checkbox" id="ni-select-all-branches">
+                                <span class="form-check-label small">Select all branches</span>
+                            </label>
+                        </div>
+                        <div id="ni-branch-list" class="border rounded p-2" style="max-height:180px;overflow-y:auto">
+                            <div class="text-secondary small">Loading branches…</div>
+                        </div>
+                        <div class="form-hint">Check every branch to stock this item at, and set that branch's starting
+                            quantity
+                            independently — each branch gets its own inventory row.</div>
                     </div>
                     <div class="mb-2"><label class="form-label">Name <span class="text-danger">*</span></label>
                         <input class="form-control" id="ni-name" placeholder="e.g. Argan Oil Shampoo 500ml">
@@ -351,13 +361,10 @@
                             <option value="">None</option>
                         </select>
                     </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-6"><label class="form-label">Initial Quantity</label>
-                            <input type="number" class="form-control" id="ni-quantity" min="0" placeholder="0">
-                        </div>
-                        <div class="col-6"><label class="form-label">Low Stock Threshold</label>
-                            <input type="number" class="form-control" id="ni-threshold" min="0" placeholder="5">
-                        </div>
+                    <div class="mb-2"><label class="form-label">Low Stock Threshold</label>
+                        <input type="number" class="form-control" id="ni-threshold" min="0" placeholder="5">
+                        <div class="form-hint">Applies to every branch selected above — quantity is the only per-branch
+                            value.</div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label" id="ni-price-label">Price <span class="text-danger"
@@ -426,6 +433,41 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="btn-save-edit-item">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movement History Modal -->
+    <div class="modal modal-blur fade" id="modal-history" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Movement History — <span id="history-item-name">—</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter mb-0">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Type</th>
+                                    <th>Change</th>
+                                    <th>By</th>
+                                    <th>Reason / Reference</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-secondary py-4">Loading…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -595,18 +637,37 @@
 
             document.getElementById("btn-new-item").addEventListener("click", function () {
                 document.getElementById("new-item-error").classList.add("d-none");
-                ["ni-name", "ni-unit", "ni-quantity", "ni-threshold", "ni-price", "ni-expiry"].forEach(function (id) { document.getElementById(id).value = ""; });
+                ["ni-name", "ni-unit", "ni-threshold", "ni-price", "ni-expiry"].forEach(function (id) { document.getElementById(id).value = ""; });
+                // Reset the branch checkbox list too — uncheck every branch,
+                // clear and disable every per-branch quantity field, and
+                // uncheck "select all" so the modal always opens blank.
+                document.querySelectorAll('.ni-branch-check').forEach(function (chk) { chk.checked = false; });
+                document.querySelectorAll('.ni-branch-qty').forEach(function (qty) { qty.value = "0"; qty.disabled = true; });
+                var selectAll = document.getElementById("ni-select-all-branches");
+                if (selectAll) selectAll.checked = false;
                 document.getElementById("ni-category").value = "FOR_SALE";
                 updatePriceRequirement('ni-category', 'ni-price-hint', 'ni-price-required');
                 new bootstrap.Modal(document.getElementById("modal-new-item")).show();
             });
+
             document.getElementById("ni-category").addEventListener("change", function () {
                 updatePriceRequirement('ni-category', 'ni-price-hint', 'ni-price-required');
             });
+
             document.getElementById("ei-category").addEventListener("change", function () {
                 updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
             });
+
             document.getElementById("btn-save-new-item").addEventListener("click", submitNewItem);
+            document.getElementById("ni-select-all-branches").addEventListener("change", function () {
+                var checked = this.checked;
+                document.querySelectorAll('.ni-branch-check').forEach(function (chk) {
+                    chk.checked = checked;
+                    var qtyInput = document.querySelector('.ni-branch-qty[data-branch-id="' + chk.value + '"]');
+                    if (qtyInput) qtyInput.disabled = !checked;
+                });
+            });
+
             document.getElementById("btn-save-edit-item").addEventListener("click", submitEditItem);
             document.getElementById("btn-save-adjust").addEventListener("click", submitAdjust);
             document.getElementById("btn-confirm-reject-transfer").addEventListener("click", submitRejectTransfer);
@@ -662,10 +723,40 @@
                 _branchesCache = branches;
                 var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
                 document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
-                document.getElementById("ni-branch").innerHTML = '<option value="">Select branch…</option>' + opts;
+                renderNewItemBranchList(branches);
             } catch (err) {
                 console.error("Failed to load branches", err);
             }
+        }
+
+        /** Each row: a checkbox to include the branch, plus its own independent starting-quantity input — shown/enabled only once that branch is checked. */
+        function renderNewItemBranchList(branches) {
+            var container = document.getElementById("ni-branch-list");
+            if (!container) return;
+            container.innerHTML = branches.map(function (b) {
+                return '<div class="d-flex align-items-center gap-2 py-1">' +
+                    '<label class="form-check mb-0 flex-fill">' +
+                    '<input class="form-check-input ni-branch-check" type="checkbox" value="' + b.id + '">' +
+                    '<span class="form-check-label">' + escapeHtml(b.name) + '</span>' +
+                    '</label>' +
+                    '<input type="number" min="0" class="form-control form-control-sm ni-branch-qty" style="width:90px" placeholder="Qty" value="0" disabled data-branch-id="' + b.id + '">' +
+                    '</div>';
+            }).join('');
+
+            container.querySelectorAll('.ni-branch-check').forEach(function (chk) {
+                chk.addEventListener('change', function () {
+                    var qtyInput = container.querySelector('.ni-branch-qty[data-branch-id="' + chk.value + '"]');
+                    if (qtyInput) qtyInput.disabled = !chk.checked;
+                    syncSelectAllCheckbox();
+                });
+            });
+        }
+
+        function syncSelectAllCheckbox() {
+            var all = document.querySelectorAll('.ni-branch-check');
+            var checked = document.querySelectorAll('.ni-branch-check:checked');
+            var selectAll = document.getElementById('ni-select-all-branches');
+            if (selectAll) selectAll.checked = all.length > 0 && all.length === checked.length;
         }
 
         async function loadSupplierOptions() {
@@ -750,12 +841,16 @@
                         '<td>' + i.lowStockThreshold + '</td>' +
                         '<td>' + Inventory.statusBadge(i) + '</td>' +
                         '<td class="text-nowrap"><button class="btn btn-sm btn-outline-secondary me-1 btn-edit-item" data-id="' + i.id + '">Edit</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button></td>' +
+                        '<button class="btn btn-sm btn-outline-secondary me-1 btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-history" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">History</button></td>' +
                         '</tr>';
                 }).join('');
                 _itemsCache = items;
                 tbody.querySelectorAll('.btn-edit-item').forEach(function (btn) {
                     btn.addEventListener('click', function () { openEditItemModal(btn.dataset.id); });
+                });
+                tbody.querySelectorAll('.btn-history').forEach(function (btn) {
+                    btn.addEventListener('click', function () { openHistoryModal(btn.dataset.id, btn.dataset.name); });
                 });
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
@@ -772,6 +867,38 @@
             var isForSale = category === 'FOR_SALE';
             document.getElementById(requiredMarkId).style.display = isForSale ? '' : 'none';
             document.getElementById(labelHintId).textContent = isForSale ? '(required — item is For Sale)' : '(optional — not sellable)';
+        }
+
+        async function openHistoryModal(id, name) {
+            document.getElementById("history-item-name").textContent = name || "—";
+            var tbody = document.getElementById("history-tbody");
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById("modal-history")).show();
+
+            try {
+                var result = await Inventory.getMovementHistory(id, { limit: 100 });
+                var entries = result.data || [];
+
+                tbody.innerHTML = entries.length
+                    ? entries.map(function (m) {
+                        var when = new Date(m.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
+                        var typeLabel = Inventory.MOVEMENT_TYPE_LABELS[m.type] || m.type;
+                        var change = (m.quantityDelta > 0 ? '+' : '') + m.quantityDelta;
+                        var changeClass = m.quantityDelta > 0 ? 'text-success' : (m.quantityDelta < 0 ? 'text-danger' : '');
+                        var by = m.performedBy ? escapeHtml(m.performedBy.name) : '<span class="text-secondary">Admin</span>';
+                        var refText = m.reason ? escapeHtml(m.reason) : (m.referenceId ? '<span class="text-secondary small">Ref: ' + escapeHtml(m.referenceId) + '</span>' : '—');
+                        return '<tr>' +
+                            '<td class="text-secondary small">' + when + '</td>' +
+                            '<td>' + escapeHtml(typeLabel) + '</td>' +
+                            '<td class="' + changeClass + '">' + change + '</td>' +
+                            '<td>' + by + '</td>' +
+                            '<td class="small">' + refText + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="5" class="text-center text-secondary py-4">No movements recorded yet.</td></tr>';
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+            }
         }
 
         function openEditItemModal(id) {
@@ -835,18 +962,26 @@
         }
 
         async function submitNewItem() {
-            var branchId = document.getElementById("ni-branch").value;
             var name = document.getElementById("ni-name").value.trim();
             var category = document.getElementById("ni-category").value;
             var unit = document.getElementById("ni-unit").value.trim();
-            var quantity = document.getElementById("ni-quantity").value;
             var threshold = document.getElementById("ni-threshold").value;
             var price = document.getElementById("ni-price").value;
             var expiry = document.getElementById("ni-expiry").value;
             var errEl = document.getElementById("new-item-error");
+            errEl.classList.add("d-none");
 
-            if (!branchId || !name) {
-                errEl.textContent = "Branch and name are required.";
+            var branches = [];
+            document.querySelectorAll('.ni-branch-check:checked').forEach(function (chk) {
+                var qtyInput = document.querySelector('.ni-branch-qty[data-branch-id="' + chk.value + '"]');
+                branches.push({
+                    branchId: chk.value,
+                    initialQuantity: qtyInput && qtyInput.value ? Number(qtyInput.value) : 0,
+                });
+            });
+
+            if (!branches.length || !name) {
+                errEl.textContent = "At least one branch and a name are required.";
                 errEl.classList.remove("d-none");
                 return;
             }
@@ -859,18 +994,24 @@
             var btn = document.getElementById("btn-save-new-item");
             btn.disabled = true;
             try {
-                await Inventory.create({
-                    branchId: branchId,
+                var result = await Inventory.createBulk({
                     name: name,
                     category: category,
                     unit: unit || undefined,
-                    initialQuantity: quantity ? Number(quantity) : undefined,
                     lowStockThreshold: threshold ? Number(threshold) : undefined,
                     price: price ? Number(price) : undefined,
                     expiryDate: expiry || undefined,
                     supplierId: document.getElementById("ni-supplier").value || undefined,
+                    branches: branches,
                 });
                 bootstrap.Modal.getInstance(document.getElementById("modal-new-item")).hide();
+                if (result.skippedCount > 0) {
+                    var skippedNames = result.skipped.map(function (s) {
+                        var branch = (_branchesCache || []).find(function (b) { return b.id === s.branchId; });
+                        return branch ? branch.name : s.branchId;
+                    }).join(', ');
+                    alert('Created at ' + result.createdCount + ' branch(es). Skipped (already exists there): ' + skippedNames);
+                }
                 loadItems();
             } catch (err) {
                 errEl.textContent = err.message || "Failed to create item.";
