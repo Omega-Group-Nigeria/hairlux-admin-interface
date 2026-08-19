@@ -7,7 +7,7 @@
     var SP = (global.SettingsPage = global.SettingsPage || {});
 
     SP.State = {
-        VALID_SECTIONS: ['profile', 'security', 'admin-management'],
+        VALID_SECTIONS: ['profile', 'security', 'home-service', 'admin-management'],
 
         /** Current user profile from GET /user/profile */
         profile: null,
@@ -23,5 +23,17 @@
 
         /** Role id currently selected in the Permissions tab */
         permRole: null,
+
+        /** Home service settings from GET /admin/settings/home-service (contains serviceableAreas) */
+        homeService: null,
+
+        /** Serviceable areas draft: [{ state, city }], city "*" = whole state */
+        serviceableAreas: [],
+
+        /** True while local area edits have not been persisted to the API yet */
+        serviceableAreasDirty: false,
+
+        /** Bundled state -> cities reference data (window.NG_CITIES) */
+        ngCities: window.NG_CITIES || {},
     };
 })(window);

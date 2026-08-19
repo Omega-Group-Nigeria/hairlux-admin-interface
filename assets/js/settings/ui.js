@@ -29,7 +29,7 @@
 
     function routeOnLoad() {
         var hash = (location.hash || '#profile').replace('#', '');
-        var valid = ['profile', 'security', 'admin-management', 'business-hours'];
+        var valid = ['profile', 'security', 'home-service', 'admin-management', 'business-hours'];
         switchSection(valid.indexOf(hash) !== -1 ? hash : 'profile');
     }
 
@@ -354,6 +354,119 @@
 
     var DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+    // ── Home service: serviceable areas ────────────────────────────────────
+
+    function updateDraftBanner() {
+        var banner = document.getElementById('home-service-draft-banner');
+        if (!banner) return;
+        banner.classList.toggle('d-none', !State.serviceableAreasDirty);
+        var countEl = document.getElementById('home-service-draft-count');
+        if (countEl) countEl.textContent = State.serviceableAreas ? State.serviceableAreas.length : 0;
+    }
+
+    function renderServiceableAreas(areas) {
+        var tbody = document.getElementById('home-service-tbody');
+        var countEl = document.getElementById('stat-home-service-count');
+        var disabledEl = document.getElementById('home-service-disabled');
+        if (!tbody) return;
+        areas = areas || [];
+        if (countEl) countEl.textContent = areas.length;
+        if (disabledEl) disabledEl.classList.toggle('d-none', areas.length > 0);
+
+        if (!areas.length) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-secondary py-4">' +
+                'No service areas configured. Home service bookings are <strong>disabled everywhere</strong> until you add one.</td></tr>';
+            updateDraftBanner();
+            return;
+        }
+        tbody.innerHTML = areas.map(function (a, i) {
+            var cityBadge = a.city === '*'
+                ? '<span class="badge bg-primary-lt">All Cities</span>'
+                : '<span class="badge bg-secondary-lt">' + _esc(a.city) + '</span>';
+            return '<tr>' +
+                '<td class="fw-medium">' + _esc(a.state) + '</td>' +
+                '<td>' + cityBadge + '</td>' +
+                '<td class="w-1">' +
+                '<button type="button" class="btn btn-sm btn-ghost-danger" data-remove-area="' + i + '" title="Remove area">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>' +
+                '</button></td></tr>';
+        }).join('');
+
+        tbody.onclick = function (e) {
+            var btn = e.target.closest('[data-remove-area]');
+            if (!btn) return;
+            var idx = parseInt(btn.dataset.removeArea, 10);
+            var areasCopy = State.serviceableAreas.slice();
+            areasCopy.splice(idx, 1);
+            State.serviceableAreas = areasCopy;
+            State.serviceableAreasDirty = true;
+            renderServiceableAreas(State.serviceableAreas);
+            updateDraftBanner();
+        };
+        updateDraftBanner();
+    }
+
+    function renderAddAreaPreview() {
+        var wrap = document.getElementById('home-service-add-preview');
+        if (!wrap) return;
+        var state = document.getElementById('add-area-state').value;
+        var cityEl = document.getElementById('add-area-city');
+        var cities = cityEl
+            ? Array.from(cityEl.selectedOptions).map(function (o) { return o.value; }).filter(function (v) { return v !== ''; })
+            : [];
+        if (!state || !cities.length) {
+            wrap.innerHTML = '<div class="text-secondary small">No cities selected yet — they will show here as they are added.</div>';
+            return;
+        }
+        wrap.innerHTML =
+            '<div class="mb-1 text-secondary small fw-medium">Will be added (one entry per city)</div>' +
+            '<div class="d-flex flex-wrap align-items-center gap-2">' +
+            cities.map(function (city) {
+                var label = city === '*' ? 'All Cities' : city;
+                return '<span class="badge bg-primary-lt py-1 ps-2 pe-1 d-inline-flex align-items-center gap-1">' +
+                    _esc(state) + ' &middot; <strong>' + _esc(label) + '</strong>' +
+                    '<button type="button" class="btn btn-icon btn-sm btn-link text-danger p-0 ms-1" ' +
+                    'data-preview-remove="' + _esc(city) + '" title="Remove ' + _esc(label) + '" aria-label="Remove ' + _esc(label) + '">&times;</button>' +
+                    '</span>';
+            }).join('') +
+            '<button type="button" class="btn btn-sm btn-link link-danger p-0 ms-1" id="btn-preview-clear-all">Clear all</button>' +
+            '</div>';
+    }
+
+    function populateAddAreaState() {
+        var sel = document.getElementById('add-area-state');
+        if (!sel) return;
+        // Preserve current selection id before repopulating
+        var prev = sel.value;
+        var names = Object.keys(State.ngCities).sort();
+        if (!names.length) {
+            sel.innerHTML = '<option value="" disabled selected>State list unavailable</option>';
+            return;
+        }
+        sel.innerHTML = '<option value="">Select a state…</option>' + names.map(function (s) {
+            return '<option value="' + _esc(s) + '">' + _esc(s) + '</option>';
+        }).join('');
+        if (sel.value !== prev) sel.value = prev;
+    }
+
+    function populateAddAreaCity(state) {
+        var sel = document.getElementById('add-area-city');
+        if (!sel) return;
+        if (!state) {
+            sel.innerHTML = '<option value="" disabled selected>Select a state first…</option>';
+            sel.disabled = true;
+            MultiSelect.refresh('add-area-city');
+            return;
+        }
+        var cities = State.ngCities[state] || [];
+        var allOpt = '<option value="*">All Cities (*)</option>';
+        sel.innerHTML = allOpt + cities.map(function (c) {
+            return '<option value="' + _esc(c) + '">' + _esc(c) + '</option>';
+        }).join('');
+        sel.disabled = false;
+        MultiSelect.refresh('add-area-city');
+    }
+
     function renderBusinessHoursTable(hours) {
         var byDay = {};
         (hours || []).forEach(function (h) { byDay[h.dayOfWeek] = h; });
@@ -399,5 +512,10 @@
         clearAdminSearch: clearAdminSearch,
         renderPermMatrix: renderPermMatrix,
         renderBusinessHoursTable: renderBusinessHoursTable,
+        renderServiceableAreas: renderServiceableAreas,
+        populateAddAreaState: populateAddAreaState,
+        populateAddAreaCity: populateAddAreaCity,
+        updateDraftBanner: updateDraftBanner,
+        renderAddAreaPreview: renderAddAreaPreview,
     };
 })(window);

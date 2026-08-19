@@ -6,7 +6,9 @@
 var Layout = window.Layout || (() => {
 
     function getBasePath() {
-        return window.location.pathname.includes("/bookings/") ? "../" : "./";
+        const path = window.location.pathname;
+        if (path.includes("/bookings/") || path.includes("/app/")) return "../";
+        return "./";
     }
 
     function resolveHref(href) {
@@ -15,10 +17,11 @@ var Layout = window.Layout || (() => {
 
     function getCurrentPagePath() {
         const path = window.location.pathname;
-        if (path.includes("/bookings/")) {
+        if (path.includes("/bookings/") || path.includes("/app/")) {
+            const folder = path.includes("/bookings/") ? "bookings" : "app";
             const file = path.split("/").pop() || "index.html";
-            if (file === "index.html") return "bookings/index.html";
-            return "bookings/" + file;
+            if (file === "index.html") return folder + "/index.html";
+            return folder + "/" + file;
         }
         return path.split("/").pop() || "index.html";
     }

@@ -30,6 +30,17 @@
             });
         },
 
+        // Home service settings
+        getHomeService: function () {
+            return _jsonFetch('/admin/settings/home-service');
+        },
+        updateHomeService: function (body) {
+            return _jsonFetch('/admin/settings/home-service', {
+                method: 'PUT',
+                body: JSON.stringify(body),
+            });
+        },
+
         // Admin users / roles (Roles helper)
         getAdminUsers: function () { return Roles.getAdminUsers(); },
         createAdmin: function (data) { return Roles.createAdmin(data); },

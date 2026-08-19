@@ -43,6 +43,20 @@ function showAdminAlert(type, msg) {
     el._timer = setTimeout(function() { el.classList.add('d-none'); }, 6000);
 }
 
+function showHomeServiceAlert(type, msg) {
+    var el  = document.getElementById('home-service-alert');
+    var ico = document.getElementById('home-service-alert-icon');
+    var txt = document.getElementById('home-service-alert-msg');
+    el.className = 'alert alert-' + type + ' mb-3';
+    ico.innerHTML = type === 'success'
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M5 12l5 5l10 -10"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>';
+    txt.textContent = msg;
+    el.classList.remove('d-none');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(function() { el.classList.add('d-none'); }, 6000);
+}
+
 function fuzzyScore(str, query) {
     str   = str.toLowerCase();
     query = query.toLowerCase().trim();
@@ -70,6 +84,7 @@ function fuzzyScore(str, query) {
         setSpinner: setSpinner,
         _esc: _esc,
         showAdminAlert: showAdminAlert,
+        showHomeServiceAlert: showHomeServiceAlert,
         fuzzyScore: fuzzyScore,
     };
 })(window);

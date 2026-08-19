@@ -241,6 +241,18 @@
                                             </svg>
                                             Business Hours
                                         </a>
+                                        <a href="#home-service" class="nav-link d-flex align-items-center gap-2"
+                                            data-section="home-service">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path
+                                                    d="M9 20l-5.447 -2.724a1 1 0 0 1 -0.553 -0.894v-6.764a1 1 0 0 1 .553 -.894l6 -3a1 1 0 0 1 .894 0l6 3a1 1 0 0 1 .553 .894v6.764a1 1 0 0 1 -.553 .894l-5.447 2.724z" />
+                                                <path d="M12 9v4" />
+                                                <path d="M10 11h4" />
+                                            </svg>
+                                            Home Service
+                                        </a>
                                         <a href="#admin-management"
                                             class="nav-link d-flex align-items-center gap-2 d-none"
                                             id="nav-admin-management" data-section="admin-management">
@@ -415,6 +427,111 @@
                                                 ✓</span>
                                         </div>
                                     </div>
+
+                                    <!-- ═══ SECTION: HOME SERVICE ═══════════════ -->
+                                    <div class="settings-section" id="section-home-service">
+
+                                        <!-- Header -->
+                                        <div
+                                            class="d-flex align-items-center justify-content-between gap-2 mb-4 pb-3 border-bottom">
+                                            <div>
+                                                <h3 class="mb-0">Home Service Areas</h3>
+                                                <p class="text-secondary small mt-1 mb-0">
+                                                    Control the states/cities where mobile (home service) bookings are
+                                                    available. Changes take effect immediately.
+                                                </p>
+                                            </div>
+                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                                    id="btn-add-serviceable-area">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon me-1">
+                                                        <path d="M12 5l0 14" />
+                                                        <path d="M5 12l14 0" />
+                                                    </svg>
+                                                    Add Area
+                                                </button>
+                                                <button type="button" class="btn btn-primary btn-sm"
+                                                    id="btn-save-serviceable-areas">
+                                                    <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                        id="spinner-serviceable-areas" role="status"></span>
+                                                    Save Areas
+                                                </button>
+                                                <span class="text-success small ms-1 d-none align-self-center"
+                                                    id="home-service-saved">Saved ✓</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Draft banner: unsaved changes -->
+                                        <div id="home-service-draft-banner" class="d-none mb-3">
+                                            <div
+                                                class="alert alert-warning mb-0 py-2 px-3 d-flex align-items-center justify-content-between gap-2">
+                                                <span class="d-flex align-items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon" style="flex-shrink:0">
+                                                        <path d="M7 3.337a1 1 0 0 1 1.586 -.92l.269 .18a2 2 0 0 0 1.29 .403h3.71a2 2 0 0 0 1.29 -.403l.27 -.18a1 1 0 0 1 1.585 .92v.9a7 7 0 0 1 -10 0v-.9" />
+                                                        <path d="M12 8a4 4 0 0 1 4 4v3.5" />
+                                                        <path d="M14.5 20h-5a3 3 0 0 0 -3 3v1h11v-1a3 3 0 0 0 -3 -3" />
+                                                        <path d="M5 22v-1" />
+                                                        <path d="M19 22v-1" />
+                                                        <path d="M18 16l2 2l4 -4" />
+                                                    </svg>
+                                                    <span><strong id="home-service-draft-count">0</strong> area(s) in
+                                                        draft &mdash; not saved yet. Click <strong>Save Areas</strong> to
+                                                        publish permanently.</span>
+                                                </span>
+                                                <button type="button" class="btn btn-sm btn-warning text-white"
+                                                    id="btn-save-areas-banner">
+                                                    <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                        id="spinner-serviceable-areas-banner" role="status"></span>
+                                                    Save Areas
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Section alert -->
+                                        <div id="home-service-alert" class="alert d-none mb-3" role="alert">
+                                            <span id="home-service-alert-icon"></span>
+                                            <span id="home-service-alert-msg" class="ms-2"></span>
+                                        </div>
+
+                                        <!-- Status summary -->
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3"
+                                            id="home-service-summary">
+                                            <span class="badge bg-secondary-lt px-3 py-2 fs-6">
+                                                <span id="stat-home-service-count">—</span> area(s)
+                                            </span>
+                                            <span class="badge bg-warning-lt px-3 py-2 d-none" id="home-service-disabled">
+                                                Home service disabled everywhere
+                                            </span>
+                                        </div>
+
+                                        <!-- Areas table -->
+                                        <div class="table-responsive">
+                                            <table class="table table-vcenter">
+                                                <thead>
+                                                    <tr>
+                                                        <th>State</th>
+                                                        <th>City</th>
+                                                        <th class="w-1"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="home-service-tbody">
+                                                    <tr>
+                                                        <td colspan="3" class="text-center text-secondary py-4">
+                                                            Loading…
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+                                    <!-- ═══ END SECTION: HOME SERVICE ════════ -->
 
                                     <!-- ═══ SECTION: ADMIN MANAGEMENT ════════════ -->
                                     <div class="settings-section" id="section-admin-management">
@@ -642,6 +759,73 @@
 
         </div>
     </div>
+
+    <!-- ===== MODAL: ADD SERVICEABLE AREA ===== -->
+    <div class="modal modal-blur fade" id="modal-add-serviceable-area" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon me-2">
+                            <path
+                                d="M9 20l-5.447 -2.724a1 1 0 0 1 -0.553 -0.894v-6.764a1 1 0 0 1 .553 -.894l6 -3a1 1 0 0 1 .894 0l6 3a1 1 0 0 1 .553 .894v6.764a1 1 0 0 1 -.553 .894l-5.447 2.724z" />
+                            <path d="M12 9v4" />
+                            <path d="M10 11h4" />
+                        </svg>
+                        Add Service Areas
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div id="modal-add-area-alert" class="alert d-none mx-3 mt-3 mb-0 py-2" role="alert">
+                    <span id="modal-add-area-alert-msg"></span>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label required">State</label>
+                            <select class="form-select" id="add-area-state">
+                                <option value="">Select a state…</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label required">City / Cities <span class="text-secondary fw-normal">(multi-select)</span></label>
+                            <select multiple class="form-select" id="add-area-city" disabled>
+                                <option value="">Select a state first…</option>
+                            </select>
+                            <div class="form-hint">
+                                Click cities to add them; each appears in the field with an <strong>×</strong> to remove it
+                                individually or clear all. Choose <strong>All Cities (*)</strong> to enable the whole state.
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="rounded-2 border p-2" style="background:var(--tblr-bg-surface-secondary)">
+                                <div id="home-service-add-preview">
+                                    <div class="text-secondary small">No cities selected yet.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex align-items-center justify-content-between gap-2">
+                    <span class="text-secondary small" id="modal-add-area-note"></span>
+                    <div class="d-flex gap-2 ms-auto">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="btn-confirm-add-area">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                                <path d="M12 5l0 14" />
+                                <path d="M5 12l14 0" />
+                            </svg>
+                            Add to Draft
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: ADD SERVICEABLE AREA ===== -->
 
     <!-- ===== MODAL: CREATE ADMIN ===== -->
     <div class="modal modal-blur fade" id="modal-create-admin" tabindex="-1" role="dialog" aria-hidden="true">
@@ -875,7 +1059,9 @@
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/searchable-select.js"></script>
+    <script src="assets/js/multi-select.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/data/nigeria-cities.js"></script>
 
     <!-- Settings page modules (order matters) -->
     <script src="assets/js/settings/state.js"></script>

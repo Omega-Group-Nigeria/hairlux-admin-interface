@@ -203,7 +203,15 @@ const RBAC = (() => {
     }
 
     function getCurrentPageFile() {
-        return window.location.pathname.split('/').pop() || 'index.html';
+        const path = window.location.pathname;
+        const file = path.split('/').pop() || 'index.html';
+        if (path.includes('/bookings/')) {
+            return file === 'index.html' ? 'bookings/index.html' : 'bookings/' + file;
+        }
+        if (path.includes('/app/')) {
+            return file === 'index.html' ? 'app/index.html' : 'app/' + file;
+        }
+        return file;
     }
 
     /**
@@ -245,8 +253,8 @@ const RBAC = (() => {
         }
 
         if (!allowed) {
-            // Correct sub-directory detection: only bookings/ pages live one level deep.
-            var isSubDir = window.location.pathname.includes('/bookings/');
+            // Correct sub-directory detection: only bookings/ and app/ pages live one level deep.
+            const isSubDir = window.location.pathname.includes('/bookings/') || window.location.pathname.includes('/app/');
             var currentFile = window.location.pathname.split('/').pop() || 'index.html';
             var redirect;
             if (isSubDir) {
