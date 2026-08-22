@@ -1819,10 +1819,15 @@
     <div class="oc-modal-box" id="onboarding-modal-box"></div>
   </div>
 
-  <div class="oc-modal-overlay" id="profile-modal-overlay" style="display:none"
-    onclick="if(event.target===this) closeProfileModal()">
-    <div class="oc-modal-box" id="profile-modal-box"></div>
-  </div>
+    <div class="oc-modal-overlay" id="profile-modal-overlay" style="display:none"
+      onclick="if(event.target===this) closeProfileModal()">
+      <div class="oc-modal-box" id="profile-modal-box"></div>
+    </div>
+    
+    <div class="oc-modal-overlay" id="training-viewer-overlay" style="display:none"
+      onclick="if(event.target===this) closeTrainingViewer()">
+      <div class="oc-modal-box" id="training-viewer-box" style="max-width:800px"></div>
+    </div>
   <div id="sb-print-receipt" style="display:none">
     <div class="pr-center">
       <div style="font-weight:700">HAIRLUX SALON &amp; SPA</div>
@@ -1948,8 +1953,8 @@
         <div class="sb-item sb-subitem" onclick="show('profile')"><span class="ico">•</span>Profile Overview</div>
         <div class="sb-item sb-subitem" onclick="show('onboarding')"><span class="ico">•</span>Complete Onboarding<span
             class="bdg amber">!</span></div>
-        <div class="sb-item sb-subitem" onclick="show('agreements')"><span class="ico">•</span>Documents &
-          Agreements</div>
+        <div class="sb-item" onclick="show('training')"><span class="ico">🎓</span>My Training</div>
+        <div class="sb-item" onclick="show('agreements')"><span class="ico">📋</span>Documents & Agreements</div>
       </div>
       <div class="sb-item" onclick="show('attendance')"><span class="ico">🕐</span>Attendance</div>
       <div class="sb-item" onclick="show('leave')"><span class="ico">🗓️</span>Leave & Permission</div>
@@ -2350,6 +2355,18 @@
         </div>
 
         <!-- ═══ AGREEMENTS ═══ -->
+        <!-- ═══ TRAINING (LMS) ═══ -->
+        <div id="training" class="screen">
+          <div class="card">
+            <div class="card-h">
+              <h3>My Training</h3>
+            </div>
+            <div class="card-b" id="training-list-body">
+              <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>
+            </div>
+          </div>
+        </div>
+
         <div id="agreements" class="screen">
           <div class="card">
             <div class="card-h">
@@ -3187,26 +3204,30 @@
     });
 
     function show(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        const el = document.getElementById(id);
-        if (el) el.classList.add('active');
-        document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
-        const p = pages[id];
-        if (p) {
-          document.getElementById('page-h1').textContent = p[0];
-          document.getElementById('bc-page').textContent = p[1];
-          document.getElementById('tb-cta').textContent = ctas[id] || '⏵ Check In';
-        }
-        document.querySelectorAll('.sb-item').forEach(item => {
-          const oc = item.getAttribute('onclick') || '';
-          if (oc.includes("'" + id + "'") || oc.includes('"' + id + '"')) { item.classList.add('active'); }
-        });
-        closeSidebar();
-
-        if (id === 'dashboard' && typeof loadOnboarding === 'function') {
-          loadOnboarding().then(() => { if (typeof renderDashboard === 'function') renderDashboard(); });
-        }
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+      document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+      const p = pages[id];
+      if (p) {
+        document.getElementById('page-h1').textContent = p[0];
+        document.getElementById('bc-page').textContent = p[1];
+        document.getElementById('tb-cta').textContent = ctas[id] || '⏵ Check In';
       }
+      document.querySelectorAll('.sb-item').forEach(item => {
+        const oc = item.getAttribute('onclick') || '';
+        if (oc.includes("'" + id + "'") || oc.includes('"' + id + '"')) { item.classList.add('active'); }
+      });
+      closeSidebar();
+
+            if (id === 'dashboard' && typeof loadOnboarding === 'function') {
+        loadOnboarding().then(() => { if (typeof renderDashboard === 'function') renderDashboard(); });
+      }
+      if (id === 'training' && typeof loadTraining === 'function') {
+        loadTraining();
+      }
+    }
+    
     function startClock() {
       function upd() {
         const now = new Date(), h = now.getHours(), m = now.getMinutes();

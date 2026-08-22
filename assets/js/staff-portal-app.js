@@ -534,6 +534,80 @@ function closeOnboardingModal() {
   document.getElementById('onboarding-modal-overlay').style.display = 'none';
 }
 
+async function loadTraining() {
+  const body = document.getElementById('training-list-body');
+  body.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>';
+  try {
+    const courses = await StaffSelf.getLmsCourses();
+    if (!courses.length) {
+      body.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px">No training material available for your role right now.</div>';
+      return;
+    }
+    body.innerHTML = courses.map((c) => {
+      const badges = (c.videoKey ? '<span class="badge b-blue">Video</span>' : '') +
+        (c.pdfKey ? '<span class="badge b-blue">PDF</span>' : '');
+      return (
+        '<div class="flex aic gap3 mb3" style="padding:12px;border:1px solid var(--line);border-radius:var(--r2);cursor:pointer" onclick="openTrainingViewer(\'' + c.id + '\')">' +
+        '<span style="font-size:20px">🎓</span>' +
+        '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + escapeHtml(c.title) + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + badges + '</div></div>' +
+        '<span style="color:var(--muted)">›</span></div>'
+      );
+    }).join('');
+  } catch (err) {
+    body.innerHTML = '<div style="color:var(--red);font-size:13px;text-align:center;padding:12px">' + escapeHtml(err.message || 'Failed to load training material.') + '</div>';
+  }
+}
+
+async function openTrainingViewer(id) {
+  const box = document.getElementById('training-viewer-box');
+  box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted)">Loading…</div>';
+  document.getElementById('training-viewer-overlay').style.display = 'flex';
+
+  try {
+    // Fresh, short-lived URLs fetched every time this is opened -- never
+    // cached or reused across opens, matching the whole point of keeping
+    // them short-lived in the first place.
+    const course = await StaffSelf.getLmsCourse(id);
+
+    let mediaHtml = '';
+    if (course.videoUrl) {
+      // controlsList="nodownload" hides the native download button in
+      // Chrome/Edge's video controls; disablePictureInPicture removes one
+      // more easy extraction path; the context-menu block deters a casual
+      // right-click save. None of this is unbypassable -- it's the same
+      // "inconvenient, not impossible" mitigation level already agreed on
+      // for this feature.
+      mediaHtml += '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:var(--r2);margin-bottom:12px" src="' + course.videoUrl + '"></video>';
+    }
+    if (course.pdfUrl) {
+      // #toolbar=0&navpanes=0 hides the browser's built-in PDF viewer
+      // toolbar (including its own download button) in Chrome/Firefox --
+      // not honored by every browser, same caveat as above.
+      mediaHtml += '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px"></iframe>';
+    }
+
+    box.innerHTML =
+      '<div class="flex aic gap3 mb3" style="justify-content:space-between">' +
+      '<h3 style="margin:0">' + escapeHtml(course.title) + '</h3>' +
+      '<button class="btn btn-ghost btn-sm" onclick="closeTrainingViewer()">Close</button>' +
+      '</div>' +
+      mediaHtml +
+      '<div style="font-size:14px;line-height:1.6">' + course.description + '</div>';
+  } catch (err) {
+    box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red)">' + escapeHtml(err.message || 'Could not load this course.') + '</div>' +
+      '<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="closeTrainingViewer()">Close</button></div>';
+  }
+}
+
+function closeTrainingViewer() {
+  document.getElementById('training-viewer-overlay').style.display = 'none';
+  // Clear content on close rather than just hiding -- the video element
+  // would otherwise keep its src (and the short-lived presigned URL
+  // inside it) sitting in the DOM after the viewer is dismissed.
+  document.getElementById('training-viewer-box').innerHTML = '';
+}
+
 function showOnboardingModalError(message) {
   const el = document.getElementById('oc-modal-error');
   if (el) { el.textContent = message; el.style.display = 'block'; }

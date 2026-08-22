@@ -257,6 +257,14 @@ const StaffSelf = (() => {
         return jsonFetch("/staff/me/address-verification");
     }
 
+    async function getLmsCourses() {
+        return jsonFetch("/lms/me/courses");
+    }
+
+    async function getLmsCourse(id) {
+        return jsonFetch("/lms/me/courses/" + id);
+    }
+
     /**
      * Same reasoning as uploadPassportPhoto above -- bypasses Auth.fetch
      * to avoid its forced Content-Type: application/json breaking the
@@ -368,6 +376,7 @@ const StaffSelf = (() => {
         getMyPassportPhoto,
         getAddressVerification, 
         submitAddressVerification,
+        getLmsCourses, getLmsCourse,
         getInventoryDashboard,
         getInventoryEntries,
         idCardUrl,

@@ -173,8 +173,9 @@ const Inventory = (function () {
     }
 
     function statusBadge(item) {
-        if (item.currentQuantity <= 0) return '<span class="badge bg-danger-lt">Out of Stock</span>';
-        if (item.currentQuantity <= item.lowStockThreshold) return '<span class="badge bg-warning-lt">Low</span>';
+        const total = (Number(item.storeStock) || 0) + (Number(item.salesStock) || 0) + (Number(item.usageStock) || 0);
+        if (total <= 0) return '<span class="badge bg-danger-lt">Out of Stock</span>';
+        if (total <= item.lowStockThreshold) return '<span class="badge bg-warning-lt">Low</span>';
         return '<span class="badge bg-success-lt">Good</span>';
     }
 

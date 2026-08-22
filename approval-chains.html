@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Approval Chains</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .stage-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+
+        .stage-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--tblr-primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="page-pretitle">Settings</div>
+                    <h2 class="page-title">Approval Chains</h2>
+                    <div class="text-secondary small mt-1">Configure which roles must approve each request type, and
+                        in what order. A request type with no configured chain uses the default: one approver (the
+                        branch manager, falling back to any admin).</div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="chains-list">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">Configure Chain</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div id="stages-list" class="mb-3"></div>
+                    <div class="d-flex gap-2">
+                        <select class="form-select" id="f-add-role"></select>
+                        <button class="btn btn-outline-primary text-nowrap" id="btn-add-stage">Add Stage</button>
+                    </div>
+                    <div class="form-hint mt-2">An empty chain reverts this request type to the default single-approver
+                        behavior.</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save">Save Chain</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/roles.js"></script>
+    <script src="assets/js/api-utils/approval-chains.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var _allRoles = [];
+        var _editingType = null;
+        var _stageIds = []; // ordered list of role ids, position = stage order
+
+        // Every request type this workflow engine currently knows about --
+        // matches the ApprovalRequestType enum. Kept as a plain, hand-
+        // maintained list here since it's small and rarely changes; no
+        // endpoint currently exposes "list every possible enum value."
+        var REQUEST_TYPES = [
+            { value: 'PURCHASE_REQUEST', label: 'Purchase Request' },
+            { value: 'LEAVE_REQUEST', label: 'Leave Request' },
+            { value: 'INVENTORY_ADJUSTMENT', label: 'Inventory Adjustment' },
+            { value: 'STOCK_TRANSFER', label: 'Stock Transfer' },
+            { value: 'PAYROLL_ADJUSTMENT', label: 'Payroll Adjustment' },
+            { value: 'COMMISSION_ADJUSTMENT', label: 'Commission Adjustment' },
+            { value: 'DISCIPLINARY_ACTION', label: 'Disciplinary Action' },
+        ];
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('approval_chains:read');
+            document.getElementById('btn-add-stage').addEventListener('click', addStage);
+            document.getElementById('btn-save').addEventListener('click', save);
+
+            try {
+                _allRoles = await Roles.fetchRoles();
+            } catch (e) {
+                _allRoles = [];
+            }
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function roleName(roleId) {
+            var role = _allRoles.filter(function (r) { return r.id === roleId; })[0];
+            return role ? role.name : 'Unknown role';
+        }
+
+        async function load() {
+            var container = document.getElementById('chains-list');
+            container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+            try {
+                var configured = await ApprovalChains.getAll();
+                var byType = {};
+                configured.forEach(function (c) { byType[c.requestType] = c.stages; });
+
+                container.innerHTML = REQUEST_TYPES.map(function (rt) {
+                    var stages = byType[rt.value] || [];
+                    var chainSummary = stages.length
+                        ? stages.map(function (s, i) {
+                            return '<span class="badge bg-secondary-lt me-1">' + (i + 1) + '. ' + esc(s.approverRole ? s.approverRole.name : '') + '</span>';
+                        }).join('')
+                        : '<span class="text-secondary small">Default — single approver (branch manager)</span>';
+                    return '<div class="card mb-2">' +
+                        '<div class="card-body d-flex align-items-center justify-content-between">' +
+                        '<div><div class="fw-semibold mb-1">' + esc(rt.label) + '</div><div>' + chainSummary + '</div></div>' +
+                        '<button class="btn btn-outline-primary btn-sm text-nowrap" onclick="openForm(\'' + rt.value + '\')">Configure</button>' +
+                        '</div></div>';
+                }).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</div>';
+            }
+        }
+
+        function renderRoleOptions() {
+            var select = document.getElementById('f-add-role');
+            if (!_allRoles.length) {
+                select.innerHTML = '<option value="">No roles found — create one under Roles & Permissions first</option>';
+                return;
+            }
+            select.innerHTML = _allRoles.map(function (r) {
+                return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>';
+            }).join('');
+        }
+
+        function renderStagesList() {
+            var container = document.getElementById('stages-list');
+            container.innerHTML = _stageIds.length
+                ? _stageIds.map(function (roleId, i) {
+                    return '<div class="stage-row">' +
+                        '<span class="stage-num">' + (i + 1) + '</span>' +
+                        '<span class="flex-fill">' + esc(roleName(roleId)) + '</span>' +
+                        '<button class="btn btn-icon btn-sm btn-ghost-secondary" title="Move up" ' + (i === 0 ? 'disabled' : '') + ' onclick="moveStage(' + i + ',-1)">\u2191</button>' +
+                        '<button class="btn btn-icon btn-sm btn-ghost-secondary" title="Move down" ' + (i === _stageIds.length - 1 ? 'disabled' : '') + ' onclick="moveStage(' + i + ',1)">\u2193</button>' +
+                        '<button class="btn btn-icon btn-sm btn-ghost-danger" title="Remove" onclick="removeStage(' + i + ')">\u2715</button>' +
+                        '</div>';
+                }).join('')
+                : '<div class="text-secondary small mb-2">No stages configured yet — this request type uses the default single-approver behavior.</div>';
+        }
+
+        function addStage() {
+            var roleId = document.getElementById('f-add-role').value;
+            if (!roleId) return;
+            _stageIds.push(roleId);
+            renderStagesList();
+        }
+
+        function moveStage(index, delta) {
+            var target = index + delta;
+            if (target < 0 || target >= _stageIds.length) return;
+            var tmp = _stageIds[index];
+            _stageIds[index] = _stageIds[target];
+            _stageIds[target] = tmp;
+            renderStagesList();
+        }
+
+        function removeStage(index) {
+            _stageIds.splice(index, 1);
+            renderStagesList();
+        }
+
+        async function openForm(requestType) {
+            _editingType = requestType;
+            document.getElementById('form-error').classList.add('d-none');
+            var label = REQUEST_TYPES.filter(function (rt) { return rt.value === requestType; })[0];
+            document.getElementById('modal-form-title').textContent = 'Configure Chain — ' + (label ? label.label : requestType);
+
+            renderRoleOptions();
+            try {
+                var stages = await ApprovalChains.getOne(requestType);
+                _stageIds = stages.map(function (s) { return s.approverRoleId; });
+            } catch (e) {
+                _stageIds = [];
+            }
+            renderStagesList();
+
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                await ApprovalChains.set(_editingType, _stageIds);
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

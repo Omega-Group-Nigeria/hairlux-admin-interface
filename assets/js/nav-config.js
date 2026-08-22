@@ -68,6 +68,10 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Users", href: "users.html" },
                 { label: "Customer Contacts", href: "customer-contacts.html" },
                 { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html" },
+                { label: "Inventory Products", href: "inventory-products.html" },
+                { label: "Purchase Requests", href: "purchase-requests.html" },
+                { label: "Purchases", href: "purchases.html" },
+                { label: "Financial Dashboard", href: "financial-dashboard.html" },
                 { label: "Suppliers", href: "suppliers.html" },
                 { label: "Vendors", href: "vendors.html" },
             ],
@@ -165,9 +169,10 @@ var NavConfig = window.NavConfig || (() => {
             id: "staff",
             label: "Staff",
             icon: "staff",
+
             permission: {
                 type: "requireAny",
-                perms: ["staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations"],
+                perms: ["staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations", "lms:read", "approval_chains:read"],
             },
             children: [
                 { label: "Staff Records", href: "staff.html" },
@@ -176,6 +181,8 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Tasks & Directives", href: "staff-directives.html" },
                 { label: "Attendance", href: "staff-attendance.html" },
                 { label: "Leave Requests", href: "leave-requests.html" },
+                { label: "Training Library (LMS)", href: "lms.html" },
+                { label: "Approval Chains", href: "approval-chains.html" },
             ],
         },
         {

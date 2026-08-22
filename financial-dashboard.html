@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Financial Dashboard</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .metric-card {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: var(--tblr-secondary);
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="page-pretitle">Procurement</div>
+                    <h2 class="page-title">Financial Dashboard</h2>
+                    <div class="text-secondary small mt-1">Every figure here reads directly from the Financial
+                        Transaction ledger — nothing is recalculated or estimated per module.</div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <select class="form-select" id="f-branch">
+                                <option value="">All branches</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="f-from" placeholder="From">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="f-to" placeholder="To">
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear
+                                Filters</button>
+                        </div>
+                    </div>
+
+                    <div class="row row-cards mb-3">
+                        <div class="col-md-4">
+                            <div class="card metric-card">
+                                <div class="metric-label">Total Inflow</div>
+                                <div class="metric-value text-success" id="metric-inflow">—</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card metric-card">
+                                <div class="metric-label">Total Outflow</div>
+                                <div class="metric-value text-danger" id="metric-outflow">—</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card metric-card">
+                                <div class="metric-label">Net Cash Flow</div>
+                                <div class="metric-value" id="metric-net">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h3 class="card-title">Breakdown by Category</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Direction</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="category-tbody">
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <h3 class="card-title">Transactions</h3>
+                            <div class="row g-2 mb-3 mt-1">
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="f-direction">
+                                        <option value="">All directions</option>
+                                        <option value="INFLOW">Inflow</option>
+                                        <option value="OUTFLOW">Outflow</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select form-select-sm" id="f-category">
+                                        <option value="">All categories</option>
+                                        <optgroup label="Inflows">
+                                            <option value="SALON_BOOKING_REVENUE">Salon Booking Revenue</option>
+                                            <option value="PRODUCT_SALE">Product Sale</option>
+                                            <option value="ACADEMY_PAYMENT">Academy Payment</option>
+                                            <option value="MEMBERSHIP_PAYMENT">Membership Payment</option>
+                                            <option value="WALLET_FUNDING">Wallet Funding</option>
+                                            <option value="OTHER_INCOME">Other Income</option>
+                                        </optgroup>
+                                        <optgroup label="Outflows">
+                                            <option value="VENDOR_PAYMENT">Vendor Payment</option>
+                                            <option value="SALARY">Salary</option>
+                                            <option value="REFUND">Refund</option>
+                                            <option value="OPERATIONAL_EXPENSE">Operational Expense</option>
+                                            <option value="LOGISTICS">Logistics</option>
+                                            <option value="OTHER_EXPENSE">Other Expense</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Reference</th>
+                                        <th>Direction</th>
+                                        <th>Category</th>
+                                        <th>Branch</th>
+                                        <th>Description</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tx-tbody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="text-secondary small" id="page-info"></div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary" id="btn-prev-page">Previous</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="btn-next-page">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/financial-transactions.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var _currentPage = 1;
+        var _lastPageResult = null;
+
+        var CATEGORY_LABELS = {
+            SALON_BOOKING_REVENUE: 'Salon Booking Revenue', PRODUCT_SALE: 'Product Sale', ACADEMY_PAYMENT: 'Academy Payment',
+            MEMBERSHIP_PAYMENT: 'Membership Payment', WALLET_FUNDING: 'Wallet Funding', OTHER_INCOME: 'Other Income',
+            VENDOR_PAYMENT: 'Vendor Payment', SALARY: 'Salary', REFUND: 'Refund', OPERATIONAL_EXPENSE: 'Operational Expense',
+            LOGISTICS: 'Logistics', OTHER_EXPENSE: 'Other Expense',
+        };
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('financial_transactions:read');
+
+            ['f-branch', 'f-from', 'f-to', 'f-direction', 'f-category'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', function () { _currentPage = 1; loadAll(); });
+            });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-branch').value = '';
+                document.getElementById('f-from').value = '';
+                document.getElementById('f-to').value = '';
+                document.getElementById('f-direction').value = '';
+                document.getElementById('f-category').value = '';
+                _currentPage = 1;
+                loadAll();
+            });
+            document.getElementById('btn-prev-page').addEventListener('click', function () {
+                if (_currentPage > 1) { _currentPage--; loadTransactions(); }
+            });
+            document.getElementById('btn-next-page').addEventListener('click', function () {
+                if (_lastPageResult && _currentPage * _lastPageResult.limit < _lastPageResult.total) { _currentPage++; loadTransactions(); }
+            });
+
+            try {
+                var branches = await Branches.getBranches();
+                document.getElementById('f-branch').innerHTML += branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+            } catch (e) { /* branch filter just stays with "All branches" */ }
+
+            loadAll();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function formatMoney(v) {
+            return '₦' + Number(v || 0).toLocaleString();
+        }
+
+        function currentFilters() {
+            return {
+                branchId: document.getElementById('f-branch').value,
+                from: document.getElementById('f-from').value,
+                to: document.getElementById('f-to').value,
+            };
+        }
+
+        function loadAll() {
+            loadSummary();
+            loadTransactions();
+        }
+
+        async function loadSummary() {
+            var metricInflow = document.getElementById('metric-inflow');
+            var metricOutflow = document.getElementById('metric-outflow');
+            var metricNet = document.getElementById('metric-net');
+            var categoryTbody = document.getElementById('category-tbody');
+            try {
+                var summary = await FinancialTransactions.getSummary(currentFilters());
+                metricInflow.textContent = formatMoney(summary.totalInflow);
+                metricOutflow.textContent = formatMoney(summary.totalOutflow);
+                metricNet.textContent = formatMoney(summary.netCashFlow);
+                metricNet.className = 'metric-value ' + (summary.netCashFlow >= 0 ? 'text-success' : 'text-danger');
+
+                categoryTbody.innerHTML = summary.byCategory.length
+                    ? summary.byCategory.map(function (row) {
+                        return '<tr><td>' + esc(CATEGORY_LABELS[row.category] || row.category) + '</td>' +
+                            '<td><span class="badge ' + (row.direction === 'INFLOW' ? 'bg-green-lt' : 'bg-red-lt') + '">' + row.direction + '</span></td>' +
+                            '<td class="text-end">' + formatMoney(row.total) + '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="3" class="text-center text-secondary py-3">No transactions in this range yet.</td></tr>';
+            } catch (e) {
+                categoryTbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load summary.') + '</td></tr>';
+            }
+        }
+
+        async function loadTransactions() {
+            var tbody = document.getElementById('tx-tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var filters = currentFilters();
+                filters.direction = document.getElementById('f-direction').value;
+                filters.category = document.getElementById('f-category').value;
+                var result = await FinancialTransactions.getAll(filters, _currentPage);
+                _lastPageResult = result;
+
+                tbody.innerHTML = result.items.length
+                    ? result.items.map(function (t) {
+                        return '<tr>' +
+                            '<td>' + new Date(t.createdAt).toLocaleDateString() + '</td>' +
+                            '<td>' + esc(t.reference) + '</td>' +
+                            '<td><span class="badge ' + (t.direction === 'INFLOW' ? 'bg-green-lt' : 'bg-red-lt') + '">' + t.direction + '</span></td>' +
+                            '<td>' + esc(CATEGORY_LABELS[t.category] || t.category) + '</td>' +
+                            '<td>' + esc(t.branch ? t.branch.name : '\u2014') + '</td>' +
+                            '<td class="text-truncate" style="max-width:220px">' + esc(t.description || '\u2014') + '</td>' +
+                            '<td class="text-end">' + formatMoney(t.amount) + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="7" class="text-center text-secondary py-5">No transactions found.</td></tr>';
+
+                var start = result.total === 0 ? 0 : (result.page - 1) * result.limit + 1;
+                var end = Math.min(result.page * result.limit, result.total);
+                document.getElementById('page-info').textContent = result.total
+                    ? ('Showing ' + start + '\u2013' + end + ' of ' + result.total)
+                    : '';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>
