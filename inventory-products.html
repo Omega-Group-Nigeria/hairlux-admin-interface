@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Inventory Products</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .vendor-check-list {
+            max-height: 160px;
+            overflow-y: auto;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Procurement</div>
+                            <h2 class="page-title">Inventory Products</h2>
+                            <div class="text-secondary small mt-1">The master catalogue — products are selected from
+                                here throughout Procurement, never re-entered per branch.</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-primary" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Product
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" id="f-search"
+                                        placeholder="Search name, SKU, brand…">
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-category-filter">
+                                        <option value="">All categories</option>
+                                        <option value="FOR_SALE">For Sale</option>
+                                        <option value="INTERNAL_USE">Internal Use</option>
+                                        <option value="STORAGE">Storage</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Category</th>
+                                        <th>Cost / Selling Price</th>
+                                        <th>Vendors</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">New Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="f-name"
+                                placeholder="e.g. Moisturizing Shampoo 500ml">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">SKU <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-sku">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Brand <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-brand">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="f-category">
+                                <option value="FOR_SALE">For Sale</option>
+                                <option value="INTERNAL_USE">Internal Use</option>
+                                <option value="STORAGE">Storage</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Product Type <span
+                                    class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-product-type" placeholder="e.g. Hair Care">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Unit <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-unit" placeholder="e.g. bottle">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cost Price</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="f-cost-price">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Selling Price</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="f-selling-price">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Low Stock Threshold</label>
+                            <input type="number" min="0" class="form-control" id="f-low-stock-threshold" value="5">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Bulk Selling Price <span
+                                    class="text-secondary">(optional)</span></label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="f-bulk-price">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Minimum Bulk Quantity <span
+                                    class="text-secondary">(optional)</span></label>
+                            <input type="number" min="1" class="form-control" id="f-min-bulk-qty">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description <span class="text-secondary">(optional)</span></label>
+                        <textarea class="form-control" id="f-description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Supplying Vendors <span
+                                class="text-secondary">(optional)</span></label>
+                        <div class="vendor-check-list" id="f-vendors"></div>
+                    </div>
+                    <div class="d-flex gap-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="f-expiry-tracking">
+                            <label class="form-check-label" for="f-expiry-tracking">Track expiry</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="f-active" checked>
+                            <label class="form-check-label" for="f-active">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/suppliers.js"></script>
+    <script src="assets/js/api-utils/inventory-products.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var editingId = null;
+        var _allVendors = [];
+        var _searchDebounce = null;
+
+        var CATEGORY_LABELS = { FOR_SALE: 'For Sale', INTERNAL_USE: 'Internal Use', STORAGE: 'Storage' };
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('inventory_products:read');
+
+            document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('f-category-filter').addEventListener('change', load);
+            document.getElementById('f-search').addEventListener('input', function () {
+                clearTimeout(_searchDebounce);
+                _searchDebounce = setTimeout(load, 300);
+            });
+
+            try {
+                // Suppliers.getAll with no type filter returns both
+                // SUPPLIER and VENDOR records -- either can supply a
+                // product, matching the spec's own "Vendor" master data
+                // (this codebase's existing Supplier model, extended).
+                _allVendors = await Suppliers.getAll();
+            } catch (e) {
+                _allVendors = [];
+            }
+            renderVendorCheckboxes();
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function formatMoney(v) {
+            if (v == null) return '—';
+            return '\u20a6' + Number(v).toLocaleString();
+        }
+
+        function renderVendorCheckboxes() {
+            var container = document.getElementById('f-vendors');
+            if (!_allVendors.length) {
+                container.innerHTML = '<div class="text-secondary small">No suppliers/vendors found — add one first under Contacts → Suppliers/Vendors.</div>';
+                return;
+            }
+            container.innerHTML = _allVendors.map(function (v) {
+                return '<div class="form-check">' +
+                    '<input class="form-check-input vendor-checkbox" type="checkbox" value="' + esc(v.id) + '" id="vendor-' + esc(v.id) + '">' +
+                    '<label class="form-check-label" for="vendor-' + esc(v.id) + '">' + esc(v.name) + ' <span class="text-secondary small">(' + esc(v.type) + ')</span></label>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function checkedVendorIds() {
+            return Array.from(document.querySelectorAll('.vendor-checkbox:checked')).map(function (el) { return el.value; });
+        }
+
+        function setCheckedVendors(ids) {
+            var set = new Set(ids || []);
+            document.querySelectorAll('.vendor-checkbox').forEach(function (el) { el.checked = set.has(el.value); });
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var search = document.getElementById('f-search').value.trim();
+                var category = document.getElementById('f-category-filter').value;
+                var list = await InventoryProducts.getAll(search, category);
+                tbody.innerHTML = list.length
+                    ? list.map(function (p) {
+                        var statusBadge = p.isActive
+                            ? '<span class="badge bg-green-lt">Active</span>'
+                            : '<span class="badge bg-secondary-lt">Inactive</span>';
+                        var vendorBadges = (p.suppliers || []).map(function (s) {
+                            return '<span class="badge bg-secondary-lt me-1">' + esc(s.vendor ? s.vendor.name : '') + '</span>';
+                        }).join('') || '<span class="text-secondary small">None</span>';
+                        var subtext = [p.sku, p.brand].filter(Boolean).join(' · ');
+                        return '<tr>' +
+                            '<td><div class="fw-semibold">' + esc(p.name) + '</div>' +
+                            (subtext ? '<div class="text-secondary small">' + esc(subtext) + '</div>' : '') + '</td>' +
+                            '<td>' + esc(CATEGORY_LABELS[p.category] || p.category) + '</td>' +
+                            '<td>' + formatMoney(p.costPrice) + ' / ' + formatMoney(p.sellingPrice) + '</td>' +
+                            '<td>' + vendorBadges + '</td>' +
+                            '<td>' + statusBadge + '</td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + p.id + '\')">Edit</button>' +
+                            '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + p.id + '\')">Delete</button>' +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No products found.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function openForm(id) {
+            editingId = id;
+            document.getElementById('form-error').classList.add('d-none');
+            document.getElementById('modal-form-title').textContent = id ? 'Edit Product' : 'New Product';
+
+            if (id) {
+                try {
+                    var p = await InventoryProducts.getOne(id);
+                    document.getElementById('f-name').value = p.name;
+                    document.getElementById('f-sku').value = p.sku || '';
+                    document.getElementById('f-brand').value = p.brand || '';
+                    document.getElementById('f-category').value = p.category;
+                    document.getElementById('f-product-type').value = p.productType || '';
+                    document.getElementById('f-unit').value = p.unit || '';
+                    document.getElementById('f-cost-price').value = p.costPrice != null ? p.costPrice : '';
+                    document.getElementById('f-selling-price').value = p.sellingPrice != null ? p.sellingPrice : '';
+                    document.getElementById('f-bulk-price').value = p.bulkSellingPrice != null ? p.bulkSellingPrice : '';
+                    document.getElementById('f-min-bulk-qty').value = p.minBulkQuantity != null ? p.minBulkQuantity : '';
+                    document.getElementById('f-low-stock-threshold').value = p.lowStockThreshold;
+                    document.getElementById('f-description').value = p.description || '';
+                    document.getElementById('f-expiry-tracking').checked = !!p.expiryTrackingEnabled;
+                    document.getElementById('f-active').checked = !!p.isActive;
+                    setCheckedVendors((p.suppliers || []).map(function (s) { return s.vendorId; }));
+                } catch (e) {
+                    alert(e.message || 'Failed to load.');
+                    return;
+                }
+            } else {
+                document.getElementById('f-name').value = '';
+                document.getElementById('f-sku').value = '';
+                document.getElementById('f-brand').value = '';
+                document.getElementById('f-category').value = 'FOR_SALE';
+                document.getElementById('f-product-type').value = '';
+                document.getElementById('f-unit').value = '';
+                document.getElementById('f-cost-price').value = '';
+                document.getElementById('f-selling-price').value = '';
+                document.getElementById('f-bulk-price').value = '';
+                document.getElementById('f-min-bulk-qty').value = '';
+                document.getElementById('f-low-stock-threshold').value = '5';
+                document.getElementById('f-description').value = '';
+                document.getElementById('f-expiry-tracking').checked = false;
+                document.getElementById('f-active').checked = true;
+                setCheckedVendors([]);
+            }
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+            var name = document.getElementById('f-name').value.trim();
+            if (!name) { errEl.textContent = 'Name is required.'; errEl.classList.remove('d-none'); return; }
+
+            var payload = {
+                name: name,
+                sku: document.getElementById('f-sku').value.trim() || undefined,
+                brand: document.getElementById('f-brand').value.trim() || undefined,
+                category: document.getElementById('f-category').value,
+                productType: document.getElementById('f-product-type').value.trim() || undefined,
+                unit: document.getElementById('f-unit').value.trim() || undefined,
+                costPrice: document.getElementById('f-cost-price').value ? Number(document.getElementById('f-cost-price').value) : undefined,
+                sellingPrice: document.getElementById('f-selling-price').value ? Number(document.getElementById('f-selling-price').value) : undefined,
+                bulkSellingPrice: document.getElementById('f-bulk-price').value ? Number(document.getElementById('f-bulk-price').value) : undefined,
+                minBulkQuantity: document.getElementById('f-min-bulk-qty').value ? Number(document.getElementById('f-min-bulk-qty').value) : undefined,
+                lowStockThreshold: Number(document.getElementById('f-low-stock-threshold').value) || 0,
+                expiryTrackingEnabled: document.getElementById('f-expiry-tracking').checked,
+                description: document.getElementById('f-description').value.trim() || undefined,
+                isActive: document.getElementById('f-active').checked,
+                vendorIds: checkedVendorIds(),
+            };
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                if (editingId) await InventoryProducts.update(editingId, payload);
+                else await InventoryProducts.create(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function remove(id) {
+            if (!confirm('Delete this product permanently? This cannot be undone.')) return;
+            try {
+                await InventoryProducts.remove(id);
+                load();
+            } catch (e) {
+                alert(e.message || 'Failed to delete.');
+            }
+        }
+    </script>
+</body>
+
+</html>

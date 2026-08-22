@@ -483,7 +483,16 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="adjust-error"></div>
-                    <p class="text-secondary small" id="adjust-item-label"></p>
+                    <p class="text-secondary small mb-1" id="adjust-item-label"></p>
+                    <p class="text-secondary small" id="adjust-item-breakdown"></p>
+                    <div class="mb-2"><label class="form-label">Stock Bucket <span class="text-danger">*</span></label>
+                        <select class="form-select" id="adj-stock-type">
+                            <option value="STORE">Store (unallocated)</option>
+                            <option value="SALES">Sales</option>
+                            <option value="USAGE">Usage</option>
+                        </select>
+                        <div class="form-hint">Which of the three buckets this adjustment corrects.</div>
+                    </div>
                     <div class="mb-2"><label class="form-label">Quantity Change <span
                                 class="text-danger">*</span></label>
                         <input type="number" class="form-control" id="adj-delta" placeholder="e.g. -3 or 10">
@@ -717,6 +726,11 @@
             return div.innerHTML;
         }
 
+        /** Matches the backend's own getTotalStock convention from Phase 2 -- sum of all three buckets. */
+        function totalStock(item) {
+            return (Number(item.storeStock) || 0) + (Number(item.salesStock) || 0) + (Number(item.usageStock) || 0);
+        }
+
         async function loadBranchOptions() {
             try {
                 var branches = await Staff.getLocations();
@@ -821,8 +835,9 @@
                 });
                 var items = result.data || [];
 
-                var outOfStock = items.filter(function (i) { return i.currentQuantity <= 0; }).length;
-                var lowStock = items.filter(function (i) { return i.currentQuantity > 0 && i.currentQuantity <= i.lowStockThreshold; }).length;
+
+                var outOfStock = items.filter(function (i) { return totalStock(i) <= 0; }).length;
+                var lowStock = items.filter(function (i) { return totalStock(i) > 0 && totalStock(i) <= i.lowStockThreshold; }).length;
                 document.getElementById("stat-total").textContent = items.length;
                 document.getElementById("stat-low").textContent = lowStock;
                 document.getElementById("stat-out").textContent = outOfStock;
@@ -837,7 +852,8 @@
                         '<td>' + escapeHtml(i.branch ? i.branch.name : '—') + '</td>' +
                         '<td>' + (Inventory.CATEGORY_LABELS[i.category] || i.category) + '</td>' +
                         '<td>' + (i.category === 'FOR_SALE' ? Inventory.formatMoney(i.price) : '<span class="text-secondary">—</span>') + '</td>' +
-                        '<td>' + i.currentQuantity + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
+                        '<td>' + totalStock(i) + (i.unit ? ' ' + escapeHtml(i.unit) : '') +
+                        '<div class="text-secondary small">Store: ' + i.storeStock + ' \u00b7 Sales: ' + i.salesStock + ' \u00b7 Usage: ' + i.usageStock + '</div></td>' +
                         '<td>' + i.lowStockThreshold + '</td>' +
                         '<td>' + Inventory.statusBadge(i) + '</td>' +
                         '<td class="text-nowrap"><button class="btn btn-sm btn-outline-secondary me-1 btn-edit-item" data-id="' + i.id + '">Edit</button>' +
@@ -1024,13 +1040,23 @@
         function openAdjustModal(itemId, itemName) {
             _pendingAdjustItemId = itemId;
             document.getElementById("adjust-item-label").textContent = itemName;
+            document.getElementById("adj-stock-type").value = "STORE";
             document.getElementById("adj-delta").value = "";
             document.getElementById("adj-reason").value = "";
             document.getElementById("adjust-error").classList.add("d-none");
+
+            // Looked up from the already-loaded list, same pattern
+            // openEditItemModal already uses -- no extra API call needed.
+            var item = _itemsCache.find(function (i) { return i.id === itemId; });
+            document.getElementById("adjust-item-breakdown").textContent = item
+                ? 'Current — Store: ' + item.storeStock + ' \u00b7 Sales: ' + item.salesStock + ' \u00b7 Usage: ' + item.usageStock
+                : '';
+
             new bootstrap.Modal(document.getElementById("modal-adjust")).show();
         }
 
         async function submitAdjust() {
+            var stockType = document.getElementById("adj-stock-type").value;
             var delta = parseInt(document.getElementById("adj-delta").value, 10);
             var reason = document.getElementById("adj-reason").value.trim();
             var errEl = document.getElementById("adjust-error");
@@ -1044,7 +1070,7 @@
             var btn = document.getElementById("btn-save-adjust");
             btn.disabled = true;
             try {
-                await Inventory.adjust(_pendingAdjustItemId, { quantityDelta: delta, reason: reason });
+                await Inventory.adjust(_pendingAdjustItemId, { stockType: stockType, quantityDelta: delta, reason: reason });
                 bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
                 loadItems();
                 refreshBadgeCounts();
@@ -1077,7 +1103,7 @@
                     return '<tr>' +
                         '<td class="fw-semibold">' + escapeHtml(a.item ? a.item.name : '—') + '</td>' +
                         '<td>' + escapeHtml(a.item && a.item.branch ? a.item.branch.name : '—') + '</td>' +
-                        '<td>' + (a.item ? a.item.currentQuantity : '—') + '</td>' +
+                        '<td>' + (a.item ? totalStock(a.item) : '—') + '</td>' +
                         '<td class="text-secondary small">' + new Date(a.triggeredAt).toLocaleString() + '</td>' +
                         '<td><span class="badge ' + stageColor + '">' + a.currentStage + '</span></td>' +
                         '<td>' + action + '</td>' +
