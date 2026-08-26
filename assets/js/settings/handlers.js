@@ -37,6 +37,9 @@
     var populateAddAreaCity = UI.populateAddAreaCity;
     var updateDraftBanner = UI.updateDraftBanner;
     var renderAddAreaPreview = UI.renderAddAreaPreview;
+    var renderCancellationPolicy = UI.renderCancellationPolicy;
+    var collectCancellationPolicyRules = UI.collectCancellationPolicyRules;
+    var wireCancellationPolicyInputs = UI.wireCancellationPolicyInputs;
 
 
     // ── Alert helpers ─────────────────────────────────────────────────────
@@ -111,6 +114,72 @@
     });
 
     // ── Password visibility toggle ────────────────────────────────────────
+
+    async function loadCancellationPolicy() {
+        var walkTbody = document.getElementById('cancellation-policy-walkin-tbody');
+        var homeTbody = document.getElementById('cancellation-policy-home-tbody');
+        if (walkTbody) walkTbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        if (homeTbody) homeTbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        try {
+            var data = await Bookings.getCancellationPolicy();
+            State.cancellationPolicy = data;
+            State.cancellationPolicyDirty = false;
+            renderCancellationPolicy(State.cancellationPolicy);
+            var savedEl = document.getElementById('cancellation-policy-saved');
+            if (savedEl) savedEl.classList.add('d-none');
+        } catch (err) {
+            showCancellationPolicyAlert('danger', 'Failed to load cancellation policy: ' + err.message);
+            if (walkTbody) walkTbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+            if (homeTbody) homeTbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+        }
+    }
+
+    async function saveCancellationPolicy() {
+        if (!RBAC.can('settings:manage')) return;
+        var walkRules = collectCancellationPolicyRules('walkInBranch');
+        var homeRules = collectCancellationPolicyRules('homeService');
+        var walkErr = Bookings.validateCancellationRules(walkRules);
+        if (walkErr) {
+            showCancellationPolicyAlert('danger', walkErr);
+            return;
+        }
+        var homeErr = Bookings.validateCancellationRules(homeRules);
+        if (homeErr) {
+            showCancellationPolicyAlert('danger', homeErr);
+            return;
+        }
+        var btn = document.getElementById('btn-save-cancellation-policy');
+        if (btn) btn.disabled = true;
+        setSpinner('spinner-cancellation-policy', true);
+        try {
+            var data = await Bookings.updateCancellationPolicy({
+                walkInBranch: walkRules,
+                homeService: homeRules,
+            });
+            State.cancellationPolicy = data;
+            State.cancellationPolicyDirty = false;
+            renderCancellationPolicy(State.cancellationPolicy);
+            showCancellationPolicyAlert('success', 'Cancellation policy saved.');
+            var savedEl = document.getElementById('cancellation-policy-saved');
+            if (savedEl) {
+                savedEl.classList.remove('d-none');
+                setTimeout(function () { savedEl.classList.add('d-none'); }, 3000);
+            }
+        } catch (err) {
+            showCancellationPolicyAlert('danger', err.message);
+        } finally {
+            setSpinner('spinner-cancellation-policy', false);
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    function showCancellationPolicyAlert(type, message) {
+        var alertEl = document.getElementById('cancellation-policy-alert');
+        var msgEl = document.getElementById('cancellation-policy-alert-msg');
+        if (!alertEl || !msgEl) return;
+        alertEl.className = 'alert alert-' + type + ' mb-3';
+        msgEl.textContent = message;
+    }
 
     // ── GET /admin/settings/home-service ──────────────────────────────────
     async function loadHomeService() {
@@ -246,12 +315,15 @@
             State.isSuperAdmin = RBAC.isSuperAdmin();
             var navLink = document.getElementById('nav-admin-management');
             if (navLink) navLink.classList.toggle('d-none', !State.isSuperAdmin);
+            var cancelNav = document.getElementById('nav-cancellation-policy');
+            if (cancelNav) cancelNav.classList.toggle('d-none', !RBAC.can('settings:read') && !RBAC.can('settings:manage'));
         });
         populateUserInfo(Auth.getUser());
         loadProfile();
         await populateRoleSelects();
         loadBusinessHours();
         loadHomeService();
+        wireCancellationPolicyInputs();
 
         // Settings sidebar nav
         document.querySelectorAll('.settings-nav .nav-link').forEach(function (link) {
@@ -269,6 +341,9 @@
                 }
                 if (section === 'home-service') {
                     loadHomeService();
+                }
+                if (section === 'cancellation-policy') {
+                    loadCancellationPolicy();
                 }
             });
         });
@@ -444,6 +519,29 @@
         if (btnSaveAreasBanner) {
             btnSaveAreasBanner.addEventListener('click', function () {
                 saveHomeService(this);
+            });
+        }
+
+        var btnSaveCancellationPolicy = document.getElementById('btn-save-cancellation-policy');
+        if (btnSaveCancellationPolicy) {
+            btnSaveCancellationPolicy.addEventListener('click', function () {
+                saveCancellationPolicy();
+            });
+        }
+
+        var cancelPolicyTabs = document.getElementById('cancellation-policy-tabs');
+        if (cancelPolicyTabs) {
+            cancelPolicyTabs.addEventListener('click', function (e) {
+                var link = e.target.closest('[data-cancel-tab]');
+                if (!link) return;
+                e.preventDefault();
+                cancelPolicyTabs.querySelectorAll('.nav-link').forEach(function (el) { el.classList.remove('active'); });
+                link.classList.add('active');
+                var tab = link.dataset.cancelTab;
+                var walk = document.getElementById('cancellation-tab-walkin');
+                var home = document.getElementById('cancellation-tab-home');
+                if (walk) walk.classList.toggle('d-none', tab !== 'walkin');
+                if (home) home.classList.toggle('d-none', tab !== 'home');
             });
         }
 
@@ -758,6 +856,9 @@
         var hash = (location.hash || '').replace('#', '');
         if (hash === 'home-service') {
             loadHomeService();
+        }
+        if (hash === 'cancellation-policy') {
+            loadCancellationPolicy();
         }
         if (hash === 'admin-management') {
             populateRoleSelects().then(function () { renderPermRoleSelector(); });

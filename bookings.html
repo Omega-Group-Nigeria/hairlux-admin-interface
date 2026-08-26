@@ -442,6 +442,17 @@
                                 </svg>
                                 Business Hours
                             </button>
+                            <a href="./settings.html#cancellation-policy" class="btn btn-outline-primary d-none"
+                                id="btn-cancellation-policy-settings" title="Configure refund rules for booking cancellations">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 9v4" />
+                                    <path d="M10.363 5.365a9.466 9.466 0 0 1 2.637 -.365c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.083 -2.131 2.916" />
+                                    <path d="M5 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                </svg>
+                                Cancellation Policy
+                            </a>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -631,6 +642,7 @@
     <script src="assets/js/api-utils/beauticians.js"></script>
     <script src="assets/js/api-utils/bookings.js"></script>
     <script src="assets/js/force-assign-modal.js"></script>
+    <script src="assets/js/booking-cancel-modal.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
     <!-- BUSINESS HOURS MODAL -->
@@ -825,6 +837,10 @@
             RBAC.fetchMe().then(function() {
                 RBAC.applyPageGuard('bookings:read');
                 RBAC.applyNavVisibility();
+                var policyBtn = document.getElementById('btn-cancellation-policy-settings');
+                if (policyBtn) {
+                    policyBtn.classList.toggle('d-none', !RBAC.can('settings:read') && !RBAC.can('settings:manage'));
+                }
             });
             // ── Initial loads ───────────────────────────────────────────────
             loadStats();
@@ -1373,6 +1389,7 @@
 
             var feedbackInner = Bookings.renderCustomerFeedbackHtml(b, { plain: true, esc: escHtml });
             var timelineInner = Bookings.renderHomeServiceTimelineHtml(b, { plain: true, esc: escHtml });
+            var cancellationInner = Bookings.renderCancellationDetailHtml(b, { plain: true, esc: escHtml });
 
             var stack =
                 '<div class="detail-stack" data-booking-id="' + escHtml(id) + '">' +
@@ -1391,6 +1408,7 @@
                 (timelineInner ? detailCard("Service timeline", timelineInner) : "") +
                 (guestBody ? detailCard("Guest", guestBody) : "") +
                 (notesBody ? detailCard("Notes", notesBody) : "") +
+                (cancellationInner ? detailCard("Cancellation", cancellationInner) : "") +
                 (feedbackInner ? detailCard("Customer feedback", feedbackInner) : "") +
                 (Bookings.isHomeServiceBooking(b)
                     ? detailCard("Dispatch trace",
@@ -1463,6 +1481,10 @@
                 var homeTransitions = { PENDING_ASSIGNMENT: ["CANCELLED"], PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
                 var homeNexts = homeTransitions[b.status] || [];
                 homeNexts.forEach(function (s) {
+                    if (s === "CANCELLED") {
+                        html += '<button class="btn btn-danger" onclick="openCancelBookingModal(\'' + safeId + '\')">Cancel</button>';
+                        return;
+                    }
                     var col = { CONFIRMED: "primary", IN_PROGRESS: "warning", COMPLETED: "success", CANCELLED: "danger" }[s] || "secondary";
                     html += '<button class="btn btn-' + col + '" onclick="handleDetailAction(\'' + safeId + '\',\'status\',\'' + s + '\',null)">' + s.replace(/_/g, " ") + '</button>';
                 });
@@ -1470,11 +1492,19 @@
                 var transitions = { PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
                 var nexts = transitions[b.status] || [];
                 nexts.forEach(function (s) {
+                    if (s === "CANCELLED") {
+                        html += '<button class="btn btn-danger" onclick="openCancelBookingModal(\'' + safeId + '\')">Cancel</button>';
+                        return;
+                    }
                     var col = { CONFIRMED: "primary", IN_PROGRESS: "warning", COMPLETED: "success", CANCELLED: "danger" }[s] || "secondary";
                     html += '<button class="btn btn-' + col + '" onclick="handleDetailAction(\'' + safeId + '\',\'status\',\'' + s + '\',null)">' + s.replace(/_/g, " ") + '</button>';
                 });
             }
             return html;
+        }
+
+        function openCancelBookingModal(bookingId) {
+            BookingCancelModal.open(bookingId);
         }
 
         // ── Handle offcanvas action ──────────────────────────────────────────────
@@ -1492,6 +1522,10 @@
                         '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
                 }
             } else if (action === "status") {
+                if (status === "CANCELLED") {
+                    openCancelBookingModal(id);
+                    return;
+                }
                 if (!confirm('Change booking status to "' + status.replace(/_/g, " ") + '"?')) return;
                 actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating\u2026';
                 try {
@@ -1538,6 +1572,14 @@
 
         ForceAssignModal.init({
             onSuccess: async function (id) {
+                loadBookings();
+                loadStats();
+                openDetail(id);
+            },
+        });
+
+        BookingCancelModal.init({
+            onSuccess: function (id) {
                 loadBookings();
                 loadStats();
                 openDetail(id);

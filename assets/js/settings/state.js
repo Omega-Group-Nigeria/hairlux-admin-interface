@@ -7,7 +7,7 @@
     var SP = (global.SettingsPage = global.SettingsPage || {});
 
     SP.State = {
-        VALID_SECTIONS: ['profile', 'security', 'home-service', 'admin-management'],
+        VALID_SECTIONS: ['profile', 'security', 'business-hours', 'home-service', 'cancellation-policy', 'admin-management'],
 
         /** Current user profile from GET /user/profile */
         profile: null,
@@ -35,5 +35,11 @@
 
         /** Bundled state -> cities reference data (window.NG_CITIES) */
         ngCities: window.NG_CITIES || {},
+
+        /** Cancellation policy from GET /admin/bookings/cancellation-policy */
+        cancellationPolicy: null,
+
+        /** Local edits before save */
+        cancellationPolicyDirty: false,
     };
 })(window);

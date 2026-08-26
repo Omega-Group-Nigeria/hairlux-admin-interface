@@ -29,7 +29,7 @@
 
     function routeOnLoad() {
         var hash = (location.hash || '#profile').replace('#', '');
-        var valid = ['profile', 'security', 'home-service', 'admin-management', 'business-hours'];
+        var valid = ['profile', 'security', 'home-service', 'admin-management', 'business-hours', 'cancellation-policy'];
         switchSection(valid.indexOf(hash) !== -1 ? hash : 'profile');
     }
 
@@ -498,6 +498,110 @@
         });
     }
 
+    function renderCancellationPolicyRuleRow(rule, category, canManage) {
+        var scenario = rule.scenario || '';
+        var needsWindow = Bookings.CANCELLATION_SCENARIOS_WITH_WINDOW.indexOf(scenario) !== -1;
+        var refund = rule.refundPercent != null ? rule.refundPercent : 0;
+        var forfeiture = rule.forfeiturePercent != null ? rule.forfeiturePercent : 0;
+        var windowVal = rule.windowMinutes != null ? rule.windowMinutes : '';
+        var disabled = canManage ? '' : ' disabled';
+        return '<tr data-policy-category="' + _esc(category) + '" data-policy-scenario="' + _esc(scenario) + '">' +
+            '<td class="small">' +
+            '<div class="fw-medium">' + _esc(Bookings.scenarioLabel(scenario)) + '</div>' +
+            '<div class="text-secondary small mt-1">' + _esc(Bookings.scenarioGuide(scenario, category)) + '</div></td>' +
+            '<td>' +
+            (needsWindow
+                ? '<input type="number" class="form-control form-control-sm policy-window" min="1" max="10080" value="' + _esc(windowVal) + '"' + disabled + ' style="max-width:6rem">'
+                : '<span class="text-secondary small">—</span>') +
+            '</td>' +
+            '<td><input type="number" class="form-control form-control-sm policy-refund" min="0" max="100" value="' + _esc(refund) + '"' + disabled + ' style="max-width:5rem"></td>' +
+            '<td><input type="number" class="form-control form-control-sm policy-forfeiture" min="0" max="100" value="' + _esc(forfeiture) + '"' + disabled + ' style="max-width:5rem"></td>' +
+            '<td class="text-center"><input type="checkbox" class="form-check-input policy-customer-cancel"' + (rule.customerCanCancel ? ' checked' : '') + disabled + '></td>' +
+            '<td class="text-center"><input type="checkbox" class="form-check-input policy-admin-cancel"' + (rule.adminCanCancel ? ' checked' : '') + disabled + '></td>' +
+            '</tr>';
+    }
+
+    function renderCancellationPolicyTable(category, rules, canManage) {
+        var tbodyId = category === 'walkInBranch' ? 'cancellation-policy-walkin-tbody' : 'cancellation-policy-home-tbody';
+        var tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        rules = rules || [];
+        if (!rules.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No rules configured.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = rules.map(function (rule) {
+            return renderCancellationPolicyRuleRow(rule, category, canManage);
+        }).join('');
+    }
+
+    function renderCancellationPolicy(policy) {
+        var canManage = RBAC.can('settings:manage');
+        var walkIn = policy && policy.walkInBranch ? policy.walkInBranch : [];
+        var home = policy && policy.homeService ? policy.homeService : [];
+        renderCancellationPolicyTable('walkInBranch', walkIn, canManage);
+        renderCancellationPolicyTable('homeService', home, canManage);
+        var saveBtn = document.getElementById('btn-save-cancellation-policy');
+        if (saveBtn) saveBtn.classList.toggle('d-none', !canManage);
+        var draftBanner = document.getElementById('cancellation-policy-draft-banner');
+        if (draftBanner) draftBanner.classList.toggle('d-none', !State.cancellationPolicyDirty);
+    }
+
+    function collectCancellationPolicyRules(category) {
+        var tbodyId = category === 'walkInBranch' ? 'cancellation-policy-walkin-tbody' : 'cancellation-policy-home-tbody';
+        var tbody = document.getElementById(tbodyId);
+        if (!tbody) return [];
+        return Array.from(tbody.querySelectorAll('tr[data-policy-scenario]')).map(function (row) {
+            var scenario = row.dataset.policyScenario;
+            var refundEl = row.querySelector('.policy-refund');
+            var forfeitureEl = row.querySelector('.policy-forfeiture');
+            var windowEl = row.querySelector('.policy-window');
+            var customerEl = row.querySelector('.policy-customer-cancel');
+            var adminEl = row.querySelector('.policy-admin-cancel');
+            var rule = {
+                scenario: scenario,
+                refundPercent: parseInt(refundEl && refundEl.value, 10) || 0,
+                forfeiturePercent: parseInt(forfeitureEl && forfeitureEl.value, 10) || 0,
+                customerCanCancel: !!(customerEl && customerEl.checked),
+                adminCanCancel: !!(adminEl && adminEl.checked),
+            };
+            if (Bookings.CANCELLATION_SCENARIOS_WITH_WINDOW.indexOf(scenario) !== -1) {
+                rule.windowMinutes = parseInt(windowEl && windowEl.value, 10) || 0;
+            }
+            return rule;
+        });
+    }
+
+    function wireCancellationPolicyInputs() {
+        var container = document.getElementById('section-cancellation-policy');
+        if (!container || container.dataset.policyWired === '1') return;
+        container.dataset.policyWired = '1';
+        container.addEventListener('input', function (e) {
+            var row = e.target.closest('tr[data-policy-scenario]');
+            if (!row) return;
+            if (e.target.classList.contains('policy-refund')) {
+                var refund = parseInt(e.target.value, 10);
+                if (!Number.isFinite(refund)) return;
+                var forfeitureEl = row.querySelector('.policy-forfeiture');
+                if (forfeitureEl) forfeitureEl.value = String(Math.max(0, 100 - refund));
+            } else if (e.target.classList.contains('policy-forfeiture')) {
+                var forfeiture = parseInt(e.target.value, 10);
+                if (!Number.isFinite(forfeiture)) return;
+                var refundEl = row.querySelector('.policy-refund');
+                if (refundEl) refundEl.value = String(Math.max(0, 100 - forfeiture));
+            }
+            State.cancellationPolicyDirty = true;
+            var draftBanner = document.getElementById('cancellation-policy-draft-banner');
+            if (draftBanner) draftBanner.classList.remove('d-none');
+        });
+        container.addEventListener('change', function (e) {
+            if (!e.target.closest('tr[data-policy-scenario]')) return;
+            State.cancellationPolicyDirty = true;
+            var draftBanner = document.getElementById('cancellation-policy-draft-banner');
+            if (draftBanner) draftBanner.classList.remove('d-none');
+        });
+    }
+
     SP.UI = {
         switchSection: switchSection,
         routeOnLoad: routeOnLoad,
@@ -517,5 +621,8 @@
         populateAddAreaCity: populateAddAreaCity,
         updateDraftBanner: updateDraftBanner,
         renderAddAreaPreview: renderAddAreaPreview,
+        renderCancellationPolicy: renderCancellationPolicy,
+        collectCancellationPolicyRules: collectCancellationPolicyRules,
+        wireCancellationPolicyInputs: wireCancellationPolicyInputs,
     };
 })(window);

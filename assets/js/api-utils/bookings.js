@@ -306,9 +306,16 @@ const Bookings = (() => {
   }
 
   // ─── PUT /admin/bookings/:id/status ──────────────────────────────────────────
-  async function updateStatus(id, status, reason = "") {
+  /**
+   * @param {string} id
+   * @param {string} status
+   * @param {object|string} [options]  Legacy: reason string. Or { reason, isNoShow }.
+   */
+  async function updateStatus(id, status, options = {}) {
+    if (typeof options === "string") options = { reason: options };
     const body = { status };
-    if (reason) body.reason = reason;
+    if (options.reason) body.reason = options.reason;
+    if (options.isNoShow) body.isNoShow = true;
     const res = await Auth.fetch(`/admin/bookings/${id}/status`, {
       method: "PUT",
       body: JSON.stringify(body),
@@ -316,6 +323,128 @@ const Bookings = (() => {
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Failed to update status (${res.status})`);
     return normalizeBooking(raw.data || raw);
+  }
+
+  // ─── Cancellation policy ─────────────────────────────────────────────────────
+  async function getCancellationPolicy() {
+    const res = await Auth.fetch("/admin/bookings/cancellation-policy");
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || `Failed to load cancellation policy (${res.status})`);
+    return raw.data || raw;
+  }
+
+  async function updateCancellationPolicy(payload) {
+    const res = await Auth.fetch("/admin/bookings/cancellation-policy", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || `Failed to update cancellation policy (${res.status})`);
+    return raw.data || raw;
+  }
+
+  const CANCELLATION_SCENARIO_LABELS = {
+    WITHIN_CANCELLATION_WINDOW: "Within cancellation window",
+    OUTSIDE_CANCELLATION_WINDOW: "Outside cancellation window",
+    GRACE_PERIOD: "Grace period",
+    AFTER_GRACE_PERIOD: "After grace period",
+    DISPATCHED: "Dispatched (en route)",
+    NO_SHOW: "No-show",
+    ADMIN_CANCELLATION: "Admin cancellation",
+  };
+
+  const CANCELLATION_SCENARIO_GUIDES = {
+    walkInBranch: {
+      WITHIN_CANCELLATION_WINDOW: "Cancel at least this many minutes before the appointment.",
+      OUTSIDE_CANCELLATION_WINDOW: "Too close to the appointment. Customer cannot cancel or get a refund.",
+      NO_SHOW: "Admin cancels and marks the customer as a no-show.",
+      ADMIN_CANCELLATION: "Admin cancels when the customer cannot (not a no-show).",
+    },
+    homeService: {
+      GRACE_PERIOD: "Cancel within this many minutes after the booking was made.",
+      AFTER_GRACE_PERIOD: "Grace period ended. Customer cannot cancel or get a refund.",
+      DISPATCHED: "Beautician is assigned or on the way. Admin cancels after grace period.",
+      NO_SHOW: "Admin marks no-show after grace period ended.",
+      ADMIN_CANCELLATION: "Admin cancels after grace period, before beautician is sent.",
+    },
+  };
+
+  const CANCELLATION_SCENARIOS_WITH_WINDOW = ["WITHIN_CANCELLATION_WINDOW", "GRACE_PERIOD"];
+
+  function scenarioLabel(scenario) {
+    return CANCELLATION_SCENARIO_LABELS[scenario] || String(scenario || "").replace(/_/g, " ");
+  }
+
+  function scenarioGuide(scenario, category) {
+    var guides = CANCELLATION_SCENARIO_GUIDES[category];
+    return (guides && guides[scenario]) || "";
+  }
+
+  function validateCancellationRule(rule) {
+    if (!rule || !rule.scenario) return "Each rule must have a scenario.";
+    const refund = Number(rule.refundPercent);
+    const forfeiture = Number(rule.forfeiturePercent);
+    if (!Number.isFinite(refund) || refund < 0 || refund > 100) {
+      return scenarioLabel(rule.scenario) + ": refund % must be 0–100.";
+    }
+    if (!Number.isFinite(forfeiture) || forfeiture < 0 || forfeiture > 100) {
+      return scenarioLabel(rule.scenario) + ": forfeiture % must be 0–100.";
+    }
+    if (refund + forfeiture !== 100) {
+      return scenarioLabel(rule.scenario) + ": refund % + forfeiture % must equal 100.";
+    }
+    if (CANCELLATION_SCENARIOS_WITH_WINDOW.includes(rule.scenario)) {
+      const window = Number(rule.windowMinutes);
+      if (!Number.isFinite(window) || window < 1 || window > 10080) {
+        return scenarioLabel(rule.scenario) + ": window minutes must be 1–10080.";
+      }
+    }
+    return "";
+  }
+
+  function validateCancellationRules(rules) {
+    if (!Array.isArray(rules) || !rules.length) return "At least one rule is required.";
+    for (let i = 0; i < rules.length; i++) {
+      const err = validateCancellationRule(rules[i]);
+      if (err) return err;
+    }
+    return "";
+  }
+
+  function renderCancellationDetailHtml(booking, opts = {}) {
+    const esc = opts.esc || ((value) => String(value ?? ""));
+    if (!booking || booking.status !== "CANCELLED") return "";
+
+    const cancellation = booking.cancellation;
+    const parts = [];
+
+    if (booking.cancelReason) {
+      parts.push(
+        '<div class="col-12"><div class="detail-field-label">Cancel reason</div>' +
+        '<div class="detail-prose text-secondary">' + esc(booking.cancelReason) + "</div></div>"
+      );
+    }
+
+    if (cancellation && typeof cancellation === "object") {
+      const scenario = scenarioLabel(cancellation.scenario);
+      parts.push(
+        '<div class="col-sm-6"><div class="detail-field-label">Policy scenario</div>' +
+        '<div class="detail-field-value fw-semibold">' + esc(scenario) + "</div></div>",
+        '<div class="col-sm-6"><div class="detail-field-label">Refund</div>' +
+        '<div class="detail-field-value">' + esc(cancellation.refundPercent ?? "—") + "% · " +
+        esc(formatMoney(cancellation.refundAmount ?? 0)) + "</div></div>",
+        '<div class="col-sm-6"><div class="detail-field-label">Forfeiture</div>' +
+        '<div class="detail-field-value">' + esc(cancellation.forfeiturePercent ?? "—") + "% · " +
+        esc(formatMoney(cancellation.forfeitureAmount ?? 0)) + "</div></div>"
+      );
+    }
+
+    if (!parts.length) return "";
+
+    const inner = '<div class="row g-3">' + parts.join("") + "</div>";
+    if (opts.plain) return inner;
+    if (opts.section) return '<div class="detail-section">' + inner + "</div>";
+    return '<div class="col-12">' + inner + "</div>";
   }
 
   // ─── POST /admin/bookings/:id/retry-matching ─────────────────────────────────
@@ -704,6 +833,15 @@ const Bookings = (() => {
     useReservation,
     getOne,
     updateStatus,
+    getCancellationPolicy,
+    updateCancellationPolicy,
+    CANCELLATION_SCENARIO_LABELS,
+    CANCELLATION_SCENARIOS_WITH_WINDOW,
+    scenarioLabel,
+    scenarioGuide,
+    validateCancellationRule,
+    validateCancellationRules,
+    renderCancellationDetailHtml,
     retryMatching,
     getDispatchTrace,
     forceAssign,

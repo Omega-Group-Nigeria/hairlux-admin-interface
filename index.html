@@ -405,6 +405,7 @@
     <script src="assets/js/api-utils/bookings.js" defer></script>
     <script src="assets/js/api-utils/beauticians.js" defer></script>
     <script src="assets/js/force-assign-modal.js" defer></script>
+    <script src="assets/js/booking-cancel-modal.js" defer></script>
     <script src="assets/js/api-utils/analytics.js" defer></script>
     <script src="assets/js/api-utils/staff.js" defer></script>
     <script src="assets/js/api-utils/staff-comms.js" defer></script>
@@ -487,6 +488,7 @@
                     (b.guestName ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Name</div><div>' + b.guestName + '</div></div>' : '') +
                     (b.guestPhone ? '<div class="col-md-6"><div class="mb-1 text-secondary small">Guest Phone</div><div>' + b.guestPhone + '</div></div>' : '') +
                     (b.notes ? '<div class="col-12"><div class="mb-1 text-secondary small">Notes</div><div class="text-secondary">' + b.notes + '</div></div>' : '') +
+                    Bookings.renderCancellationDetailHtml(b) +
                     Bookings.renderCustomerFeedbackHtml(b) +
                     '<div class="col-12"><div class="mb-1 text-secondary small">Booking ID</div><div class="text-secondary small font-monospace">' + id + '</div></div>' +
                     '</div>';
@@ -517,6 +519,10 @@
                 var homeTransitions = { PENDING_ASSIGNMENT: ['CANCELLED'], PENDING: ['CONFIRMED','CANCELLED'], CONFIRMED: ['IN_PROGRESS','CANCELLED'], IN_PROGRESS: ['COMPLETED','CANCELLED'] };
                 var homeNexts = homeTransitions[b.status] || [];
                 homeNexts.forEach(function (s) {
+                    if (s === 'CANCELLED') {
+                        html += '<button class="btn btn-danger" onclick="openCancelBookingModal(\'' + safeId + '\')">Cancel</button>';
+                        return;
+                    }
                     var col = { CONFIRMED: 'primary', IN_PROGRESS: 'warning', COMPLETED: 'success', CANCELLED: 'danger' }[s] || 'secondary';
                     html += '<button class="btn btn-' + col + '" onclick="handleDetailAction(\'' + safeId + '\',\'status\',\'' + s + '\',null)">' + s.replace(/_/g, ' ') + '</button>';
                 });
@@ -524,11 +530,19 @@
                 var transitions = { PENDING: ['CONFIRMED','CANCELLED'], CONFIRMED: ['IN_PROGRESS','CANCELLED'], IN_PROGRESS: ['COMPLETED','CANCELLED'] };
                 var nexts = transitions[b.status] || [];
                 nexts.forEach(function (s) {
+                    if (s === 'CANCELLED') {
+                        html += '<button class="btn btn-danger" onclick="openCancelBookingModal(\'' + safeId + '\')">Cancel</button>';
+                        return;
+                    }
                     var col = { CONFIRMED: 'primary', IN_PROGRESS: 'warning', COMPLETED: 'success', CANCELLED: 'danger' }[s] || 'secondary';
                     html += '<button class="btn btn-' + col + '" onclick="handleDetailAction(\'' + safeId + '\',\'status\',\'' + s + '\',null)">' + s.replace(/_/g, ' ') + '</button>';
                 });
             }
             return html;
+        }
+
+        function openCancelBookingModal(bookingId) {
+            BookingCancelModal.open(bookingId);
         }
 
         async function handleDetailAction(id, action, status, code) {
@@ -545,6 +559,10 @@
                         '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
                 }
             } else if (action === 'status') {
+                if (status === 'CANCELLED') {
+                    openCancelBookingModal(id);
+                    return;
+                }
                 if (!confirm('Change booking status to "' + status.replace(/_/g, ' ') + '"?')) return;
                 actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating\u2026';
                 try {
@@ -615,6 +633,12 @@
 
             ForceAssignModal.init({
                 onSuccess: async function (id) {
+                    openDetail(id);
+                },
+            });
+
+            BookingCancelModal.init({
+                onSuccess: function (id) {
                     openDetail(id);
                 },
             });

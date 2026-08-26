@@ -40,6 +40,7 @@
     <script src="../assets/js/api-utils/bookings.js"></script>
     <script src="../assets/js/api-utils/beauticians.js"></script>
     <script src="../assets/js/force-assign-modal.js"></script>
+    <script src="../assets/js/booking-cancel-modal.js"></script>
     <div class="page">
 
         <!-- ===== NAVBAR ===== -->
@@ -283,6 +284,22 @@
                 },
             });
 
+            BookingCancelModal.init({
+                onSuccess: function (_id, result) {
+                    var alert = document.getElementById('action-alert');
+                    if (alert) {
+                        alert.className = 'alert alert-success';
+                        var refundLine = '';
+                        if (result && result.cancellation) {
+                            refundLine = ' Refund: ' + Bookings.formatMoney(result.cancellation.refundAmount ?? 0) +
+                                ' (' + (result.cancellation.refundPercent ?? 0) + '%).';
+                        }
+                        alert.innerHTML = '<strong>Booking cancelled.</strong>' + refundLine;
+                    }
+                    setTimeout(refreshLookupResult, 1200);
+                },
+            });
+
             // ── Auto-fill code from URL param ────────────────────────────
             var urlParams = new URLSearchParams(window.location.search);
             var urlCode = urlParams.get("code");
@@ -462,6 +479,12 @@
 
                 // Notes
                 (b.notes ? '<div class="detail-section"><div class="detail-label mb-1">Notes</div><div class="text-secondary">' + b.notes + '</div></div>' : '') +
+                (function () {
+                    var cancelHtml = Bookings.renderCancellationDetailHtml(b, { esc: escHtml, labelClass: "detail-label" });
+                    return cancelHtml
+                        ? '<div class="detail-section">' + cancelHtml + '</div>'
+                        : '';
+                })() +
                 Bookings.renderCustomerFeedbackHtml(b, { esc: escHtml, section: true, labelClass: "detail-label", titleClass: "detail-label mb-2" }) +
 
                 // Booking ID + timestamps
@@ -521,6 +544,9 @@
                 }
                 html += steps.map(function (pair) {
                     var newStatus = pair[0], btnClass = pair[1];
+                    if (newStatus === "CANCELLED") {
+                        return '<button class="btn btn-danger me-2" onclick="openCancelBookingModal(\'' + id + '\')">Cancel</button>';
+                    }
                     return '<button class="btn ' + btnClass + ' me-2" onclick="updateStatus(\'' + id + '\',\'' + newStatus + '\')">' +
                         newStatus.replace(/_/g, " ") +
                         '</button>';
@@ -597,6 +623,10 @@
             ForceAssignModal.open(bookingId);
         }
 
+        function openCancelBookingModal(bookingId) {
+            BookingCancelModal.open(bookingId);
+        }
+
         function refreshLookupResult() {
             var codeInput = document.getElementById('code-input');
             if (codeInput && codeInput.value) {
@@ -607,6 +637,10 @@
         // ── Update Status (HOME_SERVICE) ────────────────────────────────────────
         async function updateStatus(bookingId, newStatus) {
             if (!bookingId || !newStatus) return;
+            if (newStatus === "CANCELLED") {
+                openCancelBookingModal(bookingId);
+                return;
+            }
             if (!confirm('Change booking status to "' + newStatus.replace(/_/g, " ") + '"?')) return;
             var alert = document.getElementById("action-alert");
             var btns  = document.querySelectorAll("#action-buttons .btn");
