@@ -145,17 +145,44 @@
                                         <option value="salon_booking">Staff-created (walk-in)</option>
                                     </select>
                                 </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Search</label>
+                                    <input type="text" class="form-control" id="ov-search" placeholder="Name or phone…">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" id="ov-status">
+                                        <option value="">All statuses</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Service</label>
+                                    <select class="form-select" id="ov-service">
+                                        <option value="">All services</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Staff</label>
+                                    <select class="form-select" id="ov-staff">
+                                        <option value="">All staff</option>
+                                    </select>
+                                </div>
                                 <div class="col-md-2 d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-secondary flex-fill" id="btn-refresh-overview"
-                                        title="Reload with current filters">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                                    <button type="button" class="btn btn-outline-secondary flex-fill"
+                                        id="btn-refresh-overview" title="Reload with current filters">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
                                             <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
                                             <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
                                         </svg>
                                         Refresh
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary" id="btn-reset-filters">Reset</button>
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        id="btn-reset-filters">Reset</button>
                                 </div>
                             </div>
                         </div>
@@ -192,6 +219,13 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="text-secondary small" id="ov-page-info"></div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary" id="ov-btn-prev-page">Previous</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="ov-btn-next-page">Next</button>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -202,30 +236,55 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/services.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/salon-bookings.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var isSuperAdmin = false;
+        var _currentPage = 1;
+        var _lastMeta = null;
+        var _searchDebounce = null;
 
         document.addEventListener('DOMContentLoaded', function () {
             var user = Auth.getUser();
             isSuperAdmin = !!(user && user.role === 'SUPER_ADMIN');
 
             document.getElementById('btn-refresh-overview').addEventListener('click', loadOverview);
-            document.getElementById('ov-date-from').addEventListener('change', loadOverview);
-            document.getElementById('ov-date-to').addEventListener('change', loadOverview);
-            document.getElementById('ov-branch').addEventListener('change', loadOverview);
-            document.getElementById('ov-source').addEventListener('change', loadOverview);
+            document.getElementById('ov-date-from').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-date-to').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-branch').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-source').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-status').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-service').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-staff').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-search').addEventListener('input', function () {
+                clearTimeout(_searchDebounce);
+                _searchDebounce = setTimeout(function () { _currentPage = 1; loadOverview(); }, 300);
+            });
+            document.getElementById('ov-btn-prev-page').addEventListener('click', function () {
+                if (_currentPage > 1) { _currentPage--; loadOverview(); }
+            });
+            document.getElementById('ov-btn-next-page').addEventListener('click', function () {
+                if (_lastMeta && _currentPage * _lastMeta.limit < _lastMeta.total) { _currentPage++; loadOverview(); }
+            });
             document.getElementById('btn-reset-filters').addEventListener('click', function () {
                 document.getElementById('ov-date-from').value = '';
                 document.getElementById('ov-date-to').value = '';
                 document.getElementById('ov-branch').value = '';
                 document.getElementById('ov-source').value = 'all';
+                document.getElementById('ov-search').value = '';
+                document.getElementById('ov-status').value = '';
+                document.getElementById('ov-service').value = '';
+                document.getElementById('ov-staff').value = '';
+                _currentPage = 1;
                 loadOverview();
             });
 
             loadBranchFilter();
+            loadServiceFilter();
+            loadStaffFilter();
             loadOverview();
         });
 
@@ -241,6 +300,33 @@
                     select.appendChild(opt);
                 });
             } catch (e) { /* non-fatal — branch filter just stays at "All branches" */ }
+        }
+
+        async function loadServiceFilter() {
+            try {
+                var services = await Services.getAll();
+                var select = document.getElementById('ov-service');
+                services.forEach(function (s) {
+                    var opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                });
+            } catch (e) { /* non-fatal — service filter just stays at "All services" */ }
+        }
+
+        async function loadStaffFilter() {
+            try {
+                var result = await Staff.getAll({ limit: 200 });
+                var staffList = result.data || result || [];
+                var select = document.getElementById('ov-staff');
+                staffList.forEach(function (s) {
+                    var opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                });
+            } catch (e) { /* non-fatal — staff filter just stays at "All staff" */ }
         }
 
         function esc(s) {
@@ -263,19 +349,33 @@
                 dateTo: document.getElementById('ov-date-to').value || undefined,
                 branchId: document.getElementById('ov-branch').value || undefined,
                 source: document.getElementById('ov-source').value || 'all',
+                search: document.getElementById('ov-search').value.trim() || undefined,
+                status: document.getElementById('ov-status').value || undefined,
+                serviceId: document.getElementById('ov-service').value || undefined,
+                staffId: document.getElementById('ov-staff').value || undefined,
+                page: _currentPage,
             };
 
             try {
                 var result = await SalonBookings.getOverview(params);
                 var summary = result.summary;
                 var bookings = result.bookings || [];
+                _lastMeta = result.meta || null;
 
                 document.getElementById('ov-total').textContent = summary.totalBookings;
                 document.getElementById('ov-revenue').textContent = SalonBookings.formatMoney(summary.totalRevenue);
                 document.getElementById('ov-completed').textContent = summary.completed;
                 document.getElementById('ov-pending').textContent = summary.pending;
                 document.getElementById('ov-cancelled').textContent = summary.cancelled;
-                document.getElementById('ov-results-label').textContent = bookings.length + ' booking' + (bookings.length === 1 ? '' : 's');
+                document.getElementById('ov-results-label').textContent = bookings.length + ' booking' + (bookings.length === 1 ? '' : 's') + ' on this page';
+
+                if (_lastMeta) {
+                    var start = _lastMeta.total === 0 ? 0 : (_lastMeta.page - 1) * _lastMeta.limit + 1;
+                    var end = Math.min(_lastMeta.page * _lastMeta.limit, _lastMeta.total);
+                    document.getElementById('ov-page-info').textContent = _lastMeta.total
+                        ? ('Showing ' + start + '\u2013' + end + ' of ' + _lastMeta.total)
+                        : '';
+                }
 
                 tbody.innerHTML = bookings.length
                     ? bookings.map(function (b) {

@@ -5,6 +5,21 @@
 
 let currentStaff = null;
 let currentAddressVerification = null;
+
+/**
+ * True if an onboarding item still genuinely needs the staff member's
+ * action. isComplete alone can't express "the admin cancelled this" --
+ * a cancelled Physical Address Verification is correctly not complete,
+ * but it's also not something the staff member owes any action on
+ * anymore. Centralized here after the same gap was independently missed
+ * in three different places (the dashboard warning banner, the progress
+ * bar, and the sidebar badge count) when CANCELLED was first added.
+ */
+function isOnboardingItemPending(item) {
+  if (item.isComplete) return false;
+  if (item.type === 'PHYSICAL_ADDRESS_VERIFICATION' && currentAddressVerification && currentAddressVerification.status === 'CANCELLED') return false;
+  return true;
+}
 let currentOnboarding = null;
 let currentDocuments = null;
 let currentAnnouncements = [];
@@ -233,7 +248,7 @@ function renderDashboard() {
       alertBanner.style.display = 'none';
     } else {
       alertBanner.style.display = '';
-      const remaining = currentOnboarding.items.filter((i) => !i.isComplete);
+      const remaining = currentOnboarding.items.filter(isOnboardingItemPending);
       const titleEl = alertBanner.querySelector('div[style*="font-weight:700"]');
       const descEl = alertBanner.querySelector('div[style*="font-size:12px"]');
       if (titleEl) titleEl.textContent = 'Onboarding Incomplete \u2014 ' + remaining.length + ' step' + (remaining.length === 1 ? '' : 's') + ' remaining';
@@ -372,19 +387,24 @@ function renderDashboard() {
   const onboardingCard = screen.querySelectorAll('.g2 > div:last-child .card')[1];
   if (onboardingCard && currentOnboarding) {
     const items = currentOnboarding.items;
-    const doneCount = items.filter((i) => i.isComplete).length;
-    const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+    // Excluded entirely from the denominator, not just the numerator --
+    // a cancelled item is no longer a real, active onboarding
+    // requirement for this staff member, so it shouldn't count against
+    // their completion percentage at all.
+    const activeItems = items.filter((i) => !(i.type === 'PHYSICAL_ADDRESS_VERIFICATION' && currentAddressVerification && currentAddressVerification.status === 'CANCELLED'));
+    const doneCount = activeItems.filter((i) => i.isComplete).length;
+    const pct = activeItems.length ? Math.round((doneCount / activeItems.length) * 100) : 0;
 
     const pctLabel = onboardingCard.querySelector('span[style*="color:var(--gold)"]');
     const countLabel = onboardingCard.querySelector('span[style*="color:var(--muted)"]');
     const barFill = onboardingCard.querySelector('.pbar span');
     if (pctLabel) pctLabel.textContent = pct + '% Complete';
-    if (countLabel) countLabel.textContent = doneCount + ' of ' + items.length + ' done';
+    if (countLabel) countLabel.textContent = doneCount + ' of ' + activeItems.length + ' done';
     if (barFill) barFill.style.width = pct + '%';
 
     const listContainer = barFill ? barFill.closest('div[style*="margin-bottom:8px"]') : null;
     if (listContainer) {
-      const rowsHtml = items
+      const rowsHtml = activeItems
         .map((item) => {
           const label = ONBOARDING_ITEM_LABELS[item.type] || item.type;
           const icon = item.isComplete ? '\u2713' : '\u23F3';
@@ -1150,7 +1170,7 @@ function renderOnboardingBadge() {
   if (currentOnboarding.onboardingComplete) {
     if (sidebarBadge) sidebarBadge.remove();
   } else if (sidebarBadge) {
-    const remaining = currentOnboarding.items.filter((i) => !i.isComplete).length;
+    const remaining = currentOnboarding.items.filter(isOnboardingItemPending).length;
     sidebarBadge.textContent = String(remaining);
   }
   applyPayrollGate();
@@ -1222,6 +1242,16 @@ function renderAddressVerificationRow(label) {
       '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
       '<div style="font-size:11px;color:var(--red)">' + (av.status === 'REJECTED' ? 'Could not be verified' : 'Verification failed') + ' \u2014 contact your admin</div></div>' +
       '<button class="btn btn-gold btn-sm" onclick="openOnboardingSubmitModal(\'PHYSICAL_ADDRESS_VERIFICATION\')">Resubmit</button></div>'
+    );
+  }
+  if (av.status === 'CANCELLED') {
+    // Neutral, not a red "action needed" state -- the admin withdrew the
+    // request, there is nothing pending on the staff member's side.
+    return (
+      '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--surface2, rgba(0,0,0,.04));border-radius:var(--r2)">' +
+      '<span style="color:var(--muted);font-size:18px">\u2013</span>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">Request cancelled by your admin</div></div></div>'
     );
   }
   // REQUESTED -- nothing submitted yet
@@ -2690,7 +2720,10 @@ function sbAddServiceLine() {
 async function sbAddItemLine() {
   if (!window._sbInventoryItems) {
     try {
-      var res = await InventorySelf.getItems();
+      // Dev Feedback: the endpoint's default limit is 20 -- passing this
+      // explicitly ensures a branch with more than 20 products still
+      // shows all of them here, not just the first page.
+      var res = await InventorySelf.getItems({ limit: 1000 });
       window._sbInventoryItems = res.data || res || [];
     } catch (err) { window._sbInventoryItems = []; }
   }
@@ -2787,7 +2820,7 @@ async function loadInventoryItems() {
   const category = document.getElementById('inv-category-filter').value;
   let result;
   try {
-    result = await InventorySelf.getItems({ category, limit: 100 });
+    result = await InventorySelf.getItems({ category, limit: 1000 });
   } catch (err) {
     console.error('Failed to load inventory items', err);
     document.getElementById('inv-items-tbody').innerHTML =

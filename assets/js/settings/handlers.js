@@ -30,6 +30,7 @@
     var updateSearchInfo = UI.updateSearchInfo;
     var clearAdminSearch = UI.clearAdminSearch;
     var renderPermMatrix = UI.renderPermMatrix;
+    var filterPermMatrix = UI.filterPermMatrix;
     var renderBusinessHoursTable = UI.renderBusinessHoursTable;
 
 
@@ -890,6 +891,12 @@
         }
 
         // Save permissions
+        // Dev Feedback Round 4, item #30: permission search
+        var permSearchInput = document.getElementById('perm-search');
+        if (permSearchInput) {
+            permSearchInput.addEventListener('input', filterPermMatrix);
+        }
+
         var btnSavePerms = document.getElementById('btn-save-perms');
         if (btnSavePerms) {
             btnSavePerms.addEventListener('click', async function () {
@@ -931,9 +938,6 @@
             initAdminSearch();
         }
     }
-
-
-
 
     SP.Handlers = {
         loadProfile: loadProfile,

@@ -93,7 +93,7 @@
                                     <button type="button" class="btn btn-outline-secondary flex-fill"
                                         id="btn-bf-refresh">Refresh</button>
                                     <button type="button" class="btn btn-primary flex-fill" id="btn-bf-reconcile">Submit
-                                        Cash Count</button>
+                                        Total Revenue Received</button>
                                 </div>
                             </div>
                         </div>
@@ -164,7 +164,7 @@
                                         <th>Expected Cash</th>
                                         <th>Stock Received</th>
                                         <th>Stock Transfers</th>
-                                        <th>Cash Count</th>
+                                        <th>Total Revenue Received</th>
                                     </tr>
                                 </thead>
                                 <tbody id="bf-tbody">
@@ -186,27 +186,29 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Submit Cash Count</h5>
+                    <h5 class="modal-title">Submit Total Revenue Received</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div id="reconcile-error" class="alert alert-danger d-none mx-3 mt-3 mb-0 py-2"></div>
+                <div id="reconcile-deadline-note" class="alert alert-info d-none mx-3 mt-3 mb-0 py-2 small"></div>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Date</label>
-                        <input type="date" class="form-control" id="rec-date">
+                        <input type="date" class="form-control" id="rec-date" readonly>
+                        <div class="form-hint">You can only submit for yesterday, and only before 12:00pm today.</div>
                     </div>
                     <div class="mb-3" id="rec-expected-wrap">
                         <div class="text-secondary small">Expected cash for this date</div>
                         <div class="h3 mb-0" id="rec-expected">—</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label required">Cash Counted</label>
+                        <label class="form-label required">Total Revenue Received</label>
                         <input type="number" step="0.01" min="0" class="form-control" id="rec-cash-counted"
                             placeholder="0.00">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Notes <span class="text-muted">(optional — explain any
-                                variance)</span></label>
+                        <label class="form-label">Notes <span class="text-muted">(required if there's a variance
+                                between cash counted and expected cash)</span></label>
                         <textarea class="form-control" id="rec-notes" rows="2"></textarea>
                     </div>
                 </div>
@@ -232,6 +234,7 @@
         RBAC.loadFromStorage();
 
         var isAdmin = false;
+        var isMultiBranch = false; // Dev Feedback Round 4, item #25 -- true for a non-admin with access to more than one branch
         var lockedBranchId = null;
         var _lastSummary = null;
 
@@ -242,7 +245,16 @@
         }
 
         function todayStr() {
-            return new Date().toISOString().slice(0, 10);
+            // WAT = UTC+1, not the browser's local timezone or bare UTC --
+            // matters now that the backend enforces a hard, strict
+            // deadline against a WAT-computed date; a mismatch near
+            // midnight WAT could reject a legitimate on-time submission.
+            return new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 10);
+        }
+
+        /** Dev Feedback Round 4, items #25-29: the only date the backend now accepts a submission for. */
+        function yesterdayStr() {
+            return new Date(Date.now() + 60 * 60 * 1000 - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
         }
 
         async function init() {
@@ -265,15 +277,35 @@
                 }
                 loadSummary(); // All Branches, All Time by default
             } else {
-                // Non-admin: locked to their own branch, resolved server-side —
-                // just hide the picker and load immediately.
-                branchWrap.classList.add('d-none');
+                // Non-admin: locked to their own branch(es), resolved
+                // server-side. Dev Feedback Round 4, item #25: a manager
+                // granted extra branches sees a picker scoped to just
+                // those branches (never every branch in the company,
+                // unlike admin's picker) -- a single-branch manager still
+                // gets no picker at all, same as before.
+                try {
+                    var probe = await BranchFinance.getDailySummary({});
+                    var myBranchIds = probe.branchIds || [];
+                    if (myBranchIds.length > 1) {
+                        isMultiBranch = true;
+                        var allBranches = await Branches.getBranches();
+                        var mine = allBranches.filter(function (b) { return myBranchIds.indexOf(b.id) !== -1; });
+                        var sel = document.getElementById('bf-branch');
+                        sel.innerHTML = '<option value="">All My Branches</option>' +
+                            mine.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                        branchWrap.classList.remove('d-none');
+                    } else {
+                        branchWrap.classList.add('d-none');
+                    }
+                } catch (err) {
+                    branchWrap.classList.add('d-none');
+                }
                 loadSummary();
             }
         }
 
         async function loadSummary() {
-            var branchId = isAdmin ? document.getElementById('bf-branch').value : undefined;
+            var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bf-branch').value : undefined;
 
             var dateFrom = document.getElementById('bf-date-from').value;
             var dateTo = document.getElementById('bf-date-to').value;
@@ -342,25 +374,38 @@
 
         document.getElementById('btn-bf-refresh').addEventListener('click', loadSummary);
         document.getElementById('bf-branch').addEventListener('change', function () {
-                var opt = this.options[this.selectedIndex];
-                console.log('[branch-finance] branch switched ->', {
-                    name: opt ? opt.textContent : '(All Branches)',
-                    id: this.value || '(none — All Branches)',
-                });
-                loadSummary();
+            var opt = this.options[this.selectedIndex];
+            console.log('[branch-finance] branch switched ->', {
+                name: opt ? opt.textContent : '(All Branches)',
+                id: this.value || '(none — All Branches)',
             });
+            loadSummary();
+        });
 
         document.getElementById('btn-bf-reconcile').addEventListener('click', async function () {
-            if (isAdmin && !document.getElementById('bf-branch').value) {
+            if ((isAdmin || isMultiBranch) && !document.getElementById('bf-branch').value) {
                 var errEl = document.getElementById('bf-error');
                 errEl.textContent = 'A cash count is per branch — select a specific branch first (not "All Branches").';
                 errEl.classList.remove('d-none');
                 return;
             }
             document.getElementById('reconcile-error').classList.add('d-none');
-            document.getElementById('rec-date').value = todayStr();
+            document.getElementById('rec-date').value = yesterdayStr();
             document.getElementById('rec-cash-counted').value = '';
             document.getElementById('rec-notes').value = '';
+
+            // Warn upfront if the noon window has already closed, rather
+            // than letting the admin fill out the whole form only to hit
+            // a rejection on submit.
+            var deadlineNote = document.getElementById('reconcile-deadline-note');
+            var nowWat = new Date(Date.now() + 60 * 60 * 1000);
+            if (nowWat.getUTCHours() >= 12) {
+                deadlineNote.textContent = "The 12:00pm submission window for " + yesterdayStr() + " has already closed today. This submission will be rejected.";
+                deadlineNote.classList.remove('d-none');
+            } else {
+                deadlineNote.classList.add('d-none');
+            }
+
             await loadExpectedForDate();
             new bootstrap.Modal(document.getElementById('modal-reconcile')).show();
         });
@@ -372,7 +417,7 @@
             var expectedEl = document.getElementById('rec-expected');
             expectedEl.textContent = 'Loading…';
             try {
-                var branchId = isAdmin ? document.getElementById('bf-branch').value : undefined;
+                var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bf-branch').value : undefined;
                 var summary = await BranchFinance.getDailySummary({ branchId: branchId, dateFrom: date, dateTo: date });
                 expectedEl.textContent = BranchFinance.formatMoney(summary.totals.expectedCash);
             } catch (err) {
@@ -401,7 +446,7 @@
 
             try {
                 var payload = { date: date, cashCounted: Number(cashCounted), notes: notes || undefined };
-                if (isAdmin) payload.branchId = document.getElementById('bf-branch').value;
+                if (isAdmin || isMultiBranch) payload.branchId = document.getElementById('bf-branch').value;
                 await BranchFinance.submitReconciliation(payload);
                 bootstrap.Modal.getInstance(document.getElementById('modal-reconcile')).hide();
                 loadSummary();

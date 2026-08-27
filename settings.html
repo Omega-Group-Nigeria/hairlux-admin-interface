@@ -231,18 +231,22 @@
                                             </svg>
                                             Security
                                         </a>
-                                        <a href="#business-hours" class="nav-link d-flex align-items-center gap-2" data-section="business-hours">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                        <a href="#business-hours" class="nav-link d-flex align-items-center gap-2"
+                                            data-section="business-hours">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
                                                 <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
                                                 <path d="M12 7v5l3 3" />
                                             </svg>
                                             Business Hours
                                         </a>
-                                        <a href="#customer-classification" class="nav-link d-flex align-items-center gap-2"
+                                        <a href="#customer-classification"
+                                            class="nav-link d-flex align-items-center gap-2"
                                             data-section="customer-classification">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
                                                 <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
                                                 <path d="M12 11a4 4 0 1 0 0 -8a4 4 0 0 0 0 8z" />
                                             </svg>
@@ -417,79 +421,89 @@
                                                 <span class="spinner-border spinner-border-sm me-1 d-none"
                                                     id="spinner-business-hours" role="status"></span>
                                                 Save Business Hours
-                                                </button>
-                                                <span class="text-success small ms-2 d-none" id="biz-hours-saved">Saved
-                                                    ✓</span>
+                                            </button>
+                                            <span class="text-success small ms-2 d-none" id="biz-hours-saved">Saved
+                                                ✓</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- ═══ SECTION: CUSTOMER CLASSIFICATION ════════════ -->
+                                    <div class="settings-section" id="section-customer-classification">
+                                        <h3 class="mb-1">Customer Classification</h3>
+                                        <p class="text-secondary small mb-4">
+                                            Thresholds that drive the Lifecycle and Value badges shown on Customer
+                                            Contacts and Users — changing these reclassifies every customer
+                                            immediately, not just new ones going forward.
+                                        </p>
+
+                                        <div class="alert alert-danger d-none" id="cc-settings-error"></div>
+
+                                        <h4 class="mb-2">Value</h4>
+                                        <p class="text-secondary small mb-3">Based on a customer's total completed
+                                            spend.</p>
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Premium threshold (₦)</label>
+                                                <input type="number" min="1" class="form-control" id="cc-premium-spend">
+                                                <div class="form-hint">Total spend at or above this reaches Premium.
                                                 </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">VIP threshold (₦)</label>
+                                                <input type="number" min="1" class="form-control" id="cc-vip-spend">
+                                                <div class="form-hint">Total spend at or above this reaches VIP
+                                                    (overrides Premium).</div>
+                                            </div>
+                                        </div>
+
+                                        <h4 class="mb-2">Lifecycle</h4>
+                                        <p class="text-secondary small mb-3">Based on account age, visit count, and days
+                                            since last visit.</p>
+                                        <div class="row g-3 mb-2">
+                                            <div class="col-md-6">
+                                                <label class="form-label">New — account age (days)</label>
+                                                <input type="number" min="1" class="form-control" id="cc-new-age">
+                                                <div class="form-hint">An account this age or younger, with fewer
+                                                    completed visits than the count below, is
+                                                    New.</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">New — completed visit count</label>
+                                                <input type="number" min="0" class="form-control" id="cc-new-visits">
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Active — days since last visit</label>
+                                                <input type="number" min="1" class="form-control" id="cc-active-days">
+                                                <div class="form-hint">Up to this many days since the last visit is
+                                                    Active.</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">At Risk — days since last visit</label>
+                                                <input type="number" min="1" class="form-control" id="cc-at-risk-days">
+                                                <div class="form-hint">Beyond Active, up to this many days is At Risk.
                                                 </div>
-                                                
-                                                <!-- ═══ SECTION: CUSTOMER CLASSIFICATION ════════════ -->
-                                                <div class="settings-section" id="section-customer-classification">
-                                                    <h3 class="mb-1">Customer Classification</h3>
-                                                    <p class="text-secondary small mb-4">
-                                                        Thresholds that drive the Lifecycle and Value badges shown on Customer
-                                                        Contacts and Users — changing these reclassifies every customer
-                                                        immediately, not just new ones going forward.
-                                                    </p>
-                                                
-                                                    <div class="alert alert-danger d-none" id="cc-settings-error"></div>
-                                                
-                                                    <h4 class="mb-2">Value</h4>
-                                                    <p class="text-secondary small mb-3">Based on a customer's total completed spend.</p>
-                                                    <div class="row g-3 mb-4">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Premium threshold (₦)</label>
-                                                            <input type="number" min="1" class="form-control" id="cc-premium-spend">
-                                                            <div class="form-hint">Total spend at or above this reaches Premium.</div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">VIP threshold (₦)</label>
-                                                            <input type="number" min="1" class="form-control" id="cc-vip-spend">
-                                                            <div class="form-hint">Total spend at or above this reaches VIP (overrides Premium).</div>
-                                                        </div>
-                                                    </div>
-                                                
-                                                    <h4 class="mb-2">Lifecycle</h4>
-                                                    <p class="text-secondary small mb-3">Based on account age, visit count, and days since last visit.</p>
-                                                    <div class="row g-3 mb-2">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">New — account age (days)</label>
-                                                            <input type="number" min="1" class="form-control" id="cc-new-age">
-                                                            <div class="form-hint">An account this age or younger, with fewer completed visits than the count below, is
-                                                                New.</div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">New — completed visit count</label>
-                                                            <input type="number" min="0" class="form-control" id="cc-new-visits">
-                                                        </div>
-                                                    </div>
-                                                    <div class="row g-3 mb-4">
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Active — days since last visit</label>
-                                                            <input type="number" min="1" class="form-control" id="cc-active-days">
-                                                            <div class="form-hint">Up to this many days since the last visit is Active.</div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">At Risk — days since last visit</label>
-                                                            <input type="number" min="1" class="form-control" id="cc-at-risk-days">
-                                                            <div class="form-hint">Beyond Active, up to this many days is At Risk.</div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <label class="form-label">Dormant — days since last visit</label>
-                                                            <input type="number" min="1" class="form-control" id="cc-dormant-days">
-                                                            <div class="form-hint">Beyond At Risk, up to this many days is Dormant. Anything further is Inactive.</div>
-                                                        </div>
-                                                    </div>
-                                                
-                                                    <button type="button" class="btn btn-primary" id="btn-save-customer-classification">
-                                                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-customer-classification"
-                                                            role="status"></span>
-                                                        Save Classification Settings
-                                                    </button>
-                                                    <span class="text-success small ms-2 d-none" id="cc-settings-saved">Saved ✓</span>
-                                                </div>
-                                                
-                                                <!-- ═══ SECTION: ADMIN MANAGEMENT ════════════ -->
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Dormant — days since last visit</label>
+                                                <input type="number" min="1" class="form-control" id="cc-dormant-days">
+                                                <div class="form-hint">Beyond At Risk, up to this many days is Dormant.
+                                                    Anything further is Inactive.</div>
+                                            </div>
+                                        </div>
+
+                                        <button type="button" class="btn btn-primary"
+                                            id="btn-save-customer-classification">
+                                            <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                id="spinner-customer-classification" role="status"></span>
+                                            Save Classification Settings
+                                        </button>
+                                        <span class="text-success small ms-2 d-none" id="cc-settings-saved">Saved
+                                            ✓</span>
+                                    </div>
+
+                                    <!-- ═══ SECTION: ADMIN MANAGEMENT ════════════ -->
                                     <div class="settings-section" id="section-admin-management">
 
                                         <!-- Header -->
@@ -674,9 +688,12 @@
                                                 <!-- Role selector — populated by JS -->
                                                 <div class="d-flex flex-wrap gap-1" id="perm-role-selector"></div>
                                                 <div class="ms-auto d-flex gap-2">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-view-role-users">View Users</button>
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-edit-role">Edit Role</button>
-                                                    <button type="button" class="btn btn-sm btn-ghost-danger" id="btn-delete-role">Delete Role</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        id="btn-view-role-users">View Users</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        id="btn-edit-role">Edit Role</button>
+                                                    <button type="button" class="btn btn-sm btn-ghost-danger"
+                                                        id="btn-delete-role">Delete Role</button>
                                                     <button type="button" class="btn btn-sm btn-primary"
                                                         id="btn-save-perms">
                                                         <span class="spinner-border spinner-border-sm me-1 d-none"
@@ -698,7 +715,20 @@
                                                 </svg>
                                                 <strong>Super Admin</strong> always has every permission and cannot be
                                                 modified.
-                                                Changes here are stored in this browser session.
+                                            </div>
+
+                                            <!-- Permission search -->
+                                            <div class="mb-3 position-relative">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon position-absolute"
+                                                    style="left:10px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.5">
+                                                    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                                                    <path d="M21 21l-6 -6" />
+                                                </svg>
+                                                <input type="text" class="form-control form-control-sm ps-5"
+                                                    id="perm-search" placeholder="Search permissions by name or key…">
                                             </div>
 
                                             <!-- Permission matrix (rendered by JS) -->
@@ -1048,7 +1078,7 @@
         </div>
     </div>
     <!-- ===== END MODAL: EDIT ROLE ===== -->
-    
+
     <!-- ===== MODAL: VIEW ROLE USERS ===== -->
     <div class="modal modal-blur fade" id="modal-view-role-users" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
