@@ -151,8 +151,29 @@
                         <div class="card-body border-bottom py-4">
                             <div class="row g-2 align-items-end">
                                 <div class="col-auto">
-                                    <label class="form-label text-secondary small mb-1">Date</label>
+                                    <label class="form-label text-secondary small mb-1">Exact date</label>
                                     <input type="date" class="form-control form-control-sm" id="filter-date">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">From</label>
+                                    <input type="date" class="form-control form-control-sm" id="filter-from">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">To</label>
+                                    <input type="date" class="form-control form-control-sm" id="filter-to">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">Status</label>
+                                    <select class="form-select form-select-sm" id="filter-status">
+                                        <option value="">All statuses</option>
+                                        <option value="PRESENT">Present</option>
+                                        <option value="LATE">Late</option>
+                                        <option value="ABSENT">Absent</option>
+                                        <option value="ON_LEAVE">On Leave</option>
+                                        <option value="APPROVED_PERMISSION">Approved Permission</option>
+                                        <option value="PUBLIC_HOLIDAY">Public Holiday</option>
+                                        <option value="EXTRA_WORK_DAY_PENDING">Extra Work Day Pending</option>
+                                    </select>
                                 </div>
                                 <div class="col-auto">
                                     <label class="form-label text-secondary small mb-1">Branch</label>
@@ -169,6 +190,10 @@
                                 <div class="col-auto">
                                     <button type="button" class="btn btn-sm btn-secondary"
                                         id="btn-clear-filters">Clear</button>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        id="btn-download-csv">Download CSV</button>
                                 </div>
                             </div>
                         </div>
@@ -380,7 +405,7 @@
         RBAC.loadFromStorage();
         RBAC.applyPageGuardForCurrentPage();
 
-        var listState = { date: "", locationId: "", staffId: "" };
+        var listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "" };
         var pageAlertTimer = null;
 
         function setPageAlert(type, message) {
@@ -488,6 +513,68 @@
                 document.getElementById("attendance-tbody").innerHTML =
                     '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || "Failed to load attendance.") + '</td></tr>';
                 document.getElementById("results-label").textContent = "Error";
+            }
+        }
+
+        /**
+         * Fetches every record matching the current filters (not just the
+         * loaded page — a large limit rather than the default page size)
+         * and generates a CSV client-side. No backend export endpoint
+         * needed since the data is already filterable server-side; this
+         * just widens the same query.
+         */
+        async function downloadAttendanceCsv() {
+            var btn = document.getElementById("btn-download-csv");
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Preparing…";
+            try {
+                var result = await StaffOps.getAttendanceReport(Object.assign({}, listState, { limit: 10000 }));
+                var records = result.data || [];
+                if (!records.length) {
+                    flashPageAlert("warning", "No records match the current filters.");
+                    return;
+                }
+
+                var headers = ["Staff Name", "Staff Code", "Branch", "Date", "Check In", "Check Out", "Hours", "Status", "Late Minutes", "Late Penalty", "Manually Adjusted"];
+                var csvEscape = function (v) {
+                    var s = v === null || v === undefined ? "" : String(v);
+                    return '"' + s.replace(/"/g, '""') + '"';
+                };
+                var rows = records.map(function (r) {
+                    var hours = r.checkOutAt
+                        ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
+                        : "";
+                    return [
+                        r.staff ? r.staff.name : "",
+                        r.staff ? r.staff.staffCode : "",
+                        r.location ? r.location.name : "",
+                        StaffOps.formatDate(r.date),
+                        StaffOps.formatTime(r.checkInAt),
+                        r.checkOutAt ? StaffOps.formatTime(r.checkOutAt) : "",
+                        hours,
+                        String(r.status || "").replace(/_/g, " "),
+                        r.lateMinutes || "",
+                        r.latePenaltyAmount || "",
+                        r.isManuallyAdjusted ? "Yes" : "No",
+                    ].map(csvEscape).join(",");
+                });
+                var csvContent = headers.map(csvEscape).join(",") + "\n" + rows.join("\n");
+
+                var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement("a");
+                a.href = url;
+                a.download = "attendance-report-" + new Date().toISOString().slice(0, 10) + ".csv";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                flashPageAlert("danger", e.message || "Failed to generate CSV.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
             }
         }
 
@@ -667,6 +754,18 @@
                 listState.date = this.value;
                 loadAttendance();
             });
+            document.getElementById("filter-from").addEventListener("change", function () {
+                listState.from = this.value;
+                loadAttendance();
+            });
+            document.getElementById("filter-to").addEventListener("change", function () {
+                listState.to = this.value;
+                loadAttendance();
+            });
+            document.getElementById("filter-status").addEventListener("change", function () {
+                listState.status = this.value;
+                loadAttendance();
+            });
             document.getElementById("filter-branch").addEventListener("change", function () {
                 listState.locationId = this.value;
                 loadAttendance();
@@ -677,11 +776,15 @@
             });
             document.getElementById("btn-clear-filters").addEventListener("click", function () {
                 document.getElementById("filter-date").value = "";
+                document.getElementById("filter-from").value = "";
+                document.getElementById("filter-to").value = "";
+                document.getElementById("filter-status").value = "";
                 document.getElementById("filter-branch").value = "";
                 document.getElementById("filter-staff").value = "";
-                listState = { date: "", locationId: "", staffId: "" };
+                listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "" };
                 loadAttendance();
             });
+            document.getElementById("btn-download-csv").addEventListener("click", downloadAttendanceCsv);
 
             // ── Monthly summary — default to the current month ───────────────
             var now = new Date();

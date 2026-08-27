@@ -19,20 +19,141 @@
     <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
+
         /* Cloak page content until RBAC check completes — prevents permission flash */
-        #page-content-cloak ~ * .page-wrapper,
-        body.rbac-loading .page-wrapper { visibility: hidden !important; }
-        .res-code { font-family: var(--tblr-font-monospace, monospace); font-size: .8rem; font-weight: 600; letter-spacing: .02em; }
-        .svc-list { list-style: none; padding: 0; margin: 0; }
-        .svc-list li { display: flex; justify-content: space-between; align-items: center;
-            padding: 2px 0; border-bottom: 1px solid var(--tblr-border-color-translucent); }
-        .svc-list li:last-child { border-bottom: none; }
-        .svc-list li .svc-name { font-size: .82rem; }
-        .svc-list li .svc-meta { font-size: .75rem; color: var(--tblr-secondary); white-space: nowrap; margin-left: 8px; }
-        #recent-bookings-tbody td { vertical-align: middle; }
-        .td-services { min-width: 180px; white-space: normal; }
-        .badge-used { background: var(--tblr-secondary-lt); color: var(--tblr-secondary); }
-        .badge-valid { background: var(--tblr-success-lt); color: var(--tblr-success); }
+        #page-content-cloak~* .page-wrapper,
+        body.rbac-loading .page-wrapper {
+            visibility: hidden !important;
+        }
+
+        .res-code {
+            font-family: var(--tblr-font-monospace, monospace);
+            font-size: .8rem;
+            font-weight: 600;
+            letter-spacing: .02em;
+        }
+
+        .svc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .svc-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 0;
+            border-bottom: 1px solid var(--tblr-border-color-translucent);
+        }
+
+        .svc-list li:last-child {
+            border-bottom: none;
+        }
+
+        .svc-list li .svc-name {
+            font-size: .82rem;
+        }
+
+        .svc-list li .svc-meta {
+            font-size: .75rem;
+            color: var(--tblr-secondary);
+            white-space: nowrap;
+            margin-left: 8px;
+        }
+
+        #recent-bookings-tbody td {
+            vertical-align: middle;
+        }
+
+        .td-services {
+            min-width: 180px;
+            white-space: normal;
+        }
+
+        .badge-used {
+            background: var(--tblr-secondary-lt);
+            color: var(--tblr-secondary);
+        }
+
+        .badge-valid {
+            background: var(--tblr-success-lt);
+            color: var(--tblr-success);
+        }
+
+        .login-type-toggle {
+            position: relative;
+            display: flex;
+            background: #f1f3f5;
+            border-radius: 8px;
+            padding: 3px;
+            height: 40px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, .06);
+        }
+
+        .login-type-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+
+        .login-type-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .875rem;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            z-index: 2;
+            transition: color .2s ease;
+            user-select: none;
+            border-radius: 6px;
+            padding: 0 12px;
+            white-space: nowrap;
+        }
+
+        .login-type-input:checked+.login-type-label {
+            color: #1f2937;
+        }
+
+        .login-type-slider {
+            position: absolute;
+            top: 3px;
+            bottom: 3px;
+            left: 3px;
+            width: calc(50% - 3px);
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .04);
+            transition: transform .25s cubic-bezier(.4, 0, .2, 1);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #login-type-staff:checked~.login-type-slider {
+            transform: translateX(100%);
+        }
+
+        [data-bs-theme="dark"] .login-type-toggle {
+            background: #2a2d33;
+        }
+
+        [data-bs-theme="dark"] .login-type-label {
+            color: #9ca3af;
+        }
+
+        [data-bs-theme="dark"] .login-type-input:checked+.login-type-label {
+            color: #f3f4f6;
+        }
+
+        [data-bs-theme="dark"] .login-type-slider {
+            background: #3a3d45;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .2), 0 1px 2px rgba(0, 0, 0, .15);
+        }
     </style>
 </head>
 
@@ -42,17 +163,19 @@
     <div class="page page-center">
         <div class="container container-tight py-4">
             <div class="text-center mb-4">
-                <!-- BEGIN NAVBAR LOGO --><a href="." aria-label="Tabler"
-                    class="navbar-brand navbar-brand-autodark">
-                    <img id="login-brand-logo" src="assets/img/logo.png" style="width: 70px;" alt=""></a><!-- END NAVBAR LOGO -->
-                    <p style="font-size: 14px;font-weight: 600;">Hairlux Administrator Panel</p>
+                <!-- BEGIN NAVBAR LOGO --><a href="." aria-label="Tabler" class="navbar-brand navbar-brand-autodark">
+                    <img id="login-brand-logo" src="assets/img/logo.png" style="width: 70px;"
+                        alt=""></a><!-- END NAVBAR LOGO -->
+                <p style="font-size: 14px;font-weight: 600;">Hairlux Administrator Panel</p>
             </div>
 
             <!-- Alert: hidden by default, shown on error/success -->
             <div id="login-alert" class="alert alert-dismissible d-none mb-3" role="alert">
                 <div class="d-flex">
                     <div id="login-alert-icon" class="me-2"></div>
-                    <div><div id="login-alert-message" class="fw-medium"></div></div>
+                    <div>
+                        <div id="login-alert-message" class="fw-medium"></div>
+                    </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -61,18 +184,22 @@
                 <div class="card-body">
                     <h2 class="h2 text-center mb-3">Login to your account</h2>
 
-                    <!-- Admin / Staff toggle -->
-                    <div class="btn-group w-100 mb-4" role="group" aria-label="Login type">
-                        <input type="radio" class="btn-check" name="login-type" id="login-type-admin" autocomplete="off" checked>
-                        <label class="btn btn-outline-primary" for="login-type-admin">For Admin</label>
-                        <input type="radio" class="btn-check" name="login-type" id="login-type-staff" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="login-type-staff">For Staff</label>
+                    <!-- Admin / Staff sliding toggle -->
+                    <div class="login-type-toggle mb-4" role="group" aria-label="Login type">
+                        <input type="radio" class="login-type-input" name="login-type" id="login-type-admin"
+                            autocomplete="off" checked>
+                        <label class="login-type-label" for="login-type-admin">For Admin</label>
+                        <input type="radio" class="login-type-input" name="login-type" id="login-type-staff"
+                            autocomplete="off">
+                        <label class="login-type-label" for="login-type-staff">For Staff</label>
+                        <div class="login-type-slider"></div>
                     </div>
 
                     <form id="login-form" autocomplete="off" novalidate>
                         <div class="mb-3">
                             <label class="form-label" for="login-email">Email address</label>
-                            <input id="login-email" type="email" class="form-control" placeholder="your@email.com" autocomplete="email" required />
+                            <input id="login-email" type="email" class="form-control" placeholder="your@email.com"
+                                autocomplete="email" required />
                         </div>
                         <div class="mb-2">
                             <label class="form-label" for="login-password">
@@ -82,14 +209,17 @@
                                 </span>
                             </label>
                             <div class="input-group input-group-flat">
-                                <input id="login-password" type="password" class="form-control" placeholder="Your password" autocomplete="current-password" required />
+                                <input id="login-password" type="password" class="form-control"
+                                    placeholder="Your password" autocomplete="current-password" required />
                                 <span class="input-group-text">
-                                    <a href="#" id="toggle-password" class="link-secondary" title="Show password" data-bs-toggle="tooltip">
+                                    <a href="#" id="toggle-password" class="link-secondary" title="Show password"
+                                        data-bs-toggle="tooltip">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                             stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
                                             <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                                            <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                            <path
+                                                d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
                                         </svg>
                                     </a>
                                 </span>
@@ -97,7 +227,7 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-check">
-                                <input type="checkbox" id="login-remember" class="form-check-input" />
+                                <input type="checkbox" id="login-remember" class="form-check-input" checked />
                                 <span class="form-check-label">Remember me on this device</span>
                             </label>
                         </div>
@@ -126,7 +256,7 @@
         var ICON_SUCCESS = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg>';
 
         function showAlert(type, message) {
-            var el  = document.getElementById('login-alert');
+            var el = document.getElementById('login-alert');
             var msg = document.getElementById('login-alert-message');
             var ico = document.getElementById('login-alert-icon');
             el.className = 'alert alert-dismissible alert-' + type + ' mb-3';
@@ -169,12 +299,12 @@
         document.getElementById('login-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             hideAlert();
-            var email     = document.getElementById('login-email').value.trim();
-            var password  = document.getElementById('login-password').value;
+            var email = document.getElementById('login-email').value.trim();
+            var password = document.getElementById('login-password').value;
             var loginType = document.getElementById('login-type-staff').checked ? 'staff' : 'admin';
-            var btn       = document.getElementById('login-btn');
-            var btnText   = document.getElementById('login-btn-text');
-            var spinner   = document.getElementById('login-btn-spinner');
+            var btn = document.getElementById('login-btn');
+            var btnText = document.getElementById('login-btn-text');
+            var spinner = document.getElementById('login-btn-spinner');
 
             if (!email || !password) {
                 showAlert('danger', 'Please enter your email and password.');
@@ -183,6 +313,14 @@
             btn.disabled = true;
             btnText.classList.add('d-none');
             spinner.classList.remove('d-none');
+
+            // Dev Feedback Round 4, item #15: must be set before login()
+            // actually saves the session, since Auth reads this preference
+            // to decide which storage the tokens go into. Defaults to true
+            // if the checkbox somehow isn't found, preserving the exact
+            // behavior every page already depended on.
+            var rememberEl = document.getElementById('login-remember');
+            Auth.setRememberPreference(rememberEl ? rememberEl.checked : true);
 
             try {
                 await Auth.login(email, password, loginType);

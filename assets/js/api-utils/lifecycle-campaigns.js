@@ -38,5 +38,38 @@ const LifecycleCampaigns = (function () {
         return apiFetch(`/admin/lifecycle-campaigns/templates/${id}`, { method: 'DELETE' });
     }
 
-    return { getAll, getOne, create, update, remove };
+    // ── Dev Feedback Round 4, item #9: sequences ──
+
+    async function getAllSequences() {
+        return apiFetch('/admin/lifecycle-campaigns/sequences');
+    }
+
+    async function getOneSequence(id) {
+        return apiFetch(`/admin/lifecycle-campaigns/sequences/${id}`);
+    }
+
+    async function createSequence(payload) {
+        return apiFetch('/admin/lifecycle-campaigns/sequences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function updateSequence(id, payload) {
+        return apiFetch(`/admin/lifecycle-campaigns/sequences/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function removeSequence(id) {
+        return apiFetch(`/admin/lifecycle-campaigns/sequences/${id}`, { method: 'DELETE' });
+    }
+
+    return {
+        getAll, getOne, create, update, remove,
+        getAllSequences, getOneSequence, createSequence, updateSequence, removeSequence,
+    };
 })();

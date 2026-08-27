@@ -527,6 +527,15 @@
                     </div>
 
                     <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">Products</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="eb-add-item">+ Add
+                                product</button>
+                        </div>
+                        <div id="eb-item-lines"></div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Notes</label>
                         <textarea class="form-control" id="eb-notes" rows="2"></textarea>
                     </div>
@@ -682,6 +691,7 @@
                 loadBookings();
             });
             document.getElementById('eb-add-service').addEventListener('click', function () { addEditServiceLine(); });
+            document.getElementById('eb-add-item').addEventListener('click', function () { addEditItemLine(); });
             document.getElementById('btn-submit-edit-booking').addEventListener('click', submitEditBooking);
             document.getElementById('btn-submit-add-service').addEventListener('click', submitAddService);
 
@@ -1230,6 +1240,42 @@
 
         function addEditServiceLine() { edLine(document.getElementById('eb-service-lines')); updateEditEstimatedTotal(); }
 
+        /**
+         * Mirrors edLine/populateServiceSelect above, for products instead
+         * of services -- same event-listener wiring, same total-recompute
+         * trigger on every change.
+         */
+        function populateEditItemSelect(select) {
+            var current = select.value;
+            var items = window._ebInventoryItems || [];
+            select.innerHTML = '<option value="">Select product…</option>' + items.map(function (i) {
+                var priceLabel = i.category === 'FOR_SALE' ? (' — ' + SalonBookings.formatMoney(i.price)) : ' — not for sale';
+                return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + esc(i.name) + priceLabel + '</option>';
+            }).join('');
+            if (current) select.value = current;
+        }
+
+        function edItemLine(container, itemId, quantity) {
+            var row = document.createElement('div');
+            row.className = 'line-row';
+            row.innerHTML =
+                '<select class="form-select form-select-sm line-item-select"></select>' +
+                '<input type="number" min="1" value="' + (quantity || 1) + '" class="form-control form-control-sm line-qty">' +
+                '<div class="line-row-total">—</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
+            container.appendChild(row);
+            var sel = row.querySelector('.line-item-select');
+            populateEditItemSelect(sel);
+            if (itemId) sel.value = itemId;
+
+            sel.addEventListener('change', updateEditEstimatedTotal);
+            row.querySelector('.line-qty').addEventListener('input', updateEditEstimatedTotal);
+            row.querySelector('.btn-remove-line').addEventListener('click', function () { row.remove(); updateEditEstimatedTotal(); });
+            return row;
+        }
+
+        function addEditItemLine() { edItemLine(document.getElementById('eb-item-lines')); updateEditEstimatedTotal(); }
+
         function updateEditEstimatedTotal() {
             var total = 0;
             document.querySelectorAll('#eb-service-lines .line-row').forEach(function (row) {
@@ -1239,6 +1285,16 @@
                 var price = opt ? Number(opt.dataset.price || 0) : 0;
                 var lineTotal = price * qty;
                 row.querySelector('.line-row-total').textContent = opt && opt.value ? SalonBookings.formatMoney(lineTotal) : '—';
+                total += lineTotal;
+            });
+            document.querySelectorAll('#eb-item-lines .line-row').forEach(function (row) {
+                var sel = row.querySelector('.line-item-select');
+                var qty = Number(row.querySelector('.line-qty').value) || 0;
+                var opt = sel.options[sel.selectedIndex];
+                var sellable = opt && opt.dataset.sellable === '1';
+                var price = opt && sellable ? Number(opt.dataset.price || 0) : 0;
+                var lineTotal = price * qty;
+                row.querySelector('.line-row-total').textContent = opt && opt.value ? (sellable ? SalonBookings.formatMoney(lineTotal) : 'not billed') : '—';
                 total += lineTotal;
             });
             document.getElementById('eb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(total);
@@ -1255,13 +1311,23 @@
             document.getElementById('eb-time').value = b.bookingTime || '';
             document.getElementById('eb-notes').value = b.notes || '';
             document.getElementById('eb-service-lines').innerHTML = '';
+            document.getElementById('eb-item-lines').innerHTML = '';
 
-            await loadServices(b.branchId || (b.branch && b.branch.id));
+            var branchId = b.branchId || (b.branch && b.branch.id);
+            await loadServices(branchId);
+
+            // Products are branch-scoped, same as the New Booking modal --
+            // a booking's branch is fixed and never editable here, so this
+            // is loaded once per open rather than reactively.
+            try {
+                var invResult = await Inventory.getAll({ branchId: branchId, limit: 100 });
+                window._ebInventoryItems = invResult.data || invResult || [];
+            } catch (e) { window._ebInventoryItems = []; }
 
             var staffSel = document.getElementById('eb-staff');
             staffSel.innerHTML = '<option value="">Loading…</option>';
             try {
-                var staffResult = await Staff.getAll({ locationId: b.branchId || (b.branch && b.branch.id), limit: 100 });
+                var staffResult = await Staff.getAll({ locationId: branchId, limit: 100 });
                 var staffList = staffResult.data || [];
                 staffSel.innerHTML = staffList.length
                     ? staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
@@ -1273,6 +1339,12 @@
             (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
                 edLine(container, line.service ? line.service.id : undefined, line.quantity);
             });
+
+            var itemContainer = document.getElementById('eb-item-lines');
+            (b.inventoryItems || []).forEach(function (line) {
+                edItemLine(itemContainer, line.item ? line.item.id : undefined, line.quantity);
+            });
+
             updateEditEstimatedTotal();
 
             new bootstrap.Modal(document.getElementById('modal-edit-booking')).show();
@@ -1294,6 +1366,17 @@
                 return;
             }
 
+            // Full replace, matching the backend's own semantics -- every
+            // line currently in the modal is sent, whether or not it
+            // changed. An empty array (every product line removed) is
+            // sent as-is to correctly clear all products, not omitted.
+            var inventoryItems = [];
+            document.querySelectorAll('#eb-item-lines .line-row').forEach(function (row) {
+                var itemId = row.querySelector('.line-item-select').value;
+                var quantity = Number(row.querySelector('.line-qty').value) || 1;
+                if (itemId) inventoryItems.push({ itemId: itemId, quantity: quantity });
+            });
+
             var payload = {
                 customerName: document.getElementById('eb-customer-name').value.trim() || undefined,
                 customerPhone: document.getElementById('eb-customer-phone').value.trim() || undefined,
@@ -1302,6 +1385,7 @@
                 bookingTime: document.getElementById('eb-time').value || undefined,
                 notes: document.getElementById('eb-notes').value.trim(),
                 services: services,
+                inventoryItems: inventoryItems,
             };
 
             var btn = document.getElementById('btn-submit-edit-booking');

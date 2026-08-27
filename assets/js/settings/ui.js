@@ -289,6 +289,28 @@
         updateSearchInfo(0, 0, '');
     }
 
+    /**
+     * Dev Feedback Round 4, item #30. Purely client-side -- the full
+     * catalogue is already fetched in one call by renderPermMatrix, so
+     * there's no need for a server round-trip on every keystroke.
+     * Hides a group-header row too once every permission under it is
+     * filtered out, so Admin never sees an empty group heading.
+     */
+    function filterPermMatrix() {
+        var input = document.getElementById('perm-search');
+        var term = input ? input.value.trim().toLowerCase() : '';
+        var visibleGroups = {};
+
+        document.querySelectorAll('#perm-matrix tr.perm-row').forEach(function (row) {
+            var matches = !term || (row.dataset.search || '').indexOf(term) !== -1;
+            row.classList.toggle('d-none', !matches);
+            if (matches) visibleGroups[row.dataset.group] = true;
+        });
+        document.querySelectorAll('#perm-matrix tr.perm-group-row').forEach(function (row) {
+            row.classList.toggle('d-none', !visibleGroups[row.dataset.group]);
+        });
+    }
+
     async function renderPermMatrix() {
         var container = document.getElementById('perm-matrix');
         if (!container) return;
@@ -338,12 +360,12 @@
                 '<th class="text-center" style="width:21%"><span class="badge bg-' + roleColor + '-lt">' + _esc(roleLabel) + '</span></th>' +
                 '</tr></thead><tbody>';
             catalogue.groups.forEach(function (group) {
-                html += '<tr>' +
+                html += '<tr class="perm-group-row" data-group="' + _esc(group.group) + '">' +
                     '<td colspan="3" class="fw-semibold text-secondary small py-1 ps-2" style="background:var(--tblr-bg-surface-secondary)">' + _esc(group.group) + '</td>' +
                     '</tr>';
                 group.permissions.forEach(function (perm) {
                     var hasIt = perms.indexOf(perm.key) !== -1;
-                    html += '<tr>' +
+                    html += '<tr class="perm-row" data-group="' + _esc(group.group) + '" data-search="' + _esc((perm.label + ' ' + perm.key).toLowerCase()) + '">' +
                         '<td class="ps-4 small">' + _esc(perm.label) +
                         ' <code class="text-secondary ms-1" style="font-size:.7em">' + _esc(perm.key) + '</code></td>' +
                         '<td class="text-center"><input type="checkbox" class="form-check-input" checked disabled title="Super Admin always has this" /></td>' +
@@ -353,6 +375,7 @@
             });
             html += '</tbody></table></div>';
             container.innerHTML = html;
+            filterPermMatrix(); // re-applies any search term already typed, e.g. after switching roles
         } catch (err) {
             container.innerHTML = '<div class="text-center text-danger py-4">' +
                 '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2">' +
@@ -407,6 +430,7 @@
         updateSearchInfo: updateSearchInfo,
         clearAdminSearch: clearAdminSearch,
         renderPermMatrix: renderPermMatrix,
+        filterPermMatrix: filterPermMatrix,
         renderBusinessHoursTable: renderBusinessHoursTable,
     };
 })(window);

@@ -284,6 +284,10 @@ const Staff = (() => {
         return jsonFetch("/admin/staff/" + id + "/address-verification/request", { method: "POST" });
     }
 
+    async function cancelAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification/cancel", { method: "POST" });
+    }
+
     async function getAddressVerification(id) {
         return jsonFetch("/admin/staff/" + id + "/address-verification");
     }
@@ -367,7 +371,7 @@ const Staff = (() => {
         getDocumentStatus,
         getDirectives,
         setCompensation, getCompensationHistory,
-        requestAddressVerification, getAddressVerification,
+        requestAddressVerification, getAddressVerification, cancelAddressVerification,
         getPassportPhotoUrl,
         idCardUrl,
         downloadIdCard,

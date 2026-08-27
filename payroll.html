@@ -185,18 +185,39 @@
                 </div>
 
                 <!-- Withdrawal history -->
-                <div class="card">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <h3 class="card-title mb-0">Withdrawal / Transaction History</h3>
-                        <select class="form-select form-select-sm" style="max-width:180px"
-                            id="withdrawal-status-filter">
-                            <option value="">All statuses</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="PROCESSING">Processing</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="FAILED">Failed</option>
-                            <option value="REJECTED">Rejected</option>
-                        </select>
+                <div class="card mb-3">
+                    <div class="card-header d-block">
+                        <h3 class="card-title mb-3">Withdrawal / Transaction History</h3>
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <select class="form-select form-select-sm" id="withdrawal-status-filter">
+                                    <option value="">All statuses</option>
+                                    <option value="COMPLETED">Completed</option>
+                                    <option value="PROCESSING">Processing</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="FAILED">Failed</option>
+                                    <option value="REJECTED">Rejected</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select form-select-sm" id="withdrawal-staff-filter">
+                                    <option value="">All staff</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select form-select-sm" id="withdrawal-branch-filter">
+                                    <option value="">All branches</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <input type="date" class="form-control form-control-sm" id="withdrawal-from-filter"
+                                    placeholder="From">
+                            </div>
+                            <div class="col-auto">
+                                <input type="date" class="form-control form-control-sm" id="withdrawal-to-filter"
+                                    placeholder="To">
+                            </div>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table">
@@ -217,6 +238,52 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <div class="text-secondary small" id="withdrawal-page-info"></div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-withdrawal-prev-page">Previous</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-withdrawal-next-page">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payroll audit log -->
+                <div class="card" id="audit-log-card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">Payroll Audit Log</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                    <th>Staff</th>
+                                    <th>Actor</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-log-tbody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-primary"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <div class="text-secondary small" id="audit-log-page-info"></div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-audit-prev-page">Previous</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-audit-next-page">Next</button>
+                        </div>
                     </div>
                 </div>
 
@@ -342,6 +409,7 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/payroll.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
@@ -361,16 +429,56 @@
             document.getElementById('btn-save-period').addEventListener('click', saveNewPeriod);
             document.getElementById('payday-switch').addEventListener('change', togglePayday);
             document.getElementById('btn-save-adjustment').addEventListener('click', saveAdjustment);
-            document.getElementById('withdrawal-status-filter').addEventListener('change', loadWithdrawals);
+            document.getElementById('withdrawal-status-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('withdrawal-staff-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('withdrawal-branch-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('withdrawal-from-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('withdrawal-to-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('btn-withdrawal-prev-page').addEventListener('click', function () {
+                if (_withdrawalPage > 1) { _withdrawalPage--; loadWithdrawals(); }
+            });
+            document.getElementById('btn-withdrawal-next-page').addEventListener('click', function () {
+                if (_withdrawalMeta && _withdrawalPage * _withdrawalMeta.limit < _withdrawalMeta.total) { _withdrawalPage++; loadWithdrawals(); }
+            });
+            document.getElementById('btn-audit-prev-page').addEventListener('click', function () {
+                if (_auditPage > 1) { _auditPage--; loadAuditLog(); }
+            });
+            document.getElementById('btn-audit-next-page').addEventListener('click', function () {
+                if (_auditMeta && _auditPage * _auditMeta.limit < _auditMeta.total) { _auditPage++; loadAuditLog(); }
+            });
             document.getElementById('bank-lookup-staff').addEventListener('change', loadBankLookupResult);
 
             loadDashboard();
             loadSettings();
             loadPeriods();
             loadBankChanges();
+            loadWithdrawalFilterOptions();
             loadWithdrawals();
+            loadAuditLog();
             loadBankLookupStaffOptions();
         });
+
+        var _withdrawalPage = 1;
+        var _withdrawalMeta = null;
+        var _auditPage = 1;
+        var _auditMeta = null;
+
+        async function loadWithdrawalFilterOptions() {
+            try {
+                var staffResult = await Staff.getAll({ limit: 200 });
+                var staffList = staffResult.data || [];
+                document.getElementById('withdrawal-staff-filter').innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
+                    return '<option value="' + s.id + '">' + esc(s.name) + '</option>';
+                }).join('');
+            } catch (e) { /* non-fatal */ }
+
+            try {
+                var branches = await Branches.getBranches();
+                document.getElementById('withdrawal-branch-filter').innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+            } catch (e) { /* non-fatal */ }
+        }
 
         function esc(s) {
             return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -424,7 +532,10 @@
                         if (p.status === 'DRAFT') {
                             actions += '<button class="btn btn-sm btn-primary" onclick="runGenerate(\'' + p.id + '\')">Generate</button>';
                         } else if (p.status === 'AWAITING_RELEASE') {
-                            actions += '<button class="btn btn-sm btn-success" onclick="runApprove(\'' + p.id + '\')">Approve</button>';
+                            actions += '<button class="btn btn-sm btn-success me-1" onclick="runApprove(\'' + p.id + '\')">Approve</button>';
+                            if (RBAC.can('payroll:correct')) {
+                                actions += '<button class="btn btn-sm btn-outline-warning" onclick="runRequestCorrection(\'' + p.id + '\')">Send for Correction</button>';
+                            }
                         }
                         return '<tr>' +
                             '<td class="fw-semibold">' + esc(p.label) + '<div class="text-secondary small">' + Payroll.formatDate(p.periodStart) + ' \u2013 ' + Payroll.formatDate(p.periodEnd) + '</div></td>' +
@@ -475,6 +586,17 @@
                 loadPeriods();
             } catch (e) {
                 alert(e.message || 'Failed to approve period.');
+            }
+        }
+
+        async function runRequestCorrection(id) {
+            if (!confirm('Send this payroll period back for correction? It will reopen as Draft so it can be regenerated once fixed.')) return;
+            var note = prompt('What needs correcting? (optional, for the audit trail)') || '';
+            try {
+                await Payroll.requestCorrection(id, note);
+                loadPeriods();
+            } catch (e) {
+                alert(e.message || 'Failed to send period back for correction.');
             }
         }
 
@@ -626,15 +748,23 @@
 
         async function loadWithdrawals() {
             var tbody = document.getElementById('withdrawals-tbody');
-            var status = document.getElementById('withdrawal-status-filter').value;
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
-                var list = await Payroll.listWithdrawals(status);
+                var result = await Payroll.listWithdrawals({
+                    status: document.getElementById('withdrawal-status-filter').value,
+                    staffId: document.getElementById('withdrawal-staff-filter').value,
+                    locationId: document.getElementById('withdrawal-branch-filter').value,
+                    from: document.getElementById('withdrawal-from-filter').value,
+                    to: document.getElementById('withdrawal-to-filter').value,
+                    page: _withdrawalPage,
+                });
+                var list = result.data || [];
+                _withdrawalMeta = result.meta || null;
                 var statusBadge = { COMPLETED: 'bg-green-lt', PROCESSING: 'bg-blue-lt', PENDING: 'bg-amber-lt', FAILED: 'bg-red-lt', REJECTED: 'bg-red-lt', CANCELLED: 'bg-secondary-lt' };
                 tbody.innerHTML = list.length
                     ? list.map(function (w) {
                         return '<tr>' +
-                            '<td>' + esc(w.staff.name) + '</td>' +
+                            '<td>' + esc(w.staff.name) + (w.staff.location ? '<div class="text-secondary small">' + esc(w.staff.location.name) + '</div>' : '') + '</td>' +
                             '<td>' + Payroll.formatMoney(w.amount) + '</td>' +
                             '<td>' + esc(w.accountName || '') + '<br><span class="text-secondary small">' + esc(w.accountNumber) + '</span></td>' +
                             '<td><span class="badge ' + (statusBadge[w.status] || 'bg-secondary-lt') + '">' + w.status + '</span></td>' +
@@ -642,8 +772,50 @@
                             '</tr>';
                     }).join('')
                     : '<tr><td colspan="5" class="text-center text-secondary py-5">No withdrawals found.</td></tr>';
+
+                if (_withdrawalMeta) {
+                    var start = _withdrawalMeta.total === 0 ? 0 : (_withdrawalMeta.page - 1) * _withdrawalMeta.limit + 1;
+                    var end = Math.min(_withdrawalMeta.page * _withdrawalMeta.limit, _withdrawalMeta.total);
+                    document.getElementById('withdrawal-page-info').textContent = _withdrawalMeta.total
+                        ? ('Showing ' + start + '\u2013' + end + ' of ' + _withdrawalMeta.total)
+                        : '';
+                }
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        /** Dev Feedback Round 4, items #22-24 -- view for the new payroll audit trail. */
+        async function loadAuditLog() {
+            var tbody = document.getElementById('audit-log-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await Payroll.getAuditLog({ page: _auditPage });
+                var list = result.data || [];
+                _auditMeta = result.meta || null;
+
+                tbody.innerHTML = list.length
+                    ? list.map(function (a) {
+                        return '<tr>' +
+                            '<td class="text-secondary small">' + Payroll.formatDate(a.createdAt) + '</td>' +
+                            '<td><span class="badge bg-blue-lt">' + esc(a.action.replace(/_/g, ' ')) + '</span></td>' +
+                            '<td class="text-secondary small">' + esc(a.entityType) + '</td>' +
+                            '<td>' + (a.staff ? esc(a.staff.name) : '<span class="text-secondary">\u2014</span>') + '</td>' +
+                            '<td>' + (a.actor ? esc(a.actor.name) : '<span class="text-secondary">System</span>') + '</td>' +
+                            '<td class="text-secondary small">' + esc(a.note || '') + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No audit entries yet.</td></tr>';
+
+                if (_auditMeta) {
+                    var start = _auditMeta.total === 0 ? 0 : (_auditMeta.page - 1) * _auditMeta.limit + 1;
+                    var end = Math.min(_auditMeta.page * _auditMeta.limit, _auditMeta.total);
+                    document.getElementById('audit-log-page-info').textContent = _auditMeta.total
+                        ? ('Showing ' + start + '\u2013' + end + ' of ' + _auditMeta.total)
+                        : '';
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
         }
     </script>

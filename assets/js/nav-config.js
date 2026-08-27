@@ -83,7 +83,15 @@ var NavConfig = window.NavConfig || (() => {
             href: "payroll.html",
             permission: {
                 type: "requireAny",
-                perms: ["payroll:read", "payroll:manage"],
+                // Dev Feedback Round 4, item #37: payroll:manage was split
+                // into 7 granular permissions -- listed here so a user
+                // with even a subset of them (not necessarily all) still
+                // sees this nav item.
+                perms: [
+                    "payroll:read", "payroll:manage_compensation", "payroll:approve_bank_change",
+                    "payroll:create_period", "payroll:generate", "payroll:approve_period",
+                    "payroll:manage_adjustments", "payroll:manage_settings", "payroll:correct",
+                ],
             },
         },
         {
@@ -105,7 +113,14 @@ var NavConfig = window.NavConfig || (() => {
             // the group's visibility gates access to both.
             permission: {
                 type: "requireAny",
-                perms: ["branches:read", "branches:manage", "branch_finance:read", "branch_finance:reconcile"],
+                // Dev Feedback Round 4, item #43: branches:manage was
+                // split into 5 granular permissions -- listed here so a
+                // user with even a subset of them still sees this nav item.
+                perms: [
+                    "branches:read", "branches:create", "branches:update",
+                    "branches:manage_manager", "branches:delete", "branches:manage_services",
+                    "branch_finance:read", "branch_finance:reconcile",
+                ],
             },
             children: [
                 { label: "Overview", href: "branches.html" },

@@ -33,6 +33,10 @@ const StaffOps = (() => {
         if (params.date) q.set("date", params.date);
         if (params.locationId) q.set("locationId", params.locationId);
         if (params.staffId) q.set("staffId", params.staffId);
+        if (params.status) q.set("status", params.status);
+        if (params.from) q.set("from", params.from);
+        if (params.to) q.set("to", params.to);
+        if (params.limit) q.set("limit", params.limit);
         return jsonFetch("/admin/attendance" + (q.toString() ? "?" + q.toString() : ""));
     }
 

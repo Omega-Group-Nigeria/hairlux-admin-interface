@@ -530,6 +530,8 @@
                 var requestAddressVerificationBtn = e.target.closest(".btn-oc-request-address-verification");
                 if (setCompensationBtn) return handleSetCompensation(setCompensationBtn.dataset.id);
                 if (requestAddressVerificationBtn) return handleRequestAddressVerification(requestAddressVerificationBtn.dataset.id);
+                var cancelAddressVerificationBtn = e.target.closest(".btn-oc-cancel-address-verification");
+                if (cancelAddressVerificationBtn) return handleCancelAddressVerification(cancelAddressVerificationBtn.dataset.id);
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
                 if (editHist) return handleEditHistory(editHist.dataset.staffId, editHist.dataset.historyId);
                 if (delHist) return handleDeleteHistory(delHist.dataset.staffId, delHist.dataset.historyId);
@@ -1073,10 +1075,12 @@
         var ADDRESS_VERIFICATION_BADGE = {
             REQUESTED: 'bg-secondary-lt', SUBMITTED: 'bg-warning-lt',
             VERIFIED: 'bg-success-lt', REJECTED: 'bg-danger-lt', FAILED: 'bg-danger-lt',
+            CANCELLED: 'bg-secondary-lt',
         };
         var ADDRESS_VERIFICATION_LABEL = {
             REQUESTED: 'Awaiting staff submission', SUBMITTED: 'In progress (24-48h)',
             VERIFIED: 'Verified', REJECTED: 'Rejected', FAILED: 'Failed',
+            CANCELLED: 'Cancelled',
         };
 
         function renderAddressVerificationStatus(av) {
@@ -1205,9 +1209,14 @@
                     '<div class="mb-3">' +
                     '<div class="d-flex align-items-center justify-content-between mb-1">' +
                     '<div class="fw-semibold">Address Verification</div>' +
-                    (!addressVerification || addressVerification.status === 'FAILED' || addressVerification.status === 'REJECTED'
+                    '<div class="d-flex gap-1">' +
+                    (!addressVerification || addressVerification.status === 'FAILED' || addressVerification.status === 'REJECTED' || addressVerification.status === 'CANCELLED'
                         ? '<button class="btn btn-xs btn-outline-primary btn-oc-request-address-verification" data-id="' + esc(s.id) + '">' + (addressVerification ? 'Re-request' : 'Request') + '</button>'
                         : '') +
+                    (addressVerification && (addressVerification.status === 'REQUESTED' || addressVerification.status === 'SUBMITTED')
+                        ? '<button class="btn btn-xs btn-outline-danger btn-oc-cancel-address-verification" data-id="' + esc(s.id) + '">Cancel</button>'
+                        : '') +
+                    '</div>' +
                     '</div>' +
                     (renderAddressVerificationStatus(addressVerification)) +
                     '</div>' +
@@ -1799,6 +1808,16 @@
                 if (_currentStaffId === id) await openStaffDetail(id);
             } catch (err) {
                 alert(err.message || "Failed to request address verification");
+            }
+        }
+
+        async function handleCancelAddressVerification(id) {
+            if (!confirm("Cancel this Physical Address Verification request? This only stops us from tracking it -- if a QoreID field visit is already underway, it is not actually called off.")) return;
+            try {
+                await Staff.cancelAddressVerification(id);
+                if (_currentStaffId === id) await openStaffDetail(id);
+            } catch (err) {
+                alert(err.message || "Failed to cancel address verification");
             }
         }
 

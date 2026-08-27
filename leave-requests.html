@@ -116,6 +116,26 @@
                                         <option value="OVERTIME_REQUEST">Overtime Request</option>
                                     </select>
                                 </div>
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <label class="form-label text-secondary small mb-1">Staff member</label>
+                                    <select id="filter-staff" class="form-select form-select-sm">
+                                        <option value="">All staff</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="filter-branch" class="form-select form-select-sm">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">From</label>
+                                    <input type="date" id="filter-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">To</label>
+                                    <input type="date" id="filter-to" class="form-control form-control-sm">
+                                </div>
                                 <div class="col-6 col-md-3 col-lg-2">
                                     <label class="form-label text-secondary small mb-1">Per page</label>
                                     <select id="filter-limit" class="form-select form-select-sm">
@@ -127,6 +147,10 @@
                                 <div class="col-6 col-md-auto">
                                     <button type="button" class="btn btn-sm btn-secondary w-100" id="btn-clear">Clear
                                         filters</button>
+                                </div>
+                                <div class="col-6 col-md-auto">
+                                    <button type="button" class="btn btn-sm btn-outline-primary w-100"
+                                        id="btn-download-csv">Download CSV</button>
                                 </div>
                             </div>
                         </div>
@@ -227,6 +251,7 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/leave.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
     <script>
@@ -235,7 +260,7 @@
         RBAC.loadFromStorage();
         RBAC.applyPageGuardForCurrentPage();
 
-        var state = { page: 1, limit: 20, status: '', type: '', totalPages: 1 };
+        var state = { page: 1, limit: 20, status: '', type: '', staffId: '', locationId: '', from: '', to: '', totalPages: 1 };
         var _pendingRejectId = null;
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -258,6 +283,7 @@
             document.getElementById("logout-btn").addEventListener("click", function (e) { e.preventDefault(); Auth.logout(); });
 
             loadRequests();
+            loadFilterOptions();
 
             document.getElementById("status-tabs").addEventListener("click", function (e) {
                 e.preventDefault();
@@ -273,17 +299,34 @@
             document.getElementById("filter-type").addEventListener("change", function () {
                 state.type = this.value; state.page = 1; loadRequests();
             });
+            document.getElementById("filter-staff").addEventListener("change", function () {
+                state.staffId = this.value; state.page = 1; loadRequests();
+            });
+            document.getElementById("filter-branch").addEventListener("change", function () {
+                state.locationId = this.value; state.page = 1; loadRequests();
+            });
+            document.getElementById("filter-from").addEventListener("change", function () {
+                state.from = this.value; state.page = 1; loadRequests();
+            });
+            document.getElementById("filter-to").addEventListener("change", function () {
+                state.to = this.value; state.page = 1; loadRequests();
+            });
             document.getElementById("filter-limit").addEventListener("change", function () {
                 state.limit = parseInt(this.value, 10); state.page = 1; loadRequests();
             });
             document.getElementById("btn-clear").addEventListener("click", function () {
                 document.getElementById("filter-type").value = "";
+                document.getElementById("filter-staff").value = "";
+                document.getElementById("filter-branch").value = "";
+                document.getElementById("filter-from").value = "";
+                document.getElementById("filter-to").value = "";
                 document.getElementById("filter-limit").value = "20";
                 document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
-                state = { page: 1, limit: 20, status: '', type: '', totalPages: 1 };
+                state = { page: 1, limit: 20, status: '', type: '', staffId: '', locationId: '', from: '', to: '', totalPages: 1 };
                 loadRequests();
             });
+            document.getElementById("btn-download-csv").addEventListener("click", downloadLeaveRequestsCsv);
             document.getElementById("btn-refresh").addEventListener("click", loadRequests);
 
             document.getElementById("pagination-btns").addEventListener("click", function (e) {
@@ -316,6 +359,83 @@
             return div.innerHTML;
         }
 
+        async function loadFilterOptions() {
+            try {
+                var staffResult = await Staff.getAll({ limit: 200 });
+                var staffList = staffResult.data || [];
+                document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
+                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
+                }).join('');
+            } catch (err) { /* non-fatal — filter just stays at "All staff" */ }
+
+            try {
+                var branches = await Branches.getBranches();
+                document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>';
+                }).join('');
+            } catch (err) { /* non-fatal — filter just stays at "All branches" */ }
+        }
+
+        /**
+         * Fetches every request matching the current filters (a large
+         * limit, not the paginated page size) and generates a CSV
+         * client-side -- same pattern as the Attendance report's export,
+         * no backend export endpoint needed since the data is already
+         * filterable server-side.
+         */
+        async function downloadLeaveRequestsCsv() {
+            var btn = document.getElementById("btn-download-csv");
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Preparing…";
+            try {
+                var result = await LeaveRequests.getAll({
+                    status: state.status, type: state.type, staffId: state.staffId,
+                    locationId: state.locationId, from: state.from, to: state.to, limit: 10000,
+                });
+                var rows = result.data || (Array.isArray(result) ? result : []);
+                if (!rows.length) {
+                    alert("No requests match the current filters.");
+                    return;
+                }
+
+                var headers = ["Staff Name", "Staff Code", "Type", "Start Date", "End Date", "Status", "Reason", "Rejection Reason", "Submitted At"];
+                var csvEscape = function (v) {
+                    var s = v === null || v === undefined ? "" : String(v);
+                    return '"' + s.replace(/"/g, '""') + '"';
+                };
+                var csvRows = rows.map(function (r) {
+                    return [
+                        r.staff ? r.staff.name : "",
+                        r.staff ? r.staff.staffCode : "",
+                        String(r.type || "").replace(/_/g, " "),
+                        r.startDate ? r.startDate.slice(0, 10) : "",
+                        r.endDate ? r.endDate.slice(0, 10) : "",
+                        r.status || "",
+                        r.reason || "",
+                        r.rejectionReason || "",
+                        r.createdAt ? r.createdAt.slice(0, 10) : "",
+                    ].map(csvEscape).join(",");
+                });
+                var csvContent = headers.map(csvEscape).join(",") + "\n" + csvRows.join("\n");
+
+                var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement("a");
+                a.href = url;
+                a.download = "leave-requests-" + new Date().toISOString().slice(0, 10) + ".csv";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert(err.message || "Failed to generate CSV.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
         async function loadRequests() {
             var tbody = document.getElementById("leave-tbody");
             tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
@@ -323,6 +443,7 @@
             try {
                 var result = await LeaveRequests.getAll({
                     page: state.page, limit: state.limit, status: state.status, type: state.type,
+                    staffId: state.staffId, locationId: state.locationId, from: state.from, to: state.to,
                 });
                 var rows = result.data || (Array.isArray(result) ? result : []);
                 var meta = result.meta || {};

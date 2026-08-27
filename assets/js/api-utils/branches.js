@@ -7,8 +7,18 @@
  *   - auth.js   (Auth.fetch, Auth.getToken, Auth.isTokenExpired, Auth.refreshAccessToken, Auth.logout)
  *
  * Permissions (see documents/branch-api.md):
- *   branches:read   — list/view branches and service matrix
- *   branches:manage — create/update/delete branches; configure branch services
+ *   branches:read             — list/view branches and service matrix
+ *   branches:create           — create a new branch
+ *   branches:update           — edit branch details
+ *   branches:manage_manager   — assign or remove a branch's manager
+ *   branches:delete           — delete a branch
+ *   branches:manage_services  — manage which services a branch offers, and their walk-in pricing
+ *
+ * Dev Feedback Round 4, item #43: the previous single branches:manage
+ * permission was split into the 5 above (delete always separate from
+ * edit) -- kept as individual constants below so each UI action can be
+ * gated by the specific permission it actually needs, not one blanket
+ * check.
  *
  * Branch create/update requires non-empty `address` (max 500 chars). See documents/branch-address-required.md.
  *
@@ -29,7 +39,11 @@ const Branches = (() => {
 
     const PERMISSIONS = {
         READ: "branches:read",
-        MANAGE: "branches:manage",
+        CREATE: "branches:create",
+        UPDATE: "branches:update",
+        MANAGE_MANAGER: "branches:manage_manager",
+        DELETE: "branches:delete",
+        MANAGE_SERVICES: "branches:manage_services",
     };
 
     function getBase() {
