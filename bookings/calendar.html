@@ -302,9 +302,25 @@
                 RBAC.applyNavVisibility();
             });
             ForceAssignModal.init({
-                onSuccess: async function (id) {
+                onSuccess: async function (id, info) {
                     loadCalendar();
-                    openDetail(id);
+                    await openDetail(id);
+                    if (info && info.newName) {
+                        var body = document.getElementById("offcanvas-detail-body");
+                        if (body) {
+                            var oldName = info.oldName || "";
+                            var newName = info.newName || "";
+                            var msg = "";
+                            if (oldName && oldName !== newName) {
+                                msg = 'Booking reassigned from ' + escHtml(oldName) + ' to ' + escHtml(newName);
+                            } else if (!oldName && newName) {
+                                msg = 'Booking assigned to ' + escHtml(newName);
+                            } else if (info.isReassign) {
+                                msg = 'Booking reassigned to ' + escHtml(newName);
+                            }
+                            if (msg) body.insertAdjacentHTML('afterbegin', '<div class="alert alert-success py-2 small mb-3">' + msg + '</div>');
+                        }
+                    }
                 },
             });
             BookingCancelModal.init({
@@ -525,7 +541,9 @@
             var safeCode = (b.reservationCode || "").replace(/'/g, "\\'");
             var safeId   = (b.id || "").replace(/'/g, "\\'");
             if (bookingType === "WALK_IN") {
-                if (!b.reservationUsed) {
+                if (b.status === "CANCELLED") {
+                    // No check-in for cancelled walk-in bookings
+                } else if (!b.reservationUsed) {
                     html += '<button class="btn btn-success" onclick="handleDetailAction(\'' + safeId + '\',\'checkin\',null,\'' + safeCode + '\')">\u2714\ufe0f Mark as Used / Check In</button>';
                 } else {
                     html += '<span class="text-secondary small">Reservation already used.</span>';
@@ -535,10 +553,15 @@
                     html += '<button class="btn btn-warning" onclick="handleDetailAction(\'' + safeId + '\',\'retry-matching\',null,null)">Retry Matching</button>';
                 }
                 if (Bookings.canAdminForceAssign(b)) {
-                    html += '<button class="btn btn-primary" onclick="openForceAssignModal(\'' + safeId + '\')">Force Assign</button>';
+                    var assignLabel = (Bookings.getForceAssignLabel ? Bookings.getForceAssignLabel(b) : (Bookings.isAssigned && Bookings.isAssigned(b) && !Bookings.isPendingAssignment(b) ? "Reassign" : "Force Assign"));
+                    html += '<button class="btn btn-primary" onclick="openForceAssignModal(\'' + safeId + '\')">' + assignLabel + '</button>';
                 }
-                var homeTransitions = { PENDING_ASSIGNMENT: ["CANCELLED"], PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
+                var homeTransitions = { PENDING_ASSIGNMENT: ["CANCELLED"], PENDING: ["CONFIRMED","CANCELLED"], ASSIGNED: ["CANCELLED"], EN_ROUTE: ["CANCELLED"], ARRIVED: ["CANCELLED"], ARRIVED_VERIFIED: ["CANCELLED"], AWAITING_CUSTOMER_CONFIRM: ["CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
                 var homeNexts = homeTransitions[b.status] || [];
+                if (homeNexts.indexOf("CANCELLED") === -1 && Bookings.canAdminCancelBooking && Bookings.canAdminCancelBooking(b)) {
+                    homeNexts = homeNexts.slice();
+                    homeNexts.push("CANCELLED");
+                }
                 homeNexts.forEach(function (s) {
                     if (s === "CANCELLED") {
                         html += '<button class="btn btn-danger" onclick="openCancelBookingModal(\'' + safeId + '\')">Cancel</button>';
@@ -550,6 +573,10 @@
             } else {
                 var transitions = { PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
                 var nexts = transitions[b.status] || [];
+                if (nexts.indexOf("CANCELLED") === -1 && Bookings.canAdminCancelBooking && Bookings.canAdminCancelBooking(b)) {
+                    nexts = nexts.slice();
+                    nexts.push("CANCELLED");
+                }
                 nexts.forEach(function (s) {
                     if (s === "CANCELLED") {
                         html += '<button class="btn btn-danger" onclick="openCancelBookingModal(\'' + safeId + '\')">Cancel</button>';

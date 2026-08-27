@@ -276,10 +276,22 @@
             });
 
             ForceAssignModal.init({
-                onSuccess: async function () {
+                onSuccess: async function (id, info) {
                     var alert = document.getElementById('action-alert');
                     alert.className = 'alert alert-success';
-                    alert.innerHTML = '<strong>Booking force-assigned.</strong>';
+                    if (info && info.newName) {
+                        var oldName = info.oldName || "";
+                        var newName = info.newName || "";
+                        if (oldName && oldName !== newName) {
+                            alert.innerHTML = '<strong>Booking reassigned from ' + escHtml(oldName) + ' to ' + escHtml(newName) + '.</strong>';
+                        } else if (newName) {
+                            alert.innerHTML = '<strong>Booking assigned to ' + escHtml(newName) + '.</strong>';
+                        } else {
+                            alert.innerHTML = '<strong>Booking force-assigned.</strong>';
+                        }
+                    } else {
+                        alert.innerHTML = '<strong>Booking force-assigned.</strong>';
+                    }
                     setTimeout(refreshLookupResult, 1200);
                 },
             });
@@ -516,6 +528,9 @@
             var code        = b.reservationCode;
 
             if (bookingType === "WALK_IN") {
+                if (b.status === "CANCELLED") {
+                    return '<span class="text-secondary small">Booking cancelled — no check-in required.</span>';
+                }
                 // WALK_IN → Mark as Used via PATCH /admin/bookings/reservation/{code}/use
                 if (isUsed) {
                     return '<span class="text-secondary"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>This reservation has already been used.</span>';
@@ -530,17 +545,30 @@
                     html += '<button class="btn btn-warning me-2" onclick="retryMatching(\'' + id + '\')">Retry Matching</button>';
                 }
                 if (Bookings.canAdminForceAssign(b)) {
-                    html += '<button class="btn btn-primary me-2" onclick="openForceAssignModal(\'' + id + '\')">Force Assign</button>';
+                    var assignLabel = (Bookings.getForceAssignLabel ? Bookings.getForceAssignLabel(b) : (Bookings.isAssigned && Bookings.isAssigned(b) && !Bookings.isPendingAssignment(b) ? "Reassign" : "Force Assign"));
+                    html += '<button class="btn btn-primary me-2" onclick="openForceAssignModal(\'' + id + '\')">' + assignLabel + '</button>';
                 }
                 var transitions = {
                     PENDING_ASSIGNMENT: [["CANCELLED", "btn-danger"]],
                     PENDING:     [["CONFIRMED", "btn-primary"], ["CANCELLED", "btn-danger"]],
+                    ASSIGNED: [["CANCELLED", "btn-danger"]],
+                    EN_ROUTE: [["CANCELLED", "btn-danger"]],
+                    ARRIVED: [["CANCELLED", "btn-danger"]],
+                    ARRIVED_VERIFIED: [["CANCELLED", "btn-danger"]],
+                    AWAITING_CUSTOMER_CONFIRM: [["CANCELLED", "btn-danger"]],
                     CONFIRMED:   [["IN_PROGRESS", "btn-warning"], ["CANCELLED", "btn-danger"]],
                     IN_PROGRESS: [["COMPLETED", "btn-success"], ["CANCELLED", "btn-danger"]],
                 };
                 var steps = transitions[status] || [];
+                var hasCancel = steps.some(function (p) { return p[0] === "CANCELLED"; });
+                if (!hasCancel && Bookings.canAdminCancelBooking && Bookings.canAdminCancelBooking(b)) {
+                    steps = steps.slice();
+                    steps.push(["CANCELLED", "btn-danger"]);
+                }
                 if (!html && !steps.length) {
-                    return '<span class="text-secondary">No further actions available for status <strong>' + status.replace(/_/g, " ") + '</strong>.</span>';
+                    if (Bookings.canAdminCancelBooking && !Bookings.canAdminCancelBooking(b)) {
+                        return '<span class="text-secondary">No further actions available for status <strong>' + status.replace(/_/g, " ") + '</strong>.</span>';
+                    }
                 }
                 html += steps.map(function (pair) {
                     var newStatus = pair[0], btnClass = pair[1];
@@ -551,9 +579,25 @@
                         newStatus.replace(/_/g, " ") +
                         '</button>';
                 }).join("");
+                if (!html) {
+                    return '<span class="text-secondary">No further actions available for status <strong>' + status.replace(/_/g, " ") + '</strong>.</span>';
+                }
                 return html;
             } else {
-                return '<span class="text-secondary small">No actions available.</span>';
+                var fallbackNexts = [];
+                var genTransitions = { PENDING: [["CONFIRMED","btn-primary"],["CANCELLED","btn-danger"]], CONFIRMED: [["IN_PROGRESS","btn-warning"],["CANCELLED","btn-danger"]], IN_PROGRESS: [["COMPLETED","btn-success"],["CANCELLED","btn-danger"]] };
+                fallbackNexts = genTransitions[status] || [];
+                var hasC = fallbackNexts.some(function(p){ return p[0]==="CANCELLED"; });
+                if (!hasC && Bookings.canAdminCancelBooking && Bookings.canAdminCancelBooking(b)) {
+                    fallbackNexts = fallbackNexts.slice();
+                    fallbackNexts.push(["CANCELLED","btn-danger"]);
+                }
+                if (!fallbackNexts.length) return '<span class="text-secondary small">No actions available.</span>';
+                return fallbackNexts.map(function(pair){
+                    var ns=pair[0], bc=pair[1];
+                    if(ns==="CANCELLED") return '<button class="btn btn-danger me-2" onclick="openCancelBookingModal(\''+id+'\')">Cancel</button>';
+                    return '<button class="btn '+bc+' me-2" onclick="updateStatus(\''+id+'\',\''+ns+'\')">'+ns.replace(/_/g," ")+'</button>';
+                }).join("");
             }
         }
 

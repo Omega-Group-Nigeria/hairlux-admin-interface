@@ -604,8 +604,55 @@ const Bookings = (() => {
     return isHomeServiceBooking(booking) && isPendingAssignment(booking);
   }
 
+  // ── Assigned / cancellable helpers for admin cancel & reassign ─────────────
+  var ASSIGNED_STATUSES = ["ASSIGNED","EN_ROUTE","ARRIVED","ARRIVED_VERIFIED","IN_PROGRESS","CONFIRMED","AWAITING_CUSTOMER_CONFIRM"];
+  function isAssignedStatus(status) {
+    return ASSIGNED_STATUSES.indexOf(status) !== -1;
+  }
+  function hasBeauticianAssigned(booking) {
+    if (!booking || typeof booking !== "object") return false;
+    if (booking.beauticianUserId) return true;
+    if (booking.beautician && typeof booking.beautician === "object") {
+      if (booking.beautician.userId || booking.beautician.id) return true;
+      if (booking.beautician.user && (booking.beautician.user.id || booking.beautician.user.userId)) return true;
+    }
+    if (booking.assignedBeautician) return true;
+    if (booking.homeBeautician) return true;
+    return false;
+  }
+  function isAssigned(booking) {
+    if (!booking || typeof booking !== "object") return false;
+    return isAssignedStatus(booking.status) || hasBeauticianAssigned(booking);
+  }
+  function canAdminCancelBooking(booking) {
+    return !!(booking && booking.status !== "CANCELLED" && booking.status !== "COMPLETED");
+  }
+  // Force assign now works for both pending assignment and already assigned bookings.
   function canAdminForceAssign(booking) {
-    return canAdminRetryMatching(booking);
+    return !!(isHomeServiceBooking(booking) && canAdminCancelBooking(booking) && (isPendingAssignment(booking) || isAssigned(booking)));
+  }
+  // Alias for already-assigned reassign case (kept for clarity)
+  function canAdminReassign(booking) {
+    return !!(isHomeServiceBooking(booking) && canAdminCancelBooking(booking) && isAssigned(booking));
+  }
+  function getForceAssignLabel(booking) {
+    if (isAssigned(booking) && !isPendingAssignment(booking)) return "Reassign";
+    return "Force Assign";
+  }
+  function getBeauticianDisplayName(booking) {
+    if (!booking || typeof booking !== "object") return "";
+    var beautician = booking.beautician || booking.assignedBeautician || booking.homeBeautician || null;
+    var user = beautician && beautician.user ? beautician.user : beautician;
+    if (user) {
+      var name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+      if (name) return name;
+      if (user.name) return String(user.name);
+      if (user.fullName) return String(user.fullName);
+    }
+    if (booking.beauticianName) return String(booking.beauticianName);
+    if (beautician && beautician.name) return String(beautician.name);
+    if (booking.beauticianUserId) return shortId(booking.beauticianUserId);
+    return "";
   }
 
   function getAssignmentStatusMessage(booking) {
@@ -851,6 +898,14 @@ const Bookings = (() => {
     canAdminRetryMatching,
     canAdminForceAssign,
     getAssignmentStatusMessage,
+    // new helpers for cancel & reassign on already-assigned bookings
+    isAssignedStatus,
+    hasBeauticianAssigned,
+    isAssigned,
+    canAdminCancelBooking,
+    canAdminReassign,
+    getForceAssignLabel,
+    getBeauticianDisplayName,
     dispatchStatusBadge,
     formatIsoDateTime,
     renderAssignmentAlertHtml,
