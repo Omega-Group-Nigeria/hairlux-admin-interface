@@ -318,195 +318,63 @@ function downloadKycVideo(url, fileName) {
     });
 }
 
-// ── ffmpeg.wasm: re-encode broken mobile AAC so Chrome can play with audio ──
-var _kycFfmpeg = null;
-var _kycFfmpegLoadPromise = null;
-var _kycBlobUrl = null;
-var KYC_FFMPEG_SCRIPT = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
-var KYC_FFMPEG_CORE_BASE = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+// ── Poor-network resilience: auto-retry transient load failures with backoff ──
+var KYC_VIDEO_MAX_AUTO_RETRIES = 3;
+var _kycVideoRetryCount = 0;
+var _kycVideoRetryTimer = null;
 
-function loadScriptOnce(src) {
-    return new Promise(function (resolve, reject) {
-        var existing = document.querySelector('script[data-kyc-src="' + src + '"]');
-        if (existing) {
-            if (existing.dataset.loaded === '1') resolve();
-            else existing.addEventListener('load', function () { resolve(); });
-            existing.addEventListener('error', function () { reject(new Error('Failed to load script')); });
-            return;
+function clearKycVideoRetryTimer() {
+    if (_kycVideoRetryTimer) {
+        window.clearTimeout(_kycVideoRetryTimer);
+        _kycVideoRetryTimer = null;
+    }
+}
+
+function resetKycVideoRetryCount() {
+    _kycVideoRetryCount = 0;
+}
+
+/**
+ * Reload the current MP4 source (used by auto-retry and the Retry button).
+ * Keeps playback position so a mid-playback stall resumes where it left off.
+ */
+function retryKycVideoLoad(opts) {
+    var video = getKycVideoEl();
+    var src = video && video.dataset.kycSrc;
+    if (!video || !src) return;
+    clearKycVideoRetryTimer();
+    var resumeAt = opts && opts.resume ? video.currentTime : 0;
+    var wasMuted = video.muted;
+    var volumeVal = video.volume;
+    setKycVideoLoading(true, (opts && opts.message) || 'Loading video…');
+    setKycVideoControlsEnabled(false);
+    video.removeAttribute('src');
+    try {
+        video.load();
+    } catch (e) { /* ignore */ }
+    window.setTimeout(function () {
+        video.dataset.kycLoadToken = video.dataset.kycLoadToken || '';
+        video.src = src;
+        if (resumeAt > 0) {
+            var seekBack = function () {
+                try { video.currentTime = resumeAt; } catch (e2) { /* ignore */ }
+                video.removeEventListener('loadedmetadata', seekBack);
+            };
+            video.addEventListener('loadedmetadata', seekBack);
         }
-        var s = document.createElement('script');
-        s.src = src;
-        s.async = true;
-        s.dataset.kycSrc = src;
-        s.onload = function () {
-            s.dataset.loaded = '1';
-            resolve();
-        };
-        s.onerror = function () {
-            reject(new Error('Failed to load FFmpeg library'));
-        };
-        document.head.appendChild(s);
-    });
-}
-
-function kycToBlobURL(url, mimeType) {
-    return fetch(url)
-        .then(function (res) {
-            if (!res.ok) throw new Error('Could not download FFmpeg core (' + res.status + ')');
-            return res.arrayBuffer();
-        })
-        .then(function (buf) {
-            return URL.createObjectURL(new Blob([buf], { type: mimeType || 'application/octet-stream' }));
-        });
-}
-
-function revokeKycBlobUrl() {
-    if (_kycBlobUrl) {
+        video.muted = wasMuted;
+        video.volume = volumeVal;
         try {
-            URL.revokeObjectURL(_kycBlobUrl);
-        } catch (e) { /* ignore */ }
-        _kycBlobUrl = null;
-    }
-}
-
-/**
- * Lazy-load ffmpeg.wasm (single-thread core). Cached after first open.
- * First load downloads ~25–30 MB core; later opens reuse the instance.
- * Safe to call repeatedly — concurrent callers share one load promise.
- */
-function getKycFfmpeg(onStatus) {
-    if (_kycFfmpeg && _kycFfmpeg.loaded) {
-        return Promise.resolve(_kycFfmpeg);
-    }
-    if (_kycFfmpegLoadPromise) return _kycFfmpegLoadPromise;
-
-    if (typeof onStatus === 'function') {
-        onStatus('Downloading video engine in the background (first time only)…');
-    }
-
-    _kycFfmpegLoadPromise = loadScriptOnce(KYC_FFMPEG_SCRIPT)
-        .then(function () {
-            var FFmpegCtor = (window.FFmpegWASM && window.FFmpegWASM.FFmpeg) || (window.FFmpeg && window.FFmpeg.FFmpeg);
-            if (!FFmpegCtor) throw new Error('FFmpeg WASM failed to initialize');
-            if (typeof onStatus === 'function') {
-                onStatus('Loading video engine core…');
-            }
-            var ffmpeg = new FFmpegCtor();
-            return Promise.all([
-                kycToBlobURL(KYC_FFMPEG_CORE_BASE + '/ffmpeg-core.js', 'text/javascript'),
-                kycToBlobURL(KYC_FFMPEG_CORE_BASE + '/ffmpeg-core.wasm', 'application/wasm'),
-            ]).then(function (urls) {
-                return ffmpeg.load({
-                    coreURL: urls[0],
-                    wasmURL: urls[1],
-                }).then(function () {
-                    _kycFfmpeg = ffmpeg;
-                    return ffmpeg;
-                });
-            });
-        })
-        .catch(function (err) {
-            _kycFfmpegLoadPromise = null;
-            throw err;
-        });
-
-    return _kycFfmpegLoadPromise;
-}
-
-/**
- * Kick off engine download without blocking (first Play click).
- * Subsequent getKycFfmpeg() calls reuse the same in-flight promise.
- */
-function warmKycFfmpegInBackground() {
-    if (_kycFfmpeg && _kycFfmpeg.loaded) return;
-    if (_kycFfmpegLoadPromise) return;
-    getKycFfmpeg(null).catch(function () {
-        // Errors surface when prepareKycVideoForPlayback awaits the same promise
-    });
-}
-
-/**
- * Fetch public R2 video while engine loads (in parallel on first open),
- * re-encode audio to AAC 44.1 kHz (copy video), return blob: URL.
- */
-function prepareKycVideoForPlayback(remoteUrl, onStatus) {
-    var status = typeof onStatus === 'function' ? onStatus : function () {};
-    var engineReady = false;
-    var videoReady = false;
-
-    function syncStatus() {
-        if (!engineReady && !videoReady) {
-            status('Downloading video engine & video in the background…');
-        } else if (!engineReady && videoReady) {
-            status('Video ready — finishing video engine download…');
-        } else if (engineReady && !videoReady) {
-            status('Engine ready — downloading video…');
-        } else {
-            status('Fixing audio for browser playback…');
-        }
-    }
-
-    // Start both immediately so the ~30 MB engine does not block the R2 fetch
-    warmKycFfmpegInBackground();
-    syncStatus();
-
-    var engineP = getKycFfmpeg(function (msg) {
-        if (!engineReady) status(msg || 'Downloading video engine in the background…');
-    }).then(function (ffmpeg) {
-        engineReady = true;
-        syncStatus();
-        return ffmpeg;
-    });
-
-    var videoP = fetch(remoteUrl, {
-        mode: 'cors',
-        credentials: 'omit',
-        referrerPolicy: 'no-referrer',
-        cache: 'no-store',
-    }).then(function (res) {
-        if (!res.ok && res.status !== 206) {
-            throw new Error('Storage returned HTTP ' + res.status);
-        }
-        return res.arrayBuffer();
-    }).then(function (buf) {
-        if (!buf || !buf.byteLength) throw new Error('Downloaded video is empty');
-        videoReady = true;
-        syncStatus();
-        return buf;
-    });
-
-    return Promise.all([engineP, videoP]).then(function (results) {
-        var ffmpeg = results[0];
-        var buf = results[1];
-        status('Fixing audio for browser playback…');
-        var input = new Uint8Array(buf);
-        return ffmpeg.writeFile('input.mp4', input).then(function () {
-            return ffmpeg.exec([
-                '-i', 'input.mp4',
-                '-c:v', 'copy',
-                '-c:a', 'aac',
-                '-b:a', '128k',
-                '-ar', '44100',
-                '-ac', '1',
-                '-movflags', '+faststart',
-                'output.mp4',
-            ]);
-        }).then(function () {
-            return ffmpeg.readFile('output.mp4');
-        }).then(function (data) {
-            try { ffmpeg.deleteFile('input.mp4'); } catch (e1) { /* ignore */ }
-            try { ffmpeg.deleteFile('output.mp4'); } catch (e2) { /* ignore */ }
-            var bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-            var blob = new Blob([bytes], { type: 'video/mp4' });
-            revokeKycBlobUrl();
-            _kycBlobUrl = URL.createObjectURL(blob);
-            return _kycBlobUrl;
-        });
-    });
+            video.load();
+        } catch (e3) { /* ignore */ }
+    }, (opts && opts.delay) || 0);
 }
 
 function loadKycVideoSource(video, src, loadToken) {
     if (!video || !src) return;
+    clearKycVideoRetryTimer();
+    resetKycVideoRetryCount();
+    video.dataset.kycSrc = src;
     video.dataset.kycLoadToken = loadToken || video.dataset.kycLoadToken || '';
     video.setAttribute('playsinline', '');
     video.setAttribute('preload', 'auto');
@@ -582,6 +450,11 @@ function setKycVideoLoading(isLoading, message) {
     }
 }
 
+function setKycVideoBuffering(isBuffering) {
+    var el = document.getElementById('kyc-video-buffering');
+    if (el) el.classList.toggle('d-none', !isBuffering);
+}
+
 function hideKycVideoError() {
     var errEl = document.getElementById('kyc-video-error');
     if (!errEl) return;
@@ -605,6 +478,7 @@ function showKycVideoError(title, message) {
     if (errEl) errEl.classList.remove('d-none');
     setKycVideoPlayUi(false);
     setKycVideoControlsEnabled(false);
+    setKycVideoBuffering(false);
 }
 
 function kycVideoErrorMessageFromMedia(video) {
@@ -644,6 +518,8 @@ function markKycVideoReady() {
     var video = getKycVideoEl();
     var errEl = document.getElementById('kyc-video-error');
     if (errEl && !errEl.classList.contains('d-none')) return;
+    resetKycVideoRetryCount();
+    setKycVideoBuffering(false);
     setKycVideoLoading(false);
     if (video) video.classList.remove('is-hidden');
     setKycVideoControlsEnabled(true);
@@ -670,11 +546,13 @@ function syncKycVideoProgress() {
 }
 
 /**
- * Stop playback and clear the media element source (including blob URLs from ffmpeg).
+ * Stop playback and clear the media element source.
  */
 function stopKycVideoPlayer() {
     var video = getKycVideoEl();
     if (!video) return;
+    clearKycVideoRetryTimer();
+    resetKycVideoRetryCount();
     video.dataset.kycLoadToken = '';
     try {
         video.pause();
@@ -684,7 +562,6 @@ function stopKycVideoPlayer() {
     try {
         video.load();
     } catch (e2) { /* ignore */ }
-    revokeKycBlobUrl();
     setKycVideoPlayUi(false);
     setKycVideoControlsEnabled(false);
     var seek = document.getElementById('kyc-video-seek');
@@ -699,13 +576,13 @@ function stopKycVideoPlayer() {
     if (currentEl) currentEl.textContent = '0:00';
     if (durationEl) durationEl.textContent = '0:00';
     hideKycVideoError();
+    setKycVideoBuffering(false);
     setKycVideoLoading(false);
     if (video) video.classList.remove('is-hidden');
 }
 
 /**
- * Open intro video: fetch public R2 URL → ffmpeg.wasm re-encode audio → play blob.
- * Keeps H.264 video as-is; rewrites AAC so Chrome can decode with sound.
+ * Open intro video modal and stream the public MP4 URL directly.
  */
 function openKycVideoModal(url, opts) {
     opts = opts || {};
@@ -718,18 +595,19 @@ function openKycVideoModal(url, opts) {
     if (titleEl) titleEl.textContent = opts.title || 'Intro video';
 
     stopKycVideoPlayer();
-    // First Play: start ~30 MB engine download immediately (shared promise; does not block R2 fetch)
-    warmKycFfmpegInBackground();
-    setKycVideoLoading(true, 'Downloading video engine & video in the background…');
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
     if (!remoteUrl) {
+        setKycVideoLoading(false);
         showKycVideoError(
             'Video unavailable',
             'No public video URL is available for this intro video.'
         );
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
         return;
     }
+
+    setKycVideoLoading(true, 'Loading video…');
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
     var loadToken = String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8);
     video.dataset.kycLoadToken = loadToken;
@@ -744,44 +622,7 @@ function openKycVideoModal(url, opts) {
         setKycVideoMuteUi(video.muted);
     }
 
-    prepareKycVideoForPlayback(remoteUrl, function (msg) {
-        if (video.dataset.kycLoadToken !== loadToken) return;
-        setKycVideoLoading(true, msg);
-    })
-        .then(function (blobUrl) {
-            if (video.dataset.kycLoadToken !== loadToken) {
-                // Modal was closed mid-process; drop this blob if we created a new one
-                if (blobUrl && blobUrl === _kycBlobUrl) return;
-                return;
-            }
-            setKycVideoLoading(true, 'Starting player…');
-            loadKycVideoSource(video, blobUrl, loadToken);
-        })
-        .catch(function (err) {
-            if (video.dataset.kycLoadToken !== loadToken) return;
-            var message = (err && err.message) ? String(err.message) : 'Processing failed.';
-            // Common when SharedArrayBuffer is blocked without COOP/COEP on some hosts
-            if (/SharedArrayBuffer|cross-origin|security/i.test(message)) {
-                message = 'Video engine needs a secure context. Serve admin over HTTPS with Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: require-corp, or open via a host that sets those headers.';
-            }
-            showKycVideoError('Could not prepare video', message);
-        });
-
-    window.setTimeout(function () {
-        if (video.dataset.kycLoadToken !== loadToken) return;
-        var errVisible = document.getElementById('kyc-video-error');
-        var stillLoading = document.getElementById('kyc-video-loading');
-        if (errVisible && !errVisible.classList.contains('d-none')) return;
-        if (stillLoading && stillLoading.classList.contains('d-none')) return;
-        if (video.readyState >= 2) {
-            markKycVideoReady();
-            return;
-        }
-        showKycVideoError(
-            'Taking too long',
-            'Preparing the video is taking longer than expected. First open downloads the video engine (~30 MB) in the background. Try again on a faster connection.'
-        );
-    }, 120000);
+    loadKycVideoSource(video, remoteUrl, loadToken);
 }
 
 /**
@@ -895,6 +736,19 @@ function initKycVideoModal() {
         });
     }
 
+    var retryBtn = document.getElementById('kyc-video-retry');
+    if (retryBtn) {
+        retryBtn.addEventListener('click', function () {
+            // Manual retry: give the connection a fresh set of auto-retries
+            resetKycVideoRetryCount();
+            hideKycVideoError();
+            retryKycVideoLoad({
+                resume: true,
+                message: 'Retrying…',
+            });
+        });
+    }
+
     video.addEventListener('play', function () { setKycVideoPlayUi(true); });
     video.addEventListener('pause', function () { setKycVideoPlayUi(false); });
     video.addEventListener('ended', function () { setKycVideoPlayUi(false); });
@@ -912,16 +766,42 @@ function initKycVideoModal() {
         markKycVideoReady();
     });
     video.addEventListener('waiting', function () {
-        // Mid-playback buffer stall: subtle loading without full error state
-        if (!video.paused && video.currentTime > 0) return;
         var errEl = document.getElementById('kyc-video-error');
         if (errEl && !errEl.classList.contains('d-none')) return;
-        setKycVideoLoading(true);
+        if (video.paused && video.currentTime === 0) {
+            // Initial load stall: full loading overlay
+            setKycVideoLoading(true);
+        } else {
+            // Mid-playback stall: subtle chip so the paused frame stays visible
+            setKycVideoBuffering(true);
+        }
     });
     video.addEventListener('playing', function () {
+        setKycVideoBuffering(false);
         markKycVideoReady();
     });
+    video.addEventListener('stalled', function () {
+        // Stalled without 'waiting' can happen on flaky connections
+        var errEl = document.getElementById('kyc-video-error');
+        if (errEl && !errEl.classList.contains('d-none')) return;
+        if (video.readyState < 3 && !video.paused) setKycVideoBuffering(true);
+    });
+    video.addEventListener('seeked', function () {
+        setKycVideoBuffering(false);
+    });
     video.addEventListener('error', function () {
+        var code = video.error ? video.error.code : null;
+        var isTransient = code === 1 || code === 2 || (!video.error && !video.currentSrc);
+        if (isTransient && _kycVideoRetryCount < KYC_VIDEO_MAX_AUTO_RETRIES && video.dataset.kycSrc) {
+            _kycVideoRetryCount += 1;
+            var delayMs = 1000 * Math.pow(2, _kycVideoRetryCount - 1); // 1s, 2s, 4s
+            retryKycVideoLoad({
+                resume: video.currentTime > 0,
+                delay: delayMs,
+                message: 'Network is unstable — retrying (' + _kycVideoRetryCount + '/' + KYC_VIDEO_MAX_AUTO_RETRIES + ')…',
+            });
+            return;
+        }
         var info = kycVideoErrorMessageFromMedia(video);
         showKycVideoError(info.title, info.message);
     });
