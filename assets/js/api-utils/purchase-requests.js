@@ -37,6 +37,19 @@ const PurchaseRequests = (function () {
         });
     }
 
+    /**
+     * POST /admin/purchase-requests/from-alerts
+     * payload: { lowStockAlertIds?, expiryAlertIds?, vendorId, reason? }
+     * Procurement/Inventory/Finance Integration, Phase 7.
+     */
+    async function createFromAlerts(payload) {
+        return apiFetch('/admin/purchase-requests/from-alerts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
     async function update(id, payload) {
         return apiFetch(`/admin/purchase-requests/${id}`, {
             method: 'PATCH',
@@ -65,5 +78,5 @@ const PurchaseRequests = (function () {
         });
     }
 
-    return { getAll, getOne, getLastPrice, create, update, submit, approve, reject };
+    return { getAll, getOne, getLastPrice, create, createFromAlerts, update, submit, approve, reject };
 })();

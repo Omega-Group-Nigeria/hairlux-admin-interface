@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Commission Plans</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Payroll</div>
+                            <h2 class="page-title">Commission Plans</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-primary d-none" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Commission Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">All Commission Plans</h3>
+                                <span class="text-secondary small" id="results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Rate</th>
+                                        <th>Scope</th>
+                                        <th>Effective Date</th>
+                                        <th>Requires Approval</th>
+                                        <th class="text-center">Assigned Staff</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">New Commission Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="f-name"
+                            placeholder="e.g. Senior Stylist Commission">
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Commission Rate (%)</label>
+                            <input type="number" min="0" max="100" step="0.1" class="form-control" id="f-rate"
+                                placeholder="e.g. 15">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Effective Date</label>
+                            <input type="date" class="form-control" id="f-effective-date">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Eligible Services <span class="text-secondary">(leave empty for "every
+                                service")</span></label>
+                        <select class="form-select" id="f-eligible-services" multiple size="5"></select>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Branch <span class="text-secondary">(optional — leave blank for
+                                    any branch)</span></label>
+                            <select class="form-select" id="f-branch">
+                                <option value="">Any branch</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role <span class="text-secondary">(optional — leave blank for any
+                                    role)</span></label>
+                            <input type="text" class="form-control" id="f-role" placeholder="e.g. Senior Stylist">
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="f-requires-approval">
+                        <label class="form-check-label" for="f-requires-approval">Requires admin approval per
+                            transaction</label>
+                    </div>
+                    <div class="mb-3" id="f-active-wrap" style="display:none">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="f-active" checked>
+                            <label class="form-check-label" for="f-active">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="modal modal-blur fade" id="modal-confirm" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-status bg-danger"></div>
+                <div class="modal-body text-center py-4">
+                    <p class="mb-0" id="confirm-text"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn w-100" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger w-100" id="btn-confirm-delete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/commission-plans.js"></script>
+    <script src="assets/js/api-utils/services.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var _pendingDeleteId = null;
+        var _servicesCache = null;
+        var _branchesCache = null;
+        var _editingPlanId = null;
+
+        function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('btn-new').classList.toggle('d-none', !RBAC.can('payroll:create_commission_plan'));
+            document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('btn-confirm-delete').addEventListener('click', executeDelete);
+
+            document.getElementById('tbody').addEventListener('click', function (e) {
+                var editBtn = e.target.closest('.btn-edit');
+                var deleteBtn = e.target.closest('.btn-delete');
+                if (editBtn) { openForm(editBtn.dataset.id); return; }
+                if (deleteBtn) { confirmDelete(deleteBtn.dataset.id, deleteBtn.dataset.name); return; }
+            });
+
+            load();
+        });
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var plans = await CommissionPlans.getAll();
+                document.getElementById('results-label').textContent = plans.length + ' plan' + (plans.length !== 1 ? 's' : '');
+                if (!plans.length) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No commission plans yet.</td></tr>';
+                    return;
+                }
+                var canUpdate = RBAC.can('payroll:update_commission_plan');
+                var canDelete = RBAC.can('payroll:delete_commission_plan');
+                tbody.innerHTML = plans.map(function (p) {
+                    var scope = [p.applicableBranch ? p.applicableBranch.name : null, p.applicableRole || null].filter(Boolean).join(' \u00b7 ') || 'Any branch/role';
+                    var statusBadge = p.isActive ? '<span class="badge bg-success-lt text-success">Active</span>' : '<span class="badge bg-secondary-lt text-secondary">Inactive</span>';
+                    var actions = '';
+                    if (canUpdate) actions += '<button class="btn btn-sm btn-ghost-primary btn-edit" data-id="' + p.id + '">Edit</button> ';
+                    if (canDelete) actions += '<button class="btn btn-sm btn-ghost-danger btn-delete" data-id="' + p.id + '" data-name="' + esc(p.name) + '">Delete</button>';
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + esc(p.name) + '</td>' +
+                        '<td>' + CommissionPlans.formatRate(p.commissionRate) + '</td>' +
+                        '<td class="text-secondary small">' + esc(scope) + '</td>' +
+                        '<td>' + new Date(p.effectiveDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + '</td>' +
+                        '<td>' + (p.requiresApproval ? 'Yes' : 'No') + '</td>' +
+                        '<td class="text-center">' + (p._count ? p._count.assignedStaff : 0) + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td class="text-nowrap">' + actions + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(err.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function ensureLookups() {
+            if (!_servicesCache) {
+                try { _servicesCache = await Services.getAll(); } catch (e) { _servicesCache = []; }
+                var svcSelect = document.getElementById('f-eligible-services');
+                svcSelect.innerHTML = _servicesCache.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+            }
+            if (!_branchesCache) {
+                try {
+                    var result = await Branches.getBranches();
+                    _branchesCache = result.data || result || [];
+                } catch (e) { _branchesCache = []; }
+                var branchSelect = document.getElementById('f-branch');
+                branchSelect.innerHTML = '<option value="">Any branch</option>' +
+                    _branchesCache.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+            }
+        }
+
+        async function openForm(id) {
+            await ensureLookups();
+            _editingPlanId = id;
+            document.getElementById('form-error').classList.add('d-none');
+            document.getElementById('modal-form-title').textContent = id ? 'Edit Commission Plan' : 'New Commission Plan';
+            document.getElementById('f-active-wrap').style.display = id ? '' : 'none';
+
+            if (id) {
+                try {
+                    var p = await CommissionPlans.getOne(id);
+                    document.getElementById('f-name').value = p.name || '';
+                    document.getElementById('f-rate').value = p.commissionRate != null ? (Number(p.commissionRate) * 100) : '';
+                    document.getElementById('f-effective-date').value = p.effectiveDate ? p.effectiveDate.slice(0, 10) : '';
+                    document.getElementById('f-branch').value = p.applicableBranchId || '';
+                    document.getElementById('f-role').value = p.applicableRole || '';
+                    document.getElementById('f-requires-approval').checked = !!p.requiresApproval;
+                    document.getElementById('f-active').checked = p.isActive !== false;
+                    var ids = (p.eligibleServiceIds || []);
+                    Array.from(document.getElementById('f-eligible-services').options).forEach(function (o) { o.selected = ids.indexOf(o.value) !== -1; });
+                } catch (err) {
+                    document.getElementById('form-error').textContent = err.message || 'Failed to load plan.';
+                    document.getElementById('form-error').classList.remove('d-none');
+                }
+            } else {
+                document.getElementById('f-name').value = '';
+                document.getElementById('f-rate').value = '';
+                document.getElementById('f-effective-date').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('f-branch').value = '';
+                document.getElementById('f-role').value = '';
+                document.getElementById('f-requires-approval').checked = false;
+                document.getElementById('f-active').checked = true;
+                Array.from(document.getElementById('f-eligible-services').options).forEach(function (o) { o.selected = false; });
+            }
+
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+
+            var name = document.getElementById('f-name').value.trim();
+            var ratePercent = Number(document.getElementById('f-rate').value);
+            var effectiveDate = document.getElementById('f-effective-date').value;
+            if (!name) { errEl.textContent = 'Name is required.'; errEl.classList.remove('d-none'); return; }
+            if (!ratePercent && ratePercent !== 0) { errEl.textContent = 'A commission rate is required.'; errEl.classList.remove('d-none'); return; }
+            if (ratePercent < 0 || ratePercent > 100) { errEl.textContent = 'Commission rate must be between 0 and 100.'; errEl.classList.remove('d-none'); return; }
+            if (!effectiveDate) { errEl.textContent = 'An effective date is required.'; errEl.classList.remove('d-none'); return; }
+
+            var selectedServiceIds = Array.from(document.getElementById('f-eligible-services').selectedOptions).map(function (o) { return o.value; });
+
+            var payload = {
+                name: name,
+                commissionRate: ratePercent / 100,
+                eligibleServiceIds: selectedServiceIds,
+                applicableBranchId: document.getElementById('f-branch').value || undefined,
+                applicableRole: document.getElementById('f-role').value.trim() || undefined,
+                effectiveDate: effectiveDate,
+                requiresApproval: document.getElementById('f-requires-approval').checked,
+            };
+            if (_editingPlanId) payload.isActive = document.getElementById('f-active').checked;
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                if (_editingPlanId) { await CommissionPlans.update(_editingPlanId, payload); }
+                else { await CommissionPlans.create(payload); }
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function confirmDelete(id, name) {
+            _pendingDeleteId = id;
+            document.getElementById('confirm-text').textContent = 'Delete "' + name + '"? This cannot be undone.';
+            new bootstrap.Modal(document.getElementById('modal-confirm')).show();
+        }
+
+        async function executeDelete() {
+            var btn = document.getElementById('btn-confirm-delete');
+            btn.disabled = true;
+            try {
+                await CommissionPlans.remove(_pendingDeleteId);
+                bootstrap.Modal.getInstance(document.getElementById('modal-confirm')).hide();
+                load();
+            } catch (err) {
+                alert(err.message || 'Failed to delete.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

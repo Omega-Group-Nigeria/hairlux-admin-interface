@@ -246,6 +246,10 @@
                                     <button type="button" class="btn btn-primary btn-sm w-100"
                                         id="btn-load-summary">Load Summary</button>
                                 </div>
+                                <div class="col-6 col-md-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100"
+                                        id="btn-export-summary">Export CSV</button>
+                                </div>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -397,6 +401,7 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-operations.js"></script>
+    <script src="./assets/js/csv-export.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -436,8 +441,18 @@
                 console.error("Failed to load branches", e);
             }
 
+            await loadFilterStaffOptions();
+        }
+
+        // Dev Feedback Round 5, item #5: re-fetches scoped to whichever
+        // branch is currently selected, without a page reload -- "All
+        // Branches" (empty value) returns everyone. Called on branch
+        // change too, so switching back to "All Branches" resets the
+        // staff list rather than leaving it filtered to whatever branch
+        // was previously selected.
+        async function loadFilterStaffOptions(branchId) {
             try {
-                var result = await Staff.getAll({ limit: 100 });
+                var result = await Staff.getAll({ limit: 100, locationId: branchId || undefined });
                 document.getElementById("filter-staff").innerHTML =
                     '<option value="">All staff</option>' +
                     result.data.map(function (s) { return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + '</option>'; }).join("");
@@ -768,6 +783,9 @@
             });
             document.getElementById("filter-branch").addEventListener("change", function () {
                 listState.locationId = this.value;
+                document.getElementById("filter-staff").value = "";
+                listState.staffId = "";
+                loadFilterStaffOptions(this.value);
                 loadAttendance();
             });
             document.getElementById("filter-staff").addEventListener("change", function () {
@@ -782,6 +800,7 @@
                 document.getElementById("filter-branch").value = "";
                 document.getElementById("filter-staff").value = "";
                 listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "" };
+                loadFilterStaffOptions();
                 loadAttendance();
             });
             document.getElementById("btn-download-csv").addEventListener("click", downloadAttendanceCsv);
@@ -793,6 +812,7 @@
             document.getElementById("summary-to").value = now.toISOString().slice(0, 10);
 
             document.getElementById("btn-load-summary").addEventListener("click", loadAttendanceSummary);
+            document.getElementById("btn-export-summary").addEventListener("click", exportAttendanceSummary);
 
             loadFilterOptions();
             loadAttendance();
@@ -811,6 +831,8 @@
             }
         }
 
+        var _lastSummaryRows = [];
+
         async function loadAttendanceSummary() {
             var tbody = document.getElementById("summary-tbody");
             var from = document.getElementById("summary-from").value;
@@ -826,6 +848,7 @@
 
             try {
                 var rows = await StaffOps.getAllStaffSummary(from, to, branchId || undefined);
+                _lastSummaryRows = rows;
                 if (!rows.length) {
                     tbody.innerHTML = '<tr><td colspan="10" class="text-center text-secondary py-4">No active staff found for this branch.</td></tr>';
                     return;
@@ -847,6 +870,28 @@
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">' + esc(err.message || "Failed to load summary.") + '</td></tr>';
             }
+        }
+
+        function exportAttendanceSummary() {
+            if (!_lastSummaryRows.length) {
+                alert("Load the summary first, or there is nothing to export for the current filters.");
+                return;
+            }
+            var from = document.getElementById("summary-from").value;
+            var to = document.getElementById("summary-to").value;
+            CsvExport.download("attendance-summary_" + from + "_to_" + to + ".csv", [
+                { label: "Staff", get: function (r) { return r.staffName; } },
+                { label: "Expected Days", get: function (r) { return r.expectedWorkingDays; } },
+                { label: "Days Worked", get: function (r) { return r.daysWorked; } },
+                { label: "Half Days", get: function (r) { return r.halfDaysWorked; } },
+                { label: "Approved Extra Days", get: function (r) { return r.approvedExtraWorkDays; } },
+                { label: "Pending Extra Days", get: function (r) { return r.pendingExtraWorkDays; } },
+                { label: "Leave Days", get: function (r) { return r.approvedLeaveDays; } },
+                { label: "Public Holidays Worked", get: function (r) { return r.publicHolidaysWorked; } },
+                { label: "Late Arrivals", get: function (r) { return r.lateArrivals; } },
+                { label: "Early Departures", get: function (r) { return r.earlyDepartures; } },
+                { label: "Absent Days", get: function (r) { return r.absentDays; } },
+            ], _lastSummaryRows);
         }
     </script>
 </body>

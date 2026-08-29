@@ -65,6 +65,8 @@
                             <h2 class="page-title" id="page-title-text">Suppliers</h2>
                         </div>
                         <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary me-2" id="btn-export">Export
+                                CSV</button>
                             <button type="button" class="btn btn-primary" id="btn-new">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -255,15 +257,76 @@
         </div>
     </div>
 
+    <!-- Vendor Ledger Modal -->
+    <div class="modal modal-blur fade" id="modal-ledger" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ledger-modal-title">Vendor Ledger</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="ledger-body">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary d-none" id="btn-add-adjustment">Add Adjustment</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Adjustment Modal -->
+    <div class="modal modal-blur fade" id="modal-adjustment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Ledger Adjustment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="adj-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="adj-type">
+                            <option value="CREDIT">Credit (reduces what we owe them)</option>
+                            <option value="DEBIT">Debit (increases what we owe them)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" min="0.01" step="0.01" class="form-control" id="adj-amount">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control" id="adj-reason" rows="2"
+                            placeholder="e.g. Credit note for 3 damaged units returned on GRN-2026-000045"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-adjustment">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
+    <script src="assets/js/api-utils/vendor-ledger.js"></script>
+    <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var supplierType = new URLSearchParams(location.search).get('type') === 'VENDOR' ? 'VENDOR' : 'SUPPLIER';
         var typeLabel = supplierType === 'VENDOR' ? 'Vendor' : 'Supplier';
         var editingId = null;
+        var _lastLoadedSuppliers = [];
 
         document.addEventListener('DOMContentLoaded', function () {
             RBAC.applyPageGuard('suppliers:read');
@@ -285,6 +348,7 @@
             }
 
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-export').addEventListener('click', exportSuppliers);
             document.getElementById('btn-save').addEventListener('click', save);
 
             load();
@@ -296,11 +360,27 @@
             });
         }
 
+        function exportSuppliers() {
+            if (!_lastLoadedSuppliers.length) {
+                alert('No ' + typeLabel.toLowerCase() + 's to export.');
+                return;
+            }
+            CsvExport.download(typeLabel.toLowerCase() + 's.csv', [
+                { label: 'Name', get: function (s) { return s.name; } },
+                { label: 'Contact Person', get: function (s) { return s.contactPerson || ''; } },
+                { label: 'Phone', get: function (s) { return s.phone || ''; } },
+                { label: 'Email', get: function (s) { return s.email || ''; } },
+                { label: 'Preferred', get: function (s) { return s.isPreferred ? 'Yes' : 'No'; } },
+                { label: 'Status', get: function (s) { return s.isActive ? 'Active' : 'Inactive'; } },
+            ], _lastLoadedSuppliers);
+        }
+
         async function load() {
             var tbody = document.getElementById('tbody');
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var list = await Suppliers.getAll(supplierType);
+                _lastLoadedSuppliers = list;
                 document.getElementById('results-label').textContent = list.length + ' ' + typeLabel.toLowerCase() + (list.length === 1 ? '' : 's');
                 tbody.innerHTML = list.length
                     ? list.map(function (s) {
@@ -317,6 +397,7 @@
                             '<td>' + statusBadge + '</td>' +
                             '<td class="text-nowrap">' +
                             '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + s.id + '\')">Edit</button>' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewLedger(\'' + s.id + '\', \'' + esc(s.name).replace(/'/g, "\\'") + '\')">Ledger</button>' +
                             '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + s.id + '\')">Delete</button>' +
                             '</td>' +
                             '</tr>';
@@ -458,6 +539,94 @@
                 list.innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
             }
         }
+
+        var ledgerVendorId = null;
+
+        async function viewLedger(id, name) {
+            ledgerVendorId = id;
+            document.getElementById('ledger-modal-title').textContent = 'Ledger \u2014 ' + name;
+            var body = document.getElementById('ledger-body');
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+            var addBtn = document.getElementById('btn-add-adjustment');
+            addBtn.classList.toggle('d-none', !RBAC.can('suppliers:manage_ledger'));
+            new bootstrap.Modal(document.getElementById('modal-ledger')).show();
+            try {
+                var l = await VendorLedger.getVendorLedger(id);
+                var html = '<div class="row g-3 mb-4">' +
+                    '<div class="col-6"><div class="card card-sm"><div class="card-body text-center">' +
+                    '<div class="text-secondary small mb-1">Outstanding Payable</div>' +
+                    '<div class="h2 mb-0">' + VendorLedger.formatMoney(l.outstandingPayable) + '</div></div></div></div>' +
+                    '<div class="col-6"><div class="card card-sm"><div class="card-body text-center">' +
+                    '<div class="text-secondary small mb-1">Outstanding Goods</div>' +
+                    '<div class="h2 mb-0">' + VendorLedger.formatMoney(l.outstandingGoodsValue) + '</div></div></div></div>' +
+                    '</div>';
+
+                if (l.outstandingGoodsLines && l.outstandingGoodsLines.length) {
+                    html += '<h4>Undelivered Goods</h4><div class="table-responsive mb-4"><table class="table table-sm">' +
+                        '<thead><tr><th>Purchase</th><th>Product</th><th class="text-end">Ordered</th><th class="text-end">Received</th><th class="text-end">Outstanding</th><th class="text-end">Value</th></tr></thead><tbody>' +
+                        l.outstandingGoodsLines.map(function (line) {
+                            return '<tr><td>Purchase #' + line.purchaseNumber + '</td><td>' + esc(line.productName) + '</td>' +
+                                '<td class="text-end">' + line.orderedQty + '</td><td class="text-end">' + line.receivedQty + '</td>' +
+                                '<td class="text-end">' + line.outstandingQty + '</td><td class="text-end">' + VendorLedger.formatMoney(line.outstandingValue) + '</td></tr>';
+                        }).join('') + '</tbody></table></div>';
+                }
+
+                html += '<h4>Ledger History</h4><div class="table-responsive"><table class="table table-sm">' +
+                    '<thead><tr><th>Date</th><th>Type</th><th>Reference</th><th class="text-end">Amount</th></tr></thead><tbody>';
+                html += l.entries.length
+                    ? l.entries.map(function (entry) {
+                        var typeBadge = entry.type === 'PURCHASE' ? '<span class="badge bg-blue-lt">Purchase</span>'
+                            : entry.type === 'PAYMENT' ? '<span class="badge bg-green-lt">Payment</span>'
+                                : '<span class="badge bg-amber-lt">Adjustment</span>';
+                        var sign = entry.direction === 'INCREASES_PAYABLE' ? '+' : '\u2212';
+                        return '<tr><td>' + new Date(entry.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + '</td>' +
+                            '<td>' + typeBadge + '</td><td>' + esc(entry.reference) + '</td>' +
+                            '<td class="text-end">' + sign + ' ' + VendorLedger.formatMoney(entry.amount) + '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="4" class="text-center text-secondary py-3">No ledger activity yet.</td></tr>';
+                html += '</tbody></table></div>';
+
+                body.innerHTML = html;
+            } catch (e) {
+                body.innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load ledger.') + '</div>';
+            }
+        }
+
+        document.getElementById('btn-add-adjustment').addEventListener('click', function () {
+            document.getElementById('adj-error').classList.add('d-none');
+            document.getElementById('adj-type').value = 'CREDIT';
+            document.getElementById('adj-amount').value = '';
+            document.getElementById('adj-reason').value = '';
+            new bootstrap.Modal(document.getElementById('modal-adjustment')).show();
+        });
+
+        document.getElementById('btn-save-adjustment').addEventListener('click', async function () {
+            var errEl = document.getElementById('adj-error');
+            errEl.classList.add('d-none');
+            var amount = Number(document.getElementById('adj-amount').value);
+            var reason = document.getElementById('adj-reason').value.trim();
+            if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount.'; errEl.classList.remove('d-none'); return; }
+            if (!reason) { errEl.textContent = 'A reason is required.'; errEl.classList.remove('d-none'); return; }
+
+            var btn = document.getElementById('btn-save-adjustment');
+            btn.disabled = true;
+            try {
+                await VendorLedger.createAdjustment(ledgerVendorId, {
+                    type: document.getElementById('adj-type').value,
+                    amount: amount,
+                    reason: reason,
+                });
+                bootstrap.Modal.getInstance(document.getElementById('modal-adjustment')).hide();
+                // Refresh the ledger modal underneath with the new adjustment reflected.
+                var name = document.getElementById('ledger-modal-title').textContent.replace(/^Ledger \u2014 /, '');
+                viewLedger(ledgerVendorId, name);
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save adjustment.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 

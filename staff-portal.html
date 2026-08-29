@@ -1803,6 +1803,145 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #c2c2c2
     }
+
+    .pr-payslip-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 15, 15, .45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .pr-payslip-modal {
+      background: var(--dark2);
+      border-radius: var(--r);
+      box-shadow: var(--sh2);
+      width: 100%;
+      max-width: 560px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .pr-payslip-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .pr-payslip-modal-header h3 {
+      font-size: 16px;
+    }
+
+    .pr-payslip-modal-close {
+      background: none;
+      border: none;
+      font-size: 22px;
+      line-height: 1;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .pr-payslip-modal-close:hover {
+      color: var(--text);
+    }
+
+    .pr-payslip-modal-body {
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .pr-detail-section {
+      margin-bottom: 18px;
+    }
+
+    .pr-detail-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .pr-detail-section h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .pr-detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .pr-detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .pr-detail-row .label {
+      color: var(--light);
+    }
+
+    .pr-detail-row .value {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .pr-detail-row.total .value {
+      color: var(--gold);
+      font-size: 15px;
+    }
+
+    /* This page loads no external CSS framework -- only its own inline
+       styles -- so Bootstrap-style utility classes used throughout this
+       page's markup (including pre-existing code, e.g.
+       #sb-phone-match-prompt) need their own definitions here. Missing
+       .d-none in particular is a real bug: any element that starts
+       hidden via class="... d-none" in its static HTML (like the
+       payslip detail modal) is actually visible on page load without
+       this rule, since nothing was ever overriding the layout CSS that
+       shows it. */
+    .d-none {
+      display: none !important;
+    }
+
+    .spinner-border {
+      display: inline-block;
+      width: 1.5rem;
+      height: 1.5rem;
+      vertical-align: -0.125em;
+      border: 2px solid currentcolor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: pr-spinner-border 0.75s linear infinite;
+    }
+
+    @keyframes pr-spinner-border {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .text-primary {
+      color: var(--gold);
+    }
+
+    .text-danger {
+      color: var(--red);
+    }
+
+    .text-secondary {
+      color: var(--light);
+    }
   </style>
 </head>
 
@@ -1822,15 +1961,15 @@
     <div class="oc-modal-box" id="onboarding-modal-box"></div>
   </div>
 
-    <div class="oc-modal-overlay" id="profile-modal-overlay" style="display:none"
-      onclick="if(event.target===this) closeProfileModal()">
-      <div class="oc-modal-box" id="profile-modal-box"></div>
-    </div>
-    
-    <div class="oc-modal-overlay" id="training-viewer-overlay" style="display:none"
-      onclick="if(event.target===this) closeTrainingViewer()">
-      <div class="oc-modal-box" id="training-viewer-box" style="max-width:800px"></div>
-    </div>
+  <div class="oc-modal-overlay" id="profile-modal-overlay" style="display:none"
+    onclick="if(event.target===this) closeProfileModal()">
+    <div class="oc-modal-box" id="profile-modal-box"></div>
+  </div>
+
+  <div class="oc-modal-overlay" id="training-viewer-overlay" style="display:none"
+    onclick="if(event.target===this) closeTrainingViewer()">
+    <div class="oc-modal-box" id="training-viewer-box" style="max-width:800px"></div>
+  </div>
   <div id="sb-print-receipt" style="display:none">
     <div class="pr-center">
       <div style="font-weight:700">HAIRLUX SALON &amp; SPA</div>
@@ -2972,6 +3111,8 @@
                 <thead>
                   <tr>
                     <th>Period</th>
+                    <th>Reference</th>
+                    <th>Status</th>
                     <th>Gross Pay</th>
                     <th>Deductions</th>
                     <th>Net Pay</th>
@@ -2980,7 +3121,7 @@
                 </thead>
                 <tbody id="pr-payslips-tbody">
                   <tr>
-                    <td colspan="4" class="text-center py-4">
+                    <td colspan="7" class="text-center py-4">
                       <div class="spinner-border text-primary"></div>
                     </td>
                   </tr>
@@ -3223,14 +3364,14 @@
       });
       closeSidebar();
 
-            if (id === 'dashboard' && typeof loadOnboarding === 'function') {
+      if (id === 'dashboard' && typeof loadOnboarding === 'function') {
         loadOnboarding().then(() => { if (typeof renderDashboard === 'function') renderDashboard(); });
       }
       if (id === 'training' && typeof loadTraining === 'function') {
         loadTraining();
       }
     }
-    
+
     function startClock() {
       function upd() {
         const now = new Date(), h = now.getHours(), m = now.getMinutes();
@@ -3258,6 +3399,20 @@
       }
     }
   </script>
+
+  <div id="pr-payslip-detail-overlay" class="pr-payslip-overlay d-none">
+    <div class="pr-payslip-modal">
+      <div class="pr-payslip-modal-header">
+        <h3 id="pr-payslip-detail-title">Payslip detail</h3>
+        <button type="button" class="pr-payslip-modal-close" id="pr-payslip-detail-close"
+          aria-label="Close">&times;</button>
+      </div>
+      <div id="pr-payslip-detail-body" class="pr-payslip-modal-body">
+        <div class="spinner-border text-primary"></div>
+      </div>
+    </div>
+  </div>
+
   <script src="./assets/js/staff-portal-app.js"></script>
 </body>
 

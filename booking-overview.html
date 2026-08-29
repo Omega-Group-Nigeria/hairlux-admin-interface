@@ -254,7 +254,12 @@
             document.getElementById('btn-refresh-overview').addEventListener('click', loadOverview);
             document.getElementById('ov-date-from').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
             document.getElementById('ov-date-to').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
-            document.getElementById('ov-branch').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-branch').addEventListener('change', function () {
+                _currentPage = 1;
+                document.getElementById('ov-staff').value = '';
+                loadStaffFilter(this.value);
+                loadOverview();
+            });
             document.getElementById('ov-source').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
             document.getElementById('ov-status').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
             document.getElementById('ov-service').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
@@ -279,6 +284,7 @@
                 document.getElementById('ov-service').value = '';
                 document.getElementById('ov-staff').value = '';
                 _currentPage = 1;
+                loadStaffFilter();
                 loadOverview();
             });
 
@@ -315,11 +321,18 @@
             } catch (e) { /* non-fatal — service filter just stays at "All services" */ }
         }
 
-        async function loadStaffFilter() {
+        // Dev Feedback Round 5, item #5: same branch-scoped, no-reload
+        // staff re-fetch already applied elsewhere -- "All branches"
+        // (empty value) returns everyone. Resets the select back to just
+        // the static "All staff" option before repopulating, since this
+        // function builds options via appendChild (not innerHTML), and
+        // it's now called more than once per page load.
+        async function loadStaffFilter(branchId) {
             try {
-                var result = await Staff.getAll({ limit: 200 });
+                var result = await Staff.getAll({ limit: 200, locationId: branchId || undefined });
                 var staffList = result.data || result || [];
                 var select = document.getElementById('ov-staff');
+                select.innerHTML = '<option value="">All staff</option>';
                 staffList.forEach(function (s) {
                     var opt = document.createElement('option');
                     opt.value = s.id;

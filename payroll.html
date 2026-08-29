@@ -187,7 +187,11 @@
                 <!-- Withdrawal history -->
                 <div class="card mb-3">
                     <div class="card-header d-block">
-                        <h3 class="card-title mb-3">Withdrawal / Transaction History</h3>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h3 class="card-title mb-0">Withdrawal / Transaction History</h3>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-export-withdrawals">Export CSV</button>
+                        </div>
                         <div class="row g-2">
                             <div class="col-auto">
                                 <select class="form-select form-select-sm" id="withdrawal-status-filter">
@@ -200,13 +204,13 @@
                                 </select>
                             </div>
                             <div class="col-auto">
-                                <select class="form-select form-select-sm" id="withdrawal-staff-filter">
-                                    <option value="">All staff</option>
+                                <select class="form-select form-select-sm" id="withdrawal-branch-filter">
+                                    <option value="">All branches</option>
                                 </select>
                             </div>
                             <div class="col-auto">
-                                <select class="form-select form-select-sm" id="withdrawal-branch-filter">
-                                    <option value="">All branches</option>
+                                <select class="form-select form-select-sm" id="withdrawal-staff-filter">
+                                    <option value="">All staff</option>
                                 </select>
                             </div>
                             <div class="col-auto">
@@ -344,9 +348,30 @@
                                     <th class="text-end">Tax</th>
                                     <th class="text-end">Pension</th>
                                     <th class="text-end">Net Pay</th>
+                                    <th>Status</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="detail-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+                        <h4 class="mb-0">Bonuses &amp; Deductions</h4>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Reason</th>
+                                    <th>Effective Date</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="adjustments-tbody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -391,11 +416,21 @@
                             </optgroup>
                         </select>
                     </div>
-                    <div class="mb-2"><label class="form-label">Amount (\u20a6)</label>
+                    <div class="mb-2"><label class="form-label">Amount (₦)</label>
                         <input type="number" min="0.01" step="0.01" class="form-control" id="adj-amount">
                     </div>
                     <div class="mb-2"><label class="form-label">Reason</label>
                         <textarea class="form-control" id="adj-reason" rows="2"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Effective Date <span class="text-secondary">(optional)</span></label>
+                        <input type="date" class="form-control" id="adj-effective-date">
+                        <div class="form-hint">The date this actually pertains to, if different from today.</div>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Notes <span
+                                class="text-secondary">(optional)</span></label>
+                        <textarea class="form-control" id="adj-notes" rows="2"
+                            placeholder="Any further detail beyond the reason above"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -406,15 +441,76 @@
         </div>
     </div>
 
+    <!-- Correct Adjustment Modal -->
+    <div class="modal modal-blur fade" id="modal-correct-adjustment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Correct Amount</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="correct-adj-error"></div>
+                    <p class="text-secondary small mb-3" id="correct-adj-summary"></p>
+                    <div class="mb-2"><label class="form-label">Corrected Amount (₦)</label>
+                        <input type="number" min="0.01" step="0.01" class="form-control" id="correct-adj-amount">
+                    </div>
+                    <div class="mb-0"><label class="form-label">Reason for Correction</label>
+                        <textarea class="form-control" id="correct-adj-reason" rows="2"
+                            placeholder="Why is the original amount being corrected?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="btn-save-correct-adjustment">Save
+                        Correction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adjustment History Modal -->
+    <div class="modal modal-blur fade" id="modal-adjustment-history" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Correction History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                    <th>By</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adjustment-history-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/payroll.js"></script>
+    <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var currentPeriodId = null;
+        var currentPeriodStatus = null;
 
         document.addEventListener('DOMContentLoaded', function () {
             RBAC.applyPageGuardForCurrentPage();
@@ -429,14 +525,21 @@
             document.getElementById('btn-save-period').addEventListener('click', saveNewPeriod);
             document.getElementById('payday-switch').addEventListener('change', togglePayday);
             document.getElementById('btn-save-adjustment').addEventListener('click', saveAdjustment);
+            document.getElementById('btn-save-correct-adjustment').addEventListener('click', saveCorrectAdjustment);
             document.getElementById('withdrawal-status-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
             document.getElementById('withdrawal-staff-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
-            document.getElementById('withdrawal-branch-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('withdrawal-branch-filter').addEventListener('change', function () {
+                _withdrawalPage = 1;
+                document.getElementById('withdrawal-staff-filter').value = '';
+                loadWithdrawalStaffOptions(this.value);
+                loadWithdrawals();
+            });
             document.getElementById('withdrawal-from-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
             document.getElementById('withdrawal-to-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
             document.getElementById('btn-withdrawal-prev-page').addEventListener('click', function () {
                 if (_withdrawalPage > 1) { _withdrawalPage--; loadWithdrawals(); }
             });
+            document.getElementById('btn-export-withdrawals').addEventListener('click', exportWithdrawals);
             document.getElementById('btn-withdrawal-next-page').addEventListener('click', function () {
                 if (_withdrawalMeta && _withdrawalPage * _withdrawalMeta.limit < _withdrawalMeta.total) { _withdrawalPage++; loadWithdrawals(); }
             });
@@ -452,7 +555,8 @@
             loadSettings();
             loadPeriods();
             loadBankChanges();
-            loadWithdrawalFilterOptions();
+            loadWithdrawalBranches();
+            loadWithdrawalStaffOptions();
             loadWithdrawals();
             loadAuditLog();
             loadBankLookupStaffOptions();
@@ -463,19 +567,28 @@
         var _auditPage = 1;
         var _auditMeta = null;
 
-        async function loadWithdrawalFilterOptions() {
-            try {
-                var staffResult = await Staff.getAll({ limit: 200 });
-                var staffList = staffResult.data || [];
-                document.getElementById('withdrawal-staff-filter').innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
-                    return '<option value="' + s.id + '">' + esc(s.name) + '</option>';
-                }).join('');
-            } catch (e) { /* non-fatal */ }
-
+        async function loadWithdrawalBranches() {
             try {
                 var branches = await Branches.getBranches();
                 document.getElementById('withdrawal-branch-filter').innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
                     return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+            } catch (e) { /* non-fatal */ }
+        }
+
+        // Dev Feedback Round 5, item #4: staff filter re-fetches scoped to
+        // whichever branch is currently selected, without a page reload --
+        // "All branches" (empty value) returns everyone. Called on branch
+        // change too, so switching back to "All Branches" resets the staff
+        // list rather than leaving it filtered to whatever branch was
+        // previously selected.
+        async function loadWithdrawalStaffOptions(branchId) {
+            var select = document.getElementById('withdrawal-staff-filter');
+            try {
+                var staffResult = await Staff.getAll({ limit: 200, locationId: branchId || undefined });
+                var staffList = staffResult.data || [];
+                select.innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
+                    return '<option value="' + s.id + '">' + esc(s.name) + '</option>';
                 }).join('');
             } catch (e) { /* non-fatal */ }
         }
@@ -600,10 +713,26 @@
             }
         }
 
+        async function runCorrectPayslip(id, staffName) {
+            // Guide, section 15: a correction retains the original (marked
+            // superseded) and generates a fresh, recalculated replacement
+            // alongside it -- always requires a reason, shown to the staff
+            // member as the correction reference.
+            var reason = prompt('Why is ' + staffName + '\'s payslip being corrected? This will be shown to them as the correction reason.');
+            if (reason === null) return;
+            if (!reason.trim()) { alert('A reason is required to correct a payslip.'); return; }
+            try {
+                await Payroll.correctPayslip(id, reason.trim());
+                viewPeriod(currentPeriodId);
+            } catch (e) {
+                alert(e.message || 'Failed to correct payslip.');
+            }
+        }
+
         async function viewPeriod(id) {
             currentPeriodId = id;
             var tbody = document.getElementById('detail-tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
             new bootstrap.Modal(document.getElementById('modal-period-detail')).show();
 
             try {
@@ -619,6 +748,13 @@
                 tbody.innerHTML = payslips.length
                     ? payslips.map(function (p) {
                         var deductions = Number(p.totalDeductions) - Number(p.taxDeduction) - Number(p.pensionDeduction);
+                        var statusBadge = p.status === 'CORRECTED'
+                            ? '<span class="badge bg-amber-lt">Corrected</span>'
+                            : '<span class="badge bg-green-lt">Published</span>';
+                        var rowActions = '';
+                        if (period.status === 'RELEASED' && RBAC.can('payroll:correct')) {
+                            rowActions = '<button class="btn btn-sm btn-outline-warning" onclick="runCorrectPayslip(\'' + p.id + '\', \'' + esc(p.staff.name).replace(/'/g, "\\'") + '\')">Correct</button>';
+                        }
                         return '<tr>' +
                             '<td>' + esc(p.staff.name) + '<div class="text-secondary small">' + esc(p.staff.staffCode || '') + '</div></td>' +
                             '<td class="text-end">' + Payroll.formatMoney(p.baseSalary) + '</td>' +
@@ -628,11 +764,98 @@
                             '<td class="text-end">' + Payroll.formatMoney(p.taxDeduction) + '</td>' +
                             '<td class="text-end">' + Payroll.formatMoney(p.pensionDeduction) + '</td>' +
                             '<td class="text-end fw-bold">' + Payroll.formatMoney(p.netPay) + '</td>' +
+                            '<td>' + statusBadge + '</td>' +
+                            '<td>' + rowActions + '</td>' +
                             '</tr>';
                     }).join('')
-                    : '<tr><td colspan="8" class="text-center text-secondary py-4">No payslips yet \u2014 generate this period first.</td></tr>';
+                    : '<tr><td colspan="10" class="text-center text-secondary py-4">No payslips yet \u2014 generate this period first.</td></tr>';
+
+                loadAdjustments(id, period.status);
+                currentPeriodStatus = period.status;
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function loadAdjustments(periodId, periodStatus) {
+            var tbody = document.getElementById('adjustments-tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            try {
+                var list = await Payroll.listAdjustments(periodId);
+                var canManage = RBAC.can('payroll:manage_adjustments');
+                var canCorrect = canManage && periodStatus !== 'DRAFT';
+                tbody.innerHTML = list.length
+                    ? list.map(function (a) {
+                        var typeBadge = a.type === 'BONUS' ? '<span class="badge bg-green-lt">Bonus</span>' : '<span class="badge bg-red-lt">Deduction</span>';
+                        var actions = '';
+                        if (canCorrect) actions += '<button class="btn btn-sm btn-outline-warning me-1" onclick="openCorrectAdjustmentModal(\'' + a.id + '\', \'' + esc(a.staff.name).replace(/'/g, "\\'") + '\', ' + Number(a.amount) + ')">Correct</button>';
+                        actions += '<button class="btn btn-sm btn-outline-secondary" onclick="viewAdjustmentHistory(\'' + a.id + '\')">History</button>';
+                        return '<tr>' +
+                            '<td>' + esc(a.staff.name) + '</td>' +
+                            '<td>' + typeBadge + '</td>' +
+                            '<td>' + esc(a.category) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(a.amount) + '</td>' +
+                            '<td class="text-secondary small">' + esc(a.reason) + '</td>' +
+                            '<td class="text-secondary small">' + (a.effectiveDate ? new Date(a.effectiveDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '\u2014') + '</td>' +
+                            '<td class="text-nowrap">' + actions + '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="7" class="text-center text-secondary py-3">No bonuses or deductions recorded for this period.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        var _pendingCorrectAdjustmentId = null;
+
+        function openCorrectAdjustmentModal(id, staffName, currentAmount) {
+            _pendingCorrectAdjustmentId = id;
+            document.getElementById('correct-adj-error').classList.add('d-none');
+            document.getElementById('correct-adj-summary').textContent = staffName + ' \u2014 current amount: ' + Payroll.formatMoney(currentAmount);
+            document.getElementById('correct-adj-amount').value = currentAmount;
+            document.getElementById('correct-adj-reason').value = '';
+            new bootstrap.Modal(document.getElementById('modal-correct-adjustment')).show();
+        }
+
+        async function saveCorrectAdjustment() {
+            var errEl = document.getElementById('correct-adj-error');
+            errEl.classList.add('d-none');
+            var amount = document.getElementById('correct-adj-amount').value;
+            var reason = document.getElementById('correct-adj-reason').value.trim();
+            if (!amount || !reason) { errEl.textContent = 'Both the corrected amount and a reason are required.'; errEl.classList.remove('d-none'); return; }
+
+            var btn = document.getElementById('btn-save-correct-adjustment');
+            btn.disabled = true;
+            try {
+                await Payroll.correctAdjustment(_pendingCorrectAdjustmentId, { amount: Number(amount), correctionReason: reason });
+                bootstrap.Modal.getInstance(document.getElementById('modal-correct-adjustment')).hide();
+                loadAdjustments(currentPeriodId, currentPeriodStatus);
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save correction.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function viewAdjustmentHistory(id) {
+            var tbody = document.getElementById('adjustment-history-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById('modal-adjustment-history')).show();
+            try {
+                var chain = await Payroll.getAdjustmentHistory(id);
+                tbody.innerHTML = chain.map(function (row, i) {
+                    var statusBadge = row.status === 'ACTIVE'
+                        ? '<span class="badge bg-green-lt">' + (i === 0 ? 'Original' : 'Current') + '</span>'
+                        : '<span class="badge bg-secondary-lt">Superseded</span>';
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + Payroll.formatMoney(row.amount) + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td class="text-secondary small">' + esc(row.correctionReason || row.reason) + '</td>' +
+                        '<td class="text-secondary small">' + (row.createdBy ? esc(row.createdBy.name) : '\u2014') + '</td>' +
+                        '<td class="text-secondary small">' + new Date(row.createdAt).toLocaleString() + '</td></tr>';
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
         }
 
@@ -653,6 +876,8 @@
             document.getElementById('adj-error').classList.add('d-none');
             document.getElementById('adj-amount').value = '';
             document.getElementById('adj-reason').value = '';
+            document.getElementById('adj-effective-date').value = '';
+            document.getElementById('adj-notes').value = '';
 
             var opts = await ensureStaffOptions();
             document.getElementById('adj-staff').innerHTML = '<option value="">Select…</option>' + opts;
@@ -707,6 +932,8 @@
                     category: document.getElementById('adj-category').value,
                     amount: Number(amount),
                     reason: reason,
+                    effectiveDate: document.getElementById('adj-effective-date').value || undefined,
+                    notes: document.getElementById('adj-notes').value.trim() || undefined,
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modal-adjustment')).hide();
                 viewPeriod(currentPeriodId);
@@ -744,6 +971,42 @@
         async function rejectBankChange(staffId) {
             try { await Payroll.rejectBankChange(staffId); loadBankChanges(); }
             catch (e) { alert(e.message || 'Failed to reject.'); }
+        }
+
+        async function exportWithdrawals() {
+            var btn = document.getElementById('btn-export-withdrawals');
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Exporting…';
+            try {
+                var result = await Payroll.listWithdrawals({
+                    status: document.getElementById('withdrawal-status-filter').value,
+                    staffId: document.getElementById('withdrawal-staff-filter').value,
+                    locationId: document.getElementById('withdrawal-branch-filter').value,
+                    from: document.getElementById('withdrawal-from-filter').value,
+                    to: document.getElementById('withdrawal-to-filter').value,
+                    limit: 100000, // every matching withdrawal, not just the on-screen page
+                });
+                var list = result.data || [];
+                if (!list.length) {
+                    alert('No withdrawals to export for the current filters.');
+                    return;
+                }
+                CsvExport.download('withdrawal-history.csv', [
+                    { label: 'Staff', get: function (w) { return w.staff.name; } },
+                    { label: 'Branch', get: function (w) { return w.staff.location ? w.staff.location.name : ''; } },
+                    { label: 'Amount', get: function (w) { return w.amount; } },
+                    { label: 'Account Name', get: function (w) { return w.accountName || ''; } },
+                    { label: 'Account Number', get: function (w) { return w.accountNumber || ''; } },
+                    { label: 'Status', get: function (w) { return w.status; } },
+                    { label: 'Requested', get: function (w) { return Payroll.formatDate(w.createdAt); } },
+                ], list);
+            } catch (e) {
+                alert(e.message || 'Failed to export withdrawals.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
         }
 
         async function loadWithdrawals() {

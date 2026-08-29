@@ -72,6 +72,7 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Purchase Requests", href: "purchase-requests.html" },
                 { label: "Purchases", href: "purchases.html" },
                 { label: "Financial Dashboard", href: "financial-dashboard.html" },
+                { label: "Profitability Report", href: "profitability-report.html" },
                 { label: "Suppliers", href: "suppliers.html" },
                 { label: "Vendors", href: "vendors.html" },
             ],
@@ -80,19 +81,28 @@ var NavConfig = window.NavConfig || (() => {
             id: "payroll",
             label: "Payroll",
             icon: "users",
-            href: "payroll.html",
             permission: {
                 type: "requireAny",
                 // Dev Feedback Round 4, item #37: payroll:manage was split
                 // into 7 granular permissions -- listed here so a user
                 // with even a subset of them (not necessarily all) still
-                // sees this nav item.
+                // sees this nav item. Payroll Engine v2, Phase 4: the
+                // commission-plan permissions are included too, so a user
+                // with only those (and none of the period/payslip ones)
+                // still sees the group and can reach Commission Plans.
                 perms: [
                     "payroll:read", "payroll:manage_compensation", "payroll:approve_bank_change",
                     "payroll:create_period", "payroll:generate", "payroll:approve_period",
                     "payroll:manage_adjustments", "payroll:manage_settings", "payroll:correct",
+                    "payroll:read_commission_plans", "payroll:create_commission_plan",
+                    "payroll:update_commission_plan", "payroll:delete_commission_plan",
+                    "payroll:assign_commission_plan",
                 ],
             },
+            children: [
+                { label: "Payroll", href: "payroll.html" },
+                { label: "Commission Plans", href: "commission-plans.html" },
+            ],
         },
         {
             id: "services",
@@ -268,4 +278,4 @@ var NavConfig = window.NavConfig || (() => {
         getAccessiblePageOrder,
     };
 })();
-window.NavConfig = NavConfig;
+window.NavConfig = NavConfig; 

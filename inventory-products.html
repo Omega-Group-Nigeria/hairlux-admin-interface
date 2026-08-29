@@ -75,6 +75,8 @@
                                 here throughout Procurement, never re-entered per branch.</div>
                         </div>
                         <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary me-2" id="btn-export">Export
+                                CSV</button>
                             <button type="button" class="btn btn-primary" id="btn-new">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -236,12 +238,14 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
     <script src="assets/js/api-utils/inventory-products.js"></script>
+    <script src="assets/js/csv-export.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var editingId = null;
         var _allVendors = [];
         var _searchDebounce = null;
+        var _lastLoadedProducts = [];
 
         var CATEGORY_LABELS = { FOR_SALE: 'For Sale', INTERNAL_USE: 'Internal Use', STORAGE: 'Storage' };
 
@@ -249,6 +253,7 @@
             RBAC.applyPageGuard('inventory_products:read');
 
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-export').addEventListener('click', exportProducts);
             document.getElementById('btn-save').addEventListener('click', save);
             document.getElementById('f-category-filter').addEventListener('change', load);
             document.getElementById('f-search').addEventListener('input', function () {
@@ -304,6 +309,22 @@
             document.querySelectorAll('.vendor-checkbox').forEach(function (el) { el.checked = set.has(el.value); });
         }
 
+        function exportProducts() {
+            if (!_lastLoadedProducts.length) {
+                alert('No products to export for the current filters.');
+                return;
+            }
+            CsvExport.download('inventory-products.csv', [
+                { label: 'Name', get: function (p) { return p.name; } },
+                { label: 'SKU', get: function (p) { return p.sku || ''; } },
+                { label: 'Brand', get: function (p) { return p.brand || ''; } },
+                { label: 'Category', get: function (p) { return CATEGORY_LABELS[p.category] || p.category; } },
+                { label: 'Cost Price', get: function (p) { return p.costPrice; } },
+                { label: 'Selling Price', get: function (p) { return p.sellingPrice; } },
+                { label: 'Status', get: function (p) { return p.isActive ? 'Active' : 'Inactive'; } },
+            ], _lastLoadedProducts);
+        }
+
         async function load() {
             var tbody = document.getElementById('tbody');
             tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
@@ -311,6 +332,7 @@
                 var search = document.getElementById('f-search').value.trim();
                 var category = document.getElementById('f-category-filter').value;
                 var list = await InventoryProducts.getAll(search, category);
+                _lastLoadedProducts = list;
                 tbody.innerHTML = list.length
                     ? list.map(function (p) {
                         var statusBadge = p.isActive

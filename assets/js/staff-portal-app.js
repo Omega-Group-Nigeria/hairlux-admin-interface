@@ -3200,17 +3200,140 @@ async function prLoadPayslips() {
     tbody.innerHTML = payslips.length
       ? payslips.map(function (p) {
         var period = p.payrollPeriod ? p.payrollPeriod.label : '\u2014';
-        return '<tr><td>' + escapeHtml(period) + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td>' +
-          '<td><button class="btn btn-ghost btn-sm pr-download-payslip" data-id="' + p.id + '">Download</button></td></tr>';
+        var statusBadge = p.status === 'CORRECTED'
+          ? '<span class="badge b-amber">Corrected</span>'
+          : '<span class="badge b-green">Published</span>';
+        return '<tr><td>' + escapeHtml(period) + '</td><td>' + escapeHtml(p.payslipReference || '\u2014') + '</td><td>' + statusBadge + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td>' +
+          '<td><button class="btn btn-ghost btn-sm pr-view-payslip" data-id="' + p.id + '">View</button> <button class="btn btn-ghost btn-sm pr-download-payslip" data-id="' + p.id + '">Download</button></td></tr>';
       }).join('')
-      : '<tr><td colspan="5" class="text-center text-secondary py-4">No payslips yet.</td></tr>';
+      : '<tr><td colspan="7" class="text-center text-secondary py-4">No payslips yet.</td></tr>';
     tbody.querySelectorAll('.pr-download-payslip').forEach(function (btn) {
       btn.addEventListener('click', function () { prDownloadPayslip(btn.dataset.id, btn); });
     });
+    tbody.querySelectorAll('.pr-view-payslip').forEach(function (btn) {
+      btn.addEventListener('click', function () { prOpenPayslipDetail(btn.dataset.id); });
+    });
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
   }
 }
+
+function prFmtDate(d) {
+  if (!d) return '\u2014';
+  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function prDetailRow(label, value, isTotal) {
+  return '<div class="pr-detail-row' + (isTotal ? ' total' : '') + '"><span class="label">' + escapeHtml(label) + '</span><span class="value">' + value + '</span></div>';
+}
+
+async function prOpenPayslipDetail(id) {
+  var overlay = document.getElementById('pr-payslip-detail-overlay');
+  var body = document.getElementById('pr-payslip-detail-body');
+  var title = document.getElementById('pr-payslip-detail-title');
+  overlay.classList.remove('d-none');
+  body.innerHTML = '<div class="spinner-border text-primary"></div>';
+  try {
+    var p = await PayrollSelf.getPayslipDetail(id);
+    title.textContent = 'Payslip \u2014 ' + (p.payrollPeriod ? p.payrollPeriod.label : '');
+
+    var html = '';
+
+    html += '<div class="pr-detail-section"><h4>Overview</h4>';
+    html += prDetailRow('Reference', escapeHtml(p.payslipReference || '\u2014'));
+    html += prDetailRow('Status', p.status === 'CORRECTED' ? '<span class="badge b-amber">Corrected</span>' : '<span class="badge b-green">Published</span>');
+    html += prDetailRow('Published', prFmtDate(p.publishedAt));
+    html += '</div>';
+
+    // Guide, section 15 "Salary fields" -- show only when salary applies.
+    if (p.fullMonthScheduledWorkdays != null) {
+      html += '<div class="pr-detail-section"><h4>Salary</h4>';
+      html += prDetailRow('Full-month scheduled workdays', p.fullMonthScheduledWorkdays);
+      html += prDetailRow('Applicable scheduled workdays', p.applicableScheduledWorkdays);
+      if (p.missedWorkdays) html += prDetailRow('Missed workdays', p.missedWorkdays);
+      if (p.approvedExtraWorkdaysCount) html += prDetailRow('Approved extra workdays', p.approvedExtraWorkdaysCount);
+      html += prDetailRow('Payable workdays', p.payableWorkdays);
+      html += prDetailRow('Daily rate', sbFormatMoney(p.dailyRate));
+      html += prDetailRow('Salary earned', sbFormatMoney(p.salaryEarned));
+      html += '</div>';
+    }
+
+    // "First applicable payroll month" -- show only when relevant.
+    if (p.isFirstMonth && p.staffHireDateSnapshot) {
+      html += '<div class="pr-detail-section"><h4>First payroll month</h4>';
+      html += prDetailRow('Start date', prFmtDate(p.staffHireDateSnapshot));
+      html += '</div>';
+    }
+
+    // Salary-to-commission fields -- show only when this payslip actually used the cutoff rule.
+    if (p.cutoffClassification) {
+      html += '<div class="pr-detail-section"><h4>Salary-to-commission</h4>';
+      html += prDetailRow('Cutoff day', p.cutoffDayUsed);
+      html += prDetailRow('Classification', p.cutoffClassification === 'BEFORE_CUTOFF' ? 'Before cutoff' : 'On/after cutoff');
+      if (p.salaryPeriodStart) html += prDetailRow('Salary period', prFmtDate(p.salaryPeriodStart) + ' \u2013 ' + prFmtDate(p.salaryPeriodEnd));
+      if (p.commissionPeriodStart) html += prDetailRow('Commission period', prFmtDate(p.commissionPeriodStart) + ' \u2013 ' + prFmtDate(p.commissionPeriodEnd));
+      html += prDetailRow('Transition date', prFmtDate(p.transitionDate));
+      html += '</div>';
+    }
+
+    // Commission fields -- show only when commission applies.
+    if (Number(p.commissionEarned) > 0 || p.commissionPlanIdUsed) {
+      html += '<div class="pr-detail-section"><h4>Commission</h4>';
+      html += prDetailRow('Commission earned', sbFormatMoney(p.commissionEarned));
+      if (p.commissionRateUsed) html += prDetailRow('Rate used', (Number(p.commissionRateUsed) * 100).toFixed(1) + '%');
+      html += '</div>';
+    }
+
+    html += '<div class="pr-detail-section"><h4>Earnings</h4>';
+    if (Number(p.allowances) > 0) html += prDetailRow('Allowances', sbFormatMoney(p.allowances));
+    if (Number(p.bonusTotal) > 0) html += prDetailRow('Bonus', sbFormatMoney(p.bonusTotal));
+    if (Number(p.extraWorkDayEarnings) > 0) html += prDetailRow('Extra work day earnings', sbFormatMoney(p.extraWorkDayEarnings));
+    html += prDetailRow('Gross pay', sbFormatMoney(p.grossPay), true);
+    html += '</div>';
+
+    html += '<div class="pr-detail-section"><h4>Deductions</h4>';
+    if (Number(p.attendanceDeduction) > 0) html += prDetailRow('Attendance', sbFormatMoney(p.attendanceDeduction));
+    if (Number(p.latePenaltyDeduction) > 0) html += prDetailRow('Late penalty', sbFormatMoney(p.latePenaltyDeduction));
+    if (Number(p.fineTotal) > 0) html += prDetailRow('Fines', sbFormatMoney(p.fineTotal));
+    if (Number(p.loanRepayment) > 0) html += prDetailRow('Loan repayment', sbFormatMoney(p.loanRepayment));
+    if (Number(p.taxDeduction) > 0) html += prDetailRow('Tax (PAYE)', sbFormatMoney(p.taxDeduction));
+    if (Number(p.pensionDeduction) > 0) html += prDetailRow('Pension', sbFormatMoney(p.pensionDeduction));
+    if (Number(p.otherDeductionTotal) > 0) html += prDetailRow('Other', sbFormatMoney(p.otherDeductionTotal));
+    html += prDetailRow('Total deductions', sbFormatMoney(p.totalDeductions), true);
+    html += '</div>';
+
+    html += '<div class="pr-detail-section"><h4>Net pay</h4>';
+    html += prDetailRow('Net pay', sbFormatMoney(p.netPay), true);
+    html += '</div>';
+
+    // Guide, section 15 #5/#11: show the correction reference where this
+    // payslip is itself a correction, or was later corrected.
+    if (p.correctionReference) {
+      html += '<div class="pr-detail-section"><h4>Correction</h4>';
+      html += prDetailRow('Reason', escapeHtml(p.correctionReference));
+      if (p.supersedes) html += prDetailRow('Replaces', escapeHtml(p.supersedes.payslipReference || ''));
+      html += '</div>';
+    }
+    if (p.supersededBy) {
+      html += '<div class="pr-detail-section"><h4>Superseded</h4>';
+      html += prDetailRow('Replaced by', escapeHtml(p.supersededBy.payslipReference || ''));
+      html += '</div>';
+    }
+
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div class="text-danger">' + escapeHtml(err.message || 'Failed to load payslip.') + '</div>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  var closeBtn = document.getElementById('pr-payslip-detail-close');
+  var overlay = document.getElementById('pr-payslip-detail-overlay');
+  if (closeBtn && overlay) {
+    closeBtn.addEventListener('click', function () { overlay.classList.add('d-none'); });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.classList.add('d-none'); });
+  }
+});
 
 async function prDownloadPayslip(id, btn) {
   var original = btn.textContent;

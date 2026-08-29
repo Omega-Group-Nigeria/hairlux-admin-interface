@@ -503,11 +503,23 @@
             try {
                 var branches = await ensureBranchesCache();
                 document.getElementById("filter-location").innerHTML = '<option value="">All branches</option>' + branchOptionsHtml(branches);
-                var staffList = await ensureStaffCache();
-                document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffOptionsHtml(staffList);
+                await loadFilterStaffOptions();
             } catch (e) {
                 flashPageAlert("danger", "Failed to load filter options: " + (e.message || ""));
             }
+        }
+
+        // Dev Feedback Round 5, item #5: dedicated to the RESULTS filter
+        // specifically -- deliberately separate from ensureStaffCache(),
+        // which is shared with the task-row "assign to staff" picker
+        // that must always show every staff member regardless of this
+        // filter's branch selection. Same branch-scoped, no-reload
+        // re-fetch pattern already applied elsewhere.
+        async function loadFilterStaffOptions(branchId) {
+            try {
+                var result = await Staff.getAll({ limit: 100, locationId: branchId || undefined });
+                document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffOptionsHtml(result.data);
+            } catch (e) { /* non-fatal — staff filter just stays at "All staff" */ }
         }
 
         function applyFiltersFromInputs() {
@@ -526,6 +538,7 @@
                 document.getElementById(id).value = "";
             });
             _currentFilters = {};
+            loadFilterStaffOptions();
             loadDirectives();
         }
 
@@ -730,7 +743,11 @@
             document.getElementById("btn-save-edit-directive").addEventListener("click", saveEditDirective);
 
             document.getElementById("filter-status").addEventListener("change", applyFiltersFromInputs);
-            document.getElementById("filter-location").addEventListener("change", applyFiltersFromInputs);
+            document.getElementById("filter-location").addEventListener("change", function () {
+                document.getElementById("filter-staff").value = "";
+                loadFilterStaffOptions(this.value);
+                applyFiltersFromInputs();
+            });
             document.getElementById("filter-staff").addEventListener("change", applyFiltersFromInputs);
             document.getElementById("filter-due-after").addEventListener("change", applyFiltersFromInputs);
             document.getElementById("filter-due-before").addEventListener("change", applyFiltersFromInputs);

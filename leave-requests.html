@@ -303,7 +303,11 @@
                 state.staffId = this.value; state.page = 1; loadRequests();
             });
             document.getElementById("filter-branch").addEventListener("change", function () {
-                state.locationId = this.value; state.page = 1; loadRequests();
+                state.locationId = this.value; state.page = 1;
+                document.getElementById("filter-staff").value = "";
+                state.staffId = "";
+                loadFilterStaffOptions(this.value);
+                loadRequests();
             });
             document.getElementById("filter-from").addEventListener("change", function () {
                 state.from = this.value; state.page = 1; loadRequests();
@@ -324,6 +328,7 @@
                 document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
                 state = { page: 1, limit: 20, status: '', type: '', staffId: '', locationId: '', from: '', to: '', totalPages: 1 };
+                loadFilterStaffOptions();
                 loadRequests();
             });
             document.getElementById("btn-download-csv").addEventListener("click", downloadLeaveRequestsCsv);
@@ -361,19 +366,26 @@
 
         async function loadFilterOptions() {
             try {
-                var staffResult = await Staff.getAll({ limit: 200 });
-                var staffList = staffResult.data || [];
-                document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
-                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
-                }).join('');
-            } catch (err) { /* non-fatal — filter just stays at "All staff" */ }
-
-            try {
                 var branches = await Branches.getBranches();
                 document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
                     return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>';
                 }).join('');
             } catch (err) { /* non-fatal — filter just stays at "All branches" */ }
+
+            await loadFilterStaffOptions();
+        }
+
+        // Dev Feedback Round 5, item #5: same branch-scoped, no-reload
+        // staff re-fetch already applied to Withdrawal History and
+        // Attendance -- "All branches" (empty value) returns everyone.
+        async function loadFilterStaffOptions(branchId) {
+            try {
+                var staffResult = await Staff.getAll({ limit: 200, locationId: branchId || undefined });
+                var staffList = staffResult.data || [];
+                document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
+                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
+                }).join('');
+            } catch (err) { /* non-fatal — filter just stays at "All staff" */ }
         }
 
         /**

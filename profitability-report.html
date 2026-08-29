@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Profitability Report</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .metric-card {
+            padding: 16px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--tblr-secondary-color);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Procurement</div>
+                            <h2 class="page-title">Profitability Report</h2>
+                            <div class="text-secondary small mt-1">Revenue and cost across every product sale —
+                                standalone retail and products sold during a completed booking.</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-export-products">Export
+                                CSV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <select class="form-select" id="f-branch">
+                                <option value="">All branches</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="f-from" placeholder="From">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="f-to" placeholder="To">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear
+                                Filters</button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning d-none" id="unknown-cost-warning"></div>
+
+                    <div class="row row-cards mb-3">
+                        <div class="col-md-3">
+                            <div class="card metric-card">
+                                <div class="metric-label">Revenue</div>
+                                <div class="metric-value" id="metric-revenue">—</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card">
+                                <div class="metric-label">Cost of Goods Sold</div>
+                                <div class="metric-value" id="metric-cogs">—</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card">
+                                <div class="metric-label">Gross Profit</div>
+                                <div class="metric-value text-success" id="metric-profit">—</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card">
+                                <div class="metric-label">Gross Margin</div>
+                                <div class="metric-value" id="metric-margin">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h3 class="card-title">By Source</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Source</th>
+                                        <th class="text-end">Revenue</th>
+                                        <th class="text-end">COGS</th>
+                                        <th class="text-end">Gross Profit</th>
+                                        <th class="text-end">Margin</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="source-tbody">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-block">
+                            <h3 class="card-title mb-0">Top Products by Revenue</h3>
+                            <div class="text-secondary small mt-1">Showing the top 10 — Export CSV includes every
+                                product in this range.</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Qty Sold</th>
+                                        <th class="text-end">Revenue</th>
+                                        <th class="text-end">COGS</th>
+                                        <th class="text-end">Gross Profit</th>
+                                        <th class="text-end">Margin</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="products-tbody">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/reports.js"></script>
+    <script src="assets/js/csv-export.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var _lastReport = null;
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('reports:read_profitability');
+
+            ['f-branch', 'f-from', 'f-to'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', load);
+            });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-branch').value = '';
+                document.getElementById('f-from').value = '';
+                document.getElementById('f-to').value = '';
+                load();
+            });
+            document.getElementById('btn-export-products').addEventListener('click', exportProducts);
+
+            try {
+                var branches = await Branches.getBranches();
+                document.getElementById('f-branch').innerHTML += branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+            } catch (e) { /* branch filter just stays with "All branches" */ }
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function formatMoney(v) {
+            return '₦' + Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function currentFilters() {
+            return {
+                branchId: document.getElementById('f-branch').value,
+                from: document.getElementById('f-from').value,
+                to: document.getElementById('f-to').value,
+            };
+        }
+
+        async function load() {
+            var warningEl = document.getElementById('unknown-cost-warning');
+            warningEl.classList.add('d-none');
+            document.getElementById('source-tbody').innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            document.getElementById('products-tbody').innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+
+            try {
+                var report = await Reports.getProfitability(currentFilters());
+                _lastReport = report;
+
+                document.getElementById('metric-revenue').textContent = formatMoney(report.revenue);
+                document.getElementById('metric-cogs').textContent = formatMoney(report.cogs);
+                document.getElementById('metric-profit').textContent = formatMoney(report.grossProfit);
+                document.getElementById('metric-margin').textContent = report.grossMarginPercent.toFixed(1) + '%';
+
+                if (report.linesWithUnknownCost > 0) {
+                    warningEl.textContent = report.linesWithUnknownCost + ' sale line(s) in this range have no linked product cost, so COGS and Gross Profit here may be understated.';
+                    warningEl.classList.remove('d-none');
+                }
+
+                var bySource = report.bySource;
+                document.getElementById('source-tbody').innerHTML =
+                    ['standaloneSales', 'bookingSales'].map(function (key) {
+                        var s = bySource[key];
+                        var label = key === 'standaloneSales' ? 'Standalone Product Sales' : 'Products Sold During Bookings';
+                        return '<tr>' +
+                            '<td>' + label + '</td>' +
+                            '<td class="text-end">' + formatMoney(s.revenue) + '</td>' +
+                            '<td class="text-end">' + formatMoney(s.cogs) + '</td>' +
+                            '<td class="text-end">' + formatMoney(s.grossProfit) + '</td>' +
+                            '<td class="text-end">' + s.grossMarginPercent.toFixed(1) + '%</td>' +
+                            '</tr>';
+                    }).join('');
+
+                document.getElementById('products-tbody').innerHTML = report.products.length
+                    ? report.products.slice(0, 10).map(function (p) {
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(p.productName) + '</td>' +
+                            '<td class="text-end">' + p.quantitySold + '</td>' +
+                            '<td class="text-end">' + formatMoney(p.revenue) + '</td>' +
+                            '<td class="text-end">' + formatMoney(p.cogs) + '</td>' +
+                            '<td class="text-end">' + formatMoney(p.grossProfit) + '</td>' +
+                            '<td class="text-end">' + p.grossMarginPercent.toFixed(1) + '%</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No product sales in this range yet.</td></tr>';
+            } catch (e) {
+                document.getElementById('source-tbody').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                document.getElementById('products-tbody').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        function exportProducts() {
+            if (!_lastReport || !_lastReport.products.length) {
+                alert('No product data to export for the current filters.');
+                return;
+            }
+            CsvExport.download('profitability-by-product.csv', [
+                { label: 'Product', get: function (p) { return p.productName; } },
+                { label: 'Quantity Sold', get: function (p) { return p.quantitySold; } },
+                { label: 'Revenue', get: function (p) { return p.revenue; } },
+                { label: 'COGS', get: function (p) { return p.cogs; } },
+                { label: 'Gross Profit', get: function (p) { return p.grossProfit; } },
+                { label: 'Gross Margin %', get: function (p) { return p.grossMarginPercent; } },
+            ], _lastReport.products);
+        }
+    </script>
+</body>
+
+</html>
