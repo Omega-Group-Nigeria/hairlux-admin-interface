@@ -426,6 +426,15 @@
                             <option value="">None</option>
                         </select>
                     </div>
+                    <div class="mb-2"><label class="form-label">Linked Product</label>
+                        <select class="form-select" id="ei-product">
+                            <option value="">Not linked</option>
+                        </select>
+                        <div class="form-hint">Links this item to the shared product master record. Required for stock
+                            alerts to be pushed into a purchase request, service consumption recipes, and profitability
+                            reporting — an item added directly (rather than via goods receiving) may never have been
+                            linked.</div>
+                    </div>
                     <div class="mb-2"><label class="form-label">Low Stock Threshold</label>
                         <input type="number" class="form-control" id="ei-threshold" min="0">
                     </div>
@@ -640,6 +649,7 @@
     <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/api-utils/inventory.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
+    <script src="assets/js/api-utils/inventory-products.js"></script>
     <script src="assets/js/api-utils/purchase-requests.js"></script>
     <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/tabler.min.js"></script>
@@ -679,6 +689,7 @@
 
             loadBranchOptions();
             loadSupplierOptions();
+            loadProductOptions();
             loadItems();
             refreshBadgeCounts();
 
@@ -847,6 +858,18 @@
                 document.getElementById("ei-supplier").innerHTML = '<option value="">None</option>' + opts;
             } catch (err) {
                 console.error("Failed to load suppliers", err);
+            }
+        }
+
+        async function loadProductOptions() {
+            try {
+                var products = await InventoryProducts.getAll(undefined, undefined, true);
+                var opts = products.map(function (p) {
+                    return '<option value="' + p.id + '">' + escapeHtml(p.name) + (p.sku ? ' (' + escapeHtml(p.sku) + ')' : '') + '</option>';
+                }).join('');
+                document.getElementById("ei-product").innerHTML = '<option value="">Not linked</option>' + opts;
+            } catch (err) {
+                console.error("Failed to load products", err);
             }
         }
 
@@ -1030,6 +1053,8 @@
             document.getElementById('ei-price').value = item.price != null ? item.price : '';
             document.getElementById('ei-expiry').value = item.expiryDate ? item.expiryDate.slice(0, 10) : '';
             document.getElementById('ei-supplier').value = item.supplierId || (item.supplier ? item.supplier.id : '') || '';
+            document.getElementById('ei-product').value = item.productId || (item.product ? item.product.id : '') || '';
+            SearchableSelect.attach('ei-product');
             updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
             new bootstrap.Modal(document.getElementById('modal-edit-item')).show();
         }
@@ -1067,6 +1092,7 @@
                     price: price ? Number(price) : undefined,
                     expiryDate: expiry || undefined,
                     supplierId: document.getElementById('ei-supplier').value || null,
+                    productId: document.getElementById('ei-product').value || null,
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modal-edit-item')).hide();
                 loadItems();
