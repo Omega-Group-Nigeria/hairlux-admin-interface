@@ -79,10 +79,18 @@
         <div class="page-wrapper">
             <div class="page-header d-print-none">
                 <div class="container-xl">
-                    <div class="page-pretitle">Procurement</div>
-                    <h2 class="page-title">Purchases</h2>
-                    <div class="text-secondary small mt-1">Created automatically once a Purchase Request is fully
-                        approved. Record vendor payments and confirm goods received from here.</div>
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Procurement</div>
+                            <h2 class="page-title">Purchases</h2>
+                            <div class="text-secondary small mt-1">Created automatically once a Purchase Request is
+                                fully
+                                approved. Record vendor payments and confirm goods received from here.</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-export">Export CSV</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -224,11 +232,13 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
     <script src="assets/js/api-utils/purchases.js"></script>
+    <script src="assets/js/csv-export.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var _allVendors = [];
         var _currentPurchase = null;
+        var _lastLoadedPurchases = [];
         var _receiveLines = []; // [{ purchaseLineId, productName, ordered, previouslyReceived, deliveredQty, damagedQty, acceptedQty, batchLotNumber, expiryDate }]
 
         var STATUS_BADGE = {
@@ -244,6 +254,7 @@
 
             document.getElementById('f-vendor-filter').addEventListener('change', load);
             document.getElementById('f-status-filter').addEventListener('change', load);
+            document.getElementById('btn-export').addEventListener('click', exportPurchases);
             document.getElementById('btn-save-payment').addEventListener('click', savePayment);
             document.getElementById('btn-save-receive').addEventListener('click', saveReceive);
 
@@ -272,6 +283,23 @@
             return 'PO-' + new Date().getFullYear() + '-' + String(n).padStart(6, '0');
         }
 
+        function exportPurchases() {
+            if (!_lastLoadedPurchases.length) {
+                alert('No purchases to export for the current filters.');
+                return;
+            }
+            CsvExport.download('purchases.csv', [
+                { label: 'PO Number', get: function (p) { return formatPoNumber(p.purchaseNumber); } },
+                { label: 'Branch', get: function (p) { return p.branch ? p.branch.name : ''; } },
+                { label: 'Vendor', get: function (p) { return p.vendor ? p.vendor.name : ''; } },
+                { label: 'Grand Total', get: function (p) { return p.grandTotal; } },
+                { label: 'Amount Paid', get: function (p) { return p.amountPaid; } },
+                { label: 'Payment Status', get: function (p) { return p.paymentStatus; } },
+                { label: 'Status', get: function (p) { return p.status; } },
+                { label: 'Created', get: function (p) { return new Date(p.createdAt).toLocaleDateString(); } },
+            ], _lastLoadedPurchases);
+        }
+
         async function load() {
             var tbody = document.getElementById('tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
@@ -280,6 +308,7 @@
                     vendorId: document.getElementById('f-vendor-filter').value,
                     status: document.getElementById('f-status-filter').value,
                 });
+                _lastLoadedPurchases = list;
                 tbody.innerHTML = list.length
                     ? list.map(function (p) {
                         return '<tr>' +

@@ -33,5 +33,17 @@ const FinancialTransactions = (function () {
         return apiFetch('/admin/financial-transactions/summary' + (qs ? '?' + qs : ''));
     }
 
-    return { getAll, getSummary };
+    async function exportAll(filters) {
+        filters = filters || {};
+        const params = new URLSearchParams();
+        if (filters.direction) params.set('direction', filters.direction);
+        if (filters.category) params.set('category', filters.category);
+        if (filters.branchId) params.set('branchId', filters.branchId);
+        if (filters.from) params.set('from', filters.from);
+        if (filters.to) params.set('to', filters.to);
+        const qs = params.toString();
+        return apiFetch('/admin/financial-transactions/export' + (qs ? '?' + qs : ''));
+    }
+
+    return { getAll, getSummary, exportAll };
 })();

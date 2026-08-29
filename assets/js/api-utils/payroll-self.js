@@ -46,6 +46,10 @@ const PayrollSelf = (function () {
         return jsonFetch('/staff/me/payroll/payslips');
     }
 
+    async function getPayslipDetail(id) {
+        return jsonFetch('/staff/me/payroll/payslips/' + id);
+    }
+
     async function downloadPayslip(id) {
         const res = await Auth.fetch('/staff/me/payroll/payslips/' + id + '.pdf');
         if (!res.ok) throw new Error('Failed to generate payslip');
@@ -82,7 +86,7 @@ const PayrollSelf = (function () {
 
     return {
         listBanks, getBankAccount, resolveAccount, submitBankAccount,
-        getCompensation, getCurrentFines, getPayslips, downloadPayslip, getAdjustments,
+        getCompensation, getCurrentFines, getPayslips, getPayslipDetail, downloadPayslip, getAdjustments,
         getWallet, requestWithdrawal, listWithdrawals,
     };
 })();

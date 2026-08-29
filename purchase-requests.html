@@ -91,6 +91,8 @@
                             <h2 class="page-title">Purchase Requests</h2>
                         </div>
                         <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary me-2" id="btn-export">Export
+                                CSV</button>
                             <button type="button" class="btn btn-primary" id="btn-new">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -235,12 +237,14 @@
     <script src="assets/js/api-utils/suppliers.js"></script>
     <script src="assets/js/api-utils/inventory-products.js"></script>
     <script src="assets/js/api-utils/purchase-requests.js"></script>
+    <script src="assets/js/csv-export.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var _allVendors = [];
         var _allProducts = [];
         var _allBranches = [];
+        var _lastLoadedRequests = [];
         var editingId = null;
         var _formLines = []; // [{ productId, quantity, estimatedPrice }]
 
@@ -253,6 +257,7 @@
             RBAC.applyPageGuard('purchase_requests:read');
 
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-export').addEventListener('click', exportRequests);
             document.getElementById('btn-add-line').addEventListener('click', addLine);
             document.getElementById('btn-save').addEventListener('click', save);
             document.getElementById('f-vendor-filter').addEventListener('change', load);
@@ -368,6 +373,22 @@
         }
 
         // ── List ─────────────────────────────────────────────────────────
+        function exportRequests() {
+            if (!_lastLoadedRequests.length) {
+                alert('No purchase requests to export for the current filters.');
+                return;
+            }
+            CsvExport.download('purchase-requests.csv', [
+                { label: 'Request Number', get: function (r) { return formatRequestNumber(r.requestNumber); } },
+                { label: 'Branch', get: function (r) { return r.branch ? r.branch.name : ''; } },
+                { label: 'Vendor', get: function (r) { return r.vendor ? r.vendor.name : ''; } },
+                { label: 'Reason', get: function (r) { return r.reason; } },
+                { label: 'Grand Total', get: function (r) { return r.grandTotal; } },
+                { label: 'Status', get: function (r) { return r.status; } },
+                { label: 'Created', get: function (r) { return new Date(r.createdAt).toLocaleDateString(); } },
+            ], _lastLoadedRequests);
+        }
+
         async function load() {
             var tbody = document.getElementById('tbody');
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
@@ -376,6 +397,7 @@
                     vendorId: document.getElementById('f-vendor-filter').value,
                     status: document.getElementById('f-status-filter').value,
                 });
+                _lastLoadedRequests = list;
                 tbody.innerHTML = list.length
                     ? list.map(function (r) {
                         var canEdit = r.status === 'DRAFT';

@@ -19,12 +19,8 @@
             background: #fff;
         }
 
-        .role-check-list {
-            max-height: 180px;
-            overflow-y: auto;
-            border: 1px solid var(--tblr-border-color);
-            border-radius: 4px;
-            padding: 8px 12px;
+        .role-multiselect {
+            min-height: 140px;
         }
 
         .file-status {
@@ -160,8 +156,9 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Visible to (roles)</label>
-                        <div class="role-check-list" id="f-roles"></div>
-                        <div class="form-hint">Staff need at least one of the checked roles to see this course.</div>
+                        <select class="form-select role-multiselect" id="f-roles" multiple></select>
+                        <div class="form-hint">Staff need at least one of the selected roles to see this course.
+                            Ctrl/Cmd-click (or drag) to select more than one.</div>
                     </div>
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="f-active" checked>
@@ -230,26 +227,26 @@
         }
 
         function renderRoleCheckboxes() {
-            var container = document.getElementById('f-roles');
+            var select = document.getElementById('f-roles');
             if (!_allRoles.length) {
-                container.innerHTML = '<div class="text-secondary small">No roles found — create roles first under Settings → Roles & Permissions.</div>';
+                select.innerHTML = '';
+                select.disabled = true;
+                select.insertAdjacentHTML('afterend', '<div class="text-secondary small mt-1" id="f-roles-empty">No roles found — create roles first under Settings → Roles & Permissions.</div>');
                 return;
             }
-            container.innerHTML = _allRoles.map(function (r) {
-                return '<div class="form-check">' +
-                    '<input class="form-check-input role-checkbox" type="checkbox" value="' + esc(r.id) + '" id="role-' + esc(r.id) + '">' +
-                    '<label class="form-check-label" for="role-' + esc(r.id) + '">' + esc(r.name) + '</label>' +
-                    '</div>';
+            select.disabled = false;
+            select.innerHTML = _allRoles.map(function (r) {
+                return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>';
             }).join('');
         }
 
         function checkedRoleIds() {
-            return Array.from(document.querySelectorAll('.role-checkbox:checked')).map(function (el) { return el.value; });
+            return Array.from(document.getElementById('f-roles').selectedOptions).map(function (o) { return o.value; });
         }
 
         function setCheckedRoles(ids) {
             var set = new Set(ids || []);
-            document.querySelectorAll('.role-checkbox').forEach(function (el) { el.checked = set.has(el.value); });
+            Array.from(document.getElementById('f-roles').options).forEach(function (o) { o.selected = set.has(o.value); });
         }
 
         async function load() {

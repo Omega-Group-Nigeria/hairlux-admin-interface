@@ -4,7 +4,7 @@
  */
 const StaffDocuments = (() => {
     const PERMISSIONS = {
-        READ:   "staff:read",
+        READ: "staff:read",
         MANAGE: "staff:manage_documents",
     };
 
@@ -50,18 +50,28 @@ const StaffDocuments = (() => {
         return raw.data !== undefined ? raw.data : raw;
     }
 
-    const DOCUMENT_TYPES = [
-        { value: "EMPLOYMENT_CONTRACT",      label: "Employment Contract" },
-        { value: "NDA",                      label: "Confidentiality Agreement (NDA)" },
-        { value: "IT_ACCEPTABLE_USE_POLICY", label: "IT & Acceptable Use Policy" },
-        { value: "STAFF_HANDBOOK",           label: "Staff Handbook" },
-        { value: "CODE_OF_CONDUCT",          label: "Code of Conduct" },
-        { value: "DATA_PROTECTION_POLICY",   label: "Data Protection & Privacy Policy" },
-    ];
+    async function getDocumentTypes(activeOnly) {
+        return jsonFetch("/admin/document-types" + (activeOnly ? "?activeOnly=true" : ""));
+    }
 
-    function typeLabel(type) {
-        const found = DOCUMENT_TYPES.find(function (t) { return t.value === type; });
-        return found ? found.label : type;
+    async function createDocumentType(name) {
+        return jsonFetch("/admin/document-types", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name }),
+        });
+    }
+
+    async function setDocumentTypeActive(id, isActive) {
+        return jsonFetch("/admin/document-types/" + id + "/active", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isActive: isActive }),
+        });
+    }
+
+    async function removeDocumentType(id) {
+        return jsonFetch("/admin/document-types/" + id, { method: "DELETE" });
     }
 
     function formatDate(value) {
@@ -73,11 +83,13 @@ const StaffDocuments = (() => {
 
     return {
         PERMISSIONS,
-        DOCUMENT_TYPES,
         getActiveDocuments,
         createDocument,
         uploadFile,
-        typeLabel,
+        getDocumentTypes,
+        createDocumentType,
+        setDocumentTypeActive,
+        removeDocumentType,
         formatDate,
     };
 })();

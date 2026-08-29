@@ -76,10 +76,18 @@
         <div class="page-wrapper">
             <div class="page-header d-print-none">
                 <div class="container-xl">
-                    <div class="page-pretitle">Procurement</div>
-                    <h2 class="page-title">Financial Dashboard</h2>
-                    <div class="text-secondary small mt-1">Every figure here reads directly from the Financial
-                        Transaction ledger — nothing is recalculated or estimated per module.</div>
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Procurement</div>
+                            <h2 class="page-title">Financial Dashboard</h2>
+                            <div class="text-secondary small mt-1">Every figure here reads directly from the Financial
+                                Transaction ledger — nothing is recalculated or estimated per module.</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-export-transactions">Export
+                                CSV</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -221,6 +229,7 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/financial-transactions.js"></script>
+    <script src="assets/js/csv-export.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var _currentPage = 1;
@@ -254,6 +263,7 @@
             document.getElementById('btn-next-page').addEventListener('click', function () {
                 if (_lastPageResult && _currentPage * _lastPageResult.limit < _lastPageResult.total) { _currentPage++; loadTransactions(); }
             });
+            document.getElementById('btn-export-transactions').addEventListener('click', exportTransactions);
 
             try {
                 var branches = await Branches.getBranches();
@@ -309,6 +319,37 @@
                     : '<tr><td colspan="3" class="text-center text-secondary py-3">No transactions in this range yet.</td></tr>';
             } catch (e) {
                 categoryTbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load summary.') + '</td></tr>';
+            }
+        }
+
+        async function exportTransactions() {
+            var btn = document.getElementById('btn-export-transactions');
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Exporting…';
+            try {
+                var filters = currentFilters();
+                filters.direction = document.getElementById('f-direction').value;
+                filters.category = document.getElementById('f-category').value;
+                var rows = await FinancialTransactions.exportAll(filters);
+                if (!rows.length) {
+                    alert('No transactions match the current filters.');
+                    return;
+                }
+                CsvExport.download('financial-transactions.csv', [
+                    { label: 'Date', get: function (t) { return new Date(t.createdAt).toLocaleDateString(); } },
+                    { label: 'Reference', get: function (t) { return t.reference; } },
+                    { label: 'Direction', get: function (t) { return t.direction; } },
+                    { label: 'Category', get: function (t) { return CATEGORY_LABELS[t.category] || t.category; } },
+                    { label: 'Branch', get: function (t) { return t.branch ? t.branch.name : ''; } },
+                    { label: 'Description', get: function (t) { return t.description || ''; } },
+                    { label: 'Amount', get: function (t) { return t.amount; } },
+                ], rows);
+            } catch (e) {
+                alert(e.message || 'Failed to export transactions.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
             }
         }
 

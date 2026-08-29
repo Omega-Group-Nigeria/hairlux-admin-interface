@@ -79,6 +79,14 @@ const Payroll = (function () {
         });
     }
 
+    async function correctPayslip(id, reason) {
+        return apiFetch(`/admin/payroll/payslips/${id}/correct`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
+    }
+
     async function createAdjustment(periodId, payload) {
         return apiFetch(`/admin/payroll/periods/${periodId}/adjustments`, {
             method: 'POST',
@@ -93,6 +101,18 @@ const Payroll = (function () {
 
     async function removeAdjustment(id) {
         return apiFetch(`/admin/payroll/adjustments/${id}`, { method: 'DELETE' });
+    }
+
+    async function correctAdjustment(id, payload) {
+        return apiFetch(`/admin/payroll/adjustments/${id}/correct`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getAdjustmentHistory(id) {
+        return apiFetch(`/admin/payroll/adjustments/${id}/history`);
     }
 
     async function getSettings() {
@@ -148,8 +168,8 @@ const Payroll = (function () {
         getDashboard, listBanks,
         setCompensation, getCompensationHistory,
         listPendingBankChanges, getBankAccount, approveBankChange, rejectBankChange,
-        createPeriod, listPeriods, getPeriod, generatePayroll, approvePeriod, requestCorrection,
-        createAdjustment, listAdjustments, removeAdjustment,
+        createPeriod, listPeriods, getPeriod, generatePayroll, approvePeriod, requestCorrection, correctPayslip,
+        createAdjustment, listAdjustments, removeAdjustment, correctAdjustment, getAdjustmentHistory,
         getSettings, setReleaseActive, setPensionRate,
         listWithdrawals, getAuditLog,
         formatMoney, formatDate,
