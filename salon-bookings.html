@@ -1152,8 +1152,19 @@
             } catch (e) { staffSel.innerHTML = '<option value="">Failed to load staff</option>'; }
 
             try {
-                window._nbInventoryItems = await Inventory.getAll({ branchId, category: 'INTERNAL_USE', limit: 100 });
-                if (window._nbInventoryItems.data) window._nbInventoryItems = window._nbInventoryItems.data;
+                // Dev Feedback: category ("INTERNAL_USE" vs "FOR_SALE") is
+                // a product classification, independent of whether stock
+                // has actually been allocated to the usage bucket for this
+                // branch (storeStock/salesStock/usageStock are separate
+                // per-branch fields on the same item, moved between each
+                // other via stock adjustment) -- filtering by category
+                // alone showed a category-matched item with zero usable
+                // usageStock, and could show nothing at all for a branch
+                // whose usage-allocated stock sits on FOR_SALE-categorized
+                // items. Filtered by actual usageStock > 0 instead.
+                var invItems = await Inventory.getAll({ branchId, limit: 1000 });
+                if (invItems.data) invItems = invItems.data;
+                window._nbInventoryItems = (invItems || []).filter(function (i) { return (i.usageStock || 0) > 0; });
             } catch (e) { window._nbInventoryItems = []; }
 
             await loadServices(branchId);
@@ -1424,8 +1435,12 @@
             // a booking's branch is fixed and never editable here, so this
             // is loaded once per open rather than reactively.
             try {
-                var invResult = await Inventory.getAll({ branchId: branchId, category: 'INTERNAL_USE', limit: 100 });
-                window._ebInventoryItems = invResult.data || invResult || [];
+                // Same fix as the New Booking modal's own call -- see its
+                // comment for why usageStock, not category, is the right
+                // filter here.
+                var invResult = await Inventory.getAll({ branchId: branchId, limit: 1000 });
+                var invItems = invResult.data || invResult || [];
+                window._ebInventoryItems = invItems.filter(function (i) { return (i.usageStock || 0) > 0; });
             } catch (e) { window._ebInventoryItems = []; }
 
             var staffSel = document.getElementById('eb-staff');
