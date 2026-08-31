@@ -373,9 +373,9 @@
         async function ensureStaffLoaded() {
             if (_staffLoaded) return;
             try {
-                var result = await Staff.getAll({ limit: 100 });
+                var staffList = await Staff.getOptions();
                 var sel = document.getElementById("announcement-staff");
-                sel.innerHTML = result.data.map(function (s) {
+                sel.innerHTML = staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + ' (' + esc(s.staffCode || "") + ')</option>';
                 }).join("");
                 _staffLoaded = true;

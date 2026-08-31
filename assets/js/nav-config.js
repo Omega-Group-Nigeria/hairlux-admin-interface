@@ -20,6 +20,7 @@ var NavConfig = window.NavConfig || (() => {
         applications: '<svg ' + SVG_ATTRS + '><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M3 7l9 6l9 -6" /></svg>',
         staff: '<svg ' + SVG_ATTRS + '><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>',
         beauticians: '<svg ' + SVG_ATTRS + '><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>',
+        history: '<svg ' + SVG_ATTRS + '><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>',
     };
 
     /** @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string}>, permission?:object}>} */
@@ -234,6 +235,16 @@ var NavConfig = window.NavConfig || (() => {
             permission: {
                 type: "requireAny",
                 perms: ["site_stats:manage"],
+            },
+        },
+        {
+            id: "audit-trail",
+            label: "Audit Trail",
+            icon: "history",
+            href: "audit-trail.html",
+            permission: {
+                type: "requireAny",
+                perms: ["audit_trail:read"],
             },
         },
     ];

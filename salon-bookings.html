@@ -1021,8 +1021,7 @@
                 document.getElementById('vr-assign-section').style.display = 'block';
 
                 var pickerBranchId = booking.branchId || (booking.branch && booking.branch.id);
-                var staffResult = await Staff.getAll({ locationId: pickerBranchId, limit: 100 });
-                var staffList = staffResult.data || [];
+                var staffList = await Staff.getOptions({ locationId: pickerBranchId });
                 document.getElementById('vr-staff-select').innerHTML = staffList.length
                     ? '<option value="">Select stylist…</option>' + staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
                     : '<option value="">No staff at this branch</option>';
@@ -1066,7 +1065,11 @@
             document.getElementById('nb-customer-search-results').style.display = 'none';
             document.getElementById('nb-date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('nb-date').min = new Date().toISOString().slice(0, 10);
-            document.getElementById('nb-time').value = new Date().toTimeString().slice(0, 5);
+            // +5 minutes -- by the time the rest of the form (customer,
+            // services, etc.) is filled in, a bare "now" default would
+            // already be in the past and get rejected by this same form's
+            // own past-time validation below.
+            document.getElementById('nb-time').value = new Date(Date.now() + 5 * 60 * 1000).toTimeString().slice(0, 5);
             document.getElementById('nb-notes').value = '';
             document.getElementById('nb-coupon-code').value = '';
             document.getElementById('nb-coupon-result').classList.add('d-none');
@@ -1142,8 +1145,7 @@
             }
 
             try {
-                var staffResult = await Staff.getAll({ locationId: branchId, limit: 100 });
-                var staffList = staffResult.data || [];
+                var staffList = await Staff.getOptions({ locationId: branchId });
                 staffSel.innerHTML = staffList.length
                     ? staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
                     : '<option value="">No staff at this branch</option>';
@@ -1429,8 +1431,7 @@
             var staffSel = document.getElementById('eb-staff');
             staffSel.innerHTML = '<option value="">Loading…</option>';
             try {
-                var staffResult = await Staff.getAll({ locationId: branchId, limit: 100 });
-                var staffList = staffResult.data || [];
+                var staffList = await Staff.getOptions({ locationId: branchId });
                 staffSel.innerHTML = staffList.length
                     ? staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('')
                     : '<option value="">No staff at this branch</option>';

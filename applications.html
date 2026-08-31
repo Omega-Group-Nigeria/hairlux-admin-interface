@@ -929,8 +929,7 @@
         async function ensureStaff() {
             if (staffCache) return staffCache;
             try {
-                var result = await Staff.getAll({ limit: 100, employmentStatus: 'ACTIVE' });
-                staffCache = result.data || (Array.isArray(result) ? result : []);
+                staffCache = await Staff.getOptions();
             } catch (err) {
                 staffCache = [];
             }

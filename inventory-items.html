@@ -1798,8 +1798,7 @@
             new bootstrap.Modal(document.getElementById("modal-reassign-request")).show();
 
             try {
-                var result = await Staff.getAll({ limit: 100 });
-                var staffList = result.data || [];
+                var staffList = await Staff.getOptions();
                 select.innerHTML = '<option value="">Select a staff member…</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
                 }).join('');

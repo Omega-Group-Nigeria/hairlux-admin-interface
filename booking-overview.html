@@ -329,8 +329,7 @@
         // it's now called more than once per page load.
         async function loadStaffFilter(branchId) {
             try {
-                var result = await Staff.getAll({ limit: 200, locationId: branchId || undefined });
-                var staffList = result.data || result || [];
+                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
                 var select = document.getElementById('ov-staff');
                 select.innerHTML = '<option value="">All staff</option>';
                 staffList.forEach(function (s) {

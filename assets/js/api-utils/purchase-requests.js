@@ -16,6 +16,9 @@ const PurchaseRequests = (function () {
         if (filters.branchId) params.set('branchId', filters.branchId);
         if (filters.vendorId) params.set('vendorId', filters.vendorId);
         if (filters.status) params.set('status', filters.status);
+        if (filters.search) params.set('search', filters.search);
+        if (filters.from) params.set('from', filters.from);
+        if (filters.to) params.set('to', filters.to);
         const qs = params.toString();
         return apiFetch('/admin/purchase-requests' + (qs ? '?' + qs : ''));
     }

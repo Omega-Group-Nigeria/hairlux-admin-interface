@@ -585,8 +585,7 @@
         async function loadWithdrawalStaffOptions(branchId) {
             var select = document.getElementById('withdrawal-staff-filter');
             try {
-                var staffResult = await Staff.getAll({ limit: 200, locationId: branchId || undefined });
-                var staffList = staffResult.data || [];
+                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
                 select.innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + esc(s.name) + '</option>';
                 }).join('');
@@ -864,8 +863,7 @@
         async function ensureStaffOptions() {
             if (!staffOptionsCache) {
                 try {
-                    var result = await Staff.getAll({ employmentStatus: 'ACTIVE', limit: 100 });
-                    var staffList = result.data || [];
+                    var staffList = await Staff.getOptions();
                     staffOptionsCache = staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
                 } catch (e) { staffOptionsCache = ''; }
             }
