@@ -115,6 +115,22 @@
                                         <option value="COMPLETED">Completed</option>
                                     </select>
                                 </div>
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" id="f-search-filter"
+                                        placeholder="Search PO # e.g. PO-2026-000123">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <input type="date" class="form-control" id="f-from-filter" placeholder="From">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="date" class="form-control" id="f-to-filter" placeholder="To">
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear
+                                        Filters</button>
+                                </div>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -254,6 +270,21 @@
 
             document.getElementById('f-vendor-filter').addEventListener('change', load);
             document.getElementById('f-status-filter').addEventListener('change', load);
+            document.getElementById('f-from-filter').addEventListener('change', load);
+            document.getElementById('f-to-filter').addEventListener('change', load);
+            var searchTimer;
+            document.getElementById('f-search-filter').addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(load, 400);
+            });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-vendor-filter').value = '';
+                document.getElementById('f-status-filter').value = '';
+                document.getElementById('f-search-filter').value = '';
+                document.getElementById('f-from-filter').value = '';
+                document.getElementById('f-to-filter').value = '';
+                load();
+            });
             document.getElementById('btn-export').addEventListener('click', exportPurchases);
             document.getElementById('btn-save-payment').addEventListener('click', savePayment);
             document.getElementById('btn-save-receive').addEventListener('click', saveReceive);
@@ -307,6 +338,9 @@
                 var list = await Purchases.getAll({
                     vendorId: document.getElementById('f-vendor-filter').value,
                     status: document.getElementById('f-status-filter').value,
+                    search: document.getElementById('f-search-filter').value,
+                    from: document.getElementById('f-from-filter').value,
+                    to: document.getElementById('f-to-filter').value,
                 });
                 _lastLoadedPurchases = list;
                 tbody.innerHTML = list.length

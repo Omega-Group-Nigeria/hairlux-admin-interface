@@ -575,12 +575,13 @@
             select.innerHTML = '<option value="">Loading staff…</option>';
             new bootstrap.Modal(document.getElementById('modal-reassign')).show();
             try {
-                // Dev Feedback Round 6, item #22 -- same fix as
-                // loadFilterStaffOptions above: this used to call
-                // Staff.getAll() (requires staff:read), which an ADMIN
-                // without that permission individually granted couldn't
-                // reach even though they could open this page and modal.
-                var staffList = await LeaveRequests.getStaffOptions();
+                // Dev Feedback Round 7, item #10: narrowed to ACTIVE +
+                // ON_LEAVE specifically for this reassign use (unlike the
+                // filter dropdown above, which deliberately still includes
+                // SUSPENDED -- a suspended staff member can't be reassigned
+                // an approval to act on, but their past requests are still
+                // worth being able to filter by).
+                var staffList = await Staff.getOptions();
                 select.innerHTML = '<option value="">Select a staff member…</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
                 }).join('');

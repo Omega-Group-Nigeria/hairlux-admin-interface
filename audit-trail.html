@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Audit Trail</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        pre.diff-block {
+            background: var(--tblr-bg-surface-secondary);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 12px;
+            max-height: 320px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Operations</div>
+                            <h2 class="page-title">Audit Trail</h2>
+                            <div class="text-secondary small mt-1">Every important action across Roles &amp;
+                                Permissions, Payroll, and the rest of the system — who did what, and when.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-3">
+                            <select class="form-select" id="f-source">
+                                <option value="">All sources</option>
+                                <option value="ROLE">Roles &amp; Permissions</option>
+                                <option value="PAYROLL">Payroll</option>
+                                <option value="SYSTEM">System</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="f-entity-type">
+                                <option value="">All record types</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="f-from" placeholder="From">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="f-to" placeholder="To">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear
+                                Filters</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h3 class="card-title mb-0">Actions</h3>
+                            <span class="text-secondary small" id="results-label">Loading…</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Source</th>
+                                        <th>Action</th>
+                                        <th>Record</th>
+                                        <th>Actor</th>
+                                        <th>Subject</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="text-secondary small" id="page-label"></div>
+                            <div class="btn-group">
+                                <button class="btn btn-outline-secondary" id="btn-prev-page">Previous</button>
+                                <button class="btn btn-outline-secondary" id="btn-next-page">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div class="modal modal-blur fade" id="modal-details" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Action Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-details-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/audit-trail.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var state = { page: 1, limit: 50, totalPages: 1 };
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = (s === null || s === undefined) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('audit_trail:read');
+
+            ['f-source', 'f-entity-type', 'f-from', 'f-to'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', function () {
+                    state.page = 1;
+                    load();
+                });
+            });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-source').value = '';
+                document.getElementById('f-entity-type').value = '';
+                document.getElementById('f-from').value = '';
+                document.getElementById('f-to').value = '';
+                state.page = 1;
+                load();
+            });
+            document.getElementById('btn-prev-page').addEventListener('click', function () {
+                if (state.page > 1) { state.page -= 1; load(); }
+            });
+            document.getElementById('btn-next-page').addEventListener('click', function () {
+                if (state.page < state.totalPages) { state.page += 1; load(); }
+            });
+            document.getElementById('tbody').addEventListener('click', function (e) {
+                var btn = e.target.closest('.btn-view-details');
+                if (btn) openDetails(JSON.parse(btn.dataset.entry));
+            });
+
+            try {
+                var entityTypes = await AuditTrail.getEntityTypes();
+                document.getElementById('f-entity-type').innerHTML += entityTypes.map(function (t) {
+                    return '<option value="' + esc(t) + '">' + esc(t) + '</option>';
+                }).join('');
+            } catch (e) { /* entity-type filter just stays with "All record types" */ }
+
+            load();
+        });
+
+        function currentFilters() {
+            return {
+                source: document.getElementById('f-source').value,
+                entityType: document.getElementById('f-entity-type').value,
+                from: document.getElementById('f-from').value,
+                to: document.getElementById('f-to').value,
+                page: state.page,
+                limit: state.limit,
+            };
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            document.getElementById('results-label').textContent = 'Loading…';
+
+            try {
+                var result = await AuditTrail.getAll(currentFilters());
+                var rows = result.data || [];
+                var meta = result.meta || {};
+                state.totalPages = meta.totalPages || 1;
+
+                document.getElementById('results-label').textContent = (meta.total ?? rows.length) + ' action' + ((meta.total ?? rows.length) !== 1 ? 's' : '');
+                document.getElementById('page-label').textContent = 'Page ' + state.page + ' of ' + state.totalPages;
+                document.getElementById('btn-prev-page').disabled = state.page <= 1;
+                document.getElementById('btn-next-page').disabled = state.page >= state.totalPages;
+
+                tbody.innerHTML = rows.length
+                    ? rows.map(function (r) {
+                        return '<tr>' +
+                            '<td class="text-secondary small text-nowrap">' + AuditTrail.formatDate(r.createdAt) + '</td>' +
+                            '<td><span class="badge ' + (AuditTrail.SOURCE_BADGE[r.source] || 'bg-secondary-lt') + '">' + esc(AuditTrail.SOURCE_LABELS[r.source] || r.source) + '</span></td>' +
+                            '<td class="fw-semibold">' + esc(r.action.replace(/_/g, ' ')) + '</td>' +
+                            '<td>' + esc(r.entityType) + (r.entityId ? '<div class="text-secondary small">' + esc(r.entityId) + '</div>' : '') + '</td>' +
+                            '<td>' + esc(r.actorName || (r.actorId ? r.actorId : 'System')) + '</td>' +
+                            '<td>' + esc(r.subjectName || '—') + '</td>' +
+                            '<td class="text-nowrap">' +
+                            ((r.before || r.after || r.note)
+                                ? '<button class="btn btn-sm btn-outline-secondary btn-view-details" data-entry=\'' + esc(JSON.stringify(r)) + '\'>Details</button>'
+                                : '') +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="7" class="text-center text-secondary py-5">No actions match the current filters.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                document.getElementById('results-label').textContent = 'Error';
+            }
+        }
+
+        function openDetails(entry) {
+            var body = document.getElementById('modal-details-body');
+            body.innerHTML =
+                '<dl class="row small mb-3">' +
+                '<dt class="col-3 text-secondary">Action</dt><dd class="col-9">' + esc(entry.action.replace(/_/g, ' ')) + '</dd>' +
+                '<dt class="col-3 text-secondary">Record</dt><dd class="col-9">' + esc(entry.entityType) + (entry.entityId ? ' — ' + esc(entry.entityId) : '') + '</dd>' +
+                '<dt class="col-3 text-secondary">Actor</dt><dd class="col-9">' + esc(entry.actorName || 'System') + '</dd>' +
+                (entry.subjectName ? '<dt class="col-3 text-secondary">Subject</dt><dd class="col-9">' + esc(entry.subjectName) + '</dd>' : '') +
+                '<dt class="col-3 text-secondary">Time</dt><dd class="col-9">' + AuditTrail.formatDate(entry.createdAt) + '</dd>' +
+                (entry.note ? '<dt class="col-3 text-secondary">Note</dt><dd class="col-9">' + esc(entry.note) + '</dd>' : '') +
+                '</dl>' +
+                (entry.before ? '<div class="mb-2"><div class="fw-semibold small mb-1">Before</div><pre class="diff-block">' + esc(JSON.stringify(entry.before, null, 2)) + '</pre></div>' : '') +
+                (entry.after ? '<div><div class="fw-semibold small mb-1">After</div><pre class="diff-block">' + esc(JSON.stringify(entry.after, null, 2)) + '</pre></div>' : '');
+            new bootstrap.Modal(document.getElementById('modal-details')).show();
+        }
+    </script>
+</body>
+
+</html>

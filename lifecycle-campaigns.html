@@ -333,18 +333,7 @@
                 <div class="modal-body">
                     <div class="alert alert-danger d-none" id="seq-form-error"></div>
                     <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Target Lifecycle</label>
-                            <select class="form-select" id="sf-target-lifecycle">
-                                <option value="NEW">New</option>
-                                <option value="ACTIVE">Active</option>
-                                <option value="AT_RISK">At Risk</option>
-                                <option value="DORMANT">Dormant</option>
-                                <option value="INACTIVE">Inactive</option>
-                                <option value="NEVER_VISITED">Never Visited</option>
-                            </select>
-                        </div>
-                        <div class="col-md-5">
+                        <div class="col-md-9">
                             <label class="form-label">Name</label>
                             <input type="text" class="form-control" id="sf-name"
                                 placeholder="e.g. At-Risk Re-engagement Sequence">
@@ -355,6 +344,7 @@
                             <div class="form-hint">Before the whole sequence restarts.</div>
                         </div>
                     </div>
+                    <div class="form-hint mb-3" id="sf-target-lifecycle-hint" style="display:none;"></div>
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" id="sf-enabled" checked>
                         <label class="form-check-label" for="sf-enabled">Enabled</label>
@@ -698,10 +688,11 @@
                 var preview = (t.subject ? t.subject + ' \u2014 ' : '') + (t.bodyTemplate || '').slice(0, 100) + ((t.bodyTemplate || '').length > 100 ? '…' : '');
                 previewEl.textContent = preview;
             };
-            templateSel.addEventListener('change', syncPreview);
+            templateSel.addEventListener('change', function () { syncPreview(); syncTargetLifecycleHint(); });
             block.querySelector('.btn-remove-step').addEventListener('click', function () {
                 block.remove();
                 renumberSteps();
+                syncTargetLifecycleHint();
             });
 
             if (step) {
@@ -721,9 +712,25 @@
             });
         }
 
+        function syncTargetLifecycleHint() {
+            var hintEl = document.getElementById('sf-target-lifecycle-hint');
+            var firstBlock = document.querySelector('#sf-steps > div');
+            var firstTemplateId = firstBlock ? firstBlock.querySelector('.step-template').value : '';
+            var firstTemplate = firstTemplateId ? _allTemplates.find(function (t) { return t.id === firstTemplateId; }) : null;
+
+            if (firstTemplate) {
+                hintEl.textContent = 'Target Lifecycle: ' + (LIFECYCLE_LABELS[firstTemplate.targetLifecycle] || firstTemplate.targetLifecycle) + ' (from Step 1\'s template)';
+                hintEl.style.display = '';
+            } else {
+                hintEl.textContent = 'Select a template for Step 1 to set this sequence\'s target lifecycle.';
+                hintEl.style.display = '';
+            }
+        }
+
         function addStepLine(step) {
             document.getElementById('sf-steps').appendChild(stepLine(step));
             renumberSteps();
+            syncTargetLifecycleHint();
         }
 
         async function openSequenceForm(id) {
@@ -743,7 +750,6 @@
             if (id) {
                 try {
                     var s = await LifecycleCampaigns.getOneSequence(id);
-                    document.getElementById('sf-target-lifecycle').value = s.targetLifecycle;
                     document.getElementById('sf-name').value = s.name || '';
                     document.getElementById('sf-cooldown-days').value = s.cooldownDays;
                     document.getElementById('sf-enabled').checked = !!s.isEnabled;
@@ -754,13 +760,13 @@
                     return;
                 }
             } else {
-                document.getElementById('sf-target-lifecycle').value = 'AT_RISK';
                 document.getElementById('sf-name').value = '';
                 document.getElementById('sf-cooldown-days').value = 30;
                 document.getElementById('sf-enabled').checked = true;
                 addStepLine();
             }
 
+            syncTargetLifecycleHint();
             new bootstrap.Modal(document.getElementById('modal-sequence-form')).show();
         }
 
@@ -788,8 +794,20 @@
             if (stepError) { errEl.textContent = stepError; errEl.classList.remove('d-none'); return; }
             if (!steps.length) { errEl.textContent = 'At least one step is required.'; errEl.classList.remove('d-none'); return; }
 
+            // Dev Feedback Round 7, item #3: Target Lifecycle removed as
+            // its own form field -- derived from Step 1's template
+            // instead, since every step already selects one and the
+            // field was redundant with (and could drift from) whatever
+            // Step 1 actually targets.
+            var firstStepTemplate = _allTemplates.find(function (t) { return t.id === steps[0].templateId; });
+            if (!firstStepTemplate) {
+                errEl.textContent = 'Could not determine this sequence\'s target lifecycle from Step 1\'s template — try reselecting it.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
             var payload = {
-                targetLifecycle: document.getElementById('sf-target-lifecycle').value,
+                targetLifecycle: firstStepTemplate.targetLifecycle,
                 name: name,
                 cooldownDays: Number(document.getElementById('sf-cooldown-days').value) || 0,
                 isEnabled: document.getElementById('sf-enabled').checked,
@@ -823,4 +841,4 @@
     </script>
 </body>
 
-</html>
+</html>p

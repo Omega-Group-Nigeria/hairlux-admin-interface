@@ -452,10 +452,10 @@
         // was previously selected.
         async function loadFilterStaffOptions(branchId) {
             try {
-                var result = await Staff.getAll({ limit: 100, locationId: branchId || undefined });
+                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
                 document.getElementById("filter-staff").innerHTML =
                     '<option value="">All staff</option>' +
-                    result.data.map(function (s) { return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + '</option>'; }).join("");
+                    staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + '</option>'; }).join("");
             } catch (e) {
                 console.error("Failed to load staff", e);
             }

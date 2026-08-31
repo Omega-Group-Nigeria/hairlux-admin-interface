@@ -331,8 +331,7 @@
 
         async function ensureStaffCache() {
             if (_staffCache) return _staffCache;
-            var result = await Staff.getAll({ limit: 100 });
-            _staffCache = result.data;
+            _staffCache = await Staff.getOptions();
             return _staffCache;
         }
 
@@ -517,8 +516,8 @@
         // re-fetch pattern already applied elsewhere.
         async function loadFilterStaffOptions(branchId) {
             try {
-                var result = await Staff.getAll({ limit: 100, locationId: branchId || undefined });
-                document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffOptionsHtml(result.data);
+                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
+                document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffOptionsHtml(staffList);
             } catch (e) { /* non-fatal — staff filter just stays at "All staff" */ }
         }
 

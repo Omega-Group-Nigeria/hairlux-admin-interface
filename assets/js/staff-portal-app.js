@@ -199,9 +199,10 @@ function renderStaffChip() {
  * Shows/hides sidebar sections per staff eligibility — Manager (managedBranch
  * set, or the staff-portal:approvals permission), Authorized Access
  * (staff-portal:inventory / staff-portal:bookings permissions from their
- * assigned role), Commission (commissionRate set). Permission strings ride
- * on the same AdminRole system used for admin-portal access, so one role
- * assignment governs both portals consistently.
+ * assigned role), Commission (commissionRate or commissionPlanId set).
+ * Permission strings ride on the same AdminRole system used for
+ * admin-portal access, so one role assignment governs both portals
+ * consistently.
  */
 function applyModuleVisibility() {
   var s = currentStaff || {};
@@ -212,7 +213,12 @@ function applyModuleVisibility() {
   var hasBookingsAccess = hasPerm('staff-portal:bookings');
   var hasInventoryAccess = hasPerm('staff-portal:inventory');
   var hasSalesAccess = hasPerm('staff-portal:sales');
-  var hasCommission = s.commissionRate != null;
+  // Dev Feedback Round 7, item #7: checks both a Commission Plan and the
+  // flat rate -- checking commissionRate alone would hide this entire
+  // nav section for a staff member whose only setup is a plan (a valid,
+  // real scenario -- see Staff.commissionRate's own schema comment: it's
+  // "the fallback... with no formal plan yet").
+  var hasCommission = s.commissionRate != null || !!s.commissionPlanId;
 
   var managerSec = document.getElementById('sb-sec-manager');
   if (managerSec) managerSec.style.display = isManager ? '' : 'none';
@@ -2186,7 +2192,9 @@ async function showBookingForm() {
     '<div class="col-6"><label class="form-label small mb-1">Date</label>' +
     '<input type="date" class="input" id="sb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Time</label>' +
-    '<input type="time" class="input" id="sb-time" value="' + new Date().toTimeString().slice(0, 5) + '"></div>' +
+    // +5 minutes -- by the time the rest of the form is filled in, a
+    // bare "now" default would already be in the past.
+    '<input type="time" class="input" id="sb-time" value="' + new Date(Date.now() + 5 * 60 * 1000).toTimeString().slice(0, 5) + '"></div>' +
     '</div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Services</label><div id="sb-service-lines"></div>' +
     '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddServiceLine()">+ Add service</button></div>' +
@@ -3485,7 +3493,13 @@ async function loadCommission() {
     var result = await SalonBookingsSelf.getMyCommission();
     var data = result.data || result;
 
-    if (data.commissionRate == null) {
+    // Dev Feedback Round 7, item #7: hasCommissionSetup checks both a
+    // Commission Plan and the flat rate -- checking commissionRate alone
+    // used to wrongly gate out a staff member whose only setup is a
+    // plan (a valid, real scenario). commissionRate itself is no longer
+    // returned or displayed at all, since it's misleading whenever a
+    // plan (with its own, different rate) is the one actually in use.
+    if (!data.hasCommissionSetup) {
       container.innerHTML =
         '<div class="card"><div class="card-b">' +
         '<div class="text-secondary">You\u2019re not currently set up for commission. If this role should earn commission, ask an admin to set your rate on your staff profile.</div>' +
@@ -3493,16 +3507,16 @@ async function loadCommission() {
       return;
     }
 
-    var ratePct = (data.commissionRate * 100).toFixed(1).replace(/\.0$/, '');
-
     var statsHtml =
       '<div class="g4 mb6">' +
       '<div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">\uD83D\uDCB0</div>' +
       '<div class="stat-lbl">Commission This Month</div><div class="stat-val">' + sbFormatMoney(data.thisMonthTotal) + '</div>' +
       '<div class="stat-delta neu">' + data.bookingsThisMonth + ' booking' + (data.bookingsThisMonth === 1 ? '' : 's') + '</div></div>' +
-      '<div class="stat green"><div class="stat-ico" style="background:var(--green2)">\uD83D\uDCC8</div>' +
-      '<div class="stat-lbl">Commission Rate</div><div class="stat-val">' + ratePct + '%</div>' +
-      '<div class="stat-delta neu">Per completed booking</div></div>' +
+      (data.effectiveRate != null
+        ? '<div class="stat green"><div class="stat-ico" style="background:var(--green2)">\uD83D\uDCC8</div>' +
+        '<div class="stat-lbl">Commission Rate</div><div class="stat-val">' + (data.effectiveRate * 100).toFixed(1).replace(/\.0$/, '') + '%</div>' +
+        '<div class="stat-delta neu">' + escapeHtml(data.effectiveRateSource) + '</div></div>'
+        : '') +
       '<div class="stat blue"><div class="stat-ico" style="background:var(--blue2)">\uD83D\uDCCA</div>' +
       '<div class="stat-lbl">All-Time Commission</div><div class="stat-val">' + sbFormatMoney(data.allTimeTotal) + '</div>' +
       '<div class="stat-delta neu">' + data.entries.length + ' booking' + (data.entries.length === 1 ? '' : 's') + ' total</div></div>' +

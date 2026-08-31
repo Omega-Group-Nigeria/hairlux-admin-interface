@@ -597,8 +597,8 @@
         async function ensureStaffOptionsLoaded() {
             if (state.staffOptions.length) return;
             try {
-                var result = await Staff.getAll({ limit: 100 });
-                state.staffOptions = (result.data || []).map(function (s) {
+                var staffList = await Staff.getOptions();
+                state.staffOptions = staffList.map(function (s) {
                     return { value: String(s.id), label: Staff.fullName(s) + (s.staffCode ? ' (' + s.staffCode + ')' : '') };
                 });
             } catch (err) {
@@ -1429,7 +1429,6 @@
                     { value: "COMMISSION", label: "Commission Only" },
                 ];
                 var planOpts = (d.planOptions || []).map(function (p) { return { value: p.id, label: p.name + ' (' + CommissionPlans.formatRate(p.commissionRate) + ')' }; });
-                var commissionPercentValue = (d.commissionRate != null && d.commissionRate !== '') ? (Number(d.commissionRate) * 100) : '';
                 form.innerHTML =
                     buildOptionSelect('col-12', 'Compensation Type', 'sf-comp-type', d.compensationType || 'SALARY', compTypeOpts, 'Select a compensation type', true) +
                     '<div id="sf-salary-fields-wrap" class="row g-3">' +
@@ -1446,10 +1445,7 @@
                     '</div>' +
                     '<div id="sf-commission-fields-wrap" class="row g-3">' +
                     buildOptionSelect('col-12', 'Commission Plan', 'sf-comp-plan-id', String(d.commissionPlanId || ''), planOpts, 'No plan assigned', false) +
-                    '<div class="col-12"><label class="form-label" for="sf-commission-rate">Commission Rate (%)</label>' +
-                    '<input type="number" min="0" max="100" step="0.1" class="form-control" id="sf-commission-rate" value="' + esc(commissionPercentValue) + '" placeholder="e.g. 15 for 15%">' +
-                    '<div class="form-hint">Used only when no Commission Plan is assigned above \u2014 a plan\'s rate always takes priority. Leave blank if not applicable.</div>' +
-                    '</div>' +
+                    '<div class="col-12"><div class="form-hint">Every commission-earning staff member is set up through a Commission Plan \u2014 create one under Payroll if one doesn\'t exist yet for their rate.</div></div>' +
                     '</div>';
                 SearchableSelect.attach('sf-comp-plan-id');
 
@@ -1585,7 +1581,6 @@
 
             if (actionType === "payroll-method") {
                 var compType = document.getElementById("sf-comp-type").value;
-                var commissionPercentInput = document.getElementById("sf-commission-rate").value;
                 var payrollPayload = { compensationType: compType };
 
                 var showSalary = compType === 'SALARY' || compType === 'SALARY_TO_COMMISSION' || compType === 'SALARY_PLUS_COMMISSION';
@@ -1601,7 +1596,6 @@
                 var showCommission = compType === 'SALARY_TO_COMMISSION' || compType === 'SALARY_PLUS_COMMISSION' || compType === 'COMMISSION';
                 if (showCommission) {
                     payrollPayload.commissionPlanId = document.getElementById("sf-comp-plan-id").value || null;
-                    payrollPayload.commissionRate = commissionPercentInput ? (Number(commissionPercentInput) / 100) : null;
                 }
 
                 return payrollPayload;
@@ -1728,9 +1722,6 @@
                         };
                         Object.keys(compPayload).forEach(function (k) { if (compPayload[k] === undefined) delete compPayload[k]; });
                         await Staff.setCompensation(_staffFormAction.staffId, compPayload);
-                    }
-                    if (payload.commissionRate !== undefined) {
-                        await Staff.update(_staffFormAction.staffId, { commissionRate: payload.commissionRate });
                     }
                 }
                 else if (_staffFormAction.type === "assign-role") await Staff.assignRole(_staffFormAction.staffId, payload.adminRoleId, payload.grantPortalLogin);
