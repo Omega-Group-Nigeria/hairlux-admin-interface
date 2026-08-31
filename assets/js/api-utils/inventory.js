@@ -98,6 +98,14 @@ const Inventory = (function () {
         });
     }
 
+    async function transferStockType(id, payload) {
+        return jsonFetch(`/admin/inventory-items/${id}/transfer-stock-type`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
     async function getAlerts(branchId, resolved) {
         const q = new URLSearchParams();
         if (branchId) q.set('branchId', branchId);
@@ -120,6 +128,14 @@ const Inventory = (function () {
 
     async function resolveExpiryAlert(id) {
         return jsonFetch(`/admin/inventory-items/alerts/expiry/${id}/resolve`, { method: 'PATCH' });
+    }
+
+    async function requestTransfer(payload) {
+        return jsonFetch('/admin/inventory-items/transfer-requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
     }
 
     async function getTransfers(branchId) {
@@ -180,11 +196,11 @@ const Inventory = (function () {
     }
 
     return {
-        getAll, getOne, create, createBulk, update, adjust,
+        getAll, getOne, create, createBulk, update, adjust, transferStockType,
         getMovementHistory, MOVEMENT_TYPE_LABELS,
         getAlerts, resolveAlert,
         getExpiryAlerts, resolveExpiryAlert,
-        getTransfers, approveTransfer, rejectTransfer, reassignTransfer,
+        getTransfers, requestTransfer, approveTransfer, rejectTransfer, reassignTransfer,
         getAdjustmentRequests, approveAdjustment, rejectAdjustment, reassignAdjustment,
         CATEGORY_LABELS, ALERT_STAGE_COLORS, TRANSFER_STATUS_COLORS,
         statusBadge, formatMoney,

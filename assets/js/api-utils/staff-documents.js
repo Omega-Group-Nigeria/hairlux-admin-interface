@@ -74,6 +74,10 @@ const StaffDocuments = (() => {
         return jsonFetch("/admin/document-types/" + id, { method: "DELETE" });
     }
 
+    async function removeDocument(id) {
+        return jsonFetch("/admin/company-documents/" + id, { method: "DELETE" });
+    }
+
     function formatDate(value) {
         if (!value) return "-";
         const d = new Date(value);
@@ -90,6 +94,7 @@ const StaffDocuments = (() => {
         createDocumentType,
         setDocumentTypeActive,
         removeDocumentType,
+        removeDocument,
         formatDate,
     };
 })();

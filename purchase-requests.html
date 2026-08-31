@@ -112,12 +112,17 @@
                     <div class="card">
                         <div class="card-header d-block pb-0">
                             <div class="row g-2 mb-3">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-branch-filter">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
                                     <select class="form-select" id="f-vendor-filter">
                                         <option value="">All vendors</option>
                                     </select>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <select class="form-select" id="f-status-filter">
                                         <option value="">All statuses</option>
                                         <option value="DRAFT">Draft</option>
@@ -260,6 +265,7 @@
             document.getElementById('btn-export').addEventListener('click', exportRequests);
             document.getElementById('btn-add-line').addEventListener('click', addLine);
             document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('f-branch-filter').addEventListener('change', load);
             document.getElementById('f-vendor-filter').addEventListener('change', load);
             document.getElementById('f-status-filter').addEventListener('change', load);
 
@@ -280,6 +286,9 @@
             try {
                 _allBranches = await Branches.getBranches();
                 document.getElementById('f-branch').innerHTML = _allBranches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+                document.getElementById('f-branch-filter').innerHTML += _allBranches.map(function (b) {
                     return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
                 }).join('');
             } catch (e) { _allBranches = []; }
@@ -394,6 +403,7 @@
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var list = await PurchaseRequests.getAll({
+                    branchId: document.getElementById('f-branch-filter').value,
                     vendorId: document.getElementById('f-vendor-filter').value,
                     status: document.getElementById('f-status-filter').value,
                 });
@@ -403,6 +413,7 @@
                         var canEdit = r.status === 'DRAFT';
                         var canSubmit = r.status === 'DRAFT';
                         var canAct = r.status === 'PENDING' || r.status === 'UNDER_REVIEW';
+                        var canDelete = r.status === 'DRAFT' || r.status === 'REJECTED' || r.status === 'CANCELLED';
                         return '<tr>' +
                             '<td class="fw-semibold">' + formatRequestNumber(r.requestNumber) + '</td>' +
                             '<td>' + esc(r.branch ? r.branch.name : '\u2014') + '</td>' +
@@ -414,7 +425,8 @@
                             '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewOne(\'' + r.id + '\')">View</button>' +
                             (canEdit ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + r.id + '\')">Edit</button>' : '') +
                             (canSubmit ? '<button class="btn btn-sm btn-outline-primary me-1" onclick="submitRequest(\'' + r.id + '\')">Submit</button>' : '') +
-                            (canAct ? '<button class="btn btn-sm btn-outline-success me-1" onclick="approveRequest(\'' + r.id + '\')">Approve</button><button class="btn btn-sm btn-outline-danger" onclick="rejectRequest(\'' + r.id + '\')">Reject</button>' : '') +
+                            (canAct ? '<button class="btn btn-sm btn-outline-success me-1" onclick="approveRequest(\'' + r.id + '\')">Approve</button><button class="btn btn-sm btn-outline-danger me-1" onclick="rejectRequest(\'' + r.id + '\')">Reject</button>' : '') +
+                            (canDelete ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteRequest(\'' + r.id + '\')">Delete</button>' : '') +
                             '</td>' +
                             '</tr>';
                     }).join('')
@@ -519,6 +531,14 @@
                 await PurchaseRequests.reject(id, reason);
                 load();
             } catch (e) { alert(e.message || 'Failed to reject — you may not be the current approver for this request.'); }
+        }
+
+        async function deleteRequest(id) {
+            if (!confirm('Delete this purchase request? This cannot be undone.')) return;
+            try {
+                await PurchaseRequests.remove(id);
+                load();
+            } catch (e) { alert(e.message || 'Failed to delete.'); }
         }
 
         // ── View ─────────────────────────────────────────────────────────

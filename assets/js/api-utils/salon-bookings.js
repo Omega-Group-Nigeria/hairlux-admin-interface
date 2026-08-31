@@ -53,6 +53,12 @@ const SalonBookings = (function () {
         });
     }
 
+    async function previewDiscount(code, branchId, subtotal, customerId) {
+        const q = new URLSearchParams({ code: code, branchId: branchId, subtotal: String(subtotal) });
+        if (customerId) q.set('customerId', customerId);
+        return apiFetch(`/admin/salon-bookings/preview-discount?${q.toString()}`);
+    }
+
     async function editBooking(id, payload) {
         return apiFetch(`/admin/salon-bookings/${id}`, {
             method: 'PATCH',
@@ -171,7 +177,7 @@ const SalonBookings = (function () {
     }
 
     return {
-        getAll, getOne, create, editBooking, addServiceToCompletedBooking,
+        getAll, getOne, create, previewDiscount, editBooking, addServiceToCompletedBooking,
         addInventoryItem, start, complete, cancel, noShow,
         verifyCode, confirmVerification, searchCustomers, checkPhoneMatch, findAllCustomers,
         getCustomerContactsPerformance, getCustomerProfile,

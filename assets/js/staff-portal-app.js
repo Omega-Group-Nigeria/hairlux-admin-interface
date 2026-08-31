@@ -2193,6 +2193,11 @@ async function showBookingForm() {
     '<div class="mb-2"><label class="form-label small mb-1">Products Used / Sold (optional)</label><div id="sb-item-lines"></div>' +
     '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddItemLine()">+ Add item</button></div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Notes</label><textarea class="input" id="sb-notes" rows="2"></textarea></div>' +
+    '<div class="mb-2"><label class="form-label small mb-1">Coupon Code (optional)</label>' +
+    '<div class="flex gap2"><input type="text" class="input" id="sb-coupon-code" placeholder="e.g. SUMMER20" style="text-transform:uppercase;">' +
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="sbApplyCoupon()">Apply</button></div>' +
+    '<div class="small mt-1" id="sb-coupon-result" style="display:none;"></div></div>' +
+    '<div class="text-end small mb-1" id="sb-subtotal-line" style="display:none;color:var(--muted);"></div>' +
     '<div class="text-end fw-bold small mb-2" id="sb-estimated-total">Estimated total: —</div>' +
     '<div class="flex gap2">' +
     '<button class="btn btn-gold btn-sm" onclick="submitBookingForm()">Create Booking</button>' +
@@ -2200,10 +2205,19 @@ async function showBookingForm() {
     '</div>';
 
   window._sbInventoryItems = null;
+  _sbAppliedCoupon = null;
   SearchableSelect.attach('sb-staff');
   sbAddServiceLine();
   sbWireCustomerSearch();
   sbWirePhoneMatchCheck();
+  restrictToPhoneChars(document.getElementById('sb-customer-phone'));
+  document.getElementById('sb-coupon-code').addEventListener('input', function () {
+    if (_sbAppliedCoupon) {
+      _sbAppliedCoupon = null;
+      document.getElementById('sb-coupon-result').style.display = 'none';
+      sbUpdateTotal();
+    }
+  });
 }
 
 var _sbCustomerSearchTimer = null;
@@ -2381,6 +2395,7 @@ async function sbOpenEditModal(b) {
     sbEditLine(lineContainer, line.service ? line.service.id : undefined, line.quantity);
   });
 
+  restrictToPhoneChars(document.getElementById('sbeb-customer-phone'));
   document.getElementById('profile-modal-overlay').style.display = 'flex';
 }
 
@@ -2722,8 +2737,10 @@ async function sbAddItemLine() {
     try {
       // Dev Feedback: the endpoint's default limit is 20 -- passing this
       // explicitly ensures a branch with more than 20 products still
-      // shows all of them here, not just the first page.
-      var res = await InventorySelf.getItems({ limit: 1000 });
+      // shows all of them here, not just the first page. Dev Feedback
+      // Round 6: only Internal Use items belong in a booking's "used"
+      // list -- retail sales go through the dedicated Product Sale flow.
+      var res = await InventorySelf.getItems({ category: 'INTERNAL_USE', limit: 1000 });
       window._sbInventoryItems = res.data || res || [];
     } catch (err) { window._sbInventoryItems = []; }
   }
@@ -2748,7 +2765,9 @@ async function sbAddItemLine() {
   sbUpdateTotal();
 }
 
-function sbUpdateTotal() {
+var _sbAppliedCoupon = null; // { id, code, percentage }
+
+function sbCurrentSubtotal() {
   var total = 0;
   document.querySelectorAll('#sb-service-lines > div').forEach(function (row) {
     var sel = row.querySelector('.sb-service-select');
@@ -2762,8 +2781,54 @@ function sbUpdateTotal() {
     var opt = sel.options[sel.selectedIndex];
     if (opt && opt.value && opt.dataset.sellable === '1') total += Number(opt.dataset.price || 0) * qty;
   });
-  var el = document.getElementById('sb-estimated-total');
-  if (el) el.textContent = 'Estimated total: ' + sbFormatMoney(total);
+  return total;
+}
+
+function sbUpdateTotal() {
+  var total = sbCurrentSubtotal();
+  var subtotalLine = document.getElementById('sb-subtotal-line');
+  var totalEl = document.getElementById('sb-estimated-total');
+  if (!totalEl) return;
+
+  if (_sbAppliedCoupon) {
+    // Recomputed client-side from the validated percentage -- no need
+    // to re-call the server just because a line item changed, since a
+    // percentage discount scales linearly.
+    var discountAmount = Math.round(total * (_sbAppliedCoupon.percentage / 100) * 100) / 100;
+    var finalTotal = total - discountAmount;
+    if (subtotalLine) {
+      subtotalLine.textContent = 'Subtotal ' + sbFormatMoney(total) + ' \u2212 ' + _sbAppliedCoupon.code + ' (' + _sbAppliedCoupon.percentage + '%): ' + sbFormatMoney(discountAmount);
+      subtotalLine.style.display = '';
+    }
+    totalEl.textContent = 'Estimated total: ' + sbFormatMoney(finalTotal);
+  } else {
+    if (subtotalLine) subtotalLine.style.display = 'none';
+    totalEl.textContent = 'Estimated total: ' + sbFormatMoney(total);
+  }
+}
+
+async function sbApplyCoupon() {
+  var code = document.getElementById('sb-coupon-code').value.trim();
+  var resultEl = document.getElementById('sb-coupon-result');
+  resultEl.style.display = '';
+  resultEl.style.color = '';
+  if (!code) {
+    resultEl.textContent = 'Enter a coupon code.';
+    resultEl.style.color = 'var(--red)';
+    return;
+  }
+  try {
+    var preview = await SalonBookingsSelf.previewDiscount(code, sbCurrentSubtotal());
+    _sbAppliedCoupon = { id: preview.id, code: preview.code, percentage: Number(preview.percentage) };
+    resultEl.textContent = '\u2713 "' + preview.name + '" applied \u2014 ' + preview.percentage + '% off.';
+    resultEl.style.color = 'var(--green)';
+    sbUpdateTotal();
+  } catch (err) {
+    _sbAppliedCoupon = null;
+    resultEl.textContent = err.message || 'Invalid coupon.';
+    resultEl.style.color = 'var(--red)';
+    sbUpdateTotal();
+  }
 }
 
 async function submitBookingForm() {
@@ -2804,6 +2869,7 @@ async function submitBookingForm() {
       assignedStaffId: assignedStaffId, bookingDate: bookingDate, bookingTime: bookingTime,
       services: services, inventoryItems: inventoryItems.length ? inventoryItems : undefined,
       notes: notes || undefined,
+      discountCode: _sbAppliedCoupon ? _sbAppliedCoupon.code : undefined,
     });
     cancelBookingForm();
     await loadSalonBookings();
@@ -2815,6 +2881,16 @@ async function submitBookingForm() {
 // -- Inventory --
 
 var inventoryBranchesCache = null;
+
+// Procurement/Inventory/Finance Integration, Phase 2 replaced the old,
+// single InventoryItem.currentQuantity field with the three-way Store/
+// Sales/Usage split -- this file was never updated after that change,
+// so every stock figure it showed was reading a field that no longer
+// exists on the API response (undefined), producing exactly the
+// "undefined in stock" / stock-of-0 validation failures reported.
+function totalStock(item) {
+  return (item.storeStock || 0) + (item.salesStock || 0) + (item.usageStock || 0);
+}
 
 async function loadInventoryItems() {
   const category = document.getElementById('inv-category-filter').value;
@@ -2829,8 +2905,8 @@ async function loadInventoryItems() {
   }
 
   const items = result.data || [];
-  const outOfStock = items.filter((i) => i.currentQuantity <= 0).length;
-  const lowStock = items.filter((i) => i.currentQuantity > 0 && i.currentQuantity <= i.lowStockThreshold).length;
+  const outOfStock = items.filter((i) => totalStock(i) <= 0).length;
+  const lowStock = items.filter((i) => totalStock(i) > 0 && totalStock(i) <= i.lowStockThreshold).length;
   const healthy = items.length - outOfStock - lowStock;
 
   document.getElementById('inv-total').textContent = String(items.length);
@@ -2843,15 +2919,15 @@ async function loadInventoryItems() {
     tbody.innerHTML = '<tr><td colspan="6" class="text-secondary">No items yet for this branch.</td></tr>';
   } else {
     tbody.innerHTML = items.map(function (i) {
-      var statusBadge = i.currentQuantity <= 0
+      var statusBadge = totalStock(i) <= 0
         ? '<span class="badge b-red">Out of Stock</span>'
-        : i.currentQuantity <= i.lowStockThreshold
+        : totalStock(i) <= i.lowStockThreshold
           ? '<span class="badge b-amber">Low</span>'
           : '<span class="badge b-green">Good</span>';
       return '<tr>' +
         '<td style="font-weight:600;color:var(--white)">' + escapeHtml(i.name) + '</td>' +
         '<td>' + (InventorySelf.CATEGORY_LABELS[i.category] || i.category) + '</td>' +
-        '<td>' + i.currentQuantity + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
+        '<td>' + totalStock(i) + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
         '<td>' + i.lowStockThreshold + '</td>' +
         '<td>' + statusBadge + '</td>' +
         '<td><button class="btn btn-ghost btn-sm" onclick="promptReceiveGoods(\'' + i.id + '\', \'' + escapeHtml(i.name).replace(/'/g, "\\'") + '\')">Receive Goods</button> ' +
@@ -2862,7 +2938,7 @@ async function loadInventoryItems() {
   // Populate the transfer-item dropdown from the same item list.
   var transferSelect = document.getElementById('inv-transfer-item');
   transferSelect.innerHTML = '<option value="">Select an item…</option>' +
-    items.map(function (i) { return '<option value="' + i.id + '">' + escapeHtml(i.name) + ' (' + i.currentQuantity + ' in stock)</option>'; }).join('');
+    items.map(function (i) { return '<option value="' + i.id + '">' + escapeHtml(i.name) + ' (' + totalStock(i) + ' in stock)</option>'; }).join('');
 }
 
 async function promptReceiveGoods(itemId, itemName) {
@@ -3503,7 +3579,7 @@ function populateSaleItemSelect(select) {
   var items = saleItemsCache || [];
   select.innerHTML = '<option value="">Select product…</option>' + items.map(function (i) {
     var price = i.price != null ? i.price : 0;
-    return '<option value="' + i.id + '" data-price="' + price + '" data-stock="' + i.currentQuantity + '">' + escapeHtml(i.name) + ' — ' + sbFormatMoney(price) + ' (' + i.currentQuantity + ' in stock)</option>';
+    return '<option value="' + i.id + '" data-price="' + price + '" data-stock="' + (i.salesStock || 0) + '">' + escapeHtml(i.name) + ' — ' + sbFormatMoney(price) + ' (' + (i.salesStock || 0) + ' in stock)</option>';
   }).join('');
   if (current) select.value = current;
 }
@@ -3631,6 +3707,18 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// Digits only, plus an optional leading "+" for international format
+// (matching the +234... placeholder/format the backend actually
+// expects) -- strips anything else as the user types.
+function restrictToPhoneChars(input) {
+  if (!input) return;
+  input.addEventListener('input', function () {
+    var hasPlus = input.value.trim().charAt(0) === '+';
+    var digits = input.value.replace(/\D/g, '');
+    input.value = (hasPlus ? '+' : '') + digits;
+  });
+}
+
 function statusLabel(status) {
   const map = { ACTIVE: 'Active Employee', ON_LEAVE: 'On Leave', SUSPENDED: 'Suspended', EXITED: 'Exited', ARCHIVED: 'Archived' };
   return map[status] || status || 'Unknown';
@@ -3644,4 +3732,5 @@ function statusBadgeClass(status) {
 // -- Boot --
 document.addEventListener('DOMContentLoaded', () => {
   initStaffPortal();
+  restrictToPhoneChars(document.getElementById('sale-customer-phone'));
 });

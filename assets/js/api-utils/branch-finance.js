@@ -23,6 +23,18 @@ const BranchFinance = (() => {
         });
     }
 
+    async function getSettings() {
+        return apiFetch('/branch-finance/settings');
+    }
+
+    async function updateSettings(submissionDeadlineTime) {
+        return apiFetch('/branch-finance/settings', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ submissionDeadlineTime }),
+        });
+    }
+
     function formatMoney(value) {
         var n = Number(value) || 0;
         return '₦' + n.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -31,6 +43,8 @@ const BranchFinance = (() => {
     return {
         getDailySummary,
         submitReconciliation,
+        getSettings,
+        updateSettings,
         formatMoney,
     };
 })();

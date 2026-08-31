@@ -527,11 +527,9 @@
                 var onboardingApprove = e.target.closest(".btn-onboarding-approve");
                 var onboardingReject = e.target.closest(".btn-onboarding-reject");
                 var editWorkCalendar = e.target.closest(".btn-edit-work-calendar");
-                var setCompensationBtn = e.target.closest(".btn-oc-set-compensation");
-                var setCompensationPlanBtn = e.target.closest(".btn-oc-set-compensation-plan");
+                var setPayrollMethodBtn = e.target.closest(".btn-oc-set-payroll-method");
                 var requestAddressVerificationBtn = e.target.closest(".btn-oc-request-address-verification");
-                if (setCompensationBtn) return handleSetCompensation(setCompensationBtn.dataset.id);
-                if (setCompensationPlanBtn) return handleSetCompensationPlan(setCompensationPlanBtn.dataset.id);
+                if (setPayrollMethodBtn) return handleSetPayrollMethod(setPayrollMethodBtn.dataset.id);
                 if (requestAddressVerificationBtn) return handleRequestAddressVerification(requestAddressVerificationBtn.dataset.id);
                 var cancelAddressVerificationBtn = e.target.closest(".btn-oc-cancel-address-verification");
                 if (cancelAddressVerificationBtn) return handleCancelAddressVerification(cancelAddressVerificationBtn.dataset.id);
@@ -1112,23 +1110,6 @@
             return html;
         }
 
-        function renderDirectivesSection(directives) {
-            if (!directives) {
-                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load tasks.</div>';
-            }
-            if (!directives.length) {
-                return '<div class="text-secondary small">No tasks assigned to this staff member.</div>';
-            }
-            var STATUS_BADGE = { PENDING: 'bg-red-lt', ACKNOWLEDGED: 'bg-warning-lt', COMPLETED: 'bg-success-lt' };
-            return directives.slice(0, 5).map(function (d) {
-                var badgeClass = STATUS_BADGE[d.status] || 'bg-secondary-lt';
-                return '<div class="py-1">' +
-                    '<div class="d-flex align-items-center justify-content-between">' +
-                    '<div class="small fw-semibold">' + esc(d.title) + '</div>' +
-                    '<span class="badge ' + badgeClass + '">' + esc(d.status) + '</span></div>' +
-                    '<div class="text-secondary small">' + esc(d.body) + '</div></div>';
-            }).join('');
-        }
 
         async function openStaffDetail(id) {
             _currentStaffId = id;
@@ -1143,7 +1124,6 @@
 
                 var onboardingResult = await Staff.getOnboarding(id).catch(function () { return null; });
                 var documentsResult = await Staff.getDocumentStatus(id).catch(function () { return null; });
-                var directivesResult = await Staff.getDirectives(id).catch(function () { return null; });
                 var passportPhotoResult = await Staff.getPassportPhotoUrl(id).catch(function () { return null; });
                 var passportPhotoUrl = passportPhotoResult && passportPhotoResult.viewUrl;
                 var roleAssignment = await Staff.getRoleAssignment(id).catch(function () { return { adminRoleId: null, adminRoleName: null, hasAdminPortalLogin: false, linkedToUserAccount: false }; });
@@ -1190,19 +1170,20 @@
                     '<div id="work-calendar-summary">' + renderWorkCalendarSummary(workCalendarResult) + '</div>' +
                     '</div>' +
                     '<div class="mb-3">' +
-                    '<div class="fw-semibold mb-1">Tasks &amp; Directives</div>' +
-                    renderDirectivesSection(directivesResult) +
-                    '</div>' +
-                    '<div class="mb-3">' +
                     '<div class="d-flex align-items-center justify-content-between mb-1">' +
-                    '<div class="fw-semibold">Compensation</div>' +
-                    '<button class="btn btn-xs btn-outline-primary btn-oc-set-compensation" data-id="' + esc(s.id) + '">Set</button>' +
+                    '<div class="fw-semibold">Payroll Method</div>' +
+                    '<button class="btn btn-xs btn-outline-primary btn-oc-set-payroll-method" data-id="' + esc(s.id) + '">Set</button>' +
+                    '</div>' +
+                    '<div class="small mb-2">' +
+                    'Type: <strong>' + esc(compensationTypeLabel(s.compensationType)) + '</strong>' +
+                    (s.commissionPlan ? ' &middot; Plan: <strong>' + esc(s.commissionPlan.name) + '</strong> (' + esc(CommissionPlans.formatRate(s.commissionPlan.commissionRate)) + ')'
+                        : (s.commissionRate != null ? ' &middot; Flat Rate: <strong>' + esc((Number(s.commissionRate) * 100).toFixed(1)) + '%</strong>' : '')) +
                     '</div>' +
                     '<div class="small mb-2">' +
                     (s.currentBaseSalary != null
                         ? 'Base: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentBaseSalary) : ('\u20a6' + Number(s.currentBaseSalary).toLocaleString())) + '</strong>' +
                         (s.currentAllowances != null ? ' &middot; Allowances: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentAllowances) : ('\u20a6' + Number(s.currentAllowances).toLocaleString())) + '</strong>' : '')
-                        : '<span class="text-secondary">Not set yet.</span>') +
+                        : '<span class="text-secondary">No salary set.</span>') +
                     '</div>' +
                     (compensationHistory.length
                         ? '<div class="d-flex flex-column gap-1">' +
@@ -1217,16 +1198,6 @@
                         }).join('') +
                         '</div>'
                         : '<div class="text-secondary small">No compensation history yet.</div>') +
-                    '</div>' +
-                    '<div class="mb-3">' +
-                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
-                    '<div class="fw-semibold">Payroll Method</div>' +
-                    '<button class="btn btn-xs btn-outline-primary btn-oc-set-compensation-plan" data-id="' + esc(s.id) + '">Set</button>' +
-                    '</div>' +
-                    '<div class="small">' +
-                    'Type: <strong>' + esc(compensationTypeLabel(s.compensationType)) + '</strong>' +
-                    (s.commissionPlan ? ' &middot; Plan: <strong>' + esc(s.commissionPlan.name) + '</strong> (' + esc(CommissionPlans.formatRate(s.commissionPlan.commissionRate)) + ')' : '') +
-                    '</div>' +
                     '</div>' +
                     '<div class="mb-3">' +
                     '<div class="d-flex align-items-center justify-content-between mb-1">' +
@@ -1395,7 +1366,6 @@
 
             if (action.type === "update") {
                 var managerOptions = resolveManagerOptions(action.staffId, d.reportingToId);
-                var commissionPercentValue = (d.commissionRate != null && d.commissionRate !== '') ? (Number(d.commissionRate) * 100) : '';
                 var permissionRoleOpts = (d.roleOptions || []).map(function (r) { return { value: r.id, label: r.name }; });
                 form.innerHTML =
                     buildInput('col-md-6', 'Full Name', 'sf-name', d.name || '') +
@@ -1410,10 +1380,6 @@
                     '</div>' +
                     buildSelect('col-md-4', 'Employment Status', 'sf-employment-status', d.employmentStatus || 'ACTIVE', statusOpts) +
                     buildOptionSelect('col-md-6', 'Reports To', 'sf-reporting-to-id', String(d.reportingToId || ''), managerOptions, 'No manager assigned', false) +
-                    '<div class="col-md-6"><label class="form-label" for="sf-commission-rate">Commission Rate (%)</label>' +
-                    '<input type="number" min="0" max="100" step="0.1" class="form-control" id="sf-commission-rate" value="' + esc(commissionPercentValue) + '" placeholder="e.g. 15 for 15%">' +
-                    '<div class="form-hint">Only relevant for commission-based roles (e.g. Stylists), and only used when this staff member has no Commission Plan assigned (see the Payroll Method section) \u2014 a plan\'s rate takes priority. Leave blank if this staff member earns no commission.</div>' +
-                    '</div>' +
                     '<div class="col-md-6"><label class="form-label" for="sf-grace-override">Personal Late Grace Period (minutes)</label>' +
                     '<input type="number" min="0" step="1" class="form-control" id="sf-grace-override" value="' + esc(d.lateGracePeriodOverride != null ? d.lateGracePeriodOverride : '') + '" placeholder="Leave blank to use branch default">' +
                     '<div class="form-hint">Overrides the branch\'s grace period for this staff member specifically. Leave blank to use the branch default.</div>' +
@@ -1455,8 +1421,18 @@
                 return;
             }
 
-            if (action.type === "compensation") {
+            if (action.type === "payroll-method") {
+                var compTypeOpts = [
+                    { value: "SALARY", label: "Salary" },
+                    { value: "SALARY_TO_COMMISSION", label: "Salary \u2192 Commission (switches after the configured cutoff)" },
+                    { value: "SALARY_PLUS_COMMISSION", label: "Salary + Commission" },
+                    { value: "COMMISSION", label: "Commission Only" },
+                ];
+                var planOpts = (d.planOptions || []).map(function (p) { return { value: p.id, label: p.name + ' (' + CommissionPlans.formatRate(p.commissionRate) + ')' }; });
+                var commissionPercentValue = (d.commissionRate != null && d.commissionRate !== '') ? (Number(d.commissionRate) * 100) : '';
                 form.innerHTML =
+                    buildOptionSelect('col-12', 'Compensation Type', 'sf-comp-type', d.compensationType || 'SALARY', compTypeOpts, 'Select a compensation type', true) +
+                    '<div id="sf-salary-fields-wrap" class="row g-3">' +
                     (d.currentBaseSalary != null
                         ? '<div class="col-12"><div class="alert alert-info mb-0">Current: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(d.currentBaseSalary) : ('\u20a6' + Number(d.currentBaseSalary).toLocaleString())) + '</strong>' +
                         (d.currentAllowances != null ? ' + <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(d.currentAllowances) : ('\u20a6' + Number(d.currentAllowances).toLocaleString())) + '</strong> allowances' : '') + '</div></div>'
@@ -1466,24 +1442,26 @@
                     buildInput('col-md-6', 'Effective Date', 'sf-comp-effective-date', new Date().toISOString().slice(0, 10), 'date') +
                     '<div class="col-md-6"></div>' +
                     '<div class="col-12"><label class="form-label" for="sf-comp-note">Note</label><textarea class="form-control" id="sf-comp-note" rows="2" placeholder="e.g. Annual review — 10% increase"></textarea></div>' +
-                    '<div class="col-12"><div class="form-hint">This is the ongoing figure Payroll reads from — distinct from the original offer letter, which is a one-time pre-hire snapshot. Every change is recorded in this staff member\'s compensation history.</div></div>';
-                return;
-            }
-
-            if (action.type === "compensation-plan") {
-                var compTypeOpts = [
-                    { value: "SALARY", label: "Salary" },
-                    { value: "SALARY_TO_COMMISSION", label: "Salary \u2192 Commission (switches after the configured cutoff)" },
-                    { value: "SALARY_PLUS_COMMISSION", label: "Salary + Commission" },
-                    { value: "COMMISSION", label: "Commission Only" },
-                ];
-                var planOpts = (d.planOptions || []).map(function (p) { return { value: p.id, label: p.name + ' (' + CommissionPlans.formatRate(p.commissionRate) + ')' }; });
-                form.innerHTML =
-                    '<div class="col-12"><div class="alert alert-info mb-0">Determines which payroll calculation path applies to this staff member, and (where relevant) which Commission Plan\'s rate and eligible services to use.</div></div>' +
-                    buildOptionSelect('col-12', 'Compensation Type', 'sf-comp-type', d.compensationType || 'SALARY', compTypeOpts, 'Select a compensation type', true) +
+                    '<div class="col-12"><div class="form-hint">This is the ongoing figure Payroll reads from — distinct from the original offer letter, which is a one-time pre-hire snapshot. Every change is recorded in this staff member\'s compensation history.</div></div>' +
+                    '</div>' +
+                    '<div id="sf-commission-fields-wrap" class="row g-3">' +
                     buildOptionSelect('col-12', 'Commission Plan', 'sf-comp-plan-id', String(d.commissionPlanId || ''), planOpts, 'No plan assigned', false) +
-                    '<div class="col-12"><div class="form-hint">Only relevant for Salary + Commission or Commission Only. Leave unassigned to use this staff member\'s flat Commission Rate instead (see Compensation section above).</div></div>';
+                    '<div class="col-12"><label class="form-label" for="sf-commission-rate">Commission Rate (%)</label>' +
+                    '<input type="number" min="0" max="100" step="0.1" class="form-control" id="sf-commission-rate" value="' + esc(commissionPercentValue) + '" placeholder="e.g. 15 for 15%">' +
+                    '<div class="form-hint">Used only when no Commission Plan is assigned above \u2014 a plan\'s rate always takes priority. Leave blank if not applicable.</div>' +
+                    '</div>' +
+                    '</div>';
                 SearchableSelect.attach('sf-comp-plan-id');
+
+                var syncPayrollMethodFields = function () {
+                    var type = document.getElementById('sf-comp-type').value;
+                    var showSalary = type === 'SALARY' || type === 'SALARY_TO_COMMISSION' || type === 'SALARY_PLUS_COMMISSION';
+                    var showCommission = type === 'SALARY_TO_COMMISSION' || type === 'SALARY_PLUS_COMMISSION' || type === 'COMMISSION';
+                    document.getElementById('sf-salary-fields-wrap').style.display = showSalary ? '' : 'none';
+                    document.getElementById('sf-commission-fields-wrap').style.display = showCommission ? '' : 'none';
+                };
+                document.getElementById('sf-comp-type').addEventListener('change', syncPayrollMethodFields);
+                syncPayrollMethodFields();
                 return;
             }
 
@@ -1559,7 +1537,6 @@
                 return base;
             }
             if (actionType === "update") {
-                var commissionPercentInput = document.getElementById("sf-commission-rate").value;
                 var updatePayload = {
                     name: trimOrUndef(document.getElementById("sf-name").value),
                     currentRole: trimOrUndef(document.getElementById("sf-current-role").value),
@@ -1570,7 +1547,6 @@
                     reasonForExit: trimOrUndef(document.getElementById("sf-reason-for-exit").value),
                     exitDate: trimOrUndef(document.getElementById("sf-exit-date").value),
                     reportingToId: document.getElementById("sf-reporting-to-id").value || null,
-                    commissionRate: commissionPercentInput ? (Number(commissionPercentInput) / 100) : null,
                     lateGracePeriodOverride: (function () {
                         var v = document.getElementById("sf-grace-override").value.trim();
                         return v === "" ? null : Number(v);
@@ -1607,24 +1583,28 @@
                 return transferPayload;
             }
 
-            if (actionType === "compensation") {
-                var baseSalaryInput = document.getElementById("sf-comp-base-salary").value;
-                var allowancesInput = document.getElementById("sf-comp-allowances").value;
-                var compPayload = {
-                    baseSalary: baseSalaryInput === "" ? undefined : Number(baseSalaryInput),
-                    allowances: allowancesInput === "" ? undefined : Number(allowancesInput),
-                    effectiveDate: trimOrUndef(document.getElementById("sf-comp-effective-date").value),
-                    note: trimOrUndef(document.getElementById("sf-comp-note").value),
-                };
-                Object.keys(compPayload).forEach(function (k) { if (compPayload[k] === undefined) delete compPayload[k]; });
-                return compPayload;
-            }
+            if (actionType === "payroll-method") {
+                var compType = document.getElementById("sf-comp-type").value;
+                var commissionPercentInput = document.getElementById("sf-commission-rate").value;
+                var payrollPayload = { compensationType: compType };
 
-            if (actionType === "compensation-plan") {
-                return {
-                    compensationType: document.getElementById("sf-comp-type").value,
-                    commissionPlanId: document.getElementById("sf-comp-plan-id").value || null,
-                };
+                var showSalary = compType === 'SALARY' || compType === 'SALARY_TO_COMMISSION' || compType === 'SALARY_PLUS_COMMISSION';
+                if (showSalary) {
+                    var baseSalaryInput = document.getElementById("sf-comp-base-salary").value;
+                    var allowancesInput = document.getElementById("sf-comp-allowances").value;
+                    payrollPayload.baseSalary = baseSalaryInput === "" ? undefined : Number(baseSalaryInput);
+                    payrollPayload.allowances = allowancesInput === "" ? undefined : Number(allowancesInput);
+                    payrollPayload.effectiveDate = trimOrUndef(document.getElementById("sf-comp-effective-date").value);
+                    payrollPayload.note = trimOrUndef(document.getElementById("sf-comp-note").value);
+                }
+
+                var showCommission = compType === 'SALARY_TO_COMMISSION' || compType === 'SALARY_PLUS_COMMISSION' || compType === 'COMMISSION';
+                if (showCommission) {
+                    payrollPayload.commissionPlanId = document.getElementById("sf-comp-plan-id").value || null;
+                    payrollPayload.commissionRate = commissionPercentInput ? (Number(commissionPercentInput) / 100) : null;
+                }
+
+                return payrollPayload;
             }
 
             if (actionType === "assign-role") {
@@ -1697,16 +1677,19 @@
                     return;
                 }
             }
-            if (_staffFormAction.type === "compensation") {
-                if (payload.baseSalary == null || isNaN(payload.baseSalary) || payload.baseSalary < 0) {
-                    errorEl.textContent = "Please enter a valid base salary.";
-                    errorEl.classList.remove("d-none");
-                    return;
-                }
-                if (!payload.effectiveDate) {
-                    errorEl.textContent = "Please select an effective date.";
-                    errorEl.classList.remove("d-none");
-                    return;
+            if (_staffFormAction.type === "payroll-method") {
+                var pmShowSalary = payload.compensationType === 'SALARY' || payload.compensationType === 'SALARY_TO_COMMISSION' || payload.compensationType === 'SALARY_PLUS_COMMISSION';
+                if (pmShowSalary) {
+                    if (payload.baseSalary == null || isNaN(payload.baseSalary) || payload.baseSalary < 0) {
+                        errorEl.textContent = "Please enter a valid base salary.";
+                        errorEl.classList.remove("d-none");
+                        return;
+                    }
+                    if (!payload.effectiveDate) {
+                        errorEl.textContent = "Please select an effective date.";
+                        errorEl.classList.remove("d-none");
+                        return;
+                    }
                 }
             }
             if (_staffFormAction.type === "assign-role") {
@@ -1731,8 +1714,25 @@
                 }
                 else if (_staffFormAction.type === "status") await Staff.updateStatus(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "transfer") await Staff.transferBranch(_staffFormAction.staffId, payload);
-                else if (_staffFormAction.type === "compensation") await Staff.setCompensation(_staffFormAction.staffId, payload);
-                else if (_staffFormAction.type === "compensation-plan") await CommissionPlans.assignCompensation(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "payroll-method") {
+                    await CommissionPlans.assignCompensation(_staffFormAction.staffId, {
+                        compensationType: payload.compensationType,
+                        commissionPlanId: payload.commissionPlanId !== undefined ? payload.commissionPlanId : null,
+                    });
+                    if (payload.baseSalary !== undefined) {
+                        var compPayload = {
+                            baseSalary: payload.baseSalary,
+                            allowances: payload.allowances,
+                            effectiveDate: payload.effectiveDate,
+                            note: payload.note,
+                        };
+                        Object.keys(compPayload).forEach(function (k) { if (compPayload[k] === undefined) delete compPayload[k]; });
+                        await Staff.setCompensation(_staffFormAction.staffId, compPayload);
+                    }
+                    if (payload.commissionRate !== undefined) {
+                        await Staff.update(_staffFormAction.staffId, { commissionRate: payload.commissionRate });
+                    }
+                }
                 else if (_staffFormAction.type === "assign-role") await Staff.assignRole(_staffFormAction.staffId, payload.adminRoleId, payload.grantPortalLogin);
                 else if (_staffFormAction.type === "archive") await Staff.archive(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "add-history") await Staff.addHistory(_staffFormAction.staffId, payload);
@@ -1821,36 +1821,21 @@
             }
         }
 
-        async function handleSetCompensation(id) {
-            try {
-                var s = await Staff.getOne(id);
-                openStaffFormModal({
-                    type: "compensation",
-                    staffId: id,
-                    title: "Set Compensation — " + Staff.fullName(s),
-                    help: "Sets the ongoing base salary and allowances Payroll reads from. Every change is recorded in this staff member's compensation history.",
-                    data: {
-                        currentBaseSalary: s.currentBaseSalary,
-                        currentAllowances: s.currentAllowances,
-                    }
-                });
-            } catch (err) {
-                alert(err.message || "Failed to load staff for compensation update");
-            }
-        }
-
-        async function handleSetCompensationPlan(id) {
+        async function handleSetPayrollMethod(id) {
             try {
                 var s = await Staff.getOne(id);
                 var plans = await CommissionPlans.getAll(true).catch(function () { return []; });
                 openStaffFormModal({
-                    type: "compensation-plan",
+                    type: "payroll-method",
                     staffId: id,
                     title: "Payroll Method — " + Staff.fullName(s),
-                    help: "Sets which payroll calculation path applies, and (where relevant) which Commission Plan to use.",
+                    help: "Sets which payroll calculation path applies, and the relevant salary or commission figures for it.",
                     data: {
                         compensationType: s.compensationType || "SALARY",
+                        currentBaseSalary: s.currentBaseSalary,
+                        currentAllowances: s.currentAllowances,
                         commissionPlanId: s.commissionPlanId || "",
+                        commissionRate: s.commissionRate,
                         planOptions: plans,
                     }
                 });
