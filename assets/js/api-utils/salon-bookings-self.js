@@ -49,6 +49,11 @@ const SalonBookingsSelf = (function () {
         });
     }
 
+    async function previewDiscount(code, subtotal) {
+        const q = new URLSearchParams({ code: code, subtotal: String(subtotal) });
+        return jsonFetch(`/staff/me/salon-bookings/preview-discount?${q.toString()}`);
+    }
+
     async function editBooking(id, payload) {
         return jsonFetch(`/staff/me/salon-bookings/${id}`, {
             method: 'PATCH',
@@ -115,7 +120,7 @@ const SalonBookingsSelf = (function () {
 
     return {
         getAll, getOne, getBranchStaff, getMyCommission, searchCustomers, checkPhoneMatch,
-        create, editBooking, addServiceToCompletedBooking, getTodayStylistPerformance,
+        create, previewDiscount, editBooking, addServiceToCompletedBooking, getTodayStylistPerformance,
         addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification,
-    }; 
+    };
 })();

@@ -399,7 +399,8 @@
                         <div class="col-md-6">
                             <label class="form-label">Customer Phone <span
                                     class="text-secondary">(optional)</span></label>
-                            <input type="text" class="form-control" id="nb-customer-phone" placeholder="+2348012345678">
+                            <input type="text" class="form-control" id="nb-customer-phone" inputmode="tel"
+                                placeholder="+2348012345678">
                             <div id="nb-phone-match-prompt" class="alert alert-warning py-2 px-3 mt-2 d-none"
                                 style="font-size:13px;">
                                 <span id="nb-phone-match-text"></span>
@@ -450,6 +451,18 @@
                         <textarea class="form-control" id="nb-notes" rows="2"></textarea>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">Coupon Code <span class="text-secondary">(optional)</span></label>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control text-uppercase" id="nb-coupon-code"
+                                placeholder="e.g. SUMMER20">
+                            <button type="button" class="btn btn-outline-primary text-nowrap"
+                                id="btn-nb-apply-coupon">Apply</button>
+                        </div>
+                        <div class="small mt-1 d-none" id="nb-coupon-result"></div>
+                    </div>
+
+                    <div class="text-end text-secondary small d-none" id="nb-subtotal-line"></div>
                     <div class="text-end fw-bold" id="nb-estimated-total">Estimated total: —</div>
                 </div>
                 <div class="modal-footer">
@@ -496,7 +509,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Customer Phone</label>
-                            <input type="text" class="form-control" id="eb-customer-phone">
+                            <input type="text" class="form-control" id="eb-customer-phone" inputmode="tel">
                         </div>
                     </div>
 
@@ -651,6 +664,17 @@
 
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
+        // Digits only, plus an optional leading "+" for international
+        // format (matching the +234... placeholder/format the backend
+        // actually expects) -- strips anything else as the user types.
+        function restrictToPhoneChars(input) {
+            input.addEventListener('input', function () {
+                var hasPlus = input.value.trim().charAt(0) === '+';
+                var digits = input.value.replace(/\D/g, '');
+                input.value = (hasPlus ? '+' : '') + digits;
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             loadBranches();
             loadServices();
@@ -705,6 +729,14 @@
             document.getElementById('nb-add-service').addEventListener('click', function () { addServiceLine(); });
             document.getElementById('nb-add-item').addEventListener('click', function () { addItemLine(); });
             document.getElementById('btn-submit-booking').addEventListener('click', submitNewBooking);
+            document.getElementById('btn-nb-apply-coupon').addEventListener('click', nbApplyCoupon);
+            document.getElementById('nb-coupon-code').addEventListener('input', function () {
+                if (_nbAppliedCoupon) {
+                    _nbAppliedCoupon = null;
+                    document.getElementById('nb-coupon-result').classList.add('d-none');
+                    updateEstimatedTotal();
+                }
+            });
             document.getElementById('btn-confirm-reason').addEventListener('click', submitReason);
 
             document.getElementById('logout-btn').addEventListener('click', function (e) { e.preventDefault(); Auth.logout(); });
@@ -1036,6 +1068,9 @@
             document.getElementById('nb-date').min = new Date().toISOString().slice(0, 10);
             document.getElementById('nb-time').value = new Date().toTimeString().slice(0, 5);
             document.getElementById('nb-notes').value = '';
+            document.getElementById('nb-coupon-code').value = '';
+            document.getElementById('nb-coupon-result').classList.add('d-none');
+            _nbAppliedCoupon = null;
             document.getElementById('nb-service-lines').innerHTML = '';
             document.getElementById('nb-item-lines').innerHTML = '';
             document.getElementById('nb-estimated-total').textContent = 'Estimated total: —';
@@ -1115,7 +1150,7 @@
             } catch (e) { staffSel.innerHTML = '<option value="">Failed to load staff</option>'; }
 
             try {
-                window._nbInventoryItems = await Inventory.getAll({ branchId, limit: 100 });
+                window._nbInventoryItems = await Inventory.getAll({ branchId, category: 'INTERNAL_USE', limit: 100 });
                 if (window._nbInventoryItems.data) window._nbInventoryItems = window._nbInventoryItems.data;
             } catch (e) { window._nbInventoryItems = []; }
 
@@ -1182,6 +1217,8 @@
             updateEstimatedTotal();
         }
 
+        var _nbAppliedCoupon = null; // { id, code, percentage }
+
         function updateEstimatedTotal() {
             var total = 0;
 
@@ -1206,8 +1243,73 @@
                 total += lineTotal;
             });
 
-            document.getElementById('nb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(total);
+            var subtotalLine = document.getElementById('nb-subtotal-line');
+            if (_nbAppliedCoupon) {
+                // Recomputed client-side from the validated percentage --
+                // no need to re-call the server just because a line item
+                // changed, since a percentage discount scales linearly.
+                var discountAmount = Math.round(total * (_nbAppliedCoupon.percentage / 100) * 100) / 100;
+                var finalTotal = total - discountAmount;
+                subtotalLine.textContent = 'Subtotal ' + SalonBookings.formatMoney(total) + ' \u2212 ' + _nbAppliedCoupon.code + ' (' + _nbAppliedCoupon.percentage + '%): ' + SalonBookings.formatMoney(discountAmount);
+                subtotalLine.classList.remove('d-none');
+                document.getElementById('nb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(finalTotal);
+            } else {
+                subtotalLine.classList.add('d-none');
+                document.getElementById('nb-estimated-total').textContent = 'Estimated total: ' + SalonBookings.formatMoney(total);
+            }
         }
+
+        function nbCurrentSubtotal() {
+            var total = 0;
+            document.querySelectorAll('#nb-service-lines .line-row').forEach(function (row) {
+                var sel = row.querySelector('.line-service-select');
+                var qty = Number(row.querySelector('.line-qty').value) || 0;
+                var opt = sel.options[sel.selectedIndex];
+                total += (opt ? Number(opt.dataset.price || 0) : 0) * qty;
+            });
+            document.querySelectorAll('#nb-item-lines .line-row').forEach(function (row) {
+                var sel = row.querySelector('.line-item-select');
+                var qty = Number(row.querySelector('.line-qty').value) || 0;
+                var opt = sel.options[sel.selectedIndex];
+                var sellable = opt && opt.dataset.sellable === '1';
+                total += (opt && sellable ? Number(opt.dataset.price || 0) : 0) * qty;
+            });
+            return total;
+        }
+
+        async function nbApplyCoupon() {
+            var code = document.getElementById('nb-coupon-code').value.trim();
+            var resultEl = document.getElementById('nb-coupon-result');
+            resultEl.classList.remove('d-none', 'text-success', 'text-danger');
+            if (!code) {
+                resultEl.textContent = 'Enter a coupon code.';
+                resultEl.classList.add('text-danger');
+                return;
+            }
+            var branchId = document.getElementById('nb-branch').value;
+            if (!branchId) {
+                resultEl.textContent = 'Select a branch first.';
+                resultEl.classList.add('text-danger');
+                return;
+            }
+            var btn = document.getElementById('btn-nb-apply-coupon');
+            btn.disabled = true;
+            try {
+                var preview = await SalonBookings.previewDiscount(code, branchId, nbCurrentSubtotal());
+                _nbAppliedCoupon = { id: preview.id, code: preview.code, percentage: Number(preview.percentage) };
+                resultEl.textContent = '\u2713 "' + preview.name + '" applied \u2014 ' + preview.percentage + '% off.';
+                resultEl.classList.add('text-success');
+                updateEstimatedTotal();
+            } catch (err) {
+                _nbAppliedCoupon = null;
+                resultEl.textContent = err.message || 'Invalid coupon.';
+                resultEl.classList.add('text-danger');
+                updateEstimatedTotal();
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
 
         /** Routes to the right modal — full Edit for Scheduled/In Progress, the narrower Add Service flow for Completed. */
         async function openEditOrAddService(id) {
@@ -1320,7 +1422,7 @@
             // a booking's branch is fixed and never editable here, so this
             // is loaded once per open rather than reactively.
             try {
-                var invResult = await Inventory.getAll({ branchId: branchId, limit: 100 });
+                var invResult = await Inventory.getAll({ branchId: branchId, category: 'INTERNAL_USE', limit: 100 });
                 window._ebInventoryItems = invResult.data || invResult || [];
             } catch (e) { window._ebInventoryItems = []; }
 
@@ -1491,6 +1593,8 @@
         }
 
         document.getElementById('nb-customer-phone').addEventListener('blur', nbCheckPhoneMatch);
+        restrictToPhoneChars(document.getElementById('nb-customer-phone'));
+        restrictToPhoneChars(document.getElementById('eb-customer-phone'));
         // Any further edit to the phone invalidates whatever was last confirmed/checked.
         document.getElementById('nb-customer-phone').addEventListener('input', function () {
             _nbLinkToVerifiedUser = false;
@@ -1556,6 +1660,7 @@
                 services: services,
                 inventoryItems: inventoryItems.length ? inventoryItems : undefined,
                 notes: notes || undefined,
+                discountCode: _nbAppliedCoupon ? _nbAppliedCoupon.code : undefined,
             };
 
             var btn = document.getElementById('btn-submit-booking');

@@ -93,19 +93,33 @@
 
             <div class="page-body">
                 <div class="container-xl">
-                    <div class="row g-2 mb-3">
+                    <div class="row g-2 mb-2">
                         <div class="col-md-4">
                             <select class="form-select" id="f-branch">
                                 <option value="">All branches</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
+                            <select class="form-select" id="f-product">
+                                <option value="">All products</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="f-source">
+                                <option value="">All sources</option>
+                                <option value="standalone">Standalone Product Sales</option>
+                                <option value="booking">Sold During Bookings</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
                             <input type="date" class="form-control" id="f-from" placeholder="From">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <input type="date" class="form-control" id="f-to" placeholder="To">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear
                                 Filters</button>
                         </div>
@@ -202,8 +216,10 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/inventory-products.js"></script>
     <script src="assets/js/api-utils/reports.js"></script>
     <script src="assets/js/csv-export.js"></script>
+    <script src="assets/js/searchable-select.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -212,11 +228,13 @@
         document.addEventListener('DOMContentLoaded', async function () {
             RBAC.applyPageGuard('reports:read_profitability');
 
-            ['f-branch', 'f-from', 'f-to'].forEach(function (id) {
+            ['f-branch', 'f-product', 'f-source', 'f-from', 'f-to'].forEach(function (id) {
                 document.getElementById(id).addEventListener('change', load);
             });
             document.getElementById('btn-clear-filters').addEventListener('click', function () {
                 document.getElementById('f-branch').value = '';
+                document.getElementById('f-product').value = '';
+                document.getElementById('f-source').value = '';
                 document.getElementById('f-from').value = '';
                 document.getElementById('f-to').value = '';
                 load();
@@ -229,6 +247,14 @@
                     return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
                 }).join('');
             } catch (e) { /* branch filter just stays with "All branches" */ }
+
+            try {
+                var products = await InventoryProducts.getAll(undefined, undefined, true);
+                document.getElementById('f-product').innerHTML += products.map(function (p) {
+                    return '<option value="' + p.id + '">' + esc(p.name) + (p.sku ? ' (' + esc(p.sku) + ')' : '') + '</option>';
+                }).join('');
+                SearchableSelect.attach('f-product');
+            } catch (e) { /* product filter just stays with "All products" */ }
 
             load();
         });
@@ -246,6 +272,8 @@
         function currentFilters() {
             return {
                 branchId: document.getElementById('f-branch').value,
+                productId: document.getElementById('f-product').value,
+                source: document.getElementById('f-source').value,
                 from: document.getElementById('f-from').value,
                 to: document.getElementById('f-to').value,
             };

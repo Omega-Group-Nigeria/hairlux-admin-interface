@@ -64,6 +64,10 @@
                             <div class="page-pretitle">Operations</div>
                             <h2 class="page-title">Branch Finance</h2>
                         </div>
+                        <div class="col-auto d-none" id="bf-settings-btn-wrap">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-bf-settings">Submission
+                                Deadline Settings</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -195,7 +199,8 @@
                     <div class="mb-3">
                         <label class="form-label">Date</label>
                         <input type="date" class="form-control" id="rec-date" readonly>
-                        <div class="form-hint">You can only submit for yesterday, and only before 12:00pm today.</div>
+                        <div class="form-hint" id="rec-deadline-hint">You can only submit for yesterday, and only
+                            before 12:00pm today.</div>
                     </div>
                     <div class="mb-3" id="rec-expected-wrap">
                         <div class="text-secondary small">Expected cash for this date</div>
@@ -205,9 +210,11 @@
                         <label class="form-label required">Total Revenue Received</label>
                         <input type="number" step="0.01" min="0" class="form-control" id="rec-cash-counted"
                             placeholder="0.00">
+                        <div class="small mt-1 d-none" id="rec-variance-line"></div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Notes <span class="text-muted">(required if there's a variance
+                        <label class="form-label" id="rec-notes-label">Notes <span class="text-muted">(required if
+                                there's a variance
                                 between cash counted and expected cash)</span></label>
                         <textarea class="form-control" id="rec-notes" rows="2"></textarea>
                     </div>
@@ -218,6 +225,32 @@
                         <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-reconcile"></span>
                         Submit
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submission Deadline Settings Modal — Dev Feedback Round 6, item #17 -->
+    <div class="modal modal-blur fade" id="modal-bf-settings" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Submission Deadline Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="bf-settings-error"></div>
+                    <p class="text-secondary small">Applies across every branch — each branch can only submit
+                        yesterday's cash count up until this time today.</p>
+                    <div class="mb-2">
+                        <label class="form-label">Deadline Time</label>
+                        <input type="time" class="form-control" id="bf-settings-deadline">
+                    </div>
+                    <p class="text-secondary small mb-0" id="bf-settings-meta"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-bf-settings">Save</button>
                 </div>
             </div>
         </div>
@@ -237,6 +270,17 @@
         var isMultiBranch = false; // Dev Feedback Round 4, item #25 -- true for a non-admin with access to more than one branch
         var lockedBranchId = null;
         var _lastSummary = null;
+        var _submissionDeadlineTime = '12:00'; // Dev Feedback Round 6, item #19 -- fetched fresh in init(); this default only covers the brief window before that fetch resolves
+
+        /** "12:00" -> "12:00pm", "09:30" -> "9:30am". Dev Feedback Round 6, item #19. */
+        function formatDeadlineTime(hhmm) {
+            var parts = (hhmm || '12:00').split(':');
+            var hour = Number(parts[0]);
+            var minute = parts[1] || '00';
+            var period = hour >= 12 ? 'pm' : 'am';
+            var hour12 = hour % 12 === 0 ? 12 : hour % 12;
+            return hour12 + ':' + minute + period;
+        }
 
         function esc(s) {
             var d = document.createElement('div');
@@ -260,6 +304,17 @@
         async function init() {
             var user = Auth.getUser();
             isAdmin = !!(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
+
+            if (isAdmin && RBAC.can('branch_finance:manage_settings')) {
+                document.getElementById('bf-settings-btn-wrap').classList.remove('d-none');
+            }
+
+            try {
+                var settings = await BranchFinance.getSettings();
+                _submissionDeadlineTime = settings.submissionDeadlineTime;
+            } catch (e) { _submissionDeadlineTime = '12:00'; }
+            document.getElementById('rec-deadline-hint').textContent =
+                'You can only submit for yesterday, and only before ' + formatDeadlineTime(_submissionDeadlineTime) + ' today.';
 
             // No default dates -- an empty filter means "all time", matching
             // Booking Overview's own behavior when no date filter is applied.
@@ -394,13 +449,16 @@
             document.getElementById('rec-cash-counted').value = '';
             document.getElementById('rec-notes').value = '';
 
-            // Warn upfront if the noon window has already closed, rather
-            // than letting the admin fill out the whole form only to hit
-            // a rejection on submit.
+            // Warn upfront if the submission window has already closed,
+            // rather than letting the admin fill out the whole form only
+            // to hit a rejection on submit.
             var deadlineNote = document.getElementById('reconcile-deadline-note');
             var nowWat = new Date(Date.now() + 60 * 60 * 1000);
-            if (nowWat.getUTCHours() >= 12) {
-                deadlineNote.textContent = "The 12:00pm submission window for " + yesterdayStr() + " has already closed today. This submission will be rejected.";
+            var deadlineParts = _submissionDeadlineTime.split(':');
+            var deadlineMinutesSinceMidnight = Number(deadlineParts[0]) * 60 + Number(deadlineParts[1] || 0);
+            var nowMinutesSinceMidnight = nowWat.getUTCHours() * 60 + nowWat.getUTCMinutes();
+            if (nowMinutesSinceMidnight >= deadlineMinutesSinceMidnight) {
+                deadlineNote.textContent = "The " + formatDeadlineTime(_submissionDeadlineTime) + " submission window for " + yesterdayStr() + " has already closed today. This submission will be rejected.";
                 deadlineNote.classList.remove('d-none');
             } else {
                 deadlineNote.classList.add('d-none');
@@ -410,20 +468,55 @@
             new bootstrap.Modal(document.getElementById('modal-reconcile')).show();
         });
 
+        var _recExpectedCash = null; // raw number, for live variance calc -- rec-expected only ever holds the formatted display string
+
         document.getElementById('rec-date').addEventListener('change', loadExpectedForDate);
 
         async function loadExpectedForDate() {
             var date = document.getElementById('rec-date').value;
             var expectedEl = document.getElementById('rec-expected');
             expectedEl.textContent = 'Loading…';
+            _recExpectedCash = null;
             try {
                 var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bf-branch').value : undefined;
                 var summary = await BranchFinance.getDailySummary({ branchId: branchId, dateFrom: date, dateTo: date });
-                expectedEl.textContent = BranchFinance.formatMoney(summary.totals.expectedCash);
+                _recExpectedCash = Number(summary.totals.expectedCash);
+                expectedEl.textContent = BranchFinance.formatMoney(_recExpectedCash);
             } catch (err) {
                 expectedEl.textContent = '—';
             }
+            updateRecVariance();
         }
+
+        // Dev Feedback Round 6, item #19: mirrors the backend's own
+        // auto-calc + required-reason-on-variance rule (branch-finance.
+        // service.ts, submitReconciliation) so the admin sees it live
+        // rather than discovering it only after a rejected submit.
+        function updateRecVariance() {
+            var line = document.getElementById('rec-variance-line');
+            var notesLabel = document.getElementById('rec-notes-label');
+            var cashCounted = document.getElementById('rec-cash-counted').value;
+
+            if (_recExpectedCash === null || cashCounted === '' || isNaN(Number(cashCounted))) {
+                line.classList.add('d-none');
+                notesLabel.innerHTML = 'Notes <span class="text-muted">(required if there\'s a variance between cash counted and expected cash)</span>';
+                return;
+            }
+
+            var variance = Number(cashCounted) - _recExpectedCash;
+            line.classList.remove('d-none');
+            if (variance === 0) {
+                line.className = 'small mt-1 text-secondary';
+                line.textContent = 'Matches expected cash exactly.';
+                notesLabel.innerHTML = 'Notes <span class="text-muted">(optional)</span>';
+            } else {
+                line.className = 'small mt-1 ' + (variance > 0 ? 'text-success' : 'text-danger');
+                line.textContent = (variance > 0 ? '+' : '') + BranchFinance.formatMoney(variance) + ' variance from expected \u2014 a reason is required below.';
+                notesLabel.innerHTML = 'Notes <span class="text-danger">(required \u2014 there is a variance)</span>';
+            }
+        }
+
+        document.getElementById('rec-cash-counted').addEventListener('input', updateRecVariance);
 
         document.getElementById('btn-submit-reconcile').addEventListener('click', async function () {
             var errEl = document.getElementById('reconcile-error');
@@ -435,6 +528,11 @@
             if (!date) { errEl.textContent = 'Date is required.'; errEl.classList.remove('d-none'); return; }
             if (cashCounted === '' || isNaN(Number(cashCounted)) || Number(cashCounted) < 0) {
                 errEl.textContent = 'Enter a valid cash amount.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            if (_recExpectedCash !== null && (Number(cashCounted) - _recExpectedCash) !== 0 && !notes) {
+                errEl.textContent = 'There is a variance between cash counted and expected cash \u2014 please explain it in Notes before submitting.';
                 errEl.classList.remove('d-none');
                 return;
             }
@@ -456,6 +554,47 @@
             } finally {
                 btn.disabled = false;
                 spinner.classList.add('d-none');
+            }
+        });
+
+        // Dev Feedback Round 6, item #17.
+        document.getElementById('btn-bf-settings').addEventListener('click', async function () {
+            var errEl = document.getElementById('bf-settings-error');
+            errEl.classList.add('d-none');
+            document.getElementById('bf-settings-meta').textContent = 'Loading…';
+            new bootstrap.Modal(document.getElementById('modal-bf-settings')).show();
+            try {
+                var settings = await BranchFinance.getSettings();
+                document.getElementById('bf-settings-deadline').value = settings.submissionDeadlineTime;
+                document.getElementById('bf-settings-meta').textContent = settings.updatedAt
+                    ? 'Last changed ' + new Date(settings.updatedAt).toLocaleString() + (settings.updatedBy ? ' by ' + settings.updatedBy.name : '')
+                    : 'Using the default — never explicitly changed.';
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to load settings.';
+                errEl.classList.remove('d-none');
+                document.getElementById('bf-settings-meta').textContent = '';
+            }
+        });
+
+        document.getElementById('btn-save-bf-settings').addEventListener('click', async function () {
+            var errEl = document.getElementById('bf-settings-error');
+            errEl.classList.add('d-none');
+            var value = document.getElementById('bf-settings-deadline').value;
+            if (!value) {
+                errEl.textContent = 'Choose a deadline time.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            try {
+                await BranchFinance.updateSettings(value);
+                bootstrap.Modal.getInstance(document.getElementById('modal-bf-settings')).hide();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to save settings.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
             }
         });
 

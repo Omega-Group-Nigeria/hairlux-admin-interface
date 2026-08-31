@@ -615,6 +615,7 @@
     <script src="assets/js/api-utils/discounts.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/lifecycle-campaigns.js"></script>
+    <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
     <!-- ===== CREATE DISCOUNT MODAL ===== -->
@@ -673,38 +674,18 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Branches</label>
-                                <select multiple class="form-select" name="targetBranchIds" id="create-target-branches"
-                                    size="4"></select>
+                                <select multiple class="form-select" name="targetBranchIds" id="create-target-branches"></select>
                                 <div class="form-text">Nothing selected = all branches.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Customer Lifecycle Stage</label>
-                                <select multiple class="form-select" name="targetLifecycleStages" size="4">
-                                    <option value="NEW">New</option>
-                                    <option value="ACTIVE">Active</option>
-                                    <option value="AT_RISK">At Risk</option>
-                                    <option value="DORMANT">Dormant</option>
-                                    <option value="INACTIVE">Inactive</option>
-                                    <option value="NEVER_VISITED">Never Visited</option>
+                                <label class="form-label">Gate to Campaign Recipients <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" id="create-target-campaign" required>
+                                    <option value="">Select a template or sequence…</option>
                                 </select>
-                                <div class="form-text">Nothing selected = all stages.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Customer Value Tier</label>
-                                <select multiple class="form-select" name="targetValueTiers" size="3">
-                                    <option value="STANDARD">Standard</option>
-                                    <option value="PREMIUM">Premium</option>
-                                    <option value="VIP">VIP</option>
-                                </select>
-                                <div class="form-text">Nothing selected = all tiers.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Gate to Campaign Recipients</label>
-                                <select class="form-select" id="create-target-campaign">
-                                    <option value="">Not gated by campaign</option>
-                                </select>
-                                <div class="form-text">Only customers actually sent this campaign message can redeem.
-                                </div>
+                                <div class="form-text">Required — only customers actually sent this campaign message
+                                    can redeem. Lifecycle stage and Value tier targeting are already set on the
+                                    campaign itself.</div>
                             </div>
                         </div>
                     </div>
@@ -1627,6 +1608,8 @@
             try {
                 var d = await Discounts.getOne(id);
                 formBody.innerHTML = buildEditForm(d);
+                MultiSelectDropdown.attach('edit-target-branches', { placeholder: 'All branches\u2026' });
+                MultiSelectDropdown.refresh('edit-target-branches');
             } catch (err) {
                 formBody.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
             }
@@ -1646,6 +1629,8 @@
                     branchSelect.innerHTML = _targetBranches.map(function (b) {
                         return '<option value="' + b.id + '">' + escHtml(b.name) + '</option>';
                     }).join('');
+                    MultiSelectDropdown.attach('create-target-branches', { placeholder: 'All branches\u2026' });
+                    MultiSelectDropdown.refresh('create-target-branches');
                 }
             } catch (e) { /* non-fatal — branch targeting just stays empty */ }
 
@@ -1657,7 +1642,7 @@
             } catch (e) { _targetCampaignSequences = []; }
 
             var campaignSelect = document.getElementById('create-target-campaign');
-            if (campaignSelect) campaignSelect.innerHTML = '<option value="">Not gated by campaign</option>' + campaignOptionsHtml();
+            if (campaignSelect) campaignSelect.innerHTML = '<option value="">Select a template or sequence…</option>' + campaignOptionsHtml();
         }
 
         /** Shared by the static Create select and the dynamically-built Edit form -- combined list so an admin picks "which campaign" without needing to know Template vs Sequence as separate concepts. Value encodes both id and type (e.g. "template:<uuid>"), split apart again when building the payload. */
@@ -1680,8 +1665,6 @@
 
         function buildEditForm(d) {
             var targetBranchIds = d.targetBranchIds || [];
-            var targetLifecycleStages = d.targetLifecycleStages || [];
-            var targetValueTiers = d.targetValueTiers || [];
             var selectedCampaign = d.targetCampaignTemplateId ? ('template:' + d.targetCampaignTemplateId)
                 : (d.targetCampaignSequenceId ? ('sequence:' + d.targetCampaignSequenceId) : '');
 
@@ -1716,7 +1699,7 @@
                 '</div>' +
                 '<div class="col-md-6">' +
                 '<label class="form-label">Branches</label>' +
-                '<select multiple class="form-select" name="targetBranchIds" size="4">' +
+                '<select multiple class="form-select" name="targetBranchIds" id="edit-target-branches">' +
                 _targetBranches.map(function (b) {
                     return '<option value="' + b.id + '"' + (targetBranchIds.indexOf(b.id) !== -1 ? ' selected' : '') + '>' + escHtml(b.name) + '</option>';
                 }).join('') +
@@ -1724,30 +1707,12 @@
                 '<div class="form-text">Nothing selected = all branches.</div>' +
                 '</div>' +
                 '<div class="col-md-6">' +
-                '<label class="form-label">Customer Lifecycle Stage</label>' +
-                '<select multiple class="form-select" name="targetLifecycleStages" size="4">' +
-                ['NEW', 'ACTIVE', 'AT_RISK', 'DORMANT', 'INACTIVE', 'NEVER_VISITED'].map(function (v) {
-                    return '<option value="' + v + '"' + (targetLifecycleStages.indexOf(v) !== -1 ? ' selected' : '') + '>' + v.replace(/_/g, ' ') + '</option>';
-                }).join('') +
-                '</select>' +
-                '<div class="form-text">Nothing selected = all stages.</div>' +
-                '</div>' +
-                '<div class="col-md-6">' +
-                '<label class="form-label">Customer Value Tier</label>' +
-                '<select multiple class="form-select" name="targetValueTiers" size="3">' +
-                ['STANDARD', 'PREMIUM', 'VIP'].map(function (v) {
-                    return '<option value="' + v + '"' + (targetValueTiers.indexOf(v) !== -1 ? ' selected' : '') + '>' + v + '</option>';
-                }).join('') +
-                '</select>' +
-                '<div class="form-text">Nothing selected = all tiers.</div>' +
-                '</div>' +
-                '<div class="col-md-6">' +
-                '<label class="form-label">Gate to Campaign Recipients</label>' +
-                '<select class="form-select" id="edit-target-campaign">' +
-                '<option value="">Not gated by campaign</option>' +
+                '<label class="form-label">Gate to Campaign Recipients <span class="text-danger">*</span></label>' +
+                '<select class="form-select" id="edit-target-campaign" required>' +
+                '<option value="">Select a template or sequence…</option>' +
                 campaignOptionsHtml(selectedCampaign) +
                 '</select>' +
-                '<div class="form-text">Only customers actually sent this campaign message can redeem.</div>' +
+                '<div class="form-text">Required — only customers actually sent this campaign message can redeem. Lifecycle stage and Value tier targeting are already set on the campaign itself.</div>' +
                 '</div>';
         }
 
@@ -1920,14 +1885,13 @@
             if (exp) payload.expiresAt = new Date(exp).toISOString();
 
             payload.targetBranchIds = fd.getAll("targetBranchIds");
-            payload.targetLifecycleStages = fd.getAll("targetLifecycleStages");
-            payload.targetValueTiers = fd.getAll("targetValueTiers");
             var campaignVal = document.getElementById("create-target-campaign").value;
-            if (campaignVal) {
-                var parts = campaignVal.split(":");
-                if (parts[0] === "template") payload.targetCampaignTemplateId = parts[1];
-                else if (parts[0] === "sequence") payload.targetCampaignSequenceId = parts[1];
+            if (!campaignVal) {
+                throw new Error("A gating template or sequence is required.");
             }
+            var parts = campaignVal.split(":");
+            if (parts[0] === "template") payload.targetCampaignTemplateId = parts[1];
+            else if (parts[0] === "sequence") payload.targetCampaignSequenceId = parts[1];
             return payload;
         }
 
@@ -1945,20 +1909,23 @@
             payload.expiresAt = exp ? new Date(exp).toISOString() : null;
 
             // Always sent, matching the full-replace semantics of the edit
-            // form re-rendering all three multi-selects with their complete
-            // current state -- not a conditional add like maxUses/expiresAt.
+            // form re-rendering the Branches multi-select with its
+            // complete current state -- not a conditional add like
+            // maxUses/expiresAt.
             payload.targetBranchIds = fd.getAll("targetBranchIds");
-            payload.targetLifecycleStages = fd.getAll("targetLifecycleStages");
-            payload.targetValueTiers = fd.getAll("targetValueTiers");
 
             // Both fields always sent (one set, one explicitly null) --
             // otherwise switching from a template-gated to a
-            // sequence-gated coupon (or clearing it) would leave the old,
-            // now-stale field untouched by the backend's
-            // omit-means-leave-alone update semantics.
+            // sequence-gated coupon would leave the old, now-stale field
+            // untouched by the backend's omit-means-leave-alone update
+            // semantics. Required field -- see the create form's own
+            // check for why this can't be empty.
             var campaignEl = document.getElementById("edit-target-campaign");
             var campaignVal = campaignEl ? campaignEl.value : "";
-            var parts = campaignVal ? campaignVal.split(":") : [];
+            if (!campaignVal) {
+                throw new Error("A gating template or sequence is required.");
+            }
+            var parts = campaignVal.split(":");
             payload.targetCampaignTemplateId = parts[0] === "template" ? parts[1] : null;
             payload.targetCampaignSequenceId = parts[0] === "sequence" ? parts[1] : null;
 

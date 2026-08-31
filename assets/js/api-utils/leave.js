@@ -45,6 +45,14 @@ const LeaveRequests = (function () {
         return raw.data || raw;
     }
 
+    /** Dev Feedback Round 6, item #22 -- gated the same as this page's other endpoints (ADMIN/SUPER_ADMIN role only), sidestepping the staff:read permission mismatch that silently broke both staff dropdowns on this page for a plain ADMIN without that permission individually granted. */
+    async function getStaffOptions() {
+        const res = await Auth.fetch('/admin/leave-requests/staff-options');
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to load staff options');
+        return raw.data || raw;
+    }
+
     async function approve(id) {
         const res = await Auth.fetch(`/admin/leave-requests/${id}/approve`, { method: 'PATCH' });
         const raw = await res.json().catch(() => ({}));
@@ -74,5 +82,5 @@ const LeaveRequests = (function () {
         return raw.data || raw;
     }
 
-    return { getAll, approve, reject, reassign, TYPE_LABELS, STATUS_COLORS, statusBadge, formatDate };
+    return { getAll, getStaffOptions, approve, reject, reassign, TYPE_LABELS, STATUS_COLORS, statusBadge, formatDate };
 })();

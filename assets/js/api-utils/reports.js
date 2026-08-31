@@ -15,6 +15,8 @@ const Reports = (function () {
         filters = filters || {};
         const params = new URLSearchParams();
         if (filters.branchId) params.set('branchId', filters.branchId);
+        if (filters.productId) params.set('productId', filters.productId);
+        if (filters.source) params.set('source', filters.source);
         if (filters.from) params.set('from', filters.from);
         if (filters.to) params.set('to', filters.to);
         const qs = params.toString();

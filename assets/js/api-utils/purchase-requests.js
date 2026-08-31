@@ -62,6 +62,10 @@ const PurchaseRequests = (function () {
         return apiFetch(`/admin/purchase-requests/${id}/submit`, { method: 'POST' });
     }
 
+    async function remove(id) {
+        return apiFetch(`/admin/purchase-requests/${id}`, { method: 'DELETE' });
+    }
+
     async function approve(id, comment) {
         return apiFetch(`/admin/purchase-requests/${id}/approve`, {
             method: 'POST',
@@ -78,5 +82,5 @@ const PurchaseRequests = (function () {
         });
     }
 
-    return { getAll, getOne, getLastPrice, create, createFromAlerts, update, submit, approve, reject };
+    return { getAll, getOne, getLastPrice, create, createFromAlerts, update, submit, remove, approve, reject };
 })();

@@ -378,10 +378,15 @@
         // Dev Feedback Round 5, item #5: same branch-scoped, no-reload
         // staff re-fetch already applied to Withdrawal History and
         // Attendance -- "All branches" (empty value) returns everyone.
+        // Dev Feedback Round 6, item #22: switched from Staff.getAll()
+        // (requires staff:read) to LeaveRequests.getStaffOptions() (gated
+        // the same as the rest of this page) -- an ADMIN without
+        // staff:read individually granted could reach this page but had
+        // this dropdown silently fail to populate.
         async function loadFilterStaffOptions(branchId) {
             try {
-                var staffResult = await Staff.getAll({ limit: 200, locationId: branchId || undefined });
-                var staffList = staffResult.data || [];
+                var staffList = await LeaveRequests.getStaffOptions();
+                if (branchId) staffList = staffList.filter(function (s) { return s.locationId === branchId; });
                 document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
                 }).join('');
@@ -570,8 +575,12 @@
             select.innerHTML = '<option value="">Loading staff…</option>';
             new bootstrap.Modal(document.getElementById('modal-reassign')).show();
             try {
-                var result = await Staff.getAll({ limit: 100 });
-                var staffList = result.data || [];
+                // Dev Feedback Round 6, item #22 -- same fix as
+                // loadFilterStaffOptions above: this used to call
+                // Staff.getAll() (requires staff:read), which an ADMIN
+                // without that permission individually granted couldn't
+                // reach even though they could open this page and modal.
+                var staffList = await LeaveRequests.getStaffOptions();
                 select.innerHTML = '<option value="">Select a staff member…</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
                 }).join('');

@@ -253,10 +253,13 @@
                     ? '<button type="button" class="btn btn-sm btn-outline-primary btn-doc-version" data-id="' + t.id + '">' + (doc ? "New Version" : "Create") + '</button>'
                     : "";
                 var typeActions = "";
+                if (canManage && doc) {
+                    typeActions += ' <button type="button" class="btn btn-sm btn-outline-danger btn-delete-document" data-id="' + doc.id + '" data-name="' + esc(t.name) + '">Delete</button>';
+                }
                 if (canManage && !t.isSystem) {
                     typeActions += ' <button type="button" class="btn btn-sm btn-outline-secondary btn-deactivate-type" data-id="' + t.id + '" data-name="' + esc(t.name) + '">Deactivate</button>';
                     if (!doc) {
-                        typeActions += ' <button type="button" class="btn btn-sm btn-outline-danger btn-delete-type" data-id="' + t.id + '" data-name="' + esc(t.name) + '">Delete</button>';
+                        typeActions += ' <button type="button" class="btn btn-sm btn-outline-danger btn-delete-type" data-id="' + t.id + '" data-name="' + esc(t.name) + '">Delete Type</button>';
                     }
                 }
                 if (!doc) {
@@ -399,6 +402,18 @@
             }
         }
 
+        /** Dev Feedback Round 6, item #20. */
+        async function deleteDocument(id, name) {
+            if (!confirm('Delete the current "' + name + '" document? This cannot be undone.')) return;
+            try {
+                await StaffDocuments.removeDocument(id);
+                flashPageAlert("success", '"' + name + '" document deleted.');
+                loadDocuments();
+            } catch (e) {
+                flashPageAlert("danger", e.message || "Failed to delete document.");
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
@@ -424,6 +439,8 @@
                 if (deactivateBtn) { deactivateType(deactivateBtn.dataset.id, deactivateBtn.dataset.name); return; }
                 var deleteBtn = e.target.closest(".btn-delete-type");
                 if (deleteBtn) { deleteType(deleteBtn.dataset.id, deleteBtn.dataset.name); return; }
+                var deleteDocBtn = e.target.closest(".btn-delete-document");
+                if (deleteDocBtn) { deleteDocument(deleteDocBtn.dataset.id, deleteDocBtn.dataset.name); return; }
             });
 
             loadDocuments();

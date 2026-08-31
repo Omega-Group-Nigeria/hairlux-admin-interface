@@ -13,12 +13,8 @@
     <style>
         @import url("https://rsms.me/inter/inter.css");
 
-        .vendor-check-list {
-            max-height: 160px;
-            overflow-y: auto;
-            border: 1px solid var(--tblr-border-color);
-            border-radius: 4px;
-            padding: 8px 12px;
+        .vendor-multiselect {
+            min-height: 130px;
         }
     </style>
 </head>
@@ -213,7 +209,8 @@
                     <div class="mb-3">
                         <label class="form-label">Supplying Vendors <span
                                 class="text-secondary">(optional)</span></label>
-                        <div class="vendor-check-list" id="f-vendors"></div>
+                        <select class="form-select vendor-multiselect" id="f-vendors" multiple></select>
+                        <div class="form-hint">Ctrl/Cmd-click (or drag) to select more than one.</div>
                     </div>
                     <div class="d-flex gap-4">
                         <div class="form-check form-switch">
@@ -239,6 +236,7 @@
     <script src="assets/js/api-utils/suppliers.js"></script>
     <script src="assets/js/api-utils/inventory-products.js"></script>
     <script src="assets/js/csv-export.js"></script>
+    <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -287,26 +285,29 @@
         }
 
         function renderVendorCheckboxes() {
-            var container = document.getElementById('f-vendors');
+            var select = document.getElementById('f-vendors');
             if (!_allVendors.length) {
-                container.innerHTML = '<div class="text-secondary small">No suppliers/vendors found — add one first under Contacts → Suppliers/Vendors.</div>';
+                select.innerHTML = '';
+                select.disabled = true;
+                select.insertAdjacentHTML('afterend', '<div class="text-secondary small mt-1" id="f-vendors-empty">No suppliers/vendors found — add one first under Contacts → Suppliers/Vendors.</div>');
                 return;
             }
-            container.innerHTML = _allVendors.map(function (v) {
-                return '<div class="form-check">' +
-                    '<input class="form-check-input vendor-checkbox" type="checkbox" value="' + esc(v.id) + '" id="vendor-' + esc(v.id) + '">' +
-                    '<label class="form-check-label" for="vendor-' + esc(v.id) + '">' + esc(v.name) + ' <span class="text-secondary small">(' + esc(v.type) + ')</span></label>' +
-                    '</div>';
+            select.disabled = false;
+            select.innerHTML = _allVendors.map(function (v) {
+                return '<option value="' + esc(v.id) + '">' + esc(v.name) + ' (' + esc(v.type) + ')</option>';
             }).join('');
+            MultiSelectDropdown.attach('f-vendors', { placeholder: 'Select vendors\u2026' });
+            MultiSelectDropdown.refresh('f-vendors');
         }
 
         function checkedVendorIds() {
-            return Array.from(document.querySelectorAll('.vendor-checkbox:checked')).map(function (el) { return el.value; });
+            return Array.from(document.getElementById('f-vendors').selectedOptions).map(function (o) { return o.value; });
         }
 
         function setCheckedVendors(ids) {
             var set = new Set(ids || []);
-            document.querySelectorAll('.vendor-checkbox').forEach(function (el) { el.checked = set.has(el.value); });
+            Array.from(document.getElementById('f-vendors').options).forEach(function (o) { o.selected = set.has(o.value); });
+            MultiSelectDropdown.sync('f-vendors');
         }
 
         function exportProducts() {

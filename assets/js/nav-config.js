@@ -226,6 +226,16 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Payouts", href: "beauticians.html#payouts" },
             ],
         },
+        {
+            id: "site-stats",
+            label: "Site Stats",
+            icon: "dashboard",
+            href: "site-stats.html",
+            permission: {
+                type: "requireAny",
+                perms: ["site_stats:manage"],
+            },
+        },
     ];
 
     function normalizePage(href) {
@@ -278,4 +288,4 @@ var NavConfig = window.NavConfig || (() => {
         getAccessiblePageOrder,
     };
 })();
-window.NavConfig = NavConfig; 
+window.NavConfig = NavConfig;
