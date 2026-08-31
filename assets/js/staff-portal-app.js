@@ -2745,11 +2745,20 @@ async function sbAddItemLine() {
     try {
       // Dev Feedback: the endpoint's default limit is 20 -- passing this
       // explicitly ensures a branch with more than 20 products still
-      // shows all of them here, not just the first page. Dev Feedback
-      // Round 6: only Internal Use items belong in a booking's "used"
-      // list -- retail sales go through the dedicated Product Sale flow.
-      var res = await InventorySelf.getItems({ category: 'INTERNAL_USE', limit: 1000 });
-      window._sbInventoryItems = res.data || res || [];
+      // shows all of them here, not just the first page.
+      // Dev Feedback Round 7: category ("INTERNAL_USE" vs "FOR_SALE") is
+      // a product classification, independent of whether stock has
+      // actually been allocated to the usage bucket for this branch
+      // (storeStock/salesStock/usageStock are separate per-branch fields
+      // on the same item, moved between each other via stock
+      // adjustment) -- filtering by category alone could show a
+      // category-matched item with zero usable usageStock (all still
+      // sitting in storeStock), or hide one whose usage stock lives on a
+      // FOR_SALE-categorized item. Filtered by actual usageStock > 0
+      // instead of category, replacing Round 6's category-only filter.
+      var res = await InventorySelf.getItems({ limit: 1000 });
+      var allItems = res.data || res || [];
+      window._sbInventoryItems = allItems.filter(function (i) { return (i.usageStock || 0) > 0; });
     } catch (err) { window._sbInventoryItems = []; }
   }
   var container = document.getElementById('sb-item-lines');
@@ -3580,8 +3589,25 @@ var saleItemsCache = null;
 async function ensureSaleItemsLoaded() {
   if (saleItemsCache) return saleItemsCache;
   try {
-    var result = await InventorySelf.getItems({ category: 'FOR_SALE' });
-    saleItemsCache = result.data || result || [];
+    // Dev Feedback Round 7 (same fix as the booking "products used"
+    // picker): category ("FOR_SALE" vs "INTERNAL_USE") is a product
+    // classification, independent of whether stock has actually been
+    // allocated to the sales bucket for this branch (storeStock/
+    // salesStock/usageStock are separate per-branch fields on the same
+    // item, moved between each other via stock adjustment) -- a
+    // category-matched item could still have salesStock: 0 (all still
+    // sitting in storeStock), showing "(0 in stock)" and not actually
+    // sellable. Filtered by actual salesStock > 0 instead of category.
+    // limit added to match the booking picker's own fix -- the default
+    // page size (20) could otherwise silently truncate a branch with
+    // more products than that. price != null excludes an item whose
+    // salesStock is allocated but was never given a price (price is
+    // only enforced when category = FOR_SALE, per the schema's own
+    // comment) -- without it, such an item would silently display as a
+    // free (₦0) sale rather than being excluded.
+    var result = await InventorySelf.getItems({ limit: 1000 });
+    var allItems = result.data || result || [];
+    saleItemsCache = allItems.filter(function (i) { return (i.salesStock || 0) > 0 && i.price != null; });
   } catch (err) {
     saleItemsCache = [];
   }
