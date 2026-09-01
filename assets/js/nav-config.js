@@ -59,7 +59,7 @@ var NavConfig = window.NavConfig || (() => {
         },
         {
             id: "contacts",
-            label: "Contacts",
+            label: "Business Operations",
             icon: "users",
             permission: {
                 type: "requireAny",

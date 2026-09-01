@@ -946,9 +946,12 @@
             }
         }
 
+        var _productsForEditCache = [];
+
         async function loadProductOptions() {
             try {
                 var products = await InventoryProducts.getAll(undefined, undefined, true);
+                _productsForEditCache = products;
                 var opts = products.map(function (p) {
                     return '<option value="' + p.id + '">' + escapeHtml(p.name) + (p.sku ? ' (' + escapeHtml(p.sku) + ')' : '') + '</option>';
                 }).join('');
@@ -957,6 +960,24 @@
                 console.error("Failed to load products", err);
             }
         }
+
+        /**
+         * Dev Feedback Round 8: auto-picks the item's Supplier/Vendor when
+         * a Linked Product is chosen, IF that product has exactly one
+         * vendor already attached (InventoryProducts.getAll already
+         * includes `suppliers`, so this is a local lookup, no extra
+         * request). Zero or multiple vendors on the product is left
+         * alone -- picking one arbitrarily out of several would guess
+         * wrong as often as right, so that case still needs the admin's
+         * own deliberate choice.
+         */
+        document.getElementById("ei-product").addEventListener("change", function () {
+            var selectedProductId = document.getElementById("ei-product").value;
+            var product = _productsForEditCache.find(function (p) { return p.id === selectedProductId; });
+            if (product && product.suppliers && product.suppliers.length === 1) {
+                document.getElementById("ei-supplier").value = product.suppliers[0].vendorId;
+            }
+        });
 
         async function refreshBadgeCounts() {
             try {
