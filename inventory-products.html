@@ -160,7 +160,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Category</label>
-                            <select class="form-select" id="f-category">
+                            <select class="form-select" id="f-category" multiple>
                                 <option value="FOR_SALE">For Sale</option>
                                 <option value="INTERNAL_USE">Internal Use</option>
                                 <option value="STORAGE">Storage</option>
@@ -247,8 +247,13 @@
 
         var CATEGORY_LABELS = { FOR_SALE: 'For Sale', INTERNAL_USE: 'Internal Use', STORAGE: 'Storage' };
 
+        function formatCategories(categories) {
+            return (categories || []).map(function (c) { return CATEGORY_LABELS[c] || c; }).join(', ');
+        }
+
         document.addEventListener('DOMContentLoaded', async function () {
             RBAC.applyPageGuard('inventory_products:read');
+            MultiSelectDropdown.attach('f-category', { placeholder: 'Select categories…' });
 
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
             document.getElementById('btn-export').addEventListener('click', exportProducts);
@@ -304,10 +309,20 @@
             return Array.from(document.getElementById('f-vendors').selectedOptions).map(function (o) { return o.value; });
         }
 
+        function checkedCategories() {
+            return Array.from(document.getElementById('f-category').selectedOptions).map(function (o) { return o.value; });
+        }
+
         function setCheckedVendors(ids) {
             var set = new Set(ids || []);
             Array.from(document.getElementById('f-vendors').options).forEach(function (o) { o.selected = set.has(o.value); });
             MultiSelectDropdown.sync('f-vendors');
+        }
+
+        function setCheckedCategories(values) {
+            var set = new Set(values || []);
+            Array.from(document.getElementById('f-category').options).forEach(function (o) { o.selected = set.has(o.value); });
+            MultiSelectDropdown.sync('f-category');
         }
 
         function exportProducts() {
@@ -319,7 +334,7 @@
                 { label: 'Name', get: function (p) { return p.name; } },
                 { label: 'SKU', get: function (p) { return p.sku || ''; } },
                 { label: 'Brand', get: function (p) { return p.brand || ''; } },
-                { label: 'Category', get: function (p) { return CATEGORY_LABELS[p.category] || p.category; } },
+                { label: 'Category', get: function (p) { return formatCategories(p.category); } },
                 { label: 'Cost Price', get: function (p) { return p.costPrice; } },
                 { label: 'Selling Price', get: function (p) { return p.sellingPrice; } },
                 { label: 'Status', get: function (p) { return p.isActive ? 'Active' : 'Inactive'; } },
@@ -346,7 +361,7 @@
                         return '<tr>' +
                             '<td><div class="fw-semibold">' + esc(p.name) + '</div>' +
                             (subtext ? '<div class="text-secondary small">' + esc(subtext) + '</div>' : '') + '</td>' +
-                            '<td>' + esc(CATEGORY_LABELS[p.category] || p.category) + '</td>' +
+                            '<td>' + esc(formatCategories(p.category)) + '</td>' +
                             '<td>' + formatMoney(p.costPrice) + ' / ' + formatMoney(p.sellingPrice) + '</td>' +
                             '<td>' + vendorBadges + '</td>' +
                             '<td>' + statusBadge + '</td>' +
@@ -373,7 +388,7 @@
                     document.getElementById('f-name').value = p.name;
                     document.getElementById('f-sku').value = p.sku || '';
                     document.getElementById('f-brand').value = p.brand || '';
-                    document.getElementById('f-category').value = p.category;
+                    setCheckedCategories(p.category || []);
                     document.getElementById('f-product-type').value = p.productType || '';
                     document.getElementById('f-unit').value = p.unit || '';
                     document.getElementById('f-cost-price').value = p.costPrice != null ? p.costPrice : '';
@@ -393,7 +408,7 @@
                 document.getElementById('f-name').value = '';
                 document.getElementById('f-sku').value = '';
                 document.getElementById('f-brand').value = '';
-                document.getElementById('f-category').value = 'FOR_SALE';
+                setCheckedCategories(['FOR_SALE']);
                 document.getElementById('f-product-type').value = '';
                 document.getElementById('f-unit').value = '';
                 document.getElementById('f-cost-price').value = '';
@@ -414,12 +429,14 @@
             errEl.classList.add('d-none');
             var name = document.getElementById('f-name').value.trim();
             if (!name) { errEl.textContent = 'Name is required.'; errEl.classList.remove('d-none'); return; }
+            var categories = checkedCategories();
+            if (!categories.length) { errEl.textContent = 'At least one category is required.'; errEl.classList.remove('d-none'); return; }
 
             var payload = {
                 name: name,
                 sku: document.getElementById('f-sku').value.trim() || undefined,
                 brand: document.getElementById('f-brand').value.trim() || undefined,
-                category: document.getElementById('f-category').value,
+                category: categories,
                 productType: document.getElementById('f-product-type').value.trim() || undefined,
                 unit: document.getElementById('f-unit').value.trim() || undefined,
                 costPrice: document.getElementById('f-cost-price').value ? Number(document.getElementById('f-cost-price').value) : undefined,
