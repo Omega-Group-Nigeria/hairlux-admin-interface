@@ -77,10 +77,10 @@ const MultiSelectDropdown = (function () {
         }).join('');
     }
 
-    function toggleValue(state, value) {
+    function setValue(state, value, checked) {
         const opt = Array.from(state.select.options).find(function (o) { return o.value === value; });
         if (!opt) return;
-        opt.selected = !opt.selected;
+        opt.selected = checked;
         state.select.dispatchEvent(new Event('change', { bubbles: true }));
         updateTrigger(state);
     }
@@ -161,11 +161,10 @@ const MultiSelectDropdown = (function () {
 
         search.addEventListener('input', function () { renderList(state, search.value); });
 
-        list.addEventListener('click', function (e) {
-            const item = e.target.closest('.msd-item');
-            if (!item) return;
-            const checkbox = item.querySelector('input');
-            toggleValue(state, checkbox.getAttribute('data-value'));
+        list.addEventListener('change', function (e) {
+            const checkbox = e.target.closest('input[type="checkbox"]');
+            if (!checkbox) return;
+            setValue(state, checkbox.getAttribute('data-value'), checkbox.checked);
         });
 
         document.addEventListener('click', function (e) {

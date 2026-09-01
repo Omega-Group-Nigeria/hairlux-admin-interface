@@ -2746,19 +2746,24 @@ async function sbAddItemLine() {
       // Dev Feedback: the endpoint's default limit is 20 -- passing this
       // explicitly ensures a branch with more than 20 products still
       // shows all of them here, not just the first page.
-      // Dev Feedback Round 7: category ("INTERNAL_USE" vs "FOR_SALE") is
-      // a product classification, independent of whether stock has
-      // actually been allocated to the usage bucket for this branch
-      // (storeStock/salesStock/usageStock are separate per-branch fields
-      // on the same item, moved between each other via stock
-      // adjustment) -- filtering by category alone could show a
-      // category-matched item with zero usable usageStock (all still
-      // sitting in storeStock), or hide one whose usage stock lives on a
-      // FOR_SALE-categorized item. Filtered by actual usageStock > 0
-      // instead of category, replacing Round 6's category-only filter.
+      // Products offered here are SOLD to the customer during this
+      // booking (see the "Products Sold" label on the equivalent admin
+      // page), not consumed internally -- that's a separate, per-service
+      // concept configured on the admin Services page (product
+      // consumption), unrelated to this booking-time list. salesStock is
+      // the per-branch bucket that actually gets decremented on sale, so
+      // that's the figure to check, matching the same-purpose filter
+      // already used a few hundred lines down for this same staff
+      // member's standalone product sales (ensureSaleItemsLoaded). A
+      // prior fix here filtered on usageStock instead, which was meant
+      // for the (different) internal-consumption case and let items with
+      // zero sellable stock show up as sellable here. price != null
+      // excludes an item whose salesStock is allocated but was never
+      // given a price -- without it, such an item would silently display
+      // as a free (\u20a60) sale.
       var res = await InventorySelf.getItems({ limit: 1000 });
       var allItems = res.data || res || [];
-      window._sbInventoryItems = allItems.filter(function (i) { return (i.usageStock || 0) > 0; });
+      window._sbInventoryItems = allItems.filter(function (i) { return (i.salesStock || 0) > 0 && i.price != null; });
     } catch (err) { window._sbInventoryItems = []; }
   }
   var container = document.getElementById('sb-item-lines');
@@ -2768,8 +2773,8 @@ async function sbAddItemLine() {
   row.style.gap = '8px';
   row.style.marginBottom = '6px';
   var options = '<option value="">Select product…</option>' + window._sbInventoryItems.map(function (i) {
-    var label = i.category === 'FOR_SALE' ? (' — ' + sbFormatMoney(i.price)) : ' — not for sale';
-    return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + escapeHtml(i.name) + label + '</option>';
+    var label = i.category === 'FOR_SALE' ? (' — ' + sbFormatMoney(i.price) + ' (' + (i.salesStock || 0) + ' in stock)') : ' — not for sale';
+    return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-stock="' + (i.salesStock || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + escapeHtml(i.name) + label + '</option>';
   }).join('');
   row.innerHTML =
     '<select class="input sb-item-select">' + options + '</select>' +
@@ -3072,13 +3077,29 @@ async function loadPayrollSection() {
   ]);
 }
 
-/** Late-penalty total for the in-progress payroll period, matching exactly what payroll will eventually deduct — visible before payroll actually runs. Absent days are also listed for transparency, but no longer imply a separate fee (see the comment below on why). */
+/** Late-penalty total for the in-progress payroll period by default, matching exactly what payroll will eventually deduct -- visible before payroll actually runs. The month picker lets a staff member instead look up a specific past period (e.g. to see what fed into an already-published payslip from a prior month, instead of this always defaulting to the live current period regardless of which payslip they're looking at). Absent days are also listed for transparency, but no longer imply a separate fee (see the comment below on why). */
 async function prLoadFines() {
   var container = document.getElementById('pr-fines-content');
   var labelEl = document.getElementById('pr-fines-period-label');
+  var monthInput = document.getElementById('pr-fines-month');
   try {
-    var fines = await PayrollSelf.getCurrentFines();
+    var range;
+    if (monthInput && monthInput.value) {
+      // <input type="month"> gives "YYYY-MM" -- first/last calendar day of that month.
+      var parts = monthInput.value.split('-').map(Number);
+      var y = parts[0], m = parts[1];
+      var start = new Date(y, m - 1, 1);
+      var end = new Date(y, m, 0);
+      range = { periodStart: start.toISOString(), periodEnd: end.toISOString() };
+    }
+
+    var fines = await PayrollSelf.getCurrentFines(range);
     if (labelEl) labelEl.textContent = fines.periodLabel + (fines.isDraftPeriod ? '' : ' (est.)');
+    // Reflect the resolved period back into the picker on first load (when
+    // it was left empty), so it's clear at a glance which month is shown.
+    if (monthInput && !monthInput.value && fines.periodStart) {
+      monthInput.value = String(fines.periodStart).slice(0, 7);
+    }
 
     // Dev Feedback Round 8: checks records.length, not fines.total --
     // total no longer includes absentFeeTotal (an absence already
