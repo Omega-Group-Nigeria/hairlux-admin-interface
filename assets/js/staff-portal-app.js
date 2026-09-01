@@ -3066,12 +3066,13 @@ async function loadPayrollSection() {
     prLoadBankAccount(),
     prLoadCompensation(),
     prLoadFines(),
+    prLoadAdjustments(),
     prLoadPayslips(),
     prLoadWithdrawals(),
   ]);
 }
 
-/** Running late-penalty + absent-fee total for the in-progress payroll period — visible before payroll actually runs, matching exactly what payroll will eventually sum. */
+/** Late-penalty total for the in-progress payroll period, matching exactly what payroll will eventually deduct — visible before payroll actually runs. Absent days are also listed for transparency, but no longer imply a separate fee (see the comment below on why). */
 async function prLoadFines() {
   var container = document.getElementById('pr-fines-content');
   var labelEl = document.getElementById('pr-fines-period-label');
@@ -3079,29 +3080,61 @@ async function prLoadFines() {
     var fines = await PayrollSelf.getCurrentFines();
     if (labelEl) labelEl.textContent = fines.periodLabel + (fines.isDraftPeriod ? '' : ' (est.)');
 
-    if (!fines.total) {
+    // Dev Feedback Round 8: checks records.length, not fines.total --
+    // total no longer includes absentFeeTotal (an absence already
+    // reduces payable days directly, rather than being charged as a
+    // separate fee), so a staff member with only absence records (no
+    // late penalties) would have total === 0 and see this whole section
+    // wrongly hidden if checked the old way.
+    if (!(fines.records || []).length) {
       container.innerHTML = '<div class="text-secondary small">No fines recorded this period.</div>';
       return;
     }
 
     var rows = (fines.records || []).map(function (r) {
-      var amount = r.status === 'ABSENT' ? r.absentFeeAmount : r.latePenaltyAmount;
       var detail = r.status === 'ABSENT'
-        ? 'Absent fee'
+        ? 'Absent \u2014 reduces payable days, not a separate fee'
         : (r.lateMinutes ? r.lateMinutes + ' min late' : 'Late penalty');
+      var amountHtml = r.status === 'ABSENT' ? '' : '<div class="fw-semibold">' + sbFormatMoney(r.latePenaltyAmount) + '</div>';
       return '<div class="d-flex justify-content-between border-bottom py-2">' +
         '<div><span class="badge ' + (r.status === 'ABSENT' ? 'b-red' : 'b-amber') + ' me-2">' + r.status + '</span>' +
         '<span class="text-secondary small">' + StaffSelf.formatDate(r.date, { day: '2-digit', month: 'short' }) + ' \u2014 ' + detail + '</span></div>' +
-        '<div class="fw-semibold">' + sbFormatMoney(amount) + '</div></div>';
+        amountHtml + '</div>';
     }).join('');
 
     container.innerHTML =
       '<div class="d-flex justify-content-between mb-3">' +
-      '<div><div class="text-secondary small">Late Penalties</div><div class="fw-semibold">' + sbFormatMoney(fines.latePenaltyTotal) + '</div></div>' +
-      '<div><div class="text-secondary small">Absent Fees</div><div class="fw-semibold">' + sbFormatMoney(fines.absentFeeTotal) + '</div></div>' +
-      '<div><div class="text-secondary small">Total</div><div class="fw-bold" style="color:var(--red)">' + sbFormatMoney(fines.total) + '</div></div>' +
+      '<div><div class="text-secondary small">Late Penalties</div><div class="fw-bold" style="color:var(--red)">' + sbFormatMoney(fines.latePenaltyTotal) + '</div></div>' +
       '</div>' +
       rows;
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
+}
+
+/**
+ * Dev Feedback Round 8, item #3: individual, dated bonus/deduction
+ * records (including fines an admin recorded against a specific day via
+ * the admin Payroll page's "Add Adjustment" form) -- PayrollSelf.getAdjustments()
+ * already existed on the backend but was never actually displayed
+ * anywhere on the staff portal.
+ */
+async function prLoadAdjustments() {
+  var container = document.getElementById('pr-adjustments-content');
+  try {
+    var list = await PayrollSelf.getAdjustments();
+    if (!list.length) {
+      container.innerHTML = '<div class="text-secondary small">No bonuses or deductions recorded yet.</div>';
+      return;
+    }
+    container.innerHTML = list.map(function (a) {
+      var isBonus = a.type === 'BONUS';
+      var dateStr = StaffSelf.formatDate(a.effectiveDate || a.createdAt, { day: '2-digit', month: 'short', year: 'numeric' });
+      return '<div class="d-flex justify-content-between border-bottom py-2">' +
+        '<div><span class="badge ' + (isBonus ? 'b-green' : 'b-red') + ' me-2">' + escapeHtml(a.category) + '</span>' +
+        '<span class="text-secondary small">' + dateStr + (a.reason ? ' \u2014 ' + escapeHtml(a.reason) : '') + '</span></div>' +
+        '<div class="fw-semibold" style="color:' + (isBonus ? 'var(--green)' : 'var(--red)') + '">' + (isBonus ? '+' : '-') + sbFormatMoney(a.amount) + '</div></div>';
+    }).join('');
   } catch (err) {
     container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
   }

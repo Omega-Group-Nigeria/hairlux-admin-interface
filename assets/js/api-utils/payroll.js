@@ -135,6 +135,15 @@ const Payroll = (function () {
         });
     }
 
+    /** Dev Feedback Round 8 -- flat, admin-configurable rate replacing the old progressive PAYE-band calculation. */
+    async function setTaxRate(rate) {
+        return apiFetch('/admin/payroll/settings/tax-rate', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rate }),
+        });
+    }
+
     /** Dev Feedback Round 4, items #22-24 -- was single-param (status only); now takes the full filter set the backend supports. */
     async function listWithdrawals(filters = {}) {
         const q = new URLSearchParams();
@@ -170,7 +179,7 @@ const Payroll = (function () {
         listPendingBankChanges, getBankAccount, approveBankChange, rejectBankChange,
         createPeriod, listPeriods, getPeriod, generatePayroll, approvePeriod, requestCorrection, correctPayslip,
         createAdjustment, listAdjustments, removeAdjustment, correctAdjustment, getAdjustmentHistory,
-        getSettings, setReleaseActive, setPensionRate,
+        getSettings, setReleaseActive, setPensionRate, setTaxRate,
         listWithdrawals, getAuditLog,
         formatMoney, formatDate,
     };
