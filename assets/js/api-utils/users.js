@@ -84,11 +84,11 @@ const Users = (() => {
 
     async function getAll(params = {}) {
         const q = new URLSearchParams();
-        if (params.search)   q.set("search",   params.search);
-        if (params.status)   q.set("status",   params.status);
-        if (params.role)     q.set("role",     params.role);
-        if (params.page)     q.set("page",     params.page);
-        if (params.limit)    q.set("limit",    params.limit);
+        if (params.search) q.set("search", params.search);
+        if (params.status) q.set("status", params.status);
+        if (params.role) q.set("role", params.role);
+        if (params.page) q.set("page", params.page);
+        if (params.limit) q.set("limit", params.limit);
         const res = await Auth.fetch("/admin/users?" + q.toString());
         const raw = await res.json();
         if (!res.ok) throw new Error(raw.message || "Failed to load users");
@@ -100,6 +100,38 @@ const Users = (() => {
         const payload = raw.data || raw;
         if (Array.isArray(payload)) return { data: payload, meta: {} };
         return payload;
+    }
+
+    async function findAllCustomerUsers(params = {}) {
+        const q = new URLSearchParams();
+        Object.keys(params).forEach((k) => {
+            if (params[k] !== undefined && params[k] !== null && params[k] !== "") q.set(k, params[k]);
+        });
+        const res = await Auth.fetch("/admin/users/customers?" + q.toString());
+        const raw = await res.json();
+        if (!res.ok) throw new Error(raw.message || "Failed to load customers");
+        // Controller wraps the service's {data, meta} inside an outer
+        // {success, message, data} envelope — one more level than getAll's
+        // endpoint, so unwrap raw.data.data / raw.data.meta here.
+        return { data: (raw.data && raw.data.data) || [], meta: (raw.data && raw.data.meta) || {} };
+    }
+
+    async function getCustomerUsersPerformance(params = {}) {
+        const q = new URLSearchParams();
+        Object.keys(params).forEach((k) => {
+            if (params[k] !== undefined && params[k] !== null && params[k] !== "") q.set(k, params[k]);
+        });
+        const res = await Auth.fetch("/admin/users/customers/performance?" + q.toString());
+        const raw = await res.json();
+        if (!res.ok) throw new Error(raw.message || "Failed to load performance");
+        return raw.data || {};
+    }
+
+    async function getCustomerUserProfile(id) {
+        const res = await Auth.fetch("/admin/users/customers/" + id + "/profile");
+        const raw = await res.json();
+        if (!res.ok) throw new Error(raw.message || "Failed to load customer profile");
+        return raw.data || {};
     }
 
     async function getOne(id) {
@@ -211,5 +243,9 @@ const Users = (() => {
             + " · " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
     }
 
-    return { getAll, getOne, getStats, createAdmin, getUserTransactions, updateStatus, statusBadge, roleBadge, formatMoney, formatDate, formatDateTime };
+    return {
+        getAll, getOne, getStats, createAdmin, getUserTransactions, updateStatus,
+        findAllCustomerUsers, getCustomerUsersPerformance, getCustomerUserProfile,
+        statusBadge, roleBadge, formatMoney, formatDate, formatDateTime
+    };
 })();

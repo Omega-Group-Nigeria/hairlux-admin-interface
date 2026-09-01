@@ -66,7 +66,9 @@
                         </div>
                         <div class="col-auto ms-auto d-flex gap-2">
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
-                            <button type="button" class="btn btn-primary" id="btn-new-item">+ New Item</button>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-export-items">Export
+                                CSV</button>
+                            <button type="button" class="btn btn-primary" id="btn-new-item" hidden>+ New Item</button>
                         </div>
                     </div>
                 </div>
@@ -181,18 +183,22 @@
                     <!-- ALERTS TAB -->
                     <div id="tab-alerts" style="display:none">
                         <div class="card">
-                            <div class="card-header">
+                            <div class="card-header d-flex justify-content-between align-items-center">
                                 <div class="btn-group" role="group">
                                     <button class="btn btn-sm btn-outline-secondary active" data-resolved="false"
                                         onclick="loadAlerts(false)">Open</button>
                                     <button class="btn btn-sm btn-outline-secondary" data-resolved="true"
                                         onclick="loadAlerts(true)">Resolved</button>
                                 </div>
+                                <button class="btn btn-sm btn-primary d-none" id="btn-push-low-stock-alerts">Push
+                                    Selected to Purchase Request</button>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter table-hover card-table">
                                     <thead>
                                         <tr>
+                                            <th class="w-1"><input type="checkbox" class="form-check-input"
+                                                    id="chk-all-low-stock"></th>
                                             <th>Item</th>
                                             <th>Branch</th>
                                             <th>Current Stock</th>
@@ -203,7 +209,7 @@
                                     </thead>
                                     <tbody id="alerts-tbody">
                                         <tr>
-                                            <td colspan="6" class="text-center py-5">
+                                            <td colspan="7" class="text-center py-5">
                                                 <div class="spinner-border text-primary"></div>
                                             </td>
                                         </tr>
@@ -216,18 +222,22 @@
                     <!-- EXPIRY TAB -->
                     <div id="tab-expiry" style="display:none">
                         <div class="card">
-                            <div class="card-header">
+                            <div class="card-header d-flex justify-content-between align-items-center">
                                 <div class="btn-group" role="group">
                                     <button class="btn btn-sm btn-outline-secondary active" data-resolved="false"
                                         onclick="loadExpiryAlerts(false)">Open</button>
                                     <button class="btn btn-sm btn-outline-secondary" data-resolved="true"
                                         onclick="loadExpiryAlerts(true)">Resolved</button>
                                 </div>
+                                <button class="btn btn-sm btn-primary d-none" id="btn-push-expiry-alerts">Push Selected
+                                    to Purchase Request</button>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter table-hover card-table">
                                     <thead>
                                         <tr>
+                                            <th class="w-1"><input type="checkbox" class="form-check-input"
+                                                    id="chk-all-expiry"></th>
                                             <th>Item</th>
                                             <th>Branch</th>
                                             <th>Expiry Date</th>
@@ -238,7 +248,7 @@
                                     </thead>
                                     <tbody id="expiry-tbody">
                                         <tr>
-                                            <td colspan="6" class="text-center py-5">
+                                            <td colspan="7" class="text-center py-5">
                                                 <div class="spinner-border text-primary"></div>
                                             </td>
                                         </tr>
@@ -250,6 +260,10 @@
 
                     <!-- TRANSFERS TAB -->
                     <div id="tab-transfers" style="display:none">
+                        <div class="d-flex justify-content-end mb-2">
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-new-transfer">+ New
+                                Transfer Request</button>
+                        </div>
                         <div class="card">
                             <div class="table-responsive">
                                 <table class="table table-vcenter table-hover card-table">
@@ -326,10 +340,20 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="new-item-error"></div>
-                    <div class="mb-2"><label class="form-label">Branch <span class="text-danger">*</span></label>
-                        <select class="form-select" id="ni-branch">
-                            <option value="">Select branch…</option>
-                        </select>
+                    <div class="mb-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="form-label mb-0">Branches <span class="text-danger">*</span></label>
+                            <label class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="checkbox" id="ni-select-all-branches">
+                                <span class="form-check-label small">Select all branches</span>
+                            </label>
+                        </div>
+                        <div id="ni-branch-list" class="border rounded p-2" style="max-height:180px;overflow-y:auto">
+                            <div class="text-secondary small">Loading branches…</div>
+                        </div>
+                        <div class="form-hint">Check every branch to stock this item at, and set that branch's starting
+                            quantity
+                            independently — each branch gets its own inventory row.</div>
                     </div>
                     <div class="mb-2"><label class="form-label">Name <span class="text-danger">*</span></label>
                         <input class="form-control" id="ni-name" placeholder="e.g. Argan Oil Shampoo 500ml">
@@ -351,13 +375,10 @@
                             <option value="">None</option>
                         </select>
                     </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-6"><label class="form-label">Initial Quantity</label>
-                            <input type="number" class="form-control" id="ni-quantity" min="0" placeholder="0">
-                        </div>
-                        <div class="col-6"><label class="form-label">Low Stock Threshold</label>
-                            <input type="number" class="form-control" id="ni-threshold" min="0" placeholder="5">
-                        </div>
+                    <div class="mb-2"><label class="form-label">Low Stock Threshold</label>
+                        <input type="number" class="form-control" id="ni-threshold" min="0" placeholder="5">
+                        <div class="form-hint">Applies to every branch selected above — quantity is the only per-branch
+                            value.</div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label" id="ni-price-label">Price <span class="text-danger"
@@ -409,6 +430,15 @@
                             <option value="">None</option>
                         </select>
                     </div>
+                    <div class="mb-2"><label class="form-label">Linked Product</label>
+                        <select class="form-select" id="ei-product">
+                            <option value="">Not linked</option>
+                        </select>
+                        <div class="form-hint">Links this item to the shared product master record. Required for stock
+                            alerts to be pushed into a purchase request, service consumption recipes, and profitability
+                            reporting — an item added directly (rather than via goods receiving) may never have been
+                            linked.</div>
+                    </div>
                     <div class="mb-2"><label class="form-label">Low Stock Threshold</label>
                         <input type="number" class="form-control" id="ei-threshold" min="0">
                     </div>
@@ -431,6 +461,41 @@
         </div>
     </div>
 
+    <!-- Movement History Modal -->
+    <div class="modal modal-blur fade" id="modal-history" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Movement History — <span id="history-item-name">—</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter mb-0">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Type</th>
+                                    <th>Change</th>
+                                    <th>By</th>
+                                    <th>Reason / Reference</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-secondary py-4">Loading…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Adjust Stock Modal -->
     <div class="modal modal-blur fade" id="modal-adjust" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -441,19 +506,115 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="adjust-error"></div>
-                    <p class="text-secondary small" id="adjust-item-label"></p>
-                    <div class="mb-2"><label class="form-label">Quantity Change <span
-                                class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="adj-delta" placeholder="e.g. -3 or 10">
+                    <p class="text-secondary small mb-1" id="adjust-item-label"></p>
+                    <p class="text-secondary small" id="adjust-item-breakdown"></p>
+
+                    <ul class="nav nav-pills mb-3" id="adjust-mode-tabs">
+                        <li class="nav-item"><a class="nav-link active" href="#" data-mode="quantity">Quantity
+                                Change</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-mode="transfer">Transfer Between
+                                Buckets</a></li>
+                    </ul>
+
+                    <div id="adjust-mode-quantity">
+                        <div class="mb-2"><label class="form-label">Stock Bucket <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="adj-stock-type">
+                                <option value="STORE">Store (unallocated)</option>
+                                <option value="SALES">Sales</option>
+                                <option value="USAGE">Usage</option>
+                            </select>
+                            <div class="form-hint">Which of the three buckets this adjustment corrects.</div>
+                        </div>
+                        <div class="mb-2"><label class="form-label">Quantity Change <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="adj-delta" placeholder="e.g. -3 or 10">
+                        </div>
+                        <div class="mb-2"><label class="form-label">Reason Category <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="adj-reason-category">
+                                <option value="DAMAGED">Damaged</option>
+                                <option value="LOST">Lost</option>
+                                <option value="EXPIRED">Expired</option>
+                                <option value="FOUND">Found</option>
+                                <option value="COUNTING_ERROR">Counting Error</option>
+                                <option value="OPENING_BALANCE">Opening Balance</option>
+                                <option value="CORRECTION">Correction</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-2"><label class="form-label">Detail <span class="text-danger d-none"
+                                    id="adj-reason-required-mark">*</span></label>
+                            <textarea class="form-control" id="adj-reason" rows="2"
+                                placeholder="Optional detail beyond the category"></textarea>
+                            <div class="form-hint">Required when the category is "Other".</div>
+                        </div>
                     </div>
-                    <div class="mb-2"><label class="form-label">Reason <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="adj-reason" rows="2"
-                            placeholder="Why is this adjustment being made?"></textarea>
+
+                    <div id="adjust-mode-transfer" class="d-none">
+                        <div class="mb-2"><label class="form-label">From Bucket <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="xfer-from">
+                                <option value="STORE">Store (unallocated)</option>
+                                <option value="SALES">Sales</option>
+                                <option value="USAGE">Usage</option>
+                            </select>
+                        </div>
+                        <div class="mb-2"><label class="form-label">To Bucket <span class="text-danger">*</span></label>
+                            <select class="form-select" id="xfer-to">
+                                <option value="STORE">Store (unallocated)</option>
+                                <option value="SALES" selected>Sales</option>
+                                <option value="USAGE">Usage</option>
+                            </select>
+                        </div>
+                        <div class="mb-2"><label class="form-label">Quantity to Move <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" min="1" class="form-control" id="xfer-quantity" placeholder="e.g. 10">
+                            <div class="form-hint">Moves stock between buckets without changing the item's total.
+                            </div>
+                        </div>
+                        <div class="mb-2"><label class="form-label">Note <span
+                                    class="text-secondary">(optional)</span></label>
+                            <textarea class="form-control" id="xfer-reason" rows="2"
+                                placeholder="Optional note on why this was reallocated"></textarea>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="btn-save-adjust">Save Adjustment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Push Alerts to Purchase Request Modal -->
+    <div class="modal modal-blur fade" id="modal-push-alerts" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Push to Purchase Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="push-alerts-error"></div>
+                    <p class="text-secondary small" id="push-alerts-count"></p>
+                    <div class="mb-2"><label class="form-label">Vendor <span class="text-danger">*</span></label>
+                        <select class="form-select" id="push-alerts-vendor">
+                            <option value="">Select a vendor…</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Reason</label>
+                        <input type="text" class="form-control" id="push-alerts-reason"
+                            placeholder="Auto-generated from stock alerts">
+                    </div>
+                    <p class="text-secondary small mb-0">Suggested quantities and last purchase prices are pre-filled —
+                        you'll still be able to review and edit the draft before submitting it.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-push-alerts">Create Draft
+                        Request</button>
                 </div>
             </div>
         </div>
@@ -476,6 +637,44 @@
                     <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="btn-confirm-reject-transfer">Confirm
                         Rejection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Transfer Request Modal — Dev Feedback Round 6, item #8 -->
+    <div class="modal modal-blur fade" id="modal-new-transfer" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Request Stock Transfer</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="new-transfer-error"></div>
+                    <div class="mb-2"><label class="form-label">Source Item <span class="text-danger">*</span></label>
+                        <select class="form-select" id="nt-item"></select>
+                        <div class="form-hint">Search across every branch — the item you pick determines the source
+                            branch.</div>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Stock Bucket <span class="text-danger">*</span></label>
+                        <select class="form-select" id="nt-stock-type">
+                            <option value="STORE">Store (unallocated)</option>
+                            <option value="SALES">Sales</option>
+                            <option value="USAGE">Usage</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Destination Branch <span
+                                class="text-danger">*</span></label>
+                        <select class="form-select" id="nt-branch"></select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Quantity <span class="text-danger">*</span></label>
+                        <input type="number" min="1" class="form-control" id="nt-quantity" placeholder="e.g. 10">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-new-transfer">Submit Request</button>
                 </div>
             </div>
         </div>
@@ -531,7 +730,11 @@
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/api-utils/inventory.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
+    <script src="assets/js/api-utils/inventory-products.js"></script>
+    <script src="assets/js/api-utils/purchase-requests.js"></script>
+    <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
     <script>
@@ -543,6 +746,10 @@
         var _pendingAdjustItemId = null;
         var _pendingRejectTransferId = null;
         var _branchesCache = null;
+        var _selectedLowStockAlertIds = {};
+        var _selectedExpiryAlertIds = {};
+        var _vendorsCache = null;
+        var _pendingPushAlertKind = null; // 'low-stock' | 'expiry'
 
         document.addEventListener('DOMContentLoaded', function () {
             RBAC.fetchMe().then(function () {
@@ -565,6 +772,7 @@
 
             loadBranchOptions();
             loadSupplierOptions();
+            loadProductOptions();
             loadItems();
             refreshBadgeCounts();
 
@@ -592,24 +800,46 @@
                 _searchDebounce = setTimeout(loadItems, 300);
             });
             document.getElementById("btn-refresh").addEventListener("click", function () { loadItems(); refreshBadgeCounts(); });
+            document.getElementById("btn-export-items").addEventListener("click", exportItems);
 
             document.getElementById("btn-new-item").addEventListener("click", function () {
                 document.getElementById("new-item-error").classList.add("d-none");
-                ["ni-name", "ni-unit", "ni-quantity", "ni-threshold", "ni-price", "ni-expiry"].forEach(function (id) { document.getElementById(id).value = ""; });
+                ["ni-name", "ni-unit", "ni-threshold", "ni-price", "ni-expiry"].forEach(function (id) { document.getElementById(id).value = ""; });
+                // Reset the branch checkbox list too — uncheck every branch,
+                // clear and disable every per-branch quantity field, and
+                // uncheck "select all" so the modal always opens blank.
+                document.querySelectorAll('.ni-branch-check').forEach(function (chk) { chk.checked = false; });
+                document.querySelectorAll('.ni-branch-qty').forEach(function (qty) { qty.value = "0"; qty.disabled = true; });
+                var selectAll = document.getElementById("ni-select-all-branches");
+                if (selectAll) selectAll.checked = false;
                 document.getElementById("ni-category").value = "FOR_SALE";
                 updatePriceRequirement('ni-category', 'ni-price-hint', 'ni-price-required');
                 new bootstrap.Modal(document.getElementById("modal-new-item")).show();
             });
+
             document.getElementById("ni-category").addEventListener("change", function () {
                 updatePriceRequirement('ni-category', 'ni-price-hint', 'ni-price-required');
             });
+
             document.getElementById("ei-category").addEventListener("change", function () {
                 updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
             });
+
             document.getElementById("btn-save-new-item").addEventListener("click", submitNewItem);
+            document.getElementById("ni-select-all-branches").addEventListener("change", function () {
+                var checked = this.checked;
+                document.querySelectorAll('.ni-branch-check').forEach(function (chk) {
+                    chk.checked = checked;
+                    var qtyInput = document.querySelector('.ni-branch-qty[data-branch-id="' + chk.value + '"]');
+                    if (qtyInput) qtyInput.disabled = !checked;
+                });
+            });
+
             document.getElementById("btn-save-edit-item").addEventListener("click", submitEditItem);
             document.getElementById("btn-save-adjust").addEventListener("click", submitAdjust);
             document.getElementById("btn-confirm-reject-transfer").addEventListener("click", submitRejectTransfer);
+            document.getElementById("btn-new-transfer").addEventListener("click", openNewTransferModal);
+            document.getElementById("btn-save-new-transfer").addEventListener("click", submitNewTransfer);
             document.getElementById("items-tbody").addEventListener("click", function (e) {
                 var btn = e.target.closest(".btn-adjust");
                 if (!btn) return;
@@ -656,16 +886,51 @@
             return div.innerHTML;
         }
 
+        /** Matches the backend's own getTotalStock convention from Phase 2 -- sum of all three buckets. */
+        function totalStock(item) {
+            return (Number(item.storeStock) || 0) + (Number(item.salesStock) || 0) + (Number(item.usageStock) || 0);
+        }
+
         async function loadBranchOptions() {
             try {
                 var branches = await Staff.getLocations();
                 _branchesCache = branches;
                 var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
                 document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
-                document.getElementById("ni-branch").innerHTML = '<option value="">Select branch…</option>' + opts;
+                renderNewItemBranchList(branches);
             } catch (err) {
                 console.error("Failed to load branches", err);
             }
+        }
+
+        /** Each row: a checkbox to include the branch, plus its own independent starting-quantity input — shown/enabled only once that branch is checked. */
+        function renderNewItemBranchList(branches) {
+            var container = document.getElementById("ni-branch-list");
+            if (!container) return;
+            container.innerHTML = branches.map(function (b) {
+                return '<div class="d-flex align-items-center gap-2 py-1">' +
+                    '<label class="form-check mb-0 flex-fill">' +
+                    '<input class="form-check-input ni-branch-check" type="checkbox" value="' + b.id + '">' +
+                    '<span class="form-check-label">' + escapeHtml(b.name) + '</span>' +
+                    '</label>' +
+                    '<input type="number" min="0" class="form-control form-control-sm ni-branch-qty" style="width:90px" placeholder="Qty" value="0" disabled data-branch-id="' + b.id + '">' +
+                    '</div>';
+            }).join('');
+
+            container.querySelectorAll('.ni-branch-check').forEach(function (chk) {
+                chk.addEventListener('change', function () {
+                    var qtyInput = container.querySelector('.ni-branch-qty[data-branch-id="' + chk.value + '"]');
+                    if (qtyInput) qtyInput.disabled = !chk.checked;
+                    syncSelectAllCheckbox();
+                });
+            });
+        }
+
+        function syncSelectAllCheckbox() {
+            var all = document.querySelectorAll('.ni-branch-check');
+            var checked = document.querySelectorAll('.ni-branch-check:checked');
+            var selectAll = document.getElementById('ni-select-all-branches');
+            if (selectAll) selectAll.checked = all.length > 0 && all.length === checked.length;
         }
 
         async function loadSupplierOptions() {
@@ -680,6 +945,39 @@
                 console.error("Failed to load suppliers", err);
             }
         }
+
+        var _productsForEditCache = [];
+
+        async function loadProductOptions() {
+            try {
+                var products = await InventoryProducts.getAll(undefined, undefined, true);
+                _productsForEditCache = products;
+                var opts = products.map(function (p) {
+                    return '<option value="' + p.id + '">' + escapeHtml(p.name) + (p.sku ? ' (' + escapeHtml(p.sku) + ')' : '') + '</option>';
+                }).join('');
+                document.getElementById("ei-product").innerHTML = '<option value="">Not linked</option>' + opts;
+            } catch (err) {
+                console.error("Failed to load products", err);
+            }
+        }
+
+        /**
+         * Dev Feedback Round 8: auto-picks the item's Supplier/Vendor when
+         * a Linked Product is chosen, IF that product has exactly one
+         * vendor already attached (InventoryProducts.getAll already
+         * includes `suppliers`, so this is a local lookup, no extra
+         * request). Zero or multiple vendors on the product is left
+         * alone -- picking one arbitrarily out of several would guess
+         * wrong as often as right, so that case still needs the admin's
+         * own deliberate choice.
+         */
+        document.getElementById("ei-product").addEventListener("change", function () {
+            var selectedProductId = document.getElementById("ei-product").value;
+            var product = _productsForEditCache.find(function (p) { return p.id === selectedProductId; });
+            if (product && product.suppliers && product.suppliers.length === 1) {
+                document.getElementById("ei-supplier").value = product.suppliers[0].vendorId;
+            }
+        });
 
         async function refreshBadgeCounts() {
             try {
@@ -717,6 +1015,43 @@
 
         // -- Items --
 
+        async function exportItems() {
+            var btn = document.getElementById("btn-export-items");
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Exporting…";
+            try {
+                var result = await Inventory.getAll({
+                    search: document.getElementById("filter-search").value.trim() || undefined,
+                    branchId: document.getElementById("filter-branch").value,
+                    category: document.getElementById("filter-category").value,
+                    lowStockOnly: document.getElementById("filter-low-stock").checked || undefined,
+                    limit: 100000, // every matching item, not just the on-screen page
+                });
+                var items = result.data || [];
+                if (!items.length) {
+                    alert("No items to export for the current filters.");
+                    return;
+                }
+                CsvExport.download("inventory-items.csv", [
+                    { label: "Name", get: function (i) { return i.name; } },
+                    { label: "Branch", get: function (i) { return i.branch ? i.branch.name : ""; } },
+                    { label: "Category", get: function (i) { return Inventory.CATEGORY_LABELS[i.category] || i.category; } },
+                    { label: "Price", get: function (i) { return i.category === "FOR_SALE" ? i.price : ""; } },
+                    { label: "Store Stock", get: function (i) { return i.storeStock; } },
+                    { label: "Sales Stock", get: function (i) { return i.salesStock; } },
+                    { label: "Usage Stock", get: function (i) { return i.usageStock; } },
+                    { label: "Total Stock", get: function (i) { return totalStock(i); } },
+                    { label: "Low Stock Threshold", get: function (i) { return i.lowStockThreshold; } },
+                ], items);
+            } catch (err) {
+                alert(err.message || "Failed to export items.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
         async function loadItems() {
             var tbody = document.getElementById("items-tbody");
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
@@ -730,8 +1065,9 @@
                 });
                 var items = result.data || [];
 
-                var outOfStock = items.filter(function (i) { return i.currentQuantity <= 0; }).length;
-                var lowStock = items.filter(function (i) { return i.currentQuantity > 0 && i.currentQuantity <= i.lowStockThreshold; }).length;
+
+                var outOfStock = items.filter(function (i) { return totalStock(i) <= 0; }).length;
+                var lowStock = items.filter(function (i) { return totalStock(i) > 0 && totalStock(i) <= i.lowStockThreshold; }).length;
                 document.getElementById("stat-total").textContent = items.length;
                 document.getElementById("stat-low").textContent = lowStock;
                 document.getElementById("stat-out").textContent = outOfStock;
@@ -746,16 +1082,21 @@
                         '<td>' + escapeHtml(i.branch ? i.branch.name : '—') + '</td>' +
                         '<td>' + (Inventory.CATEGORY_LABELS[i.category] || i.category) + '</td>' +
                         '<td>' + (i.category === 'FOR_SALE' ? Inventory.formatMoney(i.price) : '<span class="text-secondary">—</span>') + '</td>' +
-                        '<td>' + i.currentQuantity + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
+                        '<td>' + totalStock(i) + (i.unit ? ' ' + escapeHtml(i.unit) : '') +
+                        '<div class="text-secondary small">Store: ' + i.storeStock + ' \u00b7 Sales: ' + i.salesStock + ' \u00b7 Usage: ' + i.usageStock + '</div></td>' +
                         '<td>' + i.lowStockThreshold + '</td>' +
                         '<td>' + Inventory.statusBadge(i) + '</td>' +
                         '<td class="text-nowrap"><button class="btn btn-sm btn-outline-secondary me-1 btn-edit-item" data-id="' + i.id + '">Edit</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button></td>' +
+                        '<button class="btn btn-sm btn-outline-secondary me-1 btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary btn-history" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">History</button></td>' +
                         '</tr>';
                 }).join('');
                 _itemsCache = items;
                 tbody.querySelectorAll('.btn-edit-item').forEach(function (btn) {
                     btn.addEventListener('click', function () { openEditItemModal(btn.dataset.id); });
+                });
+                tbody.querySelectorAll('.btn-history').forEach(function (btn) {
+                    btn.addEventListener('click', function () { openHistoryModal(btn.dataset.id, btn.dataset.name); });
                 });
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
@@ -774,6 +1115,38 @@
             document.getElementById(labelHintId).textContent = isForSale ? '(required — item is For Sale)' : '(optional — not sellable)';
         }
 
+        async function openHistoryModal(id, name) {
+            document.getElementById("history-item-name").textContent = name || "—";
+            var tbody = document.getElementById("history-tbody");
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById("modal-history")).show();
+
+            try {
+                var result = await Inventory.getMovementHistory(id, { limit: 100 });
+                var entries = result.data || [];
+
+                tbody.innerHTML = entries.length
+                    ? entries.map(function (m) {
+                        var when = new Date(m.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
+                        var typeLabel = Inventory.MOVEMENT_TYPE_LABELS[m.type] || m.type;
+                        var change = (m.quantityDelta > 0 ? '+' : '') + m.quantityDelta;
+                        var changeClass = m.quantityDelta > 0 ? 'text-success' : (m.quantityDelta < 0 ? 'text-danger' : '');
+                        var by = m.performedBy ? escapeHtml(m.performedBy.name) : '<span class="text-secondary">Admin</span>';
+                        var refText = m.reason ? escapeHtml(m.reason) : (m.referenceId ? '<span class="text-secondary small">Ref: ' + escapeHtml(m.referenceId) + '</span>' : '—');
+                        return '<tr>' +
+                            '<td class="text-secondary small">' + when + '</td>' +
+                            '<td>' + escapeHtml(typeLabel) + '</td>' +
+                            '<td class="' + changeClass + '">' + change + '</td>' +
+                            '<td>' + by + '</td>' +
+                            '<td class="small">' + refText + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="5" class="text-center text-secondary py-4">No movements recorded yet.</td></tr>';
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+            }
+        }
+
         function openEditItemModal(id) {
             var item = _itemsCache.find(function (i) { return i.id === id; });
             if (!item) return;
@@ -786,6 +1159,8 @@
             document.getElementById('ei-price').value = item.price != null ? item.price : '';
             document.getElementById('ei-expiry').value = item.expiryDate ? item.expiryDate.slice(0, 10) : '';
             document.getElementById('ei-supplier').value = item.supplierId || (item.supplier ? item.supplier.id : '') || '';
+            document.getElementById('ei-product').value = item.productId || (item.product ? item.product.id : '') || '';
+            SearchableSelect.attach('ei-product');
             updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
             new bootstrap.Modal(document.getElementById('modal-edit-item')).show();
         }
@@ -823,6 +1198,7 @@
                     price: price ? Number(price) : undefined,
                     expiryDate: expiry || undefined,
                     supplierId: document.getElementById('ei-supplier').value || null,
+                    productId: document.getElementById('ei-product').value || null,
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modal-edit-item')).hide();
                 loadItems();
@@ -835,18 +1211,26 @@
         }
 
         async function submitNewItem() {
-            var branchId = document.getElementById("ni-branch").value;
             var name = document.getElementById("ni-name").value.trim();
             var category = document.getElementById("ni-category").value;
             var unit = document.getElementById("ni-unit").value.trim();
-            var quantity = document.getElementById("ni-quantity").value;
             var threshold = document.getElementById("ni-threshold").value;
             var price = document.getElementById("ni-price").value;
             var expiry = document.getElementById("ni-expiry").value;
             var errEl = document.getElementById("new-item-error");
+            errEl.classList.add("d-none");
 
-            if (!branchId || !name) {
-                errEl.textContent = "Branch and name are required.";
+            var branches = [];
+            document.querySelectorAll('.ni-branch-check:checked').forEach(function (chk) {
+                var qtyInput = document.querySelector('.ni-branch-qty[data-branch-id="' + chk.value + '"]');
+                branches.push({
+                    branchId: chk.value,
+                    initialQuantity: qtyInput && qtyInput.value ? Number(qtyInput.value) : 0,
+                });
+            });
+
+            if (!branches.length || !name) {
+                errEl.textContent = "At least one branch and a name are required.";
                 errEl.classList.remove("d-none");
                 return;
             }
@@ -859,18 +1243,24 @@
             var btn = document.getElementById("btn-save-new-item");
             btn.disabled = true;
             try {
-                await Inventory.create({
-                    branchId: branchId,
+                var result = await Inventory.createBulk({
                     name: name,
                     category: category,
                     unit: unit || undefined,
-                    initialQuantity: quantity ? Number(quantity) : undefined,
                     lowStockThreshold: threshold ? Number(threshold) : undefined,
                     price: price ? Number(price) : undefined,
                     expiryDate: expiry || undefined,
                     supplierId: document.getElementById("ni-supplier").value || undefined,
+                    branches: branches,
                 });
                 bootstrap.Modal.getInstance(document.getElementById("modal-new-item")).hide();
+                if (result.skippedCount > 0) {
+                    var skippedNames = result.skipped.map(function (s) {
+                        var branch = (_branchesCache || []).find(function (b) { return b.id === s.branchId; });
+                        return branch ? branch.name : s.branchId;
+                    }).join(', ');
+                    alert('Created at ' + result.createdCount + ' branch(es). Skipped (already exists there): ' + skippedNames);
+                }
                 loadItems();
             } catch (err) {
                 errEl.textContent = err.message || "Failed to create item.";
@@ -880,22 +1270,70 @@
             }
         }
 
+        var _adjustMode = "quantity";
+
         function openAdjustModal(itemId, itemName) {
             _pendingAdjustItemId = itemId;
             document.getElementById("adjust-item-label").textContent = itemName;
+            document.getElementById("adj-stock-type").value = "STORE";
             document.getElementById("adj-delta").value = "";
+            document.getElementById("adj-reason-category").value = "DAMAGED";
             document.getElementById("adj-reason").value = "";
+            document.getElementById("adj-reason-required-mark").classList.add("d-none");
+            document.getElementById("xfer-from").value = "STORE";
+            document.getElementById("xfer-to").value = "SALES";
+            document.getElementById("xfer-quantity").value = "";
+            document.getElementById("xfer-reason").value = "";
             document.getElementById("adjust-error").classList.add("d-none");
+            setAdjustMode("quantity");
+
+            // Looked up from the already-loaded list, same pattern
+            // openEditItemModal already uses -- no extra API call needed.
+            var item = _itemsCache.find(function (i) { return i.id === itemId; });
+            document.getElementById("adjust-item-breakdown").textContent = item
+                ? 'Current — Store: ' + item.storeStock + ' \u00b7 Sales: ' + item.salesStock + ' \u00b7 Usage: ' + item.usageStock
+                : '';
+
             new bootstrap.Modal(document.getElementById("modal-adjust")).show();
         }
 
+        function setAdjustMode(mode) {
+            _adjustMode = mode;
+            document.getElementById("adjust-mode-quantity").classList.toggle("d-none", mode !== "quantity");
+            document.getElementById("adjust-mode-transfer").classList.toggle("d-none", mode !== "transfer");
+            document.querySelectorAll("#adjust-mode-tabs .nav-link").forEach(function (a) {
+                a.classList.toggle("active", a.dataset.mode === mode);
+            });
+            document.getElementById("adjust-error").classList.add("d-none");
+        }
+
+        document.querySelectorAll("#adjust-mode-tabs .nav-link").forEach(function (a) {
+            a.addEventListener("click", function (e) {
+                e.preventDefault();
+                setAdjustMode(this.dataset.mode);
+            });
+        });
+
+        document.getElementById("adj-reason-category").addEventListener("change", function () {
+            document.getElementById("adj-reason-required-mark").classList.toggle("d-none", this.value !== "OTHER");
+        });
+
         async function submitAdjust() {
+            if (_adjustMode === "transfer") return submitTransfer();
+
+            var stockType = document.getElementById("adj-stock-type").value;
             var delta = parseInt(document.getElementById("adj-delta").value, 10);
+            var reasonCategory = document.getElementById("adj-reason-category").value;
             var reason = document.getElementById("adj-reason").value.trim();
             var errEl = document.getElementById("adjust-error");
 
-            if (!delta || !reason) {
-                errEl.textContent = "A non-zero quantity change and a reason are both required.";
+            if (!delta) {
+                errEl.textContent = "A non-zero quantity change is required.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (reasonCategory === "OTHER" && !reason) {
+                errEl.textContent = "A detail is required when the category is \"Other\".";
                 errEl.classList.remove("d-none");
                 return;
             }
@@ -903,12 +1341,45 @@
             var btn = document.getElementById("btn-save-adjust");
             btn.disabled = true;
             try {
-                await Inventory.adjust(_pendingAdjustItemId, { quantityDelta: delta, reason: reason });
+                await Inventory.adjust(_pendingAdjustItemId, { stockType: stockType, quantityDelta: delta, reasonCategory: reasonCategory, reason: reason || undefined });
                 bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
                 loadItems();
                 refreshBadgeCounts();
             } catch (err) {
                 errEl.textContent = err.message || "Failed to adjust stock.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function submitTransfer() {
+            var fromStockType = document.getElementById("xfer-from").value;
+            var toStockType = document.getElementById("xfer-to").value;
+            var quantity = parseInt(document.getElementById("xfer-quantity").value, 10);
+            var reason = document.getElementById("xfer-reason").value.trim();
+            var errEl = document.getElementById("adjust-error");
+
+            if (fromStockType === toStockType) {
+                errEl.textContent = "From and To buckets must be different.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (!quantity || quantity <= 0) {
+                errEl.textContent = "Enter a quantity greater than zero.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+
+            var btn = document.getElementById("btn-save-adjust");
+            btn.disabled = true;
+            try {
+                await Inventory.transferStockType(_pendingAdjustItemId, { fromStockType: fromStockType, toStockType: toStockType, quantity: quantity, reason: reason || undefined });
+                bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
+                loadItems();
+                refreshBadgeCounts();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to transfer stock.";
                 errEl.classList.remove("d-none");
             } finally {
                 btn.disabled = false;
@@ -922,28 +1393,32 @@
                 b.classList.toggle('active', b.dataset.resolved === String(resolved));
             });
             var tbody = document.getElementById("alerts-tbody");
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            _selectedLowStockAlertIds = {};
+            updatePushButton('low-stock');
             try {
                 var result = await Inventory.getAlerts(undefined, resolved);
                 var alerts = result.data || result || [];
                 if (!alerts.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' alerts.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' alerts.</td></tr>';
                     return;
                 }
                 tbody.innerHTML = alerts.map(function (a) {
                     var stageColor = Inventory.ALERT_STAGE_COLORS[a.currentStage] || 'bg-secondary-lt';
                     var action = resolved ? '' : '<button class="btn btn-sm btn-success btn-resolve-alert" data-id="' + a.id + '">Resolve</button>';
+                    var checkbox = resolved ? '' : '<input type="checkbox" class="form-check-input chk-low-stock-alert" data-id="' + a.id + '">';
                     return '<tr>' +
+                        '<td>' + checkbox + '</td>' +
                         '<td class="fw-semibold">' + escapeHtml(a.item ? a.item.name : '—') + '</td>' +
                         '<td>' + escapeHtml(a.item && a.item.branch ? a.item.branch.name : '—') + '</td>' +
-                        '<td>' + (a.item ? a.item.currentQuantity : '—') + '</td>' +
+                        '<td>' + (a.item ? totalStock(a.item) : '—') + '</td>' +
                         '<td class="text-secondary small">' + new Date(a.triggeredAt).toLocaleString() + '</td>' +
                         '<td><span class="badge ' + stageColor + '">' + a.currentStage + '</span></td>' +
                         '<td>' + action + '</td>' +
                         '</tr>';
                 }).join('');
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
             }
         }
 
@@ -963,18 +1438,22 @@
                 b.classList.toggle('active', b.dataset.resolved === String(resolved));
             });
             var tbody = document.getElementById("expiry-tbody");
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            _selectedExpiryAlertIds = {};
+            updatePushButton('expiry');
             try {
                 var result = await Inventory.getExpiryAlerts(undefined, resolved);
                 var alerts = result.data || result || [];
                 if (!alerts.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' expiry alerts.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' expiry alerts.</td></tr>';
                     return;
                 }
                 tbody.innerHTML = alerts.map(function (a) {
                     var severityColor = a.severity === 'EXPIRED' ? 'bg-danger-lt' : 'bg-warning-lt';
                     var action = resolved ? '' : '<button class="btn btn-sm btn-success btn-resolve-expiry-alert" data-id="' + a.id + '">Resolve</button>';
+                    var checkbox = resolved ? '' : '<input type="checkbox" class="form-check-input chk-expiry-alert" data-id="' + a.id + '">';
                     return '<tr>' +
+                        '<td>' + checkbox + '</td>' +
                         '<td class="fw-semibold">' + escapeHtml(a.item ? a.item.name : '—') + '</td>' +
                         '<td>' + escapeHtml(a.item && a.item.branch ? a.item.branch.name : '—') + '</td>' +
                         '<td>' + (a.item && a.item.expiryDate ? new Date(a.item.expiryDate).toLocaleDateString() : '—') + '</td>' +
@@ -984,9 +1463,107 @@
                         '</tr>';
                 }).join('');
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
             }
         }
+
+        // -- Alert multi-select \u2192 push to Purchase Request (Procurement/
+        // Inventory/Finance Integration, Phase 7) --
+
+        function updatePushButton(kind) {
+            var ids = kind === 'low-stock' ? _selectedLowStockAlertIds : _selectedExpiryAlertIds;
+            var btn = document.getElementById(kind === 'low-stock' ? 'btn-push-low-stock-alerts' : 'btn-push-expiry-alerts');
+            var count = Object.keys(ids).filter(function (k) { return ids[k]; }).length;
+            btn.classList.toggle('d-none', count === 0);
+            btn.textContent = count ? ('Push ' + count + ' Selected to Purchase Request') : 'Push Selected to Purchase Request';
+        }
+
+        document.getElementById("alerts-tbody").addEventListener("change", function (e) {
+            var chk = e.target.closest(".chk-low-stock-alert");
+            if (!chk) return;
+            _selectedLowStockAlertIds[chk.dataset.id] = chk.checked;
+            updatePushButton('low-stock');
+        });
+
+        document.getElementById("expiry-tbody").addEventListener("change", function (e) {
+            var chk = e.target.closest(".chk-expiry-alert");
+            if (!chk) return;
+            _selectedExpiryAlertIds[chk.dataset.id] = chk.checked;
+            updatePushButton('expiry');
+        });
+
+        document.getElementById("chk-all-low-stock").addEventListener("change", function () {
+            var checked = this.checked;
+            document.querySelectorAll(".chk-low-stock-alert").forEach(function (chk) {
+                chk.checked = checked;
+                _selectedLowStockAlertIds[chk.dataset.id] = checked;
+            });
+            updatePushButton('low-stock');
+        });
+
+        document.getElementById("chk-all-expiry").addEventListener("change", function () {
+            var checked = this.checked;
+            document.querySelectorAll(".chk-expiry-alert").forEach(function (chk) {
+                chk.checked = checked;
+                _selectedExpiryAlertIds[chk.dataset.id] = checked;
+            });
+            updatePushButton('expiry');
+        });
+
+        async function openPushAlertsModal(kind) {
+            _pendingPushAlertKind = kind;
+            var ids = kind === 'low-stock' ? _selectedLowStockAlertIds : _selectedExpiryAlertIds;
+            var count = Object.keys(ids).filter(function (k) { return ids[k]; }).length;
+            document.getElementById("push-alerts-count").textContent = count + ' alert(s) selected \u2014 all must be from the same branch.';
+            document.getElementById("push-alerts-reason").value = "";
+            document.getElementById("push-alerts-error").classList.add("d-none");
+
+            var select = document.getElementById("push-alerts-vendor");
+            if (!_vendorsCache) {
+                try {
+                    var result = await Suppliers.getAll(undefined, true);
+                    _vendorsCache = result.data || result || [];
+                } catch (e) {
+                    _vendorsCache = [];
+                }
+            }
+            select.innerHTML = '<option value="">Select a vendor\u2026</option>' +
+                _vendorsCache.map(function (v) { return '<option value="' + v.id + '">' + escapeHtml(v.name) + '</option>'; }).join('');
+
+            new bootstrap.Modal(document.getElementById("modal-push-alerts")).show();
+        }
+
+        document.getElementById("btn-push-low-stock-alerts").addEventListener("click", function () { openPushAlertsModal('low-stock'); });
+        document.getElementById("btn-push-expiry-alerts").addEventListener("click", function () { openPushAlertsModal('expiry'); });
+
+        document.getElementById("btn-confirm-push-alerts").addEventListener("click", async function () {
+            var errEl = document.getElementById("push-alerts-error");
+            errEl.classList.add("d-none");
+            var vendorId = document.getElementById("push-alerts-vendor").value;
+            if (!vendorId) { errEl.textContent = "Select a vendor."; errEl.classList.remove("d-none"); return; }
+
+            var payload = { vendorId: vendorId, reason: document.getElementById("push-alerts-reason").value.trim() || undefined };
+            if (_pendingPushAlertKind === 'low-stock') {
+                payload.lowStockAlertIds = Object.keys(_selectedLowStockAlertIds).filter(function (k) { return _selectedLowStockAlertIds[k]; });
+            } else {
+                payload.expiryAlertIds = Object.keys(_selectedExpiryAlertIds).filter(function (k) { return _selectedExpiryAlertIds[k]; });
+            }
+
+            var btn = document.getElementById("btn-confirm-push-alerts");
+            btn.disabled = true;
+            try {
+                var created = await PurchaseRequests.createFromAlerts(payload);
+                bootstrap.Modal.getInstance(document.getElementById("modal-push-alerts")).hide();
+                var ref = created.data ? created.data.id : (created.id || '');
+                alert('Draft purchase request created. Open Purchase Requests to review and submit it.');
+                if (_pendingPushAlertKind === 'low-stock') { loadAlerts(false); } else { loadExpiryAlerts(false); }
+            } catch (e) {
+                errEl.textContent = e.message || "Failed to create purchase request.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        });
 
         async function resolveExpiryAlert(id) {
             if (!confirm("Mark this expiry alert resolved?")) return;
@@ -1068,6 +1645,73 @@
                 refreshBadgeCounts();
             } catch (err) {
                 errEl.textContent = err.message || "Failed to reject transfer.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function openNewTransferModal() {
+            document.getElementById("new-transfer-error").classList.add("d-none");
+            document.getElementById("nt-quantity").value = "";
+            document.getElementById("nt-stock-type").value = "STORE";
+
+            var itemSelect = document.getElementById("nt-item");
+            var branchSelect = document.getElementById("nt-branch");
+            itemSelect.innerHTML = '<option value="">Loading\u2026</option>';
+            branchSelect.innerHTML = '<option value="">Loading\u2026</option>';
+
+            try {
+                var [itemsResult, branches] = await Promise.all([
+                    Inventory.getAll({ limit: 1000 }),
+                    Branches.getBranches(),
+                ]);
+                var items = itemsResult.data || itemsResult || [];
+                itemSelect.innerHTML = '<option value="">Select an item\u2026</option>' + items.map(function (i) {
+                    var branchName = i.branch ? i.branch.name : "Unknown branch";
+                    return '<option value="' + i.id + '">' + escapeHtml(i.name) + ' \u2014 ' + escapeHtml(branchName) + '</option>';
+                }).join('');
+                branchSelect.innerHTML = '<option value="">Select branch\u2026</option>' + branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>';
+                }).join('');
+                SearchableSelect.attach("nt-item");
+                SearchableSelect.attach("nt-branch");
+            } catch (err) {
+                itemSelect.innerHTML = '<option value="">Failed to load</option>';
+                branchSelect.innerHTML = '<option value="">Failed to load</option>';
+            }
+
+            new bootstrap.Modal(document.getElementById("modal-new-transfer")).show();
+        }
+
+        async function submitNewTransfer() {
+            var errEl = document.getElementById("new-transfer-error");
+            errEl.classList.add("d-none");
+
+            var fromItemId = document.getElementById("nt-item").value;
+            var stockType = document.getElementById("nt-stock-type").value;
+            var toBranchId = document.getElementById("nt-branch").value;
+            var quantity = parseInt(document.getElementById("nt-quantity").value, 10);
+
+            if (!fromItemId || !toBranchId) {
+                errEl.textContent = "Choose a source item and a destination branch.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (!quantity || quantity <= 0) {
+                errEl.textContent = "Enter a quantity greater than zero.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+
+            var btn = document.getElementById("btn-save-new-transfer");
+            btn.disabled = true;
+            try {
+                await Inventory.requestTransfer({ fromItemId: fromItemId, toBranchId: toBranchId, stockType: stockType, quantity: quantity });
+                bootstrap.Modal.getInstance(document.getElementById("modal-new-transfer")).hide();
+                loadTransfers();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to submit transfer request.";
                 errEl.classList.remove("d-none");
             } finally {
                 btn.disabled = false;
@@ -1175,8 +1819,7 @@
             new bootstrap.Modal(document.getElementById("modal-reassign-request")).show();
 
             try {
-                var result = await Staff.getAll({ limit: 100 });
-                var staffList = result.data || [];
+                var staffList = await Staff.getOptions();
                 select.innerHTML = '<option value="">Select a staff member…</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
                 }).join('');

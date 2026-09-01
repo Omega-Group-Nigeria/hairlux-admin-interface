@@ -4,7 +4,7 @@
  */
 const StaffComms = (() => {
     const PERMISSIONS = {
-        READ:   "staff:read",
+        READ: "staff:read",
         MANAGE: "staff:update",
     };
 
@@ -23,6 +23,18 @@ const StaffComms = (() => {
         });
     }
 
+    async function updateAnnouncement(id, payload) {
+        return jsonFetch("/admin/announcements/" + id, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function deleteAnnouncement(id) {
+        return jsonFetch("/admin/announcements/" + id, { method: "DELETE" });
+    }
+
     async function getAllAnnouncements() {
         return jsonFetch("/admin/announcements");
     }
@@ -38,7 +50,35 @@ const StaffComms = (() => {
     async function getAllDirectives(params = {}) {
         const q = new URLSearchParams();
         if (params.status) q.set("status", params.status);
+        if (params.targetStaffId) q.set("targetStaffId", params.targetStaffId);
+        if (params.locationId) q.set("locationId", params.locationId);
+        if (params.dueBefore) q.set("dueBefore", params.dueBefore);
+        if (params.dueAfter) q.set("dueAfter", params.dueAfter);
         return jsonFetch("/admin/directives" + (q.toString() ? "?" + q.toString() : ""));
+    }
+
+    async function bulkCreateDirectives(payload) {
+        return jsonFetch("/admin/directives/bulk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function updateDirective(id, payload) {
+        return jsonFetch("/admin/directives/" + id, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function deleteDirective(id) {
+        return jsonFetch("/admin/directives/" + id, { method: "DELETE" });
+    }
+
+    async function getDirectiveEvidence(id) {
+        return jsonFetch("/admin/directives/" + id + "/evidence");
     }
 
     async function getStaffDirectives(staffId) {
@@ -75,8 +115,14 @@ const StaffComms = (() => {
     return {
         PERMISSIONS,
         createAnnouncement,
+        updateAnnouncement,
+        deleteAnnouncement,
         getAllAnnouncements,
         createDirective,
+        bulkCreateDirectives,
+        updateDirective,
+        deleteDirective,
+        getDirectiveEvidence,
         getAllDirectives,
         getStaffDirectives,
         directiveStatusBadge,

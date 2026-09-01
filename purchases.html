@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Purchases</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .receive-line-row {
+            display: grid;
+            grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr 1fr;
+            gap: 8px;
+            align-items: end;
+            margin-bottom: 8px;
+        }
+
+        .receive-line-row label {
+            font-size: 11px;
+            color: var(--tblr-secondary);
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .readonly-figure {
+            font-size: 13px;
+            padding: 6px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Procurement</div>
+                            <h2 class="page-title">Purchases</h2>
+                            <div class="text-secondary small mt-1">Created automatically once a Purchase Request is
+                                fully
+                                approved. Record vendor payments and confirm goods received from here.</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-export">Export CSV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <select class="form-select" id="f-vendor-filter">
+                                        <option value="">All vendors</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select" id="f-status-filter">
+                                        <option value="">All statuses</option>
+                                        <option value="PENDING">Pending</option>
+                                        <option value="ORDERED">Ordered</option>
+                                        <option value="PARTIALLY_RECEIVED">Partially Received</option>
+                                        <option value="FULLY_RECEIVED">Fully Received</option>
+                                        <option value="CANCELLED">Cancelled</option>
+                                        <option value="COMPLETED">Completed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" id="f-search-filter"
+                                        placeholder="Search PO # e.g. PO-2026-000123">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <input type="date" class="form-control" id="f-from-filter" placeholder="From">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="date" class="form-control" id="f-to-filter" placeholder="To">
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear
+                                        Filters</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>PO #</th>
+                                        <th>Branch</th>
+                                        <th>Vendor</th>
+                                        <th>Grand Total</th>
+                                        <th>Paid</th>
+                                        <th>Payment Status</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals continue below -->
+    <div class="modal modal-blur fade" id="modal-view" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="view-title">Purchase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="view-body">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="modal-footer" id="view-footer"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-payment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Record Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="payment-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" step="0.01" min="0.01" class="form-control" id="p-amount">
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Method</label>
+                            <input type="text" class="form-control" id="p-method" placeholder="e.g. Bank Transfer">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Date</label>
+                            <input type="date" class="form-control" id="p-date">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reference <span class="text-secondary">(optional)</span></label>
+                        <input type="text" class="form-control" id="p-reference">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save-payment">Record Payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-receive" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Receive Goods</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="receive-error"></div>
+                    <div class="receive-line-row text-secondary small">
+                        <div>Product</div>
+                        <div>Ordered</div>
+                        <div>Received</div>
+                        <div>Delivering</div>
+                        <div>Damaged</div>
+                        <div>Accepted</div>
+                        <div>Batch / Expiry</div>
+                    </div>
+                    <div id="receive-lines-container"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save-receive">Confirm Receipt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/suppliers.js"></script>
+    <script src="assets/js/api-utils/purchases.js"></script>
+    <script src="assets/js/csv-export.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var _allVendors = [];
+        var _currentPurchase = null;
+        var _lastLoadedPurchases = [];
+        var _receiveLines = []; // [{ purchaseLineId, productName, ordered, previouslyReceived, deliveredQty, damagedQty, acceptedQty, batchLotNumber, expiryDate }]
+
+        var STATUS_BADGE = {
+            PENDING: 'bg-yellow-lt', ORDERED: 'bg-azure-lt', PARTIALLY_RECEIVED: 'bg-orange-lt',
+            FULLY_RECEIVED: 'bg-green-lt', CANCELLED: 'bg-secondary-lt', COMPLETED: 'bg-green-lt',
+        };
+        var PAYMENT_BADGE = {
+            UNPAID: 'bg-red-lt', PARTIALLY_PAID: 'bg-orange-lt', FULLY_PAID: 'bg-green-lt', OVERPAID: 'bg-purple-lt',
+        };
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('purchases:read');
+
+            document.getElementById('f-vendor-filter').addEventListener('change', load);
+            document.getElementById('f-status-filter').addEventListener('change', load);
+            document.getElementById('f-from-filter').addEventListener('change', load);
+            document.getElementById('f-to-filter').addEventListener('change', load);
+            var searchTimer;
+            document.getElementById('f-search-filter').addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(load, 400);
+            });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-vendor-filter').value = '';
+                document.getElementById('f-status-filter').value = '';
+                document.getElementById('f-search-filter').value = '';
+                document.getElementById('f-from-filter').value = '';
+                document.getElementById('f-to-filter').value = '';
+                load();
+            });
+            document.getElementById('btn-export').addEventListener('click', exportPurchases);
+            document.getElementById('btn-save-payment').addEventListener('click', savePayment);
+            document.getElementById('btn-save-receive').addEventListener('click', saveReceive);
+
+            try {
+                _allVendors = await Suppliers.getAll();
+                document.getElementById('f-vendor-filter').innerHTML += _allVendors.map(function (v) {
+                    return '<option value="' + v.id + '">' + esc(v.name) + '</option>';
+                }).join('');
+            } catch (e) { _allVendors = []; }
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function formatMoney(v) {
+            if (v == null) return '—';
+            return '\u20a6' + Number(v).toLocaleString();
+        }
+
+        function formatPoNumber(n) {
+            return 'PO-' + new Date().getFullYear() + '-' + String(n).padStart(6, '0');
+        }
+
+        function exportPurchases() {
+            if (!_lastLoadedPurchases.length) {
+                alert('No purchases to export for the current filters.');
+                return;
+            }
+            CsvExport.download('purchases.csv', [
+                { label: 'PO Number', get: function (p) { return formatPoNumber(p.purchaseNumber); } },
+                { label: 'Branch', get: function (p) { return p.branch ? p.branch.name : ''; } },
+                { label: 'Vendor', get: function (p) { return p.vendor ? p.vendor.name : ''; } },
+                { label: 'Grand Total', get: function (p) { return p.grandTotal; } },
+                { label: 'Amount Paid', get: function (p) { return p.amountPaid; } },
+                { label: 'Payment Status', get: function (p) { return p.paymentStatus; } },
+                { label: 'Status', get: function (p) { return p.status; } },
+                { label: 'Created', get: function (p) { return new Date(p.createdAt).toLocaleDateString(); } },
+            ], _lastLoadedPurchases);
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var list = await Purchases.getAll({
+                    vendorId: document.getElementById('f-vendor-filter').value,
+                    status: document.getElementById('f-status-filter').value,
+                    search: document.getElementById('f-search-filter').value,
+                    from: document.getElementById('f-from-filter').value,
+                    to: document.getElementById('f-to-filter').value,
+                });
+                _lastLoadedPurchases = list;
+                tbody.innerHTML = list.length
+                    ? list.map(function (p) {
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + formatPoNumber(p.purchaseNumber) + '</td>' +
+                            '<td>' + esc(p.branch ? p.branch.name : '\u2014') + '</td>' +
+                            '<td>' + esc(p.vendor ? p.vendor.name : '\u2014') + '</td>' +
+                            '<td>' + formatMoney(p.grandTotal) + '</td>' +
+                            '<td>' + formatMoney(p.amountPaid) + '</td>' +
+                            '<td><span class="badge ' + (PAYMENT_BADGE[p.paymentStatus] || 'bg-secondary-lt') + '">' + esc(p.paymentStatus.replace('_', ' ')) + '</span></td>' +
+                            '<td><span class="badge ' + (STATUS_BADGE[p.status] || 'bg-secondary-lt') + '">' + esc(p.status.replace('_', ' ')) + '</span></td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-outline-secondary" onclick="viewOne(\'' + p.id + '\')">View</button>' +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="8" class="text-center text-secondary py-5">No purchases found.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        // ── View ─────────────────────────────────────────────────────────
+        async function viewOne(id) {
+            document.getElementById('view-body').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+            document.getElementById('view-footer').innerHTML = '';
+            new bootstrap.Modal(document.getElementById('modal-view')).show();
+            try {
+                var p = await Purchases.getOne(id);
+                _currentPurchase = p;
+                document.getElementById('view-title').textContent = formatPoNumber(p.purchaseNumber);
+
+                var linesHtml = p.lines.map(function (l) {
+                    return '<tr><td>' + esc(l.product ? l.product.name : '') + '</td><td>' + l.quantity + '</td><td>' + formatMoney(l.unitPrice) + '</td><td>' + formatMoney(l.lineTotal) + '</td></tr>';
+                }).join('');
+
+                var paymentsHtml = (p.payments || []).length
+                    ? p.payments.map(function (pay) {
+                        return '<tr><td>' + new Date(pay.paymentDate).toLocaleDateString() + '</td><td>' + formatMoney(pay.amount) + '</td><td>' + esc(pay.paymentMethod) + '</td><td>' + esc(pay.paymentReference || '\u2014') + '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="4" class="text-secondary text-center">No payments recorded yet.</td></tr>';
+
+                var receiptsHtml = (p.goodsReceipts || []).length
+                    ? p.goodsReceipts.map(function (r) {
+                        var lineSummary = r.lines.map(function (l) { return l.acceptedQty + ' accepted (of ' + l.deliveredQty + ' delivered)'; }).join(', ');
+                        return '<tr><td>' + new Date(r.receivedDate).toLocaleDateString() + '</td><td>' + esc(lineSummary) + '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="2" class="text-secondary text-center">No deliveries received yet.</td></tr>';
+
+                document.getElementById('view-body').innerHTML =
+                    '<div class="row g-2 mb-3">' +
+                    '<div class="col-6"><div class="text-secondary small">Branch</div><div>' + esc(p.branch.name) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Vendor</div><div>' + esc(p.vendor.name) + '</div></div>' +
+                    '<div class="col-4"><div class="text-secondary small">Grand Total</div><div>' + formatMoney(p.grandTotal) + '</div></div>' +
+                    '<div class="col-4"><div class="text-secondary small">Paid</div><div>' + formatMoney(p.amountPaid) + '</div></div>' +
+                    '<div class="col-4"><div class="text-secondary small">Status</div><div><span class="badge ' + (STATUS_BADGE[p.status] || 'bg-secondary-lt') + '">' + esc(p.status.replace('_', ' ')) + '</span></div></div>' +
+                    '</div>' +
+                    '<div class="fw-semibold mb-1">Products</div>' +
+                    '<table class="table table-sm mb-3"><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Line Total</th></tr></thead><tbody>' + linesHtml + '</tbody></table>' +
+                    '<div class="fw-semibold mb-1">Payments</div>' +
+                    '<table class="table table-sm mb-3"><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead><tbody>' + paymentsHtml + '</tbody></table>' +
+                    '<div class="fw-semibold mb-1">Goods Received</div>' +
+                    '<table class="table table-sm"><thead><tr><th>Date</th><th>Summary</th></tr></thead><tbody>' + receiptsHtml + '</tbody></table>';
+
+                document.getElementById('view-footer').innerHTML =
+                    '<button class="btn btn-outline-primary" onclick="openPaymentForm()">Record Payment</button>' +
+                    '<button class="btn btn-outline-success" onclick="openReceiveForm()">Receive Goods</button>' +
+                    '<button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>';
+            } catch (e) {
+                document.getElementById('view-body').innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
+            }
+        }
+
+        // ── Record Payment ───────────────────────────────────────────────
+        function openPaymentForm() {
+            document.getElementById('payment-error').classList.add('d-none');
+            document.getElementById('p-amount').value = '';
+            document.getElementById('p-method').value = '';
+            document.getElementById('p-date').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('p-reference').value = '';
+            new bootstrap.Modal(document.getElementById('modal-payment')).show();
+        }
+
+        async function savePayment() {
+            var errEl = document.getElementById('payment-error');
+            errEl.classList.add('d-none');
+            var amount = Number(document.getElementById('p-amount').value);
+            var method = document.getElementById('p-method').value.trim();
+            var date = document.getElementById('p-date').value;
+            if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount.'; errEl.classList.remove('d-none'); return; }
+            if (!method) { errEl.textContent = 'Payment method is required.'; errEl.classList.remove('d-none'); return; }
+            if (!date) { errEl.textContent = 'Payment date is required.'; errEl.classList.remove('d-none'); return; }
+
+            var btn = document.getElementById('btn-save-payment');
+            btn.disabled = true;
+            try {
+                await Purchases.recordPayment(_currentPurchase.id, {
+                    amount: amount,
+                    paymentMethod: method,
+                    paymentDate: date,
+                    paymentReference: document.getElementById('p-reference').value.trim() || undefined,
+                });
+                bootstrap.Modal.getInstance(document.getElementById('modal-payment')).hide();
+                viewOne(_currentPurchase.id);
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to record payment.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ── Receive Goods ─────────────────────────────────────────────────
+        function openReceiveForm() {
+            document.getElementById('receive-error').classList.add('d-none');
+
+            var deliveredByLine = {};
+            (_currentPurchase.goodsReceipts || []).forEach(function (r) {
+                r.lines.forEach(function (l) {
+                    deliveredByLine[l.purchaseLineId] = (deliveredByLine[l.purchaseLineId] || 0) + l.deliveredQty;
+                });
+            });
+
+            _receiveLines = _currentPurchase.lines
+                .filter(function (l) { return (deliveredByLine[l.id] || 0) < l.quantity; })
+                .map(function (l) {
+                    return {
+                        purchaseLineId: l.id,
+                        productName: l.product ? l.product.name : '',
+                        ordered: l.quantity,
+                        previouslyReceived: deliveredByLine[l.id] || 0,
+                        deliveredQty: '',
+                        damagedQty: 0,
+                        acceptedQty: '',
+                        batchLotNumber: '',
+                        expiryDate: '',
+                    };
+                });
+
+            renderReceiveLines();
+            new bootstrap.Modal(document.getElementById('modal-receive')).show();
+        }
+
+        function renderReceiveLines() {
+            var container = document.getElementById('receive-lines-container');
+            if (!_receiveLines.length) {
+                container.innerHTML = '<div class="text-secondary text-center py-3">Every line on this purchase has already been fully received.</div>';
+                return;
+            }
+            container.innerHTML = _receiveLines.map(function (l, i) {
+                return '<div class="receive-line-row">' +
+                    '<div>' + esc(l.productName) + '<div class="text-secondary small">Outstanding: ' + (l.ordered - l.previouslyReceived) + '</div></div>' +
+                    '<div class="readonly-figure">' + l.ordered + '</div>' +
+                    '<div class="readonly-figure">' + l.previouslyReceived + '</div>' +
+                    '<input type="number" min="0" class="form-control form-control-sm" value="' + l.deliveredQty + '" oninput="onReceiveFieldChange(' + i + ',\'deliveredQty\',this.value)">' +
+                    '<input type="number" min="0" class="form-control form-control-sm" value="' + l.damagedQty + '" oninput="onReceiveFieldChange(' + i + ',\'damagedQty\',this.value)">' +
+                    '<input type="number" min="0" class="form-control form-control-sm" value="' + l.acceptedQty + '" oninput="onReceiveFieldChange(' + i + ',\'acceptedQty\',this.value)">' +
+                    '<div><input type="text" class="form-control form-control-sm mb-1" placeholder="Batch/Lot" value="' + esc(l.batchLotNumber) + '" oninput="onReceiveFieldChange(' + i + ',\'batchLotNumber\',this.value)">' +
+                    '<input type="date" class="form-control form-control-sm" value="' + l.expiryDate + '" oninput="onReceiveFieldChange(' + i + ',\'expiryDate\',this.value)"></div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function onReceiveFieldChange(index, field, value) {
+            // No full re-render on every keystroke -- same reasoning as
+            // Purchase Requests' line items -- just updates the backing array.
+            _receiveLines[index][field] = value;
+        }
+
+        async function saveReceive() {
+            var errEl = document.getElementById('receive-error');
+            errEl.classList.add('d-none');
+
+            var linesToSubmit = _receiveLines.filter(function (l) { return Number(l.deliveredQty) > 0; });
+            if (!linesToSubmit.length) {
+                errEl.textContent = 'Enter a delivered quantity for at least one line.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            for (var i = 0; i < linesToSubmit.length; i++) {
+                var l = linesToSubmit[i];
+                if (l.acceptedQty === '' || l.acceptedQty == null) {
+                    errEl.textContent = 'Accepted quantity is required for every line being received.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+            }
+
+            var payload = {
+                lines: linesToSubmit.map(function (l) {
+                    return {
+                        purchaseLineId: l.purchaseLineId,
+                        deliveredQty: Number(l.deliveredQty),
+                        damagedQty: Number(l.damagedQty) || 0,
+                        acceptedQty: Number(l.acceptedQty),
+                        batchLotNumber: l.batchLotNumber || undefined,
+                        expiryDate: l.expiryDate || undefined,
+                    };
+                }),
+            };
+
+            var btn = document.getElementById('btn-save-receive');
+            btn.disabled = true;
+            try {
+                await Purchases.receiveGoods(_currentPurchase.id, payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-receive')).hide();
+                viewOne(_currentPurchase.id);
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to record receipt.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

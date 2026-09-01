@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Lifecycle Campaigns</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Contacts</div>
+                            <h2 class="page-title">Lifecycle Campaigns</h2>
+                            <div class="text-secondary small mt-1">Automated messages sent when a customer's
+                                lifecycle stage changes (e.g. Active → At Risk).</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-primary" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <ul class="nav nav-tabs mb-3" id="main-tabs">
+                        <li class="nav-item"><a href="#" class="nav-link active" data-tab="templates">Templates</a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" data-tab="sequences">Sequences</a></li>
+                    </ul>
+
+                    <div id="tab-templates">
+                        <div class="card">
+                            <div class="card-header d-block pb-0">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h3 class="card-title mb-0">All Templates</h3>
+                                    <span class="text-secondary small" id="results-label">Loading…</span>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-auto">
+                                        <select class="form-select form-select-sm" id="tf-lifecycle">
+                                            <option value="">All lifecycle stages</option>
+                                            <option value="NEVER_VISITED">Never Visited</option>
+                                            <option value="NEW">New</option>
+                                            <option value="ACTIVE">Active</option>
+                                            <option value="AT_RISK">At Risk</option>
+                                            <option value="DORMANT">Dormant</option>
+                                            <option value="INACTIVE">Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select class="form-select form-select-sm" id="tf-channel">
+                                            <option value="">All channels</option>
+                                            <option value="EMAIL">Email</option>
+                                            <option value="SMS">SMS</option>
+                                            <option value="PUSH">Push</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select class="form-select form-select-sm" id="tf-status">
+                                            <option value="">All statuses</option>
+                                            <option value="enabled">Enabled</option>
+                                            <option value="disabled">Disabled</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select class="form-select form-select-sm" id="tf-target-value">
+                                            <option value="">All value tiers</option>
+                                            <option value="STANDARD">Standard</option>
+                                            <option value="PREMIUM">Premium</option>
+                                            <option value="VIP">VIP</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-auto">
+                                        <select class="form-select form-select-sm" id="tf-audience-source">
+                                            <option value="">All audience sources</option>
+                                            <option value="USER">Users only</option>
+                                            <option value="CUSTOMER">Customer Contacts only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Target Lifecycle</th>
+                                            <th>Audience</th>
+                                            <th>Channel</th>
+                                            <th>Status</th>
+                                            <th>Delay</th>
+                                            <th>Send Time</th>
+                                            <th>Cooldown</th>
+                                            <th>Message Preview</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody">
+                                        <tr>
+                                            <td colspan="9" class="text-center py-5">
+                                                <div class="spinner-border text-primary"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-sequences" style="display:none">
+                        <div class="card">
+                            <div class="card-header d-block pb-0">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h3 class="card-title mb-0">All Sequences</h3>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="text-secondary small" id="seq-results-label">Loading…</span>
+                                        <button type="button" class="btn btn-primary btn-sm" id="btn-new-sequence">+ New
+                                            Sequence</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Target Lifecycle</th>
+                                            <th>Name</th>
+                                            <th>Status</th>
+                                            <th>Steps</th>
+                                            <th>Cooldown</th>
+                                            <th class="w-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="seq-tbody">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5">
+                                                <div class="spinner-border text-primary"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">New Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Target Lifecycle</label>
+                            <select class="form-select" id="f-target-lifecycle">
+                                <option value="NEW">New</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="AT_RISK">At Risk</option>
+                                <option value="DORMANT">Dormant</option>
+                                <option value="INACTIVE">Inactive</option>
+                                <option value="NEVER_VISITED">Never Visited</option>
+                            </select>
+                            <div class="form-hint">The customer's stage <strong>after</strong> the transition — a
+                                message is triggered the moment someone lands here.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Channel</label>
+                            <select class="form-select" id="f-channel">
+                                <option value="EMAIL">Email</option>
+                                <option value="SMS">SMS</option>
+                                <option value="PUSH">Push Notification</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Value Tier <span class="text-secondary">(optional)</span></label>
+                            <select class="form-select" id="f-target-value">
+                                <option value="">Any value tier</option>
+                                <option value="STANDARD">Standard</option>
+                                <option value="PREMIUM">Premium</option>
+                                <option value="VIP">VIP</option>
+                            </select>
+                            <div class="form-hint">Further narrows the audience — leave as "Any" to ignore Value
+                                tier entirely.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Audience Source <span
+                                    class="text-secondary">(optional)</span></label>
+                            <select class="form-select" id="f-audience-source">
+                                <option value="">Users &amp; Customer Contacts</option>
+                                <option value="USER">Users only (registered Web/App accounts)</option>
+                                <option value="CUSTOMER">Customer Contacts only (walk-ins)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="f-subject-wrap">
+                        <label class="form-label">Subject <span class="text-secondary">(Email only)</span></label>
+                        <input type="text" class="form-control" id="f-subject" placeholder="We miss you at Hairlux!">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" id="f-body" rows="4"
+                            placeholder="Hi {{firstName}}, it's been a while since your last visit on {{lastVisitDate}} — we'd love to see you again!"></textarea>
+                        <div class="form-hint">Available placeholders: <code>{{firstName}}</code>,
+                            <code>{{lastName}}</code>, <code>{{lastVisitDate}}</code>.
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Delay (days)</label>
+                            <input type="number" min="0" class="form-control" id="f-delay-days" value="0">
+                            <div class="form-hint">Days to wait after the transition before sending.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cooldown (days)</label>
+                            <input type="number" min="0" class="form-control" id="f-cooldown-days" value="30">
+                            <div class="form-hint">Minimum gap before this template can send to the same person
+                                again.</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="f-send-immediately" checked>
+                            <label class="form-check-label" for="f-send-immediately">Send immediately</label>
+                        </div>
+                        <div class="form-hint">As soon as the next check runs (within 15 minutes) — no delay, no
+                            time-of-day restriction. Uncheck to set a delay and/or a specific send time instead.
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Send Time <span class="text-secondary">(optional)</span></label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="number" min="0" max="23" class="form-control" id="f-send-hour"
+                                    placeholder="Hour (0-23)">
+                                <span>:</span>
+                                <input type="number" min="0" max="59" class="form-control" id="f-send-minute"
+                                    placeholder="Min (0-59)">
+                            </div>
+                            <div class="form-hint">Leave both blank to send any time the job runs. When set, holds
+                                the message until this time of day (or later) on the eligible day.</div>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="f-enabled" checked>
+                        <label class="form-check-label" for="f-enabled">Enabled</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sequence Create/Edit Modal -->
+    <div class="modal modal-blur fade" id="modal-sequence-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-sequence-form-title">New Sequence</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="seq-form-error"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-9">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="sf-name"
+                                placeholder="e.g. At-Risk Re-engagement Sequence">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Cooldown (days)</label>
+                            <input type="number" min="0" class="form-control" id="sf-cooldown-days" value="30">
+                            <div class="form-hint">Before the whole sequence restarts.</div>
+                        </div>
+                    </div>
+                    <div class="form-hint mb-3" id="sf-target-lifecycle-hint" style="display:none;"></div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="sf-enabled" checked>
+                        <label class="form-check-label" for="sf-enabled">Enabled</label>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label mb-0">Steps <span class="text-secondary small">(execution order — top
+                                to bottom)</span></label>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="sf-add-step">+ Add
+                            step</button>
+                    </div>
+                    <div id="sf-steps"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save-sequence">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/lifecycle-campaigns.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var editingId = null;
+        var editingHasFixedKey = false; // true when editing -- target/channel become read-only, see openForm()
+
+        var LIFECYCLE_LABELS = {
+            NEW: 'New', ACTIVE: 'Active', AT_RISK: 'At Risk', DORMANT: 'Dormant',
+            INACTIVE: 'Inactive', NEVER_VISITED: 'Never Visited',
+        };
+        var CHANNEL_LABELS = { EMAIL: 'Email', SMS: 'SMS', PUSH: 'Push' };
+        var VALUE_TIER_LABELS = { STANDARD: 'Standard', PREMIUM: 'Premium', VIP: 'VIP' };
+        var AUDIENCE_SOURCE_LABELS = { USER: 'Users only', CUSTOMER: 'Customer Contacts only' };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            RBAC.applyPageGuard('lifecycle_campaigns:read');
+
+            document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('tf-lifecycle').addEventListener('change', renderFilteredTemplates);
+            document.getElementById('tf-channel').addEventListener('change', renderFilteredTemplates);
+            document.getElementById('tf-status').addEventListener('change', renderFilteredTemplates);
+            document.getElementById('tf-target-value').addEventListener('change', renderFilteredTemplates);
+            document.getElementById('tf-audience-source').addEventListener('change', renderFilteredTemplates);
+            document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('f-channel').addEventListener('change', syncSubjectVisibility);
+            document.getElementById('f-send-immediately').addEventListener('change', syncSendImmediately);
+
+            document.getElementById('main-tabs').addEventListener('click', function (e) {
+                e.preventDefault();
+                var tab = e.target.closest('a[data-tab]');
+                if (!tab) return;
+                document.querySelectorAll('#main-tabs .nav-link').forEach(function (t) { t.classList.remove('active'); });
+                tab.classList.add('active');
+                document.getElementById('tab-templates').style.display = tab.dataset.tab === 'templates' ? '' : 'none';
+                document.getElementById('tab-sequences').style.display = tab.dataset.tab === 'sequences' ? '' : 'none';
+                // "New Template" lives in the page header, outside either
+                // tab -- the Sequences tab has its own "+ New Sequence"
+                // button in its own card header, so hide this one there
+                // rather than leave two ambiguous "new" actions visible.
+                document.getElementById('btn-new').style.display = tab.dataset.tab === 'templates' ? '' : 'none';
+                if (tab.dataset.tab === 'sequences') loadSequences();
+            });
+
+            document.getElementById('btn-new-sequence').addEventListener('click', function () { openSequenceForm(null); });
+            document.getElementById('btn-save-sequence').addEventListener('click', saveSequence);
+            document.getElementById('sf-add-step').addEventListener('click', function () { addStepLine(); });
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function syncSubjectVisibility() {
+            var isEmail = document.getElementById('f-channel').value === 'EMAIL';
+            document.getElementById('f-subject-wrap').style.display = isEmail ? 'block' : 'none';
+        }
+
+        // Dev Feedback Round 6, item #11: makes "send immediately" a
+        // first-class, explicit choice rather than something only
+        // achievable by knowing to leave delay/send-time fields empty.
+        // Checked -> locks delayDays to 0 and clears/disables the
+        // send-time fields. Unchecked -> hands control back for a
+        // manual delay and/or specific send time.
+        function syncSendImmediately() {
+            var immediate = document.getElementById('f-send-immediately').checked;
+            var delayInput = document.getElementById('f-delay-days');
+            var hourInput = document.getElementById('f-send-hour');
+            var minuteInput = document.getElementById('f-send-minute');
+
+            delayInput.disabled = immediate;
+            hourInput.disabled = immediate;
+            minuteInput.disabled = immediate;
+
+            if (immediate) {
+                delayInput.value = 0;
+                hourInput.value = '';
+                minuteInput.value = '';
+            }
+        }
+
+        var _allTemplates = [];
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                _allTemplates = await LifecycleCampaigns.getAll();
+                renderFilteredTemplates();
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        // Templates are a small, bounded set -- max 18 (6 lifecycle stages
+        // x 3 channels, enforced by a unique constraint) -- so filtering
+        // the already-loaded list client-side is simpler than adding
+        // query params to a backend endpoint that has no pagination need.
+        function renderFilteredTemplates() {
+            var tbody = document.getElementById('tbody');
+            var lifecycleFilter = document.getElementById('tf-lifecycle').value;
+            var channelFilter = document.getElementById('tf-channel').value;
+            var statusFilter = document.getElementById('tf-status').value;
+            var targetValueFilter = document.getElementById('tf-target-value').value;
+            var audienceSourceFilter = document.getElementById('tf-audience-source').value;
+
+            var list = _allTemplates.filter(function (t) {
+                if (lifecycleFilter && t.targetLifecycle !== lifecycleFilter) return false;
+                if (channelFilter && t.channel !== channelFilter) return false;
+                if (statusFilter === 'enabled' && !t.isEnabled) return false;
+                if (statusFilter === 'disabled' && t.isEnabled) return false;
+                if (targetValueFilter && t.targetValue !== targetValueFilter) return false;
+                if (audienceSourceFilter && t.audienceSource !== audienceSourceFilter) return false;
+                return true;
+            });
+
+            document.getElementById('results-label').textContent = list.length + ' of ' + _allTemplates.length + ' template' + (_allTemplates.length === 1 ? '' : 's');
+            tbody.innerHTML = list.length
+                ? list.map(function (t) {
+                    var statusBadge = t.isEnabled
+                        ? '<span class="badge bg-green-lt">Enabled</span>'
+                        : '<span class="badge bg-secondary-lt">Disabled</span>';
+                    var preview = (t.subject ? '<strong>' + esc(t.subject) + '</strong> — ' : '') + esc((t.bodyTemplate || '').slice(0, 60)) + (t.bodyTemplate && t.bodyTemplate.length > 60 ? '…' : '');
+                    var sendTime = (t.sendHour !== null && t.sendHour !== undefined)
+                        ? (String(t.sendHour).padStart(2, '0') + ':' + String(t.sendMinute || 0).padStart(2, '0'))
+                        : '<span class="text-secondary">Any time</span>';
+                    var audienceParts = [];
+                    if (t.targetValue) audienceParts.push('<span class="badge bg-purple-lt">' + esc(VALUE_TIER_LABELS[t.targetValue] || t.targetValue) + '</span>');
+                    if (t.audienceSource) audienceParts.push('<span class="badge bg-azure-lt">' + esc(AUDIENCE_SOURCE_LABELS[t.audienceSource] || t.audienceSource) + '</span>');
+                    var audience = audienceParts.length ? audienceParts.join(' ') : '<span class="text-secondary small">Everyone</span>';
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + esc(LIFECYCLE_LABELS[t.targetLifecycle] || t.targetLifecycle) + '</td>' +
+                        '<td>' + audience + '</td>' +
+                        '<td>' + esc(CHANNEL_LABELS[t.channel] || t.channel) + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td>' + t.delayDays + ' day' + (t.delayDays === 1 ? '' : 's') + '</td>' +
+                        '<td>' + sendTime + '</td>' +
+                        '<td>' + t.cooldownDays + ' day' + (t.cooldownDays === 1 ? '' : 's') + '</td>' +
+                        '<td class="text-secondary small" style="max-width:280px;">' + preview + '</td>' +
+                        '<td class="text-nowrap">' +
+                        '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + t.id + '\')">Edit</button>' +
+                        '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + t.id + '\')">Delete</button>' +
+                        '</td>' +
+                        '</tr>';
+                }).join('')
+                : '<tr><td colspan="9" class="text-center text-secondary py-5">' +
+                (_allTemplates.length === 0
+                    ? 'No templates yet — nothing sends until at least one is created.'
+                    : 'No templates match the current filters.') +
+                '</td></tr>';
+        }
+
+        async function openForm(id) {
+            editingId = id;
+            editingHasFixedKey = !!id;
+            document.getElementById('form-error').classList.add('d-none');
+            document.getElementById('modal-form-title').textContent = id ? 'Edit Template' : 'New Template';
+            document.getElementById('f-target-lifecycle').disabled = editingHasFixedKey;
+            document.getElementById('f-channel').disabled = editingHasFixedKey;
+
+            if (id) {
+                try {
+                    var t = await LifecycleCampaigns.getOne(id);
+                    document.getElementById('f-target-lifecycle').value = t.targetLifecycle;
+                    document.getElementById('f-channel').value = t.channel;
+                    document.getElementById('f-subject').value = t.subject || '';
+                    document.getElementById('f-body').value = t.bodyTemplate || '';
+                    document.getElementById('f-delay-days').value = t.delayDays;
+                    document.getElementById('f-cooldown-days').value = t.cooldownDays;
+                    document.getElementById('f-send-hour').value = (t.sendHour !== null && t.sendHour !== undefined) ? t.sendHour : '';
+                    document.getElementById('f-send-minute').value = (t.sendMinute !== null && t.sendMinute !== undefined) ? t.sendMinute : '';
+                    document.getElementById('f-enabled').checked = !!t.isEnabled;
+                    document.getElementById('f-send-immediately').checked = t.delayDays === 0 && (t.sendHour === null || t.sendHour === undefined);
+                    document.getElementById('f-target-value').value = t.targetValue || '';
+                    document.getElementById('f-audience-source').value = t.audienceSource || '';
+                } catch (e) {
+                    alert(e.message || 'Failed to load.');
+                    return;
+                }
+            } else {
+                document.getElementById('f-target-lifecycle').value = 'AT_RISK';
+                document.getElementById('f-channel').value = 'EMAIL';
+                document.getElementById('f-subject').value = '';
+                document.getElementById('f-body').value = '';
+                document.getElementById('f-delay-days').value = 0;
+                document.getElementById('f-cooldown-days').value = 30;
+                document.getElementById('f-send-hour').value = '';
+                document.getElementById('f-send-minute').value = '';
+                document.getElementById('f-enabled').checked = true;
+                document.getElementById('f-send-immediately').checked = true;
+                document.getElementById('f-target-value').value = '';
+                document.getElementById('f-audience-source').value = '';
+            }
+            syncSubjectVisibility();
+            syncSendImmediately();
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+            var body = document.getElementById('f-body').value.trim();
+            if (!body) { errEl.textContent = 'Message body is required.'; errEl.classList.remove('d-none'); return; }
+
+            var payload = {
+                bodyTemplate: body,
+                subject: document.getElementById('f-subject').value.trim() || undefined,
+                delayDays: Number(document.getElementById('f-delay-days').value) || 0,
+                cooldownDays: Number(document.getElementById('f-cooldown-days').value) || 0,
+                sendHour: document.getElementById('f-send-hour').value !== '' ? Number(document.getElementById('f-send-hour').value) : null,
+                sendMinute: document.getElementById('f-send-minute').value !== '' ? Number(document.getElementById('f-send-minute').value) : null,
+                targetValue: document.getElementById('f-target-value').value || null,
+                audienceSource: document.getElementById('f-audience-source').value || null,
+                isEnabled: document.getElementById('f-enabled').checked,
+            };
+            if (!editingHasFixedKey) {
+                payload.targetLifecycle = document.getElementById('f-target-lifecycle').value;
+                payload.channel = document.getElementById('f-channel').value;
+            }
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                if (editingId) await LifecycleCampaigns.update(editingId, payload);
+                else await LifecycleCampaigns.create(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function remove(id) {
+            if (!confirm('Delete this template? Any customer currently mid-cooldown for it keeps that history, but this template will never send again.')) return;
+            try {
+                await LifecycleCampaigns.remove(id);
+                load();
+            } catch (e) {
+                alert(e.message || 'Failed to delete.');
+            }
+        }
+
+        // ── Dev Feedback Round 4, item #9: Sequences ──
+
+        var editingSequenceId = null;
+
+        async function loadSequences() {
+            var tbody = document.getElementById('seq-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var list = await LifecycleCampaigns.getAllSequences();
+                document.getElementById('seq-results-label').textContent = list.length + ' sequence' + (list.length === 1 ? '' : 's');
+                tbody.innerHTML = list.length
+                    ? list.map(function (s) {
+                        var statusBadge = s.isEnabled
+                            ? '<span class="badge bg-green-lt">Enabled</span>'
+                            : '<span class="badge bg-secondary-lt">Disabled</span>';
+                        var stepsSummary = (s.steps || []).map(function (step) { return step.template ? (CHANNEL_LABELS[step.template.channel] || step.template.channel) : '\u2014'; }).join(' → ') || '<span class="text-secondary">No steps</span>';
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(LIFECYCLE_LABELS[s.targetLifecycle] || s.targetLifecycle) + '</td>' +
+                            '<td>' + esc(s.name) + '</td>' +
+                            '<td>' + statusBadge + '</td>' +
+                            '<td class="text-secondary small">' + stepsSummary + '</td>' +
+                            '<td>' + s.cooldownDays + ' day' + (s.cooldownDays === 1 ? '' : 's') + '</td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openSequenceForm(\'' + s.id + '\')">Edit</button>' +
+                            '<button class="btn btn-sm btn-outline-danger" onclick="removeSequence(\'' + s.id + '\')">Delete</button>' +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No sequences yet — nothing sends until at least one is created.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        var _stepCounter = 0;
+
+        /** One bordered block per step -- selects an existing template (Dev Feedback Round 6, item #13) rather than re-entering channel/subject/message here. */
+        function stepLine(step) {
+            var idx = _stepCounter++;
+            var block = document.createElement('div');
+            block.className = 'border rounded p-3 mb-2';
+            block.dataset.stepIndex = idx;
+            block.innerHTML =
+                '<div class="d-flex justify-content-between align-items-center mb-2">' +
+                '<span class="fw-semibold step-number-label"></span>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-step">&times;</button>' +
+                '</div>' +
+                '<div class="row g-2 mb-2">' +
+                '<div class="col-md-4"><label class="form-label small mb-1">Template</label>' +
+                '<select class="form-select form-select-sm step-template"><option value="">Select a template…</option></select></div>' +
+                '<div class="col-md-4"><label class="form-label small mb-1">Delay after previous step (minutes)</label>' +
+                '<input type="number" min="0" class="form-control form-control-sm step-delay" value="0"></div>' +
+                '<div class="col-md-2"><label class="form-label small mb-1">Send hour</label>' +
+                '<input type="number" min="0" max="23" class="form-control form-control-sm step-send-hour" placeholder="0-23"></div>' +
+                '<div class="col-md-2"><label class="form-label small mb-1">Send min</label>' +
+                '<input type="number" min="0" max="59" class="form-control form-control-sm step-send-minute" placeholder="0-59"></div>' +
+                '</div>' +
+                '<div class="text-secondary small step-template-preview"></div>';
+
+            var templateSel = block.querySelector('.step-template');
+            var previewEl = block.querySelector('.step-template-preview');
+            templateSel.innerHTML = '<option value="">Select a template…</option>' + _allTemplates.map(function (t) {
+                return '<option value="' + t.id + '">' + esc(LIFECYCLE_LABELS[t.targetLifecycle] || t.targetLifecycle) + ' \u2014 ' + esc(CHANNEL_LABELS[t.channel] || t.channel) + '</option>';
+            }).join('');
+
+            var syncPreview = function () {
+                var t = _allTemplates.find(function (x) { return x.id === templateSel.value; });
+                if (!t) { previewEl.textContent = ''; return; }
+                var preview = (t.subject ? t.subject + ' \u2014 ' : '') + (t.bodyTemplate || '').slice(0, 100) + ((t.bodyTemplate || '').length > 100 ? '…' : '');
+                previewEl.textContent = preview;
+            };
+            templateSel.addEventListener('change', function () { syncPreview(); syncTargetLifecycleHint(); });
+            block.querySelector('.btn-remove-step').addEventListener('click', function () {
+                block.remove();
+                renumberSteps();
+                syncTargetLifecycleHint();
+            });
+
+            if (step) {
+                templateSel.value = step.templateId || '';
+                block.querySelector('.step-delay').value = step.delayAfterPreviousMinutes != null ? step.delayAfterPreviousMinutes : 0;
+                block.querySelector('.step-send-hour').value = (step.sendHour !== null && step.sendHour !== undefined) ? step.sendHour : '';
+                block.querySelector('.step-send-minute').value = (step.sendMinute !== null && step.sendMinute !== undefined) ? step.sendMinute : '';
+            }
+            syncPreview();
+            return block;
+        }
+
+        function renumberSteps() {
+            document.querySelectorAll('#sf-steps > div').forEach(function (block, i) {
+                var label = block.querySelector('.step-number-label');
+                if (label) label.textContent = 'Step ' + (i + 1) + (i === 0 ? ' (delay counts from the lifecycle transition)' : ' (delay counts from the previous step)');
+            });
+        }
+
+        function syncTargetLifecycleHint() {
+            var hintEl = document.getElementById('sf-target-lifecycle-hint');
+            var firstBlock = document.querySelector('#sf-steps > div');
+            var firstTemplateId = firstBlock ? firstBlock.querySelector('.step-template').value : '';
+            var firstTemplate = firstTemplateId ? _allTemplates.find(function (t) { return t.id === firstTemplateId; }) : null;
+
+            if (firstTemplate) {
+                hintEl.textContent = 'Target Lifecycle: ' + (LIFECYCLE_LABELS[firstTemplate.targetLifecycle] || firstTemplate.targetLifecycle) + ' (from Step 1\'s template)';
+                hintEl.style.display = '';
+            } else {
+                hintEl.textContent = 'Select a template for Step 1 to set this sequence\'s target lifecycle.';
+                hintEl.style.display = '';
+            }
+        }
+
+        function addStepLine(step) {
+            document.getElementById('sf-steps').appendChild(stepLine(step));
+            renumberSteps();
+            syncTargetLifecycleHint();
+        }
+
+        async function openSequenceForm(id) {
+            editingSequenceId = id;
+            document.getElementById('seq-form-error').classList.add('d-none');
+            document.getElementById('modal-sequence-form-title').textContent = id ? 'Edit Sequence' : 'New Sequence';
+            document.getElementById('sf-steps').innerHTML = '';
+
+            // Defensive re-fetch -- _allTemplates should already be
+            // populated (Templates tab loads at page init, before this
+            // tab is ever reachable), but a step's template picker needs
+            // it, so don't silently render an empty dropdown if it isn't.
+            if (!_allTemplates.length) {
+                try { _allTemplates = await LifecycleCampaigns.getAll(); } catch (e) { /* stepLine() copes with an empty list */ }
+            }
+
+            if (id) {
+                try {
+                    var s = await LifecycleCampaigns.getOneSequence(id);
+                    document.getElementById('sf-name').value = s.name || '';
+                    document.getElementById('sf-cooldown-days').value = s.cooldownDays;
+                    document.getElementById('sf-enabled').checked = !!s.isEnabled;
+                    (s.steps || []).forEach(function (step) { addStepLine(step); });
+                    if (!s.steps || !s.steps.length) addStepLine();
+                } catch (e) {
+                    alert(e.message || 'Failed to load.');
+                    return;
+                }
+            } else {
+                document.getElementById('sf-name').value = '';
+                document.getElementById('sf-cooldown-days').value = 30;
+                document.getElementById('sf-enabled').checked = true;
+                addStepLine();
+            }
+
+            syncTargetLifecycleHint();
+            new bootstrap.Modal(document.getElementById('modal-sequence-form')).show();
+        }
+
+        async function saveSequence() {
+            var errEl = document.getElementById('seq-form-error');
+            errEl.classList.add('d-none');
+
+            var name = document.getElementById('sf-name').value.trim();
+            if (!name) { errEl.textContent = 'A name is required.'; errEl.classList.remove('d-none'); return; }
+
+            var steps = [];
+            var stepError = null;
+            document.querySelectorAll('#sf-steps > div').forEach(function (block) {
+                var templateId = block.querySelector('.step-template').value;
+                if (!templateId) { stepError = 'Every step needs a template selected.'; return; }
+                var sendHourVal = block.querySelector('.step-send-hour').value;
+                var sendMinuteVal = block.querySelector('.step-send-minute').value;
+                steps.push({
+                    templateId: templateId,
+                    delayAfterPreviousMinutes: Number(block.querySelector('.step-delay').value) || 0,
+                    sendHour: sendHourVal !== '' ? Number(sendHourVal) : undefined,
+                    sendMinute: sendMinuteVal !== '' ? Number(sendMinuteVal) : undefined,
+                });
+            });
+            if (stepError) { errEl.textContent = stepError; errEl.classList.remove('d-none'); return; }
+            if (!steps.length) { errEl.textContent = 'At least one step is required.'; errEl.classList.remove('d-none'); return; }
+
+            // Dev Feedback Round 7, item #3: Target Lifecycle removed as
+            // its own form field -- derived from Step 1's template
+            // instead, since every step already selects one and the
+            // field was redundant with (and could drift from) whatever
+            // Step 1 actually targets.
+            var firstStepTemplate = _allTemplates.find(function (t) { return t.id === steps[0].templateId; });
+            if (!firstStepTemplate) {
+                errEl.textContent = 'Could not determine this sequence\'s target lifecycle from Step 1\'s template — try reselecting it.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            var payload = {
+                targetLifecycle: firstStepTemplate.targetLifecycle,
+                name: name,
+                cooldownDays: Number(document.getElementById('sf-cooldown-days').value) || 0,
+                isEnabled: document.getElementById('sf-enabled').checked,
+                steps: steps,
+            };
+
+            var btn = document.getElementById('btn-save-sequence');
+            btn.disabled = true;
+            try {
+                if (editingSequenceId) await LifecycleCampaigns.updateSequence(editingSequenceId, payload);
+                else await LifecycleCampaigns.createSequence(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-sequence-form')).hide();
+                loadSequences();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function removeSequence(id) {
+            if (!confirm('Delete this sequence? Every step and its send history will be removed.')) return;
+            try {
+                await LifecycleCampaigns.removeSequence(id);
+                loadSequences();
+            } catch (e) {
+                alert(e.message || 'Failed to delete.');
+            }
+        }
+    </script>
+</body>
+
+</html>p

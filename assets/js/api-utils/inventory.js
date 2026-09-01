@@ -43,8 +43,34 @@ const Inventory = (function () {
         return jsonFetch(`/admin/inventory-items/${id}`);
     }
 
+    async function getMovementHistory(id, params = {}) {
+        const q = new URLSearchParams();
+        Object.keys(params).forEach((k) => {
+            if (params[k] !== undefined && params[k] !== null && params[k] !== '') q.set(k, params[k]);
+        });
+        const qs = q.toString() ? '?' + q.toString() : '';
+        return jsonFetch(`/admin/inventory-items/${id}/movements${qs}`);
+    }
+
+    const MOVEMENT_TYPE_LABELS = {
+        RECEIVED: 'Goods Received',
+        SOLD: 'Sold',
+        CONSUMED: 'Consumed',
+        ADJUSTMENT: 'Manual Adjustment',
+        TRANSFER_OUT: 'Transfer Out',
+        TRANSFER_IN: 'Transfer In',
+    };
+
     async function create(payload) {
         return jsonFetch('/admin/inventory-items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function createBulk(payload) {
+        return jsonFetch('/admin/inventory-items/bulk', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -66,6 +92,14 @@ const Inventory = (function () {
 
     async function adjust(id, payload) {
         return jsonFetch(`/admin/inventory-items/${id}/adjust`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function transferStockType(id, payload) {
+        return jsonFetch(`/admin/inventory-items/${id}/transfer-stock-type`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -94,6 +128,14 @@ const Inventory = (function () {
 
     async function resolveExpiryAlert(id) {
         return jsonFetch(`/admin/inventory-items/alerts/expiry/${id}/resolve`, { method: 'PATCH' });
+    }
+
+    async function requestTransfer(payload) {
+        return jsonFetch('/admin/inventory-items/transfer-requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
     }
 
     async function getTransfers(branchId) {
@@ -147,16 +189,18 @@ const Inventory = (function () {
     }
 
     function statusBadge(item) {
-        if (item.currentQuantity <= 0) return '<span class="badge bg-danger-lt">Out of Stock</span>';
-        if (item.currentQuantity <= item.lowStockThreshold) return '<span class="badge bg-warning-lt">Low</span>';
+        const total = (Number(item.storeStock) || 0) + (Number(item.salesStock) || 0) + (Number(item.usageStock) || 0);
+        if (total <= 0) return '<span class="badge bg-danger-lt">Out of Stock</span>';
+        if (total <= item.lowStockThreshold) return '<span class="badge bg-warning-lt">Low</span>';
         return '<span class="badge bg-success-lt">Good</span>';
     }
 
     return {
-        getAll, getOne, create, update, adjust,
+        getAll, getOne, create, createBulk, update, adjust, transferStockType,
+        getMovementHistory, MOVEMENT_TYPE_LABELS,
         getAlerts, resolveAlert,
         getExpiryAlerts, resolveExpiryAlert,
-        getTransfers, approveTransfer, rejectTransfer, reassignTransfer,
+        getTransfers, requestTransfer, approveTransfer, rejectTransfer, reassignTransfer,
         getAdjustmentRequests, approveAdjustment, rejectAdjustment, reassignAdjustment,
         CATEGORY_LABELS, ALERT_STAGE_COLORS, TRANSFER_STATUS_COLORS,
         statusBadge, formatMoney,

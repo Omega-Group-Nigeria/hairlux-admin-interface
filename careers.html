@@ -424,6 +424,15 @@
                                     <div class="spinner-border text-primary" role="status"></div>
                                 </div>
                             </div>
+                            <div class="d-flex align-items-center justify-content-between px-2 py-2 border-top">
+                                <span class="text-secondary small" id="jobs-page-info"></span>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="btn-jobs-prev-page">Previous</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="btn-jobs-next-page">Next</button>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- RIGHT: Form / empty state -->
@@ -647,10 +656,28 @@
         // ── State ──────────────────────────────────────────────────────
         let _allJobs = [];
         let _editingId = null;    // null = creating new
+        // Dev Feedback Round 4, item #11: guards against a real race
+        // condition -- if a slow save for one job is still in flight when
+        // the admin opens a DIFFERENT job (new or existing) before it
+        // resolves, the stale callback's post-save state mutation must
+        // not silently overwrite the now-current editing state (this was
+        // the actual cause of "job #11 replacing #10": the previous
+        // create's callback set _editingId to the OLD job's id after the
+        // admin had already moved on to a new one, turning the next save
+        // into an accidental update of the wrong job).
+        let _editorGeneration = 0;
         let _quill = null;
         let _activeType = '';
         let _searchQuery = '';
         let _deleteTargetId = null;
+        // Dev Feedback Round 4, item #11: client-side pagination of the
+        // (already fully-fetched) job list -- consistent with this page's
+        // existing architecture, where search/type-filter/stats all
+        // already operate on the complete _allJobs array rather than a
+        // server-paginated slice. Reset to page 0 whenever the filtered
+        // set changes underneath it.
+        const JOBS_PER_PAGE = 15;
+        let _jobsPage = 0;
 
         // ── Init ───────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
@@ -744,12 +771,21 @@
             // Add responsibility
             document.getElementById('btn-add-resp').addEventListener('click', () => addRespItem(''));
 
+            document.getElementById('btn-jobs-prev-page').addEventListener('click', () => {
+                if (_jobsPage > 0) { _jobsPage--; renderJobList(); }
+            });
+            document.getElementById('btn-jobs-next-page').addEventListener('click', () => {
+                _jobsPage++; // renderJobList clamps back down if this overshoots
+                renderJobList();
+            });
+
             // Search
             let searchTimer;
             document.getElementById('search-jobs').addEventListener('input', e => {
                 clearTimeout(searchTimer);
                 searchTimer = setTimeout(() => {
                     _searchQuery = e.target.value.toLowerCase().trim();
+                    _jobsPage = 0;
                     renderJobList();
                 }, 200);
             });
@@ -760,6 +796,7 @@
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     _activeType = btn.dataset.type;
+                    _jobsPage = 0;
                     renderJobList();
                 });
             });
@@ -770,7 +807,13 @@
             document.getElementById('jobs-list').innerHTML =
                 '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
             try {
-                const data = await Jobs.getAll({ limit: 100 });
+                // Job postings are inherently low-volume (never realistically
+                // in the thousands), so a generous single-page fetch is the
+                // pragmatic choice here rather than a full fetch-all-pages
+                // loop -- but the previous hard cap of 100 was a real bug on
+                // its own: any account with more than 100 postings would
+                // silently lose visibility into the rest entirely.
+                const data = await Jobs.getAll({ limit: 1000 });
                 _allJobs = Array.isArray(data) ? data : (data.data || []);
                 updateStats();
                 renderJobList();
@@ -780,10 +823,14 @@
             }
         }
 
+        function isJobPublished(job) {
+            return job.status === 'PUBLISHED';
+        }
+
         // ── Stats ──────────────────────────────────────────────────────
         function updateStats() {
             const total = _allJobs.length;
-            const published = _allJobs.filter(j => j.isActive).length;
+            const published = _allJobs.filter(j => isJobPublished(j)).length;
             const drafts = total - published;
             document.getElementById('stat-total').textContent = total;
             document.getElementById('stat-published').textContent = published;
@@ -808,12 +855,26 @@
 
             if (!jobs.length) {
                 container.innerHTML = '<div class="jobs-empty"><div class="text-secondary small">No matching job postings</div></div>';
+                document.getElementById('jobs-page-info').textContent = '';
+                document.getElementById('btn-jobs-prev-page').disabled = true;
+                document.getElementById('btn-jobs-next-page').disabled = true;
                 return;
             }
 
-            container.innerHTML = jobs.map(job => `
+            const totalPages = Math.max(1, Math.ceil(jobs.length / JOBS_PER_PAGE));
+            if (_jobsPage >= totalPages) _jobsPage = totalPages - 1; // clamp -- e.g. after a filter shrinks the set, or Next overshot the end
+            if (_jobsPage < 0) _jobsPage = 0;
+            const pageStart = _jobsPage * JOBS_PER_PAGE;
+            const pageJobs = jobs.slice(pageStart, pageStart + JOBS_PER_PAGE);
+
+            document.getElementById('jobs-page-info').textContent =
+                `Showing ${pageStart + 1}–${Math.min(pageStart + JOBS_PER_PAGE, jobs.length)} of ${jobs.length}`;
+            document.getElementById('btn-jobs-prev-page').disabled = _jobsPage === 0;
+            document.getElementById('btn-jobs-next-page').disabled = _jobsPage >= totalPages - 1;
+
+            container.innerHTML = pageJobs.map(job => `
             <div class="job-row${_editingId === job.id ? ' active' : ''}" data-id="${job.id}">
-                <span class="job-status-dot ${job.isActive ? 'published' : 'draft'}" title="${job.isActive ? 'Published' : 'Draft'}"></span>
+                <span class="job-status-dot ${isJobPublished(job) ? 'published' : 'draft'}" title="${isJobPublished(job) ? 'Published' : 'Draft'}"></span>
                 <div class="flex-fill min-w-0">
                     <div class="job-row-title text-truncate">${_esc(job.title)}</div>
                     <div class="job-row-meta">${_esc(job.location || '—')}</div>
@@ -824,8 +885,8 @@
                 </div>
                 <div class="job-row-actions">
                     ${RBAC.can('jobs:toggle') ? `<button class="btn btn-sm btn-ghost-secondary p-1 btn-toggle-pub" data-id="${job.id}"
-                        title="${job.isActive ? 'Unpublish' : 'Publish'}">
-                        ${job.isActive
+                        title="${isJobPublished(job) ? 'Unpublish' : 'Publish'}">
+                        ${isJobPublished(job)
                         ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.584 10.587a2 2 0 0 0 2.828 2.83"/><path d="M9.363 5.365a9.466 9.466 0 0 1 2.637-.365c4 0 7.333 2.333 10 7c-.778 1.361 -1.612 2.524 -2.503 3.488m-2.14 1.861c-1.631 1.1 -3.415 1.651 -5.357 1.651c-4 0 -7.333 -2.333 -10 -7c1.369 -2.395 2.913 -4.175 4.632 -5.341"/></svg>`
                         : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>`
                     }
@@ -853,12 +914,14 @@
                     try {
                         const updated = await Jobs.toggle(id);
                         const idx = _allJobs.findIndex(j => j.id === id);
-                        if (idx !== -1) _allJobs[idx].isActive = updated.isActive ?? !_allJobs[idx].isActive;
+                        // Use the real, persisted status the backend just
+                        // returned directly -- no local flip/guess needed.
+                        if (idx !== -1) _allJobs[idx].status = updated.status;
                         updateStats();
                         renderJobList();
                         // If currently editing this job, update the toggle in form
                         if (_editingId === id) {
-                            document.getElementById('job-is-active').checked = _allJobs[idx].isActive;
+                            document.getElementById('job-is-active').checked = isJobPublished(_allJobs[idx]);
                         }
                     } catch (err) {
                         alert(err.message);
@@ -871,6 +934,7 @@
 
         // ── Open editor ────────────────────────────────────────────────
         function openEditor(job) {
+            _editorGeneration++;
             _editingId = job ? job.id : null;
 
             // Update header labels
@@ -889,7 +953,7 @@
             });
             document.getElementById('job-closing-date').value = job && job.closingDate
                 ? job.closingDate.slice(0, 10) : '';
-            document.getElementById('job-is-active').checked = job ? !!job.isActive : false;
+            document.getElementById('job-is-active').checked = job ? isJobPublished(job) : false;
 
             // Quill content
             if (_quill) {
@@ -996,21 +1060,30 @@
             spinner.classList.remove('d-none');
             saveBtn.disabled = true;
 
+            const myGeneration = _editorGeneration;
+
             try {
                 if (_editingId) {
                     // Update existing
-                    const updated = await Jobs.update(_editingId, payload);
-                    const idx = _allJobs.findIndex(j => j.id === _editingId);
+                    const updatingId = _editingId;
+                    const updated = await Jobs.update(updatingId, payload);
+                    const idx = _allJobs.findIndex(j => j.id === updatingId);
                     if (idx !== -1) _allJobs[idx] = { ..._allJobs[idx], ...updated, ...payload };
                 } else {
                     // Create new
                     const created = await Jobs.create(payload);
                     _allJobs.unshift(created);
-                    _editingId = created.id;
-                    document.getElementById('job-id').value = created.id;
-                    document.getElementById('editor-title-label').textContent = 'Edit Job Posting';
-                    document.getElementById('editor-subtitle-label').textContent = `Editing "${created.title}"`;
-                    document.getElementById('btn-delete-job').classList.remove('d-none');
+                    // Only apply to the currently-open form if the admin
+                    // hasn't since navigated to a different job -- the job
+                    // itself was still created successfully either way,
+                    // this only guards which form's state gets updated.
+                    if (myGeneration === _editorGeneration) {
+                        _editingId = created.id;
+                        document.getElementById('job-id').value = created.id;
+                        document.getElementById('editor-title-label').textContent = 'Edit Job Posting';
+                        document.getElementById('editor-subtitle-label').textContent = `Editing "${created.title}"`;
+                        document.getElementById('btn-delete-job').classList.remove('d-none');
+                    }
                 }
                 updateStats();
                 renderJobList();

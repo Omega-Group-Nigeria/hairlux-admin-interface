@@ -70,6 +70,23 @@ const Payroll = (function () {
         return apiFetch(`/admin/payroll/periods/${id}/approve`, { method: 'PATCH' });
     }
 
+    /** Dev Feedback Round 4, item #22 -- sends an AWAITING_RELEASE period back to Draft for correction. */
+    async function requestCorrection(id, note) {
+        return apiFetch(`/admin/payroll/periods/${id}/request-correction`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ note: note || undefined }),
+        });
+    }
+
+    async function correctPayslip(id, reason) {
+        return apiFetch(`/admin/payroll/payslips/${id}/correct`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
+    }
+
     async function createAdjustment(periodId, payload) {
         return apiFetch(`/admin/payroll/periods/${periodId}/adjustments`, {
             method: 'POST',
@@ -84,6 +101,18 @@ const Payroll = (function () {
 
     async function removeAdjustment(id) {
         return apiFetch(`/admin/payroll/adjustments/${id}`, { method: 'DELETE' });
+    }
+
+    async function correctAdjustment(id, payload) {
+        return apiFetch(`/admin/payroll/adjustments/${id}/correct`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getAdjustmentHistory(id) {
+        return apiFetch(`/admin/payroll/adjustments/${id}/history`);
     }
 
     async function getSettings() {
@@ -106,9 +135,32 @@ const Payroll = (function () {
         });
     }
 
-    async function listWithdrawals(status) {
-        const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+    /** Dev Feedback Round 8 -- flat, admin-configurable rate replacing the old progressive PAYE-band calculation. */
+    async function setTaxRate(rate) {
+        return apiFetch('/admin/payroll/settings/tax-rate', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rate }),
+        });
+    }
+
+    /** Dev Feedback Round 4, items #22-24 -- was single-param (status only); now takes the full filter set the backend supports. */
+    async function listWithdrawals(filters = {}) {
+        const q = new URLSearchParams();
+        ['status', 'staffId', 'locationId', 'from', 'to', 'page', 'limit'].forEach((k) => {
+            if (filters[k] !== undefined && filters[k] !== null && filters[k] !== '') q.set(k, filters[k]);
+        });
+        const qs = q.toString() ? `?${q.toString()}` : '';
         return apiFetch(`/admin/payroll/withdrawals${qs}`);
+    }
+
+    async function getAuditLog(filters = {}) {
+        const q = new URLSearchParams();
+        ['entityType', 'entityId', 'staffId', 'actorId', 'action', 'page', 'limit'].forEach((k) => {
+            if (filters[k] !== undefined && filters[k] !== null && filters[k] !== '') q.set(k, filters[k]);
+        });
+        const qs = q.toString() ? `?${q.toString()}` : '';
+        return apiFetch(`/admin/payroll/audit-log${qs}`);
     }
 
     function formatMoney(amount) {
@@ -125,10 +177,10 @@ const Payroll = (function () {
         getDashboard, listBanks,
         setCompensation, getCompensationHistory,
         listPendingBankChanges, getBankAccount, approveBankChange, rejectBankChange,
-        createPeriod, listPeriods, getPeriod, generatePayroll, approvePeriod,
-        createAdjustment, listAdjustments, removeAdjustment,
-        getSettings, setReleaseActive, setPensionRate,
-        listWithdrawals,
+        createPeriod, listPeriods, getPeriod, generatePayroll, approvePeriod, requestCorrection, correctPayslip,
+        createAdjustment, listAdjustments, removeAdjustment, correctAdjustment, getAdjustmentHistory,
+        getSettings, setReleaseActive, setPensionRate, setTaxRate,
+        listWithdrawals, getAuditLog,
         formatMoney, formatDate,
     };
 })();

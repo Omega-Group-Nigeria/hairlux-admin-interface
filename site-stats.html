@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Site Stats</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--tblr-border-color);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-live {
+            min-width: 160px;
+        }
+
+        .stat-live-value {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .stat-live-label {
+            font-size: 12px;
+            color: var(--tblr-secondary-color);
+            text-transform: uppercase;
+        }
+
+        .stat-override-col {
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="page-pretitle">Website</div>
+                    <h2 class="page-title">Site Stats</h2>
+                    <div class="text-secondary small mt-1">Controls the "Trusted by Thousands" strip on the
+                        homepage. Each stat defaults to a live-computed count — set an override below to display a
+                        different number instead (e.g. a rounded, marketing-friendly figure).</div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="alert alert-danger d-none" id="page-error"></div>
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="card-title mb-0">Homepage Stats</h3>
+                            <span class="text-secondary small" id="last-updated-label"></span>
+                        </div>
+                        <div class="card-body" id="stats-body">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary"></div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-end">
+                            <button type="button" class="btn btn-primary d-none" id="btn-save">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/site-stats.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        var STAT_FIELDS = [
+            { key: 'completedBookings', overrideKey: 'completedBookingsOverride', label: 'Completed Bookings', decimals: 0 },
+            { key: 'registeredCustomers', overrideKey: 'registeredCustomersOverride', label: 'Registered Customers', decimals: 0 },
+            { key: 'averageRating', overrideKey: 'averageRatingOverride', label: 'Average Rating (out of 5.0)', decimals: 1 },
+            { key: 'branches', overrideKey: 'branchesOverride', label: 'Branches', decimals: 0 },
+            { key: 'professionals', overrideKey: 'professionalsOverride', label: 'Beauty Professionals', decimals: 0 },
+        ];
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('site_stats:manage');
+            document.getElementById('btn-save').addEventListener('click', save);
+            await load();
+        });
+
+        async function load() {
+            var body = document.getElementById('stats-body');
+            document.getElementById('page-error').classList.add('d-none');
+            try {
+                var result = await SiteStats.getStats();
+                var live = result.live;
+                var overrides = result.overrides;
+
+                body.innerHTML = STAT_FIELDS.map(function (f) {
+                    var liveVal = f.decimals ? Number(live[f.key]).toFixed(f.decimals) : live[f.key];
+                    var overrideVal = overrides ? overrides[f.overrideKey] : null;
+                    return '<div class="stat-row">' +
+                        '<div class="stat-live">' +
+                        '<div class="stat-live-value">' + liveVal + '</div>' +
+                        '<div class="stat-live-label">Live count</div>' +
+                        '</div>' +
+                        '<div class="stat-override-col">' +
+                        '<label class="form-label mb-1">' + esc(f.label) + ' — Displayed Value</label>' +
+                        '<input type="number" step="' + (f.decimals ? '0.1' : '1') + '" min="0" ' +
+                        (f.decimals ? 'max="5" ' : '') +
+                        'class="form-control stat-input" data-field="' + f.overrideKey + '" ' +
+                        'value="' + (overrideVal != null ? overrideVal : '') + '" ' +
+                        'placeholder="Using live count (' + liveVal + ')">' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+
+                document.getElementById('last-updated-label').textContent = overrides && overrides.updatedAt
+                    ? 'Last changed ' + new Date(overrides.updatedAt).toLocaleString() + (overrides.updatedBy ? ' by ' + overrides.updatedBy.name : '')
+                    : 'No overrides set yet — showing live counts';
+
+                document.getElementById('btn-save').classList.toggle('d-none', !RBAC.can('site_stats:manage'));
+            } catch (e) {
+                var errEl = document.getElementById('page-error');
+                errEl.textContent = e.message || 'Failed to load stats.';
+                errEl.classList.remove('d-none');
+                body.innerHTML = '';
+            }
+        }
+
+        async function save() {
+            var errEl = document.getElementById('page-error');
+            errEl.classList.add('d-none');
+
+            var payload = {};
+            document.querySelectorAll('.stat-input').forEach(function (input) {
+                var field = input.dataset.field;
+                var raw = input.value.trim();
+                // Empty input means "clear the override, use live count" -- explicit null,
+                // distinct from simply not sending the field (which would leave whatever
+                // was previously saved untouched).
+                payload[field] = raw === '' ? null : Number(raw);
+            });
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            var originalText = btn.textContent;
+            btn.textContent = 'Saving…';
+            try {
+                await SiteStats.setStats(payload);
+                await load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save changes.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+    </script>
+</body>
+
+</html>

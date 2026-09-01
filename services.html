@@ -21,55 +21,269 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
-        .service-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--tblr-bg-surface-secondary); flex-shrink: 0; }
-        .category-thumb { width: 40px; height: 40px; object-fit: contain; border-radius: 6px; background: var(--tblr-bg-surface-secondary); flex-shrink: 0; }
-        #dz-category-image { border: 2px dashed var(--tblr-border-color); border-radius: 8px; min-height: 100px; cursor: pointer; transition: border-color .2s, background .2s; padding: 0; overflow: hidden; }
-        #dz-category-image .dz-message { margin: 1.5rem 0; text-align: center; color: var(--tblr-secondary); pointer-events: none; }
-        #dz-category-image.dz-drag-hover { border-color: var(--tblr-primary); background: var(--tblr-primary-lt); }
-        #dz-category-image.dz-started .dz-message { display: none; }
-        #dz-category-image .dz-preview { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 0; border-top: 1px solid var(--tblr-border-color); background: var(--tblr-bg-surface); min-height: unset; width: 100%; float: none; }
-        #dz-category-image .dz-preview:first-of-type { border-top: none; }
-        #dz-category-image .dz-preview .dz-image { width: 48px; height: 48px; flex-shrink: 0; border-radius: 6px; overflow: hidden; background: var(--tblr-bg-surface-secondary); }
-        #dz-category-image .dz-preview .dz-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
-        #dz-category-image .dz-preview .dz-details { position: static; opacity: 1; background: none; padding: 0; flex: 1; min-width: 0; font-size: 0.8125rem; }
-        #dz-category-image .dz-preview .dz-progress, #dz-category-image .dz-preview .dz-success-mark, #dz-category-image .dz-preview .dz-error-mark { display: none !important; }
-        #dz-category-image .dz-preview .dz-remove { position: absolute; top: 8px; right: 10px; font-size: 0.7rem; color: var(--tblr-secondary); text-decoration: none; border: 1px solid var(--tblr-border-color); border-radius: 4px; padding: 1px 6px; background: var(--tblr-bg-surface); }
-        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+
+        .service-thumb {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: var(--tblr-bg-surface-secondary);
+            flex-shrink: 0;
+        }
+
+        .category-thumb {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: var(--tblr-bg-surface-secondary);
+            flex-shrink: 0;
+        }
+
+        #dz-category-image {
+            border: 2px dashed var(--tblr-border-color);
+            border-radius: 8px;
+            min-height: 100px;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #dz-category-image .dz-message {
+            margin: 1.5rem 0;
+            text-align: center;
+            color: var(--tblr-secondary);
+            pointer-events: none;
+        }
+
+        #dz-category-image.dz-drag-hover {
+            border-color: var(--tblr-primary);
+            background: var(--tblr-primary-lt);
+        }
+
+        #dz-category-image.dz-started .dz-message {
+            display: none;
+        }
+
+        #dz-category-image .dz-preview {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            margin: 0;
+            border-top: 1px solid var(--tblr-border-color);
+            background: var(--tblr-bg-surface);
+            min-height: unset;
+            width: 100%;
+            float: none;
+        }
+
+        #dz-category-image .dz-preview:first-of-type {
+            border-top: none;
+        }
+
+        #dz-category-image .dz-preview .dz-image {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--tblr-bg-surface-secondary);
+        }
+
+        #dz-category-image .dz-preview .dz-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        #dz-category-image .dz-preview .dz-details {
+            position: static;
+            opacity: 1;
+            background: none;
+            padding: 0;
+            flex: 1;
+            min-width: 0;
+            font-size: 0.8125rem;
+        }
+
+        #dz-category-image .dz-preview .dz-progress,
+        #dz-category-image .dz-preview .dz-success-mark,
+        #dz-category-image .dz-preview .dz-error-mark {
+            display: none !important;
+        }
+
+        #dz-category-image .dz-preview .dz-remove {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: var(--tblr-secondary);
+            text-decoration: none;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 4px;
+            padding: 1px 6px;
+            background: var(--tblr-bg-surface);
+        }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
         /* ── Dropzone container ── */
-        #dz-service-image { border: 2px dashed var(--tblr-border-color); border-radius: 8px; min-height: 130px; cursor: pointer; transition: border-color .2s, background .2s; padding: 0; overflow: hidden; }
-        #dz-service-image .dz-message { margin: 2.2rem 0; text-align: center; color: var(--tblr-secondary); pointer-events: none; }
-        #dz-service-image.dz-drag-hover { border-color: var(--tblr-primary); background: var(--tblr-primary-lt); }
-        #dz-service-image.dz-started .dz-message { display: none; }
+        #dz-service-image {
+            border: 2px dashed var(--tblr-border-color);
+            border-radius: 8px;
+            min-height: 130px;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #dz-service-image .dz-message {
+            margin: 2.2rem 0;
+            text-align: center;
+            color: var(--tblr-secondary);
+            pointer-events: none;
+        }
+
+        #dz-service-image.dz-drag-hover {
+            border-color: var(--tblr-primary);
+            background: var(--tblr-primary-lt);
+        }
+
+        #dz-service-image.dz-started .dz-message {
+            display: none;
+        }
 
         /* ── Preview wrapper ── */
-        #dz-service-image .dz-preview { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 0; border-top: 1px solid var(--tblr-border-color); background: var(--tblr-bg-surface); min-height: unset; width: 100%; float: none; }
-        #dz-service-image .dz-preview:first-of-type { border-top: none; }
+        #dz-service-image .dz-preview {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            margin: 0;
+            border-top: 1px solid var(--tblr-border-color);
+            background: var(--tblr-bg-surface);
+            min-height: unset;
+            width: 100%;
+            float: none;
+        }
+
+        #dz-service-image .dz-preview:first-of-type {
+            border-top: none;
+        }
 
         /* ── Thumbnail ── */
-        #dz-service-image .dz-preview .dz-image { width: 60px; height: 60px; flex-shrink: 0; border-radius: 6px; overflow: hidden; background: var(--tblr-bg-surface-secondary); }
-        #dz-service-image .dz-preview .dz-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+        #dz-service-image .dz-preview .dz-image {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+            border-radius: 6px;
+            overflow: hidden;
+            background: var(--tblr-bg-surface-secondary);
+        }
+
+        #dz-service-image .dz-preview .dz-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
 
         /* ── File details ── */
-        #dz-service-image .dz-preview .dz-details { position: static; opacity: 1; background: none; padding: 0; flex: 1; min-width: 0; font-size: 0.8125rem; }
-        #dz-service-image .dz-preview .dz-details .dz-filename { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tblr-body-color); font-weight: 500; }
-        #dz-service-image .dz-preview .dz-details .dz-filename span { border: none; background: none; }
-        #dz-service-image .dz-preview .dz-details .dz-filename:hover span { border: none; background: none; }
-        #dz-service-image .dz-preview .dz-details .dz-size { color: var(--tblr-secondary); font-size: 0.75rem; margin-bottom: 2px; }
-        #dz-service-image .dz-preview .dz-details .dz-size span { background: none; }
-        #dz-service-image .dz-preview .dz-details .dz-size strong { font-weight: normal; }
+        #dz-service-image .dz-preview .dz-details {
+            position: static;
+            opacity: 1;
+            background: none;
+            padding: 0;
+            flex: 1;
+            min-width: 0;
+            font-size: 0.8125rem;
+        }
+
+        #dz-service-image .dz-preview .dz-details .dz-filename {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--tblr-body-color);
+            font-weight: 500;
+        }
+
+        #dz-service-image .dz-preview .dz-details .dz-filename span {
+            border: none;
+            background: none;
+        }
+
+        #dz-service-image .dz-preview .dz-details .dz-filename:hover span {
+            border: none;
+            background: none;
+        }
+
+        #dz-service-image .dz-preview .dz-details .dz-size {
+            color: var(--tblr-secondary);
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+        }
+
+        #dz-service-image .dz-preview .dz-details .dz-size span {
+            background: none;
+        }
+
+        #dz-service-image .dz-preview .dz-details .dz-size strong {
+            font-weight: normal;
+        }
 
         /* ── Progress bar (hidden since autoProcess=false) ── */
-        #dz-service-image .dz-preview .dz-progress { display: none; }
+        #dz-service-image .dz-preview .dz-progress {
+            display: none;
+        }
 
         /* ── Success / error marks ── */
         #dz-service-image .dz-preview .dz-success-mark,
-        #dz-service-image .dz-preview .dz-error-mark { display: none !important; }
+        #dz-service-image .dz-preview .dz-error-mark {
+            display: none !important;
+        }
 
         /* ── Remove link → clean button top-right ── */
-        #dz-service-image .dz-preview .dz-remove { position: absolute; top: 8px; right: 10px; font-size: 0.7rem; color: var(--tblr-secondary); text-decoration: none; border: 1px solid var(--tblr-border-color); border-radius: 4px; padding: 1px 6px; background: var(--tblr-bg-surface); transition: background .15s, color .15s; }
-        #dz-service-image .dz-preview .dz-remove:hover { background: var(--tblr-danger); color: #fff; border-color: var(--tblr-danger); }
-        #current-service-img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; display: none; }
-        .cat-row td { vertical-align: middle; }
+        #dz-service-image .dz-preview .dz-remove {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: var(--tblr-secondary);
+            text-decoration: none;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 4px;
+            padding: 1px 6px;
+            background: var(--tblr-bg-surface);
+            transition: background .15s, color .15s;
+        }
+
+        #dz-service-image .dz-preview .dz-remove:hover {
+            background: var(--tblr-danger);
+            color: #fff;
+            border-color: var(--tblr-danger);
+        }
+
+        #current-service-img {
+            width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .cat-row td {
+            vertical-align: middle;
+        }
     </style>
 </head>
 
@@ -81,9 +295,8 @@
         <!-- ===== NAVBAR ===== -->
         <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
             <div class="container-xl">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
-                    aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -101,7 +314,8 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon icon-1">
-                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
                             </svg>
                         </a>
                         <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
@@ -110,12 +324,13 @@
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon icon-1">
                                 <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
                             </svg>
                         </a>
                     </div>
 
-                    
+
 
                     <!-- User menu -->
                     <div class="nav-item dropdown">
@@ -130,15 +345,17 @@
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
                             <div class="dropdown-header">
                                 <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
-                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
                             </div>
                             <div class="dropdown-divider"></div>
-                            
+
                             <a href="./settings.html" class="dropdown-item">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon icon-1 me-2">
-                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path
+                                        d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
                                     <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
                                 </svg>
                                 Settings
@@ -148,7 +365,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon icon-1 me-2">
-                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path
+                                        d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
                                     <path d="M9 12h12l-3 -3" />
                                     <path d="M18 15l3 -3" />
                                 </svg>
@@ -193,7 +411,10 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon me-1">
-                                    <path d="M4 4h6v6h-6z" /><path d="M14 4h6v6h-6z" /><path d="M4 14h6v6h-6z" /><path d="M14 14h6v6h-6z" />
+                                    <path d="M4 4h6v6h-6z" />
+                                    <path d="M14 4h6v6h-6z" />
+                                    <path d="M4 14h6v6h-6z" />
+                                    <path d="M14 14h6v6h-6z" />
                                 </svg>
                                 Categories
                             </button>
@@ -201,7 +422,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon me-1">
-                                    <path d="M12 5l0 14" /><path d="M5 12l14 0" />
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
                                 </svg>
                                 Add Service
                             </button>
@@ -273,7 +495,8 @@
                             <ul class="nav nav-tabs card-header-tabs" id="status-tabs">
                                 <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
                                 <li class="nav-item"><a href="#" class="nav-link" data-status="ACTIVE">Active</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="INACTIVE">Inactive</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="INACTIVE">Inactive</a>
+                                </li>
                             </ul>
                         </div>
 
@@ -285,9 +508,11 @@
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <circle cx="10" cy="10" r="7" />
+                                                <path d="M21 21l-6 -6" />
+                                            </svg>
                                         </span>
                                         <input type="text" id="filter-search" class="form-control"
                                             placeholder="Service name…">
@@ -300,7 +525,8 @@
                                     </select>
                                 </div>
                                 <div class="col-6 col-md-auto">
-                                    <button type="button" class="btn btn-sm btn-secondary" id="btn-clear">Clear filters</button>
+                                    <button type="button" class="btn btn-sm btn-secondary" id="btn-clear">Clear
+                                        filters</button>
                                 </div>
                             </div>
                         </div>
@@ -308,7 +534,8 @@
                         <!-- Table -->
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-vcenter table-hover table-nowrap card-table" id="services-table">
+                                <table class="table table-vcenter table-hover table-nowrap card-table"
+                                    id="services-table">
                                     <thead>
                                         <tr>
                                             <th class="w-1"></th>
@@ -358,6 +585,7 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/services.js"></script>
+    <script src="assets/js/api-utils/inventory-products.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
 
@@ -390,7 +618,7 @@
                     <div class="mb-3" id="current-img-wrapper" style="display:none">
                         <label class="form-label text-secondary small mb-1">Current Image</label>
                         <img id="current-service-img" src="" alt="Current service image"
-                             style="max-width:100%;max-height:180px;object-fit:contain;border-radius:6px;border:1px solid var(--tblr-border-color);display:block" />
+                            style="max-width:100%;max-height:180px;object-fit:contain;border-radius:6px;border:1px solid var(--tblr-border-color);display:block" />
                     </div>
 
                     <!-- Dropzone -->
@@ -398,16 +626,20 @@
                         <label class="form-label small mb-1">
                             Service Image
                             <span class="text-danger" id="img-required-mark">*</span>
-                            <span class="text-secondary ms-1" id="img-optional-hint" style="display:none">(leave empty to keep current)</span>
+                            <span class="text-secondary ms-1" id="img-optional-hint" style="display:none">(leave empty
+                                to keep current)</span>
                         </label>
                         <div id="dz-service-image">
                             <div class="dz-message">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="icon text-secondary mb-2" style="display:block;margin:0 auto">
-                                    <path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/>
-                                    <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4"/>
-                                    <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/>
+                                    stroke-linejoin="round" class="icon text-secondary mb-2"
+                                    style="display:block;margin:0 auto">
+                                    <path d="M15 8h.01" />
+                                    <path
+                                        d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z" />
+                                    <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4" />
+                                    <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" />
                                 </svg>
                                 <strong>Drop image here</strong> or click to upload<br>
                                 <small class="text-secondary">JPG, PNG, WebP — max 5 MB</small>
@@ -429,22 +661,28 @@
                     <!-- Booking type availability (first) -->
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label">Booking Type Availability <span class="text-danger">*</span></label>
+                            <label class="form-label">Booking Type Availability <span
+                                    class="text-danger">*</span></label>
                             <div class="card card-sm">
                                 <div class="card-body py-2">
                                     <div class="form-check form-switch mb-2">
-                                        <input class="form-check-input" type="checkbox" id="service-walkin-available" checked>
-                                        <label class="form-check-label" for="service-walkin-available">Walk-in available</label>
+                                        <input class="form-check-input" type="checkbox" id="service-walkin-available"
+                                            checked>
+                                        <label class="form-check-label" for="service-walkin-available">Walk-in
+                                            available</label>
                                     </div>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="service-home-available" checked>
-                                        <label class="form-check-label" for="service-home-available">Home service available</label>
+                                        <input class="form-check-input" type="checkbox" id="service-home-available"
+                                            checked>
+                                        <label class="form-check-label" for="service-home-available">Home service
+                                            available</label>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" for="service-duration">Duration (mins) <span class="text-danger">*</span></label>
+                            <label class="form-label" for="service-duration">Duration (mins) <span
+                                    class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="service-duration" min="1"
                                 placeholder="e.g. 180">
                         </div>
@@ -453,18 +691,21 @@
                     <!-- Category + conditional pricing -->
                     <div class="row g-3 mt-0">
                         <div class="col-md-4">
-                            <label class="form-label" for="service-category">Category <span class="text-danger">*</span></label>
+                            <label class="form-label" for="service-category">Category <span
+                                    class="text-danger">*</span></label>
                             <select class="form-select" id="service-category">
                                 <option value="">Select…</option>
                             </select>
                         </div>
                         <div class="col-md-4" id="service-walkin-price-group">
-                            <label class="form-label" for="service-walkin-price">Walk-in Price (₦) <span class="text-danger">*</span></label>
+                            <label class="form-label" for="service-walkin-price">Walk-in Price (₦) <span
+                                    class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="service-walkin-price" min="0" step="100"
                                 placeholder="e.g. 25000">
                         </div>
                         <div class="col-md-4" id="service-home-price-group">
-                            <label class="form-label" for="service-home-price">Home Service Price (₦) <span class="text-danger">*</span></label>
+                            <label class="form-label" for="service-home-price">Home Service Price (₦) <span
+                                    class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="service-home-price" min="0" step="100"
                                 placeholder="e.g. 30000">
                         </div>
@@ -503,7 +744,8 @@
                             <div class="alert alert-danger d-none mb-3" id="new-cat-error"></div>
                             <div class="row g-2">
                                 <div class="col-md-4">
-                                    <label class="form-label small text-secondary mb-1">Name <span class="text-danger">*</span></label>
+                                    <label class="form-label small text-secondary mb-1">Name <span
+                                            class="text-danger">*</span></label>
                                     <input type="text" class="form-control form-control-sm" id="new-cat-name"
                                         placeholder="e.g. Hair Services">
                                 </div>
@@ -513,13 +755,17 @@
                                         placeholder="Optional description">
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label small text-secondary mb-1">Category Image <span class="text-danger">*</span></label>
+                                    <label class="form-label small text-secondary mb-1">Category Image <span
+                                            class="text-danger">*</span></label>
                                     <div id="dz-category-image">
-                                        <div class="dz-message"><strong>Drop image here</strong> or click to upload<br><small class="text-secondary">JPG, PNG, WebP — max 10 MB</small></div>
+                                        <div class="dz-message"><strong>Drop image here</strong> or click to
+                                            upload<br><small class="text-secondary">JPG, PNG, WebP — max 10 MB</small>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-12">
-                                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-category">Add Category</button>
+                                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-category">Add
+                                        Category</button>
                                 </div>
                             </div>
                         </div>
@@ -538,15 +784,42 @@
                                 </tr>
                             </thead>
                             <tbody id="categories-tbody">
-                                <tr><td colspan="5" class="text-center py-4">
-                                    <div class="spinner-border text-primary" role="status"></div>
-                                </td></tr>
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status"></div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RECIPE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-recipe" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="recipe-modal-title">Product Consumption</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="recipe-error"></div>
+                    <p class="text-secondary small">Products listed here are automatically deducted from this branch's
+                        usage stock every time this service is marked completed. Staff never need to deduct these
+                        manually.</p>
+                    <div id="recipe-lines"></div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="btn-add-recipe-line">+ Add
+                        Product</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-recipe">Save Recipe</button>
                 </div>
             </div>
         </div>
@@ -580,27 +853,27 @@
 
         Auth.requireAuth();
         RBAC.loadFromStorage();
-        RBAC.applyPageGuard(['services:create','services:update','services:toggle_status','services:delete','services:manage_categories']);
+        RBAC.applyPageGuard(['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories']);
 
         // ── Page state ────────────────────────────────────────────────────────────
         var state = { status: "", search: "", categoryId: "" };
-        var _categories  = [];
-        var _editId      = null;    // null = create, UUID = edit
+        var _categories = [];
+        var _editId = null;    // null = create, UUID = edit
         var _editOriginalStatus = "ACTIVE";
         var _openDetailServiceId = null;
-        var _imageFile   = null;    // file staged in dropzone
-        var _serviceDz   = null;    // Dropzone instance
+        var _imageFile = null;    // file staged in dropzone
+        var _serviceDz = null;    // Dropzone instance
         var _catImageFile = null;   // file staged for new category
-        var _catDz        = null;   // category Dropzone instance
-        var _pendingOp   = null;    // { type, id, newStatus?, name }
+        var _catDz = null;   // category Dropzone instance
+        var _pendingOp = null;    // { type, id, newStatus?, name }
 
         document.addEventListener("DOMContentLoaded", function () {
             // ── RBAC: re-hydrate from server, apply guard + hide unauthorized UI ─
-            RBAC.fetchMe().then(function() {
-                RBAC.applyPageGuard(['services:create','services:update','services:toggle_status','services:delete','services:manage_categories']);
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuard(['services:create', 'services:update', 'services:toggle_status', 'services:delete', 'services:manage_categories']);
                 RBAC.applyNavVisibility();
-                if (!RBAC.can('services:create'))           { var b = document.getElementById('btn-add-service');  if (b) b.style.display = 'none'; }
-                if (!RBAC.can('services:manage_categories')) { var b = document.getElementById('btn-categories');   if (b) b.style.display = 'none'; }
+                if (!RBAC.can('services:create')) { var b = document.getElementById('btn-add-service'); if (b) b.style.display = 'none'; }
+                if (!RBAC.can('services:manage_categories')) { var b = document.getElementById('btn-categories'); if (b) b.style.display = 'none'; }
             });
 
             // ── Initial load ──────────────────────────────────────────────────────
@@ -667,12 +940,14 @@
 
             // ── Table action delegation ───────────────────────────────────────────
             document.getElementById("services-tbody").addEventListener("click", function (e) {
-                var viewBtn   = e.target.closest(".btn-view");
-                var editBtn   = e.target.closest(".btn-edit");
+                var viewBtn = e.target.closest(".btn-view");
+                var editBtn = e.target.closest(".btn-edit");
+                var recipeBtn = e.target.closest(".btn-recipe");
                 var toggleBtn = e.target.closest(".btn-toggle");
                 var deleteBtn = e.target.closest(".btn-delete");
-                if (viewBtn)   { openServiceDetail(viewBtn.dataset.id); return; }
-                if (editBtn)   { openServiceModal(editBtn.dataset.id);  return; }
+                if (viewBtn) { openServiceDetail(viewBtn.dataset.id); return; }
+                if (editBtn) { openServiceModal(editBtn.dataset.id); return; }
+                if (recipeBtn) { openRecipeModal(recipeBtn.dataset.id, recipeBtn.dataset.name); return; }
                 if (toggleBtn) { confirmToggleStatus(toggleBtn.dataset.id, toggleBtn.dataset.status, toggleBtn.dataset.name); return; }
                 if (deleteBtn) { confirmDelete("service", deleteBtn.dataset.id, deleteBtn.dataset.name); return; }
             });
@@ -694,12 +969,12 @@
 
             // ── Categories table inline actions ───────────────────────────────────
             document.getElementById("categories-tbody").addEventListener("click", function (e) {
-                var editBtn   = e.target.closest(".btn-cat-edit");
-                var saveBtn   = e.target.closest(".btn-cat-save");
+                var editBtn = e.target.closest(".btn-cat-edit");
+                var saveBtn = e.target.closest(".btn-cat-save");
                 var cancelBtn = e.target.closest(".btn-cat-cancel");
                 var deleteBtn = e.target.closest(".btn-cat-delete");
-                if (editBtn)   { editCategoryInline(editBtn.dataset.id, editBtn.dataset.name, editBtn.dataset.desc, editBtn.dataset.imageUrl); return; }
-                if (saveBtn)   { saveCategoryInline(saveBtn.dataset.id); return; }
+                if (editBtn) { editCategoryInline(editBtn.dataset.id, editBtn.dataset.name, editBtn.dataset.desc, editBtn.dataset.imageUrl); return; }
+                if (saveBtn) { saveCategoryInline(saveBtn.dataset.id); return; }
                 if (cancelBtn) { loadCategoriesTable(); return; }
                 if (deleteBtn) { confirmDelete("category", deleteBtn.dataset.id, deleteBtn.dataset.name); return; }
             });
@@ -708,10 +983,10 @@
         // ─── helpers ─────────────────────────────────────────────────────────────
         function esc(s) {
             return String(s == null ? "" : s)
-                .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
         function escAttr(s) {
-            return String(s == null ? "" : s).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+            return String(s == null ? "" : s).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
         }
         function appendBooleanField(fd, key, value) {
             // Some backends coerce Boolean("false") to true in multipart transforms.
@@ -720,22 +995,22 @@
         }
         function syncPriceFieldVisibility() {
             var walkInEnabled = document.getElementById("service-walkin-available").checked;
-            var homeEnabled   = document.getElementById("service-home-available").checked;
+            var homeEnabled = document.getElementById("service-home-available").checked;
 
             var walkInGroup = document.getElementById("service-walkin-price-group");
-            var homeGroup   = document.getElementById("service-home-price-group");
+            var homeGroup = document.getElementById("service-home-price-group");
             var walkInInput = document.getElementById("service-walkin-price");
-            var homeInput   = document.getElementById("service-home-price");
+            var homeInput = document.getElementById("service-home-price");
 
             walkInGroup.classList.toggle("d-none", !walkInEnabled);
             homeGroup.classList.toggle("d-none", !homeEnabled);
 
             walkInInput.disabled = !walkInEnabled;
-            homeInput.disabled   = !homeEnabled;
+            homeInput.disabled = !homeEnabled;
         }
         function renderAvailabilityBadges(s) {
             var walkIn = s.isWalkInAvailable !== false;
-            var home   = s.isHomeServiceAvailable !== false;
+            var home = s.isHomeServiceAvailable !== false;
             return [
                 '<span class="badge ' + (walkIn ? 'bg-success-lt text-success' : 'bg-secondary-lt text-secondary') + '">Walk-in ' + (walkIn ? 'On' : 'Off') + '</span>',
                 '<span class="badge ' + (home ? 'bg-info-lt text-info' : 'bg-secondary-lt text-secondary') + '">Home ' + (home ? 'On' : 'Off') + '</span>'
@@ -765,8 +1040,8 @@
                     Services.getAll({ status: "ACTIVE" }),
                     Services.getAll({ status: "INACTIVE" }),
                 ]);
-                if (results[0].status === "fulfilled") document.getElementById("stat-total").textContent    = results[0].value.length;
-                if (results[1].status === "fulfilled") document.getElementById("stat-active").textContent   = results[1].value.length;
+                if (results[0].status === "fulfilled") document.getElementById("stat-total").textContent = results[0].value.length;
+                if (results[1].status === "fulfilled") document.getElementById("stat-active").textContent = results[1].value.length;
                 if (results[2].status === "fulfilled") document.getElementById("stat-inactive").textContent = results[2].value.length;
             } catch (e) { console.warn("loadServiceStats:", e); }
         }
@@ -778,8 +1053,8 @@
             document.getElementById("results-label").textContent = "Loading…";
             try {
                 var rows = await Services.getAll({
-                    status:     state.status,
-                    search:     state.search,
+                    status: state.status,
+                    search: state.search,
                     categoryId: state.categoryId,
                 });
                 var count = rows.length;
@@ -799,42 +1074,44 @@
                 return;
             }
             // SVG icons (inlined for performance)
-            var eyeIcon    = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>';
-            var editIcon   = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
-            var trashIcon  = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>';
-            var pauseIcon  = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M6 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z"/><path d="M14 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z"/></svg>';
-            var playIcon   = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 4v16l13 -8z"/></svg>';
+            var eyeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>';
+            var editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
+            var trashIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>';
+            var pauseIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M6 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z"/><path d="M14 5m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z"/></svg>';
+            var playIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 4v16l13 -8z"/></svg>';
+            var recipeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M9 3v4l-4 8a3 3 0 0 0 3 5h8a3 3 0 0 0 3 -5l-4 -8v-4"/><path d="M9 3h6"/><path d="M8 13h8"/></svg>';
             var imgDefault = '<span class="avatar avatar-sm bg-secondary-lt text-secondary" style="width:48px;height:48px;border-radius:6px;font-size:10px">IMG</span>';
 
             tbody.innerHTML = rows.map(function (s) {
-                var catName  = (s.category && s.category.name) || "—";
+                var catName = (s.category && s.category.name) || "—";
                 var isActive = s.status === "ACTIVE";
-                var thumb    = s.imageUrl
+                var thumb = s.imageUrl
                     ? '<img src="' + esc(s.imageUrl) + '" class="service-thumb" alt="" loading="lazy">'
                     : imgDefault;
                 return '<tr>' +
                     '<td style="width:56px;padding-right:0">' + thumb + '</td>' +
                     '<td>' +
-                        '<div class="fw-semibold">' + esc(s.name) + '</div>' +
-                        '<div class="text-secondary small text-truncate" style="max-width:260px">' + esc(s.description || "") + '</div>' +
+                    '<div class="fw-semibold">' + esc(s.name) + '</div>' +
+                    '<div class="text-secondary small text-truncate" style="max-width:260px">' + esc(s.description || "") + '</div>' +
                     '</td>' +
                     '<td><span class="badge bg-primary-lt text-primary">' + esc(catName) + '</span></td>' +
                     '<td class="small">' +
-                        '<div><span class="text-secondary">Walk-in:</span> <span class="fw-semibold text-success">' + Services.formatMoney(s.walkInPrice) + '</span></div>' +
-                        '<div><span class="text-secondary">Home:</span> <span class="fw-semibold text-info">' + Services.formatMoney(s.homeServicePrice) + '</span></div>' +
+                    '<div><span class="text-secondary">Walk-in:</span> <span class="fw-semibold text-success">' + Services.formatMoney(s.walkInPrice) + '</span></div>' +
+                    '<div><span class="text-secondary">Home:</span> <span class="fw-semibold text-info">' + Services.formatMoney(s.homeServicePrice) + '</span></div>' +
                     '</td>' +
                     '<td class="small">' + renderAvailabilityBadges(s) + '</td>' +
                     '<td class="text-secondary">' + Services.formatDuration(s.duration) + '</td>' +
                     '<td>' + Services.statusBadge(s.status) + '</td>' +
                     '<td>' +
-                        '<div class="d-flex gap-1">' +
-                            '<button class="btn btn-sm btn-ghost-secondary btn-view" data-id="' + s.id + '" title="View details">' + eyeIcon + '</button>' +
-                            (RBAC.can('services:update') ? '<button class="btn btn-sm btn-ghost-primary btn-edit" data-id="' + s.id + '" title="Edit service">' + editIcon + '</button>' : '') +
-                            (RBAC.can('services:toggle_status') ? '<button class="btn btn-sm ' + (isActive ? "btn-ghost-warning" : "btn-ghost-success") + ' btn-toggle" data-id="' + s.id + '" data-status="' + s.status + '" data-name="' + escAttr(s.name) + '" title="' + (isActive ? "Deactivate" : "Activate") + '">' + (isActive ? pauseIcon : playIcon) + '</button>' : '') +
-                            (RBAC.can('services:delete') ? '<button class="btn btn-sm btn-ghost-danger btn-delete" data-id="' + s.id + '" data-name="' + escAttr(s.name) + '" title="Delete service">' + trashIcon + '</button>' : '') +
-                        '</div>' +
+                    '<div class="d-flex gap-1">' +
+                    '<button class="btn btn-sm btn-ghost-secondary btn-view" data-id="' + s.id + '" title="View details">' + eyeIcon + '</button>' +
+                    (RBAC.can('services:update') ? '<button class="btn btn-sm btn-ghost-primary btn-edit" data-id="' + s.id + '" title="Edit service">' + editIcon + '</button>' : '') +
+                    (RBAC.can('services:manage_recipe') ? '<button class="btn btn-sm btn-ghost-secondary btn-recipe" data-id="' + s.id + '" data-name="' + escAttr(s.name) + '" title="Configure product consumption">' + recipeIcon + '</button>' : '') +
+                    (RBAC.can('services:toggle_status') ? '<button class="btn btn-sm ' + (isActive ? "btn-ghost-warning" : "btn-ghost-success") + ' btn-toggle" data-id="' + s.id + '" data-status="' + s.status + '" data-name="' + escAttr(s.name) + '" title="' + (isActive ? "Deactivate" : "Activate") + '">' + (isActive ? pauseIcon : playIcon) + '</button>' : '') +
+                    (RBAC.can('services:delete') ? '<button class="btn btn-sm btn-ghost-danger btn-delete" data-id="' + s.id + '" data-name="' + escAttr(s.name) + '" title="Delete service">' + trashIcon + '</button>' : '') +
+                    '</div>' +
                     '</td>' +
-                '</tr>';
+                    '</tr>';
             }).join("");
         }
 
@@ -845,7 +1122,7 @@
             body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>';
             new bootstrap.Offcanvas(document.getElementById("offcanvas-service-detail")).show();
             try {
-                var s       = await Services.getOne(id);
+                var s = await Services.getOne(id);
                 var catName = (s.category && s.category.name) || "—";
                 var isActive = s.status === "ACTIVE";
                 var editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
@@ -857,55 +1134,55 @@
 
                     // Name + status + category
                     '<div class="px-4 pt-3 pb-3 border-bottom">' +
-                        '<div class="d-flex align-items-start justify-content-between gap-2 mb-1">' +
-                            '<h4 class="fw-bold mb-0">' + esc(s.name) + '</h4>' +
-                            Services.statusBadge(s.status) +
-                        '</div>' +
-                        '<span class="badge bg-primary-lt text-primary mb-2">' + esc(catName) + '</span>' +
-                        '<p class="text-secondary small mb-0">' + esc(s.description || "No description.") + '</p>' +
+                    '<div class="d-flex align-items-start justify-content-between gap-2 mb-1">' +
+                    '<h4 class="fw-bold mb-0">' + esc(s.name) + '</h4>' +
+                    Services.statusBadge(s.status) +
+                    '</div>' +
+                    '<span class="badge bg-primary-lt text-primary mb-2">' + esc(catName) + '</span>' +
+                    '<p class="text-secondary small mb-0">' + esc(s.description || "No description.") + '</p>' +
                     '</div>' +
 
                     // Pricing + duration + availability
                     '<div class="px-4 py-3 border-bottom">' +
-                        '<div class="row g-0 text-center">' +
-                            '<div class="col-4 border-end">' +
-                                '<div class="small text-secondary mb-1">Walk-in Price</div>' +
-                                '<div class="fw-bold fs-4 text-success">' + Services.formatMoney(s.walkInPrice) + '</div>' +
-                            '</div>' +
-                            '<div class="col-4 border-end">' +
-                                '<div class="small text-secondary mb-1">Home Price</div>' +
-                                '<div class="fw-bold fs-4 text-info">' + Services.formatMoney(s.homeServicePrice) + '</div>' +
-                            '</div>' +
-                            '<div class="col-4">' +
-                                '<div class="small text-secondary mb-1">Duration</div>' +
-                                '<div class="fw-bold fs-4">' + Services.formatDuration(s.duration) + '</div>' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="mt-3 text-center">' + renderAvailabilityBadges(s) + '</div>' +
+                    '<div class="row g-0 text-center">' +
+                    '<div class="col-4 border-end">' +
+                    '<div class="small text-secondary mb-1">Walk-in Price</div>' +
+                    '<div class="fw-bold fs-4 text-success">' + Services.formatMoney(s.walkInPrice) + '</div>' +
+                    '</div>' +
+                    '<div class="col-4 border-end">' +
+                    '<div class="small text-secondary mb-1">Home Price</div>' +
+                    '<div class="fw-bold fs-4 text-info">' + Services.formatMoney(s.homeServicePrice) + '</div>' +
+                    '</div>' +
+                    '<div class="col-4">' +
+                    '<div class="small text-secondary mb-1">Duration</div>' +
+                    '<div class="fw-bold fs-4">' + Services.formatDuration(s.duration) + '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="mt-3 text-center">' + renderAvailabilityBadges(s) + '</div>' +
                     '</div>' +
 
                     // Metadata
                     '<div class="px-4 py-3 border-bottom">' +
-                        '<div class="subheader mb-2">Details</div>' +
-                        '<dl class="row g-1 small mb-0">' +
-                            '<dt class="col-5 text-secondary fw-normal">Service ID</dt>' +
-                            '<dd class="col-7 font-monospace small text-truncate mb-1" title="' + esc(s.id) + '">' + esc(s.id) + '</dd>' +
-                            '<dt class="col-5 text-secondary fw-normal">Created</dt>' +
-                            '<dd class="col-7 mb-1">' + Services.formatDate(s.createdAt) + '</dd>' +
-                            '<dt class="col-5 text-secondary fw-normal">Updated</dt>' +
-                            '<dd class="col-7 mb-0">' + Services.formatDate(s.updatedAt) + '</dd>' +
-                        '</dl>' +
+                    '<div class="subheader mb-2">Details</div>' +
+                    '<dl class="row g-1 small mb-0">' +
+                    '<dt class="col-5 text-secondary fw-normal">Service ID</dt>' +
+                    '<dd class="col-7 font-monospace small text-truncate mb-1" title="' + esc(s.id) + '">' + esc(s.id) + '</dd>' +
+                    '<dt class="col-5 text-secondary fw-normal">Created</dt>' +
+                    '<dd class="col-7 mb-1">' + Services.formatDate(s.createdAt) + '</dd>' +
+                    '<dt class="col-5 text-secondary fw-normal">Updated</dt>' +
+                    '<dd class="col-7 mb-0">' + Services.formatDate(s.updatedAt) + '</dd>' +
+                    '</dl>' +
                     '</div>' +
 
                     // Actions
                     '<div class="px-4 py-3 d-flex gap-2">' +
-                        '<button class="btn btn-outline-primary flex-fill" onclick="openServiceModal(\'' + s.id + '\')">' +
-                            editIcon + 'Edit' +
-                        '</button>' +
-                        '<button class="btn ' + (isActive ? "btn-outline-warning" : "btn-outline-success") + ' flex-fill"' +
-                            ' onclick="confirmToggleStatus(\'' + s.id + '\',\'' + s.status + '\',\'' + escAttr(s.name) + '\')">' +
-                            (isActive ? 'Deactivate' : 'Activate') +
-                        '</button>' +
+                    '<button class="btn btn-outline-primary flex-fill" onclick="openServiceModal(\'' + s.id + '\')">' +
+                    editIcon + 'Edit' +
+                    '</button>' +
+                    '<button class="btn ' + (isActive ? "btn-outline-warning" : "btn-outline-success") + ' flex-fill"' +
+                    ' onclick="confirmToggleStatus(\'' + s.id + '\',\'' + s.status + '\',\'' + escAttr(s.name) + '\')">' +
+                    (isActive ? 'Deactivate' : 'Activate') +
+                    '</button>' +
                     '</div>';
             } catch (e) {
                 body.innerHTML = '<div class="alert alert-danger m-3">' + esc(e.message) + '</div>';
@@ -920,40 +1197,40 @@
 
             // Reset UI
             document.getElementById("form-service") && document.getElementById("form-service").reset();
-            document.getElementById("service-name").value        = "";
+            document.getElementById("service-name").value = "";
             document.getElementById("service-description").value = "";
             document.getElementById("service-walkin-price").value = "";
-            document.getElementById("service-home-price").value   = "";
-            document.getElementById("service-duration").value    = "";
+            document.getElementById("service-home-price").value = "";
+            document.getElementById("service-duration").value = "";
             document.getElementById("service-walkin-available").checked = true;
-            document.getElementById("service-home-available").checked   = true;
+            document.getElementById("service-home-available").checked = true;
             syncPriceFieldVisibility();
-            document.getElementById("service-status").value      = "ACTIVE";
+            document.getElementById("service-status").value = "ACTIVE";
             document.getElementById("modal-service-title").textContent = isEdit ? "Edit Service" : "Add Service";
-            document.getElementById("btn-save-service").textContent    = isEdit ? "Save Changes" : "Create Service";
-            document.getElementById("btn-save-service").disabled       = false;
-            document.getElementById("service-status-row").style.display  = isEdit ? "block" : "none";
-            document.getElementById("current-img-wrapper").style.display  = "none";
+            document.getElementById("btn-save-service").textContent = isEdit ? "Save Changes" : "Create Service";
+            document.getElementById("btn-save-service").disabled = false;
+            document.getElementById("service-status-row").style.display = isEdit ? "block" : "none";
+            document.getElementById("current-img-wrapper").style.display = "none";
             document.getElementById("current-service-img").src = "";
-            document.getElementById("img-required-mark").style.display   = isEdit ? "none"  : "inline";
-            document.getElementById("img-optional-hint").style.display   = isEdit ? "inline" : "none";
+            document.getElementById("img-required-mark").style.display = isEdit ? "none" : "inline";
+            document.getElementById("img-optional-hint").style.display = isEdit ? "inline" : "none";
             document.getElementById("modal-service-error").classList.add("d-none");
 
             // Re-init Dropzone — clear files first so destroy() has nothing to cancel,
             // which prevents the "Upload canceled." error event from firing.
             if (_serviceDz) {
                 _serviceDz.files = [];
-                try { _serviceDz.destroy(); } catch (_) {}
+                try { _serviceDz.destroy(); } catch (_) { }
                 _serviceDz = null;
             }
             _imageFile = null;
             _serviceDz = new Dropzone("#dz-service-image", {
-                url:              "#",
+                url: "#",
                 autoProcessQueue: false,
-                maxFiles:         1,
-                acceptedFiles:    "image/jpeg,image/png,image/webp,image/gif",
-                addRemoveLinks:   true,
-                maxFilesize:      5,
+                maxFiles: 1,
+                acceptedFiles: "image/jpeg,image/png,image/webp,image/gif",
+                addRemoveLinks: true,
+                maxFilesize: 5,
                 dictDefaultMessage: "",
                 init: function () {
                     var dz = this;
@@ -981,20 +1258,20 @@
             // If edit mode, load service data
             if (isEdit) {
                 var btn = document.getElementById("btn-save-service");
-                btn.disabled    = true;
-                btn.innerHTML   = '<span class="spinner-border spinner-inline me-1"></span>Loading…';
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Loading…';
                 try {
                     var s = await Services.getOne(id);
-                    document.getElementById("service-name").value        = s.name        || "";
+                    document.getElementById("service-name").value = s.name || "";
                     document.getElementById("service-description").value = s.description || "";
-                    document.getElementById("service-category").value    = s.categoryId  || "";
+                    document.getElementById("service-category").value = s.categoryId || "";
                     document.getElementById("service-walkin-price").value = s.walkInPrice ?? "";
-                    document.getElementById("service-home-price").value   = s.homeServicePrice ?? "";
+                    document.getElementById("service-home-price").value = s.homeServicePrice ?? "";
                     document.getElementById("service-walkin-available").checked = s.isWalkInAvailable !== false;
-                    document.getElementById("service-home-available").checked   = s.isHomeServiceAvailable !== false;
+                    document.getElementById("service-home-available").checked = s.isHomeServiceAvailable !== false;
                     syncPriceFieldVisibility();
-                    document.getElementById("service-duration").value    = s.duration    || "";
-                    document.getElementById("service-status").value      = s.status      || "ACTIVE";
+                    document.getElementById("service-duration").value = s.duration || "";
+                    document.getElementById("service-status").value = s.status || "ACTIVE";
                     _editOriginalStatus = s.status || "ACTIVE";
                     if (s.imageUrl) {
                         var imgEl = document.getElementById("current-service-img");
@@ -1006,7 +1283,7 @@
                     errEl.textContent = e.message;
                     errEl.classList.remove("d-none");
                 } finally {
-                    btn.disabled  = false;
+                    btn.disabled = false;
                     btn.textContent = "Save Changes";
                 }
             }
@@ -1018,14 +1295,14 @@
             var errEl = document.getElementById("modal-service-error");
             errEl.classList.add("d-none");
 
-            var name        = document.getElementById("service-name").value.trim();
+            var name = document.getElementById("service-name").value.trim();
             var description = document.getElementById("service-description").value.trim();
-            var categoryId  = document.getElementById("service-category").value;
+            var categoryId = document.getElementById("service-category").value;
             var walkInPrice = parseFloat(document.getElementById("service-walkin-price").value);
             var homeServicePrice = parseFloat(document.getElementById("service-home-price").value);
             var isWalkInAvailable = document.getElementById("service-walkin-available").checked;
             var isHomeServiceAvailable = document.getElementById("service-home-available").checked;
-            var duration    = parseInt(document.getElementById("service-duration").value, 10);
+            var duration = parseInt(document.getElementById("service-duration").value, 10);
             var selectedStatus = document.getElementById("service-status").value;
 
             if (!name || !categoryId || isNaN(duration)) {
@@ -1055,18 +1332,18 @@
             }
 
             var fd = new FormData();
-            fd.append("name",        name);
+            fd.append("name", name);
             fd.append("description", description);
-            fd.append("categoryId",  categoryId);
+            fd.append("categoryId", categoryId);
             if (isWalkInAvailable) fd.append("walkInPrice", walkInPrice);
             if (isHomeServiceAvailable) fd.append("homeServicePrice", homeServicePrice);
             appendBooleanField(fd, "isWalkInAvailable", isWalkInAvailable);
             appendBooleanField(fd, "isHomeServiceAvailable", isHomeServiceAvailable);
-            fd.append("duration",    duration);
+            fd.append("duration", duration);
             if (_imageFile) fd.append("image", _imageFile);
 
             var btn = document.getElementById("btn-save-service");
-            btn.disabled  = true;
+            btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
 
             try {
@@ -1088,7 +1365,7 @@
                 errEl.textContent = e.message || "Failed to save service.";
                 errEl.classList.remove("d-none");
             } finally {
-                btn.disabled    = false;
+                btn.disabled = false;
                 btn.textContent = _editId ? "Save Changes" : "Create Service";
             }
         }
@@ -1096,12 +1373,12 @@
         // ─── Toggle status confirm ────────────────────────────────────────────────
         function confirmToggleStatus(id, currentStatus, name) {
             var newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-            var action    = currentStatus === "ACTIVE" ? "Deactivate" : "Activate";
-            _pendingOp    = { type: "toggle", id: id, newStatus: newStatus };
+            var action = currentStatus === "ACTIVE" ? "Deactivate" : "Activate";
+            _pendingOp = { type: "toggle", id: id, newStatus: newStatus };
             document.getElementById("confirm-title").textContent = action + " Service";
-            document.getElementById("confirm-msg").textContent   = action + ' the service "' + name + '"?';
+            document.getElementById("confirm-msg").textContent = action + ' the service "' + name + '"?';
             var btn = document.getElementById("btn-confirm-action");
-            btn.className   = "btn " + (newStatus === "INACTIVE" ? "btn-warning" : "btn-success");
+            btn.className = "btn " + (newStatus === "INACTIVE" ? "btn-warning" : "btn-success");
             btn.textContent = action;
             new bootstrap.Modal(document.getElementById("modal-confirm")).show();
         }
@@ -1109,13 +1386,13 @@
         // ─── Delete confirm ───────────────────────────────────────────────────────
         function confirmDelete(type, id, name) {
             _pendingOp = { type: type, id: id, name: name };
-            var label  = type === "service" ? "Service" : "Category";
+            var label = type === "service" ? "Service" : "Category";
             document.getElementById("confirm-title").textContent = "Delete " + label;
-            document.getElementById("confirm-msg").textContent   =
+            document.getElementById("confirm-msg").textContent =
                 'Permanently delete "' + name + '"?' +
                 (type === "category" ? " This fails if services are still assigned to it." : "");
             var btn = document.getElementById("btn-confirm-action");
-            btn.className   = "btn btn-danger";
+            btn.className = "btn btn-danger";
             btn.textContent = "Delete";
             new bootstrap.Modal(document.getElementById("modal-confirm")).show();
         }
@@ -1123,7 +1400,7 @@
         async function executeConfirmedOp() {
             if (!_pendingOp) return;
             var btn = document.getElementById("btn-confirm-action");
-            btn.disabled  = true;
+            btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-inline"></span>';
             try {
                 if (_pendingOp.type === "toggle") {
@@ -1140,22 +1417,115 @@
             } catch (e) {
                 alert(e.message || "Operation failed.");
             } finally {
-                btn.disabled    = false;
+                btn.disabled = false;
                 btn.textContent = "Confirm";
-                _pendingOp      = null;
+                _pendingOp = null;
             }
         }
+
+        // ─── Recipe (product consumption) modal ───────────────────────────────────
+        var _recipeServiceId = null;
+        var _recipeProducts = null; // cached InventoryProduct list, fetched once per modal open
+
+        async function openRecipeModal(serviceId, serviceName) {
+            _recipeServiceId = serviceId;
+            document.getElementById("recipe-modal-title").textContent = "Product Consumption \u2014 " + serviceName;
+            document.getElementById("recipe-error").classList.add("d-none");
+            var linesEl = document.getElementById("recipe-lines");
+            linesEl.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-recipe"));
+            modal.show();
+            try {
+                var [recipe, products] = await Promise.all([
+                    Services.getRecipe(serviceId),
+                    InventoryProducts.getAll(undefined, undefined, true),
+                ]);
+                _recipeProducts = products;
+                linesEl.innerHTML = "";
+                if (recipe.length) {
+                    recipe.forEach(function (line) {
+                        addRecipeLine(line.productId, line.quantity);
+                    });
+                } else {
+                    linesEl.innerHTML = '<div class="text-secondary small py-2" id="recipe-empty-hint">No products configured yet \u2014 this service consumes nothing automatically.</div>';
+                }
+            } catch (e) {
+                linesEl.innerHTML = '<div class="text-danger text-center py-3">' + esc(e.message || "Failed to load.") + '</div>';
+            }
+        }
+
+        function addRecipeLine(productId, quantity) {
+            var hint = document.getElementById("recipe-empty-hint");
+            if (hint) hint.remove();
+
+            var options = (_recipeProducts || []).map(function (p) {
+                var selected = p.id === productId ? " selected" : "";
+                return '<option value="' + p.id + '"' + selected + '>' + esc(p.name) + (p.sku ? " (" + esc(p.sku) + ")" : "") + '</option>';
+            }).join("");
+
+            var row = document.createElement("div");
+            row.className = "row g-2 align-items-center mb-2 recipe-line";
+            row.innerHTML =
+                '<div class="col-8"><select class="form-select form-select-sm recipe-product">' +
+                '<option value="">Select a product\u2026</option>' + options + '</select></div>' +
+                '<div class="col-2"><input type="number" min="1" step="1" class="form-control form-control-sm recipe-qty" value="' + (quantity || 1) + '" placeholder="Qty"></div>' +
+                '<div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-recipe-line">Remove</button></div>';
+            document.getElementById("recipe-lines").appendChild(row);
+        }
+
+        document.getElementById("btn-add-recipe-line").addEventListener("click", function () {
+            addRecipeLine(null, 1);
+        });
+
+        document.getElementById("recipe-lines").addEventListener("click", function (e) {
+            var removeBtn = e.target.closest(".btn-remove-recipe-line");
+            if (!removeBtn) return;
+            removeBtn.closest(".recipe-line").remove();
+            if (!document.querySelectorAll(".recipe-line").length) {
+                document.getElementById("recipe-lines").innerHTML = '<div class="text-secondary small py-2" id="recipe-empty-hint">No products configured yet \u2014 this service consumes nothing automatically.</div>';
+            }
+        });
+
+        document.getElementById("btn-save-recipe").addEventListener("click", async function () {
+            var errEl = document.getElementById("recipe-error");
+            errEl.classList.add("d-none");
+
+            var lines = [];
+            var seenProductIds = {};
+            var rowEls = document.querySelectorAll(".recipe-line");
+            for (var i = 0; i < rowEls.length; i++) {
+                var productId = rowEls[i].querySelector(".recipe-product").value;
+                var qty = Number(rowEls[i].querySelector(".recipe-qty").value);
+                if (!productId) { errEl.textContent = "Select a product for every line, or remove the empty one."; errEl.classList.remove("d-none"); return; }
+                if (!qty || qty < 1) { errEl.textContent = "Quantity must be at least 1 for every line."; errEl.classList.remove("d-none"); return; }
+                if (seenProductIds[productId]) { errEl.textContent = "Each product can only appear once in the recipe."; errEl.classList.remove("d-none"); return; }
+                seenProductIds[productId] = true;
+                lines.push({ productId: productId, quantity: qty });
+            }
+
+            var btn = document.getElementById("btn-save-recipe");
+            btn.disabled = true;
+            try {
+                await Services.setRecipe(_recipeServiceId, lines);
+                bootstrap.Modal.getInstance(document.getElementById("modal-recipe")).hide();
+            } catch (e) {
+                errEl.textContent = e.message || "Failed to save recipe.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        });
 
         // ─── Manage Categories modal ──────────────────────────────────────────────
         function ensureCategoryDropzone() {
             if (_catDz) return;
             _catDz = new Dropzone("#dz-category-image", {
-                url:              "#",
+                url: "#",
                 autoProcessQueue: false,
-                maxFiles:         1,
-                acceptedFiles:    "image/jpeg,image/png,image/webp,image/gif",
-                addRemoveLinks:   true,
-                maxFilesize:      10,
+                maxFiles: 1,
+                acceptedFiles: "image/jpeg,image/png,image/webp,image/gif",
+                addRemoveLinks: true,
+                maxFilesize: 10,
                 dictDefaultMessage: "",
                 init: function () {
                     var dz = this;
@@ -1202,7 +1572,7 @@
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-4">No categories yet.</td></tr>';
                     return;
                 }
-                var editIcon  = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
+                var editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
                 var trashIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>';
                 tbody.innerHTML = _categories.map(function (c) {
                     var imageUrl = Services.getCategoryImageUrl(c);
@@ -1212,12 +1582,12 @@
                         '<td class="text-secondary small text-truncate" style="max-width:220px" title="' + escAttr(c.description || "") + '">' + esc(c.description || '—') + '</td>' +
                         '<td class="text-center">' + (c.serviceCount || 0) + '</td>' +
                         '<td>' +
-                            '<div class="d-flex gap-1">' +
-                                '<button class="btn btn-sm btn-ghost-primary btn-cat-edit" data-id="' + c.id + '" data-name="' + escAttr(c.name) + '" data-desc="' + escAttr(c.description || "") + '" data-image-url="' + escAttr(imageUrl) + '" title="Edit">' + editIcon + '</button>' +
-                                '<button class="btn btn-sm btn-ghost-danger btn-cat-delete" data-id="' + c.id + '" data-name="' + escAttr(c.name) + '" title="Delete">' + trashIcon + '</button>' +
-                            '</div>' +
+                        '<div class="d-flex gap-1">' +
+                        '<button class="btn btn-sm btn-ghost-primary btn-cat-edit" data-id="' + c.id + '" data-name="' + escAttr(c.name) + '" data-desc="' + escAttr(c.description || "") + '" data-image-url="' + escAttr(imageUrl) + '" title="Edit">' + editIcon + '</button>' +
+                        '<button class="btn btn-sm btn-ghost-danger btn-cat-delete" data-id="' + c.id + '" data-name="' + escAttr(c.name) + '" title="Delete">' + trashIcon + '</button>' +
+                        '</div>' +
                         '</td>' +
-                    '</tr>';
+                        '</tr>';
                 }).join("");
                 // Also refresh category filter dropdown
                 var sel = document.getElementById("filter-category");
@@ -1261,23 +1631,23 @@
                 : '<span class="text-secondary small d-block mb-1">No image</span>';
             row.innerHTML =
                 '<td style="min-width:140px">' +
-                    currentThumb +
-                    '<div class="d-flex align-items-start gap-2">' +
-                        '<div class="flex-grow-1" style="min-width:0">' +
-                            '<input type="file" class="form-control form-control-sm" id="edit-cat-image" accept="image/jpeg,image/png,image/webp,image/gif">' +
-                            '<small class="text-secondary">Optional replace</small>' +
-                        '</div>' +
-                        '<img id="edit-cat-new-preview" class="category-thumb d-none" alt="New image preview">' +
-                    '</div>' +
+                currentThumb +
+                '<div class="d-flex align-items-start gap-2">' +
+                '<div class="flex-grow-1" style="min-width:0">' +
+                '<input type="file" class="form-control form-control-sm" id="edit-cat-image" accept="image/jpeg,image/png,image/webp,image/gif">' +
+                '<small class="text-secondary">Optional replace</small>' +
+                '</div>' +
+                '<img id="edit-cat-new-preview" class="category-thumb d-none" alt="New image preview">' +
+                '</div>' +
                 '</td>' +
                 '<td><input class="form-control form-control-sm" id="edit-cat-name" value="' + escAttr(name) + '" placeholder="Name"></td>' +
                 '<td><input class="form-control form-control-sm" id="edit-cat-desc" value="' + escAttr(desc) + '" placeholder="Description (optional)"></td>' +
                 '<td></td>' +
                 '<td>' +
-                    '<div class="d-flex gap-1">' +
-                        '<button class="btn btn-sm btn-success btn-cat-save" data-id="' + id + '">Save</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary btn-cat-cancel">Cancel</button>' +
-                    '</div>' +
+                '<div class="d-flex gap-1">' +
+                '<button class="btn btn-sm btn-success btn-cat-save" data-id="' + id + '">Save</button>' +
+                '<button class="btn btn-sm btn-outline-secondary btn-cat-cancel">Cancel</button>' +
+                '</div>' +
                 '</td>';
             bindEditCategoryImagePreview();
             document.getElementById("edit-cat-name").focus();
@@ -1316,11 +1686,11 @@
         }
 
         async function addCategory() {
-            var errEl  = document.getElementById("new-cat-error");
+            var errEl = document.getElementById("new-cat-error");
             var nameEl = document.getElementById("new-cat-name");
             var descEl = document.getElementById("new-cat-desc");
-            var name   = nameEl.value.trim();
-            var desc   = descEl.value.trim();
+            var name = nameEl.value.trim();
+            var desc = descEl.value.trim();
             errEl.classList.add("d-none");
             if (!name) { nameEl.classList.add("is-invalid"); return; }
             nameEl.classList.remove("is-invalid");
@@ -1330,7 +1700,7 @@
                 return;
             }
             var btn = document.getElementById("btn-add-category");
-            btn.disabled  = true;
+            btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-inline"></span> Adding…';
             try {
                 var fd = new FormData();
@@ -1347,10 +1717,11 @@
                 errEl.textContent = e.message || "Failed to add category.";
                 errEl.classList.remove("d-none");
             } finally {
-                btn.disabled    = false;
+                btn.disabled = false;
                 btn.textContent = "Add Category";
             }
         }
     </script>
 </body>
+
 </html>

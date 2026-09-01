@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Purchase Requests</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        .line-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: end;
+            margin-bottom: 8px;
+        }
+
+        .line-row label {
+            font-size: 11px;
+            color: var(--tblr-secondary);
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .approval-step {
+            display: flex;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--tblr-border-color);
+        }
+
+        .approval-step:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Procurement</div>
+                            <h2 class="page-title">Purchase Requests</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary me-2" id="btn-export">Export
+                                CSV</button>
+                            <button type="button" class="btn btn-primary" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Request
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-branch-filter">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-vendor-filter">
+                                        <option value="">All vendors</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-status-filter">
+                                        <option value="">All statuses</option>
+                                        <option value="DRAFT">Draft</option>
+                                        <option value="PENDING">Pending</option>
+                                        <option value="UNDER_REVIEW">Under Review</option>
+                                        <option value="APPROVED">Approved</option>
+                                        <option value="REJECTED">Rejected</option>
+                                        <option value="CANCELLED">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" id="f-search-filter"
+                                        placeholder="Search Request # e.g. PR-2026-000123">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="f-from-filter" placeholder="From">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="f-to-filter" placeholder="To">
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-outline-secondary w-100"
+                                        id="btn-clear-filters">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request #</th>
+                                        <th>Branch</th>
+                                        <th>Vendor</th>
+                                        <th>Reason</th>
+                                        <th>Grand Total</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit modal and View modal continue below -->
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">New Purchase Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Branch</label>
+                            <select class="form-select" id="f-branch"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Vendor</label>
+                            <select class="form-select" id="f-vendor"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Attachment URL <span
+                                    class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-attachment-url">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Purchase</label>
+                        <textarea class="form-control" id="f-reason" rows="2"></textarea>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label mb-0">Products</label>
+                        <button class="btn btn-sm btn-outline-primary" id="btn-add-line">+ Add Line</button>
+                    </div>
+                    <div class="line-row text-secondary small">
+                        <div>Product</div>
+                        <div>Quantity</div>
+                        <div>Est. Price</div>
+                        <div>Line Total</div>
+                        <div></div>
+                    </div>
+                    <div id="lines-container"></div>
+                    <div class="text-end mt-2">
+                        <strong>Grand Total: <span id="grand-total-display">₦0</span></strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save">Save Draft</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-view" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="view-title">Purchase Request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="view-body">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/suppliers.js"></script>
+    <script src="assets/js/api-utils/inventory-products.js"></script>
+    <script src="assets/js/api-utils/purchase-requests.js"></script>
+    <script src="assets/js/csv-export.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var _allVendors = [];
+        var _allProducts = [];
+        var _allBranches = [];
+        var _lastLoadedRequests = [];
+        var editingId = null;
+        var _formLines = []; // [{ productId, quantity, estimatedPrice }]
+
+        var STATUS_BADGE = {
+            DRAFT: 'bg-secondary-lt', PENDING: 'bg-yellow-lt', UNDER_REVIEW: 'bg-azure-lt',
+            APPROVED: 'bg-green-lt', REJECTED: 'bg-red-lt', CANCELLED: 'bg-secondary-lt',
+        };
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('purchase_requests:read');
+
+            document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-export').addEventListener('click', exportRequests);
+            document.getElementById('btn-add-line').addEventListener('click', addLine);
+            document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('f-branch-filter').addEventListener('change', load);
+            document.getElementById('f-vendor-filter').addEventListener('change', load);
+            document.getElementById('f-status-filter').addEventListener('change', load);
+            document.getElementById('f-from-filter').addEventListener('change', load);
+            document.getElementById('f-to-filter').addEventListener('change', load);
+            var searchTimer;
+            document.getElementById('f-search-filter').addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(load, 400);
+            });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-branch-filter').value = '';
+                document.getElementById('f-vendor-filter').value = '';
+                document.getElementById('f-status-filter').value = '';
+                document.getElementById('f-search-filter').value = '';
+                document.getElementById('f-from-filter').value = '';
+                document.getElementById('f-to-filter').value = '';
+                load();
+            });
+
+            try {
+                _allVendors = await Suppliers.getAll();
+                document.getElementById('f-vendor-filter').innerHTML += _allVendors.map(function (v) {
+                    return '<option value="' + v.id + '">' + esc(v.name) + '</option>';
+                }).join('');
+                document.getElementById('f-vendor').innerHTML = _allVendors.map(function (v) {
+                    return '<option value="' + v.id + '">' + esc(v.name) + '</option>';
+                }).join('');
+            } catch (e) { _allVendors = []; }
+
+            try {
+                _allProducts = await InventoryProducts.getAll(null, null, true);
+            } catch (e) { _allProducts = []; }
+
+            try {
+                _allBranches = await Branches.getBranches();
+                document.getElementById('f-branch').innerHTML = _allBranches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+                document.getElementById('f-branch-filter').innerHTML += _allBranches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+            } catch (e) { _allBranches = []; }
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function formatMoney(v) {
+            if (v == null) return '—';
+            return '\u20a6' + Number(v).toLocaleString();
+        }
+
+        function formatRequestNumber(n) {
+            return 'PR-' + new Date().getFullYear() + '-' + String(n).padStart(6, '0');
+        }
+
+        function productName(id) {
+            var p = _allProducts.filter(function (x) { return x.id === id; })[0];
+            return p ? p.name : '';
+        }
+
+        // ── Line item management ────────────────────────────────────────
+        function renderLines() {
+            var container = document.getElementById('lines-container');
+            container.innerHTML = _formLines.map(function (line, i) {
+                var lineTotal = (Number(line.quantity) || 0) * (Number(line.estimatedPrice) || 0);
+                return '<div class="line-row">' +
+                    '<select class="form-select form-select-sm" onchange="onLineProductChange(' + i + ', this.value)">' +
+                    '<option value="">Select product…</option>' +
+                    _allProducts.map(function (p) {
+                        return '<option value="' + p.id + '" ' + (p.id === line.productId ? 'selected' : '') + '>' + esc(p.name) + '</option>';
+                    }).join('') +
+                    '</select>' +
+                    '<input type="number" min="1" class="form-control form-control-sm" value="' + (line.quantity || '') + '" oninput="onLineFieldChange(' + i + ', \'quantity\', this.value)">' +
+                    '<input type="number" min="0" step="0.01" class="form-control form-control-sm" value="' + (line.estimatedPrice != null ? line.estimatedPrice : '') + '" oninput="onLineFieldChange(' + i + ', \'estimatedPrice\', this.value)">' +
+                    '<div class="form-control-plaintext form-control-sm">' + formatMoney(lineTotal) + '</div>' +
+                    '<button class="btn btn-sm btn-outline-danger" onclick="removeLine(' + i + ')">\u2715</button>' +
+                    '</div>';
+            }).join('');
+            updateGrandTotal();
+        }
+
+        function updateGrandTotal() {
+            var total = _formLines.reduce(function (sum, l) {
+                return sum + (Number(l.quantity) || 0) * (Number(l.estimatedPrice) || 0);
+            }, 0);
+            document.getElementById('grand-total-display').textContent = formatMoney(total);
+        }
+
+        function addLine() {
+            _formLines.push({ productId: '', quantity: 1, estimatedPrice: null });
+            renderLines();
+        }
+
+        function removeLine(index) {
+            _formLines.splice(index, 1);
+            renderLines();
+        }
+
+        function onLineFieldChange(index, field, value) {
+            // Deliberately does NOT call renderLines() here -- only updates
+            // the backing array. Re-rendering on every keystroke would
+            // rebuild the inputs and steal focus mid-type; a full render
+            // only happens on add/remove/product-change.
+            _formLines[index][field] = value;
+            updateGrandTotal();
+            // Keep the plaintext line-total display in sync without a
+            // full re-render, by directly touching just that one row's DOM.
+            var row = document.getElementById('lines-container').children[index];
+            if (row) {
+                var lineTotal = (Number(_formLines[index].quantity) || 0) * (Number(_formLines[index].estimatedPrice) || 0);
+                row.querySelector('.form-control-plaintext').textContent = formatMoney(lineTotal);
+            }
+        }
+
+        async function onLineProductChange(index, productId) {
+            _formLines[index].productId = productId;
+            if (productId) {
+                try {
+                    var lastPrice = await PurchaseRequests.getLastPrice(productId);
+                    if (lastPrice != null) _formLines[index].estimatedPrice = lastPrice;
+                } catch (e) { /* no history yet -- leave price for manual entry */ }
+            }
+            renderLines();
+        }
+
+        // ── List ─────────────────────────────────────────────────────────
+        function exportRequests() {
+            if (!_lastLoadedRequests.length) {
+                alert('No purchase requests to export for the current filters.');
+                return;
+            }
+            CsvExport.download('purchase-requests.csv', [
+                { label: 'Request Number', get: function (r) { return formatRequestNumber(r.requestNumber); } },
+                { label: 'Branch', get: function (r) { return r.branch ? r.branch.name : ''; } },
+                { label: 'Vendor', get: function (r) { return r.vendor ? r.vendor.name : ''; } },
+                { label: 'Reason', get: function (r) { return r.reason; } },
+                { label: 'Grand Total', get: function (r) { return r.grandTotal; } },
+                { label: 'Status', get: function (r) { return r.status; } },
+                { label: 'Created', get: function (r) { return new Date(r.createdAt).toLocaleDateString(); } },
+            ], _lastLoadedRequests);
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var list = await PurchaseRequests.getAll({
+                    branchId: document.getElementById('f-branch-filter').value,
+                    vendorId: document.getElementById('f-vendor-filter').value,
+                    status: document.getElementById('f-status-filter').value,
+                    search: document.getElementById('f-search-filter').value,
+                    from: document.getElementById('f-from-filter').value,
+                    to: document.getElementById('f-to-filter').value,
+                });
+                _lastLoadedRequests = list;
+                tbody.innerHTML = list.length
+                    ? list.map(function (r) {
+                        var canEdit = r.status === 'DRAFT';
+                        var canSubmit = r.status === 'DRAFT';
+                        var canAct = r.status === 'PENDING' || r.status === 'UNDER_REVIEW';
+                        var canDelete = r.status === 'DRAFT' || r.status === 'REJECTED' || r.status === 'CANCELLED';
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + formatRequestNumber(r.requestNumber) + '</td>' +
+                            '<td>' + esc(r.branch ? r.branch.name : '\u2014') + '</td>' +
+                            '<td>' + esc(r.vendor ? r.vendor.name : '\u2014') + '</td>' +
+                            '<td class="text-truncate" style="max-width:220px">' + esc(r.reason) + '</td>' +
+                            '<td>' + formatMoney(r.grandTotal) + '</td>' +
+                            '<td><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewOne(\'' + r.id + '\')">View</button>' +
+                            (canEdit ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + r.id + '\')">Edit</button>' : '') +
+                            (canSubmit ? '<button class="btn btn-sm btn-outline-primary me-1" onclick="submitRequest(\'' + r.id + '\')">Submit</button>' : '') +
+                            (canAct ? '<button class="btn btn-sm btn-outline-success me-1" onclick="approveRequest(\'' + r.id + '\')">Approve</button><button class="btn btn-sm btn-outline-danger me-1" onclick="rejectRequest(\'' + r.id + '\')">Reject</button>' : '') +
+                            (canDelete ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteRequest(\'' + r.id + '\')">Delete</button>' : '') +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="7" class="text-center text-secondary py-5">No purchase requests found.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        // ── Create/Edit ──────────────────────────────────────────────────
+        async function openForm(id) {
+            editingId = id;
+            document.getElementById('form-error').classList.add('d-none');
+            document.getElementById('modal-form-title').textContent = id ? 'Edit Purchase Request' : 'New Purchase Request';
+
+            if (id) {
+                try {
+                    var r = await PurchaseRequests.getOne(id);
+                    document.getElementById('f-branch').value = r.branchId;
+                    document.getElementById('f-vendor').value = r.vendorId;
+                    document.getElementById('f-attachment-url').value = r.attachmentUrl || '';
+                    document.getElementById('f-reason').value = r.reason;
+                    _formLines = r.lines.map(function (l) {
+                        return { productId: l.productId, quantity: l.quantity, estimatedPrice: Number(l.estimatedPrice) };
+                    });
+                } catch (e) {
+                    alert(e.message || 'Failed to load.');
+                    return;
+                }
+            } else {
+                document.getElementById('f-branch').value = '';
+                document.getElementById('f-vendor').value = '';
+                document.getElementById('f-attachment-url').value = '';
+                document.getElementById('f-reason').value = '';
+                _formLines = [];
+            }
+            renderLines();
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+
+            if (!document.getElementById('f-branch').value || !document.getElementById('f-vendor').value) {
+                errEl.textContent = 'Branch and vendor are required.'; errEl.classList.remove('d-none'); return;
+            }
+            if (!_formLines.length || _formLines.some(function (l) { return !l.productId || !l.quantity; })) {
+                errEl.textContent = 'Every line needs a product and a quantity.'; errEl.classList.remove('d-none'); return;
+            }
+
+            var payload = {
+                branchId: document.getElementById('f-branch').value,
+                vendorId: document.getElementById('f-vendor').value,
+                reason: document.getElementById('f-reason').value.trim(),
+                attachmentUrl: document.getElementById('f-attachment-url').value.trim() || undefined,
+                lines: _formLines.map(function (l) {
+                    return {
+                        productId: l.productId,
+                        quantity: Number(l.quantity),
+                        estimatedPrice: l.estimatedPrice != null && l.estimatedPrice !== '' ? Number(l.estimatedPrice) : undefined,
+                    };
+                }),
+            };
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                if (editingId) await PurchaseRequests.update(editingId, payload);
+                else await PurchaseRequests.create(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ── Actions ──────────────────────────────────────────────────────
+        async function submitRequest(id) {
+            if (!confirm('Submit this request for approval? It cannot be edited once submitted.')) return;
+            try {
+                await PurchaseRequests.submit(id);
+                load();
+            } catch (e) { alert(e.message || 'Failed to submit.'); }
+        }
+
+        async function approveRequest(id) {
+            var comment = prompt('Optional comment for this approval:') || undefined;
+            try {
+                await PurchaseRequests.approve(id, comment);
+                load();
+            } catch (e) { alert(e.message || 'Failed to approve — you may not be the current approver for this request.'); }
+        }
+
+        async function rejectRequest(id) {
+            var reason = prompt('Reason for rejection:');
+            if (reason === null) return;
+            try {
+                await PurchaseRequests.reject(id, reason);
+                load();
+            } catch (e) { alert(e.message || 'Failed to reject — you may not be the current approver for this request.'); }
+        }
+
+        async function deleteRequest(id) {
+            if (!confirm('Delete this purchase request? This cannot be undone.')) return;
+            try {
+                await PurchaseRequests.remove(id);
+                load();
+            } catch (e) { alert(e.message || 'Failed to delete.'); }
+        }
+
+        // ── View ─────────────────────────────────────────────────────────
+        async function viewOne(id) {
+            document.getElementById('view-body').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+            new bootstrap.Modal(document.getElementById('modal-view')).show();
+            try {
+                var r = await PurchaseRequests.getOne(id);
+                document.getElementById('view-title').textContent = formatRequestNumber(r.requestNumber);
+
+                var linesHtml = r.lines.map(function (l) {
+                    return '<tr><td>' + esc(l.product ? l.product.name : '') + '</td><td>' + l.quantity + '</td><td>' + formatMoney(l.estimatedPrice) + '</td><td>' + formatMoney(l.lineTotal) + '</td></tr>';
+                }).join('');
+
+                var actionsHtml = (r.approvalRequest && r.approvalRequest.actions || []).map(function (a) {
+                    return '<div class="approval-step"><span class="badge ' + (STATUS_BADGE[a.action] || 'bg-secondary-lt') + '">' + esc(a.action) + '</span>' +
+                        '<div><div>' + esc(a.comment || '\u2014') + '</div><div class="text-secondary small">' + new Date(a.actedAt).toLocaleString() + '</div></div></div>';
+                }).join('') || '<div class="text-secondary small">No approval activity yet.</div>';
+
+                var purchaseLink = r.purchase
+                    ? '<div class="alert alert-success mt-3">Converted to Purchase #' + r.purchase.purchaseNumber + ' (' + esc(r.purchase.status) + ')</div>'
+                    : '';
+
+                document.getElementById('view-body').innerHTML =
+                    '<div class="row g-2 mb-3">' +
+                    '<div class="col-6"><div class="text-secondary small">Branch</div><div>' + esc(r.branch.name) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Vendor</div><div>' + esc(r.vendor.name) + '</div></div>' +
+                    '<div class="col-12"><div class="text-secondary small">Reason</div><div>' + esc(r.reason) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Status</div><div><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Grand Total</div><div>' + formatMoney(r.grandTotal) + '</div></div>' +
+                    '</div>' +
+                    '<table class="table table-sm"><thead><tr><th>Product</th><th>Qty</th><th>Est. Price</th><th>Line Total</th></tr></thead><tbody>' + linesHtml + '</tbody></table>' +
+                    purchaseLink +
+                    '<hr><div class="fw-semibold mb-2">Approval History</div>' + actionsHtml;
+            } catch (e) {
+                document.getElementById('view-body').innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
+            }
+        }
+    </script>
+</body>
+
+</html>

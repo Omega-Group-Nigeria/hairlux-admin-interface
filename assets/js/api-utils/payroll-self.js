@@ -38,8 +38,33 @@ const PayrollSelf = (function () {
         return jsonFetch('/staff/me/payroll/compensation');
     }
 
+    async function getCurrentFines(range) {
+        var qs = (range && range.periodStart && range.periodEnd)
+            ? '?periodStart=' + encodeURIComponent(range.periodStart) + '&periodEnd=' + encodeURIComponent(range.periodEnd)
+            : '';
+        return jsonFetch('/staff/me/payroll/current-fines' + qs);
+    }
+
     async function getPayslips() {
         return jsonFetch('/staff/me/payroll/payslips');
+    }
+
+    async function getPayslipDetail(id) {
+        return jsonFetch('/staff/me/payroll/payslips/' + id);
+    }
+
+    async function downloadPayslip(id) {
+        const res = await Auth.fetch('/staff/me/payroll/payslips/' + id + '.pdf');
+        if (!res.ok) throw new Error('Failed to generate payslip');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'payslip-' + id + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
     }
 
     async function getAdjustments() {
@@ -64,7 +89,7 @@ const PayrollSelf = (function () {
 
     return {
         listBanks, getBankAccount, resolveAccount, submitBankAccount,
-        getCompensation, getPayslips, getAdjustments,
+        getCompensation, getCurrentFines, getPayslips, getPayslipDetail, downloadPayslip, getAdjustments,
         getWallet, requestWithdrawal, listWithdrawals,
     };
 })();

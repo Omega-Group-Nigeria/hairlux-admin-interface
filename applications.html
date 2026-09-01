@@ -333,9 +333,47 @@
                     <h5 class="modal-title">Recruitment Report</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="report-modal-body">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary"></div>
+                <div class="modal-body">
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1">Date From</label>
+                            <input type="date" class="form-control form-control-sm" id="report-filter-date-from">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1">Date To</label>
+                            <input type="date" class="form-control form-control-sm" id="report-filter-date-to">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Role</label>
+                            <select class="form-select form-select-sm" id="report-filter-role">
+                                <option value="">All roles</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Status</label>
+                            <select class="form-select form-select-sm" id="report-filter-status">
+                                <option value="">All statuses</option>
+                                <option value="SUBMITTED">Submitted</option>
+                                <option value="UNDER_REVIEW">Under Review</option>
+                                <option value="SHORTLISTED">Shortlisted</option>
+                                <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+                                <option value="INTERVIEW_COMPLETED">Interview Completed</option>
+                                <option value="OFFER_EXTENDED">Offer Extended</option>
+                                <option value="EMPLOYED">Employed</option>
+                                <option value="NOT_SELECTED">Not Selected</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Branch</label>
+                            <select class="form-select form-select-sm" id="report-filter-branch">
+                                <option value="">All branches</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="report-modal-body">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -430,7 +468,11 @@
             // ── Recruitment report ──────────────────────────────────────────
             document.getElementById("btn-view-report").addEventListener("click", function () {
                 new bootstrap.Modal(document.getElementById("modal-report")).show();
+                ensureReportFilterOptionsLoaded();
                 loadRecruitmentReport();
+            });
+            ["report-filter-date-from", "report-filter-date-to", "report-filter-role", "report-filter-status", "report-filter-branch"].forEach(function (id) {
+                document.getElementById(id).addEventListener("change", loadRecruitmentReport);
             });
 
             // ── Clear filters ───────────────────────────────────────────────
@@ -482,11 +524,40 @@
             }
         }
 
+        var _reportOptionsLoaded = false;
+
+        async function ensureReportFilterOptionsLoaded() {
+            if (_reportOptionsLoaded) return;
+            _reportOptionsLoaded = true;
+            try {
+                var branches = await ensureLocations();
+                document.getElementById("report-filter-branch").innerHTML =
+                    '<option value="">All branches</option>' +
+                    branches.map(function (b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join("");
+            } catch (err) {
+                console.error("Failed to load branches for report filter", err);
+            }
+            try {
+                var roles = await Applications.getDistinctRoles();
+                document.getElementById("report-filter-role").innerHTML =
+                    '<option value="">All roles</option>' +
+                    roles.map(function (r) { return '<option value="' + r + '">' + r + '</option>'; }).join("");
+            } catch (err) {
+                console.error("Failed to load roles for report filter", err);
+            }
+        }
+
         async function loadRecruitmentReport() {
             var body = document.getElementById("report-modal-body");
             body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
             try {
-                var r = await Applications.getReport();
+                var r = await Applications.getReport({
+                    dateFrom: document.getElementById("report-filter-date-from").value || undefined,
+                    dateTo: document.getElementById("report-filter-date-to").value || undefined,
+                    appliedRole: document.getElementById("report-filter-role").value || undefined,
+                    status: document.getElementById("report-filter-status").value || undefined,
+                    preferredLocationId: document.getElementById("report-filter-branch").value || undefined,
+                });
 
                 var roleRows = (r.byRole || []).map(function (x) {
                     return '<tr><td>' + x.role + '</td><td class="text-end">' + x.count + '</td></tr>';
@@ -858,8 +929,7 @@
         async function ensureStaff() {
             if (staffCache) return staffCache;
             try {
-                var result = await Staff.getAll({ limit: 100, employmentStatus: 'ACTIVE' });
-                staffCache = result.data || (Array.isArray(result) ? result : []);
+                staffCache = await Staff.getOptions();
             } catch (err) {
                 staffCache = [];
             }
@@ -908,32 +978,32 @@
 
 
         function wireStaffSearchFilter(searchInputId, selectId) {
-                var input = document.getElementById(searchInputId);
-                var select = document.getElementById(selectId);
-                if (!input || !select) return;
+            var input = document.getElementById(searchInputId);
+            var select = document.getElementById(selectId);
+            if (!input || !select) return;
 
-                // Save initial master options list once if not already saved
-                if (!select._masterOptions) {
-                    select._masterOptions = Array.from(select.options).map(function (opt) {
-                        return { value: opt.value, text: opt.textContent };
-                    });
-                }
-
-                input.addEventListener('input', function () {
-                    var q = this.value.trim().toLowerCase();
-
-                    // Filter options based on query
-                    var filtered = select._masterOptions.filter(function (opt) {
-                        if (!opt.value) return true; // keep placeholder
-                        return !q || opt.text.toLowerCase().indexOf(q) !== -1;
-                    });
-
-                    // Re-render select options
-                    select.innerHTML = filtered.map(function (opt) {
-                        return '<option value="' + opt.value + '">' + opt.text + '</option>';
-                    }).join('');
+            // Save initial master options list once if not already saved
+            if (!select._masterOptions) {
+                select._masterOptions = Array.from(select.options).map(function (opt) {
+                    return { value: opt.value, text: opt.textContent };
                 });
             }
+
+            input.addEventListener('input', function () {
+                var q = this.value.trim().toLowerCase();
+
+                // Filter options based on query
+                var filtered = select._masterOptions.filter(function (opt) {
+                    if (!opt.value) return true; // keep placeholder
+                    return !q || opt.text.toLowerCase().indexOf(q) !== -1;
+                });
+
+                // Re-render select options
+                select.innerHTML = filtered.map(function (opt) {
+                    return '<option value="' + opt.value + '">' + opt.text + '</option>';
+                }).join('');
+            });
+        }
 
         async function submitInterviewOutcome() {
             var outcome = document.getElementById('io-outcome').value;

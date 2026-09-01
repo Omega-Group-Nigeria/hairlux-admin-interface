@@ -33,7 +33,44 @@ const StaffOps = (() => {
         if (params.date) q.set("date", params.date);
         if (params.locationId) q.set("locationId", params.locationId);
         if (params.staffId) q.set("staffId", params.staffId);
+        if (params.status) q.set("status", params.status);
+        if (params.from) q.set("from", params.from);
+        if (params.to) q.set("to", params.to);
+        if (params.limit) q.set("limit", params.limit);
         return jsonFetch("/admin/attendance" + (q.toString() ? "?" + q.toString() : ""));
+    }
+
+    async function getStaffSummary(staffId, periodStart, periodEnd) {
+        const q = new URLSearchParams({ periodStart, periodEnd });
+        return jsonFetch(`/admin/attendance/summary/${staffId}?` + q.toString());
+    }
+
+    async function getAllStaffSummary(periodStart, periodEnd, branchId) {
+        const q = new URLSearchParams({ periodStart, periodEnd });
+        if (branchId) q.set("branchId", branchId);
+        return jsonFetch("/admin/attendance/summary?" + q.toString());
+    }
+
+    async function getExtraWorkDayQueue(params = {}) {
+        const q = new URLSearchParams();
+        if (params.branchId) q.set("branchId", params.branchId);
+        if (params.staffId) q.set("staffId", params.staffId);
+        if (params.status) q.set("status", params.status);
+        return jsonFetch("/admin/attendance/extra-work-days" + (q.toString() ? "?" + q.toString() : ""));
+    }
+
+    async function approveExtraWorkDay(recordId, note) {
+        return jsonFetch(`/admin/attendance/extra-work-days/${recordId}/approve`, {
+            method: "PATCH",
+            body: JSON.stringify({ note }),
+        });
+    }
+
+    async function rejectExtraWorkDay(recordId, note) {
+        return jsonFetch(`/admin/attendance/extra-work-days/${recordId}/reject`, {
+            method: "PATCH",
+            body: JSON.stringify({ note }),
+        });
     }
 
     async function getInventoryDashboard(locationId) {
@@ -71,6 +108,11 @@ const StaffOps = (() => {
 
     return {
         getAttendanceReport,
+        getStaffSummary,
+        getAllStaffSummary,
+        getExtraWorkDayQueue,
+        approveExtraWorkDay,
+        rejectExtraWorkDay,
         correctAttendance,
         getLatePenaltySettings,
         updateLatePenaltySettings,

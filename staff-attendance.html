@@ -93,6 +93,9 @@
                             <h2 class="page-title">Attendance</h2>
                         </div>
                         <div class="col-auto ms-auto d-flex gap-2">
+                            <a href="bookings.html#exceptions" class="btn btn-outline-secondary"
+                                id="btn-manage-holidays">Manage Public
+                                Holidays</a>
                             <button type="button" class="btn btn-outline-primary" id="btn-open-late-penalty">Late
                                 Penalty Settings</button>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
@@ -105,6 +108,39 @@
                 <div class="container-xl">
                     <div id="page-alert" class="alert d-none mb-3" role="alert"></div>
 
+                    <div class="card mb-3" id="ewd-card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Extra Work Days
+                                    <span class="badge bg-yellow-lt ms-1 d-none" id="ewd-count-badge">0</span>
+                                </h3>
+                                <span class="text-secondary small">Clock-ins on a day the staff member's calendar marks
+                                    OFF — only approved
+                                    days count toward payroll</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Staff</th>
+                                        <th>Date</th>
+                                        <th>Check In</th>
+                                        <th>Check Out</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ewd-tbody">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header d-block pb-0">
                             <div class="d-flex align-items-center justify-content-between mb-3">
@@ -115,8 +151,29 @@
                         <div class="card-body border-bottom py-4">
                             <div class="row g-2 align-items-end">
                                 <div class="col-auto">
-                                    <label class="form-label text-secondary small mb-1">Date</label>
+                                    <label class="form-label text-secondary small mb-1">Exact date</label>
                                     <input type="date" class="form-control form-control-sm" id="filter-date">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">From</label>
+                                    <input type="date" class="form-control form-control-sm" id="filter-from">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">To</label>
+                                    <input type="date" class="form-control form-control-sm" id="filter-to">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label text-secondary small mb-1">Status</label>
+                                    <select class="form-select form-select-sm" id="filter-status">
+                                        <option value="">All statuses</option>
+                                        <option value="PRESENT">Present</option>
+                                        <option value="LATE">Late</option>
+                                        <option value="ABSENT">Absent</option>
+                                        <option value="ON_LEAVE">On Leave</option>
+                                        <option value="APPROVED_PERMISSION">Approved Permission</option>
+                                        <option value="PUBLIC_HOLIDAY">Public Holiday</option>
+                                        <option value="EXTRA_WORK_DAY_PENDING">Extra Work Day Pending</option>
+                                    </select>
                                 </div>
                                 <div class="col-auto">
                                     <label class="form-label text-secondary small mb-1">Branch</label>
@@ -133,6 +190,10 @@
                                 <div class="col-auto">
                                     <button type="button" class="btn btn-sm btn-secondary"
                                         id="btn-clear-filters">Clear</button>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        id="btn-download-csv">Download CSV</button>
                                 </div>
                             </div>
                         </div>
@@ -155,6 +216,63 @@
                                         <td colspan="8" class="text-center py-5">
                                             <div class="spinner-border text-primary"></div>
                                         </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Monthly Attendance Summary</h3>
+                            </div>
+                            <div class="row g-2 align-items-end pb-3">
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label text-secondary small mb-1">From</label>
+                                    <input type="date" id="summary-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label text-secondary small mb-1">To</label>
+                                    <input type="date" id="summary-to" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="summary-branch" class="form-select form-select-sm">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <button type="button" class="btn btn-primary btn-sm w-100"
+                                        id="btn-load-summary">Load Summary</button>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100"
+                                        id="btn-export-summary">Export CSV</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-hover card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Staff</th>
+                                        <th>Expected</th>
+                                        <th>Worked</th>
+                                        <th>Half Days</th>
+                                        <th>Extra (Appr/Pend)</th>
+                                        <th>Leave</th>
+                                        <th>Holidays Worked</th>
+                                        <th>Late</th>
+                                        <th>Early Dep.</th>
+                                        <th>Absent</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="summary-tbody">
+                                    <tr>
+                                        <td colspan="10" class="text-center text-secondary py-4">Choose a date range and
+                                            click "Load
+                                            Summary".</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -191,17 +309,54 @@
                             <option value="ON_LEAVE">On Leave</option>
                             <option value="APPROVED_PERMISSION">Approved Permission</option>
                             <option value="PUBLIC_HOLIDAY">Public Holiday</option>
+                            <option value="EXTRA_WORK_DAY_PENDING">Extra Work Day (Pending)</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Reason <span class="text-danger">*</span></label>
+                        <label class="form-label">Reason Category <span class="text-danger">*</span></label>
+                        <select class="form-select" id="correction-reason-category">
+                            <option value="" selected disabled>Select a category…</option>
+                            <option value="OFFICIAL_ASSIGNMENT">Official Assignment</option>
+                            <option value="BUSINESS_TRAVEL">Business Travel</option>
+                            <option value="TRAINING">Training</option>
+                            <option value="DEVICE_FINGERPRINT_FAILURE">Device/Fingerprint Failure</option>
+                            <option value="APPROVED_MANUAL_ATTENDANCE">Approved Manual Attendance</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason <span class="text-danger"
+                                id="correction-reason-required-mark">*</span></label>
                         <textarea class="form-control" id="correction-reason" rows="2"
-                            placeholder="Required — why is this being corrected?"></textarea>
+                            placeholder="Additional detail — required when category is Other"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="btn-save-correction">Save Correction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="ewd-reject-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Extra Work Day</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="ewd-reject-note" rows="2"
+                            placeholder="Required — why is this being rejected?"></textarea>
+                    </div>
+                    <div id="ewd-reject-error" class="text-danger small" style="display:none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-ewd-reject">Reject</button>
                 </div>
             </div>
         </div>
@@ -246,6 +401,7 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-operations.js"></script>
+    <script src="./assets/js/csv-export.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -254,7 +410,7 @@
         RBAC.loadFromStorage();
         RBAC.applyPageGuardForCurrentPage();
 
-        var listState = { date: "", locationId: "", staffId: "" };
+        var listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "" };
         var pageAlertTimer = null;
 
         function setPageAlert(type, message) {
@@ -285,11 +441,21 @@
                 console.error("Failed to load branches", e);
             }
 
+            await loadFilterStaffOptions();
+        }
+
+        // Dev Feedback Round 5, item #5: re-fetches scoped to whichever
+        // branch is currently selected, without a page reload -- "All
+        // Branches" (empty value) returns everyone. Called on branch
+        // change too, so switching back to "All Branches" resets the
+        // staff list rather than leaving it filtered to whatever branch
+        // was previously selected.
+        async function loadFilterStaffOptions(branchId) {
             try {
-                var result = await Staff.getAll({ limit: 100 });
+                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
                 document.getElementById("filter-staff").innerHTML =
                     '<option value="">All staff</option>' +
-                    result.data.map(function (s) { return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + '</option>'; }).join("");
+                    staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + '</option>'; }).join("");
             } catch (e) {
                 console.error("Failed to load staff", e);
             }
@@ -317,6 +483,7 @@
                             ON_LEAVE: "bg-azure-lt",
                             APPROVED_PERMISSION: "bg-azure-lt",
                             PUBLIC_HOLIDAY: "bg-secondary-lt",
+                            EXTRA_WORK_DAY_PENDING: "bg-purple-lt",
                         }[r.status] || "bg-secondary-lt";
 
                         var statusLabel = String(r.status || "").replace(/_/g, " ");
@@ -325,10 +492,15 @@
                             statusDetail = r.lateMinutes + " min late";
                             if (r.latePenaltyAmount) statusDetail += " · " + StaffOps.formatMoney(r.latePenaltyAmount) + " penalty";
                         }
+                        if (r.status === "EXTRA_WORK_DAY_PENDING" && r.extraWorkDayApproval) {
+                            statusDetail = "Approval: " + r.extraWorkDayApproval;
+                        }
                         if (r.overtimeMinutes) statusDetail = (statusDetail ? statusDetail + " · " : "") + r.overtimeMinutes + " min OT";
 
                         var manualBadge = r.isManuallyAdjusted
-                            ? '<div><span class="badge bg-orange-lt mt-1">Manually adjusted</span></div>'
+                            ? '<div><span class="badge bg-orange-lt mt-1">Manually adjusted</span>' +
+                            (r.adjustmentReasonCategory ? ' <span class="text-secondary small">' + esc(String(r.adjustmentReasonCategory).replace(/_/g, ' ')) + '</span>' : '') +
+                            '</div>'
                             : '<div><span class="badge bg-green-lt mt-1">GPS-verified</span></div>';
 
                         return '<tr>' +
@@ -359,6 +531,68 @@
             }
         }
 
+        /**
+         * Fetches every record matching the current filters (not just the
+         * loaded page — a large limit rather than the default page size)
+         * and generates a CSV client-side. No backend export endpoint
+         * needed since the data is already filterable server-side; this
+         * just widens the same query.
+         */
+        async function downloadAttendanceCsv() {
+            var btn = document.getElementById("btn-download-csv");
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "Preparing…";
+            try {
+                var result = await StaffOps.getAttendanceReport(Object.assign({}, listState, { limit: 10000 }));
+                var records = result.data || [];
+                if (!records.length) {
+                    flashPageAlert("warning", "No records match the current filters.");
+                    return;
+                }
+
+                var headers = ["Staff Name", "Staff Code", "Branch", "Date", "Check In", "Check Out", "Hours", "Status", "Late Minutes", "Late Penalty", "Manually Adjusted"];
+                var csvEscape = function (v) {
+                    var s = v === null || v === undefined ? "" : String(v);
+                    return '"' + s.replace(/"/g, '""') + '"';
+                };
+                var rows = records.map(function (r) {
+                    var hours = r.checkOutAt
+                        ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
+                        : "";
+                    return [
+                        r.staff ? r.staff.name : "",
+                        r.staff ? r.staff.staffCode : "",
+                        r.location ? r.location.name : "",
+                        StaffOps.formatDate(r.date),
+                        StaffOps.formatTime(r.checkInAt),
+                        r.checkOutAt ? StaffOps.formatTime(r.checkOutAt) : "",
+                        hours,
+                        String(r.status || "").replace(/_/g, " "),
+                        r.lateMinutes || "",
+                        r.latePenaltyAmount || "",
+                        r.isManuallyAdjusted ? "Yes" : "No",
+                    ].map(csvEscape).join(",");
+                });
+                var csvContent = headers.map(csvEscape).join(",") + "\n" + rows.join("\n");
+
+                var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement("a");
+                a.href = url;
+                a.download = "attendance-report-" + new Date().toISOString().slice(0, 10) + ".csv";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                flashPageAlert("danger", e.message || "Failed to generate CSV.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
         var correctionModal;
         var correctionRecordId = null;
 
@@ -367,6 +601,7 @@
             document.getElementById("correction-checkin").value = "";
             document.getElementById("correction-checkout").value = "";
             document.getElementById("correction-status").value = "";
+            document.getElementById("correction-reason-category").value = "";
             document.getElementById("correction-reason").value = "";
             if (!correctionModal) correctionModal = new bootstrap.Modal(document.getElementById("correction-modal"));
             correctionModal.show();
@@ -409,13 +644,20 @@
         }
 
         document.getElementById("btn-save-correction").addEventListener("click", async function () {
+            var reasonCategory = document.getElementById("correction-reason-category").value;
             var reason = document.getElementById("correction-reason").value.trim();
-            if (!reason) {
-                flashPageAlert("danger", "A reason is required to save a correction.");
+
+            if (!reasonCategory) {
+                flashPageAlert("danger", "A reason category is required to save a correction.");
+                return;
+            }
+            if (reasonCategory === "OTHER" && !reason) {
+                flashPageAlert("danger", "Please provide detail for an \"Other\" reason.");
                 return;
             }
 
-            var payload = { reason: reason };
+            var payload = { reasonCategory: reasonCategory };
+            if (reason) payload.reason = reason;
             var checkInVal = document.getElementById("correction-checkin").value;
             var checkOutVal = document.getElementById("correction-checkout").value;
             var statusVal = document.getElementById("correction-status").value;
@@ -433,6 +675,86 @@
             }
         });
 
+        async function loadExtraWorkDayQueue() {
+            var tbody = document.getElementById("ewd-tbody");
+            try {
+                var records = await StaffOps.getExtraWorkDayQueue({ status: "PENDING" });
+                renderExtraWorkDayQueue(records);
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Failed to load.</td></tr>';
+            }
+        }
+
+        function renderExtraWorkDayQueue(records) {
+            var tbody = document.getElementById("ewd-tbody");
+            var card = document.getElementById("ewd-card");
+            var badge = document.getElementById("ewd-count-badge");
+
+            if (!records.length) {
+                card.classList.add("d-none");
+                return;
+            }
+            card.classList.remove("d-none");
+            badge.textContent = String(records.length);
+            badge.classList.remove("d-none");
+
+            tbody.innerHTML = records.map(function (r) {
+                return '<tr>' +
+                    '<td>' + esc(r.staff ? r.staff.name : "—") + '</td>' +
+                    '<td>' + StaffOps.formatDate(r.date) + '</td>' +
+                    '<td>' + StaffOps.formatTime(r.checkInAt) + '</td>' +
+                    '<td>' + (r.checkOutAt ? StaffOps.formatTime(r.checkOutAt) : '<span class="text-secondary">Still clocked in</span>') + '</td>' +
+                    '<td class="text-nowrap">' +
+                    '<button class="btn btn-sm btn-success me-1 btn-ewd-approve" data-id="' + esc(r.id) + '">Approve</button>' +
+                    '<button class="btn btn-sm btn-outline-danger btn-ewd-reject" data-id="' + esc(r.id) + '">Reject</button>' +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+
+            tbody.querySelectorAll(".btn-ewd-approve").forEach(function (btn) {
+                btn.addEventListener("click", function () { handleApproveExtraWorkDay(btn.dataset.id); });
+            });
+            tbody.querySelectorAll(".btn-ewd-reject").forEach(function (btn) {
+                btn.addEventListener("click", function () { openRejectExtraWorkDayModal(btn.dataset.id); });
+            });
+        }
+
+        async function handleApproveExtraWorkDay(recordId) {
+            try {
+                await StaffOps.approveExtraWorkDay(recordId);
+                loadExtraWorkDayQueue();
+            } catch (err) {
+                flashPageAlert("danger", err.message || "Failed to approve.");
+            }
+        }
+
+        var _ewdRejectRecordId = null;
+
+        function openRejectExtraWorkDayModal(recordId) {
+            _ewdRejectRecordId = recordId;
+            document.getElementById("ewd-reject-note").value = "";
+            document.getElementById("ewd-reject-error").style.display = "none";
+            new bootstrap.Modal(document.getElementById("ewd-reject-modal")).show();
+        }
+
+        document.getElementById("btn-confirm-ewd-reject").addEventListener("click", async function () {
+            var note = document.getElementById("ewd-reject-note").value.trim();
+            var errEl = document.getElementById("ewd-reject-error");
+            if (!note) {
+                errEl.textContent = "A reason is required.";
+                errEl.style.display = "block";
+                return;
+            }
+            try {
+                await StaffOps.rejectExtraWorkDay(_ewdRejectRecordId, note);
+                bootstrap.Modal.getInstance(document.getElementById("ewd-reject-modal")).hide();
+                loadExtraWorkDayQueue();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to reject.";
+                errEl.style.display = "block";
+            }
+        });
+
         document.addEventListener("DOMContentLoaded", function () {
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
@@ -447,8 +769,23 @@
                 listState.date = this.value;
                 loadAttendance();
             });
+            document.getElementById("filter-from").addEventListener("change", function () {
+                listState.from = this.value;
+                loadAttendance();
+            });
+            document.getElementById("filter-to").addEventListener("change", function () {
+                listState.to = this.value;
+                loadAttendance();
+            });
+            document.getElementById("filter-status").addEventListener("change", function () {
+                listState.status = this.value;
+                loadAttendance();
+            });
             document.getElementById("filter-branch").addEventListener("change", function () {
                 listState.locationId = this.value;
+                document.getElementById("filter-staff").value = "";
+                listState.staffId = "";
+                loadFilterStaffOptions(this.value);
                 loadAttendance();
             });
             document.getElementById("filter-staff").addEventListener("change", function () {
@@ -457,15 +794,105 @@
             });
             document.getElementById("btn-clear-filters").addEventListener("click", function () {
                 document.getElementById("filter-date").value = "";
+                document.getElementById("filter-from").value = "";
+                document.getElementById("filter-to").value = "";
+                document.getElementById("filter-status").value = "";
                 document.getElementById("filter-branch").value = "";
                 document.getElementById("filter-staff").value = "";
-                listState = { date: "", locationId: "", staffId: "" };
+                listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "" };
+                loadFilterStaffOptions();
                 loadAttendance();
             });
+            document.getElementById("btn-download-csv").addEventListener("click", downloadAttendanceCsv);
+
+            // ── Monthly summary — default to the current month ───────────────
+            var now = new Date();
+            var firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            document.getElementById("summary-from").value = firstOfMonth.toISOString().slice(0, 10);
+            document.getElementById("summary-to").value = now.toISOString().slice(0, 10);
+
+            document.getElementById("btn-load-summary").addEventListener("click", loadAttendanceSummary);
+            document.getElementById("btn-export-summary").addEventListener("click", exportAttendanceSummary);
 
             loadFilterOptions();
             loadAttendance();
+            loadExtraWorkDayQueue();
+            loadSummaryBranchOptions();
         });
+
+        async function loadSummaryBranchOptions() {
+            try {
+                var branches = await Staff.getLocations();
+                document.getElementById("summary-branch").innerHTML =
+                    '<option value="">All branches</option>' +
+                    branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join("");
+            } catch (e) {
+                console.error("Failed to load branches for summary", e);
+            }
+        }
+
+        var _lastSummaryRows = [];
+
+        async function loadAttendanceSummary() {
+            var tbody = document.getElementById("summary-tbody");
+            var from = document.getElementById("summary-from").value;
+            var to = document.getElementById("summary-to").value;
+            var branchId = document.getElementById("summary-branch").value;
+
+            if (!from || !to) {
+                flashPageAlert("danger", "Choose both a From and To date for the summary.");
+                return;
+            }
+
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+
+            try {
+                var rows = await StaffOps.getAllStaffSummary(from, to, branchId || undefined);
+                _lastSummaryRows = rows;
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-secondary py-4">No active staff found for this branch.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.map(function (r) {
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + esc(r.staffName) + '</td>' +
+                        '<td>' + r.expectedWorkingDays + '</td>' +
+                        '<td>' + r.daysWorked + '</td>' +
+                        '<td>' + r.halfDaysWorked + '</td>' +
+                        '<td>' + r.approvedExtraWorkDays + ' / ' + r.pendingExtraWorkDays + '</td>' +
+                        '<td>' + r.approvedLeaveDays + '</td>' +
+                        '<td>' + r.publicHolidaysWorked + '</td>' +
+                        '<td' + (r.lateArrivals > 0 ? ' class="text-warning"' : '') + '>' + r.lateArrivals + '</td>' +
+                        '<td>' + r.earlyDepartures + '</td>' +
+                        '<td' + (r.absentDays > 0 ? ' class="text-danger"' : '') + '>' + r.absentDays + '</td>' +
+                        '</tr>';
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">' + esc(err.message || "Failed to load summary.") + '</td></tr>';
+            }
+        }
+
+        function exportAttendanceSummary() {
+            if (!_lastSummaryRows.length) {
+                alert("Load the summary first, or there is nothing to export for the current filters.");
+                return;
+            }
+            var from = document.getElementById("summary-from").value;
+            var to = document.getElementById("summary-to").value;
+            CsvExport.download("attendance-summary_" + from + "_to_" + to + ".csv", [
+                { label: "Staff", get: function (r) { return r.staffName; } },
+                { label: "Expected Days", get: function (r) { return r.expectedWorkingDays; } },
+                { label: "Days Worked", get: function (r) { return r.daysWorked; } },
+                { label: "Half Days", get: function (r) { return r.halfDaysWorked; } },
+                { label: "Approved Extra Days", get: function (r) { return r.approvedExtraWorkDays; } },
+                { label: "Pending Extra Days", get: function (r) { return r.pendingExtraWorkDays; } },
+                { label: "Leave Days", get: function (r) { return r.approvedLeaveDays; } },
+                { label: "Public Holidays Worked", get: function (r) { return r.publicHolidaysWorked; } },
+                { label: "Late Arrivals", get: function (r) { return r.lateArrivals; } },
+                { label: "Early Departures", get: function (r) { return r.earlyDepartures; } },
+                { label: "Absent Days", get: function (r) { return r.absentDays; } },
+            ], _lastSummaryRows);
+        }
     </script>
 </body>
 

@@ -53,6 +53,24 @@ const Staff = (() => {
         };
     }
 
+    /**
+     * Dev Feedback Round 7, item #10 -- minimal, ACTIVE + ON_LEAVE staff
+     * list for a dropdown. Prefer this over getAll() for any staff-picker
+     * UI: it's gated by the STAFF role (not ADMIN/SUPER_ADMIN like
+     * /admin/staff), so it works consistently regardless of that page's
+     * own access level, and it's pre-filtered to "still with the
+     * company" rather than every employment status.
+     */
+    async function getOptions(params = {}) {
+        const q = new URLSearchParams();
+        if (params.locationId) q.set("locationId", params.locationId);
+        if (params.includeAllStatuses) q.set("includeAllStatuses", "true");
+        const res = await Auth.fetch("/staff/options" + (q.toString() ? "?" + q.toString() : ""));
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || "Failed to load staff options");
+        return raw.data || [];
+    }
+
     async function getUpcomingBirthdays(params = {}) {
         const q = new URLSearchParams();
         if (params.daysAhead) q.set("daysAhead", params.daysAhead);
@@ -230,6 +248,24 @@ const Staff = (() => {
         return jsonFetch("/admin/staff/" + id + "/onboarding");
     }
 
+    async function getWorkCalendar(id) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id);
+    }
+
+    async function setWorkCalendar(id, payload) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function applyWorkCalendarDefault(id, overwrite) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id + "/apply-business-hours-default?overwrite=" + (overwrite ? "true" : "false"), {
+            method: "POST",
+        });
+    }
+
     async function getOnboardingSummary() {
         return jsonFetch("/admin/staff/onboarding-summary");
     }
@@ -248,6 +284,30 @@ const Staff = (() => {
 
     async function getDirectives(id) {
         return jsonFetch("/admin/staff/" + id + "/directives");
+    }
+
+    async function setCompensation(id, payload) {
+        return jsonFetch("/admin/payroll/staff/" + id + "/compensation", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getCompensationHistory(id) {
+        return jsonFetch("/admin/payroll/staff/" + id + "/compensation/history");
+    }
+
+    async function requestAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification/request", { method: "POST" });
+    }
+
+    async function cancelAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification/cancel", { method: "POST" });
+    }
+
+    async function getAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification");
     }
 
     async function getPassportPhotoUrl(id) {
@@ -303,6 +363,7 @@ const Staff = (() => {
 
     return {
         getAll,
+        getOptions,
         getUpcomingBirthdays,
         getOne,
         getLocations,
@@ -323,10 +384,13 @@ const Staff = (() => {
         updateHistory,
         removeHistory,
         getOnboarding,
+        getWorkCalendar, setWorkCalendar, applyWorkCalendarDefault,
         getOnboardingSummary,
         updateOnboardingItem,
         getDocumentStatus,
         getDirectives,
+        setCompensation, getCompensationHistory,
+        requestAddressVerification, getAddressVerification, cancelAddressVerification,
         getPassportPhotoUrl,
         idCardUrl,
         downloadIdCard,

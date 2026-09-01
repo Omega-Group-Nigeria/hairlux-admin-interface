@@ -65,6 +65,8 @@
                             <h2 class="page-title" id="page-title-text">Suppliers</h2>
                         </div>
                         <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary me-2" id="btn-export">Export
+                                CSV</button>
                             <button type="button" class="btn btn-primary" id="btn-new">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -149,6 +151,75 @@
                         <label class="form-label">Address</label>
                         <input type="text" class="form-control" id="f-address">
                     </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">WhatsApp <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-whatsapp">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">City <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-city">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">State <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-state">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" id="f-vendor-category-label">Vendor Category <span
+                                    class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-vendor-category"
+                                placeholder="e.g. Hair care wholesale">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Terms <span
+                                    class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="f-payment-terms" placeholder="e.g. Net 30">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Average Delivery Time (days) <span
+                                    class="text-secondary">(optional)</span></label>
+                            <input type="number" min="0" class="form-control" id="f-average-delivery-days">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Performance Rating <span class="text-secondary">(0–5,
+                                    optional)</span></label>
+                            <input type="number" min="0" max="5" step="0.1" class="form-control"
+                                id="f-performance-rating">
+                        </div>
+                    </div>
+                    <!-- Banking -- only rendered at all for a user with suppliers:view_banking; see toggleBankingSection() -->
+                    <div id="f-banking-section" style="display:none">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Bank Name <span
+                                        class="text-secondary">(optional)</span></label>
+                                <input type="text" class="form-control" id="f-bank-name">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Account Number <span
+                                        class="text-secondary">(optional)</span></label>
+                                <input type="text" class="form-control" id="f-account-number">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Verified Account Name <span
+                                        class="text-secondary">(optional)</span></label>
+                                <input type="text" class="form-control" id="f-verified-account-name">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Remarks <span class="text-secondary">(optional)</span></label>
+                        <input type="text" class="form-control" id="f-remarks">
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="f-preferred">
+                        <label class="form-check-label" id="f-preferred-label" for="f-preferred">Preferred
+                            vendor</label>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Notes</label>
                         <textarea class="form-control" id="f-notes" rows="2"></textarea>
@@ -186,15 +257,76 @@
         </div>
     </div>
 
+    <!-- Vendor Ledger Modal -->
+    <div class="modal modal-blur fade" id="modal-ledger" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ledger-modal-title">Vendor Ledger</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="ledger-body">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary d-none" id="btn-add-adjustment">Add Adjustment</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Adjustment Modal -->
+    <div class="modal modal-blur fade" id="modal-adjustment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Ledger Adjustment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="adj-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="adj-type">
+                            <option value="CREDIT">Credit (reduces what we owe them)</option>
+                            <option value="DEBIT">Debit (increases what we owe them)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" min="0.01" step="0.01" class="form-control" id="adj-amount">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control" id="adj-reason" rows="2"
+                            placeholder="e.g. Credit note for 3 damaged units returned on GRN-2026-000045"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-adjustment">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
+    <script src="assets/js/api-utils/vendor-ledger.js"></script>
+    <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var supplierType = new URLSearchParams(location.search).get('type') === 'VENDOR' ? 'VENDOR' : 'SUPPLIER';
         var typeLabel = supplierType === 'VENDOR' ? 'Vendor' : 'Supplier';
         var editingId = null;
+        var _lastLoadedSuppliers = [];
 
         document.addEventListener('DOMContentLoaded', function () {
             RBAC.applyPageGuard('suppliers:read');
@@ -203,8 +335,20 @@
             document.getElementById('list-title-text').textContent = typeLabel + 's';
             document.getElementById('btn-new-label').textContent = 'New ' + typeLabel;
             document.title = 'Hairlux Admin — ' + typeLabel + 's';
+            document.getElementById('f-vendor-category-label').textContent = typeLabel + ' Category (optional)';
+            document.getElementById('f-preferred-label').textContent = 'Preferred ' + typeLabel.toLowerCase();
+
+            // Banking fields are stripped entirely from the API response
+            // for anyone without suppliers:view_banking (not just masked) --
+            // the form section itself stays hidden to match, rather than
+            // show empty inputs that would silently overwrite existing
+            // banking data with blanks on save.
+            if (RBAC.can('suppliers:view_banking')) {
+                document.getElementById('f-banking-section').style.display = 'block';
+            }
 
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-export').addEventListener('click', exportSuppliers);
             document.getElementById('btn-save').addEventListener('click', save);
 
             load();
@@ -216,19 +360,36 @@
             });
         }
 
+        function exportSuppliers() {
+            if (!_lastLoadedSuppliers.length) {
+                alert('No ' + typeLabel.toLowerCase() + 's to export.');
+                return;
+            }
+            CsvExport.download(typeLabel.toLowerCase() + 's.csv', [
+                { label: 'Name', get: function (s) { return s.name; } },
+                { label: 'Contact Person', get: function (s) { return s.contactPerson || ''; } },
+                { label: 'Phone', get: function (s) { return s.phone || ''; } },
+                { label: 'Email', get: function (s) { return s.email || ''; } },
+                { label: 'Preferred', get: function (s) { return s.isPreferred ? 'Yes' : 'No'; } },
+                { label: 'Status', get: function (s) { return s.isActive ? 'Active' : 'Inactive'; } },
+            ], _lastLoadedSuppliers);
+        }
+
         async function load() {
             var tbody = document.getElementById('tbody');
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var list = await Suppliers.getAll(supplierType);
+                _lastLoadedSuppliers = list;
                 document.getElementById('results-label').textContent = list.length + ' ' + typeLabel.toLowerCase() + (list.length === 1 ? '' : 's');
                 tbody.innerHTML = list.length
                     ? list.map(function (s) {
                         var statusBadge = s.isActive
                             ? '<span class="badge bg-green-lt">Active</span>'
                             : '<span class="badge bg-secondary-lt">Inactive</span>';
+                        var preferredBadge = s.isPreferred ? ' <span class="badge bg-yellow-lt">Preferred</span>' : '';
                         return '<tr>' +
-                            '<td class="fw-semibold">' + esc(s.name) + '</td>' +
+                            '<td class="fw-semibold">' + esc(s.name) + preferredBadge + '</td>' +
                             '<td>' + esc(s.contactPerson || '\u2014') + '</td>' +
                             '<td>' + esc(s.phone || '\u2014') + '</td>' +
                             '<td>' + esc(s.email || '\u2014') + '</td>' +
@@ -236,6 +397,7 @@
                             '<td>' + statusBadge + '</td>' +
                             '<td class="text-nowrap">' +
                             '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + s.id + '\')">Edit</button>' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewLedger(\'' + s.id + '\', \'' + esc(s.name).replace(/'/g, "\\'") + '\')">Ledger</button>' +
                             '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + s.id + '\')">Delete</button>' +
                             '</td>' +
                             '</tr>';
@@ -260,6 +422,23 @@
                     document.getElementById('f-phone').value = s.phone || '';
                     document.getElementById('f-email').value = s.email || '';
                     document.getElementById('f-address').value = s.address || '';
+                    document.getElementById('f-whatsapp').value = s.whatsapp || '';
+                    document.getElementById('f-city').value = s.city || '';
+                    document.getElementById('f-state').value = s.state || '';
+                    document.getElementById('f-vendor-category').value = s.vendorCategory || '';
+                    document.getElementById('f-payment-terms').value = s.paymentTerms || '';
+                    document.getElementById('f-average-delivery-days').value = s.averageDeliveryDays != null ? s.averageDeliveryDays : '';
+                    document.getElementById('f-performance-rating').value = s.performanceRating != null ? s.performanceRating : '';
+                    // s.bankName etc. simply won't exist on the response at
+                    // all for a user without suppliers:view_banking (the
+                    // backend strips them, not masks them) -- these lines
+                    // just harmlessly clear to empty in that case, matching
+                    // the section itself being hidden.
+                    document.getElementById('f-bank-name').value = s.bankName || '';
+                    document.getElementById('f-account-number').value = s.accountNumber || '';
+                    document.getElementById('f-verified-account-name').value = s.verifiedAccountName || '';
+                    document.getElementById('f-remarks').value = s.remarks || '';
+                    document.getElementById('f-preferred').checked = !!s.isPreferred;
                     document.getElementById('f-notes').value = s.notes || '';
                     document.getElementById('f-active').checked = !!s.isActive;
                 } catch (e) {
@@ -267,9 +446,12 @@
                     return;
                 }
             } else {
-                ['f-name', 'f-contact-person', 'f-phone', 'f-email', 'f-address', 'f-notes'].forEach(function (id) {
-                    document.getElementById(id).value = '';
-                });
+                ['f-name', 'f-contact-person', 'f-phone', 'f-email', 'f-address', 'f-whatsapp', 'f-city', 'f-state',
+                    'f-vendor-category', 'f-payment-terms', 'f-average-delivery-days', 'f-performance-rating',
+                    'f-bank-name', 'f-account-number', 'f-verified-account-name', 'f-remarks', 'f-notes'].forEach(function (id) {
+                        document.getElementById(id).value = '';
+                    });
+                document.getElementById('f-preferred').checked = false;
             }
             new bootstrap.Modal(document.getElementById('modal-form')).show();
         }
@@ -287,8 +469,27 @@
                 phone: document.getElementById('f-phone').value.trim() || undefined,
                 email: document.getElementById('f-email').value.trim() || undefined,
                 address: document.getElementById('f-address').value.trim() || undefined,
+                whatsapp: document.getElementById('f-whatsapp').value.trim() || undefined,
+                city: document.getElementById('f-city').value.trim() || undefined,
+                state: document.getElementById('f-state').value.trim() || undefined,
+                vendorCategory: document.getElementById('f-vendor-category').value.trim() || undefined,
+                paymentTerms: document.getElementById('f-payment-terms').value.trim() || undefined,
+                averageDeliveryDays: document.getElementById('f-average-delivery-days').value ? Number(document.getElementById('f-average-delivery-days').value) : undefined,
+                performanceRating: document.getElementById('f-performance-rating').value ? Number(document.getElementById('f-performance-rating').value) : undefined,
+                remarks: document.getElementById('f-remarks').value.trim() || undefined,
+                isPreferred: document.getElementById('f-preferred').checked,
                 notes: document.getElementById('f-notes').value.trim() || undefined,
             };
+            // Only ever sent if the banking section is actually visible --
+            // for a user without suppliers:view_banking, these fields are
+            // simply never included in the payload at all, so an update
+            // from that user can never accidentally blank out existing
+            // banking data.
+            if (document.getElementById('f-banking-section').style.display !== 'none') {
+                payload.bankName = document.getElementById('f-bank-name').value.trim() || undefined;
+                payload.accountNumber = document.getElementById('f-account-number').value.trim() || undefined;
+                payload.verifiedAccountName = document.getElementById('f-verified-account-name').value.trim() || undefined;
+            }
             if (editingId) payload.isActive = document.getElementById('f-active').checked;
 
             var btn = document.getElementById('btn-save');
@@ -326,13 +527,106 @@
                 list.innerHTML = items.length
                     ? '<table class="table table-sm"><thead><tr><th>Item</th><th>Branch</th><th>Category</th><th class="text-end">Stock</th></tr></thead><tbody>' +
                     items.map(function (i) {
-                        return '<tr><td>' + esc(i.name) + '</td><td>' + esc(i.branch ? i.branch.name : '\u2014') + '</td><td>' + esc(i.category) + '</td><td class="text-end">' + i.currentQuantity + '</td></tr>';
+                        // Phase 2 replaced the old single currentQuantity
+                        // with three explicit buckets -- this was still
+                        // reading the removed field, silently showing
+                        // "undefined" for every row.
+                        var stockSummary = 'Store: ' + i.storeStock + ' \u00b7 Sales: ' + i.salesStock + ' \u00b7 Usage: ' + i.usageStock;
+                        return '<tr><td>' + esc(i.name) + '</td><td>' + esc(i.branch ? i.branch.name : '\u2014') + '</td><td>' + esc(i.category) + '</td><td class="text-end">' + esc(stockSummary) + '</td></tr>';
                     }).join('') + '</tbody></table>'
                     : '<div class="text-secondary text-center py-4">No items linked to this ' + typeLabel.toLowerCase() + ' yet.</div>';
             } catch (e) {
                 list.innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
             }
         }
+
+        var ledgerVendorId = null;
+
+        async function viewLedger(id, name) {
+            ledgerVendorId = id;
+            document.getElementById('ledger-modal-title').textContent = 'Ledger \u2014 ' + name;
+            var body = document.getElementById('ledger-body');
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+            var addBtn = document.getElementById('btn-add-adjustment');
+            addBtn.classList.toggle('d-none', !RBAC.can('suppliers:manage_ledger'));
+            new bootstrap.Modal(document.getElementById('modal-ledger')).show();
+            try {
+                var l = await VendorLedger.getVendorLedger(id);
+                var html = '<div class="row g-3 mb-4">' +
+                    '<div class="col-6"><div class="card card-sm"><div class="card-body text-center">' +
+                    '<div class="text-secondary small mb-1">Outstanding Payable</div>' +
+                    '<div class="h2 mb-0">' + VendorLedger.formatMoney(l.outstandingPayable) + '</div></div></div></div>' +
+                    '<div class="col-6"><div class="card card-sm"><div class="card-body text-center">' +
+                    '<div class="text-secondary small mb-1">Outstanding Goods</div>' +
+                    '<div class="h2 mb-0">' + VendorLedger.formatMoney(l.outstandingGoodsValue) + '</div></div></div></div>' +
+                    '</div>';
+
+                if (l.outstandingGoodsLines && l.outstandingGoodsLines.length) {
+                    html += '<h4>Undelivered Goods</h4><div class="table-responsive mb-4"><table class="table table-sm">' +
+                        '<thead><tr><th>Purchase</th><th>Product</th><th class="text-end">Ordered</th><th class="text-end">Received</th><th class="text-end">Outstanding</th><th class="text-end">Value</th></tr></thead><tbody>' +
+                        l.outstandingGoodsLines.map(function (line) {
+                            return '<tr><td>Purchase #' + line.purchaseNumber + '</td><td>' + esc(line.productName) + '</td>' +
+                                '<td class="text-end">' + line.orderedQty + '</td><td class="text-end">' + line.receivedQty + '</td>' +
+                                '<td class="text-end">' + line.outstandingQty + '</td><td class="text-end">' + VendorLedger.formatMoney(line.outstandingValue) + '</td></tr>';
+                        }).join('') + '</tbody></table></div>';
+                }
+
+                html += '<h4>Ledger History</h4><div class="table-responsive"><table class="table table-sm">' +
+                    '<thead><tr><th>Date</th><th>Type</th><th>Reference</th><th class="text-end">Amount</th></tr></thead><tbody>';
+                html += l.entries.length
+                    ? l.entries.map(function (entry) {
+                        var typeBadge = entry.type === 'PURCHASE' ? '<span class="badge bg-blue-lt">Purchase</span>'
+                            : entry.type === 'PAYMENT' ? '<span class="badge bg-green-lt">Payment</span>'
+                                : '<span class="badge bg-amber-lt">Adjustment</span>';
+                        var sign = entry.direction === 'INCREASES_PAYABLE' ? '+' : '\u2212';
+                        return '<tr><td>' + new Date(entry.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + '</td>' +
+                            '<td>' + typeBadge + '</td><td>' + esc(entry.reference) + '</td>' +
+                            '<td class="text-end">' + sign + ' ' + VendorLedger.formatMoney(entry.amount) + '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="4" class="text-center text-secondary py-3">No ledger activity yet.</td></tr>';
+                html += '</tbody></table></div>';
+
+                body.innerHTML = html;
+            } catch (e) {
+                body.innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load ledger.') + '</div>';
+            }
+        }
+
+        document.getElementById('btn-add-adjustment').addEventListener('click', function () {
+            document.getElementById('adj-error').classList.add('d-none');
+            document.getElementById('adj-type').value = 'CREDIT';
+            document.getElementById('adj-amount').value = '';
+            document.getElementById('adj-reason').value = '';
+            new bootstrap.Modal(document.getElementById('modal-adjustment')).show();
+        });
+
+        document.getElementById('btn-save-adjustment').addEventListener('click', async function () {
+            var errEl = document.getElementById('adj-error');
+            errEl.classList.add('d-none');
+            var amount = Number(document.getElementById('adj-amount').value);
+            var reason = document.getElementById('adj-reason').value.trim();
+            if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount.'; errEl.classList.remove('d-none'); return; }
+            if (!reason) { errEl.textContent = 'A reason is required.'; errEl.classList.remove('d-none'); return; }
+
+            var btn = document.getElementById('btn-save-adjustment');
+            btn.disabled = true;
+            try {
+                await VendorLedger.createAdjustment(ledgerVendorId, {
+                    type: document.getElementById('adj-type').value,
+                    amount: amount,
+                    reason: reason,
+                });
+                bootstrap.Modal.getInstance(document.getElementById('modal-adjustment')).hide();
+                // Refresh the ledger modal underneath with the new adjustment reflected.
+                var name = document.getElementById('ledger-modal-title').textContent.replace(/^Ledger \u2014 /, '');
+                viewLedger(ledgerVendorId, name);
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save adjustment.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 

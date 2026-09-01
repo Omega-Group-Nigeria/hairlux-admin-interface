@@ -20,6 +20,7 @@ var NavConfig = window.NavConfig || (() => {
         applications: '<svg ' + SVG_ATTRS + '><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M3 7l9 6l9 -6" /></svg>',
         staff: '<svg ' + SVG_ATTRS + '><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>',
         beauticians: '<svg ' + SVG_ATTRS + '><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>',
+        history: '<svg ' + SVG_ATTRS + '><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>',
     };
 
     /** @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string}>, permission?:object}>} */
@@ -58,7 +59,7 @@ var NavConfig = window.NavConfig || (() => {
         },
         {
             id: "contacts",
-            label: "Contacts",
+            label: "Business Operations",
             icon: "users",
             permission: {
                 type: "requireAny",
@@ -67,6 +68,12 @@ var NavConfig = window.NavConfig || (() => {
             children: [
                 { label: "Users", href: "users.html" },
                 { label: "Customer Contacts", href: "customer-contacts.html" },
+                { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html" },
+                { label: "Inventory Products", href: "inventory-products.html" },
+                { label: "Purchase Requests", href: "purchase-requests.html" },
+                { label: "Purchases", href: "purchases.html" },
+                { label: "Financial Dashboard", href: "financial-dashboard.html" },
+                { label: "Profitability Report", href: "profitability-report.html" },
                 { label: "Suppliers", href: "suppliers.html" },
                 { label: "Vendors", href: "vendors.html" },
             ],
@@ -75,11 +82,28 @@ var NavConfig = window.NavConfig || (() => {
             id: "payroll",
             label: "Payroll",
             icon: "users",
-            href: "payroll.html",
             permission: {
                 type: "requireAny",
-                perms: ["payroll:read", "payroll:manage"],
+                // Dev Feedback Round 4, item #37: payroll:manage was split
+                // into 7 granular permissions -- listed here so a user
+                // with even a subset of them (not necessarily all) still
+                // sees this nav item. Payroll Engine v2, Phase 4: the
+                // commission-plan permissions are included too, so a user
+                // with only those (and none of the period/payslip ones)
+                // still sees the group and can reach Commission Plans.
+                perms: [
+                    "payroll:read", "payroll:manage_compensation", "payroll:approve_bank_change",
+                    "payroll:create_period", "payroll:generate", "payroll:approve_period",
+                    "payroll:manage_adjustments", "payroll:manage_settings", "payroll:correct",
+                    "payroll:read_commission_plans", "payroll:create_commission_plan",
+                    "payroll:update_commission_plan", "payroll:delete_commission_plan",
+                    "payroll:assign_commission_plan",
+                ],
             },
+            children: [
+                { label: "Payroll", href: "payroll.html" },
+                { label: "Commission Plans", href: "commission-plans.html" },
+            ],
         },
         {
             id: "services",
@@ -95,8 +119,24 @@ var NavConfig = window.NavConfig || (() => {
             id: "branches",
             label: "Branches",
             icon: "branches",
-            href: "branches.html",
-            permission: { type: "requireAny", perms: ["branches:read", "branches:manage"] },
+            // Permission set now covers both nested pages — Branches itself
+            // and Branch Finance (formerly its own top-level item) — since
+            // the group's visibility gates access to both.
+            permission: {
+                type: "requireAny",
+                // Dev Feedback Round 4, item #43: branches:manage was
+                // split into 5 granular permissions -- listed here so a
+                // user with even a subset of them still sees this nav item.
+                perms: [
+                    "branches:read", "branches:create", "branches:update",
+                    "branches:manage_manager", "branches:delete", "branches:manage_services",
+                    "branch_finance:read", "branch_finance:reconcile",
+                ],
+            },
+            children: [
+                { label: "Overview", href: "branches.html" },
+                { label: "Branch Finance", href: "branch-finance.html" },
+            ],
         },
         {
             id: "shop",
@@ -155,9 +195,10 @@ var NavConfig = window.NavConfig || (() => {
             id: "staff",
             label: "Staff",
             icon: "staff",
+
             permission: {
                 type: "requireAny",
-                perms: ["staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations"],
+                perms: ["staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations", "lms:read", "approval_chains:read"],
             },
             children: [
                 { label: "Staff Records", href: "staff.html" },
@@ -166,6 +207,8 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Tasks & Directives", href: "staff-directives.html" },
                 { label: "Attendance", href: "staff-attendance.html" },
                 { label: "Leave Requests", href: "leave-requests.html" },
+                { label: "Training Library (LMS)", href: "lms.html" },
+                { label: "Approval Chains", href: "approval-chains.html" },
             ],
         },
         {
@@ -183,6 +226,26 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Settings", href: "beauticians.html#settings" },
                 { label: "Payouts", href: "beauticians.html#payouts" },
             ],
+        },
+        {
+            id: "site-stats",
+            label: "Site Stats",
+            icon: "dashboard",
+            href: "site-stats.html",
+            permission: {
+                type: "requireAny",
+                perms: ["site_stats:manage"],
+            },
+        },
+        {
+            id: "audit-trail",
+            label: "Audit Trail",
+            icon: "history",
+            href: "audit-trail.html",
+            permission: {
+                type: "requireAny",
+                perms: ["audit_trail:read"],
+            },
         },
     ];
 

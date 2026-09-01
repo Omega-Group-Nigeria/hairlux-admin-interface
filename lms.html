@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Training Library (LMS)</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        #quill-editor {
+            min-height: 160px;
+            background: #fff;
+        }
+
+        .file-status {
+            font-size: 12px;
+            color: var(--tblr-secondary);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <h2 class="page-title">Training Library (LMS)</h2>
+                            <div class="text-secondary small mt-1">Role-gated training material — staff can only
+                                view; there is no completion tracking.</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-primary" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Course
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Content</th>
+                                        <th>Visible to</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">New Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="f-title" placeholder="e.g. Hair Coloring Basics">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <div id="quill-editor"></div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Video <span class="text-secondary">(optional)</span></label>
+                            <input type="file" class="form-control" id="f-video" accept="video/*">
+                            <div class="file-status" id="f-video-status"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">PDF <span class="text-secondary">(optional)</span></label>
+                            <input type="file" class="form-control" id="f-pdf" accept="application/pdf">
+                            <div class="file-status" id="f-pdf-status"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Visible to (roles)</label>
+                        <select class="form-select" id="f-roles" multiple></select>
+                        <div class="form-hint">Staff need at least one of the selected roles to see this course.
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="f-active" checked>
+                        <label class="form-check-label" for="f-active">Active (visible to staff)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/roles.js"></script>
+    <script src="assets/js/api-utils/lms.js"></script>
+    <script src="assets/js/multi-select-dropdown.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var editingId = null;
+        var _quill = null;
+        var _allRoles = [];
+        var _existingVideoKey = null;
+        var _existingPdfKey = null;
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('lms:read');
+
+            _initQuill();
+            document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-save').addEventListener('click', save);
+
+            try {
+                _allRoles = await Roles.fetchRoles ? await Roles.fetchRoles() : [];
+            } catch (e) {
+                _allRoles = [];
+            }
+            renderRoleCheckboxes();
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function _initQuill() {
+            _quill = new Quill('#quill-editor', {
+                theme: 'snow',
+                placeholder: 'What this course covers…',
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        ['link'],
+                        ['clean'],
+                    ],
+                },
+            });
+        }
+
+        function renderRoleCheckboxes() {
+            var select = document.getElementById('f-roles');
+            if (!_allRoles.length) {
+                select.innerHTML = '';
+                select.disabled = true;
+                select.insertAdjacentHTML('afterend', '<div class="text-secondary small mt-1" id="f-roles-empty">No roles found — create roles first under Settings → Roles & Permissions.</div>');
+                return;
+            }
+            select.disabled = false;
+            select.innerHTML = _allRoles.map(function (r) {
+                return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>';
+            }).join('');
+            MultiSelectDropdown.attach('f-roles', { placeholder: 'Select roles…' });
+        }
+
+        function checkedRoleIds() {
+            return Array.from(document.getElementById('f-roles').selectedOptions).map(function (o) { return o.value; });
+        }
+
+        function setCheckedRoles(ids) {
+            var set = new Set(ids || []);
+            Array.from(document.getElementById('f-roles').options).forEach(function (o) { o.selected = set.has(o.value); });
+            MultiSelectDropdown.refresh('f-roles');
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var list = await Lms.getAll();
+                tbody.innerHTML = list.length
+                    ? list.map(function (c) {
+                        var statusBadge = c.isActive
+                            ? '<span class="badge bg-green-lt">Active</span>'
+                            : '<span class="badge bg-secondary-lt">Inactive</span>';
+                        var contentBadges = (c.videoKey ? '<span class="badge bg-blue-lt me-1">Video</span>' : '') +
+                            (c.pdfKey ? '<span class="badge bg-azure-lt">PDF</span>' : '') +
+                            (!c.videoKey && !c.pdfKey ? '<span class="text-secondary small">Text only</span>' : '');
+                        var roleBadges = (c.roles || []).map(function (r) {
+                            return '<span class="badge bg-secondary-lt me-1">' + esc(r.adminRole ? r.adminRole.name : '') + '</span>';
+                        }).join('') || '<span class="text-secondary small">No roles assigned</span>';
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(c.title) + '</td>' +
+                            '<td>' + contentBadges + '</td>' +
+                            '<td>' + roleBadges + '</td>' +
+                            '<td>' + statusBadge + '</td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + c.id + '\')">Edit</button>' +
+                            '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + c.id + '\')">Delete</button>' +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="5" class="text-center text-secondary py-5">No courses yet.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function openForm(id) {
+            editingId = id;
+            document.getElementById('form-error').classList.add('d-none');
+            document.getElementById('modal-form-title').textContent = id ? 'Edit Course' : 'New Course';
+            document.getElementById('f-video').value = '';
+            document.getElementById('f-pdf').value = '';
+            document.getElementById('f-video-status').textContent = '';
+            document.getElementById('f-pdf-status').textContent = '';
+            _existingVideoKey = null;
+            _existingPdfKey = null;
+
+            if (id) {
+                try {
+                    var c = await Lms.getOne(id);
+                    document.getElementById('f-title').value = c.title;
+                    _quill.root.innerHTML = c.description || '';
+                    document.getElementById('f-active').checked = !!c.isActive;
+                    setCheckedRoles((c.roles || []).map(function (r) { return r.adminRoleId; }));
+                    _existingVideoKey = c.videoKey;
+                    _existingPdfKey = c.pdfKey;
+                    if (c.videoKey) document.getElementById('f-video-status').textContent = 'A video is already attached — choose a new file only to replace it.';
+                    if (c.pdfKey) document.getElementById('f-pdf-status').textContent = 'A PDF is already attached — choose a new file only to replace it.';
+                } catch (e) {
+                    alert(e.message || 'Failed to load.');
+                    return;
+                }
+            } else {
+                document.getElementById('f-title').value = '';
+                _quill.root.innerHTML = '';
+                document.getElementById('f-active').checked = true;
+                setCheckedRoles([]);
+            }
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+            var title = document.getElementById('f-title').value.trim();
+            var description = _quill.root.innerHTML.trim();
+            var roleIds = checkedRoleIds();
+
+            if (!title) { errEl.textContent = 'Title is required.'; errEl.classList.remove('d-none'); return; }
+            if (_quill.getText().trim().length === 0) { errEl.textContent = 'Description is required.'; errEl.classList.remove('d-none'); return; }
+            if (!roleIds.length) { errEl.textContent = 'Select at least one role who can see this course.'; errEl.classList.remove('d-none'); return; }
+
+            var formData = new FormData();
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('roleIds', JSON.stringify(roleIds));
+            formData.append('isActive', document.getElementById('f-active').checked ? 'true' : 'false');
+            var videoFile = document.getElementById('f-video').files[0];
+            var pdfFile = document.getElementById('f-pdf').files[0];
+            if (videoFile) formData.append('video', videoFile);
+            if (pdfFile) formData.append('pdf', pdfFile);
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                if (editingId) await Lms.update(editingId, formData);
+                else await Lms.create(formData);
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function remove(id) {
+            if (!confirm('Delete this course permanently? This cannot be undone.')) return;
+            try {
+                await Lms.remove(id);
+                load();
+            } catch (e) {
+                alert(e.message || 'Failed to delete.');
+            }
+        }
+    </script>
+</body>
+
+</html>

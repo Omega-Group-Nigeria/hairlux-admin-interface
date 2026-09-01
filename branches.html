@@ -472,20 +472,24 @@
 
         var BRANCH_MANAGE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></svg>';
 
-        function branchActionsHtml(branch, canManage) {
+        function branchActionsHtml(branch, perms) {
             var isOpen = branch.isActive !== false;
             var id = branch.id;
             var name = escAttr(branch.name);
             var items = '<a href="#" class="dropdown-item btn-branch-services" data-id="' + id + '" data-name="' + name + '">Branch services</a>';
-            if (canManage) {
+            if (perms.canUpdate) {
                 items += '<div class="dropdown-divider"></div>';
                 items += '<a href="#" class="dropdown-item btn-branch-edit" data-id="' + id + '">Edit branch</a>';
                 items += '<a href="#" class="dropdown-item btn-branch-toggle" data-id="' + id + '" data-name="' + name + '" data-active="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close branch" : "Reopen branch") + '</a>';
+            }
+            if (perms.canManageManager) {
                 items += '<div class="dropdown-divider"></div>';
                 items += '<a href="#" class="dropdown-item btn-branch-set-manager" data-id="' + id + '" data-name="' + name + '">' + (branch.manager ? "Change manager" : "Appoint manager") + '</a>';
                 if (branch.manager) {
                     items += '<a href="#" class="dropdown-item btn-branch-remove-manager" data-id="' + id + '" data-name="' + name + '">Remove manager</a>';
                 }
+            }
+            if (perms.canDelete) {
                 items += '<div class="dropdown-divider"></div>';
                 items += '<a href="#" class="dropdown-item text-danger btn-branch-delete" data-id="' + id + '" data-name="' + name + '">Delete</a>';
             }
@@ -514,8 +518,7 @@
             var modal = new bootstrap.Modal(document.getElementById("modal-branch-manager"));
             modal.show();
             try {
-                var result = await Staff.getAll({ locationId: branchId, limit: 100 });
-                var staffList = result.data || [];
+                var staffList = await Staff.getOptions({ locationId: branchId });
                 if (!staffList.length) {
                     select.innerHTML = '<option value="">No staff assigned to this branch</option>';
                     return;
@@ -561,8 +564,10 @@
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
                 RBAC.applyNavVisibility();
-                if (RBAC.can(Branches.PERMISSIONS.MANAGE)) {
+                if (RBAC.can(Branches.PERMISSIONS.CREATE)) {
                     document.getElementById("btn-add-branch").classList.remove("d-none");
+                }
+                if (RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES)) {
                     document.getElementById("matrix-bulk-actions").classList.remove("d-none");
                 } else {
                     document.getElementById("matrix-bulk-actions").classList.add("d-none");
@@ -636,7 +641,7 @@
             });
 
             document.getElementById("matrix-bulk-actions").addEventListener("click", function (e) {
-                if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+                if (!RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES)) return;
                 if (e.target.closest(".btn-matrix-enable")) bulkMatrixAvailability(true);
                 if (e.target.closest(".btn-matrix-disable")) bulkMatrixAvailability(false);
                 if (e.target.closest(".btn-matrix-clear-prices")) bulkMatrixClearOverrides();
@@ -684,9 +689,13 @@
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No branches found.</td></tr>';
                     return;
                 }
-                var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+                var perms = {
+                    canUpdate: RBAC.can(Branches.PERMISSIONS.UPDATE),
+                    canManageManager: RBAC.can(Branches.PERMISSIONS.MANAGE_MANAGER),
+                    canDelete: RBAC.can(Branches.PERMISSIONS.DELETE),
+                };
                 tbody.innerHTML = _branches.map(function (b) {
-                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + formatManagerCell(b.manager) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, canManage) + '</td></tr>';
+                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + formatManagerCell(b.manager) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, perms) + '</td></tr>';
                 }).join("");
                 initBranchRowDropdowns();
             } catch (e) {
@@ -736,7 +745,13 @@
             return null;
         }
         async function openBranchModal(id) {
-            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            // Handles both Create (id null) and Edit (id set) -- check
+            // whichever permission actually applies. The buttons that
+            // trigger each path are already gated correctly (Add Branch
+            // by CREATE, the row's Edit item by UPDATE); this is a
+            // defensive second check in case the function is ever called
+            // from somewhere else ungated.
+            if (!RBAC.can(id ? Branches.PERMISSIONS.UPDATE : Branches.PERMISSIONS.CREATE)) return;
             _editBranchId = id || null;
             var errEl = document.getElementById("modal-branch-error");
             var nameEl = document.getElementById("branch-name");
@@ -898,7 +913,7 @@
 
         function updateMatrixDirtyState() {
             var dirty = matrixHasChanges();
-            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES);
             document.getElementById("matrix-dirty-label").textContent = dirty ? "Unsaved changes" : "No unsaved changes";
             document.getElementById("matrix-dirty-label").className = dirty ? "small text-warning" : "text-secondary small";
             if (canManage) {
@@ -917,13 +932,13 @@
         }
 
         function onMatrixAvailabilityChange(serviceId, checked) {
-            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES)) return;
             _matrixEdits[serviceId] = Object.assign({}, _matrixEdits[serviceId] || {}, { isAvailable: checked });
             renderMatrix();
         }
 
         function onMatrixPriceChange(serviceId, value) {
-            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES)) return;
             var row = _matrixRows.find(function (r) { return r.serviceId === serviceId; });
             if (!row) return;
             var trimmed = String(value).trim();
@@ -1008,7 +1023,7 @@
         function renderMatrix() {
             var tbody = document.getElementById("matrix-tbody");
             var rows = getFilteredMatrixRows();
-            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES);
             if (!rows.length) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No services match your filters.</td></tr>';
                 updateMatrixDirtyState();
@@ -1077,7 +1092,7 @@
         }
 
         async function saveMatrix() {
-            if (!RBAC.can(Branches.PERMISSIONS.MANAGE) || !_matrixBranchId) return;
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES) || !_matrixBranchId) return;
             var services = buildPatchPayload();
             if (!services.length) {
                 flashMatrixAlert("warning", "No changes to save.");

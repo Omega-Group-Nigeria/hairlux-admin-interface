@@ -41,6 +41,7 @@ const Suppliers = (function () {
     async function remove(id) {
         return apiFetch(`/admin/suppliers/${id}`, { method: 'DELETE' });
     }
+    
 
     return { getAll, getOne, create, update, remove };
 })();

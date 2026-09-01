@@ -4,6 +4,22 @@
  */
 
 let currentStaff = null;
+let currentAddressVerification = null;
+
+/**
+ * True if an onboarding item still genuinely needs the staff member's
+ * action. isComplete alone can't express "the admin cancelled this" --
+ * a cancelled Physical Address Verification is correctly not complete,
+ * but it's also not something the staff member owes any action on
+ * anymore. Centralized here after the same gap was independently missed
+ * in three different places (the dashboard warning banner, the progress
+ * bar, and the sidebar badge count) when CANCELLED was first added.
+ */
+function isOnboardingItemPending(item) {
+  if (item.isComplete) return false;
+  if (item.type === 'PHYSICAL_ADDRESS_VERIFICATION' && currentAddressVerification && currentAddressVerification.status === 'CANCELLED') return false;
+  return true;
+}
 let currentOnboarding = null;
 let currentDocuments = null;
 let currentAnnouncements = [];
@@ -16,6 +32,7 @@ const ONBOARDING_ITEM_LABELS = {
   EMERGENCY_CONTACT: 'Emergency Contact',
   REFERENCE_CHECK: 'Reference Check',
   ADDRESS_VERIFICATION: 'Address Verification',
+  PHYSICAL_ADDRESS_VERIFICATION: 'Physical Address Verification',
   PASSPORT_PHOTO: 'Passport Photo',
   POLICY_ACKNOWLEDGMENT: 'Policy Acknowledgment',
 };
@@ -45,14 +62,60 @@ async function initStaffPortal() {
     loadLeaveRequests(),
     loadMyApprovals(),
     loadSalonBookings(),
+    loadTodayStylistPerformance(),
     loadSalesData(),
     loadPayrollSection(),
     loadCommission(),
   ]);
 
+  sbWireSearchAndPagination();
   renderDashboard();
   renderOnboardingStatusStrip();
   renderNotifications();
+}
+
+function sbWireSearchAndPagination() {
+  var searchInput = document.getElementById('sb-search');
+  var limitSelect = document.getElementById('sb-limit');
+  var prevBtn = document.getElementById('sb-prev-page');
+  var nextBtn = document.getElementById('sb-next-page');
+  if (!searchInput || searchInput.dataset.wired) return; // avoid double-binding if this ever gets called twice
+
+  searchInput.dataset.wired = '1';
+  searchInput.addEventListener('input', function () {
+    clearTimeout(sbSearchTimer);
+    var val = searchInput.value;
+    sbSearchTimer = setTimeout(function () { sbSearch = val; sbPage = 1; loadSalonBookings(); }, 300);
+  });
+  limitSelect.addEventListener('change', function () { sbLimit = Number(limitSelect.value); sbPage = 1; loadSalonBookings(); });
+  prevBtn.addEventListener('click', function () { if (sbPage > 1) { sbPage--; loadSalonBookings(); } });
+  nextBtn.addEventListener('click', function () { if (sbPage < sbTotalPages) { sbPage++; loadSalonBookings(); } });
+}
+
+/** Today's Stylist Performance — branch-scoped, today only, never historical. */
+async function loadTodayStylistPerformance() {
+  var container = document.getElementById('sb-performance-container');
+  if (!container) return;
+  try {
+    var rows = await SalonBookingsSelf.getTodayStylistPerformance();
+    if (!rows.length) {
+      container.innerHTML = '<div class="text-secondary small">No completed services yet today.</div>';
+      return;
+    }
+    container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
+      '<th>Stylist</th><th>Completed Services</th><th>Total Generated</th>' +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr>' +
+          '<td>' + escapeHtml(r.staffName) + '</td>' +
+          '<td>' + r.completedServices + '</td>' +
+          '<td style="font-weight:700;color:var(--green)">' + sbFormatMoney(r.totalGenerated) + '</td>' +
+          '</tr>';
+      }).join('') +
+      '</tbody></table></div>';
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
 }
 
 /**
@@ -136,9 +199,10 @@ function renderStaffChip() {
  * Shows/hides sidebar sections per staff eligibility — Manager (managedBranch
  * set, or the staff-portal:approvals permission), Authorized Access
  * (staff-portal:inventory / staff-portal:bookings permissions from their
- * assigned role), Commission (commissionRate set). Permission strings ride
- * on the same AdminRole system used for admin-portal access, so one role
- * assignment governs both portals consistently.
+ * assigned role), Commission (commissionRate or commissionPlanId set).
+ * Permission strings ride on the same AdminRole system used for
+ * admin-portal access, so one role assignment governs both portals
+ * consistently.
  */
 function applyModuleVisibility() {
   var s = currentStaff || {};
@@ -149,7 +213,12 @@ function applyModuleVisibility() {
   var hasBookingsAccess = hasPerm('staff-portal:bookings');
   var hasInventoryAccess = hasPerm('staff-portal:inventory');
   var hasSalesAccess = hasPerm('staff-portal:sales');
-  var hasCommission = s.commissionRate != null;
+  // Dev Feedback Round 7, item #7: checks both a Commission Plan and the
+  // flat rate -- checking commissionRate alone would hide this entire
+  // nav section for a staff member whose only setup is a plan (a valid,
+  // real scenario -- see Staff.commissionRate's own schema comment: it's
+  // "the fallback... with no formal plan yet").
+  var hasCommission = s.commissionRate != null || !!s.commissionPlanId;
 
   var managerSec = document.getElementById('sb-sec-manager');
   if (managerSec) managerSec.style.display = isManager ? '' : 'none';
@@ -185,7 +254,7 @@ function renderDashboard() {
       alertBanner.style.display = 'none';
     } else {
       alertBanner.style.display = '';
-      const remaining = currentOnboarding.items.filter((i) => !i.isComplete);
+      const remaining = currentOnboarding.items.filter(isOnboardingItemPending);
       const titleEl = alertBanner.querySelector('div[style*="font-weight:700"]');
       const descEl = alertBanner.querySelector('div[style*="font-size:12px"]');
       if (titleEl) titleEl.textContent = 'Onboarding Incomplete \u2014 ' + remaining.length + ' step' + (remaining.length === 1 ? '' : 's') + ' remaining';
@@ -244,10 +313,14 @@ function renderDashboard() {
     let previewHtml = '';
     if (topAnnouncement) {
       const fromName = topAnnouncement.createdBy ? [topAnnouncement.createdBy.firstName, topAnnouncement.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+      // topAnnouncement.body is server-sanitized HTML from the admin's rich-text
+      // editor (already e.g. "<p>...</p>"), not plain text -- rendered directly,
+      // not escaped, and without an extra wrapping <p> since the body supplies
+      // its own block-level tags already.
       previewHtml +=
         '<div class="banner"><div class="tag">\uD83D\uDCE2 Management \u2014 ' +
         (topAnnouncement.target === 'ALL' ? 'All Staff' : topAnnouncement.target === 'BRANCH' ? 'Your Branch' : 'You') +
-        '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3><p>' + escapeHtml(topAnnouncement.body) + '</p>' +
+        '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3><div class="ann-body">' + topAnnouncement.body + '</div>' +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(topAnnouncement.createdAt) + '</div></div>';
     }
     if (topDirective) {
@@ -320,19 +393,24 @@ function renderDashboard() {
   const onboardingCard = screen.querySelectorAll('.g2 > div:last-child .card')[1];
   if (onboardingCard && currentOnboarding) {
     const items = currentOnboarding.items;
-    const doneCount = items.filter((i) => i.isComplete).length;
-    const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+    // Excluded entirely from the denominator, not just the numerator --
+    // a cancelled item is no longer a real, active onboarding
+    // requirement for this staff member, so it shouldn't count against
+    // their completion percentage at all.
+    const activeItems = items.filter((i) => !(i.type === 'PHYSICAL_ADDRESS_VERIFICATION' && currentAddressVerification && currentAddressVerification.status === 'CANCELLED'));
+    const doneCount = activeItems.filter((i) => i.isComplete).length;
+    const pct = activeItems.length ? Math.round((doneCount / activeItems.length) * 100) : 0;
 
     const pctLabel = onboardingCard.querySelector('span[style*="color:var(--gold)"]');
     const countLabel = onboardingCard.querySelector('span[style*="color:var(--muted)"]');
     const barFill = onboardingCard.querySelector('.pbar span');
     if (pctLabel) pctLabel.textContent = pct + '% Complete';
-    if (countLabel) countLabel.textContent = doneCount + ' of ' + items.length + ' done';
+    if (countLabel) countLabel.textContent = doneCount + ' of ' + activeItems.length + ' done';
     if (barFill) barFill.style.width = pct + '%';
 
     const listContainer = barFill ? barFill.closest('div[style*="margin-bottom:8px"]') : null;
     if (listContainer) {
-      const rowsHtml = items
+      const rowsHtml = activeItems
         .map((item) => {
           const label = ONBOARDING_ITEM_LABELS[item.type] || item.type;
           const icon = item.isComplete ? '\u2713' : '\u23F3';
@@ -436,6 +514,8 @@ const ONBOARDING_FORM_CONFIG = {
 function openOnboardingSubmitModal(type) {
   if (type === 'PASSPORT_PHOTO') return openPassportPhotoModal();
 
+  if (type === 'PHYSICAL_ADDRESS_VERIFICATION' && currentAddressVerification) return openAddressVerificationModal();
+
   const config = ONBOARDING_FORM_CONFIG[type];
   if (!config) return;
 
@@ -478,6 +558,80 @@ function openPassportPhotoModal() {
 
 function closeOnboardingModal() {
   document.getElementById('onboarding-modal-overlay').style.display = 'none';
+}
+
+async function loadTraining() {
+  const body = document.getElementById('training-list-body');
+  body.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>';
+  try {
+    const courses = await StaffSelf.getLmsCourses();
+    if (!courses.length) {
+      body.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px">No training material available for your role right now.</div>';
+      return;
+    }
+    body.innerHTML = courses.map((c) => {
+      const badges = (c.videoKey ? '<span class="badge b-blue">Video</span>' : '') +
+        (c.pdfKey ? '<span class="badge b-blue">PDF</span>' : '');
+      return (
+        '<div class="flex aic gap3 mb3" style="padding:12px;border:1px solid var(--line);border-radius:var(--r2);cursor:pointer" onclick="openTrainingViewer(\'' + c.id + '\')">' +
+        '<span style="font-size:20px">🎓</span>' +
+        '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + escapeHtml(c.title) + '</div>' +
+        '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + badges + '</div></div>' +
+        '<span style="color:var(--muted)">›</span></div>'
+      );
+    }).join('');
+  } catch (err) {
+    body.innerHTML = '<div style="color:var(--red);font-size:13px;text-align:center;padding:12px">' + escapeHtml(err.message || 'Failed to load training material.') + '</div>';
+  }
+}
+
+async function openTrainingViewer(id) {
+  const box = document.getElementById('training-viewer-box');
+  box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted)">Loading…</div>';
+  document.getElementById('training-viewer-overlay').style.display = 'flex';
+
+  try {
+    // Fresh, short-lived URLs fetched every time this is opened -- never
+    // cached or reused across opens, matching the whole point of keeping
+    // them short-lived in the first place.
+    const course = await StaffSelf.getLmsCourse(id);
+
+    let mediaHtml = '';
+    if (course.videoUrl) {
+      // controlsList="nodownload" hides the native download button in
+      // Chrome/Edge's video controls; disablePictureInPicture removes one
+      // more easy extraction path; the context-menu block deters a casual
+      // right-click save. None of this is unbypassable -- it's the same
+      // "inconvenient, not impossible" mitigation level already agreed on
+      // for this feature.
+      mediaHtml += '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:var(--r2);margin-bottom:12px" src="' + course.videoUrl + '"></video>';
+    }
+    if (course.pdfUrl) {
+      // #toolbar=0&navpanes=0 hides the browser's built-in PDF viewer
+      // toolbar (including its own download button) in Chrome/Firefox --
+      // not honored by every browser, same caveat as above.
+      mediaHtml += '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px"></iframe>';
+    }
+
+    box.innerHTML =
+      '<div class="flex aic gap3 mb3" style="justify-content:space-between">' +
+      '<h3 style="margin:0">' + escapeHtml(course.title) + '</h3>' +
+      '<button class="btn btn-ghost btn-sm" onclick="closeTrainingViewer()">Close</button>' +
+      '</div>' +
+      mediaHtml +
+      '<div style="font-size:14px;line-height:1.6">' + course.description + '</div>';
+  } catch (err) {
+    box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red)">' + escapeHtml(err.message || 'Could not load this course.') + '</div>' +
+      '<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="closeTrainingViewer()">Close</button></div>';
+  }
+}
+
+function closeTrainingViewer() {
+  document.getElementById('training-viewer-overlay').style.display = 'none';
+  // Clear content on close rather than just hiding -- the video element
+  // would otherwise keep its src (and the short-lived presigned URL
+  // inside it) sitting in the DOM after the viewer is dismissed.
+  document.getElementById('training-viewer-box').innerHTML = '';
 }
 
 function showOnboardingModalError(message) {
@@ -535,6 +689,130 @@ async function submitPassportPhotoForm() {
     renderDashboard();
   } catch (err) {
     showOnboardingModalError(err.message || 'Could not upload. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function openAddressVerificationModal() {
+  const av = currentAddressVerification;
+  document.getElementById('onboarding-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="oc-modal-error"></div>' +
+    '<h3>Physical Address Verification</h3>' +
+    '<div class="oc-modal-sub">QoreID field agents will visit within 24-48 hours to confirm this address. Fill in every field accurately -- an agent physically checks against what you enter here.</div>' +
+
+    '<div class="oc-field"><label>Street</label><input type="text" id="av-street" value="' + escapeHtml((av && av.street) || '') + '"></div>' +
+    '<div class="oc-field"><label>City</label><input type="text" id="av-city" value="' + escapeHtml((av && av.city) || '') + '"></div>' +
+    '<div class="oc-field"><label>LGA (Local Government Area)</label><input type="text" id="av-lga" value="' + escapeHtml((av && av.lgaName) || '') + '"></div>' +
+    '<div class="oc-field"><label>State</label><input type="text" id="av-state" value="' + escapeHtml((av && av.stateName) || '') + '"></div>' +
+    '<div class="oc-field"><label>Landmark <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
+    '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
+    '<div class="oc-field"><label>Description</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
+
+    '<div class="oc-field">' +
+    '<label>Location</label>' +
+    '<div class="flex aic gap3" style="margin-bottom:6px;">' +
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="captureAddressVerificationLocation()">\ud83d\udccd Use My Current Location</button>' +
+    '<span id="av-location-status" style="font-size:11px;color:var(--muted)"></span>' +
+    '</div>' +
+    '<div class="flex aic gap3">' +
+    '<input type="number" step="any" id="av-latitude" placeholder="Latitude" value="' + ((av && av.latitude) || '') + '" style="flex:1">' +
+    '<input type="number" step="any" id="av-longitude" placeholder="Longitude" value="' + ((av && av.longitude) || '') + '" style="flex:1">' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--muted);margin-top:4px;">Use the button if you\'re at the address now, or enter coordinates manually.</div>' +
+    '</div>' +
+
+    '<div class="oc-field"><label>Building Type</label><select id="av-building-description">' +
+    ['Residential', 'Commercial'].map((o) => '<option value="' + o + '"' + (av && av.buildingDescription === o ? ' selected' : '') + '>' + o + '</option>').join('') +
+    '</select></div>' +
+    '<div class="oc-field"><label>Building Status</label><select id="av-building-status">' +
+    ['Completed', 'Painted', 'Completed and Painted'].map((o) => '<option value="' + o + '"' + (av && av.buildingStatus === o ? ' selected' : '') + '>' + o + '</option>').join('') +
+    '</select></div>' +
+    '<div class="oc-field"><label>Building Structure</label><select id="av-building-type">' +
+    ['Multi-story', 'Flats & Apartment', 'Bungalow', 'Office Complex'].map((o) => '<option value="' + o + '"' + (av && av.buildingType === o ? ' selected' : '') + '>' + o + '</option>').join('') +
+    '</select></div>' +
+    '<div class="oc-field"><label>Building Colour</label><input type="text" id="av-building-colour" placeholder="e.g. Blue" value="' + escapeHtml((av && av.buildingColour) || '') + '"></div>' +
+    '<div class="oc-field"><label><input type="checkbox" id="av-has-gate-and-fence"' + (av && av.hasGateAndFence ? ' checked' : '') + '> Property has both a gate and a fence</label></div>' +
+
+    '<div class="oc-field"><label>Photos <span style="color:var(--muted)">(optional, but strengthen the verification)</span></label>' +
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">House photo</div><input type="file" id="av-photo1" accept="image/jpeg,image/png">' +
+    '<div style="font-size:11px;color:var(--muted);margin:6px 0 4px;">House number photo</div><input type="file" id="av-photo2" accept="image/jpeg,image/png">' +
+    '<div style="font-size:11px;color:var(--muted);margin:6px 0 4px;">Nearest landmark photo</div><input type="file" id="av-photo3" accept="image/jpeg,image/png">' +
+    '</div>' +
+
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeOnboardingModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="oc-modal-submit-btn" onclick="submitAddressVerificationForm()">Submit</button>' +
+    '</div>';
+
+  document.getElementById('onboarding-modal-overlay').style.display = 'flex';
+}
+
+function captureAddressVerificationLocation() {
+  const statusEl = document.getElementById('av-location-status');
+  if (!navigator.geolocation) {
+    statusEl.textContent = 'Geolocation not supported on this device -- enter coordinates manually.';
+    return;
+  }
+  statusEl.textContent = 'Getting your location\u2026';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      document.getElementById('av-latitude').value = pos.coords.latitude;
+      document.getElementById('av-longitude').value = pos.coords.longitude;
+      statusEl.textContent = 'Location captured.';
+    },
+    (err) => {
+      statusEl.textContent = 'Could not get your location (' + err.message + ') -- enter coordinates manually.';
+    },
+    { enableHighAccuracy: true, timeout: 15000 },
+  );
+}
+
+async function submitAddressVerificationForm() {
+  const val = (id) => document.getElementById(id).value.trim();
+  const street = val('av-street'), city = val('av-city'), lga = val('av-lga'), state = val('av-state');
+  const generalDescription = val('av-general-description');
+  const latitude = val('av-latitude'), longitude = val('av-longitude');
+  const buildingColour = val('av-building-colour');
+
+  if (!street || !city || !lga || !state) { showOnboardingModalError('Street, City, LGA, and State are all required.'); return; }
+  if (!generalDescription) { showOnboardingModalError('Please add a short description to help the field agent locate the address.'); return; }
+  if (!latitude || !longitude) { showOnboardingModalError('Location is required -- use the button or enter coordinates manually.'); return; }
+  if (!buildingColour) { showOnboardingModalError('Please enter the building colour.'); return; }
+
+  const formData = new FormData();
+  formData.append('street', street);
+  formData.append('city', city);
+  formData.append('lgaName', lga);
+  formData.append('stateName', state);
+  const landmark = val('av-landmark'); if (landmark) formData.append('landmark', landmark);
+  const houseNumber = val('av-house-number'); if (houseNumber) formData.append('houseNumber', houseNumber);
+  formData.append('generalDescription', generalDescription);
+  formData.append('latitude', latitude);
+  formData.append('longitude', longitude);
+  formData.append('buildingDescription', document.getElementById('av-building-description').value);
+  formData.append('buildingStatus', document.getElementById('av-building-status').value);
+  formData.append('buildingType', document.getElementById('av-building-type').value);
+  formData.append('buildingColour', buildingColour);
+  formData.append('hasGateAndFence', document.getElementById('av-has-gate-and-fence').checked ? 'true' : 'false');
+
+  ['av-photo1', 'av-photo2', 'av-photo3'].forEach((id, i) => {
+    const file = document.getElementById(id).files[0];
+    if (file) formData.append('photo' + (i + 1), file);
+  });
+
+  const btn = document.getElementById('oc-modal-submit-btn');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'Submitting\u2026';
+  try {
+    await StaffSelf.submitAddressVerification(formData);
+    closeOnboardingModal();
+    await loadOnboarding();
+    renderDashboard();
+  } catch (err) {
+    showOnboardingModalError(err.message || 'Could not submit. Please try again.');
   } finally {
     btn.disabled = false;
     btn.textContent = original;
@@ -887,6 +1165,7 @@ async function loadOnboarding() {
     console.error('Failed to load onboarding', err);
     return;
   }
+  currentAddressVerification = await StaffSelf.getAddressVerification().catch(() => null);
   renderOnboardingBadge();
   renderVerificationChecklist();
 }
@@ -897,7 +1176,7 @@ function renderOnboardingBadge() {
   if (currentOnboarding.onboardingComplete) {
     if (sidebarBadge) sidebarBadge.remove();
   } else if (sidebarBadge) {
-    const remaining = currentOnboarding.items.filter((i) => !i.isComplete).length;
+    const remaining = currentOnboarding.items.filter(isOnboardingItemPending).length;
     sidebarBadge.textContent = String(remaining);
   }
   applyPayrollGate();
@@ -919,12 +1198,76 @@ function applyPayrollGate() {
   });
 }
 
-function handlePayrollNavClick() {
+async function handlePayrollNavClick() {
+  // Deliberately re-fetches fresh rather than trusting currentOnboarding
+  // as-is -- that variable is only ever populated once, at initial app
+  // load, and nothing in this app's navigation re-syncs it automatically.
+  // An admin action that changes onboarding-complete status (e.g.
+  // requesting address verification) while a staff member's session is
+  // already open would otherwise leave this gate checking stale, boot-time
+  // data for the rest of the session.
+  try {
+    currentOnboarding = await StaffSelf.getOnboarding();
+  } catch (err) {
+    console.error('[staff-portal] failed to refresh onboarding status before payroll gate check', err);
+    // Fall through to whatever's already in memory rather than block
+    // entirely on a transient network error.
+  }
+
   if (!currentOnboarding || !currentOnboarding.onboardingComplete) {
     alert('Payslips & Payroll unlocks once your onboarding checklist -- including all Documents & Agreements -- is complete and approved. Open "Complete Onboarding" to see what\'s left.');
+    renderOnboardingBadge();
     return;
   }
   show('payroll');
+}
+
+function renderAddressVerificationRow(label) {
+  const av = currentAddressVerification;
+  if (av.status === 'VERIFIED') {
+    return (
+      '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--green2);border-radius:var(--r2)">' +
+      '<span style="color:var(--green);font-size:18px">\u2713</span>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">Verified ' + StaffSelf.formatDate(av.resultReceivedAt) + '</div></div>' +
+      '<span class="badge b-green">Complete</span></div>'
+    );
+  }
+  if (av.status === 'SUBMITTED') {
+    return (
+      '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--amber2, rgba(184,121,10,.10));border-radius:var(--r2)">' +
+      '<span style="color:var(--amber);font-size:18px">\u23F3</span>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">Submitted ' + StaffSelf.formatDate(av.submittedAt) + ' \u2014 verification in progress (24-48h)</div></div></div>'
+    );
+  }
+  if (av.status === 'REJECTED' || av.status === 'FAILED') {
+    return (
+      '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--red2);border-radius:var(--r2)">' +
+      '<span style="color:var(--red);font-size:18px">\u2717</span>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:11px;color:var(--red)">' + (av.status === 'REJECTED' ? 'Could not be verified' : 'Verification failed') + ' \u2014 contact your admin</div></div>' +
+      '<button class="btn btn-gold btn-sm" onclick="openOnboardingSubmitModal(\'PHYSICAL_ADDRESS_VERIFICATION\')">Resubmit</button></div>'
+    );
+  }
+  if (av.status === 'CANCELLED') {
+    // Neutral, not a red "action needed" state -- the admin withdrew the
+    // request, there is nothing pending on the staff member's side.
+    return (
+      '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--surface2, rgba(0,0,0,.04));border-radius:var(--r2)">' +
+      '<span style="color:var(--muted);font-size:18px">\u2013</span>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">Request cancelled by your admin</div></div></div>'
+    );
+  }
+  // REQUESTED -- nothing submitted yet
+  return (
+    '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--red2);border-radius:var(--r2)">' +
+    '<span style="color:var(--red);font-size:18px">\u2717</span>' +
+    '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
+    '<div style="font-size:11px;color:var(--red)">Your admin has requested this -- not yet submitted</div></div>' +
+    '<button class="btn btn-gold btn-sm" onclick="openOnboardingSubmitModal(\'PHYSICAL_ADDRESS_VERIFICATION\')">Submit</button></div>'
+  );
 }
 
 function renderVerificationChecklist() {
@@ -934,6 +1277,14 @@ function renderVerificationChecklist() {
     .filter((i) => i.type !== 'POLICY_ACKNOWLEDGMENT')
     .map((item) => {
       const label = ONBOARDING_ITEM_LABELS[item.type] || item.type;
+
+      // PHYSICAL_ADDRESS_VERIFICATION only ever appears in the items list
+      // at all once an admin has requested it (see backend upsert in
+      // requestVerification) -- the currentAddressVerification check here
+      // is mostly redundant with that but kept as a defensive guard.
+      if (item.type === 'PHYSICAL_ADDRESS_VERIFICATION' && currentAddressVerification) {
+        return renderAddressVerificationRow(label);
+      }
 
       if (item.isComplete) {
         return (
@@ -1090,12 +1441,14 @@ async function loadAnnouncements() {
     .map((a) => {
       const targetLabel = a.target === 'ALL' ? 'All Staff' : a.target === 'BRANCH' ? 'Your Branch' : 'Just You';
       const fromName = a.createdBy ? [a.createdBy.firstName, a.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+      // a.body is server-sanitized HTML, not plain text (see note above) --
+      // rendered directly, no escaping, no extra wrapping <p>.
       return (
         '<div class="banner" data-announcement-id="' + a.id + '" ' +
         (a.isRead ? '' : 'style="border-color:var(--gold)"') + '>' +
         '<div class="tag">\uD83D\uDCE2 ' + targetLabel + (a.isRead ? '' : ' \u00B7 New') + '</div>' +
         '<h3>' + escapeHtml(a.title) + '</h3>' +
-        '<p>' + escapeHtml(a.body) + '</p>' +
+        '<div class="ann-body">' + a.body + '</div>' +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(a.createdAt) + '</div>' +
         '</div>'
       );
@@ -1143,8 +1496,16 @@ async function loadDirectives() {
   renderNotifications();
 }
 
+function directiveIsOverdue(d) {
+  return !!(d.dueDate && d.status !== 'COMPLETED' && new Date(d.dueDate) < new Date());
+}
+
 function directiveRow(d) {
   const fromName = d.createdBy ? [d.createdBy.firstName, d.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
+  const dueLine = d.dueDate
+    ? ' \u00B7 <span' + (directiveIsOverdue(d) ? ' style="color:var(--red);font-weight:700"' : '') + '>Due ' + StaffSelf.formatDate(d.dueDate) + (directiveIsOverdue(d) ? ' (overdue)' : '') + '</span>'
+    : '';
+
   if (d.status === 'COMPLETED') {
     return (
       '<div class="task done"><div class="task-chk checked">\u2713</div><div style="flex:1">' +
@@ -1152,13 +1513,14 @@ function directiveRow(d) {
       '<div class="task-due">Completed ' + StaffSelf.formatDate(d.respondedAt) + '</div></div></div>'
     );
   }
+  var isUrgent = d.status === 'PENDING' || directiveIsOverdue(d);
   const nextAction = d.status === 'PENDING'
     ? '<button class="btn btn-ghost btn-sm" onclick="handleDirectiveStatus(\'' + d.id + '\',\'ACKNOWLEDGED\')">Acknowledge</button>'
-    : '<button class="btn btn-gold btn-sm" onclick="handleDirectiveStatus(\'' + d.id + '\',\'COMPLETED\')">Mark Done</button>';
+    : '<button class="btn btn-gold btn-sm" onclick="openMarkCompleteModal(\'' + d.id + '\')">Mark Done</button>';
   return (
-    '<div class="task' + (d.status === 'PENDING' ? ' urgent' : '') + '"><div class="task-chk">' + (d.status === 'PENDING' ? '!' : '\u2192') + '</div>' +
+    '<div class="task' + (isUrgent ? ' urgent' : '') + '"><div class="task-chk">' + (d.status === 'PENDING' ? '!' : '\u2192') + '</div>' +
     '<div style="flex:1"><div class="task-title">' + escapeHtml(d.title) + '</div>' +
-    '<div class="task-due">' + escapeHtml(d.body) + ' \u00B7 From ' + escapeHtml(fromName) + '</div></div>' +
+    '<div class="task-due">' + escapeHtml(d.body) + ' \u00B7 From ' + escapeHtml(fromName) + dueLine + '</div></div>' +
     nextAction + '</div>'
   );
 }
@@ -1170,6 +1532,65 @@ async function handleDirectiveStatus(directiveId, status) {
     renderDashboard();
   } catch (err) {
     alert('Could not update task: ' + err.message);
+  }
+}
+
+/**
+ * "Mark Done" now opens this instead of firing the status update directly
+ * — evidence is optional, so Skip goes straight to the same
+ * handleDirectiveStatus path as before; attaching a file uploads it first,
+ * then marks the task Completed right after.
+ */
+function openMarkCompleteModal(directiveId) {
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="mc-modal-error" style="display:none"></div>' +
+    '<h3>Mark Task Complete</h3>' +
+    '<div class="oc-modal-sub">You can optionally attach a photo as proof of completion.</div>' +
+    '<div class="oc-field"><label>Evidence (optional)</label><input type="file" id="mc-field-evidence" accept="image/jpeg,image/png"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" id="mc-skip-btn" onclick="submitMarkComplete(\'' + directiveId + '\', true)">Skip &amp; Mark Done</button>' +
+    '<button class="btn btn-gold btn-sm" id="mc-modal-submit-btn" onclick="submitMarkComplete(\'' + directiveId + '\', false)">Attach &amp; Mark Done</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function submitMarkComplete(directiveId, skipEvidence) {
+  var errEl = document.getElementById('mc-modal-error');
+  var fileInput = document.getElementById('mc-field-evidence');
+  var file = !skipEvidence && fileInput.files && fileInput.files[0];
+
+  if (!skipEvidence && !file) {
+    // Neither button explicitly says "no file chosen" is an error — Skip
+    // exists for that. Attach & Mark Done with nothing selected just
+    // behaves like Skip rather than blocking the user.
+    skipEvidence = true;
+  }
+  if (file && !['image/jpeg', 'image/png'].includes(file.type)) {
+    errEl.textContent = 'Only JPEG or PNG images are accepted.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var btn = skipEvidence ? document.getElementById('mc-skip-btn') : document.getElementById('mc-modal-submit-btn');
+  var otherBtn = skipEvidence ? document.getElementById('mc-modal-submit-btn') : document.getElementById('mc-skip-btn');
+  btn.disabled = true;
+  otherBtn.disabled = true;
+  var original = btn.textContent;
+  btn.textContent = file ? 'Uploading\u2026' : 'Saving\u2026';
+  try {
+    if (file) {
+      await StaffSelf.submitDirectiveEvidence(directiveId, file);
+    }
+    await StaffSelf.updateDirectiveStatus(directiveId, 'COMPLETED');
+    closeProfileModal();
+    await loadDirectives();
+    renderDashboard();
+  } catch (err) {
+    errEl.textContent = err.message || 'Could not complete this task.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    otherBtn.disabled = false;
+    btn.textContent = original;
   }
 }
 
@@ -1271,6 +1692,11 @@ async function loadAttendance() {
         if (r.status === 'LATE' && r.lateMinutes) {
           lateDetail = r.lateMinutes + ' min late';
           if (r.latePenaltyAmount) lateDetail += ' · ' + sbFormatMoney(r.latePenaltyAmount) + ' penalty';
+        } else if (r.status === 'ABSENT' && r.absentFeeAmount) {
+          // absentFeeAmount is frozen the moment ABSENT is recorded (same
+          // convention as latePenaltyAmount at check-in) — visible here the
+          // very next time this screen loads, no need to wait for payroll.
+          lateDetail = sbFormatMoney(r.absentFeeAmount) + ' absent fee';
         }
         const hours = r.checkOutAt
           ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
@@ -1599,27 +2025,47 @@ var SB_STATUS_LABELS = {
 };
 var sbServicesCache = null;
 var sbStaffCache = null;
+var sbSearch = '';
+var sbSearchTimer = null;
+var sbPage = 1;
+var sbLimit = 50;
+var sbTotalPages = 1;
+var sbEditingBookingId = null;
+var sbAddServiceBookingId = null;
 
 function sbFormatMoney(amount) {
   if (amount == null) return '—';
   return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+var sbBookingsCache = [];
+
 async function loadSalonBookings() {
   var container = document.getElementById('bookings-list-container');
   try {
-    var result = await SalonBookingsSelf.getAll({ limit: 30 });
+    var result = await SalonBookingsSelf.getAll({ search: sbSearch, page: sbPage, limit: sbLimit });
     var bookings = result.data || [];
+    sbBookingsCache = bookings;
+    var meta = result.meta || {};
+    sbTotalPages = meta.totalPages || 1;
+    var pageLabel = document.getElementById('sb-page-label');
+    if (pageLabel) pageLabel.textContent = 'Page ' + sbPage + ' of ' + sbTotalPages;
+    var prevBtn = document.getElementById('sb-prev-page');
+    var nextBtn = document.getElementById('sb-next-page');
+    if (prevBtn) prevBtn.disabled = sbPage <= 1;
+    if (nextBtn) nextBtn.disabled = sbPage >= sbTotalPages;
+
     if (!bookings.length) {
-      container.innerHTML = '<div class="text-secondary small py-3">No bookings yet for your branch.</div>';
+      container.innerHTML = '<div class="text-secondary small py-3">No bookings found.</div>';
       return;
     }
     container.innerHTML = '<div class="tbl-wrap"><table><thead><tr>' +
-      '<th>Date / Time</th><th>Customer</th><th>Stylist</th><th>Services</th><th>Total</th><th>Status</th><th></th>' +
+      '<th>Booking ID</th><th>Date / Time</th><th>Customer</th><th>Stylist</th><th>Service</th><th>Amount</th><th>Status</th><th></th>' +
       '</tr></thead><tbody>' +
       bookings.map(function (b, idx) {
         var services = (b.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
         return '<tr>' +
+          '<td style="font-family:monospace;font-size:12px">' + escapeHtml(b.bookingCode || '—') + '</td>' +
           '<td>' + StaffSelf.formatDate(b.bookingDate) + ' · ' + escapeHtml(b.bookingTime) + '</td>' +
           '<td>' + escapeHtml(b.customerName) + '</td>' +
           '<td>' + escapeHtml(b.assignedStaff ? b.assignedStaff.name : '—') + '</td>' +
@@ -1634,23 +2080,40 @@ async function loadSalonBookings() {
     container.querySelectorAll('.btn-sb-start').forEach(function (btn) { btn.addEventListener('click', function () { sbStart(btn.dataset.id); }); });
     container.querySelectorAll('.btn-sb-complete').forEach(function (btn) { btn.addEventListener('click', function () { sbComplete(btn.dataset.id); }); });
     container.querySelectorAll('.btn-sb-cancel').forEach(function (btn) { btn.addEventListener('click', function () { sbCancel(btn.dataset.id); }); });
-    container.querySelectorAll('.btn-sb-no-show').forEach(function (btn) { btn.addEventListener('click', function () { sbNoShow(btn.dataset.id); }); });
+    container.querySelectorAll('.btn-sb-edit').forEach(function (btn) { btn.addEventListener('click', function () { sbOpenEditOrAddService(btn.dataset.id); }); });
+    container.querySelectorAll('.btn-sb-print').forEach(function (btn) { btn.addEventListener('click', function () { sbPrintBooking(btn.dataset.id); }); });
   } catch (err) {
     container.innerHTML = '<div class="text-danger small py-3">' + err.message + '</div>';
   }
 }
 
+/**
+ * Fixed action set per status, matching the current spec exactly:
+ * Scheduled = View/Edit/Start/Cancel/Print, In Progress = View/Edit/Complete/Print,
+ * Completed = View/Edit/Print. No-Show isn't part of this spec's action list for
+ * any status anymore — dropped here to match, though the backend endpoint
+ * stays untouched. Cancel is Scheduled-only now — the previous version let
+ * an In Progress booking be cancelled too, which the backend's
+ * assertCancellable() no longer permits; this was a real bug, not a style choice.
+ * "View" has no dedicated screen here (this list already shows the full
+ * row), so it isn't a separate button — Edit doubles as the detail view
+ * for a Completed booking (opens Add Service, which shows all the same info).
+ */
 function sbActionsHtml(b) {
+  var edit = '<button class="btn btn-ghost btn-sm me-1 btn-sb-edit" data-id="' + b.id + '">Edit</button>';
+  var print = '<button class="btn btn-ghost btn-sm btn-sb-print" data-id="' + b.id + '">Print</button>';
   if (b.status === 'SCHEDULED') {
-    return '<button class="btn btn-gold btn-sm me-1 btn-sb-start" data-id="' + b.id + '">Start</button>' +
+    return edit +
+      '<button class="btn btn-gold btn-sm me-1 btn-sb-start" data-id="' + b.id + '">Start</button>' +
       '<button class="btn btn-ghost btn-sm me-1 btn-sb-cancel" data-id="' + b.id + '">Cancel</button>' +
-      '<button class="btn btn-ghost btn-sm btn-sb-no-show" data-id="' + b.id + '">No-Show</button>';
+      print;
   }
   if (b.status === 'IN_PROGRESS') {
-    return '<button class="btn btn-gold btn-sm me-1 btn-sb-complete" data-id="' + b.id + '">Complete</button>' +
-      '<button class="btn btn-ghost btn-sm btn-sb-cancel" data-id="' + b.id + '">Cancel</button>';
+    return edit +
+      '<button class="btn btn-gold btn-sm me-1 btn-sb-complete" data-id="' + b.id + '">Complete</button>' +
+      print;
   }
-  return '';
+  return edit + print;
 }
 
 async function sbStart(id) {
@@ -1665,7 +2128,15 @@ async function sbComplete(id) {
 async function sbCancel(id) {
   var reason = prompt('Reason for cancelling this booking:');
   if (!reason) return;
-  try { await SalonBookingsSelf.cancel(id, reason); await loadSalonBookings(); } catch (err) { alert(err.message); }
+  try {
+    await SalonBookingsSelf.cancel(id, reason);
+    await loadSalonBookings();
+  } catch (err) {
+    // Backend enforces the real rule (assertCancellable — Scheduled only);
+    // this just surfaces whatever message it sends back, e.g. when
+    // something calls sbCancel for an In Progress booking some other way.
+    alert(err.message);
+  }
 }
 
 async function sbNoShow(id) {
@@ -1709,20 +2180,32 @@ async function showBookingForm() {
     '<div class="col-6"><label class="form-label small mb-1">Customer Name</label>' +
     '<input type="text" class="input" id="sb-customer-name" placeholder="Ngozi Adeyemi"></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Customer Phone (optional)</label>' +
-    '<input type="text" class="input" id="sb-customer-phone" placeholder="+2348012345678"></div>' +
+    '<input type="text" class="input" id="sb-customer-phone" placeholder="+2348012345678">' +
+    '<div id="sb-phone-match-prompt" class="d-none mt-1" style="font-size:12px;background:rgba(184,121,10,.10);border:1px solid rgba(184,121,10,.3);border-radius:6px;padding:8px 10px;">' +
+    '<span id="sb-phone-match-text"></span>' +
+    '<div class="mt-1"><button type="button" class="btn btn-gold btn-sm me-1" id="sb-phone-match-yes">Yes, link it</button>' +
+    '<button type="button" class="btn btn-ghost btn-sm" id="sb-phone-match-no">No</button></div>' +
+    '</div></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Assigned Stylist</label>' +
     '<select class="input" id="sb-staff">' + staffOptions + '</select></div>' +
     '<div class="col-6"></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Date</label>' +
     '<input type="date" class="input" id="sb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
     '<div class="col-6"><label class="form-label small mb-1">Time</label>' +
-    '<input type="time" class="input" id="sb-time" value="' + new Date().toTimeString().slice(0, 5) + '"></div>' +
+    // +5 minutes -- by the time the rest of the form is filled in, a
+    // bare "now" default would already be in the past.
+    '<input type="time" class="input" id="sb-time" value="' + new Date(Date.now() + 5 * 60 * 1000).toTimeString().slice(0, 5) + '"></div>' +
     '</div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Services</label><div id="sb-service-lines"></div>' +
     '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddServiceLine()">+ Add service</button></div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Products Used / Sold (optional)</label><div id="sb-item-lines"></div>' +
     '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddItemLine()">+ Add item</button></div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Notes</label><textarea class="input" id="sb-notes" rows="2"></textarea></div>' +
+    '<div class="mb-2"><label class="form-label small mb-1">Coupon Code (optional)</label>' +
+    '<div class="flex gap2"><input type="text" class="input" id="sb-coupon-code" placeholder="e.g. SUMMER20" style="text-transform:uppercase;">' +
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="sbApplyCoupon()">Apply</button></div>' +
+    '<div class="small mt-1" id="sb-coupon-result" style="display:none;"></div></div>' +
+    '<div class="text-end small mb-1" id="sb-subtotal-line" style="display:none;color:var(--muted);"></div>' +
     '<div class="text-end fw-bold small mb-2" id="sb-estimated-total">Estimated total: —</div>' +
     '<div class="flex gap2">' +
     '<button class="btn btn-gold btn-sm" onclick="submitBookingForm()">Create Booking</button>' +
@@ -1730,9 +2213,19 @@ async function showBookingForm() {
     '</div>';
 
   window._sbInventoryItems = null;
+  _sbAppliedCoupon = null;
   SearchableSelect.attach('sb-staff');
   sbAddServiceLine();
   sbWireCustomerSearch();
+  sbWirePhoneMatchCheck();
+  restrictToPhoneChars(document.getElementById('sb-customer-phone'));
+  document.getElementById('sb-coupon-code').addEventListener('input', function () {
+    if (_sbAppliedCoupon) {
+      _sbAppliedCoupon = null;
+      document.getElementById('sb-coupon-result').style.display = 'none';
+      sbUpdateTotal();
+    }
+  });
 }
 
 var _sbCustomerSearchTimer = null;
@@ -1790,6 +2283,254 @@ async function sbRunCustomerSearch(q, resultsEl) {
 function cancelBookingForm() {
   document.getElementById('booking-form-container').style.display = 'none';
   document.getElementById('booking-form-container').innerHTML = '';
+}
+
+var _sbLinkToVerifiedUser = false;
+var _sbPhoneMatchLastChecked = '';
+
+function sbWirePhoneMatchCheck() {
+  _sbLinkToVerifiedUser = false;
+  _sbPhoneMatchLastChecked = '';
+  var phoneInput = document.getElementById('sb-customer-phone');
+  var promptEl = document.getElementById('sb-phone-match-prompt');
+  if (!phoneInput || !promptEl) return;
+
+  phoneInput.addEventListener('blur', async function () {
+    var phone = phoneInput.value.trim();
+    if (!phone || phone === _sbPhoneMatchLastChecked) return;
+    _sbPhoneMatchLastChecked = phone;
+    _sbLinkToVerifiedUser = false;
+    promptEl.classList.add('d-none');
+
+    try {
+      var result = await SalonBookingsSelf.checkPhoneMatch(phone);
+      if (result.hasMatch) {
+        document.getElementById('sb-phone-match-text').textContent =
+          'This number matches ' + result.accountName + '\u2019s verified account. Link this visit to their account?';
+        promptEl.classList.remove('d-none');
+      }
+    } catch (e) {
+      // Non-critical -- booking creation still works without this check succeeding.
+    }
+  });
+
+  phoneInput.addEventListener('input', function () {
+    _sbLinkToVerifiedUser = false;
+    _sbPhoneMatchLastChecked = '';
+    promptEl.classList.add('d-none');
+  });
+
+  document.getElementById('sb-phone-match-yes').addEventListener('click', function () {
+    _sbLinkToVerifiedUser = true;
+    promptEl.classList.add('d-none');
+  });
+  document.getElementById('sb-phone-match-no').addEventListener('click', function () {
+    _sbLinkToVerifiedUser = false;
+    promptEl.classList.add('d-none');
+  });
+}
+
+/** Routes to the right modal — full Edit for Scheduled/In Progress, the narrower Add Service flow for Completed. */
+async function sbOpenEditOrAddService(id) {
+  var b = (sbBookingsCache || []).find(function (x) { return x.id === id; }) || await SalonBookingsSelf.getOne(id);
+  if (b.status === 'COMPLETED') {
+    sbOpenAddServiceModal(b);
+  } else {
+    sbOpenEditModal(b);
+  }
+}
+
+function sbEditLine(container, serviceId, quantity) {
+  var row = document.createElement('div');
+  row.style.display = 'grid';
+  row.style.gridTemplateColumns = '1fr 70px 32px';
+  row.style.gap = '8px';
+  row.style.marginBottom = '6px';
+  var options = '<option value="">Select service…</option>' + (sbServicesCache || []).map(function (s) {
+    var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
+    return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(price) + '</option>';
+  }).join('');
+  row.innerHTML =
+    '<select class="input sb-eb-service-select">' + options + '</select>' +
+    '<input type="number" min="1" value="' + (quantity || 1) + '" class="input sb-eb-qty">' +
+    '<button type="button" class="btn btn-ghost btn-sm sb-eb-remove-line">&times;</button>';
+  container.appendChild(row);
+  var sel = row.querySelector('.sb-eb-service-select');
+  if (serviceId) sel.value = serviceId;
+  row.querySelector('.sb-eb-remove-line').addEventListener('click', function () { row.remove(); });
+  return row;
+}
+
+async function sbOpenEditModal(b) {
+  sbEditingBookingId = b.id;
+
+  if (!sbServicesCache) {
+    try {
+      var res = await Auth.fetch('/services?status=ACTIVE&bookingType=WALK_IN&branchId=' + encodeURIComponent(currentStaff.locationId || (currentStaff.location && currentStaff.location.id) || ''));
+      var raw = await res.json().catch(function () { return {}; });
+      sbServicesCache = Array.isArray(raw) ? raw : (raw.services || raw.data || []);
+    } catch (err) { sbServicesCache = []; }
+  }
+  if (!sbStaffCache) {
+    try { sbStaffCache = await SalonBookingsSelf.getBranchStaff() || []; } catch (err) { sbStaffCache = []; }
+  }
+
+  var staffOptions = '<option value="">Select stylist…</option>' + sbStaffCache.map(function (s) {
+    var sel = s.id === b.assignedStaffId ? ' selected' : '';
+    return '<option value="' + s.id + '"' + sel + '>' + escapeHtml(s.name) + '</option>';
+  }).join('');
+
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="sbeb-error" style="display:none"></div>' +
+    '<h3>Edit Booking — ' + escapeHtml(b.bookingCode || '') + '</h3>' +
+    '<div class="oc-field"><label>Customer Name</label><input type="text" id="sbeb-customer-name" value="' + escapeHtml(b.customerName || '') + '"></div>' +
+    '<div class="oc-field"><label>Customer Phone</label><input type="text" id="sbeb-customer-phone" value="' + escapeHtml(b.customerPhone || '') + '"></div>' +
+    '<div class="oc-field"><label>Assigned Stylist</label><select id="sbeb-staff">' + staffOptions + '</select></div>' +
+    '<div style="display:flex;gap:12px">' +
+    '<div class="oc-field" style="flex:1"><label>Date</label><input type="date" id="sbeb-date" value="' + (b.bookingDate || '').slice(0, 10) + '"></div>' +
+    '<div class="oc-field" style="flex:1"><label>Time</label><input type="time" id="sbeb-time" value="' + escapeHtml(b.bookingTime || '') + '"></div>' +
+    '</div>' +
+    '<label class="label">Services</label><div id="sbeb-service-lines"></div>' +
+    '<button type="button" class="btn btn-ghost btn-sm mt2" onclick="sbAddEditServiceLine()">+ Add service</button>' +
+    '<div class="oc-field mt3"><label>Notes</label><textarea class="input" id="sbeb-notes" rows="2">' + escapeHtml(b.notes || '') + '</textarea></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="sbeb-submit-btn" onclick="sbSubmitEditBooking()">Save Changes</button>' +
+    '</div>';
+
+  var lineContainer = document.getElementById('sbeb-service-lines');
+  (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
+    sbEditLine(lineContainer, line.service ? line.service.id : undefined, line.quantity);
+  });
+
+  restrictToPhoneChars(document.getElementById('sbeb-customer-phone'));
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+function sbAddEditServiceLine() {
+  sbEditLine(document.getElementById('sbeb-service-lines'));
+}
+
+async function sbSubmitEditBooking() {
+  var errEl = document.getElementById('sbeb-error');
+  errEl.style.display = 'none';
+
+  var services = [];
+  document.querySelectorAll('#sbeb-service-lines > div').forEach(function (row) {
+    var serviceId = row.querySelector('.sb-eb-service-select').value;
+    var quantity = Number(row.querySelector('.sb-eb-qty').value) || 1;
+    if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+  });
+  if (!services.length) {
+    errEl.textContent = 'At least one service is required.';
+    errEl.style.display = '';
+    return;
+  }
+
+  var payload = {
+    customerName: document.getElementById('sbeb-customer-name').value.trim() || undefined,
+    customerPhone: document.getElementById('sbeb-customer-phone').value.trim() || undefined,
+    assignedStaffId: document.getElementById('sbeb-staff').value || undefined,
+    bookingDate: document.getElementById('sbeb-date').value || undefined,
+    bookingTime: document.getElementById('sbeb-time').value || undefined,
+    notes: document.getElementById('sbeb-notes').value.trim(),
+    services: services,
+  };
+
+  var btn = document.getElementById('sbeb-submit-btn');
+  btn.disabled = true;
+  try {
+    await SalonBookingsSelf.editBooking(sbEditingBookingId, payload);
+    closeProfileModal();
+    await loadSalonBookings();
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to save changes.';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function sbOpenAddServiceModal(b) {
+  sbAddServiceBookingId = b.id;
+
+  if (!sbServicesCache) {
+    try {
+      var res = await Auth.fetch('/services?status=ACTIVE&bookingType=WALK_IN&branchId=' + encodeURIComponent(currentStaff.locationId || (currentStaff.location && currentStaff.location.id) || ''));
+      var raw = await res.json().catch(function () { return {}; });
+      sbServicesCache = Array.isArray(raw) ? raw : (raw.services || raw.data || []);
+    } catch (err) { sbServicesCache = []; }
+  }
+
+  var options = '<option value="">Select service…</option>' + (sbServicesCache || []).map(function (s) {
+    var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
+    return '<option value="' + s.id + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(price) + '</option>';
+  }).join('');
+
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="sbas-error" style="display:none"></div>' +
+    '<h3>Add Service — ' + escapeHtml(b.bookingCode || '') + '</h3>' +
+    '<div class="oc-modal-sub">This booking is Completed — its existing services can\'t be changed. This only adds a new one.</div>' +
+    '<div class="oc-field"><label>Service</label><select id="sbas-service">' + options + '</select></div>' +
+    '<div class="oc-field"><label>Quantity</label><input type="number" min="1" value="1" id="sbas-qty"></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="sbas-submit-btn" onclick="sbSubmitAddService()">Add Service</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function sbSubmitAddService() {
+  var errEl = document.getElementById('sbas-error');
+  errEl.style.display = 'none';
+  var serviceId = document.getElementById('sbas-service').value;
+  var quantity = Number(document.getElementById('sbas-qty').value) || 1;
+  if (!serviceId) {
+    errEl.textContent = 'Please select a service.';
+    errEl.style.display = '';
+    return;
+  }
+  var btn = document.getElementById('sbas-submit-btn');
+  btn.disabled = true;
+  try {
+    await SalonBookingsSelf.addServiceToCompletedBooking(sbAddServiceBookingId, { serviceId: serviceId, quantity: quantity });
+    closeProfileModal();
+    await loadSalonBookings();
+  } catch (err) {
+    errEl.textContent = err.message || 'Failed to add service.';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function sbPrintBooking(id) {
+  try {
+    var b = (sbBookingsCache || []).find(function (x) { return x.id === id; }) || await SalonBookingsSelf.getOne(id);
+    document.getElementById('sb-pr-booking-code').textContent = b.bookingCode || '—';
+    document.getElementById('sb-pr-datetime').textContent = StaffSelf.formatDate(b.bookingDate) + ' · ' + (b.bookingTime || '');
+    document.getElementById('sb-pr-customer').textContent = (b.customerName || '—') + (b.customerPhone ? ' (' + b.customerPhone + ')' : '');
+    document.getElementById('sb-pr-stylist').textContent = b.assignedStaff ? b.assignedStaff.name : '—';
+    document.getElementById('sb-pr-branch').textContent = currentStaff.location ? currentStaff.location.name : '';
+    // Same convention as the Admin receipt: createdBy is only set when a
+    // staff member entered the booking directly, so a customer's own
+    // self-service reservation reads as "Online booking" rather than blank.
+    document.getElementById('sb-pr-served-by').textContent = b.createdBy ? b.createdBy.name : 'Online booking';
+    var servicesContainer = document.getElementById('sb-pr-services-list');
+    var services = b.services || [];
+    servicesContainer.innerHTML = services.length
+      ? services.map(function (s) {
+        var name = escapeHtml(s.service ? s.service.name : 'Service');
+        var qty = s.quantity && s.quantity > 1 ? ' x' + s.quantity : '';
+        return '<div class="pr-service-line"><span>' + name + qty + '</span></div>';
+      }).join('')
+      : '<div class="pr-service-line"><span>—</span></div>';
+    document.getElementById('sb-pr-amount').textContent = sbFormatMoney(b.totalAmount);
+    document.getElementById('sb-pr-status').textContent = String(b.status || '').replace(/_/g, ' ');
+    window.print();
+  } catch (err) {
+    alert(err.message || 'Could not prepare receipt for printing.');
+  }
 }
 
 // -- Verify Reservation (staff, own branch only) -------------------------------
@@ -2002,8 +2743,27 @@ function sbAddServiceLine() {
 async function sbAddItemLine() {
   if (!window._sbInventoryItems) {
     try {
-      var res = await InventorySelf.getItems();
-      window._sbInventoryItems = res.data || res || [];
+      // Dev Feedback: the endpoint's default limit is 20 -- passing this
+      // explicitly ensures a branch with more than 20 products still
+      // shows all of them here, not just the first page.
+      // Products offered here are SOLD to the customer during this
+      // booking (see the "Products Sold" label on the equivalent admin
+      // page), not consumed internally -- that's a separate, per-service
+      // concept configured on the admin Services page (product
+      // consumption), unrelated to this booking-time list. salesStock is
+      // the per-branch bucket that actually gets decremented on sale, so
+      // that's the figure to check, matching the same-purpose filter
+      // already used a few hundred lines down for this same staff
+      // member's standalone product sales (ensureSaleItemsLoaded). A
+      // prior fix here filtered on usageStock instead, which was meant
+      // for the (different) internal-consumption case and let items with
+      // zero sellable stock show up as sellable here. price != null
+      // excludes an item whose salesStock is allocated but was never
+      // given a price -- without it, such an item would silently display
+      // as a free (\u20a60) sale.
+      var res = await InventorySelf.getItems({ limit: 1000 });
+      var allItems = res.data || res || [];
+      window._sbInventoryItems = allItems.filter(function (i) { return (i.salesStock || 0) > 0 && i.price != null; });
     } catch (err) { window._sbInventoryItems = []; }
   }
   var container = document.getElementById('sb-item-lines');
@@ -2013,8 +2773,8 @@ async function sbAddItemLine() {
   row.style.gap = '8px';
   row.style.marginBottom = '6px';
   var options = '<option value="">Select product…</option>' + window._sbInventoryItems.map(function (i) {
-    var label = i.category === 'FOR_SALE' ? (' — ' + sbFormatMoney(i.price)) : ' — not for sale';
-    return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + escapeHtml(i.name) + label + '</option>';
+    var label = i.category === 'FOR_SALE' ? (' — ' + sbFormatMoney(i.price) + ' (' + (i.salesStock || 0) + ' in stock)') : ' — not for sale';
+    return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-stock="' + (i.salesStock || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + escapeHtml(i.name) + label + '</option>';
   }).join('');
   row.innerHTML =
     '<select class="input sb-item-select">' + options + '</select>' +
@@ -2027,7 +2787,9 @@ async function sbAddItemLine() {
   sbUpdateTotal();
 }
 
-function sbUpdateTotal() {
+var _sbAppliedCoupon = null; // { id, code, percentage }
+
+function sbCurrentSubtotal() {
   var total = 0;
   document.querySelectorAll('#sb-service-lines > div').forEach(function (row) {
     var sel = row.querySelector('.sb-service-select');
@@ -2041,8 +2803,54 @@ function sbUpdateTotal() {
     var opt = sel.options[sel.selectedIndex];
     if (opt && opt.value && opt.dataset.sellable === '1') total += Number(opt.dataset.price || 0) * qty;
   });
-  var el = document.getElementById('sb-estimated-total');
-  if (el) el.textContent = 'Estimated total: ' + sbFormatMoney(total);
+  return total;
+}
+
+function sbUpdateTotal() {
+  var total = sbCurrentSubtotal();
+  var subtotalLine = document.getElementById('sb-subtotal-line');
+  var totalEl = document.getElementById('sb-estimated-total');
+  if (!totalEl) return;
+
+  if (_sbAppliedCoupon) {
+    // Recomputed client-side from the validated percentage -- no need
+    // to re-call the server just because a line item changed, since a
+    // percentage discount scales linearly.
+    var discountAmount = Math.round(total * (_sbAppliedCoupon.percentage / 100) * 100) / 100;
+    var finalTotal = total - discountAmount;
+    if (subtotalLine) {
+      subtotalLine.textContent = 'Subtotal ' + sbFormatMoney(total) + ' \u2212 ' + _sbAppliedCoupon.code + ' (' + _sbAppliedCoupon.percentage + '%): ' + sbFormatMoney(discountAmount);
+      subtotalLine.style.display = '';
+    }
+    totalEl.textContent = 'Estimated total: ' + sbFormatMoney(finalTotal);
+  } else {
+    if (subtotalLine) subtotalLine.style.display = 'none';
+    totalEl.textContent = 'Estimated total: ' + sbFormatMoney(total);
+  }
+}
+
+async function sbApplyCoupon() {
+  var code = document.getElementById('sb-coupon-code').value.trim();
+  var resultEl = document.getElementById('sb-coupon-result');
+  resultEl.style.display = '';
+  resultEl.style.color = '';
+  if (!code) {
+    resultEl.textContent = 'Enter a coupon code.';
+    resultEl.style.color = 'var(--red)';
+    return;
+  }
+  try {
+    var preview = await SalonBookingsSelf.previewDiscount(code, sbCurrentSubtotal());
+    _sbAppliedCoupon = { id: preview.id, code: preview.code, percentage: Number(preview.percentage) };
+    resultEl.textContent = '\u2713 "' + preview.name + '" applied \u2014 ' + preview.percentage + '% off.';
+    resultEl.style.color = 'var(--green)';
+    sbUpdateTotal();
+  } catch (err) {
+    _sbAppliedCoupon = null;
+    resultEl.textContent = err.message || 'Invalid coupon.';
+    resultEl.style.color = 'var(--red)';
+    sbUpdateTotal();
+  }
 }
 
 async function submitBookingForm() {
@@ -2079,9 +2887,11 @@ async function submitBookingForm() {
   try {
     await SalonBookingsSelf.create({
       customerName: customerName, customerPhone: customerPhone || undefined,
+      linkToVerifiedUser: _sbLinkToVerifiedUser || undefined,
       assignedStaffId: assignedStaffId, bookingDate: bookingDate, bookingTime: bookingTime,
       services: services, inventoryItems: inventoryItems.length ? inventoryItems : undefined,
       notes: notes || undefined,
+      discountCode: _sbAppliedCoupon ? _sbAppliedCoupon.code : undefined,
     });
     cancelBookingForm();
     await loadSalonBookings();
@@ -2094,11 +2904,21 @@ async function submitBookingForm() {
 
 var inventoryBranchesCache = null;
 
+// Procurement/Inventory/Finance Integration, Phase 2 replaced the old,
+// single InventoryItem.currentQuantity field with the three-way Store/
+// Sales/Usage split -- this file was never updated after that change,
+// so every stock figure it showed was reading a field that no longer
+// exists on the API response (undefined), producing exactly the
+// "undefined in stock" / stock-of-0 validation failures reported.
+function totalStock(item) {
+  return (item.storeStock || 0) + (item.salesStock || 0) + (item.usageStock || 0);
+}
+
 async function loadInventoryItems() {
   const category = document.getElementById('inv-category-filter').value;
   let result;
   try {
-    result = await InventorySelf.getItems({ category, limit: 100 });
+    result = await InventorySelf.getItems({ category, limit: 1000 });
   } catch (err) {
     console.error('Failed to load inventory items', err);
     document.getElementById('inv-items-tbody').innerHTML =
@@ -2107,8 +2927,8 @@ async function loadInventoryItems() {
   }
 
   const items = result.data || [];
-  const outOfStock = items.filter((i) => i.currentQuantity <= 0).length;
-  const lowStock = items.filter((i) => i.currentQuantity > 0 && i.currentQuantity <= i.lowStockThreshold).length;
+  const outOfStock = items.filter((i) => totalStock(i) <= 0).length;
+  const lowStock = items.filter((i) => totalStock(i) > 0 && totalStock(i) <= i.lowStockThreshold).length;
   const healthy = items.length - outOfStock - lowStock;
 
   document.getElementById('inv-total').textContent = String(items.length);
@@ -2121,15 +2941,15 @@ async function loadInventoryItems() {
     tbody.innerHTML = '<tr><td colspan="6" class="text-secondary">No items yet for this branch.</td></tr>';
   } else {
     tbody.innerHTML = items.map(function (i) {
-      var statusBadge = i.currentQuantity <= 0
+      var statusBadge = totalStock(i) <= 0
         ? '<span class="badge b-red">Out of Stock</span>'
-        : i.currentQuantity <= i.lowStockThreshold
+        : totalStock(i) <= i.lowStockThreshold
           ? '<span class="badge b-amber">Low</span>'
           : '<span class="badge b-green">Good</span>';
       return '<tr>' +
         '<td style="font-weight:600;color:var(--white)">' + escapeHtml(i.name) + '</td>' +
         '<td>' + (InventorySelf.CATEGORY_LABELS[i.category] || i.category) + '</td>' +
-        '<td>' + i.currentQuantity + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
+        '<td>' + totalStock(i) + (i.unit ? ' ' + escapeHtml(i.unit) : '') + '</td>' +
         '<td>' + i.lowStockThreshold + '</td>' +
         '<td>' + statusBadge + '</td>' +
         '<td><button class="btn btn-ghost btn-sm" onclick="promptReceiveGoods(\'' + i.id + '\', \'' + escapeHtml(i.name).replace(/'/g, "\\'") + '\')">Receive Goods</button> ' +
@@ -2140,7 +2960,7 @@ async function loadInventoryItems() {
   // Populate the transfer-item dropdown from the same item list.
   var transferSelect = document.getElementById('inv-transfer-item');
   transferSelect.innerHTML = '<option value="">Select an item…</option>' +
-    items.map(function (i) { return '<option value="' + i.id + '">' + escapeHtml(i.name) + ' (' + i.currentQuantity + ' in stock)</option>'; }).join('');
+    items.map(function (i) { return '<option value="' + i.id + '">' + escapeHtml(i.name) + ' (' + totalStock(i) + ' in stock)</option>'; }).join('');
 }
 
 async function promptReceiveGoods(itemId, itemName) {
@@ -2250,9 +3070,95 @@ async function loadPayrollSection() {
     prLoadWallet(),
     prLoadBankAccount(),
     prLoadCompensation(),
+    prLoadFines(),
+    prLoadAdjustments(),
     prLoadPayslips(),
     prLoadWithdrawals(),
   ]);
+}
+
+/** Late-penalty total for the in-progress payroll period by default, matching exactly what payroll will eventually deduct -- visible before payroll actually runs. The month picker lets a staff member instead look up a specific past period (e.g. to see what fed into an already-published payslip from a prior month, instead of this always defaulting to the live current period regardless of which payslip they're looking at). Absent days are also listed for transparency, but no longer imply a separate fee (see the comment below on why). */
+async function prLoadFines() {
+  var container = document.getElementById('pr-fines-content');
+  var labelEl = document.getElementById('pr-fines-period-label');
+  var monthInput = document.getElementById('pr-fines-month');
+  try {
+    var range;
+    if (monthInput && monthInput.value) {
+      // <input type="month"> gives "YYYY-MM" -- first/last calendar day of that month.
+      var parts = monthInput.value.split('-').map(Number);
+      var y = parts[0], m = parts[1];
+      var start = new Date(y, m - 1, 1);
+      var end = new Date(y, m, 0);
+      range = { periodStart: start.toISOString(), periodEnd: end.toISOString() };
+    }
+
+    var fines = await PayrollSelf.getCurrentFines(range);
+    if (labelEl) labelEl.textContent = fines.periodLabel + (fines.isDraftPeriod ? '' : ' (est.)');
+    // Reflect the resolved period back into the picker on first load (when
+    // it was left empty), so it's clear at a glance which month is shown.
+    if (monthInput && !monthInput.value && fines.periodStart) {
+      monthInput.value = String(fines.periodStart).slice(0, 7);
+    }
+
+    // Dev Feedback Round 8: checks records.length, not fines.total --
+    // total no longer includes absentFeeTotal (an absence already
+    // reduces payable days directly, rather than being charged as a
+    // separate fee), so a staff member with only absence records (no
+    // late penalties) would have total === 0 and see this whole section
+    // wrongly hidden if checked the old way.
+    if (!(fines.records || []).length) {
+      container.innerHTML = '<div class="text-secondary small">No fines recorded this period.</div>';
+      return;
+    }
+
+    var rows = (fines.records || []).map(function (r) {
+      var detail = r.status === 'ABSENT'
+        ? 'Absent \u2014 reduces payable days, not a separate fee'
+        : (r.lateMinutes ? r.lateMinutes + ' min late' : 'Late penalty');
+      var amountHtml = r.status === 'ABSENT' ? '' : '<div class="fw-semibold">' + sbFormatMoney(r.latePenaltyAmount) + '</div>';
+      return '<div class="d-flex justify-content-between border-bottom py-2">' +
+        '<div><span class="badge ' + (r.status === 'ABSENT' ? 'b-red' : 'b-amber') + ' me-2">' + r.status + '</span>' +
+        '<span class="text-secondary small">' + StaffSelf.formatDate(r.date, { day: '2-digit', month: 'short' }) + ' \u2014 ' + detail + '</span></div>' +
+        amountHtml + '</div>';
+    }).join('');
+
+    container.innerHTML =
+      '<div class="d-flex justify-content-between mb-3">' +
+      '<div><div class="text-secondary small">Late Penalties</div><div class="fw-bold" style="color:var(--red)">' + sbFormatMoney(fines.latePenaltyTotal) + '</div></div>' +
+      '</div>' +
+      rows;
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
+}
+
+/**
+ * Dev Feedback Round 8, item #3: individual, dated bonus/deduction
+ * records (including fines an admin recorded against a specific day via
+ * the admin Payroll page's "Add Adjustment" form) -- PayrollSelf.getAdjustments()
+ * already existed on the backend but was never actually displayed
+ * anywhere on the staff portal.
+ */
+async function prLoadAdjustments() {
+  var container = document.getElementById('pr-adjustments-content');
+  try {
+    var list = await PayrollSelf.getAdjustments();
+    if (!list.length) {
+      container.innerHTML = '<div class="text-secondary small">No bonuses or deductions recorded yet.</div>';
+      return;
+    }
+    container.innerHTML = list.map(function (a) {
+      var isBonus = a.type === 'BONUS';
+      var dateStr = StaffSelf.formatDate(a.effectiveDate || a.createdAt, { day: '2-digit', month: 'short', year: 'numeric' });
+      return '<div class="d-flex justify-content-between border-bottom py-2">' +
+        '<div><span class="badge ' + (isBonus ? 'b-green' : 'b-red') + ' me-2">' + escapeHtml(a.category) + '</span>' +
+        '<span class="text-secondary small">' + dateStr + (a.reason ? ' \u2014 ' + escapeHtml(a.reason) : '') + '</span></div>' +
+        '<div class="fw-semibold" style="color:' + (isBonus ? 'var(--green)' : 'var(--red)') + '">' + (isBonus ? '+' : '-') + sbFormatMoney(a.amount) + '</div></div>';
+    }).join('');
+  } catch (err) {
+    container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
+  }
 }
 
 async function prLoadWallet() {
@@ -2441,11 +3347,152 @@ async function prLoadPayslips() {
     tbody.innerHTML = payslips.length
       ? payslips.map(function (p) {
         var period = p.payrollPeriod ? p.payrollPeriod.label : '\u2014';
-        return '<tr><td>' + escapeHtml(period) + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td></tr>';
+        var statusBadge = p.status === 'CORRECTED'
+          ? '<span class="badge b-amber">Corrected</span>'
+          : '<span class="badge b-green">Published</span>';
+        return '<tr><td>' + escapeHtml(period) + '</td><td>' + escapeHtml(p.payslipReference || '\u2014') + '</td><td>' + statusBadge + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td>' +
+          '<td><button class="btn btn-ghost btn-sm pr-view-payslip" data-id="' + p.id + '">View</button> <button class="btn btn-ghost btn-sm pr-download-payslip" data-id="' + p.id + '">Download</button></td></tr>';
       }).join('')
-      : '<tr><td colspan="4" class="text-center text-secondary py-4">No payslips yet.</td></tr>';
+      : '<tr><td colspan="7" class="text-center text-secondary py-4">No payslips yet.</td></tr>';
+    tbody.querySelectorAll('.pr-download-payslip').forEach(function (btn) {
+      btn.addEventListener('click', function () { prDownloadPayslip(btn.dataset.id, btn); });
+    });
+    tbody.querySelectorAll('.pr-view-payslip').forEach(function (btn) {
+      btn.addEventListener('click', function () { prOpenPayslipDetail(btn.dataset.id); });
+    });
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || 'Failed to load.') + '</td></tr>';
+  }
+}
+
+function prFmtDate(d) {
+  if (!d) return '\u2014';
+  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function prDetailRow(label, value, isTotal) {
+  return '<div class="pr-detail-row' + (isTotal ? ' total' : '') + '"><span class="label">' + escapeHtml(label) + '</span><span class="value">' + value + '</span></div>';
+}
+
+async function prOpenPayslipDetail(id) {
+  var overlay = document.getElementById('pr-payslip-detail-overlay');
+  var body = document.getElementById('pr-payslip-detail-body');
+  var title = document.getElementById('pr-payslip-detail-title');
+  overlay.classList.remove('d-none');
+  body.innerHTML = '<div class="spinner-border text-primary"></div>';
+  try {
+    var p = await PayrollSelf.getPayslipDetail(id);
+    title.textContent = 'Payslip \u2014 ' + (p.payrollPeriod ? p.payrollPeriod.label : '');
+
+    var html = '';
+
+    html += '<div class="pr-detail-section"><h4>Overview</h4>';
+    html += prDetailRow('Reference', escapeHtml(p.payslipReference || '\u2014'));
+    html += prDetailRow('Status', p.status === 'CORRECTED' ? '<span class="badge b-amber">Corrected</span>' : '<span class="badge b-green">Published</span>');
+    html += prDetailRow('Published', prFmtDate(p.publishedAt));
+    html += '</div>';
+
+    // Guide, section 15 "Salary fields" -- show only when salary applies.
+    if (p.fullMonthScheduledWorkdays != null) {
+      html += '<div class="pr-detail-section"><h4>Salary</h4>';
+      html += prDetailRow('Full-month scheduled workdays', p.fullMonthScheduledWorkdays);
+      html += prDetailRow('Applicable scheduled workdays', p.applicableScheduledWorkdays);
+      if (p.missedWorkdays) html += prDetailRow('Missed workdays', p.missedWorkdays);
+      if (p.approvedExtraWorkdaysCount) html += prDetailRow('Approved extra workdays', p.approvedExtraWorkdaysCount);
+      html += prDetailRow('Payable workdays', p.payableWorkdays);
+      html += prDetailRow('Daily rate', sbFormatMoney(p.dailyRate));
+      html += prDetailRow('Salary earned', sbFormatMoney(p.salaryEarned));
+      html += '</div>';
+    }
+
+    // "First applicable payroll month" -- show only when relevant.
+    if (p.isFirstMonth && p.staffHireDateSnapshot) {
+      html += '<div class="pr-detail-section"><h4>First payroll month</h4>';
+      html += prDetailRow('Start date', prFmtDate(p.staffHireDateSnapshot));
+      html += '</div>';
+    }
+
+    // Salary-to-commission fields -- show only when this payslip actually used the cutoff rule.
+    if (p.cutoffClassification) {
+      html += '<div class="pr-detail-section"><h4>Salary-to-commission</h4>';
+      html += prDetailRow('Cutoff day', p.cutoffDayUsed);
+      html += prDetailRow('Classification', p.cutoffClassification === 'BEFORE_CUTOFF' ? 'Before cutoff' : 'On/after cutoff');
+      if (p.salaryPeriodStart) html += prDetailRow('Salary period', prFmtDate(p.salaryPeriodStart) + ' \u2013 ' + prFmtDate(p.salaryPeriodEnd));
+      if (p.commissionPeriodStart) html += prDetailRow('Commission period', prFmtDate(p.commissionPeriodStart) + ' \u2013 ' + prFmtDate(p.commissionPeriodEnd));
+      html += prDetailRow('Transition date', prFmtDate(p.transitionDate));
+      html += '</div>';
+    }
+
+    // Commission fields -- show only when commission applies.
+    if (Number(p.commissionEarned) > 0 || p.commissionPlanIdUsed) {
+      html += '<div class="pr-detail-section"><h4>Commission</h4>';
+      html += prDetailRow('Commission earned', sbFormatMoney(p.commissionEarned));
+      if (p.commissionRateUsed) html += prDetailRow('Rate used', (Number(p.commissionRateUsed) * 100).toFixed(1) + '%');
+      html += '</div>';
+    }
+
+    html += '<div class="pr-detail-section"><h4>Earnings</h4>';
+    if (Number(p.allowances) > 0) html += prDetailRow('Allowances', sbFormatMoney(p.allowances));
+    if (Number(p.bonusTotal) > 0) html += prDetailRow('Bonus', sbFormatMoney(p.bonusTotal));
+    if (Number(p.extraWorkDayEarnings) > 0) html += prDetailRow('Extra work day earnings', sbFormatMoney(p.extraWorkDayEarnings));
+    html += prDetailRow('Gross pay', sbFormatMoney(p.grossPay), true);
+    html += '</div>';
+
+    html += '<div class="pr-detail-section"><h4>Deductions</h4>';
+    if (Number(p.attendanceDeduction) > 0) html += prDetailRow('Attendance', sbFormatMoney(p.attendanceDeduction));
+    if (Number(p.latePenaltyDeduction) > 0) html += prDetailRow('Late penalty', sbFormatMoney(p.latePenaltyDeduction));
+    if (Number(p.fineTotal) > 0) html += prDetailRow('Fines', sbFormatMoney(p.fineTotal));
+    if (Number(p.loanRepayment) > 0) html += prDetailRow('Loan repayment', sbFormatMoney(p.loanRepayment));
+    if (Number(p.taxDeduction) > 0) html += prDetailRow('Tax (PAYE)', sbFormatMoney(p.taxDeduction));
+    if (Number(p.pensionDeduction) > 0) html += prDetailRow('Pension', sbFormatMoney(p.pensionDeduction));
+    if (Number(p.otherDeductionTotal) > 0) html += prDetailRow('Other', sbFormatMoney(p.otherDeductionTotal));
+    html += prDetailRow('Total deductions', sbFormatMoney(p.totalDeductions), true);
+    html += '</div>';
+
+    html += '<div class="pr-detail-section"><h4>Net pay</h4>';
+    html += prDetailRow('Net pay', sbFormatMoney(p.netPay), true);
+    html += '</div>';
+
+    // Guide, section 15 #5/#11: show the correction reference where this
+    // payslip is itself a correction, or was later corrected.
+    if (p.correctionReference) {
+      html += '<div class="pr-detail-section"><h4>Correction</h4>';
+      html += prDetailRow('Reason', escapeHtml(p.correctionReference));
+      if (p.supersedes) html += prDetailRow('Replaces', escapeHtml(p.supersedes.payslipReference || ''));
+      html += '</div>';
+    }
+    if (p.supersededBy) {
+      html += '<div class="pr-detail-section"><h4>Superseded</h4>';
+      html += prDetailRow('Replaced by', escapeHtml(p.supersededBy.payslipReference || ''));
+      html += '</div>';
+    }
+
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div class="text-danger">' + escapeHtml(err.message || 'Failed to load payslip.') + '</div>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  var closeBtn = document.getElementById('pr-payslip-detail-close');
+  var overlay = document.getElementById('pr-payslip-detail-overlay');
+  if (closeBtn && overlay) {
+    closeBtn.addEventListener('click', function () { overlay.classList.add('d-none'); });
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.classList.add('d-none'); });
+  }
+});
+
+async function prDownloadPayslip(id, btn) {
+  var original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '\u2026';
+  try {
+    await PayrollSelf.downloadPayslip(id);
+  } catch (err) {
+    alert('Could not download payslip: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
   }
 }
 
@@ -2509,7 +3556,13 @@ async function loadCommission() {
     var result = await SalonBookingsSelf.getMyCommission();
     var data = result.data || result;
 
-    if (data.commissionRate == null) {
+    // Dev Feedback Round 7, item #7: hasCommissionSetup checks both a
+    // Commission Plan and the flat rate -- checking commissionRate alone
+    // used to wrongly gate out a staff member whose only setup is a
+    // plan (a valid, real scenario). commissionRate itself is no longer
+    // returned or displayed at all, since it's misleading whenever a
+    // plan (with its own, different rate) is the one actually in use.
+    if (!data.hasCommissionSetup) {
       container.innerHTML =
         '<div class="card"><div class="card-b">' +
         '<div class="text-secondary">You\u2019re not currently set up for commission. If this role should earn commission, ask an admin to set your rate on your staff profile.</div>' +
@@ -2517,16 +3570,16 @@ async function loadCommission() {
       return;
     }
 
-    var ratePct = (data.commissionRate * 100).toFixed(1).replace(/\.0$/, '');
-
     var statsHtml =
       '<div class="g4 mb6">' +
       '<div class="stat gold"><div class="stat-ico" style="background:rgba(157,130,72,.12)">\uD83D\uDCB0</div>' +
       '<div class="stat-lbl">Commission This Month</div><div class="stat-val">' + sbFormatMoney(data.thisMonthTotal) + '</div>' +
       '<div class="stat-delta neu">' + data.bookingsThisMonth + ' booking' + (data.bookingsThisMonth === 1 ? '' : 's') + '</div></div>' +
-      '<div class="stat green"><div class="stat-ico" style="background:var(--green2)">\uD83D\uDCC8</div>' +
-      '<div class="stat-lbl">Commission Rate</div><div class="stat-val">' + ratePct + '%</div>' +
-      '<div class="stat-delta neu">Per completed booking</div></div>' +
+      (data.effectiveRate != null
+        ? '<div class="stat green"><div class="stat-ico" style="background:var(--green2)">\uD83D\uDCC8</div>' +
+        '<div class="stat-lbl">Commission Rate</div><div class="stat-val">' + (data.effectiveRate * 100).toFixed(1).replace(/\.0$/, '') + '%</div>' +
+        '<div class="stat-delta neu">' + escapeHtml(data.effectiveRateSource) + '</div></div>'
+        : '') +
       '<div class="stat blue"><div class="stat-ico" style="background:var(--blue2)">\uD83D\uDCCA</div>' +
       '<div class="stat-lbl">All-Time Commission</div><div class="stat-val">' + sbFormatMoney(data.allTimeTotal) + '</div>' +
       '<div class="stat-delta neu">' + data.entries.length + ' booking' + (data.entries.length === 1 ? '' : 's') + ' total</div></div>' +
@@ -2590,8 +3643,25 @@ var saleItemsCache = null;
 async function ensureSaleItemsLoaded() {
   if (saleItemsCache) return saleItemsCache;
   try {
-    var result = await InventorySelf.getItems({ category: 'FOR_SALE' });
-    saleItemsCache = result.data || result || [];
+    // Dev Feedback Round 7 (same fix as the booking "products used"
+    // picker): category ("FOR_SALE" vs "INTERNAL_USE") is a product
+    // classification, independent of whether stock has actually been
+    // allocated to the sales bucket for this branch (storeStock/
+    // salesStock/usageStock are separate per-branch fields on the same
+    // item, moved between each other via stock adjustment) -- a
+    // category-matched item could still have salesStock: 0 (all still
+    // sitting in storeStock), showing "(0 in stock)" and not actually
+    // sellable. Filtered by actual salesStock > 0 instead of category.
+    // limit added to match the booking picker's own fix -- the default
+    // page size (20) could otherwise silently truncate a branch with
+    // more products than that. price != null excludes an item whose
+    // salesStock is allocated but was never given a price (price is
+    // only enforced when category = FOR_SALE, per the schema's own
+    // comment) -- without it, such an item would silently display as a
+    // free (₦0) sale rather than being excluded.
+    var result = await InventorySelf.getItems({ limit: 1000 });
+    var allItems = result.data || result || [];
+    saleItemsCache = allItems.filter(function (i) { return (i.salesStock || 0) > 0 && i.price != null; });
   } catch (err) {
     saleItemsCache = [];
   }
@@ -2603,7 +3673,7 @@ function populateSaleItemSelect(select) {
   var items = saleItemsCache || [];
   select.innerHTML = '<option value="">Select product…</option>' + items.map(function (i) {
     var price = i.price != null ? i.price : 0;
-    return '<option value="' + i.id + '" data-price="' + price + '" data-stock="' + i.currentQuantity + '">' + escapeHtml(i.name) + ' — ' + sbFormatMoney(price) + ' (' + i.currentQuantity + ' in stock)</option>';
+    return '<option value="' + i.id + '" data-price="' + price + '" data-stock="' + (i.salesStock || 0) + '">' + escapeHtml(i.name) + ' — ' + sbFormatMoney(price) + ' (' + (i.salesStock || 0) + ' in stock)</option>';
   }).join('');
   if (current) select.value = current;
 }
@@ -2731,6 +3801,18 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// Digits only, plus an optional leading "+" for international format
+// (matching the +234... placeholder/format the backend actually
+// expects) -- strips anything else as the user types.
+function restrictToPhoneChars(input) {
+  if (!input) return;
+  input.addEventListener('input', function () {
+    var hasPlus = input.value.trim().charAt(0) === '+';
+    var digits = input.value.replace(/\D/g, '');
+    input.value = (hasPlus ? '+' : '') + digits;
+  });
+}
+
 function statusLabel(status) {
   const map = { ACTIVE: 'Active Employee', ON_LEAVE: 'On Leave', SUSPENDED: 'Suspended', EXITED: 'Exited', ARCHIVED: 'Archived' };
   return map[status] || status || 'Unknown';
@@ -2744,4 +3826,5 @@ function statusBadgeClass(status) {
 // -- Boot --
 document.addEventListener('DOMContentLoaded', () => {
   initStaffPortal();
+  restrictToPhoneChars(document.getElementById('sale-customer-phone'));
 });
