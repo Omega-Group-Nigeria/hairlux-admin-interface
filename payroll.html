@@ -71,6 +71,8 @@
                                 <label class="form-check-label fw-bold" for="payday-switch" id="payday-label">Payday:
                                     Loading…</label>
                             </div>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-payroll-settings">Tax
+                                &amp; Pension Settings</button>
                             <button type="button" class="btn btn-primary" id="btn-new-period">+ New Payroll
                                 Period</button>
                         </div>
@@ -297,6 +299,38 @@
     </div>
 
     <!-- New Period Modal -->
+    <!-- Tax & Pension Settings Modal — Dev Feedback Round 8 -->
+    <div class="modal modal-blur fade" id="modal-payroll-settings" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tax &amp; Pension Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="ps-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Tax Rate (%)</label>
+                        <input type="number" min="0" max="100" step="0.1" class="form-control" id="ps-tax-rate">
+                        <div class="form-hint">A flat rate applied to taxable income (gross pay minus pension) —
+                            replaces the previous progressive PAYE-band calculation. Leave at 0 to deduct no tax.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pension Rate (%)</label>
+                        <input type="number" min="0" max="100" step="0.1" class="form-control" id="ps-pension-rate">
+                        <div class="form-hint">Applied to base salary + allowances (prorated for actual attendance).
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-payroll-settings">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal modal-blur fade" id="modal-new-period" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -509,6 +543,7 @@
     <script src="assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
+        var _payrollSettingsCache = null;
         var currentPeriodId = null;
         var currentPeriodStatus = null;
 
@@ -613,8 +648,43 @@
                 var settings = await Payroll.getSettings();
                 document.getElementById('payday-switch').checked = !!settings.releaseActive;
                 document.getElementById('payday-label').textContent = 'Payday: ' + (settings.releaseActive ? 'ON' : 'OFF');
+                _payrollSettingsCache = settings;
             } catch (e) { /* non-fatal */ }
         }
+
+        document.getElementById('btn-payroll-settings').addEventListener('click', function () {
+            var errEl = document.getElementById('ps-error');
+            errEl.classList.add('d-none');
+            var settings = _payrollSettingsCache || {};
+            document.getElementById('ps-tax-rate').value = ((Number(settings.taxRate) || 0) * 100).toFixed(2).replace(/\.?0+$/, '') || '0';
+            document.getElementById('ps-pension-rate').value = ((Number(settings.pensionRate) || 0) * 100).toFixed(2).replace(/\.?0+$/, '') || '0';
+            new bootstrap.Modal(document.getElementById('modal-payroll-settings')).show();
+        });
+
+        document.getElementById('btn-save-payroll-settings').addEventListener('click', async function () {
+            var errEl = document.getElementById('ps-error');
+            errEl.classList.add('d-none');
+            var taxPercent = document.getElementById('ps-tax-rate').value;
+            var pensionPercent = document.getElementById('ps-pension-rate').value;
+            if (taxPercent === '' || isNaN(Number(taxPercent)) || pensionPercent === '' || isNaN(Number(pensionPercent))) {
+                errEl.textContent = 'Enter valid numbers for both rates.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            try {
+                await Payroll.setTaxRate(Number(taxPercent) / 100);
+                await Payroll.setPensionRate(Number(pensionPercent) / 100);
+                bootstrap.Modal.getInstance(document.getElementById('modal-payroll-settings')).hide();
+                loadSettings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save settings.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        });
 
         async function togglePayday() {
             var checkbox = document.getElementById('payday-switch');
