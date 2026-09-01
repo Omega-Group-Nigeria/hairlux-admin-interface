@@ -203,6 +203,7 @@
     <script src="assets/js/api-utils/commission-plans.js"></script>
     <script src="assets/js/api-utils/services.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -272,6 +273,8 @@
                 try { _servicesCache = await Services.getAll(); } catch (e) { _servicesCache = []; }
                 var svcSelect = document.getElementById('f-eligible-services');
                 svcSelect.innerHTML = _servicesCache.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+                MultiSelectDropdown.attach('f-eligible-services', { placeholder: 'All services\u2026' });
+                MultiSelectDropdown.refresh('f-eligible-services');
             }
             if (!_branchesCache) {
                 try {
@@ -303,6 +306,7 @@
                     document.getElementById('f-active').checked = p.isActive !== false;
                     var ids = (p.eligibleServiceIds || []);
                     Array.from(document.getElementById('f-eligible-services').options).forEach(function (o) { o.selected = ids.indexOf(o.value) !== -1; });
+                    MultiSelectDropdown.sync('f-eligible-services');
                 } catch (err) {
                     document.getElementById('form-error').textContent = err.message || 'Failed to load plan.';
                     document.getElementById('form-error').classList.remove('d-none');
@@ -316,6 +320,7 @@
                 document.getElementById('f-requires-approval').checked = false;
                 document.getElementById('f-active').checked = true;
                 Array.from(document.getElementById('f-eligible-services').options).forEach(function (o) { o.selected = false; });
+                MultiSelectDropdown.sync('f-eligible-services');
             }
 
             new bootstrap.Modal(document.getElementById('modal-form')).show();

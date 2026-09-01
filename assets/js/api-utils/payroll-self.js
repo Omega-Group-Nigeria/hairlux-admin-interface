@@ -38,8 +38,11 @@ const PayrollSelf = (function () {
         return jsonFetch('/staff/me/payroll/compensation');
     }
 
-    async function getCurrentFines() {
-        return jsonFetch('/staff/me/payroll/current-fines');
+    async function getCurrentFines(range) {
+        var qs = (range && range.periodStart && range.periodEnd)
+            ? '?periodStart=' + encodeURIComponent(range.periodStart) + '&periodEnd=' + encodeURIComponent(range.periodEnd)
+            : '';
+        return jsonFetch('/staff/me/payroll/current-fines' + qs);
     }
 
     async function getPayslips() {

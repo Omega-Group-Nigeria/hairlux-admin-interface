@@ -438,7 +438,7 @@
 
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label mb-0">Products Used / Sold <span
+                            <label class="form-label mb-0">Products Sold <span
                                     class="text-secondary small">(optional)</span></label>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="nb-add-item">+ Add
                                 item</button>
@@ -939,7 +939,7 @@
                     '</div>' +
                     '<h4>Services</h4>' +
                     '<table class="table table-sm"><thead><tr><th>Service</th><th>Qty</th><th>Price</th></tr></thead><tbody>' + (servicesHtml || '<tr><td colspan="3" class="text-secondary">None</td></tr>') + '</tbody></table>' +
-                    '<h4 class="mt-3">Products Used / Sold</h4>' +
+                    '<h4 class="mt-3">Products Sold</h4>' +
                     '<table class="table table-sm"><thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead><tbody>' + (itemsHtml || '<tr><td colspan="3" class="text-secondary">None</td></tr>') + '</tbody></table>' +
                     (b.notes ? '<div class="mt-2"><strong>Notes:</strong> ' + esc(b.notes) + '</div>' : '') +
                     commissionHtml;
@@ -1152,19 +1152,24 @@
             } catch (e) { staffSel.innerHTML = '<option value="">Failed to load staff</option>'; }
 
             try {
-                // Dev Feedback: category ("INTERNAL_USE" vs "FOR_SALE") is
-                // a product classification, independent of whether stock
-                // has actually been allocated to the usage bucket for this
-                // branch (storeStock/salesStock/usageStock are separate
-                // per-branch fields on the same item, moved between each
-                // other via stock adjustment) -- filtering by category
-                // alone showed a category-matched item with zero usable
-                // usageStock, and could show nothing at all for a branch
-                // whose usage-allocated stock sits on FOR_SALE-categorized
-                // items. Filtered by actual usageStock > 0 instead.
+                // Products offered here are SOLD to the customer (see the
+                // "Products Sold" label above), not consumed internally --
+                // that's a separate, per-service concept configured on the
+                // admin Services page (product consumption), unrelated to
+                // this booking-time list. salesStock is the per-branch
+                // bucket that actually gets decremented on sale, so that's
+                // the figure to check, matching the same-purpose filter
+                // already used for staff product sales
+                // (staff-portal-app.js's ensureSaleItemsLoaded). A prior
+                // fix here filtered on usageStock instead, which was meant
+                // for the (different) internal-consumption case and let
+                // items with zero sellable stock show up as sellable here.
+                // price != null excludes an item whose salesStock is
+                // allocated but was never given a price -- without it, such
+                // an item would silently display as a free (\u20a60) sale.
                 var invItems = await Inventory.getAll({ branchId, limit: 1000 });
                 if (invItems.data) invItems = invItems.data;
-                window._nbInventoryItems = (invItems || []).filter(function (i) { return (i.usageStock || 0) > 0; });
+                window._nbInventoryItems = (invItems || []).filter(function (i) { return (i.salesStock || 0) > 0 && i.price != null; });
             } catch (e) { window._nbInventoryItems = []; }
 
             await loadServices(branchId);
@@ -1206,8 +1211,8 @@
             var current = select.value;
             var items = window._nbInventoryItems || [];
             select.innerHTML = '<option value="">Select product…</option>' + items.map(function (i) {
-                var priceLabel = i.category === 'FOR_SALE' ? (' — ' + SalonBookings.formatMoney(i.price)) : ' — not for sale';
-                return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + esc(i.name) + priceLabel + '</option>';
+                var priceLabel = i.category === 'FOR_SALE' ? (' — ' + SalonBookings.formatMoney(i.price) + ' (' + (i.salesStock || 0) + ' in stock)') : ' — not for sale';
+                return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-stock="' + (i.salesStock || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + esc(i.name) + priceLabel + '</option>';
             }).join('');
             if (current) select.value = current;
         }
@@ -1364,8 +1369,8 @@
             var current = select.value;
             var items = window._ebInventoryItems || [];
             select.innerHTML = '<option value="">Select product…</option>' + items.map(function (i) {
-                var priceLabel = i.category === 'FOR_SALE' ? (' — ' + SalonBookings.formatMoney(i.price)) : ' — not for sale';
-                return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + esc(i.name) + priceLabel + '</option>';
+                var priceLabel = i.category === 'FOR_SALE' ? (' — ' + SalonBookings.formatMoney(i.price) + ' (' + (i.salesStock || 0) + ' in stock)') : ' — not for sale';
+                return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-stock="' + (i.salesStock || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + esc(i.name) + priceLabel + '</option>';
             }).join('');
             if (current) select.value = current;
         }
@@ -1435,12 +1440,12 @@
             // a booking's branch is fixed and never editable here, so this
             // is loaded once per open rather than reactively.
             try {
-                // Same fix as the New Booking modal's own call -- see its
-                // comment for why usageStock, not category, is the right
-                // filter here.
+                // Same fix and reasoning as the New Booking modal's own
+                // call above -- salesStock, not usageStock, is what's
+                // actually decremented when a product is sold here.
                 var invResult = await Inventory.getAll({ branchId: branchId, limit: 1000 });
                 var invItems = invResult.data || invResult || [];
-                window._ebInventoryItems = invItems.filter(function (i) { return (i.usageStock || 0) > 0; });
+                window._ebInventoryItems = invItems.filter(function (i) { return (i.salesStock || 0) > 0 && i.price != null; });
             } catch (e) { window._ebInventoryItems = []; }
 
             var staffSel = document.getElementById('eb-staff');
