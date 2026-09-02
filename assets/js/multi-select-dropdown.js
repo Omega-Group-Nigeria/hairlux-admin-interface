@@ -105,6 +105,8 @@ const MultiSelectDropdown = (function () {
         if (existing && !existing.select.isConnected) {
             delete registry[selectId];
         } else if (existing) {
+            existing.options = readOptions(existing.select);
+            updateTrigger(existing);
             return;
         }
 

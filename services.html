@@ -1436,10 +1436,19 @@
             var modal = new bootstrap.Modal(document.getElementById("modal-recipe"));
             modal.show();
             try {
+
                 var [recipe, products] = await Promise.all([
                     Services.getRecipe(serviceId),
-                    InventoryProducts.getAll(undefined, undefined, true),
+                    InventoryProducts.getAll(undefined, 'INTERNAL_USE', true),
                 ]);
+
+                var missingIds = (recipe || [])
+                    .map(function (l) { return l.productId; })
+                    .filter(function (id) { return !products.some(function (p) { return p.id === id; }); });
+                if (missingIds.length) {
+                    var allActive = await InventoryProducts.getAll(undefined, undefined, true);
+                    products = products.concat(allActive.filter(function (p) { return missingIds.indexOf(p.id) !== -1; }));
+                }
                 _recipeProducts = products;
                 linesEl.innerHTML = "";
                 if (recipe.length) {

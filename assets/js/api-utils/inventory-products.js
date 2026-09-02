@@ -10,11 +10,13 @@ const InventoryProducts = (function () {
         return raw.data !== undefined ? raw.data : raw;
     }
 
-    async function getAll(search, category, activeOnly) {
+    async function getAll(search, category, activeOnly, vendorId, noVendor) {
         const params = new URLSearchParams();
         if (search) params.set('search', search);
         if (category) params.set('category', category);
         if (activeOnly) params.set('activeOnly', 'true');
+        if (vendorId) params.set('vendorId', vendorId);
+        if (noVendor) params.set('noVendor', 'true');
         const qs = params.toString();
         return apiFetch('/admin/inventory-products' + (qs ? '?' + qs : ''));
     }

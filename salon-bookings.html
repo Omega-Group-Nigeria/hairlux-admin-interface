@@ -1310,10 +1310,16 @@
                 resultEl.classList.add('text-danger');
                 return;
             }
-            var btn = document.getElementById('btn-nb-apply-coupon');
+                        var btn = document.getElementById('btn-nb-apply-coupon');
             btn.disabled = true;
             try {
-                var preview = await SalonBookings.previewDiscount(code, branchId, nbCurrentSubtotal());
+                // Dev Feedback Round 9, item #9: a walk-in customer record
+                // doesn't exist until the booking is actually submitted, so
+                // preview passes the typed phone number and the backend
+                // does a find-only lookup against any existing Customer to
+                // check eligibility for a lifecycle/value-gated coupon.
+                var nbPhone = document.getElementById('nb-customer-phone').value.trim();
+                var preview = await SalonBookings.previewDiscount(code, branchId, nbCurrentSubtotal(), undefined, nbPhone);
                 _nbAppliedCoupon = { id: preview.id, code: preview.code, percentage: Number(preview.percentage) };
                 resultEl.textContent = '\u2713 "' + preview.name + '" applied \u2014 ' + preview.percentage + '% off.';
                 resultEl.classList.add('text-success');

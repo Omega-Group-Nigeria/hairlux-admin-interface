@@ -234,11 +234,12 @@
                                     <th>Bank</th>
                                     <th>Status</th>
                                     <th>Requested</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody id="withdrawals-tbody">
                                 <tr>
-                                    <td colspan="5" class="text-center py-5">
+                                    <td colspan="6" class="text-center py-5">
                                         <div class="spinner-border text-primary"></div>
                                     </td>
                                 </tr>
@@ -503,6 +504,58 @@
         </div>
     </div>
 
+    <!-- Dev Feedback Round 8/9, item #5's post-release half: shared
+         modal for both the post-release "Correct" action and the
+         pre-release individual "Recalculate" action -- same manual
+         override mechanism serves both, only the title/required-ness of
+         the reason field differs, set at open time. -->
+    <div class="modal modal-blur fade" id="modal-payslip-correction" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pc-title">Correct Payslip</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="pc-error"></div>
+                    <p class="text-secondary small mb-3">Existing is what the payslip currently shows; Recalculated
+                        is what the system would newly calculate from current attendance, adjustments, and
+                        compensation data — compare the two before deciding what to override. Leave a field blank
+                        to accept the recalculated value; once saved, only the final (overridden or recalculated)
+                        value is kept — the existing figure is gone.</p>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-vcenter" id="pc-fields-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th class="text-end">Existing</th>
+                                    <th class="text-end">Recalculated</th>
+                                    <th style="width: 200px;">Override (₦)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pc-fields-tbody">
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-0"><label class="form-label" id="pc-reason-label">Reason for Correction</label>
+                        <textarea class="form-control" id="pc-reason" rows="2"
+                            placeholder="Why is this payslip being corrected?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="btn-save-payslip-correction">Save
+                        Correction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Adjustment History Modal -->
     <div class="modal modal-blur fade" id="modal-adjustment-history" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -546,6 +599,7 @@
         var _payrollSettingsCache = null;
         var currentPeriodId = null;
         var currentPeriodStatus = null;
+        var currentPeriodPayslips = [];
 
         document.addEventListener('DOMContentLoaded', function () {
             RBAC.applyPageGuardForCurrentPage();
@@ -561,6 +615,7 @@
             document.getElementById('payday-switch').addEventListener('change', togglePayday);
             document.getElementById('btn-save-adjustment').addEventListener('click', saveAdjustment);
             document.getElementById('btn-save-correct-adjustment').addEventListener('click', saveCorrectAdjustment);
+            document.getElementById('btn-save-payslip-correction').addEventListener('click', savePayslipCorrection);
             document.getElementById('withdrawal-status-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
             document.getElementById('withdrawal-staff-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
             document.getElementById('withdrawal-branch-filter').addEventListener('change', function () {
@@ -782,19 +837,116 @@
             }
         }
 
-        async function runCorrectPayslip(id, staffName) {
-            // Guide, section 15: a correction retains the original (marked
-            // superseded) and generates a fresh, recalculated replacement
-            // alongside it -- always requires a reason, shown to the staff
-            // member as the correction reference.
-            var reason = prompt('Why is ' + staffName + '\'s payslip being corrected? This will be shown to them as the correction reason.');
-            if (reason === null) return;
-            if (!reason.trim()) { alert('A reason is required to correct a payslip.'); return; }
+        // Dev Feedback Round 8/9, item #5's post-release half: replaces
+        // the bare prompt()-based correction with a proper modal showing
+        // current-vs-recalculated figures and per-field override inputs.
+        async function runCorrectPayslip(payslipId) {
+            var payslip = currentPeriodPayslips.filter(function (p) { return p.id === payslipId; })[0];
+            if (!payslip) return;
+            openPayslipCorrectionModal('correct', payslip.staff.name, { payslipId: payslipId });
             try {
-                await Payroll.correctPayslip(id, reason.trim());
-                viewPeriod(currentPeriodId);
+                var preview = await Payroll.previewCorrectPayslip(payslipId);
+                renderPayslipCorrectionFields(preview.current, preview.recalculated);
             } catch (e) {
-                alert(e.message || 'Failed to correct payslip.');
+                document.getElementById('pc-fields-tbody').innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load preview.') + '</td></tr>';
+            }
+        }
+
+        // Dev Feedback Round 8/9: individual counterpart to
+        // runRequestCorrection -- opens the same correction modal, scoped
+        // to recalculating just this one staff member within the still-
+        // AWAITING_RELEASE period, without reopening the whole period.
+        async function runRecalculateStaff(periodId, staffId) {
+            var payslip = currentPeriodPayslips.filter(function (p) { return p.staff.id === staffId; })[0];
+            if (!payslip) return;
+            openPayslipCorrectionModal('recalculate', payslip.staff.name, { periodId: periodId, staffId: staffId });
+            try {
+                var preview = await Payroll.previewRecalculateStaffPayslip(periodId, staffId);
+                renderPayslipCorrectionFields(preview.current, preview.recalculated);
+            } catch (e) {
+                document.getElementById('pc-fields-tbody').innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load preview.') + '</td></tr>';
+            }
+        }
+
+        var PC_FIELDS = [
+            { key: 'baseSalary', label: 'Base Salary' },
+            { key: 'allowances', label: 'Allowances' },
+            { key: 'overtimeAmount', label: 'Overtime' },
+            { key: 'commissionPaid', label: 'Commission Paid' },
+            { key: 'bonusTotal', label: 'Bonus' },
+            { key: 'attendanceDeduction', label: 'Attendance / Absence Deduction' },
+            { key: 'latePenaltyDeduction', label: 'Late Penalty' },
+            { key: 'fineTotal', label: 'Fines' },
+            { key: 'loanRepayment', label: 'Loan Repayment' },
+            { key: 'taxDeduction', label: 'Tax' },
+            { key: 'pensionDeduction', label: 'Pension' },
+            { key: 'otherDeductionTotal', label: 'Other Deductions' },
+        ];
+        var _pcContext = null;
+
+        function openPayslipCorrectionModal(mode, staffName, context) {
+            _pcContext = { mode: mode, context: context };
+            document.getElementById('pc-title').textContent = (mode === 'correct' ? 'Correct' : 'Recalculate') + ' Payslip \u2014 ' + staffName;
+            document.getElementById('pc-reason-label').textContent = mode === 'correct'
+                ? 'Reason for Correction'
+                : 'Reason (optional, for the audit trail)';
+            document.getElementById('pc-reason').value = '';
+            document.getElementById('pc-error').classList.add('d-none');
+            document.getElementById('pc-fields-tbody').innerHTML = '<tr><td colspan="4" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById('modal-payslip-correction')).show();
+        }
+
+        // Dev Feedback Round 9: "Existing" is the current payslip row's
+        // own stored value; "Recalculated" is the preview endpoint's
+        // fresh computation -- shown side by side purely so the admin has
+        // something to compare before typing an override. Once saved,
+        // only the final (overridden-or-recalculated) figure survives on
+        // the payslip -- the existing value is not retained anywhere
+        // after this comparison.
+        function renderPayslipCorrectionFields(current, recalculated) {
+            document.getElementById('pc-fields-tbody').innerHTML = PC_FIELDS.map(function (f) {
+                var changed = Number(current[f.key]) !== Number(recalculated[f.key]);
+                return '<tr>' +
+                    '<td>' + f.label + '</td>' +
+                    '<td class="text-end text-secondary">' + Payroll.formatMoney(current[f.key]) + '</td>' +
+                    '<td class="text-end' + (changed ? ' fw-bold text-warning' : '') + '">' + Payroll.formatMoney(recalculated[f.key]) + '</td>' +
+                    '<td><input type="number" step="0.01" class="form-control form-control-sm pc-override-input" data-field="' + f.key + '" placeholder="\u2014"></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        async function savePayslipCorrection() {
+            if (!_pcContext) return;
+            var errEl = document.getElementById('pc-error');
+            errEl.classList.add('d-none');
+            var reason = document.getElementById('pc-reason').value.trim();
+            if (_pcContext.mode === 'correct' && !reason) {
+                errEl.textContent = 'A reason is required to correct a payslip.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var overrides = {};
+            document.querySelectorAll('.pc-override-input').forEach(function (input) {
+                if (input.value !== '') overrides[input.dataset.field] = Number(input.value);
+            });
+
+            var btn = document.getElementById('btn-save-payslip-correction');
+            btn.disabled = true;
+            try {
+                if (_pcContext.mode === 'correct') {
+                    await Payroll.correctPayslip(_pcContext.context.payslipId, reason, overrides);
+                    bootstrap.Modal.getInstance(document.getElementById('modal-payslip-correction')).hide();
+                    viewPeriod(currentPeriodId);
+                } else {
+                    await Payroll.recalculateStaffPayslip(_pcContext.context.periodId, _pcContext.context.staffId, reason, overrides);
+                    bootstrap.Modal.getInstance(document.getElementById('modal-payslip-correction')).hide();
+                    viewPeriod(_pcContext.context.periodId);
+                }
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save correction.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
             }
         }
 
@@ -814,15 +966,30 @@
                     : '';
 
                 var payslips = period.payslips || [];
+                currentPeriodPayslips = payslips;
                 tbody.innerHTML = payslips.length
                     ? payslips.map(function (p) {
                         var deductions = Number(p.totalDeductions) - Number(p.taxDeduction) - Number(p.pensionDeduction);
+                        // Dev Feedback Round 9: this only ever distinguished
+                        // CORRECTED vs Published -- a still-DRAFT payslip
+                        // (the normal state throughout AWAITING_RELEASE,
+                        // before period approval actually publishes it)
+                        // fell through to "Published" incorrectly.
                         var statusBadge = p.status === 'CORRECTED'
                             ? '<span class="badge bg-amber-lt">Corrected</span>'
-                            : '<span class="badge bg-green-lt">Published</span>';
+                            : p.status === 'DRAFT'
+                                ? '<span class="badge bg-secondary-lt">Draft</span>'
+                                : '<span class="badge bg-green-lt">Published</span>';
                         var rowActions = '';
                         if (period.status === 'RELEASED' && RBAC.can('payroll:correct')) {
-                            rowActions = '<button class="btn btn-sm btn-outline-warning" onclick="runCorrectPayslip(\'' + p.id + '\', \'' + esc(p.staff.name).replace(/'/g, "\\'") + '\')">Correct</button>';
+                            rowActions = '<button class="btn btn-sm btn-outline-warning" onclick="runCorrectPayslip(\'' + p.id + '\')">Correct</button>';
+                        } else if (period.status === 'AWAITING_RELEASE' && RBAC.can('payroll:correct')) {
+                            // Dev Feedback Round 8/9: individual counterpart
+                            // to the period-wide "Send for Correction"
+                            // button -- fixes just this one row without
+                            // reopening the whole period for every staff
+                            // member.
+                            rowActions = '<button class="btn btn-sm btn-outline-warning" onclick="runRecalculateStaff(\'' + id + '\', \'' + p.staff.id + '\')">Recalculate</button>';
                         }
                         return '<tr>' +
                             '<td>' + esc(p.staff.name) + '<div class="text-secondary small">' + esc(p.staff.staffCode || '') + '</div></td>' +
@@ -1092,6 +1259,15 @@
                 var list = result.data || [];
                 _withdrawalMeta = result.meta || null;
                 var statusBadge = { COMPLETED: 'bg-green-lt', PROCESSING: 'bg-blue-lt', PENDING: 'bg-amber-lt', FAILED: 'bg-red-lt', REJECTED: 'bg-red-lt', CANCELLED: 'bg-secondary-lt' };
+                // Dev Feedback Round 9: PROCESSING covers both "normal,
+                // still in flight" and "stuck because the Paystack
+                // transfer webhook never arrived" -- there's no reliable
+                // way to distinguish those from data alone, so the button
+                // is offered on every PROCESSING row rather than trying
+                // to guess a staleness threshold; resyncing an already-
+                // fine in-flight transfer is a harmless no-op (it just
+                // confirms Paystack still shows it pending).
+                var canResync = RBAC.can('payroll:resync_withdrawal');
                 tbody.innerHTML = list.length
                     ? list.map(function (w) {
                         return '<tr>' +
@@ -1100,9 +1276,12 @@
                             '<td>' + esc(w.accountName || '') + '<br><span class="text-secondary small">' + esc(w.accountNumber) + '</span></td>' +
                             '<td><span class="badge ' + (statusBadge[w.status] || 'bg-secondary-lt') + '">' + w.status + '</span></td>' +
                             '<td class="text-secondary small">' + Payroll.formatDate(w.createdAt) + '</td>' +
+                            '<td>' + (canResync && w.status === 'PROCESSING'
+                                ? '<button type="button" class="btn btn-sm btn-outline-secondary btn-resync-withdrawal" data-id="' + w.id + '">Resync</button>'
+                                : '') + '</td>' +
                             '</tr>';
                     }).join('')
-                    : '<tr><td colspan="5" class="text-center text-secondary py-5">No withdrawals found.</td></tr>';
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No withdrawals found.</td></tr>';
 
                 if (_withdrawalMeta) {
                     var start = _withdrawalMeta.total === 0 ? 0 : (_withdrawalMeta.page - 1) * _withdrawalMeta.limit + 1;
@@ -1112,9 +1291,33 @@
                         : '';
                 }
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
         }
+
+        document.getElementById('withdrawals-tbody').addEventListener('click', async function (e) {
+            var btn = e.target.closest('.btn-resync-withdrawal');
+            if (!btn) return;
+            btn.disabled = true;
+            var originalText = btn.textContent;
+            btn.textContent = 'Resyncing\u2026';
+            try {
+                var result = await Payroll.resyncWithdrawal(btn.dataset.id);
+                var status = result && result.data ? result.data.status : null;
+                if (status === 'COMPLETED') {
+                    alert('Withdrawal confirmed complete at Paystack.');
+                } else if (status === 'FAILED') {
+                    alert('Paystack shows this transfer failed \u2014 marked accordingly.');
+                } else {
+                    alert('Paystack still shows this transfer as pending \u2014 nothing to update yet.');
+                }
+                loadWithdrawals();
+            } catch (err) {
+                alert(err.message || 'Failed to resync withdrawal.');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
 
         /** Dev Feedback Round 4, items #22-24 -- view for the new payroll audit trail. */
         async function loadAuditLog() {
