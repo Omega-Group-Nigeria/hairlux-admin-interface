@@ -79,11 +79,31 @@ const Payroll = (function () {
         });
     }
 
-    async function correctPayslip(id, reason) {
+    /** Dev Feedback Round 9: current-vs-recalculated preview, nothing saved -- powers the comparison table in the correction modal. */
+    async function previewCorrectPayslip(id) {
+        return apiFetch(`/admin/payroll/payslips/${id}/correction-preview`);
+    }
+
+    /** Dev Feedback Round 8/9, item #5's post-release half: overrides is an optional partial object of specific fields to override directly (see PayslipManualOverridesDto on the backend for the exact field list). */
+    async function correctPayslip(id, reason, overrides) {
         return apiFetch(`/admin/payroll/payslips/${id}/correct`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason }),
+            body: JSON.stringify({ reason, overrides: overrides && Object.keys(overrides).length ? overrides : undefined }),
+        });
+    }
+
+    /** Dev Feedback Round 9: current-vs-recalculated preview, nothing saved -- pre-release counterpart to previewCorrectPayslip above. */
+    async function previewRecalculateStaffPayslip(periodId, staffId) {
+        return apiFetch(`/admin/payroll/periods/${periodId}/staff/${staffId}/recalculate-preview`);
+    }
+
+    /** Dev Feedback Round 8/9: individual counterpart to requestCorrection -- recalculates one staff member's payslip within an AWAITING_RELEASE period. Same overrides mechanism as correctPayslip above. */
+    async function recalculateStaffPayslip(periodId, staffId, note, overrides) {
+        return apiFetch(`/admin/payroll/periods/${periodId}/staff/${staffId}/recalculate`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ note: note || undefined, overrides: overrides && Object.keys(overrides).length ? overrides : undefined }),
         });
     }
 
@@ -163,6 +183,11 @@ const Payroll = (function () {
         return apiFetch(`/admin/payroll/audit-log${qs}`);
     }
 
+    /** Dev Feedback Round 9: manual fallback for a withdrawal stuck in PROCESSING -- queries Paystack's live transfer status and settles accordingly. */
+    async function resyncWithdrawal(id) {
+        return apiFetch(`/admin/payroll/withdrawals/${id}/resync`, { method: 'POST' });
+    }
+
     function formatMoney(amount) {
         if (amount == null) return '\u2014';
         return '\u20a6' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -177,10 +202,11 @@ const Payroll = (function () {
         getDashboard, listBanks,
         setCompensation, getCompensationHistory,
         listPendingBankChanges, getBankAccount, approveBankChange, rejectBankChange,
-        createPeriod, listPeriods, getPeriod, generatePayroll, approvePeriod, requestCorrection, correctPayslip,
+        createPeriod, listPeriods, getPeriod, generatePayroll, approvePeriod, requestCorrection, correctPayslip, recalculateStaffPayslip,
+        previewCorrectPayslip, previewRecalculateStaffPayslip,
         createAdjustment, listAdjustments, removeAdjustment, correctAdjustment, getAdjustmentHistory,
         getSettings, setReleaseActive, setPensionRate, setTaxRate,
-        listWithdrawals, getAuditLog,
+        listWithdrawals, getAuditLog, resyncWithdrawal,
         formatMoney, formatDate,
     };
 })();
