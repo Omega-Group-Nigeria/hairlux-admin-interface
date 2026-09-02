@@ -53,9 +53,10 @@ const SalonBookings = (function () {
         });
     }
 
-    async function previewDiscount(code, branchId, subtotal, customerId) {
+    async function previewDiscount(code, branchId, subtotal, customerId, customerPhone) {
         const q = new URLSearchParams({ code: code, branchId: branchId, subtotal: String(subtotal) });
         if (customerId) q.set('customerId', customerId);
+        if (customerPhone) q.set('customerPhone', customerPhone);
         return apiFetch(`/admin/salon-bookings/preview-discount?${q.toString()}`);
     }
 

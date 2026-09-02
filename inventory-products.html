@@ -104,6 +104,18 @@
                                         <option value="STORAGE">Storage</option>
                                     </select>
                                 </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-vendor-filter">
+                                        <option value="">All vendors</option>
+                                        <option value="__NONE__">No vendor attached</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-center">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="f-active-only" checked>
+                                        <label class="form-check-label" for="f-active-only">Active only</label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -259,6 +271,8 @@
             document.getElementById('btn-export').addEventListener('click', exportProducts);
             document.getElementById('btn-save').addEventListener('click', save);
             document.getElementById('f-category-filter').addEventListener('change', load);
+            document.getElementById('f-vendor-filter').addEventListener('change', load);
+            document.getElementById('f-active-only').addEventListener('change', load);
             document.getElementById('f-search').addEventListener('input', function () {
                 clearTimeout(_searchDebounce);
                 _searchDebounce = setTimeout(load, 300);
@@ -274,6 +288,15 @@
                 _allVendors = [];
             }
             renderVendorCheckboxes();
+            // Dev Feedback Round 9, item #10: populate the new vendor
+            // filter dropdown from the same _allVendors list already
+            // being fetched here for the create/edit form's checkboxes —
+            // no extra request needed.
+            var vendorFilterOpts = _allVendors.map(function (v) {
+                return '<option value="' + v.id + '">' + esc(v.name) + (v.type === 'VENDOR' ? ' (Vendor)' : ' (Supplier)') + '</option>';
+            }).join('');
+            document.getElementById('f-vendor-filter').innerHTML =
+                '<option value="">All vendors</option><option value="__NONE__">No vendor attached</option>' + vendorFilterOpts;
 
             load();
         });
@@ -347,7 +370,17 @@
             try {
                 var search = document.getElementById('f-search').value.trim();
                 var category = document.getElementById('f-category-filter').value;
-                var list = await InventoryProducts.getAll(search, category);
+                var activeOnly = document.getElementById('f-active-only').checked;
+                // Dev Feedback Round 9, item #10: the vendor filter is one
+                // dropdown covering two distinct backend params -- the
+                // sentinel "__NONE__" value maps to noVendor, any real
+                // vendor id maps to vendorId, and the two are mutually
+                // exclusive by construction (only one can ever be
+                // selected at a time from a single-select dropdown).
+                var vendorFilterVal = document.getElementById('f-vendor-filter').value;
+                var vendorId = vendorFilterVal && vendorFilterVal !== '__NONE__' ? vendorFilterVal : undefined;
+                var noVendor = vendorFilterVal === '__NONE__';
+                var list = await InventoryProducts.getAll(search, category, activeOnly, vendorId, noVendor);
                 _lastLoadedProducts = list;
                 tbody.innerHTML = list.length
                     ? list.map(function (p) {

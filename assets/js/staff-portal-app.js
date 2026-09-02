@@ -2840,7 +2840,12 @@ async function sbApplyCoupon() {
     return;
   }
   try {
-    var preview = await SalonBookingsSelf.previewDiscount(code, sbCurrentSubtotal());
+    // Dev Feedback Round 9, item #9: pass the typed phone number so the
+    // backend can look up (never create) any existing Customer record to
+    // check eligibility for a lifecycle/value-gated coupon before this
+    // walk-in's own Customer record exists.
+    var sbPhoneEl = document.getElementById('sb-customer-phone');
+    var preview = await SalonBookingsSelf.previewDiscount(code, sbCurrentSubtotal(), sbPhoneEl ? sbPhoneEl.value.trim() : undefined);
     _sbAppliedCoupon = { id: preview.id, code: preview.code, percentage: Number(preview.percentage) };
     resultEl.textContent = '\u2713 "' + preview.name + '" applied \u2014 ' + preview.percentage + '% off.';
     resultEl.style.color = 'var(--green)';
