@@ -213,12 +213,10 @@ function applyModuleVisibility() {
   var hasBookingsAccess = hasPerm('staff-portal:bookings');
   var hasInventoryAccess = hasPerm('staff-portal:inventory');
   var hasSalesAccess = hasPerm('staff-portal:sales');
-  // Dev Feedback Round 7, item #7: checks both a Commission Plan and the
-  // flat rate -- checking commissionRate alone would hide this entire
-  // nav section for a staff member whose only setup is a plan (a valid,
-  // real scenario -- see Staff.commissionRate's own schema comment: it's
-  // "the fallback... with no formal plan yet").
-  var hasCommission = s.commissionRate != null || !!s.commissionPlanId;
+  // Dev Feedback Round 9, items #1/#7: Staff.commissionRate (flat rate)
+  // removed everywhere in favor of Compensation Plan only -- this nav
+  // section now shows purely based on whether a plan is assigned.
+  var hasCommission = !!s.commissionPlanId;
 
   var managerSec = document.getElementById('sb-sec-manager');
   if (managerSec) managerSec.style.display = isManager ? '' : 'none';
@@ -2198,7 +2196,7 @@ async function showBookingForm() {
     '</div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Services</label><div id="sb-service-lines"></div>' +
     '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddServiceLine()">+ Add service</button></div>' +
-    '<div class="mb-2"><label class="form-label small mb-1">Products Used / Sold (optional)</label><div id="sb-item-lines"></div>' +
+    '<div class="mb-2"><label class="form-label small mb-1">Products Sold (optional)</label><div id="sb-item-lines"></div>' +
     '<button type="button" class="btn btn-ghost btn-sm mt-1" onclick="sbAddItemLine()">+ Add item</button></div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Notes</label><textarea class="input" id="sb-notes" rows="2"></textarea></div>' +
     '<div class="mb-2"><label class="form-label small mb-1">Coupon Code (optional)</label>' +
@@ -3397,16 +3395,31 @@ async function prOpenPayslipDetail(id) {
     html += prDetailRow('Published', prFmtDate(p.publishedAt));
     html += '</div>';
 
-    // Guide, section 15 "Salary fields" -- show only when salary applies.
-    if (p.fullMonthScheduledWorkdays != null) {
-      html += '<div class="pr-detail-section"><h4>Salary</h4>';
-      html += prDetailRow('Full-month scheduled workdays', p.fullMonthScheduledWorkdays);
+    // Guide, section 15 "Salary fields" -- was gated on
+    // fullMonthScheduledWorkdays alone, which is deliberately always null
+    // for COMMISSION-only staff (rule 4 doesn't need a daily-rate
+    // denominator the way rules 1-3 do) -- but applicableScheduledWorkdays/
+    // missedWorkdays/payableWorkdays ARE populated for commission-only too
+    // (needed for effectiveDailyPay = commissionEarned / payableWorkdays),
+    // so gating the WHOLE section on fullMonthScheduledWorkdays hid all of
+    // that real, populated data for anyone on COMMISSION. Gated on
+    // applicableScheduledWorkdays instead, since that's populated for every
+    // compensation type that has any workday concept at all; the two
+    // salary-specific lines inside (full-month workdays, daily rate/salary
+    // earned) still individually check their own null-ness, since those
+    // genuinely don't apply to commission-only.
+    if (p.applicableScheduledWorkdays != null) {
+      html += '<div class="pr-detail-section"><h4>' + (p.dailyRate != null ? 'Salary' : 'Workdays') + '</h4>';
+      if (p.fullMonthScheduledWorkdays != null) html += prDetailRow('Full-month scheduled workdays', p.fullMonthScheduledWorkdays);
       html += prDetailRow('Applicable scheduled workdays', p.applicableScheduledWorkdays);
       if (p.missedWorkdays) html += prDetailRow('Missed workdays', p.missedWorkdays);
       if (p.approvedExtraWorkdaysCount) html += prDetailRow('Approved extra workdays', p.approvedExtraWorkdaysCount);
       html += prDetailRow('Payable workdays', p.payableWorkdays);
-      html += prDetailRow('Daily rate', sbFormatMoney(p.dailyRate));
-      html += prDetailRow('Salary earned', sbFormatMoney(p.salaryEarned));
+      if (p.dailyRate != null) {
+        html += prDetailRow('Daily rate', sbFormatMoney(p.dailyRate));
+        html += prDetailRow('Salary earned', sbFormatMoney(p.salaryEarned));
+      }
+      if (p.effectiveDailyPay != null) html += prDetailRow('Daily pay', sbFormatMoney(p.effectiveDailyPay));
       html += '</div>';
     }
 
@@ -3561,16 +3574,16 @@ async function loadCommission() {
     var result = await SalonBookingsSelf.getMyCommission();
     var data = result.data || result;
 
-    // Dev Feedback Round 7, item #7: hasCommissionSetup checks both a
-    // Commission Plan and the flat rate -- checking commissionRate alone
-    // used to wrongly gate out a staff member whose only setup is a
-    // plan (a valid, real scenario). commissionRate itself is no longer
-    // returned or displayed at all, since it's misleading whenever a
-    // plan (with its own, different rate) is the one actually in use.
+    // Dev Feedback Round 9, items #1/#7: hasCommissionSetup and
+    // effectiveRate/effectiveRateSource are now purely Compensation
+    // Plan-derived on the backend -- Staff.commissionRate (flat rate) no
+    // longer exists as a fallback, so this is simply "is a plan
+    // assigned" and nothing here needs to branch on a rate source
+    // anymore.
     if (!data.hasCommissionSetup) {
       container.innerHTML =
         '<div class="card"><div class="card-b">' +
-        '<div class="text-secondary">You\u2019re not currently set up for commission. If this role should earn commission, ask an admin to set your rate on your staff profile.</div>' +
+        '<div class="text-secondary">You\u2019re not currently set up for commission. If this role should earn commission, ask an admin to assign you a Commission Plan on your staff profile.</div>' +
         '</div></div>';
       return;
     }
@@ -3640,7 +3653,7 @@ async function loadInventoryDashboard() {
 
 // -- Product Sales --------------------------------------------------------
 // Standalone retail sale — no service attached. Distinct from the Bookings
-// screen's "Products Used/Sold" lines, which always ride on a service
+// screen's "Products Sold" lines, which always ride on a service
 // appointment; this is for a walk-in who just wants to buy something.
 
 var saleItemsCache = null;
