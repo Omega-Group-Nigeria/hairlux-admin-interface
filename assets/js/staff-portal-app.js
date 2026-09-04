@@ -3431,7 +3431,7 @@ async function prOpenPayslipDetail(id) {
         html += prDetailRow('Daily rate', sbFormatMoney(p.dailyRate));
         html += prDetailRow('Salary earned', sbFormatMoney(p.salaryEarned));
       }
-      if (p.effectiveDailyPay != null && Number(p.baseSalary) > 0) html += prDetailRow('Daily pay', sbFormatMoney(p.effectiveDailyPay));
+      // if (p.effectiveDailyPay != null && Number(p.baseSalary) > 0) html += prDetailRow('Daily pay', sbFormatMoney(p.effectiveDailyPay));
       html += '</div>';
     }
 
