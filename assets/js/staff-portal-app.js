@@ -3189,6 +3189,18 @@ async function prLoadCompensation() {
   var container = document.getElementById('pr-comp-content');
   try {
     var comp = await PayrollSelf.getCompensation();
+    // Dev Feedback Round 9: currentBaseSalary is a stale leftover for
+    // anyone currently on COMMISSION (never cleared when they switched
+    // off SALARY) -- showing it here would display an old, no-longer-
+    // real figure. Shows this month's commission total instead, which
+    // the backend now returns specifically for this compensation type.
+    if (comp.compensationType === 'COMMISSION') {
+      container.innerHTML =
+        '<div class="g2">' +
+        '<div class="stat gold"><div class="stat-lbl">Commission This Month</div><div class="stat-val">' + sbFormatMoney(comp.commissionThisMonth) + '</div><div class="stat-delta neu">To date</div></div>' +
+        '</div>';
+      return;
+    }
     if (comp.currentBaseSalary == null) {
       container.innerHTML = '<div class="text-secondary small">No compensation on file yet — check with an admin.</div>';
       return;
@@ -3419,7 +3431,7 @@ async function prOpenPayslipDetail(id) {
         html += prDetailRow('Daily rate', sbFormatMoney(p.dailyRate));
         html += prDetailRow('Salary earned', sbFormatMoney(p.salaryEarned));
       }
-      if (p.effectiveDailyPay != null) html += prDetailRow('Daily pay', sbFormatMoney(p.effectiveDailyPay));
+      if (p.effectiveDailyPay != null && Number(p.baseSalary) > 0) html += prDetailRow('Daily pay', sbFormatMoney(p.effectiveDailyPay));
       html += '</div>';
     }
 
