@@ -786,8 +786,14 @@
         async function loadBranchAndServiceFilterOptions() {
             try {
                 var branches = await Staff.getLocations();
-                document.getElementById("filter-branch").innerHTML =
+                var sel = document.getElementById("filter-branch");
+                sel.innerHTML =
                     branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join("");
+
+                if (RBAC.applyBranchScopeMultiSelect(sel)) {
+                    state.page = 1;
+                    loadUsers(); loadStats();
+                }
             } catch (err) {
                 console.error("Failed to load branches", err);
             }

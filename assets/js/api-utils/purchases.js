@@ -43,5 +43,14 @@ const Purchases = (function () {
         });
     }
 
-    return { getAll, getOne, recordPayment, receiveGoods };
+    /** Dev Feedback Round 9: Product Acceptance -- the separate review-and-credit-to-inventory step, now distinct from receiveGoods above. */
+    async function acceptGoods(id, payload) {
+        return apiFetch(`/admin/purchases/${id}/accept-goods`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    return { getAll, getOne, recordPayment, receiveGoods, acceptGoods };
 })();

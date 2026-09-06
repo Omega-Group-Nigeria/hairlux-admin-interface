@@ -750,6 +750,7 @@
                 var opts = _branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
                 filterSel.innerHTML = '<option value="">All branches</option>' + opts;
                 formSel.innerHTML = '<option value="">Select branch…</option>' + opts;
+                if (RBAC.applyBranchScope(filterSel)) { _page = 1; loadBookings(); }
             } catch (e) { console.error(e); }
         }
 
@@ -1310,7 +1311,7 @@
                 resultEl.classList.add('text-danger');
                 return;
             }
-                        var btn = document.getElementById('btn-nb-apply-coupon');
+            var btn = document.getElementById('btn-nb-apply-coupon');
             btn.disabled = true;
             try {
                 // Dev Feedback Round 9, item #9: a walk-in customer record

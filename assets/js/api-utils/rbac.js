@@ -21,8 +21,16 @@
 const RBAC = (() => {
 
     // ── In-memory state (re-seeded on every page) ─────────────────────────────
-    let _role        = null;   // 'ADMIN' | 'SUPER_ADMIN' | null
+    let _role = null;   // 'ADMIN' | 'SUPER_ADMIN' | null
     let _permissions = [];     // string[]
+    // Dev Feedback Round 9: Branch Filter automation -- non-empty only
+    // for an admin who's also a branch manager (their linked Staff
+    // record has managedBranches set), same convention staff-portal-
+    // app.js's applyModuleVisibility already uses for the equivalent
+    // staff-portal check. Array, not a single object -- one manager can
+    // now oversee multiple branches (the old one-branch-per-manager DB
+    // constraint was dropped). [{ id, name }, ...], possibly empty.
+    let _managedBranches = [];
 
     // ── Hydration ─────────────────────────────────────────────────────────────
 
@@ -35,7 +43,7 @@ const RBAC = (() => {
      */
     function hydrate(userData) {
         if (!userData) return;
-        _role        = userData.role || null;
+        _role = userData.role || null;
         // Permissions may come as a flat array on the user object (current API shape)
         // or nested inside adminRole (legacy / login response shape)
         if (Array.isArray(userData.permissions)) {
@@ -45,7 +53,8 @@ const RBAC = (() => {
         } else {
             _permissions = [];
         }
-        try { localStorage.setItem('hairlux_user', JSON.stringify(userData)); } catch (_) {}
+        _managedBranches = Array.isArray(userData.managedBranches) ? userData.managedBranches : [];
+        try { localStorage.setItem('hairlux_user', JSON.stringify(userData)); } catch (_) { }
     }
 
     /**
@@ -57,7 +66,7 @@ const RBAC = (() => {
         try {
             const u = JSON.parse(localStorage.getItem('hairlux_user') || 'null');
             if (u) hydrate(u);
-        } catch (_) {}
+        } catch (_) { }
     }
 
     /**
@@ -100,6 +109,37 @@ const RBAC = (() => {
 
     /** Return the current role string ('ADMIN', 'SUPER_ADMIN', or null). */
     function getRole() { return _role; }
+
+    /** Copy of the manager's branches -- [{ id, name }, ...], possibly empty. */
+    function getManagedBranches() { return _managedBranches.slice(); }
+
+    /** Convenience for the common case of just needing the ids to filter/restrict by. */
+    function getManagedBranchIds() { return _managedBranches.map(function (b) { return b.id; }); }
+
+    /** True for any admin whose linked Staff record manages at least one branch. */
+    function isManagerScoped() { return _managedBranches.length > 0; }
+
+    function applyBranchScope(selectEl) {
+        if (!isManagerScoped() || !selectEl) return false;
+        var managedIds = getManagedBranchIds();
+        Array.from(selectEl.options).forEach(function (o) {
+            if (o.value && managedIds.indexOf(o.value) === -1) o.remove();
+        });
+        selectEl.value = managedIds[0];
+        selectEl.disabled = managedIds.length === 1;
+        return true;
+    }
+
+    function applyBranchScopeMultiSelect(selectEl) {
+        if (!isManagerScoped() || !selectEl) return false;
+        var managedIds = getManagedBranchIds();
+        Array.from(selectEl.options).forEach(function (o) {
+            if (!o.value) return;
+            if (managedIds.indexOf(o.value) === -1) { o.remove(); return; }
+            o.selected = true;
+        });
+        return true;
+    }
 
     /** Return a copy of the current permissions array. */
     function getPermissions() { return _permissions.slice(); }
@@ -271,6 +311,11 @@ const RBAC = (() => {
         can,
         isSuperAdmin,
         getRole,
+        getManagedBranches,
+        getManagedBranchIds,
+        isManagerScoped,
+        applyBranchScope,
+        applyBranchScopeMultiSelect,
         getFirstAccessiblePage,
         getPermissions,
         getPagePermissions,

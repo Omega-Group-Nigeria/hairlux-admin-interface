@@ -370,6 +370,12 @@
                 document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
                     return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>';
                 }).join('');
+
+                if (RBAC.applyBranchScope(document.getElementById("filter-branch"))) {
+                    state.locationId = RBAC.getManagedBranchIds()[0];
+                    state.page = 1;
+                    loadRequests();
+                }
             } catch (err) { /* non-fatal — filter just stays at "All branches" */ }
 
             await loadFilterStaffOptions();
