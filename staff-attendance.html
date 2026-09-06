@@ -220,6 +220,13 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="d-flex align-items-center justify-content-between mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-prev-page">«
+                                Previous</button>
+                            <span class="text-secondary small" id="page-label">Page 1 of 1</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-next-page">Next
+                                »</button>
+                        </div>
                     </div>
 
                     <div class="card mt-3">
@@ -410,7 +417,7 @@
         RBAC.loadFromStorage();
         RBAC.applyPageGuardForCurrentPage();
 
-        var listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "" };
+        var listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "", page: 1, limit: 20 };
         var pageAlertTimer = null;
 
         function setPageAlert(type, message) {
@@ -440,8 +447,13 @@
             } catch (e) {
                 console.error("Failed to load branches", e);
             }
-
-            await loadFilterStaffOptions();
+            if (RBAC.applyBranchScope(document.getElementById("filter-branch"))) {
+                listState.locationId = RBAC.getManagedBranchIds()[0];
+                await loadFilterStaffOptions(listState.locationId);
+                loadAttendance();
+            } else {
+                await loadFilterStaffOptions();
+            }
         }
 
         // Dev Feedback Round 5, item #5: re-fetches scoped to whichever
@@ -460,6 +472,8 @@
                 console.error("Failed to load staff", e);
             }
         }
+
+        var _attendanceTotalPages = 1;
 
         async function loadAttendance(options) {
             options = options || {};
@@ -523,6 +537,12 @@
                     });
                 }
                 document.getElementById("results-label").textContent = records.length + " record(s)";
+                var meta = result.meta || { total: records.length, page: 1, totalPages: 1 };
+                _attendanceTotalPages = meta.totalPages || 1;
+                listState.page = meta.page || 1;
+                document.getElementById("page-label").textContent = "Page " + listState.page + " of " + _attendanceTotalPages + " (" + meta.total + " total)";
+                document.getElementById("btn-prev-page").disabled = listState.page <= 1;
+                document.getElementById("btn-next-page").disabled = listState.page >= _attendanceTotalPages;
                 if (options.notifySuccess) flashPageAlert("success", "Refreshed.");
             } catch (e) {
                 document.getElementById("attendance-tbody").innerHTML =
@@ -767,29 +787,35 @@
 
             document.getElementById("filter-date").addEventListener("change", function () {
                 listState.date = this.value;
+                listState.page = 1;
                 loadAttendance();
             });
             document.getElementById("filter-from").addEventListener("change", function () {
                 listState.from = this.value;
+                listState.page = 1;
                 loadAttendance();
             });
             document.getElementById("filter-to").addEventListener("change", function () {
                 listState.to = this.value;
+                listState.page = 1;
                 loadAttendance();
             });
             document.getElementById("filter-status").addEventListener("change", function () {
                 listState.status = this.value;
+                listState.page = 1;
                 loadAttendance();
             });
             document.getElementById("filter-branch").addEventListener("change", function () {
                 listState.locationId = this.value;
                 document.getElementById("filter-staff").value = "";
                 listState.staffId = "";
+                listState.page = 1;
                 loadFilterStaffOptions(this.value);
                 loadAttendance();
             });
             document.getElementById("filter-staff").addEventListener("change", function () {
                 listState.staffId = this.value;
+                listState.page = 1;
                 loadAttendance();
             });
             document.getElementById("btn-clear-filters").addEventListener("click", function () {
@@ -799,11 +825,21 @@
                 document.getElementById("filter-status").value = "";
                 document.getElementById("filter-branch").value = "";
                 document.getElementById("filter-staff").value = "";
-                listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "" };
+                // Dev Feedback Round 9: page/limit were missing from this
+                // reset object -- left listState.page as undefined after
+                // clearing filters, which broke pagination until the next
+                // explicit page change re-set it.
+                listState = { date: "", locationId: "", staffId: "", status: "", from: "", to: "", page: 1, limit: 20 };
                 loadFilterStaffOptions();
                 loadAttendance();
             });
             document.getElementById("btn-download-csv").addEventListener("click", downloadAttendanceCsv);
+            document.getElementById("btn-prev-page").addEventListener("click", function () {
+                if (listState.page > 1) { listState.page--; loadAttendance(); }
+            });
+            document.getElementById("btn-next-page").addEventListener("click", function () {
+                if (listState.page < (_attendanceTotalPages || 1)) { listState.page++; loadAttendance(); }
+            });
 
             // ── Monthly summary — default to the current month ───────────────
             var now = new Date();

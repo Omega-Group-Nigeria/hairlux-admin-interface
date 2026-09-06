@@ -15,7 +15,7 @@
 
         .receive-line-row {
             display: grid;
-            grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr 1fr;
+            grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr;
             gap: 8px;
             align-items: end;
             margin-bottom: 8px;
@@ -144,12 +144,13 @@
                                         <th>Paid</th>
                                         <th>Payment Status</th>
                                         <th>Status</th>
+                                        <th>Acceptance</th>
                                         <th class="w-1">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody">
                                     <tr>
-                                        <td colspan="8" class="text-center py-5">
+                                        <td colspan="9" class="text-center py-5">
                                             <div class="spinner-border text-primary"></div>
                                         </td>
                                     </tr>
@@ -225,13 +226,15 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none" id="receive-error"></div>
+                    <div class="text-secondary small mb-2">Just records what physically arrived -- review and acceptance
+                        into inventory
+                        happens separately, via Accept Products, once this is saved.</div>
                     <div class="receive-line-row text-secondary small">
                         <div>Product</div>
                         <div>Ordered</div>
                         <div>Received</div>
                         <div>Delivering</div>
                         <div>Damaged</div>
-                        <div>Accepted</div>
                         <div>Batch / Expiry</div>
                     </div>
                     <div id="receive-lines-container"></div>
@@ -239,6 +242,35 @@
                 <div class="modal-footer">
                     <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button class="btn btn-primary" id="btn-save-receive">Confirm Receipt</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-accept" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Accept Products</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="accept-error"></div>
+                    <div class="text-secondary small mb-2">Review each delivered line still awaiting acceptance. Only
+                        the
+                        quantity you accept here enters usable inventory; each line can only be reviewed once.</div>
+                    <div class="receive-line-row text-secondary small"
+                        style="grid-template-columns: 1.5fr 0.8fr 0.8fr 1fr;">
+                        <div>Product</div>
+                        <div>Delivered</div>
+                        <div>Damaged</div>
+                        <div>Accept Qty</div>
+                    </div>
+                    <div id="accept-lines-container"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save-accept">Confirm Acceptance</button>
                 </div>
             </div>
         </div>
@@ -255,11 +287,20 @@
         var _allVendors = [];
         var _currentPurchase = null;
         var _lastLoadedPurchases = [];
-        var _receiveLines = []; // [{ purchaseLineId, productName, ordered, previouslyReceived, deliveredQty, damagedQty, acceptedQty, batchLotNumber, expiryDate }]
+        var _receiveLines = []; // [{ purchaseLineId, productName, ordered, previouslyReceived, deliveredQty, damagedQty, batchLotNumber, expiryDate }]
 
         var STATUS_BADGE = {
             PENDING: 'bg-yellow-lt', ORDERED: 'bg-azure-lt', PARTIALLY_RECEIVED: 'bg-orange-lt',
             FULLY_RECEIVED: 'bg-green-lt', CANCELLED: 'bg-secondary-lt', COMPLETED: 'bg-green-lt',
+        };
+        // Dev Feedback Round 9: Product Acceptance -- separate from
+        // PurchaseStatus above, which only tracks whether goods have
+        // physically arrived, not whether anyone's reviewed/accepted them.
+        var ACCEPTANCE_BADGE = {
+            PENDING: 'bg-secondary-lt', RECEIVED: 'bg-orange-lt', FULLY_ACCEPTED: 'bg-green-lt',
+        };
+        var ACCEPTANCE_LABEL = {
+            PENDING: 'Pending', RECEIVED: 'Received', FULLY_ACCEPTED: 'Fully Accepted',
         };
         var PAYMENT_BADGE = {
             UNPAID: 'bg-red-lt', PARTIALLY_PAID: 'bg-orange-lt', FULLY_PAID: 'bg-green-lt', OVERPAID: 'bg-purple-lt',
@@ -287,7 +328,8 @@
             });
             document.getElementById('btn-export').addEventListener('click', exportPurchases);
             document.getElementById('btn-save-payment').addEventListener('click', savePayment);
-            document.getElementById('btn-save-receive').addEventListener('click', saveReceive);
+                        document.getElementById('btn-save-receive').addEventListener('click', saveReceive);
+            document.getElementById('btn-save-accept').addEventListener('click', saveAccept);
 
             try {
                 _allVendors = await Suppliers.getAll();
@@ -333,7 +375,7 @@
 
         async function load() {
             var tbody = document.getElementById('tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var list = await Purchases.getAll({
                     vendorId: document.getElementById('f-vendor-filter').value,
@@ -353,14 +395,15 @@
                             '<td>' + formatMoney(p.amountPaid) + '</td>' +
                             '<td><span class="badge ' + (PAYMENT_BADGE[p.paymentStatus] || 'bg-secondary-lt') + '">' + esc(p.paymentStatus.replace('_', ' ')) + '</span></td>' +
                             '<td><span class="badge ' + (STATUS_BADGE[p.status] || 'bg-secondary-lt') + '">' + esc(p.status.replace('_', ' ')) + '</span></td>' +
+                            '<td><span class="badge ' + (ACCEPTANCE_BADGE[p.acceptanceStatus] || 'bg-secondary-lt') + '">' + esc(ACCEPTANCE_LABEL[p.acceptanceStatus] || p.acceptanceStatus) + '</span></td>' +
                             '<td class="text-nowrap">' +
                             '<button class="btn btn-sm btn-outline-secondary" onclick="viewOne(\'' + p.id + '\')">View</button>' +
                             '</td>' +
                             '</tr>';
                     }).join('')
-                    : '<tr><td colspan="8" class="text-center text-secondary py-5">No purchases found.</td></tr>';
+                    : '<tr><td colspan="9" class="text-center text-secondary py-5">No purchases found.</td></tr>';
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
         }
 
@@ -386,7 +429,16 @@
 
                 var receiptsHtml = (p.goodsReceipts || []).length
                     ? p.goodsReceipts.map(function (r) {
-                        var lineSummary = r.lines.map(function (l) { return l.acceptedQty + ' accepted (of ' + l.deliveredQty + ' delivered)'; }).join(', ');
+                        // Dev Feedback Round 9: acceptedQty is no longer
+                        // meaningful for a line until it's actually been
+                        // reviewed (acceptedAt set) -- a 0 accepted, not-
+                        // yet-reviewed line used to look identical to a
+                        // 0-accepted, fully-reviewed-and-rejected one.
+                        var lineSummary = r.lines.map(function (l) {
+                            return l.acceptedAt
+                                ? (l.acceptedQty + ' accepted (of ' + l.deliveredQty + ' delivered)')
+                                : (l.deliveredQty + ' delivered \u2014 awaiting acceptance');
+                        }).join(', ');
                         return '<tr><td>' + new Date(r.receivedDate).toLocaleDateString() + '</td><td>' + esc(lineSummary) + '</td></tr>';
                     }).join('')
                     : '<tr><td colspan="2" class="text-secondary text-center">No deliveries received yet.</td></tr>';
@@ -398,6 +450,7 @@
                     '<div class="col-4"><div class="text-secondary small">Grand Total</div><div>' + formatMoney(p.grandTotal) + '</div></div>' +
                     '<div class="col-4"><div class="text-secondary small">Paid</div><div>' + formatMoney(p.amountPaid) + '</div></div>' +
                     '<div class="col-4"><div class="text-secondary small">Status</div><div><span class="badge ' + (STATUS_BADGE[p.status] || 'bg-secondary-lt') + '">' + esc(p.status.replace('_', ' ')) + '</span></div></div>' +
+                    '<div class="col-4"><div class="text-secondary small">Acceptance</div><div><span class="badge ' + (ACCEPTANCE_BADGE[p.acceptanceStatus] || 'bg-secondary-lt') + '">' + esc(ACCEPTANCE_LABEL[p.acceptanceStatus] || p.acceptanceStatus) + '</span></div></div>' +
                     '</div>' +
                     '<div class="fw-semibold mb-1">Products</div>' +
                     '<table class="table table-sm mb-3"><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Line Total</th></tr></thead><tbody>' + linesHtml + '</tbody></table>' +
@@ -406,9 +459,14 @@
                     '<div class="fw-semibold mb-1">Goods Received</div>' +
                     '<table class="table table-sm"><thead><tr><th>Date</th><th>Summary</th></tr></thead><tbody>' + receiptsHtml + '</tbody></table>';
 
+                // Dev Feedback Round 9: "Accept Products" only shown once
+                // there's actually something to review (RECEIVED) -- stays
+                // hidden at PENDING (nothing delivered yet) and once
+                // everything's already FULLY_ACCEPTED.
                 document.getElementById('view-footer').innerHTML =
                     '<button class="btn btn-outline-primary" onclick="openPaymentForm()">Record Payment</button>' +
                     '<button class="btn btn-outline-success" onclick="openReceiveForm()">Receive Goods</button>' +
+                    (p.acceptanceStatus === 'RECEIVED' ? '<button class="btn btn-outline-warning" onclick="openAcceptForm()">Accept Products</button>' : '') +
                     '<button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>';
             } catch (e) {
                 document.getElementById('view-body').innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
@@ -456,109 +514,176 @@
         }
 
         // ── Receive Goods ─────────────────────────────────────────────────
-        function openReceiveForm() {
-            document.getElementById('receive-error').classList.add('d-none');
+                function openReceiveForm() {
+                        document.getElementById('receive-error').classList.add('d-none');
 
-            var deliveredByLine = {};
-            (_currentPurchase.goodsReceipts || []).forEach(function (r) {
-                r.lines.forEach(function (l) {
-                    deliveredByLine[l.purchaseLineId] = (deliveredByLine[l.purchaseLineId] || 0) + l.deliveredQty;
-                });
-            });
+                        var deliveredByLine = {};
+                        (_currentPurchase.goodsReceipts || []).forEach(function (r) {
+                            r.lines.forEach(function (l) {
+                                deliveredByLine[l.purchaseLineId] = (deliveredByLine[l.purchaseLineId] || 0) + l.deliveredQty;
+                            });
+                        });
 
-            _receiveLines = _currentPurchase.lines
-                .filter(function (l) { return (deliveredByLine[l.id] || 0) < l.quantity; })
-                .map(function (l) {
-                    return {
-                        purchaseLineId: l.id,
-                        productName: l.product ? l.product.name : '',
-                        ordered: l.quantity,
-                        previouslyReceived: deliveredByLine[l.id] || 0,
-                        deliveredQty: '',
-                        damagedQty: 0,
-                        acceptedQty: '',
-                        batchLotNumber: '',
-                        expiryDate: '',
-                    };
-                });
+                        _receiveLines = _currentPurchase.lines
+                            .filter(function (l) { return (deliveredByLine[l.id] || 0) < l.quantity; })
+                            .map(function (l) {
+                                return {
+                                    purchaseLineId: l.id,
+                                    productName: l.product ? l.product.name : '',
+                                    ordered: l.quantity,
+                                    previouslyReceived: deliveredByLine[l.id] || 0,
+                                    deliveredQty: '',
+                                    damagedQty: 0,
+                                    batchLotNumber: '',
+                                    expiryDate: '',
+                                };
+                            });
 
-            renderReceiveLines();
-            new bootstrap.Modal(document.getElementById('modal-receive')).show();
-        }
+                        renderReceiveLines();
+                        new bootstrap.Modal(document.getElementById('modal-receive')).show();
+                    }
 
-        function renderReceiveLines() {
-            var container = document.getElementById('receive-lines-container');
-            if (!_receiveLines.length) {
-                container.innerHTML = '<div class="text-secondary text-center py-3">Every line on this purchase has already been fully received.</div>';
-                return;
-            }
-            container.innerHTML = _receiveLines.map(function (l, i) {
-                return '<div class="receive-line-row">' +
-                    '<div>' + esc(l.productName) + '<div class="text-secondary small">Outstanding: ' + (l.ordered - l.previouslyReceived) + '</div></div>' +
-                    '<div class="readonly-figure">' + l.ordered + '</div>' +
-                    '<div class="readonly-figure">' + l.previouslyReceived + '</div>' +
-                    '<input type="number" min="0" class="form-control form-control-sm" value="' + l.deliveredQty + '" oninput="onReceiveFieldChange(' + i + ',\'deliveredQty\',this.value)">' +
-                    '<input type="number" min="0" class="form-control form-control-sm" value="' + l.damagedQty + '" oninput="onReceiveFieldChange(' + i + ',\'damagedQty\',this.value)">' +
-                    '<input type="number" min="0" class="form-control form-control-sm" value="' + l.acceptedQty + '" oninput="onReceiveFieldChange(' + i + ',\'acceptedQty\',this.value)">' +
-                    '<div><input type="text" class="form-control form-control-sm mb-1" placeholder="Batch/Lot" value="' + esc(l.batchLotNumber) + '" oninput="onReceiveFieldChange(' + i + ',\'batchLotNumber\',this.value)">' +
-                    '<input type="date" class="form-control form-control-sm" value="' + l.expiryDate + '" oninput="onReceiveFieldChange(' + i + ',\'expiryDate\',this.value)"></div>' +
-                    '</div>';
-            }).join('');
-        }
+                    function renderReceiveLines() {
+                        var container = document.getElementById('receive-lines-container');
+                        if (!_receiveLines.length) {
+                            container.innerHTML = '<div class="text-secondary text-center py-3">Every line on this purchase has already been fully received.</div>';
+                            return;
+                        }
+                        container.innerHTML = _receiveLines.map(function (l, i) {
+                            return '<div class="receive-line-row">' +
+                                '<div>' + esc(l.productName) + '<div class="text-secondary small">Outstanding: ' + (l.ordered - l.previouslyReceived) + '</div></div>' +
+                                '<div class="readonly-figure">' + l.ordered + '</div>' +
+                                '<div class="readonly-figure">' + l.previouslyReceived + '</div>' +
+                                '<input type="number" min="0" class="form-control form-control-sm" value="' + l.deliveredQty + '" oninput="onReceiveFieldChange(' + i + ',\'deliveredQty\',this.value)">' +
+                                '<input type="number" min="0" class="form-control form-control-sm" value="' + l.damagedQty + '" oninput="onReceiveFieldChange(' + i + ',\'damagedQty\',this.value)">' +
+                                '<div><input type="text" class="form-control form-control-sm mb-1" placeholder="Batch/Lot" value="' + esc(l.batchLotNumber) + '" oninput="onReceiveFieldChange(' + i + ',\'batchLotNumber\',this.value)">' +
+                                '<input type="date" class="form-control form-control-sm" value="' + l.expiryDate + '" oninput="onReceiveFieldChange(' + i + ',\'expiryDate\',this.value)"></div>' +
+                                '</div>';
+                        }).join('');
+                    }
 
-        function onReceiveFieldChange(index, field, value) {
-            // No full re-render on every keystroke -- same reasoning as
-            // Purchase Requests' line items -- just updates the backing array.
-            _receiveLines[index][field] = value;
-        }
+                    function onReceiveFieldChange(index, field, value) {
+                        // No full re-render on every keystroke -- same reasoning as
+                        // Purchase Requests' line items -- just updates the backing array.
+                        _receiveLines[index][field] = value;
+                    }
 
-        async function saveReceive() {
-            var errEl = document.getElementById('receive-error');
-            errEl.classList.add('d-none');
+                    async function saveReceive() {
+                        var errEl = document.getElementById('receive-error');
+                        errEl.classList.add('d-none');
 
-            var linesToSubmit = _receiveLines.filter(function (l) { return Number(l.deliveredQty) > 0; });
-            if (!linesToSubmit.length) {
-                errEl.textContent = 'Enter a delivered quantity for at least one line.';
-                errEl.classList.remove('d-none');
-                return;
-            }
-            for (var i = 0; i < linesToSubmit.length; i++) {
-                var l = linesToSubmit[i];
-                if (l.acceptedQty === '' || l.acceptedQty == null) {
-                    errEl.textContent = 'Accepted quantity is required for every line being received.';
-                    errEl.classList.remove('d-none');
-                    return;
-                }
-            }
+                        var linesToSubmit = _receiveLines.filter(function (l) { return Number(l.deliveredQty) > 0; });
+                        if (!linesToSubmit.length) {
+                            errEl.textContent = 'Enter a delivered quantity for at least one line.';
+                            errEl.classList.remove('d-none');
+                            return;
+                        }
 
-            var payload = {
-                lines: linesToSubmit.map(function (l) {
-                    return {
-                        purchaseLineId: l.purchaseLineId,
-                        deliveredQty: Number(l.deliveredQty),
-                        damagedQty: Number(l.damagedQty) || 0,
-                        acceptedQty: Number(l.acceptedQty),
-                        batchLotNumber: l.batchLotNumber || undefined,
-                        expiryDate: l.expiryDate || undefined,
-                    };
-                }),
-            };
+                        var payload = {
+                            lines: linesToSubmit.map(function (l) {
+                                return {
+                                    purchaseLineId: l.purchaseLineId,
+                                    deliveredQty: Number(l.deliveredQty),
+                                    damagedQty: Number(l.damagedQty) || 0,
+                                    batchLotNumber: l.batchLotNumber || undefined,
+                                    expiryDate: l.expiryDate || undefined,
+                                };
+                            }),
+                        };
 
-            var btn = document.getElementById('btn-save-receive');
-            btn.disabled = true;
-            try {
-                await Purchases.receiveGoods(_currentPurchase.id, payload);
-                bootstrap.Modal.getInstance(document.getElementById('modal-receive')).hide();
-                viewOne(_currentPurchase.id);
-                load();
-            } catch (e) {
-                errEl.textContent = e.message || 'Failed to record receipt.';
-                errEl.classList.remove('d-none');
-            } finally {
-                btn.disabled = false;
-            }
-        }
-    </script>
-</body>
+                        var btn = document.getElementById('btn-save-receive');
+                        btn.disabled = true;
+                        try {
+                            await Purchases.receiveGoods(_currentPurchase.id, payload);
+                            bootstrap.Modal.getInstance(document.getElementById('modal-receive')).hide();
+                            viewOne(_currentPurchase.id);
+                            load();
+                        } catch (e) {
+                            errEl.textContent = e.message || 'Failed to record receipt.';
+                            errEl.classList.remove('d-none');
+                        } finally {
+                            btn.disabled = false;
+                        }
+                    }
 
-</html>
+                    // ── Accept Products (Dev Feedback Round 9) ─────────────────────────
+                    // [{ goodsReceiptLineId, productName, deliveredQty, damagedQty, acceptedQty }]
+                    var _acceptLines = [];
+
+                    function openAcceptForm() {
+                        document.getElementById('accept-error').classList.add('d-none');
+
+                        _acceptLines = [];
+                        (_currentPurchase.goodsReceipts || []).forEach(function (r) {
+                            r.lines.forEach(function (l) {
+                                if (l.acceptedAt) return; // already reviewed -- nothing left to do for this line
+                                _acceptLines.push({
+                                    goodsReceiptLineId: l.id,
+                                    productName: l.purchaseLine && l.purchaseLine.product ? l.purchaseLine.product.name : '',
+                                    deliveredQty: l.deliveredQty,
+                                    damagedQty: l.damagedQty || 0,
+                                    acceptedQty: '',
+                                });
+                            });
+                        });
+
+                        renderAcceptLines();
+                        new bootstrap.Modal(document.getElementById('modal-accept')).show();
+                    }
+
+                    function renderAcceptLines() {
+                        var container = document.getElementById('accept-lines-container');
+                        if (!_acceptLines.length) {
+                            container.innerHTML = '<div class="text-secondary text-center py-3">Every delivered line has already been reviewed.</div>';
+                            return;
+                        }
+                        container.innerHTML = _acceptLines.map(function (l, i) {
+                            var maxAcceptable = l.deliveredQty - l.damagedQty;
+                            return '<div class="receive-line-row" style="grid-template-columns: 1.5fr 0.8fr 0.8fr 1fr;">' +
+                                '<div>' + esc(l.productName) + '</div>' +
+                                '<div class="readonly-figure">' + l.deliveredQty + '</div>' +
+                                '<div class="readonly-figure">' + l.damagedQty + '</div>' +
+                                '<input type="number" min="0" max="' + maxAcceptable + '" class="form-control form-control-sm" value="' + l.acceptedQty + '" placeholder="Up to ' + maxAcceptable + '" oninput="onAcceptFieldChange(' + i + ',this.value)">' +
+                                '</div>';
+                        }).join('');
+                    }
+
+                    function onAcceptFieldChange(index, value) {
+                        _acceptLines[index].acceptedQty = value;
+                    }
+
+                    async function saveAccept() {
+                        var errEl = document.getElementById('accept-error');
+                        errEl.classList.add('d-none');
+
+                        var linesToSubmit = _acceptLines.filter(function (l) { return l.acceptedQty !== '' && l.acceptedQty != null; });
+                        if (!linesToSubmit.length) {
+                            errEl.textContent = 'Enter an accept quantity for at least one line.';
+                            errEl.classList.remove('d-none');
+                            return;
+                        }
+
+                        var payload = {
+                            lines: linesToSubmit.map(function (l) {
+                                return { goodsReceiptLineId: l.goodsReceiptLineId, acceptedQty: Number(l.acceptedQty) };
+                            }),
+                        };
+
+                        var btn = document.getElementById('btn-save-accept');
+                        btn.disabled = true;
+                        try {
+                            await Purchases.acceptGoods(_currentPurchase.id, payload);
+                            bootstrap.Modal.getInstance(document.getElementById('modal-accept')).hide();
+                            viewOne(_currentPurchase.id);
+                            load();
+                        } catch (e) {
+                            errEl.textContent = e.message || 'Failed to record acceptance.';
+                            errEl.classList.remove('d-none');
+                        } finally {
+                            btn.disabled = false;
+                        }
+                    }
+                </script>
+    </body>
+    
+    </html>

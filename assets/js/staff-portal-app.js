@@ -196,20 +196,22 @@ function renderStaffChip() {
 }
 
 /**
- * Shows/hides sidebar sections per staff eligibility — Manager (managedBranch
- * set, or the staff-portal:approvals permission), Authorized Access
- * (staff-portal:inventory / staff-portal:bookings permissions from their
- * assigned role), Commission (commissionRate or commissionPlanId set).
- * Permission strings ride on the same AdminRole system used for
- * admin-portal access, so one role assignment governs both portals
- * consistently.
+ * Shows/hides sidebar sections per staff eligibility — Manager
+ * (managedBranches non-empty, or the staff-portal:approvals permission),
+ * Authorized Access (staff-portal:inventory / staff-portal:bookings
+ * permissions from their assigned role), Commission (commissionRate or
+ * commissionPlanId set). Permission strings ride on the same AdminRole
+ * system used for admin-portal access, so one role assignment governs
+ * both portals consistently.
  */
 function applyModuleVisibility() {
   var s = currentStaff || {};
   var perms = s.permissions || [];
   var hasPerm = function (p) { return perms.indexOf(p) !== -1; };
 
-  var isManager = !!s.managedBranch || hasPerm('staff-portal:approvals');
+
+  // than a single-object truthiness check.
+  var isManager = (Array.isArray(s.managedBranches) && s.managedBranches.length > 0) || hasPerm('staff-portal:approvals');
   var hasBookingsAccess = hasPerm('staff-portal:bookings');
   var hasInventoryAccess = hasPerm('staff-portal:inventory');
   var hasSalesAccess = hasPerm('staff-portal:sales');
