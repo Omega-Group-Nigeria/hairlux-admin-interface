@@ -359,16 +359,17 @@
                         <input class="form-control" id="ni-name" placeholder="e.g. Argan Oil Shampoo 500ml">
                     </div>
                     <div class="row g-2 mb-2">
-                                                <div class="col-6"><label class="form-label">Categories <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="ni-category" multiple>
-                                                        <option value="FOR_SALE">For Sale</option>
-                                                        <option value="INTERNAL_USE">Internal Use</option>
-                                                        <option value="STORAGE">Storage</option>
-                                                    </select>
-                                                    <div class="form-hint">Dev Feedback Round 9, item #13: pick more than one to create a
-                                                        separate stock row per category in one go — e.g. For Sale + Internal Use creates
-                                                        both rows for this product at each selected branch.</div>
-                                                </div>
+                        <div class="col-6"><label class="form-label">Categories <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="ni-category" multiple>
+                                <option value="FOR_SALE">For Sale</option>
+                                <option value="INTERNAL_USE">Internal Use</option>
+                                <option value="STORAGE">Storage</option>
+                            </select>
+                            <div class="form-hint">Dev Feedback Round 9, item #13: pick more than one to create a
+                                separate stock row per category in one go — e.g. For Sale + Internal Use creates
+                                both rows for this product at each selected branch.</div>
+                        </div>
                         <div class="col-6"><label class="form-label">Unit</label>
                             <input class="form-control" id="ni-unit" placeholder="e.g. bottle">
                         </div>
@@ -732,6 +733,7 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/searchable-select.js"></script>
+    <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="assets/js/api-utils/inventory.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
@@ -805,7 +807,7 @@
             document.getElementById("btn-refresh").addEventListener("click", function () { loadItems(); refreshBadgeCounts(); });
             document.getElementById("btn-export-items").addEventListener("click", exportItems);
 
-                        document.getElementById("btn-new-item").addEventListener("click", function () {
+            document.getElementById("btn-new-item").addEventListener("click", function () {
                 document.getElementById("new-item-error").classList.add("d-none");
                 ["ni-name", "ni-unit", "ni-threshold", "ni-price", "ni-expiry"].forEach(function (id) { document.getElementById(id).value = ""; });
                 // Reset the branch checkbox list too — uncheck every branch,
@@ -908,6 +910,7 @@
                 var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
                 document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
                 renderNewItemBranchList(branches);
+                if (RBAC.applyBranchScope(document.getElementById("filter-branch"))) loadItems();
             } catch (err) {
                 console.error("Failed to load branches", err);
             }
@@ -1118,20 +1121,20 @@
 
         var _itemsCache = [];
 
-                function updatePriceRequirement(categorySelectId, labelHintId, requiredMarkId) {
-                        var select = document.getElementById(categorySelectId);
-                        // Dev Feedback Round 9, item #13: ni-category is now a
-                        // multi-select (Inventory Product-style checkbox dropdown),
-                        // so this checks selectedOptions rather than .value -- .value
-                        // on a <select multiple> only ever reflects the FIRST
-                        // selected option, which would silently miss FOR_SALE
-                        // whenever it wasn't the first category picked. Works
-                        // unchanged for ei-category too, which is still single-select
-                        // (a single-select's selectedOptions is just one item).
-                        var isForSale = Array.from(select.selectedOptions).some(function (o) { return o.value === 'FOR_SALE'; });
-                        document.getElementById(requiredMarkId).style.display = isForSale ? '' : 'none';
-                        document.getElementById(labelHintId).textContent = isForSale ? '(required — one selected category is For Sale)' : '(optional — not sellable)';
-                    }
+        function updatePriceRequirement(categorySelectId, labelHintId, requiredMarkId) {
+            var select = document.getElementById(categorySelectId);
+            // Dev Feedback Round 9, item #13: ni-category is now a
+            // multi-select (Inventory Product-style checkbox dropdown),
+            // so this checks selectedOptions rather than .value -- .value
+            // on a <select multiple> only ever reflects the FIRST
+            // selected option, which would silently miss FOR_SALE
+            // whenever it wasn't the first category picked. Works
+            // unchanged for ei-category too, which is still single-select
+            // (a single-select's selectedOptions is just one item).
+            var isForSale = Array.from(select.selectedOptions).some(function (o) { return o.value === 'FOR_SALE'; });
+            document.getElementById(requiredMarkId).style.display = isForSale ? '' : 'none';
+            document.getElementById(labelHintId).textContent = isForSale ? '(required — one selected category is For Sale)' : '(optional — not sellable)';
+        }
 
         async function openHistoryModal(id, name) {
             document.getElementById("history-item-name").textContent = name || "—";
@@ -1228,70 +1231,70 @@
             }
         }
 
-                async function submitNewItem() {
-                        var name = document.getElementById("ni-name").value.trim();
-                        var categories = Array.from(document.getElementById("ni-category").selectedOptions).map(function (o) { return o.value; });
-                        var unit = document.getElementById("ni-unit").value.trim();
-                        var threshold = document.getElementById("ni-threshold").value;
-                        var price = document.getElementById("ni-price").value;
-                        var expiry = document.getElementById("ni-expiry").value;
-                        var errEl = document.getElementById("new-item-error");
-                        errEl.classList.add("d-none");
+        async function submitNewItem() {
+            var name = document.getElementById("ni-name").value.trim();
+            var categories = Array.from(document.getElementById("ni-category").selectedOptions).map(function (o) { return o.value; });
+            var unit = document.getElementById("ni-unit").value.trim();
+            var threshold = document.getElementById("ni-threshold").value;
+            var price = document.getElementById("ni-price").value;
+            var expiry = document.getElementById("ni-expiry").value;
+            var errEl = document.getElementById("new-item-error");
+            errEl.classList.add("d-none");
 
-                        var branches = [];
-                        document.querySelectorAll('.ni-branch-check:checked').forEach(function (chk) {
-                            var qtyInput = document.querySelector('.ni-branch-qty[data-branch-id="' + chk.value + '"]');
-                            branches.push({
-                                branchId: chk.value,
-                                initialQuantity: qtyInput && qtyInput.value ? Number(qtyInput.value) : 0,
-                            });
-                        });
+            var branches = [];
+            document.querySelectorAll('.ni-branch-check:checked').forEach(function (chk) {
+                var qtyInput = document.querySelector('.ni-branch-qty[data-branch-id="' + chk.value + '"]');
+                branches.push({
+                    branchId: chk.value,
+                    initialQuantity: qtyInput && qtyInput.value ? Number(qtyInput.value) : 0,
+                });
+            });
 
-                        if (!branches.length || !name) {
-                            errEl.textContent = "At least one branch and a name are required.";
-                            errEl.classList.remove("d-none");
-                            return;
-                        }
-                        if (!categories.length) {
-                            errEl.textContent = "Select at least one category.";
-                            errEl.classList.remove("d-none");
-                            return;
-                        }
-                        if (categories.indexOf('FOR_SALE') !== -1 && !price) {
-                            errEl.textContent = "Price is required when For Sale is one of the selected categories.";
-                            errEl.classList.remove("d-none");
-                            return;
-                        }
+            if (!branches.length || !name) {
+                errEl.textContent = "At least one branch and a name are required.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (!categories.length) {
+                errEl.textContent = "Select at least one category.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            if (categories.indexOf('FOR_SALE') !== -1 && !price) {
+                errEl.textContent = "Price is required when For Sale is one of the selected categories.";
+                errEl.classList.remove("d-none");
+                return;
+            }
 
-                        var btn = document.getElementById("btn-save-new-item");
-                        btn.disabled = true;
-                        try {
-                            var result = await Inventory.createBulk({
-                                name: name,
-                                categories: categories,
-                                unit: unit || undefined,
-                                lowStockThreshold: threshold ? Number(threshold) : undefined,
-                                price: price ? Number(price) : undefined,
-                                expiryDate: expiry || undefined,
-                                supplierId: document.getElementById("ni-supplier").value || undefined,
-                                branches: branches,
-                            });
-                            bootstrap.Modal.getInstance(document.getElementById("modal-new-item")).hide();
-                            if (result.skippedCount > 0) {
-                                var skippedNames = result.skipped.map(function (s) {
-                                    var branch = (_branchesCache || []).find(function (b) { return b.id === s.branchId; });
-                                    return (branch ? branch.name : s.branchId) + ' (' + (Inventory.CATEGORY_LABELS[s.category] || s.category) + ')';
-                                }).join(', ');
-                                alert('Created ' + result.createdCount + ' row(s). Skipped (already exists there): ' + skippedNames);
-                            }
-                            loadItems();
-                        } catch (err) {
-                            errEl.textContent = err.message || "Failed to create item.";
-                            errEl.classList.remove("d-none");
-                        } finally {
-                            btn.disabled = false;
-                        }
-                    }
+            var btn = document.getElementById("btn-save-new-item");
+            btn.disabled = true;
+            try {
+                var result = await Inventory.createBulk({
+                    name: name,
+                    categories: categories,
+                    unit: unit || undefined,
+                    lowStockThreshold: threshold ? Number(threshold) : undefined,
+                    price: price ? Number(price) : undefined,
+                    expiryDate: expiry || undefined,
+                    supplierId: document.getElementById("ni-supplier").value || undefined,
+                    branches: branches,
+                });
+                bootstrap.Modal.getInstance(document.getElementById("modal-new-item")).hide();
+                if (result.skippedCount > 0) {
+                    var skippedNames = result.skipped.map(function (s) {
+                        var branch = (_branchesCache || []).find(function (b) { return b.id === s.branchId; });
+                        return (branch ? branch.name : s.branchId) + ' (' + (Inventory.CATEGORY_LABELS[s.category] || s.category) + ')';
+                    }).join(', ');
+                    alert('Created ' + result.createdCount + ' row(s). Skipped (already exists there): ' + skippedNames);
+                }
+                loadItems();
+            } catch (err) {
+                errEl.textContent = err.message || "Failed to create item.";
+                errEl.classList.remove("d-none");
+            } finally {
+                btn.disabled = false;
+            }
+        }
 
         var _adjustMode = "quantity";
 

@@ -519,623 +519,630 @@
                     branches.map(function (b) {
                         return '<option value="' + b.id + '">' + b.name + '</option>';
                     }).join("");
+
+                if (RBAC.applyBranchScope(sel)) {
+                    state.locationId = RBAC.getManagedBranchIds()[0];
+                    state.page = 1;
+                    loadApplications();
+                }
             } catch (err) {
                 console.error("Failed to load branches for filter", err);
             }
-        }
 
-        var _reportOptionsLoaded = false;
+            var _reportOptionsLoaded = false;
 
-        async function ensureReportFilterOptionsLoaded() {
-            if (_reportOptionsLoaded) return;
-            _reportOptionsLoaded = true;
-            try {
-                var branches = await ensureLocations();
-                document.getElementById("report-filter-branch").innerHTML =
-                    '<option value="">All branches</option>' +
-                    branches.map(function (b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join("");
-            } catch (err) {
-                console.error("Failed to load branches for report filter", err);
+            async function ensureReportFilterOptionsLoaded() {
+                if (_reportOptionsLoaded) return;
+                _reportOptionsLoaded = true;
+                try {
+                    var branches = await ensureLocations();
+                    document.getElementById("report-filter-branch").innerHTML =
+                        '<option value="">All branches</option>' +
+                        branches.map(function (b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join("");
+
+                    RBAC.applyBranchScope(document.getElementById("report-filter-branch"));
+                } catch (err) {
+                    console.error("Failed to load branches for report filter", err);
+                }
+                try {
+                    var roles = await Applications.getDistinctRoles();
+                    document.getElementById("report-filter-role").innerHTML =
+                        '<option value="">All roles</option>' +
+                        roles.map(function (r) { return '<option value="' + r + '">' + r + '</option>'; }).join("");
+                } catch (err) {
+                    console.error("Failed to load roles for report filter", err);
+                }
             }
-            try {
-                var roles = await Applications.getDistinctRoles();
-                document.getElementById("report-filter-role").innerHTML =
-                    '<option value="">All roles</option>' +
-                    roles.map(function (r) { return '<option value="' + r + '">' + r + '</option>'; }).join("");
-            } catch (err) {
-                console.error("Failed to load roles for report filter", err);
+
+            async function loadRecruitmentReport() {
+                var body = document.getElementById("report-modal-body");
+                body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+                try {
+                    var r = await Applications.getReport({
+                        dateFrom: document.getElementById("report-filter-date-from").value || undefined,
+                        dateTo: document.getElementById("report-filter-date-to").value || undefined,
+                        appliedRole: document.getElementById("report-filter-role").value || undefined,
+                        status: document.getElementById("report-filter-status").value || undefined,
+                        preferredLocationId: document.getElementById("report-filter-branch").value || undefined,
+                    });
+
+                    var roleRows = (r.byRole || []).map(function (x) {
+                        return '<tr><td>' + x.role + '</td><td class="text-end">' + x.count + '</td></tr>';
+                    }).join("") || '<tr><td colspan="2" class="text-secondary text-center">No data</td></tr>';
+
+                    var statusRows = (r.byStatus || []).map(function (x) {
+                        return '<tr><td>' + Applications.statusBadge(x.status) + '</td><td class="text-end">' + x.count + '</td></tr>';
+                    }).join("") || '<tr><td colspan="2" class="text-secondary text-center">No data</td></tr>';
+
+                    body.innerHTML =
+                        '<div class="row row-cards mb-4">' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.totalApplications ?? 0) + '</div><div class="text-secondary small">Total applicants</div></div></div></div>' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.hiredCount ?? 0) + '</div><div class="text-secondary small">Hired</div></div></div></div>' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.averageTimeToHireDays != null ? r.averageTimeToHireDays + 'd' : '—') + '</div><div class="text-secondary small">Avg. time to hire</div></div></div></div>' +
+                        '</div>' +
+                        '<div class="row">' +
+                        '<div class="col-6">' +
+                        '<h4>By role</h4>' +
+                        '<table class="table table-sm"><tbody>' + roleRows + '</tbody></table>' +
+                        '</div>' +
+                        '<div class="col-6">' +
+                        '<h4>By status</h4>' +
+                        '<table class="table table-sm"><tbody>' + statusRows + '</tbody></table>' +
+                        '</div>' +
+                        '</div>';
+                } catch (err) {
+                    body.innerHTML = '<div class="alert alert-danger">' + (err.message || "Failed to load report.") + '</div>';
+                }
             }
-        }
 
-        async function loadRecruitmentReport() {
-            var body = document.getElementById("report-modal-body");
-            body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
-            try {
-                var r = await Applications.getReport({
-                    dateFrom: document.getElementById("report-filter-date-from").value || undefined,
-                    dateTo: document.getElementById("report-filter-date-to").value || undefined,
-                    appliedRole: document.getElementById("report-filter-role").value || undefined,
-                    status: document.getElementById("report-filter-status").value || undefined,
-                    preferredLocationId: document.getElementById("report-filter-branch").value || undefined,
-                });
+            async function loadApplications() {
+                var tbody = document.getElementById("applications-tbody");
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+                document.getElementById("results-label").textContent = "Loading…";
+                try {
+                    var result = await Applications.getAll({
+                        page: state.page, limit: state.limit,
+                        status: state.status, search: state.search,
+                        preferredLocationId: state.locationId
+                    });
+                    var rows = result.data || (Array.isArray(result) ? result : []);
+                    var meta = result.meta || {};
+                    state.totalPages = meta.totalPages || 1;
+                    var count = meta.total ?? rows.length;
+                    document.getElementById("results-label").textContent = count + " application" + (count !== 1 ? "s" : "") + " found";
+                    renderTable(rows);
+                    renderPagination(meta);
+                } catch (err) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.message || "Failed to load applications.") + '</td></tr>';
+                    document.getElementById("results-label").textContent = "Error";
+                }
+            }
 
-                var roleRows = (r.byRole || []).map(function (x) {
-                    return '<tr><td>' + x.role + '</td><td class="text-end">' + x.count + '</td></tr>';
-                }).join("") || '<tr><td colspan="2" class="text-secondary text-center">No data</td></tr>';
+            function renderTable(rows) {
+                var tbody = document.getElementById("applications-tbody");
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No applications found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.map(function (a, i) {
+                    var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "—";
+                    var appCell = '<div class="fw-semibold">' + name + '</div>' +
+                        '<div class="app-code text-secondary">' + (a.applicationCode || "—") + '</div>' +
+                        (a.email ? '<div class="text-secondary small mt-1">' + a.email + '</div>' : '');
+                    return '<tr class="app-row" data-id="' + a.id + '">' +
+                        '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
+                        '<td>' + appCell + '</td>' +
+                        '<td>' + (a.appliedRole || '—') + '</td>' +
+                        '<td class="text-secondary small">' + (a.preferredBranchText || '—') + '</td>' +
+                        '<td class="text-secondary small text-nowrap">' + Applications.formatDate(a.createdAt) + '</td>' +
+                        '<td>' + Applications.statusBadge(a.status) + '</td>' +
+                        '<td><button class="btn btn-sm btn-outline-secondary btn-view" data-id="' + a.id + '" title="View">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
+                        '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>' +
+                        '<path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
+                        '</svg></button></td></tr>';
+                }).join("");
+            }
 
-                var statusRows = (r.byStatus || []).map(function (x) {
-                    return '<tr><td>' + Applications.statusBadge(x.status) + '</td><td class="text-end">' + x.count + '</td></tr>';
-                }).join("") || '<tr><td colspan="2" class="text-secondary text-center">No data</td></tr>';
+            function renderPagination(meta) {
+                var total = meta.total || 0, page = meta.page || state.page;
+                var limit = meta.limit || state.limit, pages = meta.totalPages || 1;
+                var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
+                document.getElementById("pagination-info").textContent = total
+                    ? "Showing " + from + "–" + to + " of " + total : "No results";
+                var ul = document.getElementById("pagination-btns");
+                ul.innerHTML = '';
+                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
+                var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+                for (var p = start; p <= end; p++) {
+                    ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+                }
+                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
+            }
+
+            // ── Detail offcanvas ─────────────────────────────────────────────────────
+            async function openDetail(id) {
+                if (!id) return;
+                currentDetailId = id;
+                var body = document.getElementById("offcanvas-detail-body");
+                var actions = document.getElementById("offcanvas-detail-actions");
+                body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+                actions.innerHTML = '';
+                var oc = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("offcanvas-detail"));
+                oc.show();
+                try {
+                    var a = await Applications.getOne(id);
+                    renderDetailBody(a);
+                    actions.innerHTML = buildDetailActions(a);
+                } catch (err) {
+                    body.innerHTML = '<div class="alert alert-danger">' + (err.message || 'Failed to load application.') + '</div>';
+                }
+            }
+
+            function field(label, value) {
+                if (!value) return '';
+                return '<div class="detail-lbl">' + label + '</div><div class="detail-val">' + value + '</div>';
+            }
+
+            function renderDetailBody(a) {
+                var name = [a.firstName, a.middleName, a.lastName].filter(Boolean).join(" ");
+                var body = document.getElementById("offcanvas-detail-body");
+
+                var interviewBlock = '';
+                if (a.interviewScheduledAt) {
+                    interviewBlock =
+                        '<div class="mb-1"><div class="detail-lbl mb-2">Interview</div></div>' +
+                        field('Scheduled For', Applications.formatDateTime(a.interviewScheduledAt)) +
+                        field('Type', a.interviewMode === 'VIRTUAL' ? 'Virtual' : 'In-Person') +
+                        field('Location', a.interviewLocationName) +
+                        (a.interviewMeetingUrl ? field('Meeting Link', '<a href="' + a.interviewMeetingUrl + '" target="_blank" rel="noopener noreferrer">' + a.interviewMeetingUrl + '</a>') : '') +
+                        field('Interviewer', a.interviewerName) +
+                        field('Note', a.interviewNote) +
+                        '<hr>';
+                }
+
+                var approvalBlock = '';
+                if (a.employmentApproval) {
+                    approvalBlock =
+                        '<div class="mb-1"><div class="detail-lbl mb-2">Employment Approval</div></div>' +
+                        field('Approved', Applications.formatDateTime(a.employmentApproval.approvedAt)) +
+                        (a.employmentApproval.notes ? field('Notes', a.employmentApproval.notes) : '') +
+                        '<hr>';
+                }
+
+                var offerBlock = '';
+                if (a.offerLetter) {
+                    var offerStatusColor = {
+                        SENT: 'bg-purple-lt', ACCEPTED: 'bg-success-lt', DECLINED: 'bg-danger-lt',
+                        EXPIRED: 'bg-secondary-lt', WITHDRAWN: 'bg-secondary-lt',
+                    }[a.offerLetter.status] || 'bg-secondary-lt';
+                    offerBlock =
+                        '<div class="mb-1"><div class="detail-lbl mb-2">Offer Letter <span class="badge ' + offerStatusColor + '">' + a.offerLetter.status + '</span></div></div>' +
+                        field('Base Salary', '₦' + Number(a.offerLetter.baseSalary).toLocaleString()) +
+                        (a.offerLetter.allowances ? field('Allowances', '₦' + Number(a.offerLetter.allowances).toLocaleString()) : '') +
+                        (a.offerLetter.compensationNote ? field('Note', a.offerLetter.compensationNote) : '') +
+                        field('Effective Date', Applications.formatDate(a.offerLetter.effectiveDate)) +
+                        (a.offerLetter.declineReason ? field('Decline Reason', a.offerLetter.declineReason) : '') +
+                        '<hr>';
+                }
+
+                var notSelectedBlock = '';
+                if (a.status === 'NOT_SELECTED' && a.notSelectedReason) {
+                    notSelectedBlock = '<div class="alert alert-danger">' +
+                        '<div class="fw-semibold mb-1">Not Selected</div>' + a.notSelectedReason + '</div>';
+                }
+
+                var employedBlock = '';
+                if (a.status === 'EMPLOYED') {
+                    employedBlock = '<div class="alert alert-success">' +
+                        '<div class="fw-semibold mb-1">✓ Hired</div>' +
+                        (a.employedAt ? 'Converted to staff on ' + Applications.formatDate(a.employedAt) : '') +
+                        (a.staffId ? '<div class="text-secondary small mt-1 font-monospace">Staff ID: ' + a.staffId + '</div>' : '') +
+                        '</div>';
+                }
+
+                var docsBlock = '';
+                var docLinks = [];
+                // Prefer signed/public download URL from file-upload API; fall back to legacy cvUrl
+                var cvHref = a.cvDownloadUrl || (a.cvUrl && a.cvUrl !== 'string' ? a.cvUrl : '');
+                if (cvHref) docLinks.push('<a href="' + cvHref + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">View CV</a>');
+                if (a.portfolioUrl && a.portfolioUrl !== 'string') docLinks.push('<a href="' + a.portfolioUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Portfolio</a>');
+                if (docLinks.length) docsBlock = '<div class="detail-lbl">Documents</div><div class="detail-val d-flex gap-2">' + docLinks.join('') + '</div>';
+
+                var ninPhotoBlock = a.ninPhotoDownloadUrl
+                    ? '<div class="text-center mb-3"><img src="' + a.ninPhotoDownloadUrl + '" alt="NIN photo" style="width:96px;height:96px;object-fit:cover;border-radius:50%;border:2px solid var(--tblr-border-color)"><div class="text-secondary small mt-1">Photo from NIN verification</div></div>'
+                    : '';
 
                 body.innerHTML =
-                    '<div class="row row-cards mb-4">' +
-                    '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.totalApplications ?? 0) + '</div><div class="text-secondary small">Total applicants</div></div></div></div>' +
-                    '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.hiredCount ?? 0) + '</div><div class="text-secondary small">Hired</div></div></div></div>' +
-                    '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.averageTimeToHireDays != null ? r.averageTimeToHireDays + 'd' : '—') + '</div><div class="text-secondary small">Avg. time to hire</div></div></div></div>' +
+                    '<div class="d-flex align-items-start justify-content-between mb-3">' +
+                    '<div><div class="h3 mb-0">' + name + '</div>' +
+                    '<div class="app-code text-secondary">' + a.applicationCode + '</div></div>' +
+                    Applications.statusBadge(a.status) +
+                    '</div>' +
+                    ninPhotoBlock +
+                    employedBlock + notSelectedBlock +
+                    '<div class="row">' +
+                    '<div class="col-6">' + field('Phone', a.phone) + '</div>' +
+                    '<div class="col-6">' + field('Email', a.email) + '</div>' +
+                    '</div>' +
+                    field('Address', a.address) +
+                    '<div class="row">' +
+                    '<div class="col-6">' + field('Date of Birth', a.dateOfBirth) + '</div>' +
+                    '<div class="col-6">' + field('Gender', a.gender) + '</div>' +
+                    '</div>' +
+                    field('NIN', a.nin) +
+                    '<hr>' +
+                    '<div class="row">' +
+                    '<div class="col-6">' + field('Applied Role', a.appliedRole) + '</div>' +
+                    '<div class="col-6">' + field('Preferred Branch', a.preferredBranchText) + '</div>' +
                     '</div>' +
                     '<div class="row">' +
-                    '<div class="col-6">' +
-                    '<h4>By role</h4>' +
-                    '<table class="table table-sm"><tbody>' + roleRows + '</tbody></table>' +
+                    '<div class="col-6">' + field('Experience', a.yearsOfExperience) + '</div>' +
+                    '<div class="col-6">' + field('Previous Employer', a.previousEmployer) + '</div>' +
                     '</div>' +
-                    '<div class="col-6">' +
-                    '<h4>By status</h4>' +
-                    '<table class="table table-sm"><tbody>' + statusRows + '</tbody></table>' +
-                    '</div>' +
-                    '</div>';
-            } catch (err) {
-                body.innerHTML = '<div class="alert alert-danger">' + (err.message || "Failed to load report.") + '</div>';
-            }
-        }
-
-        async function loadApplications() {
-            var tbody = document.getElementById("applications-tbody");
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-            document.getElementById("results-label").textContent = "Loading…";
-            try {
-                var result = await Applications.getAll({
-                    page: state.page, limit: state.limit,
-                    status: state.status, search: state.search,
-                    preferredLocationId: state.locationId
-                });
-                var rows = result.data || (Array.isArray(result) ? result : []);
-                var meta = result.meta || {};
-                state.totalPages = meta.totalPages || 1;
-                var count = meta.total ?? rows.length;
-                document.getElementById("results-label").textContent = count + " application" + (count !== 1 ? "s" : "") + " found";
-                renderTable(rows);
-                renderPagination(meta);
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.message || "Failed to load applications.") + '</td></tr>';
-                document.getElementById("results-label").textContent = "Error";
-            }
-        }
-
-        function renderTable(rows) {
-            var tbody = document.getElementById("applications-tbody");
-            if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No applications found.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = rows.map(function (a, i) {
-                var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "—";
-                var appCell = '<div class="fw-semibold">' + name + '</div>' +
-                    '<div class="app-code text-secondary">' + (a.applicationCode || "—") + '</div>' +
-                    (a.email ? '<div class="text-secondary small mt-1">' + a.email + '</div>' : '');
-                return '<tr class="app-row" data-id="' + a.id + '">' +
-                    '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
-                    '<td>' + appCell + '</td>' +
-                    '<td>' + (a.appliedRole || '—') + '</td>' +
-                    '<td class="text-secondary small">' + (a.preferredBranchText || '—') + '</td>' +
-                    '<td class="text-secondary small text-nowrap">' + Applications.formatDate(a.createdAt) + '</td>' +
-                    '<td>' + Applications.statusBadge(a.status) + '</td>' +
-                    '<td><button class="btn btn-sm btn-outline-secondary btn-view" data-id="' + a.id + '" title="View">' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
-                    '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>' +
-                    '<path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
-                    '</svg></button></td></tr>';
-            }).join("");
-        }
-
-        function renderPagination(meta) {
-            var total = meta.total || 0, page = meta.page || state.page;
-            var limit = meta.limit || state.limit, pages = meta.totalPages || 1;
-            var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
-            document.getElementById("pagination-info").textContent = total
-                ? "Showing " + from + "–" + to + " of " + total : "No results";
-            var ul = document.getElementById("pagination-btns");
-            ul.innerHTML = '';
-            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
-            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
-            for (var p = start; p <= end; p++) {
-                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
-            }
-            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
-        }
-
-        // ── Detail offcanvas ─────────────────────────────────────────────────────
-        async function openDetail(id) {
-            if (!id) return;
-            currentDetailId = id;
-            var body = document.getElementById("offcanvas-detail-body");
-            var actions = document.getElementById("offcanvas-detail-actions");
-            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
-            actions.innerHTML = '';
-            var oc = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("offcanvas-detail"));
-            oc.show();
-            try {
-                var a = await Applications.getOne(id);
-                renderDetailBody(a);
-                actions.innerHTML = buildDetailActions(a);
-            } catch (err) {
-                body.innerHTML = '<div class="alert alert-danger">' + (err.message || 'Failed to load application.') + '</div>';
-            }
-        }
-
-        function field(label, value) {
-            if (!value) return '';
-            return '<div class="detail-lbl">' + label + '</div><div class="detail-val">' + value + '</div>';
-        }
-
-        function renderDetailBody(a) {
-            var name = [a.firstName, a.middleName, a.lastName].filter(Boolean).join(" ");
-            var body = document.getElementById("offcanvas-detail-body");
-
-            var interviewBlock = '';
-            if (a.interviewScheduledAt) {
-                interviewBlock =
-                    '<div class="mb-1"><div class="detail-lbl mb-2">Interview</div></div>' +
-                    field('Scheduled For', Applications.formatDateTime(a.interviewScheduledAt)) +
-                    field('Type', a.interviewMode === 'VIRTUAL' ? 'Virtual' : 'In-Person') +
-                    field('Location', a.interviewLocationName) +
-                    (a.interviewMeetingUrl ? field('Meeting Link', '<a href="' + a.interviewMeetingUrl + '" target="_blank" rel="noopener noreferrer">' + a.interviewMeetingUrl + '</a>') : '') +
-                    field('Interviewer', a.interviewerName) +
-                    field('Note', a.interviewNote) +
-                    '<hr>';
+                    field('Previous Employer Address', a.previousEmployerAddress) +
+                    field('Cover Note', a.coverNote) +
+                    docsBlock +
+                    '<hr>' +
+                    interviewBlock +
+                    approvalBlock +
+                    offerBlock +
+                    field('Applied', Applications.formatDateTime(a.createdAt)) +
+                    '<div class="text-secondary small font-monospace">' + a.id + '</div>';
             }
 
-            var approvalBlock = '';
-            if (a.employmentApproval) {
-                approvalBlock =
-                    '<div class="mb-1"><div class="detail-lbl mb-2">Employment Approval</div></div>' +
-                    field('Approved', Applications.formatDateTime(a.employmentApproval.approvedAt)) +
-                    (a.employmentApproval.notes ? field('Notes', a.employmentApproval.notes) : '') +
-                    '<hr>';
-            }
+            function buildDetailActions(a) {
+                var closeBtn = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="offcanvas">Close</button>';
 
-            var offerBlock = '';
-            if (a.offerLetter) {
-                var offerStatusColor = {
-                    SENT: 'bg-purple-lt', ACCEPTED: 'bg-success-lt', DECLINED: 'bg-danger-lt',
-                    EXPIRED: 'bg-secondary-lt', WITHDRAWN: 'bg-secondary-lt',
-                }[a.offerLetter.status] || 'bg-secondary-lt';
-                offerBlock =
-                    '<div class="mb-1"><div class="detail-lbl mb-2">Offer Letter <span class="badge ' + offerStatusColor + '">' + a.offerLetter.status + '</span></div></div>' +
-                    field('Base Salary', '₦' + Number(a.offerLetter.baseSalary).toLocaleString()) +
-                    (a.offerLetter.allowances ? field('Allowances', '₦' + Number(a.offerLetter.allowances).toLocaleString()) : '') +
-                    (a.offerLetter.compensationNote ? field('Note', a.offerLetter.compensationNote) : '') +
-                    field('Effective Date', Applications.formatDate(a.offerLetter.effectiveDate)) +
-                    (a.offerLetter.declineReason ? field('Decline Reason', a.offerLetter.declineReason) : '') +
-                    '<hr>';
-            }
-
-            var notSelectedBlock = '';
-            if (a.status === 'NOT_SELECTED' && a.notSelectedReason) {
-                notSelectedBlock = '<div class="alert alert-danger">' +
-                    '<div class="fw-semibold mb-1">Not Selected</div>' + a.notSelectedReason + '</div>';
-            }
-
-            var employedBlock = '';
-            if (a.status === 'EMPLOYED') {
-                employedBlock = '<div class="alert alert-success">' +
-                    '<div class="fw-semibold mb-1">✓ Hired</div>' +
-                    (a.employedAt ? 'Converted to staff on ' + Applications.formatDate(a.employedAt) : '') +
-                    (a.staffId ? '<div class="text-secondary small mt-1 font-monospace">Staff ID: ' + a.staffId + '</div>' : '') +
-                    '</div>';
-            }
-
-            var docsBlock = '';
-            var docLinks = [];
-            // Prefer signed/public download URL from file-upload API; fall back to legacy cvUrl
-            var cvHref = a.cvDownloadUrl || (a.cvUrl && a.cvUrl !== 'string' ? a.cvUrl : '');
-            if (cvHref) docLinks.push('<a href="' + cvHref + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">View CV</a>');
-            if (a.portfolioUrl && a.portfolioUrl !== 'string') docLinks.push('<a href="' + a.portfolioUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Portfolio</a>');
-            if (docLinks.length) docsBlock = '<div class="detail-lbl">Documents</div><div class="detail-val d-flex gap-2">' + docLinks.join('') + '</div>';
-
-            var ninPhotoBlock = a.ninPhotoDownloadUrl
-                ? '<div class="text-center mb-3"><img src="' + a.ninPhotoDownloadUrl + '" alt="NIN photo" style="width:96px;height:96px;object-fit:cover;border-radius:50%;border:2px solid var(--tblr-border-color)"><div class="text-secondary small mt-1">Photo from NIN verification</div></div>'
-                : '';
-
-            body.innerHTML =
-                '<div class="d-flex align-items-start justify-content-between mb-3">' +
-                '<div><div class="h3 mb-0">' + name + '</div>' +
-                '<div class="app-code text-secondary">' + a.applicationCode + '</div></div>' +
-                Applications.statusBadge(a.status) +
-                '</div>' +
-                ninPhotoBlock +
-                employedBlock + notSelectedBlock +
-                '<div class="row">' +
-                '<div class="col-6">' + field('Phone', a.phone) + '</div>' +
-                '<div class="col-6">' + field('Email', a.email) + '</div>' +
-                '</div>' +
-                field('Address', a.address) +
-                '<div class="row">' +
-                '<div class="col-6">' + field('Date of Birth', a.dateOfBirth) + '</div>' +
-                '<div class="col-6">' + field('Gender', a.gender) + '</div>' +
-                '</div>' +
-                field('NIN', a.nin) +
-                '<hr>' +
-                '<div class="row">' +
-                '<div class="col-6">' + field('Applied Role', a.appliedRole) + '</div>' +
-                '<div class="col-6">' + field('Preferred Branch', a.preferredBranchText) + '</div>' +
-                '</div>' +
-                '<div class="row">' +
-                '<div class="col-6">' + field('Experience', a.yearsOfExperience) + '</div>' +
-                '<div class="col-6">' + field('Previous Employer', a.previousEmployer) + '</div>' +
-                '</div>' +
-                field('Previous Employer Address', a.previousEmployerAddress) +
-                field('Cover Note', a.coverNote) +
-                docsBlock +
-                '<hr>' +
-                interviewBlock +
-                approvalBlock +
-                offerBlock +
-                field('Applied', Applications.formatDateTime(a.createdAt)) +
-                '<div class="text-secondary small font-monospace">' + a.id + '</div>';
-        }
-
-        function buildDetailActions(a) {
-            var closeBtn = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="offcanvas">Close</button>';
-
-            if (a.status === 'EMPLOYED' || a.status === 'NOT_SELECTED') {
-                return closeBtn;
-            }
-
-            var html = closeBtn;
-            var next = Applications.NEXT_STATUS[a.status];
-
-            if (next && RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-primary" onclick="handleStatusAction(\'' + next + '\')">Mark ' + Applications.STATUS_LABELS[next] + '</button>';
-            }
-            if (a.status === 'SHORTLISTED' && RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-primary" onclick="showScheduleInterviewForm()">Schedule Interview</button>';
-            }
-            if (a.status === 'INTERVIEW_SCHEDULED' && RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-primary" onclick="showInterviewOutcomeForm()">Record Interview Outcome</button>';
-                html += '<button class="btn btn-outline-secondary" onclick="showScheduleInterviewForm()">Reschedule</button>';
-            }
-            if (a.status === 'INTERVIEW_COMPLETED' && !a.employmentApproval && RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-primary" onclick="showEmploymentApprovalForm()">Record Employment Approval</button>';
-            }
-            if (a.status === 'INTERVIEW_COMPLETED' && a.employmentApproval && !a.offerLetter && RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-success" onclick="showGenerateOfferForm()">Generate Offer Letter</button>';
-            }
-            if (a.offerLetter && a.offerLetter.status === 'ACCEPTED' && a.status !== 'EMPLOYED' && RBAC.can('application:convert')) {
-                html += '<button class="btn btn-success" onclick="showConvertToStaffForm()">Convert to Staff</button>';
-            }
-            if (RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-outline-danger" onclick="handleNotSelected()">Not Selected</button>';
-            }
-            return html;
-        }
-
-        async function handleStatusAction(status) {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating…';
-            try {
-                await Applications.updateStatus(currentDetailId, { status: status });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function handleNotSelected() {
-            var reason = prompt('Reason for not selecting this applicant (required):');
-            if (reason === null) return;
-            if (!reason.trim()) { alert('A reason is required.'); return; }
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating…';
-            try {
-                await Applications.updateStatus(currentDetailId, { status: 'NOT_SELECTED', reason: reason.trim() });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function ensureLocations() {
-            if (locationsCache) return locationsCache;
-            try {
-                var result = await Applications.getLocations();
-                locationsCache = result.data || (Array.isArray(result) ? result : []);
-            } catch (err) {
-                locationsCache = [];
-            }
-            return locationsCache;
-        }
-
-        async function showScheduleInterviewForm() {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-            var locations = await ensureLocations();
-            var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
-            actions.innerHTML =
-                '<div class="w-100">' +
-                '<div class="row g-2 mb-2">' +
-                '<div class="col-12"><label class="form-label small mb-1">Interview Type</label>' +
-                '<select class="form-select form-select-sm" id="si-mode" onchange="toggleInterviewModeFields()">' +
-                '<option value="IN_PERSON">In-Person</option><option value="VIRTUAL">Virtual</option>' +
-                '</select></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Date &amp; Time</label>' +
-                '<input type="datetime-local" class="form-control form-control-sm" id="si-datetime"></div>' +
-                '<div class="col-12" id="si-location-wrap"><label class="form-label small mb-1">Branch</label>' +
-                '<select class="form-select form-select-sm" id="si-location"><option value="">Select branch…</option>' + options + '</select></div>' +
-                '<div class="col-12" id="si-url-wrap" style="display:none"><label class="form-label small mb-1">Meeting Link</label>' +
-                '<input type="url" class="form-control form-control-sm" id="si-url" placeholder="https://meet.google.com/…"></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Interviewer Name</label>' +
-                '<input type="text" class="form-control form-control-sm" id="si-interviewer"></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Note (optional)</label>' +
-                '<textarea class="form-control form-control-sm" id="si-note" rows="2"></textarea></div>' +
-                '</div>' +
-                '<div class="d-flex gap-2">' +
-                '<button class="btn btn-sm btn-primary flex-fill" onclick="submitScheduleInterview()">Save</button>' +
-                '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
-                '</div>' +
-                '</div>';
-        }
-
-        function toggleInterviewModeFields() {
-            var isVirtual = document.getElementById('si-mode').value === 'VIRTUAL';
-            document.getElementById('si-location-wrap').style.display = isVirtual ? 'none' : 'block';
-            document.getElementById('si-url-wrap').style.display = isVirtual ? 'block' : 'none';
-        }
-
-        async function submitScheduleInterview() {
-            var mode = document.getElementById('si-mode').value;
-            var dt = document.getElementById('si-datetime').value;
-            var loc = document.getElementById('si-location').value;
-            var url = document.getElementById('si-url').value.trim();
-            var name = document.getElementById('si-interviewer').value.trim();
-            var note = document.getElementById('si-note').value.trim();
-
-            if (!dt || !name) { alert('Date/time and interviewer name are required.'); return; }
-            if (mode === 'IN_PERSON' && !loc) { alert('Please select a branch.'); return; }
-            if (mode === 'VIRTUAL' && !url) { alert('Please enter a meeting link.'); return; }
-
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
-            try {
-                await Applications.scheduleInterview(currentDetailId, {
-                    mode: mode,
-                    scheduledAt: new Date(dt).toISOString(),
-                    locationId: mode === 'IN_PERSON' ? loc : undefined,
-                    meetingUrl: mode === 'VIRTUAL' ? url : undefined,
-                    interviewerName: name,
-                    note: note || undefined,
-                });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function ensureStaff() {
-            if (staffCache) return staffCache;
-            try {
-                staffCache = await Staff.getOptions();
-            } catch (err) {
-                staffCache = [];
-            }
-            return staffCache;
-        }
-
-        async function showInterviewOutcomeForm() {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-            var staff = await ensureStaff();
-            var options = staff.map(function (s) {
-                return '<option value="' + s.id + '">' + Staff.fullName(s) + '</option>';
-            }).join('');
-
-            actions.innerHTML =
-                '<div class="w-100">' +
-                '<div class="row g-2 mb-2">' +
-                '<div class="col-12">' +
-                '<label class="form-label small mb-1">Outcome</label>' +
-                '<select class="form-select form-select-sm" id="io-outcome">' +
-                '<option value="PASS">Pass</option>' +
-                '<option value="FAIL">Fail</option>' +
-                '<option value="HOLD">Hold</option>' +
-                '</select>' +
-                '</div>' +
-                '<div class="col-12">' +
-                '<label class="form-label small mb-1">Interviewer</label>' +
-                '<input type="text" class="form-control form-control-sm mb-1" id="io-interviewer-search" placeholder="Search staff by name…">' +
-                '<select class="form-select form-select-sm" id="io-interviewer">' +
-                '<option value="">Select interviewer…</option>' + options +
-                '</select>' +
-                '</div>' +
-                '<div class="col-12">' +
-                '<label class="form-label small mb-1">Note (optional)</label>' +
-                '<textarea class="form-control form-control-sm" id="io-note" rows="2"></textarea>' +
-                '</div>' +
-                '</div>' +
-                '<div class="d-flex gap-2">' +
-                '<button class="btn btn-sm btn-primary flex-fill" onclick="submitInterviewOutcome()">Save</button>' +
-                '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
-                '</div>' +
-                '</div>';
-
-            wireStaffSearchFilter('io-interviewer-search', 'io-interviewer');
-        }
-
-
-        function wireStaffSearchFilter(searchInputId, selectId) {
-            var input = document.getElementById(searchInputId);
-            var select = document.getElementById(selectId);
-            if (!input || !select) return;
-
-            // Save initial master options list once if not already saved
-            if (!select._masterOptions) {
-                select._masterOptions = Array.from(select.options).map(function (opt) {
-                    return { value: opt.value, text: opt.textContent };
-                });
-            }
-
-            input.addEventListener('input', function () {
-                var q = this.value.trim().toLowerCase();
-
-                // Filter options based on query
-                var filtered = select._masterOptions.filter(function (opt) {
-                    if (!opt.value) return true; // keep placeholder
-                    return !q || opt.text.toLowerCase().indexOf(q) !== -1;
-                });
-
-                // Re-render select options
-                select.innerHTML = filtered.map(function (opt) {
-                    return '<option value="' + opt.value + '">' + opt.text + '</option>';
-                }).join('');
-            });
-        }
-
-        async function submitInterviewOutcome() {
-            var outcome = document.getElementById('io-outcome').value;
-            var interviewerId = document.getElementById('io-interviewer').value;
-            var note = document.getElementById('io-note').value.trim();
-
-            if (!interviewerId) { alert('Please select an interviewer.'); return; }
-
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
-            try {
-                await Applications.recordInterviewOutcome(currentDetailId, {
-                    outcome: outcome,
-                    interviewerId: interviewerId,
-                    note: note || undefined,
-                });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        function showEmploymentApprovalForm() {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML =
-                '<div class="w-100">' +
-                '<div class="alert alert-info small py-2">This unlocks Offer Letter generation for this candidate.</div>' +
-                '<label class="form-label small mb-1">Notes (optional)</label>' +
-                '<textarea class="form-control form-control-sm mb-2" id="ea-notes" rows="2"></textarea>' +
-                '<div class="d-flex gap-2">' +
-                '<button class="btn btn-sm btn-primary flex-fill" onclick="submitEmploymentApproval()">Confirm Approval</button>' +
-                '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
-                '</div>' +
-                '</div>';
-        }
-
-        async function submitEmploymentApproval() {
-            var notes = document.getElementById('ea-notes').value.trim();
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
-            try {
-                await Applications.recordEmploymentApproval(currentDetailId, { notes: notes || undefined });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        function showGenerateOfferForm() {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML =
-                '<div class="w-100">' +
-                '<div class="row g-2 mb-2">' +
-                '<div class="col-6"><label class="form-label small mb-1">Base Salary (₦)</label>' +
-                '<input type="number" class="form-control form-control-sm" id="go-salary" min="0"></div>' +
-                '<div class="col-6"><label class="form-label small mb-1">Allowances (₦, optional)</label>' +
-                '<input type="number" class="form-control form-control-sm" id="go-allowances" min="0"></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Effective Date</label>' +
-                '<input type="date" class="form-control form-control-sm" id="go-effective-date"></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Compensation Note (optional)</label>' +
-                '<textarea class="form-control form-control-sm" id="go-note" rows="2" placeholder="e.g. includes commission on completed bookings"></textarea></div>' +
-                '</div>' +
-                '<div class="d-flex gap-2">' +
-                '<button class="btn btn-sm btn-success flex-fill" onclick="submitGenerateOffer()">Generate &amp; Send Offer</button>' +
-                '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
-                '</div>' +
-                '</div>';
-        }
-
-        async function submitGenerateOffer() {
-            var salary = document.getElementById('go-salary').value;
-            var allowances = document.getElementById('go-allowances').value;
-            var effectiveDate = document.getElementById('go-effective-date').value;
-            var note = document.getElementById('go-note').value.trim();
-
-            if (!salary || !effectiveDate) { alert('Base salary and effective date are required.'); return; }
-
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Generating…';
-            try {
-                await Applications.generateOfferLetter(currentDetailId, {
-                    baseSalary: Number(salary),
-                    allowances: allowances ? Number(allowances) : undefined,
-                    compensationNote: note || undefined,
-                    effectiveDate: effectiveDate,
-                });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function showConvertToStaffForm() {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-            var locations = await ensureLocations();
-            var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
-            actions.innerHTML =
-                '<div class="w-100">' +
-                '<div class="alert alert-warning small py-2">This creates a staff record and sends the new hire a password-setup email. This cannot be undone from here.</div>' +
-                '<label class="form-label small mb-1">Assign to Branch</label>' +
-                '<select class="form-select form-select-sm mb-2" id="cts-location"><option value="">Select branch…</option>' + options + '</select>' +
-                '<div class="d-flex gap-2">' +
-                '<button class="btn btn-sm btn-success flex-fill" onclick="submitConvertToStaff()">Confirm — Convert to Staff</button>' +
-                '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
-                '</div>' +
-                '</div>';
-        }
-
-        async function submitConvertToStaff() {
-            var loc = document.getElementById('cts-location').value;
-            if (!loc) { alert('Please select a branch.'); return; }
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Converting…';
-            try {
-                var result = await Applications.convertToStaff(currentDetailId, { locationId: loc });
-                if (result && result.rehireWarning) {
-                    alert(result.rehireWarning);
+                if (a.status === 'EMPLOYED' || a.status === 'NOT_SELECTED') {
+                    return closeBtn;
                 }
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+
+                var html = closeBtn;
+                var next = Applications.NEXT_STATUS[a.status];
+
+                if (next && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-primary" onclick="handleStatusAction(\'' + next + '\')">Mark ' + Applications.STATUS_LABELS[next] + '</button>';
+                }
+                if (a.status === 'SHORTLISTED' && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-primary" onclick="showScheduleInterviewForm()">Schedule Interview</button>';
+                }
+                if (a.status === 'INTERVIEW_SCHEDULED' && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-primary" onclick="showInterviewOutcomeForm()">Record Interview Outcome</button>';
+                    html += '<button class="btn btn-outline-secondary" onclick="showScheduleInterviewForm()">Reschedule</button>';
+                }
+                if (a.status === 'INTERVIEW_COMPLETED' && !a.employmentApproval && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-primary" onclick="showEmploymentApprovalForm()">Record Employment Approval</button>';
+                }
+                if (a.status === 'INTERVIEW_COMPLETED' && a.employmentApproval && !a.offerLetter && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-success" onclick="showGenerateOfferForm()">Generate Offer Letter</button>';
+                }
+                if (a.offerLetter && a.offerLetter.status === 'ACCEPTED' && a.status !== 'EMPLOYED' && RBAC.can('application:convert')) {
+                    html += '<button class="btn btn-success" onclick="showConvertToStaffForm()">Convert to Staff</button>';
+                }
+                if (RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-outline-danger" onclick="handleNotSelected()">Not Selected</button>';
+                }
+                return html;
             }
-        }
+
+            async function handleStatusAction(status) {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating…';
+                try {
+                    await Applications.updateStatus(currentDetailId, { status: status });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            async function handleNotSelected() {
+                var reason = prompt('Reason for not selecting this applicant (required):');
+                if (reason === null) return;
+                if (!reason.trim()) { alert('A reason is required.'); return; }
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating…';
+                try {
+                    await Applications.updateStatus(currentDetailId, { status: 'NOT_SELECTED', reason: reason.trim() });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            async function ensureLocations() {
+                if (locationsCache) return locationsCache;
+                try {
+                    var result = await Applications.getLocations();
+                    locationsCache = result.data || (Array.isArray(result) ? result : []);
+                } catch (err) {
+                    locationsCache = [];
+                }
+                return locationsCache;
+            }
+
+            async function showScheduleInterviewForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                var locations = await ensureLocations();
+                var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="row g-2 mb-2">' +
+                    '<div class="col-12"><label class="form-label small mb-1">Interview Type</label>' +
+                    '<select class="form-select form-select-sm" id="si-mode" onchange="toggleInterviewModeFields()">' +
+                    '<option value="IN_PERSON">In-Person</option><option value="VIRTUAL">Virtual</option>' +
+                    '</select></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Date &amp; Time</label>' +
+                    '<input type="datetime-local" class="form-control form-control-sm" id="si-datetime"></div>' +
+                    '<div class="col-12" id="si-location-wrap"><label class="form-label small mb-1">Branch</label>' +
+                    '<select class="form-select form-select-sm" id="si-location"><option value="">Select branch…</option>' + options + '</select></div>' +
+                    '<div class="col-12" id="si-url-wrap" style="display:none"><label class="form-label small mb-1">Meeting Link</label>' +
+                    '<input type="url" class="form-control form-control-sm" id="si-url" placeholder="https://meet.google.com/…"></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Interviewer Name</label>' +
+                    '<input type="text" class="form-control form-control-sm" id="si-interviewer"></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Note (optional)</label>' +
+                    '<textarea class="form-control form-control-sm" id="si-note" rows="2"></textarea></div>' +
+                    '</div>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-primary flex-fill" onclick="submitScheduleInterview()">Save</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            function toggleInterviewModeFields() {
+                var isVirtual = document.getElementById('si-mode').value === 'VIRTUAL';
+                document.getElementById('si-location-wrap').style.display = isVirtual ? 'none' : 'block';
+                document.getElementById('si-url-wrap').style.display = isVirtual ? 'block' : 'none';
+            }
+
+            async function submitScheduleInterview() {
+                var mode = document.getElementById('si-mode').value;
+                var dt = document.getElementById('si-datetime').value;
+                var loc = document.getElementById('si-location').value;
+                var url = document.getElementById('si-url').value.trim();
+                var name = document.getElementById('si-interviewer').value.trim();
+                var note = document.getElementById('si-note').value.trim();
+
+                if (!dt || !name) { alert('Date/time and interviewer name are required.'); return; }
+                if (mode === 'IN_PERSON' && !loc) { alert('Please select a branch.'); return; }
+                if (mode === 'VIRTUAL' && !url) { alert('Please enter a meeting link.'); return; }
+
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
+                try {
+                    await Applications.scheduleInterview(currentDetailId, {
+                        mode: mode,
+                        scheduledAt: new Date(dt).toISOString(),
+                        locationId: mode === 'IN_PERSON' ? loc : undefined,
+                        meetingUrl: mode === 'VIRTUAL' ? url : undefined,
+                        interviewerName: name,
+                        note: note || undefined,
+                    });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            async function ensureStaff() {
+                if (staffCache) return staffCache;
+                try {
+                    staffCache = await Staff.getOptions();
+                } catch (err) {
+                    staffCache = [];
+                }
+                return staffCache;
+            }
+
+            async function showInterviewOutcomeForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                var staff = await ensureStaff();
+                var options = staff.map(function (s) {
+                    return '<option value="' + s.id + '">' + Staff.fullName(s) + '</option>';
+                }).join('');
+
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="row g-2 mb-2">' +
+                    '<div class="col-12">' +
+                    '<label class="form-label small mb-1">Outcome</label>' +
+                    '<select class="form-select form-select-sm" id="io-outcome">' +
+                    '<option value="PASS">Pass</option>' +
+                    '<option value="FAIL">Fail</option>' +
+                    '<option value="HOLD">Hold</option>' +
+                    '</select>' +
+                    '</div>' +
+                    '<div class="col-12">' +
+                    '<label class="form-label small mb-1">Interviewer</label>' +
+                    '<input type="text" class="form-control form-control-sm mb-1" id="io-interviewer-search" placeholder="Search staff by name…">' +
+                    '<select class="form-select form-select-sm" id="io-interviewer">' +
+                    '<option value="">Select interviewer…</option>' + options +
+                    '</select>' +
+                    '</div>' +
+                    '<div class="col-12">' +
+                    '<label class="form-label small mb-1">Note (optional)</label>' +
+                    '<textarea class="form-control form-control-sm" id="io-note" rows="2"></textarea>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-primary flex-fill" onclick="submitInterviewOutcome()">Save</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+
+                wireStaffSearchFilter('io-interviewer-search', 'io-interviewer');
+            }
+
+
+            function wireStaffSearchFilter(searchInputId, selectId) {
+                var input = document.getElementById(searchInputId);
+                var select = document.getElementById(selectId);
+                if (!input || !select) return;
+
+                // Save initial master options list once if not already saved
+                if (!select._masterOptions) {
+                    select._masterOptions = Array.from(select.options).map(function (opt) {
+                        return { value: opt.value, text: opt.textContent };
+                    });
+                }
+
+                input.addEventListener('input', function () {
+                    var q = this.value.trim().toLowerCase();
+
+                    // Filter options based on query
+                    var filtered = select._masterOptions.filter(function (opt) {
+                        if (!opt.value) return true; // keep placeholder
+                        return !q || opt.text.toLowerCase().indexOf(q) !== -1;
+                    });
+
+                    // Re-render select options
+                    select.innerHTML = filtered.map(function (opt) {
+                        return '<option value="' + opt.value + '">' + opt.text + '</option>';
+                    }).join('');
+                });
+            }
+
+            async function submitInterviewOutcome() {
+                var outcome = document.getElementById('io-outcome').value;
+                var interviewerId = document.getElementById('io-interviewer').value;
+                var note = document.getElementById('io-note').value.trim();
+
+                if (!interviewerId) { alert('Please select an interviewer.'); return; }
+
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
+                try {
+                    await Applications.recordInterviewOutcome(currentDetailId, {
+                        outcome: outcome,
+                        interviewerId: interviewerId,
+                        note: note || undefined,
+                    });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            function showEmploymentApprovalForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="alert alert-info small py-2">This unlocks Offer Letter generation for this candidate.</div>' +
+                    '<label class="form-label small mb-1">Notes (optional)</label>' +
+                    '<textarea class="form-control form-control-sm mb-2" id="ea-notes" rows="2"></textarea>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-primary flex-fill" onclick="submitEmploymentApproval()">Confirm Approval</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            async function submitEmploymentApproval() {
+                var notes = document.getElementById('ea-notes').value.trim();
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
+                try {
+                    await Applications.recordEmploymentApproval(currentDetailId, { notes: notes || undefined });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            function showGenerateOfferForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="row g-2 mb-2">' +
+                    '<div class="col-6"><label class="form-label small mb-1">Base Salary (₦)</label>' +
+                    '<input type="number" class="form-control form-control-sm" id="go-salary" min="0"></div>' +
+                    '<div class="col-6"><label class="form-label small mb-1">Allowances (₦, optional)</label>' +
+                    '<input type="number" class="form-control form-control-sm" id="go-allowances" min="0"></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Effective Date</label>' +
+                    '<input type="date" class="form-control form-control-sm" id="go-effective-date"></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Compensation Note (optional)</label>' +
+                    '<textarea class="form-control form-control-sm" id="go-note" rows="2" placeholder="e.g. includes commission on completed bookings"></textarea></div>' +
+                    '</div>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-success flex-fill" onclick="submitGenerateOffer()">Generate &amp; Send Offer</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            async function submitGenerateOffer() {
+                var salary = document.getElementById('go-salary').value;
+                var allowances = document.getElementById('go-allowances').value;
+                var effectiveDate = document.getElementById('go-effective-date').value;
+                var note = document.getElementById('go-note').value.trim();
+
+                if (!salary || !effectiveDate) { alert('Base salary and effective date are required.'); return; }
+
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Generating…';
+                try {
+                    await Applications.generateOfferLetter(currentDetailId, {
+                        baseSalary: Number(salary),
+                        allowances: allowances ? Number(allowances) : undefined,
+                        compensationNote: note || undefined,
+                        effectiveDate: effectiveDate,
+                    });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            async function showConvertToStaffForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                var locations = await ensureLocations();
+                var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="alert alert-warning small py-2">This creates a staff record and sends the new hire a password-setup email. This cannot be undone from here.</div>' +
+                    '<label class="form-label small mb-1">Assign to Branch</label>' +
+                    '<select class="form-select form-select-sm mb-2" id="cts-location"><option value="">Select branch…</option>' + options + '</select>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-success flex-fill" onclick="submitConvertToStaff()">Confirm — Convert to Staff</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            async function submitConvertToStaff() {
+                var loc = document.getElementById('cts-location').value;
+                if (!loc) { alert('Please select a branch.'); return; }
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Converting…';
+                try {
+                    var result = await Applications.convertToStaff(currentDetailId, { locationId: loc });
+                    if (result && result.rehireWarning) {
+                        alert(result.rehireWarning);
+                    }
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
     </script>
 </body>
 

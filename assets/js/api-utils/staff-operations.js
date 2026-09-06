@@ -37,6 +37,7 @@ const StaffOps = (() => {
         if (params.from) q.set("from", params.from);
         if (params.to) q.set("to", params.to);
         if (params.limit) q.set("limit", params.limit);
+        if (params.page) q.set("page", params.page);
         return jsonFetch("/admin/attendance" + (q.toString() ? "?" + q.toString() : ""));
     }
 

@@ -483,7 +483,13 @@
             try {
                 var branches = await Staff.getLocations();
                 var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
-                document.getElementById('filter-branch').innerHTML = opts;
+                var sel = document.getElementById('filter-branch');
+                sel.innerHTML = opts;
+          
+                if (RBAC.applyBranchScopeMultiSelect(sel)) {
+                    currentPage = 1;
+                    load();
+                }
             } catch (err) {
                 console.error('Failed to load branches', err);
             }

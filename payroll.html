@@ -155,6 +155,17 @@
                                     <h3 class="card-title">Staff Bank Account Lookup</h3>
                                 </div>
                                 <div class="card-body">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <select class="form-select form-select-sm" id="bank-lookup-branch-filter">
+                                                <option value="">All branches</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" class="form-control form-control-sm"
+                                                id="bank-lookup-search" placeholder="Search by name…">
+                                        </div>
+                                    </div>
                                     <select class="form-select form-select-sm mb-2" id="bank-lookup-staff">
                                         <option value="">Select a staff member…</option>
                                     </select>
@@ -393,6 +404,22 @@
                     <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
                         <h4 class="mb-0">Bonuses &amp; Deductions</h4>
                     </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control form-control-sm" id="adj-list-search"
+                                placeholder="Search by name…">
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select form-select-sm" id="adj-list-branch-filter">
+                                <option value="">All branches</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select form-select-sm" id="adj-list-staff-filter">
+                                <option value="">All staff</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-vcenter">
                             <thead>
@@ -425,6 +452,17 @@
                 <div class="modal-body">
                     <div class="alert alert-danger d-none" id="adj-error"></div>
                     <div class="mb-2"><label class="form-label">Staff Member</label>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <select class="form-select form-select-sm" id="adj-staff-branch-filter">
+                                    <option value="">All branches</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" class="form-control form-control-sm" id="adj-staff-search"
+                                    placeholder="Search by name…">
+                            </div>
+                        </div>
                         <select class="form-select" id="adj-staff">
                             <option value="">Select…</option>
                         </select>
@@ -640,6 +678,13 @@
                 if (_auditMeta && _auditPage * _auditMeta.limit < _auditMeta.total) { _auditPage++; loadAuditLog(); }
             });
             document.getElementById('bank-lookup-staff').addEventListener('change', loadBankLookupResult);
+            document.getElementById('bank-lookup-branch-filter').addEventListener('change', refilterBankLookupStaffOptions);
+            document.getElementById('bank-lookup-search').addEventListener('input', refilterBankLookupStaffOptions);
+            document.getElementById('adj-staff-branch-filter').addEventListener('change', refilterAdjStaffOptions);
+            document.getElementById('adj-staff-search').addEventListener('input', refilterAdjStaffOptions);
+            document.getElementById('adj-list-search').addEventListener('input', renderAdjustmentsTable);
+            document.getElementById('adj-list-branch-filter').addEventListener('change', renderAdjustmentsTable);
+            document.getElementById('adj-list-staff-filter').addEventListener('change', renderAdjustmentsTable);
 
             loadDashboard();
             loadSettings();
@@ -660,18 +705,18 @@
         async function loadWithdrawalBranches() {
             try {
                 var branches = await Branches.getBranches();
-                document.getElementById('withdrawal-branch-filter').innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
+                var sel = document.getElementById('withdrawal-branch-filter');
+                sel.innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
                     return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
                 }).join('');
+                if (RBAC.applyBranchScope(sel)) {
+                    loadWithdrawalStaffOptions(RBAC.getManagedBranchIds()[0]);
+                    _withdrawalPage = 1;
+                    loadWithdrawals();
+                }
             } catch (e) { /* non-fatal */ }
         }
 
-        // Dev Feedback Round 5, item #4: staff filter re-fetches scoped to
-        // whichever branch is currently selected, without a page reload --
-        // "All branches" (empty value) returns everyone. Called on branch
-        // change too, so switching back to "All Branches" resets the staff
-        // list rather than leaving it filtered to whatever branch was
-        // previously selected.
         async function loadWithdrawalStaffOptions(branchId) {
             var select = document.getElementById('withdrawal-staff-filter');
             try {
@@ -1013,32 +1058,66 @@
             }
         }
 
+        var _currentAdjustments = [];
+        var _currentAdjustmentsCanCorrect = false;
+
         async function loadAdjustments(periodId, periodStatus) {
             var tbody = document.getElementById('adjustments-tbody');
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
             try {
-                var list = await Payroll.listAdjustments(periodId);
+                _currentAdjustments = await Payroll.listAdjustments(periodId);
                 var canManage = RBAC.can('payroll:manage_adjustments');
-                var canCorrect = canManage && periodStatus !== 'DRAFT';
-                tbody.innerHTML = list.length
-                    ? list.map(function (a) {
-                        var typeBadge = a.type === 'BONUS' ? '<span class="badge bg-green-lt">Bonus</span>' : '<span class="badge bg-red-lt">Deduction</span>';
-                        var actions = '';
-                        if (canCorrect) actions += '<button class="btn btn-sm btn-outline-warning me-1" onclick="openCorrectAdjustmentModal(\'' + a.id + '\', \'' + esc(a.staff.name).replace(/'/g, "\\'") + '\', ' + Number(a.amount) + ')">Correct</button>';
-                        actions += '<button class="btn btn-sm btn-outline-secondary" onclick="viewAdjustmentHistory(\'' + a.id + '\')">History</button>';
-                        return '<tr>' +
-                            '<td>' + esc(a.staff.name) + '</td>' +
-                            '<td>' + typeBadge + '</td>' +
-                            '<td>' + esc(a.category) + '</td>' +
-                            '<td class="text-end">' + Payroll.formatMoney(a.amount) + '</td>' +
-                            '<td class="text-secondary small">' + esc(a.reason) + '</td>' +
-                            '<td class="text-secondary small">' + (a.effectiveDate ? new Date(a.effectiveDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '\u2014') + '</td>' +
-                            '<td class="text-nowrap">' + actions + '</td></tr>';
-                    }).join('')
-                    : '<tr><td colspan="7" class="text-center text-secondary py-3">No bonuses or deductions recorded for this period.</td></tr>';
+                _currentAdjustmentsCanCorrect = canManage && periodStatus !== 'DRAFT';
+
+                var branches = await ensureBranchOptions();
+                populateBranchSelect(document.getElementById('adj-list-branch-filter'), branches, 'All branches');
+                var staffInPeriod = [];
+                var seenStaffIds = {};
+                _currentAdjustments.forEach(function (a) {
+                    if (!seenStaffIds[a.staff.id]) { seenStaffIds[a.staff.id] = true; staffInPeriod.push(a.staff); }
+                });
+                staffInPeriod.sort(function (x, y) { return x.name.localeCompare(y.name); });
+                document.getElementById('adj-list-staff-filter').innerHTML = '<option value="">All staff</option>' +
+                    staffInPeriod.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+                document.getElementById('adj-list-search').value = '';
+
+                renderAdjustmentsTable();
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
+        }
+
+        /** Filters _currentAdjustments by the search/branch/staff controls and renders the result -- no network call, since the full period's list is already in memory. */
+        function renderAdjustmentsTable() {
+            var tbody = document.getElementById('adjustments-tbody');
+            var q = document.getElementById('adj-list-search').value.trim().toLowerCase();
+            var branchId = document.getElementById('adj-list-branch-filter').value;
+            var staffId = document.getElementById('adj-list-staff-filter').value;
+
+            var list = _currentAdjustments.filter(function (a) {
+                if (branchId && a.staff.locationId !== branchId) return false;
+                if (staffId && a.staff.id !== staffId) return false;
+                if (q && a.staff.name.toLowerCase().indexOf(q) === -1) return false;
+                return true;
+            });
+
+            var canCorrect = _currentAdjustmentsCanCorrect;
+            tbody.innerHTML = list.length
+                ? list.map(function (a) {
+                    var typeBadge = a.type === 'BONUS' ? '<span class="badge bg-green-lt">Bonus</span>' : '<span class="badge bg-red-lt">Deduction</span>';
+                    var actions = '';
+                    if (canCorrect) actions += '<button class="btn btn-sm btn-outline-warning me-1" onclick="openCorrectAdjustmentModal(\'' + a.id + '\', \'' + esc(a.staff.name).replace(/'/g, "\\'") + '\', ' + Number(a.amount) + ')">Correct</button>';
+                    actions += '<button class="btn btn-sm btn-outline-secondary" onclick="viewAdjustmentHistory(\'' + a.id + '\')">History</button>';
+                    return '<tr>' +
+                        '<td>' + esc(a.staff.name) + '</td>' +
+                        '<td>' + typeBadge + '</td>' +
+                        '<td>' + esc(a.category) + '</td>' +
+                        '<td class="text-end">' + Payroll.formatMoney(a.amount) + '</td>' +
+                        '<td class="text-secondary small">' + esc(a.reason) + '</td>' +
+                        '<td class="text-secondary small">' + (a.effectiveDate ? new Date(a.effectiveDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '\u2014') + '</td>' +
+                        '<td class="text-nowrap">' + actions + '</td></tr>';
+                }).join('')
+                : '<tr><td colspan="7" class="text-center text-secondary py-3">' + (_currentAdjustments.length ? 'No bonuses or deductions match these filters.' : 'No bonuses or deductions recorded for this period.') + '</td></tr>';
         }
 
         var _pendingCorrectAdjustmentId = null;
@@ -1095,16 +1174,52 @@
             }
         }
 
+        // Dev Feedback Round 9: shared cache for the branch-filter dropdowns
+        // added to Add Bonus/Deduction, Bonuses & Deductions, and Staff Bank
+        // Account Lookup -- avoids a separate network round-trip per section
+        // for what's the same list of branches every time.
+        var branchOptionsCache = null;
+
+        async function ensureBranchOptions() {
+            if (!branchOptionsCache) {
+                try {
+                    branchOptionsCache = await Branches.getBranches();
+                } catch (e) { branchOptionsCache = []; }
+            }
+            return branchOptionsCache;
+        }
+
         var staffOptionsCache = null;
 
         async function ensureStaffOptions() {
             if (!staffOptionsCache) {
                 try {
-                    var staffList = await Staff.getOptions();
-                    staffOptionsCache = staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
-                } catch (e) { staffOptionsCache = ''; }
+                    staffOptionsCache = await Staff.getOptions();
+                } catch (e) { staffOptionsCache = []; }
             }
             return staffOptionsCache;
+        }
+
+        /** Rebuilds a staff <select>'s options from the cached list, filtered by branchId (optional) and a case-insensitive name search (optional). Keeps whichever value was already selected if it's still in the filtered set. */
+        function renderStaffOptions(selectEl, staffList, placeholder, branchId, search) {
+            var q = (search || '').trim().toLowerCase();
+            var filtered = staffList.filter(function (s) {
+                if (branchId && s.locationId !== branchId) return false;
+                if (q && s.name.toLowerCase().indexOf(q) === -1) return false;
+                return true;
+            });
+            var previousValue = selectEl.value;
+            selectEl.innerHTML = '<option value="">' + placeholder + '</option>' +
+                filtered.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+            if (previousValue && filtered.some(function (s) { return s.id === previousValue; })) {
+                selectEl.value = previousValue;
+            }
+        }
+
+        /** Populates a branch <select> with the standard "All branches" placeholder + every branch. */
+        function populateBranchSelect(selectEl, branches, placeholder) {
+            selectEl.innerHTML = '<option value="">' + placeholder + '</option>' +
+                branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
         }
 
         async function openAdjustmentModal() {
@@ -1114,14 +1229,39 @@
             document.getElementById('adj-effective-date').value = '';
             document.getElementById('adj-notes').value = '';
 
-            var opts = await ensureStaffOptions();
-            document.getElementById('adj-staff').innerHTML = '<option value="">Select…</option>' + opts;
+            var staffList = await ensureStaffOptions();
+            var branches = await ensureBranchOptions();
+            populateBranchSelect(document.getElementById('adj-staff-branch-filter'), branches, 'All branches');
+            document.getElementById('adj-staff-search').value = '';
+            renderStaffOptions(document.getElementById('adj-staff'), staffList, 'Select…', '', '');
             new bootstrap.Modal(document.getElementById('modal-adjustment')).show();
         }
 
+        function refilterAdjStaffOptions() {
+            ensureStaffOptions().then(function (staffList) {
+                renderStaffOptions(
+                    document.getElementById('adj-staff'), staffList, 'Select…',
+                    document.getElementById('adj-staff-branch-filter').value,
+                    document.getElementById('adj-staff-search').value,
+                );
+            });
+        }
+
         async function loadBankLookupStaffOptions() {
-            var opts = await ensureStaffOptions();
-            document.getElementById('bank-lookup-staff').innerHTML = '<option value="">Select a staff member…</option>' + opts;
+            var staffList = await ensureStaffOptions();
+            var branches = await ensureBranchOptions();
+            populateBranchSelect(document.getElementById('bank-lookup-branch-filter'), branches, 'All branches');
+            renderStaffOptions(document.getElementById('bank-lookup-staff'), staffList, 'Select a staff member…', '', '');
+        }
+
+        function refilterBankLookupStaffOptions() {
+            ensureStaffOptions().then(function (staffList) {
+                renderStaffOptions(
+                    document.getElementById('bank-lookup-staff'), staffList, 'Select a staff member…',
+                    document.getElementById('bank-lookup-branch-filter').value,
+                    document.getElementById('bank-lookup-search').value,
+                );
+            });
         }
 
         async function loadBankLookupResult() {
