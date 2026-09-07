@@ -178,41 +178,47 @@ const Auth = (() => {
 
   // ─── POST /auth/refresh-token ────────────────────────────────────────────────
 
+  let _refreshPromise = null;
+
   /**
    * Exchange the stored refresh token for a fresh access/refresh token pair.
-   * Updates storage in-place and returns the new access token string.
-   * Throws (and clears session) only when the SERVER explicitly rejects
-   * the refresh token (expired/revoked) -- a plain network failure (no
-   * connection, DNS, timeout) throws a distinctly-flagged error instead
-   * and deliberately does NOT clear the session, so callers can tell
-   * "you're actually logged out" apart from "we just couldn't reach the
-   * server right now" and avoid forcing a logout for the latter.
+   * Coalesced so concurrent callers share one request (single-use refresh tokens).
+   * Network failures throw isNetworkError and do not clear the session.
    */
   async function refreshAccessToken() {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) throw new Error("No refresh token stored.");
+    if (_refreshPromise) return _refreshPromise;
 
-    let res;
-    try {
-      res = await fetch(`${getBase()}/auth/refresh-token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
-    } catch (networkErr) {
-      const err = new Error("Could not reach the server. Check your connection and try again.");
-      err.isNetworkError = true;
-      throw err;
-    }
+    const run = (async () => {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) throw new Error("No refresh token stored.");
 
-    const raw = await res.json().catch(() => ({}));
+      let res;
+      try {
+        res = await fetch(`${getBase()}/auth/refresh-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+        });
+      } catch (networkErr) {
+        const err = new Error("Could not reach the server. Check your connection and try again.");
+        err.isNetworkError = true;
+        throw err;
+      }
 
-    if (!res.ok) {
-      clearSession();
-      throw new Error(raw.message || "Session expired. Please log in again.");
-    }
+      const raw = await res.json().catch(() => ({}));
 
-    return saveSession(raw);
+      if (!res.ok) {
+        clearSession();
+        throw new Error(raw.message || "Session expired. Please log in again.");
+      }
+
+      return saveSession(raw);
+    })().finally(() => {
+      _refreshPromise = null;
+    });
+
+    _refreshPromise = run;
+    return run;
   }
 
   // ─── Authenticated fetch ──────────────────────────────────────────────────────
@@ -270,9 +276,20 @@ const Auth = (() => {
 
   // ─── Logout / Guard ───────────────────────────────────────────────────────────
 
+  /**
+   * Login page URL relative to the current page.
+   * Sub-directory pages (app/, bookings/) live one level deep, so login.html
+   * needs a ../ prefix to resolve to the repo root rather than the sub-folder.
+   */
+  function loginUrl() {
+    const path = window.location.pathname;
+    if (path.includes("/app/") || path.includes("/bookings/")) return "../login.html";
+    return "./login.html";
+  }
+
   function logout() {
     clearSession();
-    window.location.href = "./login.html";
+    window.location.href = loginUrl();
   }
 
   /**
@@ -285,7 +302,7 @@ const Auth = (() => {
    */
   async function requireAuth() {
     if (!isLoggedIn()) {
-      window.location.href = "./login.html";
+      window.location.href = loginUrl();
       return;
     }
     if (isTokenExpired()) {

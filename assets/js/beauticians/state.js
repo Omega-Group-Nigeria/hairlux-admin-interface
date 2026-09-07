@@ -7,7 +7,7 @@
     var BP = (global.BeauticiansPage = global.BeauticiansPage || {});
 
     BP.State = {
-        VALID_SECTIONS: ['list', 'reviews', 'services', 'service-rates', 'settings', 'payouts'],
+        VALID_SECTIONS: ['list', 'reviews', 'services', 'service-rates', 'beautician-rates', 'settings', 'payouts'],
 
         activeSection: 'list',
 
@@ -58,6 +58,16 @@
             catalogLoadPromise: null,
             platformDefaultRate: null,
             editServicePrice: null,
+        },
+
+        /** Per-beautician commission overrides (Beautician Rates tab) */
+        bcr: {
+            page: 1,
+            limit: 20,
+            search: '',
+            totalPages: 1,
+            overrides: [],
+            rows: [],
         },
 
         SETTINGS_FIELD_HINTS: {

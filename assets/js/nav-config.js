@@ -21,6 +21,7 @@ var NavConfig = window.NavConfig || (() => {
         staff: '<svg ' + SVG_ATTRS + '><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>',
         beauticians: '<svg ' + SVG_ATTRS + '><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>',
         history: '<svg ' + SVG_ATTRS + '><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>',
+        apps: '<svg ' + SVG_ATTRS + '><path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M4 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /></svg>',
     };
 
     /** @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string}>, permission?:object}>} */
@@ -246,6 +247,18 @@ var NavConfig = window.NavConfig || (() => {
                 type: "requireAny",
                 perms: ["audit_trail:read"],
             },
+        },
+        {
+            id: "app-mgt",
+            label: "App Mgt",
+            icon: "apps",
+            permission: {
+                type: "requireAny",
+                perms: ["adverts:read", "adverts:manage"],
+            },
+            children: [
+                { label: "Adverts", href: "app/adverts.html" },
+            ],
         },
     ];
 
