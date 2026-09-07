@@ -16,7 +16,10 @@
     var setSpinner = Utils.setSpinner;
     var _esc = Utils._esc;
     var showAdminAlert = Utils.showAdminAlert;
+    var showHomeServiceAlert = Utils.showHomeServiceAlert;
     var fuzzyScore = Utils.fuzzyScore;
+    var mergeServiceableAreas = Utils.mergeServiceableAreas;
+    var dedupeServiceableAreas = Utils.dedupeServiceableAreas;
 
     var switchSection = UI.switchSection;
     var routeOnLoad = UI.routeOnLoad;
@@ -32,6 +35,17 @@
     var renderPermMatrix = UI.renderPermMatrix;
     var filterPermMatrix = UI.filterPermMatrix;
     var renderBusinessHoursTable = UI.renderBusinessHoursTable;
+    var renderServiceableAreas = UI.renderServiceableAreas;
+    var populateAddAreaState = UI.populateAddAreaState;
+    var populateAddAreaCity = UI.populateAddAreaCity;
+    var updateAddAreaCityNotice = UI.updateAddAreaCityNotice;
+    var reconcileCityPickerSelection = UI.reconcileCityPickerSelection;
+    var removeWildcardForState = UI.removeWildcardForState;
+    var updateDraftBanner = UI.updateDraftBanner;
+    var renderAddAreaPreview = UI.renderAddAreaPreview;
+    var renderCancellationPolicy = UI.renderCancellationPolicy;
+    var collectCancellationPolicyRules = UI.collectCancellationPolicyRules;
+    var wireCancellationPolicyInputs = UI.wireCancellationPolicyInputs;
 
 
     // ── Alert helpers ─────────────────────────────────────────────────────
@@ -106,6 +120,128 @@
     });
 
     // ── Password visibility toggle ────────────────────────────────────────
+
+    async function loadCancellationPolicy() {
+        var walkTbody = document.getElementById('cancellation-policy-walkin-tbody');
+        var homeTbody = document.getElementById('cancellation-policy-home-tbody');
+        if (walkTbody) walkTbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        if (homeTbody) homeTbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        try {
+            var data = await Bookings.getCancellationPolicy();
+            State.cancellationPolicy = data;
+            State.cancellationPolicyDirty = false;
+            renderCancellationPolicy(State.cancellationPolicy);
+            var savedEl = document.getElementById('cancellation-policy-saved');
+            if (savedEl) savedEl.classList.add('d-none');
+        } catch (err) {
+            showCancellationPolicyAlert('danger', 'Failed to load cancellation policy: ' + err.message);
+            if (walkTbody) walkTbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+            if (homeTbody) homeTbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+        }
+    }
+
+    async function saveCancellationPolicy() {
+        if (!RBAC.can('settings:manage')) return;
+        var walkRules = collectCancellationPolicyRules('walkInBranch');
+        var homeRules = collectCancellationPolicyRules('homeService');
+        var walkErr = Bookings.validateCancellationRules(walkRules);
+        if (walkErr) {
+            showCancellationPolicyAlert('danger', walkErr);
+            return;
+        }
+        var homeErr = Bookings.validateCancellationRules(homeRules);
+        if (homeErr) {
+            showCancellationPolicyAlert('danger', homeErr);
+            return;
+        }
+        var btn = document.getElementById('btn-save-cancellation-policy');
+        if (btn) btn.disabled = true;
+        setSpinner('spinner-cancellation-policy', true);
+        try {
+            var data = await Bookings.updateCancellationPolicy({
+                walkInBranch: walkRules,
+                homeService: homeRules,
+            });
+            State.cancellationPolicy = data;
+            State.cancellationPolicyDirty = false;
+            renderCancellationPolicy(State.cancellationPolicy);
+            showCancellationPolicyAlert('success', 'Cancellation policy saved.');
+            var savedEl = document.getElementById('cancellation-policy-saved');
+            if (savedEl) {
+                savedEl.classList.remove('d-none');
+                setTimeout(function () { savedEl.classList.add('d-none'); }, 3000);
+            }
+        } catch (err) {
+            showCancellationPolicyAlert('danger', err.message);
+        } finally {
+            setSpinner('spinner-cancellation-policy', false);
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    function showCancellationPolicyAlert(type, message) {
+        var alertEl = document.getElementById('cancellation-policy-alert');
+        var msgEl = document.getElementById('cancellation-policy-alert-msg');
+        if (!alertEl || !msgEl) return;
+        alertEl.className = 'alert alert-' + type + ' mb-3';
+        msgEl.textContent = message;
+    }
+
+    // ── GET /admin/settings/home-service ──────────────────────────────────
+    async function loadHomeService() {
+        try {
+            var result = await Api.getHomeService();
+            State.homeService = result.data || {};
+            State.serviceableAreas = (State.homeService.serviceableAreas || []).map(function (a) {
+                return { state: String(a.state || '').trim(), city: String(a.city || '').trim() };
+            });
+            State.serviceableAreasDirty = false;
+            renderServiceableAreas(State.serviceableAreas);
+            var savedEl = document.getElementById('home-service-saved');
+            if (savedEl) savedEl.classList.add('d-none');
+        } catch (err) {
+            showHomeServiceAlert('danger', 'Failed to load home service settings: ' + err.message);
+            var tbody = document.getElementById('home-service-tbody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+        }
+    }
+
+    // ── PUT /admin/settings/home-service ──────────────────────────────────
+    async function saveHomeService(btn) {
+        var btnEl = btn || document.getElementById('btn-save-serviceable-areas');
+        var spinnerId = btnEl && btnEl.closest('#home-service-draft-banner')
+            ? 'spinner-serviceable-areas-banner'
+            : 'spinner-serviceable-areas';
+        if (btnEl) btnEl.disabled = true;
+        setSpinner(spinnerId, true);
+        try {
+            var cleaned = dedupeServiceableAreas(State.serviceableAreas);
+            if (cleaned.length !== State.serviceableAreas.length) {
+                State.serviceableAreas = cleaned;
+                State.serviceableAreasDirty = true;
+                renderServiceableAreas(State.serviceableAreas);
+            }
+            var result = await Api.updateHomeService({ serviceableAreas: State.serviceableAreas });
+            if (!result.res.ok) throw new Error(result.message || 'Update failed (' + result.res.status + ')');
+            State.homeService = result.data || State.homeService;
+            State.serviceableAreas = (State.homeService.serviceableAreas || []).map(function (a) {
+                return { state: String(a.state || '').trim(), city: String(a.city || '').trim() };
+            });
+            State.serviceableAreasDirty = false;
+            renderServiceableAreas(State.serviceableAreas);
+            showHomeServiceAlert('success', 'Home service areas saved. Changes are now live.');
+            var savedEl = document.getElementById('home-service-saved');
+            if (savedEl) {
+                savedEl.classList.remove('d-none');
+                setTimeout(function () { savedEl.classList.add('d-none'); }, 3000);
+            }
+        } catch (err) {
+            showHomeServiceAlert('danger', err.message);
+        } finally {
+            setSpinner(spinnerId, false);
+            if (btnEl) btnEl.disabled = false;
+        }
+    }
 
     // ── Populate role <select> elements (Create Admin + Change Role modals) ──
     async function populateRoleSelects() {
@@ -191,11 +327,15 @@
             State.isSuperAdmin = RBAC.isSuperAdmin();
             var navLink = document.getElementById('nav-admin-management');
             if (navLink) navLink.classList.toggle('d-none', !State.isSuperAdmin);
+            var cancelNav = document.getElementById('nav-cancellation-policy');
+            if (cancelNav) cancelNav.classList.toggle('d-none', !RBAC.can('settings:read') && !RBAC.can('settings:manage'));
         });
         populateUserInfo(Auth.getUser());
         loadProfile();
         await populateRoleSelects();
         loadBusinessHours();
+        loadHomeService();
+        wireCancellationPolicyInputs();
 
         // Settings sidebar nav
         document.querySelectorAll('.settings-nav .nav-link').forEach(function (link) {
@@ -213,6 +353,12 @@
                 }
                 if (section === 'customer-classification') {
                     loadCustomerClassificationSettings();
+                }
+                if (section === 'home-service') {
+                    loadHomeService();
+                }
+                if (section === 'cancellation-policy') {
+                    loadCancellationPolicy();
                 }
             });
         });
@@ -331,6 +477,225 @@
             } finally {
                 setSpinner('spinner-customer-classification', false);
             }
+        }
+
+        // ── Home service: add-area modal wiring ────────────────────────
+        MultiSelect.attach('add-area-city');
+        var prevCitySelection = [];
+
+        var btnAddArea = document.getElementById('btn-add-serviceable-area');
+        if (btnAddArea) {
+            btnAddArea.addEventListener('click', function () {
+                var alertEl = document.getElementById('modal-add-area-alert');
+                if (alertEl) {
+                    alertEl.className = 'alert d-none mx-3 mt-3 mb-0 py-2';
+                    alertEl.classList.add('d-none');
+                }
+                document.getElementById('modal-add-area-note').textContent = '';
+                State.addAreaCityOverride = null;
+                prevCitySelection = [];
+                populateAddAreaState();
+                populateAddAreaCity('');
+                MultiSelect.clear('add-area-city');
+                renderAddAreaPreview();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-add-serviceable-area')).show();
+            });
+        }
+
+        var stateSel = document.getElementById('add-area-state');
+        if (stateSel) {
+            stateSel.addEventListener('change', function () {
+                State.addAreaCityOverride = null;
+                prevCitySelection = [];
+                populateAddAreaCity(this.value);
+                renderAddAreaPreview();
+            });
+        }
+
+        document.addEventListener('hairlux:add-area-override', function () {
+            prevCitySelection = [];
+        });
+
+        var cityNotice = document.getElementById('add-area-city-notice');
+        if (cityNotice) {
+            cityNotice.addEventListener('click', function (e) {
+                var btn = e.target.closest('#btn-override-all-cities');
+                if (!btn) return;
+                var state = document.getElementById('add-area-state').value;
+                if (!state) return;
+                removeWildcardForState(state);
+                prevCitySelection = [];
+                populateAddAreaCity(state);
+                updateAddAreaCityNotice(state);
+                renderAddAreaPreview();
+            });
+        }
+
+        var citySel = document.getElementById('add-area-city');
+        if (citySel) {
+            citySel.addEventListener('change', function () {
+                var state = document.getElementById('add-area-state').value;
+                var selected = Array.from(citySel.selectedOptions)
+                    .map(function (o) { return o.value; })
+                    .filter(Boolean);
+                var added = selected.filter(function (v) { return prevCitySelection.indexOf(v) === -1; });
+
+                if (added.indexOf('*') !== -1 && selected.length > 1) {
+                    Array.from(citySel.options).forEach(function (opt) {
+                        if (opt.value && opt.value !== '*') opt.selected = false;
+                    });
+                    MultiSelect.refresh('add-area-city');
+                    selected = ['*'];
+                } else if (prevCitySelection.indexOf('*') !== -1 && added.length && added.indexOf('*') === -1) {
+                    reconcileCityPickerSelection(state);
+                    selected = Array.from(citySel.selectedOptions)
+                        .map(function (o) { return o.value; })
+                        .filter(Boolean);
+                }
+
+                prevCitySelection = selected.slice();
+                updateAddAreaCityNotice(state);
+                renderAddAreaPreview();
+            });
+        }
+
+        // Preview: per-chip remove + clear all
+        var previewEl = document.getElementById('home-service-add-preview');
+        if (previewEl) {
+            previewEl.addEventListener('click', function (e) {
+                var removeBtn = e.target.closest('[data-preview-remove]');
+                var clearBtn = e.target.closest('#btn-preview-clear-all');
+                if (removeBtn) {
+                    var city = removeBtn.getAttribute('data-preview-remove');
+                    var opt = Array.from(citySel.options).find(function (o) { return o.value === city; });
+                    if (opt) opt.selected = false;
+                    MultiSelect.refresh('add-area-city');
+                    prevCitySelection = Array.from(citySel.selectedOptions)
+                        .map(function (o) { return o.value; })
+                        .filter(Boolean);
+                    renderAddAreaPreview();
+                } else if (clearBtn) {
+                    MultiSelect.clear('add-area-city');
+                    prevCitySelection = [];
+                    renderAddAreaPreview();
+                }
+            });
+        }
+
+        var btnConfirmAddArea = document.getElementById('btn-confirm-add-area');
+        if (btnConfirmAddArea) {
+            btnConfirmAddArea.addEventListener('click', function () {
+                var alertEl = document.getElementById('modal-add-area-alert');
+                var alertMsg = document.getElementById('modal-add-area-alert-msg');
+                var state = document.getElementById('add-area-state').value;
+                if (!state) {
+                    if (alertEl && alertMsg) {
+                        alertEl.className = 'alert alert-danger mx-3 mt-3 mb-0 py-2';
+                        alertMsg.textContent = 'Please select a state.';
+                        alertEl.classList.remove('d-none');
+                    }
+                    return;
+                }
+                var cityOpts = Array.from(document.getElementById('add-area-city').selectedOptions);
+                if (!cityOpts.length) {
+                    if (alertEl && alertMsg) {
+                        alertEl.className = 'alert alert-danger mx-3 mt-3 mb-0 py-2';
+                        alertMsg.textContent = 'Please pick at least one city (or All Cities).';
+                        alertEl.classList.remove('d-none');
+                    }
+                    return;
+                }
+                var toAdd = [];
+                cityOpts.forEach(function (opt) {
+                    if (!opt.value) return;
+                    var city = opt.value.trim();
+                    if (!city) return;
+                    toAdd.push({ state: state, city: city });
+                });
+                var mergeResult = mergeServiceableAreas(State.serviceableAreas, toAdd);
+                if (!mergeResult.added.length) {
+                    if (alertEl && alertMsg) {
+                        alertEl.className = 'alert alert-warning mx-3 mt-3 mb-0 py-2';
+                        alertMsg.textContent = mergeResult.skipped.length === 1
+                            ? 'That area is already covered by an existing entry.'
+                            : 'All selected areas are already covered by existing entries.';
+                        alertEl.classList.remove('d-none');
+                    }
+                    return;
+                }
+                State.serviceableAreas = mergeResult.areas;
+                State.serviceableAreasDirty = true;
+                renderServiceableAreas(State.serviceableAreas);
+                updateDraftBanner();
+                var savedBadge = document.getElementById('home-service-saved');
+                if (savedBadge) savedBadge.classList.add('d-none');
+                MultiSelect.clear('add-area-city');
+                populateAddAreaCity(state);
+                renderAddAreaPreview();
+                var noteParts = [mergeResult.added.length + ' area(s) added to draft'];
+                if (mergeResult.replaced > 0) {
+                    noteParts.push(mergeResult.replaced + ' specific city entries replaced by All Cities');
+                }
+                if (mergeResult.skipped.length > 0) {
+                    noteParts.push(mergeResult.skipped.length + ' skipped (already covered)');
+                }
+                document.getElementById('modal-add-area-note').textContent =
+                    noteParts.join('. ') + ' (' + State.serviceableAreas.length + ' total). Close and hit Save Areas when done.';
+            });
+        }
+
+        var btnCleanupRedundant = document.getElementById('btn-cleanup-redundant-areas');
+        if (btnCleanupRedundant) {
+            btnCleanupRedundant.addEventListener('click', function () {
+                var before = State.serviceableAreas.length;
+                var cleaned = dedupeServiceableAreas(State.serviceableAreas);
+                if (cleaned.length === before) {
+                    showHomeServiceAlert('info', 'No redundant areas to remove.');
+                    return;
+                }
+                State.serviceableAreas = cleaned;
+                State.serviceableAreasDirty = true;
+                renderServiceableAreas(State.serviceableAreas);
+                updateDraftBanner();
+                showHomeServiceAlert('success', 'Removed ' + (before - cleaned.length) + ' redundant area(s). Save to publish.');
+            });
+        }
+
+        var btnSaveAreas = document.getElementById('btn-save-serviceable-areas');
+        if (btnSaveAreas) {
+            btnSaveAreas.addEventListener('click', function () {
+                saveHomeService(this);
+            });
+        }
+
+        var btnSaveAreasBanner = document.getElementById('btn-save-areas-banner');
+        if (btnSaveAreasBanner) {
+            btnSaveAreasBanner.addEventListener('click', function () {
+                saveHomeService(this);
+            });
+        }
+
+        var btnSaveCancellationPolicy = document.getElementById('btn-save-cancellation-policy');
+        if (btnSaveCancellationPolicy) {
+            btnSaveCancellationPolicy.addEventListener('click', function () {
+                saveCancellationPolicy();
+            });
+        }
+
+        var cancelPolicyTabs = document.getElementById('cancellation-policy-tabs');
+        if (cancelPolicyTabs) {
+            cancelPolicyTabs.addEventListener('click', function (e) {
+                var link = e.target.closest('[data-cancel-tab]');
+                if (!link) return;
+                e.preventDefault();
+                cancelPolicyTabs.querySelectorAll('.nav-link').forEach(function (el) { el.classList.remove('active'); });
+                link.classList.add('active');
+                var tab = link.dataset.cancelTab;
+                var walk = document.getElementById('cancellation-tab-walkin');
+                var home = document.getElementById('cancellation-tab-home');
+                if (walk) walk.classList.toggle('d-none', tab !== 'walkin');
+                if (home) home.classList.toggle('d-none', tab !== 'home');
+            });
         }
 
         // Admin inner tabs
@@ -930,8 +1295,17 @@
 
         routeOnLoad();
 
-        // Auto-load when landing directly on admin-management
+        // Auto-load when landing directly on home-service / admin-management
         var hash = (location.hash || '').replace('#', '');
+        if (hash === 'home-service') {
+            loadHomeService();
+        }
+        if (hash === 'customer-classification') {
+            loadCustomerClassificationSettings();
+        }
+        if (hash === 'cancellation-policy') {
+            loadCancellationPolicy();
+        }
         if (hash === 'admin-management') {
             populateRoleSelects().then(function () { renderPermRoleSelector(); });
             loadAdminUsers();
@@ -944,6 +1318,8 @@
         populateRoleSelects: populateRoleSelects,
         loadAdminUsers: loadAdminUsers,
         initAdminSearch: initAdminSearch,
+        loadHomeService: loadHomeService,
+        saveHomeService: saveHomeService,
         init: init,
     };
 })(window);

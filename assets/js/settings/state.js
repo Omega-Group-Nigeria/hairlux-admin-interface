@@ -7,7 +7,7 @@
     var SP = (global.SettingsPage = global.SettingsPage || {});
 
     SP.State = {
-        VALID_SECTIONS: ['profile', 'security', 'admin-management'],
+        VALID_SECTIONS: ['profile', 'security', 'business-hours', 'customer-classification', 'home-service', 'cancellation-policy', 'admin-management'],
 
         /** Current user profile from GET /user/profile */
         profile: null,
@@ -23,5 +23,26 @@
 
         /** Role id currently selected in the Permissions tab */
         permRole: null,
+
+        /** Home service settings from GET /admin/settings/home-service (contains serviceableAreas) */
+        homeService: null,
+
+        /** Serviceable areas draft: [{ state, city }], city "*" = whole state */
+        serviceableAreas: [],
+
+        /** True while local area edits have not been persisted to the API yet */
+        serviceableAreasDirty: false,
+
+        /** State name when admin chose to override an existing All Cities entry in the add modal */
+        addAreaCityOverride: null,
+
+        /** Bundled state -> cities reference data (window.NG_CITIES) */
+        ngCities: window.NG_CITIES || {},
+
+        /** Cancellation policy from GET /admin/bookings/cancellation-policy */
+        cancellationPolicy: null,
+
+        /** Local edits before save */
+        cancellationPolicyDirty: false,
     };
 })(window);

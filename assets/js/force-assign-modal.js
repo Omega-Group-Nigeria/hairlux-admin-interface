@@ -9,6 +9,9 @@ var ForceAssignModal = (function () {
     var bookingCoords = null;
     var selectedUserId = null;
     var selectedName = '';
+    var currentAssignedUserId = null;
+    var currentAssignedName = '';
+    var currentIsAssigned = false;
     var onSuccess = null;
     var state = { page: 1, limit: 15, search: '', availabilityStatus: '', totalPages: 1 };
     var searchTimer = null;
@@ -77,6 +80,38 @@ var ForceAssignModal = (function () {
                 if (check) check.remove();
             });
         }
+    }
+
+    function updateModalLabels() {
+        var titleEl = document.querySelector('#modal-force-assign .modal-title');
+        var confirmBtn = el('btn-force-assign-confirm');
+        var isReassign = !!(currentIsAssigned || currentAssignedUserId);
+        if (titleEl) titleEl.textContent = isReassign ? 'Reassign Beautician' : 'Force Assign Beautician';
+        if (confirmBtn) confirmBtn.textContent = isReassign ? 'Reassign' : 'Force Assign';
+    }
+
+    function extractCurrentAssigned(booking) {
+        if (!booking || typeof booking !== 'object') return { id: null, name: '' };
+        var id = booking.beauticianUserId || null;
+        var name = '';
+        if (typeof Bookings !== 'undefined' && Bookings.getBeauticianDisplayName) {
+            try { name = Bookings.getBeauticianDisplayName(booking) || ''; } catch (_) {}
+        } else if (booking.beautician) {
+            var b = booking.beautician;
+            var user = b.user || b;
+            if (user) {
+                name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.name || '';
+            }
+        }
+        if (!id && booking.beautician && typeof Beauticians !== 'undefined' && Beauticians.beauticianUserId) {
+            try { id = Beauticians.beauticianUserId(booking.beautician) || null; } catch (_) {}
+        }
+        if (!id && booking.assignedBeautician) {
+            try {
+                if (typeof Beauticians !== 'undefined' && Beauticians.beauticianUserId) id = Beauticians.beauticianUserId(booking.assignedBeautician) || id;
+            } catch (_) {}
+        }
+        return { id: id, name: name };
     }
 
     function showSelected() {
@@ -193,11 +228,37 @@ var ForceAssignModal = (function () {
 
     async function loadBookingCoords(id) {
         bookingCoords = null;
+        // reset assigned tracking until we fetch fresh booking
+        currentAssignedUserId = null;
+        currentAssignedName = '';
+        currentIsAssigned = false;
         try {
             var booking = await Bookings.getOne(id);
             bookingCoords = extractBookingCoords(booking);
+            var assigned = extractCurrentAssigned(booking);
+            currentAssignedUserId = assigned.id || null;
+            currentAssignedName = assigned.name || '';
+            // Determine if this booking is already assigned (status-based or beautician present)
+            try {
+                if (typeof Bookings !== 'undefined' && Bookings.isAssigned) {
+                    currentIsAssigned = !!Bookings.isAssigned(booking);
+                } else {
+                    currentIsAssigned = !!currentAssignedUserId;
+                }
+                // Also consider pending assignment as not reassigned (force assign mode)
+                if (typeof Bookings !== 'undefined' && Bookings.isPendingAssignment && Bookings.isPendingAssignment(booking)) {
+                    currentIsAssigned = false;
+                }
+            } catch (_) {
+                currentIsAssigned = !!currentAssignedUserId;
+            }
+            updateModalLabels();
         } catch (err) {
             bookingCoords = null;
+            currentAssignedUserId = null;
+            currentAssignedName = '';
+            currentIsAssigned = false;
+            updateModalLabels();
         }
     }
 
@@ -269,12 +330,16 @@ var ForceAssignModal = (function () {
             var sub = subParts.filter(Boolean).join(' \u00b7 ');
             var rating = formatRating(b.ratingAverage);
             var isSelected = uid && uid === selectedUserId;
+            var isCurrentAssigned = !!(currentAssignedUserId && uid && uid === currentAssignedUserId);
             var selectedCls = isSelected ? ' is-selected' : '';
             var nameRow = '<div class="fw-semibold d-flex align-items-center gap-2">' +
                 (isSelected ? selectedCheckIcon() : '') +
-                '<span>' + escapeHtml(name) + '</span></div>';
+                '<span>' + escapeHtml(name) + '</span>' +
+                (isCurrentAssigned ? '<span class="badge bg-warning-lt ms-1" style="font-size:.65rem">Already assigned</span>' : '') +
+                '</div>';
             return '<button type="button" class="force-assign-item list-group-item text-start' + selectedCls + '" ' +
-                'data-user-id="' + escapeHtml(uid) + '" data-user-name="' + escapeHtml(name) + '">' +
+                'data-user-id="' + escapeHtml(uid) + '" data-user-name="' + escapeHtml(name) + '"' +
+                (isCurrentAssigned ? ' data-already-assigned="1"' : '') + '>' +
                 '<div class="d-flex justify-content-between align-items-start gap-3">' +
                 '<div class="min-w-0">' + nameRow +
                 (sub ? '<div class="text-secondary small text-truncate">' + escapeHtml(sub) + '</div>' : '') +
@@ -333,11 +398,20 @@ var ForceAssignModal = (function () {
     }
 
     function selectBeautician(userId, name) {
+        var errEl = el('force-assign-error');
+        // No-op if already assigned to this beautician — show message and do not select
+        if (currentAssignedUserId && userId && userId === currentAssignedUserId) {
+            if (errEl) {
+                errEl.textContent = 'Already assigned to this beautician';
+                errEl.classList.remove('d-none');
+            }
+            // keep previous selection (or clear if no previous) — treat as no-op
+            return;
+        }
         selectedUserId = userId;
         selectedName = name || '';
         var hidden = el('force-assign-beautician');
         if (hidden) hidden.value = userId || '';
-        var errEl = el('force-assign-error');
         if (errEl) errEl.classList.add('d-none');
 
         var list = el('force-assign-list');
@@ -420,21 +494,58 @@ var ForceAssignModal = (function () {
                     }
                     return;
                 }
-                if (!confirm('Force assign this booking to the selected beautician?')) return;
+                // No-op if trying to assign to the same beautician
+                if (currentAssignedUserId && selectedUserId === currentAssignedUserId) {
+                    if (errEl) {
+                        errEl.textContent = 'Already assigned to this beautician';
+                        errEl.classList.remove('d-none');
+                    }
+                    return;
+                }
+                var isReassign = !!(currentIsAssigned || currentAssignedUserId);
+                var confirmMsg = isReassign
+                    ? 'Reassign this booking from ' + (currentAssignedName || 'current beautician') + ' to ' + selectedName + '?'
+                    : 'Force assign this booking to the selected beautician?';
+                if (!confirm(confirmMsg)) return;
 
                 confirmBtn.disabled = true;
                 if (errEl) errEl.classList.add('d-none');
+                var oldName = currentAssignedName || '';
+                var oldId = currentAssignedUserId || null;
+                var newName = selectedName;
+                var newId = selectedUserId;
                 try {
-                    await Bookings.forceAssign(bookingId, selectedUserId);
+                    var result = await Bookings.forceAssign(bookingId, selectedUserId);
+                    // Try to resolve new name from API result if not already known
+                    try {
+                        if (result && typeof Bookings !== 'undefined' && Bookings.getBeauticianDisplayName) {
+                            var rName = Bookings.getBeauticianDisplayName(result);
+                            if (rName) newName = rName;
+                            if (result.beauticianUserId) newId = result.beauticianUserId;
+                        } else if (result && result.beautician) {
+                            var rb = result.beautician;
+                            var ru = rb.user || rb;
+                            var rn = [ru.firstName, ru.lastName].filter(Boolean).join(' ').trim() || ru.name || '';
+                            if (rn) newName = rn;
+                        }
+                    } catch (_) {}
                     var modalEl = el('modal-force-assign');
                     var bs = getBootstrap();
-                    if (modalEl && bs) bs.Modal.getInstance(modalEl).hide();
+                    if (modalEl && bs) {
+                        var inst = bs.Modal.getInstance(modalEl);
+                        if (inst) inst.hide();
+                    }
                     if (typeof onSuccess === 'function') {
-                        await onSuccess(bookingId);
+                        await onSuccess(bookingId, { oldName: oldName, newName: newName, oldId: oldId, newId: newId, result: result, isReassign: isReassign });
                     }
                 } catch (err) {
+                    var msg = err && err.message ? err.message : 'Failed to force assign.';
+                    // Treat "Already assigned" API error as no-op
+                    if (/already assigned/i.test(msg)) {
+                        msg = 'Already assigned to this beautician';
+                    }
                     if (errEl) {
-                        errEl.textContent = err.message || 'Failed to force assign.';
+                        errEl.textContent = msg;
                         errEl.classList.remove('d-none');
                     }
                 } finally {
@@ -448,6 +559,9 @@ var ForceAssignModal = (function () {
             modalEl.addEventListener('hidden.bs.modal', function () {
                 bookingId = null;
                 bookingCoords = null;
+                currentAssignedUserId = null;
+                currentAssignedName = '';
+                currentIsAssigned = false;
                 clearSelection();
                 state.page = 1;
                 state.search = '';
@@ -456,6 +570,7 @@ var ForceAssignModal = (function () {
                 if (availabilityFilter) availabilityFilter.value = '';
                 var errEl = el('force-assign-error');
                 if (errEl) errEl.classList.add('d-none');
+                updateModalLabels();
             });
         }
     }
@@ -473,6 +588,10 @@ var ForceAssignModal = (function () {
         var errEl = el('force-assign-error');
         if (errEl) errEl.classList.add('d-none');
         clearSelection();
+        currentAssignedUserId = null;
+        currentAssignedName = '';
+        currentIsAssigned = false;
+        updateModalLabels();
         setListLoading();
         var modalEl = el('modal-force-assign');
         var bs = getBootstrap();
