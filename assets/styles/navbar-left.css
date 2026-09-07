@@ -1,4 +1,107 @@
 /* Shared left-side navbar layout for admin pages */
+
+/* ── Subnav (all breakpoints) ───────────────────────────────────────────── */
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav > .nav-link--toggle {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav > .nav-link--toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav > .nav-link--toggle:active,
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav.is-open > .nav-link--toggle {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav.active > .nav-link--toggle,
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav.active.is-open > .nav-link--toggle {
+  background: #0556a2;
+  color: #fff;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item.active:after {
+  display: none;
+  content: none;
+  border: 0;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-chevron {
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.65;
+  transition: transform 0.22s ease, opacity 0.18s ease;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav.is-open > .nav-link--toggle .nav-chevron {
+  transform: rotate(-135deg);
+  opacity: 0.9;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav.is-open .nav-subnav-wrap {
+  grid-template-rows: 1fr;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav {
+  overflow: hidden;
+  min-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav.is-open .nav-subnav {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav-link {
+  display: block;
+  padding: 0.4rem 0.65rem;
+  margin: 0.1rem 0;
+  border-radius: 0.4rem;
+  color: var(--tblr-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav-link:hover {
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav-link.active {
+  color: #fff;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.page > header.navbar.navbar-expand-md .navbar-collapse .nav-item.active > .nav-link:not(.nav-link--toggle) {
+  background: #0556a2;
+  color: #fff;
+}
+
 @media (min-width: 992px) {
   :root {
     --hairlux-left-navbar-width: 250px;
@@ -62,6 +165,15 @@
     border-radius: 0.5rem;
     justify-content: flex-start;
     text-align: left;
+    transition: background-color 0.18s ease, color 0.18s ease;
+  }
+
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-link:active {
+    background: rgba(255, 255, 255, 0.14);
   }
 
   .page > header.navbar.navbar-expand-md .navbar-collapse .nav-link-title {
@@ -86,38 +198,12 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
-  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-link.nav-link--has-badge.dropdown-toggle:after {
-    margin-left: 0.35rem;
-    align-self: center;
-    flex-shrink: 0;
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav .nav-link--toggle .nav-shop-order-badge {
+    margin-right: 0.25rem;
   }
 
-  .page > header.navbar.navbar-expand-md .navbar-collapse .dropdown-menu {
-    position: static;
-    float: none;
-    transform: none;
-    inset: auto;
-    display: none;
-    margin: 0.25rem 0 0.5rem 1.5rem;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    min-width: 0;
-  }
-
-  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-item.dropdown.show > .dropdown-menu {
-    display: block;
-  }
-
-  .page > header.navbar.navbar-expand-md .navbar-collapse .dropdown-menu.show {
-    display: block;
-  }
-
-  .page > header.navbar.navbar-expand-md .navbar-collapse .dropdown-item {
-    color: var(--tblr-secondary);
-    padding: 0.35rem 0;
-    text-align: left;
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav-wrap {
+    padding-left: 1.35rem;
   }
 
   .page > header.navbar.navbar-expand-md .navbar-nav.flex-row.order-md-last .dropdown-menu {
@@ -175,9 +261,18 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
-  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-link.nav-link--has-badge.dropdown-toggle:after {
-    margin-left: 0.35rem;
-    align-self: center;
-    flex-shrink: 0;
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav-wrap {
+    padding-left: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav-wrap,
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav,
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-chevron,
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-link,
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-subnav-link,
+  .page > header.navbar.navbar-expand-md .navbar-collapse .nav-item--subnav > .nav-link--toggle {
+    transition: none !important;
   }
 }
