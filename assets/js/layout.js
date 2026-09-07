@@ -126,15 +126,20 @@ var Layout = window.Layout || (() => {
             if (item.children && item.children.length) {
                 const childrenHtml = item.children.map(function (child) {
                     const childActive = isChildActive(child.href) ? " active" : "";
-                    return '<a class="dropdown-item' + childActive + '" href="' + resolveHref(child.href) + '">' + child.label + "</a>";
+                    return '<a class="nav-subnav-link' + childActive + '" href="' + resolveHref(child.href) + '">' + child.label + "</a>";
                 }).join("");
+                const openClass = active ? " is-open" : "";
                 return (
-                    '<li class="nav-item dropdown' + (active ? " active" : "") + '">' +
-                    '<a class="' + linkClass + ' dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button" aria-expanded="false">' +
+                    '<li class="nav-item nav-item--subnav' + (active ? " active" : "") + openClass + '" data-nav-subnav>' +
+                    '<button type="button" class="' + linkClass + ' nav-link--toggle w-100" ' +
+                    'aria-expanded="' + (active ? "true" : "false") + '" ' +
+                    'aria-controls="nav-sub-' + item.id + '">' +
                     iconHtml + titleHtml + badgeHtml +
-                    "</a>" +
-                    '<div class="dropdown-menu">' + childrenHtml + "</div>" +
-                    "</li>"
+                    '<span class="nav-chevron" aria-hidden="true"></span>' +
+                    "</button>" +
+                    '<div class="nav-subnav-wrap" id="nav-sub-' + item.id + '">' +
+                    '<div class="nav-subnav">' + childrenHtml + "</div>" +
+                    "</div></li>"
                 );
             }
 
@@ -147,6 +152,38 @@ var Layout = window.Layout || (() => {
         }).join("");
 
         el.innerHTML = html;
+        initSidebarNav(el);
+    }
+
+    function initSidebarNav(container) {
+        const el = container || document.getElementById("app-sidebar");
+        if (!el) return;
+
+        el.querySelectorAll("[data-nav-subnav]").forEach(function (li) {
+            const btn = li.querySelector(".nav-link--toggle");
+            if (!btn) return;
+
+            if (li.classList.contains("active")) {
+                li.classList.add("is-open");
+                btn.setAttribute("aria-expanded", "true");
+            }
+
+            btn.addEventListener("click", function (e) {
+                e.preventDefault();
+                const willOpen = !li.classList.contains("is-open");
+                li.classList.toggle("is-open", willOpen);
+                btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+
+                if (willOpen) {
+                    el.querySelectorAll("[data-nav-subnav].is-open").forEach(function (other) {
+                        if (other === li || other.classList.contains("active")) return;
+                        other.classList.remove("is-open");
+                        const otherBtn = other.querySelector(".nav-link--toggle");
+                        if (otherBtn) otherBtn.setAttribute("aria-expanded", "false");
+                    });
+                }
+            });
+        });
     }
 
     /** Fix relative paths in header brand logo and settings links. */
@@ -228,6 +265,7 @@ var Layout = window.Layout || (() => {
         fixHeaderPaths,
         initHeader,
         init,
+        initSidebarNav,
         syncNavAccess,
         refreshShopOrderBadge,
         updateShopConfirmedBadge,
