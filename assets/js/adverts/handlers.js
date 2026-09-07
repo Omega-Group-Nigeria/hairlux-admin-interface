@@ -38,12 +38,27 @@
         return State.banners.find(function (b) { return String(b.id) === String(id); }) || null;
     }
 
+    function bindClick(id, handler) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener("click", handler);
+    }
+
+    function showListLoadError(err) {
+        Utils.setPageAlert("danger", "Failed to load banners: " + ((err && err.message) || err || "Unknown error"));
+        State.banners = [];
+        Utils.showEmpty(true);
+        var tbody = document.getElementById("adverts-tbody");
+        if (tbody) tbody.innerHTML = "";
+        UI.updateStats();
+    }
+
     // ── List loading ──────────────────────────────────────────────
     function loadBanners() {
         State.pendingOp = "list";
         Utils.setTableLoading();
         Api.list()
             .then(function (items) {
+                if (!Array.isArray(items)) items = [];
                 items.sort(function (a, b) {
                     var ao = typeof a.sortOrder === "number" ? a.sortOrder : 0;
                     var bo = typeof b.sortOrder === "number" ? b.sortOrder : 0;
@@ -51,13 +66,10 @@
                 });
                 State.banners = items;
                 UI.renderList();
-                if (State.pendingOp === "list") State.pendingOp = null;
             })
-            .catch(function (err) {
-                State.pendingOp = null;
-                Utils.setPageAlert("danger", "Failed to load banners: " + (err.message || err));
-                Utils.showEmpty(true);
-                document.getElementById("adverts-tbody").innerHTML = "";
+            .catch(showListLoadError)
+            .finally(function () {
+                if (State.pendingOp === "list") State.pendingOp = null;
             });
     }
 
@@ -355,75 +367,91 @@
 
     // ── Event wiring ──────────────────────────────────────────────
     function init() {
-        initNavbar();
+        try {
+            initNavbar();
 
-        var dropzone = document.getElementById("banner-dropzone");
-        var fileInput = document.getElementById("banner-file-input");
+            var dropzone = document.getElementById("banner-dropzone");
+            var fileInput = document.getElementById("banner-file-input");
 
-        dropzone.addEventListener("click", function () { triggerFilePick(); });
-        dropzone.addEventListener("keydown", function (e) {
-            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); triggerFilePick(); }
-        });
-        ["dragover", "dragenter"].forEach(function (evt) {
-            dropzone.addEventListener(evt, function (e) {
-                e.preventDefault();
-                dropzone.classList.add("dragover");
-            });
-        });
-        ["dragleave", "dragend", "drop"].forEach(function (evt) {
-            dropzone.addEventListener(evt, function (e) {
-                e.preventDefault();
-                dropzone.classList.remove("dragover");
-            });
-        });
-        dropzone.addEventListener("drop", function (e) {
-            var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-            if (file) onFileChosen(file);
-        });
-        fileInput.addEventListener("change", function () {
-            var file = fileInput.files && fileInput.files[0];
-            if (file) onFileChosen(file);
-        });
-
-        document.getElementById("btn-change-image").addEventListener("click", triggerFilePick);
-        document.getElementById("btn-remove-image").addEventListener("click", clearCropped);
-        document.getElementById("btn-replace-image").addEventListener("click", triggerFilePick);
-
-        document.getElementById("btn-crop-apply").addEventListener("click", applyCrop);
-        document.getElementById("btn-crop-zoom-in").addEventListener("click", function () { if (_cropper) _cropper.zoom(0.1); });
-        document.getElementById("btn-crop-zoom-out").addEventListener("click", function () { if (_cropper) _cropper.zoom(-0.1); });
-        document.getElementById("btn-crop-rotate-l").addEventListener("click", function () { if (_cropper) _cropper.rotate(-90); });
-        document.getElementById("btn-crop-rotate-r").addEventListener("click", function () { if (_cropper) _cropper.rotate(90); });
-
-        document.getElementById("modal-crop").addEventListener("shown.bs.modal", initCropper);
-        document.getElementById("modal-crop").addEventListener("hidden.bs.modal", function () {
-            if (_cropper) { _cropper.destroy(); _cropper = null; }
-            document.getElementById("crop-img").removeAttribute("src");
-            _pendingDataUrl = null;
-        });
-
-        document.getElementById("btn-new-banner").addEventListener("click", openCreate);
-        document.getElementById("btn-refresh").addEventListener("click", loadBanners);
-        document.getElementById("btn-save-banner").addEventListener("click", saveBanner);
-        document.getElementById("btn-confirm-delete").addEventListener("click", runDelete);
-
-        document.getElementById("adverts-tbody").addEventListener("click", function (e) {
-            var target = e.target.closest("[data-id]");
-            if (!target) return;
-            var id = target.getAttribute("data-id");
-            if (target.classList.contains("banner-edit")) openEdit(id);
-            else if (target.classList.contains("banner-delete")) confirmDelete(id);
-            else if (target.classList.contains("banner-move-up")) moveBanner(id, -1);
-            else if (target.classList.contains("banner-move-down")) moveBanner(id, 1);
-        });
-
-        document.getElementById("adverts-tbody").addEventListener("change", function (e) {
-            if (e.target.classList && e.target.classList.contains("banner-active-toggle")) {
-                toggleActive(e.target.getAttribute("data-id"), e.target);
+            if (dropzone) {
+                dropzone.addEventListener("click", function () { triggerFilePick(); });
+                dropzone.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); triggerFilePick(); }
+                });
+                ["dragover", "dragenter"].forEach(function (evt) {
+                    dropzone.addEventListener(evt, function (e) {
+                        e.preventDefault();
+                        dropzone.classList.add("dragover");
+                    });
+                });
+                ["dragleave", "dragend", "drop"].forEach(function (evt) {
+                    dropzone.addEventListener(evt, function (e) {
+                        e.preventDefault();
+                        dropzone.classList.remove("dragover");
+                    });
+                });
+                dropzone.addEventListener("drop", function (e) {
+                    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+                    if (file) onFileChosen(file);
+                });
             }
-        });
 
-        loadBanners();
+            if (fileInput) {
+                fileInput.addEventListener("change", function () {
+                    var file = fileInput.files && fileInput.files[0];
+                    if (file) onFileChosen(file);
+                });
+            }
+
+            bindClick("btn-change-image", triggerFilePick);
+            bindClick("btn-remove-image", clearCropped);
+            bindClick("btn-replace-image", triggerFilePick);
+            bindClick("btn-crop-apply", applyCrop);
+            bindClick("btn-crop-zoom-in", function () { if (_cropper) _cropper.zoom(0.1); });
+            bindClick("btn-crop-zoom-out", function () { if (_cropper) _cropper.zoom(-0.1); });
+            bindClick("btn-crop-rotate-l", function () { if (_cropper) _cropper.rotate(-90); });
+            bindClick("btn-crop-rotate-r", function () { if (_cropper) _cropper.rotate(90); });
+
+            var cropModal = document.getElementById("modal-crop");
+            if (cropModal) {
+                cropModal.addEventListener("shown.bs.modal", initCropper);
+                cropModal.addEventListener("hidden.bs.modal", function () {
+                    if (_cropper) { _cropper.destroy(); _cropper = null; }
+                    var cropImg = document.getElementById("crop-img");
+                    if (cropImg) cropImg.removeAttribute("src");
+                    _pendingDataUrl = null;
+                });
+            }
+
+            bindClick("btn-new-banner", openCreate);
+            bindClick("btn-refresh", loadBanners);
+            bindClick("btn-save-banner", saveBanner);
+            bindClick("btn-confirm-delete", runDelete);
+
+            var tbody = document.getElementById("adverts-tbody");
+            if (tbody) {
+                tbody.addEventListener("click", function (e) {
+                    var target = e.target.closest("[data-id]");
+                    if (!target) return;
+                    var id = target.getAttribute("data-id");
+                    if (target.classList.contains("banner-edit")) openEdit(id);
+                    else if (target.classList.contains("banner-delete")) confirmDelete(id);
+                    else if (target.classList.contains("banner-move-up")) moveBanner(id, -1);
+                    else if (target.classList.contains("banner-move-down")) moveBanner(id, 1);
+                });
+
+                tbody.addEventListener("change", function (e) {
+                    if (e.target.classList && e.target.classList.contains("banner-active-toggle")) {
+                        toggleActive(e.target.getAttribute("data-id"), e.target);
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("[Adverts] init failed", err);
+            Utils.setPageAlert("danger", "Page failed to initialize.");
+        } finally {
+            loadBanners();
+        }
     }
 
     global.Adverts.Handlers = { init: init };

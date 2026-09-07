@@ -73,7 +73,9 @@
             Utils.showEmpty(true);
         } else {
             Utils.showEmpty(false);
-            tbody.innerHTML = State.banners.map(buildRow).join("");
+            tbody.innerHTML = State.banners.map(function (banner, index) {
+                return buildRow(banner, index, State.banners.length);
+            }).join("");
         }
         updateStats();
     }
