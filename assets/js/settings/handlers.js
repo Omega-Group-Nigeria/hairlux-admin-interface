@@ -18,6 +18,8 @@
     var showAdminAlert = Utils.showAdminAlert;
     var showHomeServiceAlert = Utils.showHomeServiceAlert;
     var fuzzyScore = Utils.fuzzyScore;
+    var mergeServiceableAreas = Utils.mergeServiceableAreas;
+    var dedupeServiceableAreas = Utils.dedupeServiceableAreas;
 
     var switchSection = UI.switchSection;
     var routeOnLoad = UI.routeOnLoad;
@@ -35,6 +37,9 @@
     var renderServiceableAreas = UI.renderServiceableAreas;
     var populateAddAreaState = UI.populateAddAreaState;
     var populateAddAreaCity = UI.populateAddAreaCity;
+    var updateAddAreaCityNotice = UI.updateAddAreaCityNotice;
+    var reconcileCityPickerSelection = UI.reconcileCityPickerSelection;
+    var removeWildcardForState = UI.removeWildcardForState;
     var updateDraftBanner = UI.updateDraftBanner;
     var renderAddAreaPreview = UI.renderAddAreaPreview;
     var renderCancellationPolicy = UI.renderCancellationPolicy;
@@ -196,7 +201,7 @@
         } catch (err) {
             showHomeServiceAlert('danger', 'Failed to load home service settings: ' + err.message);
             var tbody = document.getElementById('home-service-tbody');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
         }
     }
 
@@ -209,6 +214,12 @@
         if (btnEl) btnEl.disabled = true;
         setSpinner(spinnerId, true);
         try {
+            var cleaned = dedupeServiceableAreas(State.serviceableAreas);
+            if (cleaned.length !== State.serviceableAreas.length) {
+                State.serviceableAreas = cleaned;
+                State.serviceableAreasDirty = true;
+                renderServiceableAreas(State.serviceableAreas);
+            }
             var result = await Api.updateHomeService({ serviceableAreas: State.serviceableAreas });
             if (!result.res.ok) throw new Error(result.message || 'Update failed (' + result.res.status + ')');
             State.homeService = result.data || State.homeService;
@@ -400,6 +411,7 @@
 
         // ── Home service: add-area modal wiring ────────────────────────
         MultiSelect.attach('add-area-city');
+        var prevCitySelection = [];
 
         var btnAddArea = document.getElementById('btn-add-serviceable-area');
         if (btnAddArea) {
@@ -410,6 +422,8 @@
                     alertEl.classList.add('d-none');
                 }
                 document.getElementById('modal-add-area-note').textContent = '';
+                State.addAreaCityOverride = null;
+                prevCitySelection = [];
                 populateAddAreaState();
                 populateAddAreaCity('');
                 MultiSelect.clear('add-area-city');
@@ -421,7 +435,28 @@
         var stateSel = document.getElementById('add-area-state');
         if (stateSel) {
             stateSel.addEventListener('change', function () {
+                State.addAreaCityOverride = null;
+                prevCitySelection = [];
                 populateAddAreaCity(this.value);
+                renderAddAreaPreview();
+            });
+        }
+
+        document.addEventListener('hairlux:add-area-override', function () {
+            prevCitySelection = [];
+        });
+
+        var cityNotice = document.getElementById('add-area-city-notice');
+        if (cityNotice) {
+            cityNotice.addEventListener('click', function (e) {
+                var btn = e.target.closest('#btn-override-all-cities');
+                if (!btn) return;
+                var state = document.getElementById('add-area-state').value;
+                if (!state) return;
+                removeWildcardForState(state);
+                prevCitySelection = [];
+                populateAddAreaCity(state);
+                updateAddAreaCityNotice(state);
                 renderAddAreaPreview();
             });
         }
@@ -429,6 +464,27 @@
         var citySel = document.getElementById('add-area-city');
         if (citySel) {
             citySel.addEventListener('change', function () {
+                var state = document.getElementById('add-area-state').value;
+                var selected = Array.from(citySel.selectedOptions)
+                    .map(function (o) { return o.value; })
+                    .filter(Boolean);
+                var added = selected.filter(function (v) { return prevCitySelection.indexOf(v) === -1; });
+
+                if (added.indexOf('*') !== -1 && selected.length > 1) {
+                    Array.from(citySel.options).forEach(function (opt) {
+                        if (opt.value && opt.value !== '*') opt.selected = false;
+                    });
+                    MultiSelect.refresh('add-area-city');
+                    selected = ['*'];
+                } else if (prevCitySelection.indexOf('*') !== -1 && added.length && added.indexOf('*') === -1) {
+                    reconcileCityPickerSelection(state);
+                    selected = Array.from(citySel.selectedOptions)
+                        .map(function (o) { return o.value; })
+                        .filter(Boolean);
+                }
+
+                prevCitySelection = selected.slice();
+                updateAddAreaCityNotice(state);
                 renderAddAreaPreview();
             });
         }
@@ -444,9 +500,13 @@
                     var opt = Array.from(citySel.options).find(function (o) { return o.value === city; });
                     if (opt) opt.selected = false;
                     MultiSelect.refresh('add-area-city');
+                    prevCitySelection = Array.from(citySel.selectedOptions)
+                        .map(function (o) { return o.value; })
+                        .filter(Boolean);
                     renderAddAreaPreview();
                 } else if (clearBtn) {
                     MultiSelect.clear('add-area-city');
+                    prevCitySelection = [];
                     renderAddAreaPreview();
                 }
             });
@@ -475,36 +535,59 @@
                     }
                     return;
                 }
-                var added = [];
+                var toAdd = [];
                 cityOpts.forEach(function (opt) {
                     if (!opt.value) return;
                     var city = opt.value.trim();
                     if (!city) return;
-                    var dup = State.serviceableAreas.some(function (a) {
-                        return a.state.toLowerCase() === state.toLowerCase() &&
-                            a.city.toLowerCase() === city.toLowerCase();
-                    });
-                    if (!dup) added.push({ state: state, city: city });
+                    toAdd.push({ state: state, city: city });
                 });
-                if (!added.length) {
+                var mergeResult = mergeServiceableAreas(State.serviceableAreas, toAdd);
+                if (!mergeResult.added.length) {
                     if (alertEl && alertMsg) {
                         alertEl.className = 'alert alert-warning mx-3 mt-3 mb-0 py-2';
-                        alertMsg.textContent = 'All selected cities are already in the list.';
+                        alertMsg.textContent = mergeResult.skipped.length === 1
+                            ? 'That area is already covered by an existing entry.'
+                            : 'All selected areas are already covered by existing entries.';
                         alertEl.classList.remove('d-none');
                     }
                     return;
                 }
-                State.serviceableAreas = State.serviceableAreas.concat(added);
+                State.serviceableAreas = mergeResult.areas;
                 State.serviceableAreasDirty = true;
                 renderServiceableAreas(State.serviceableAreas);
                 updateDraftBanner();
-                // Keep the modal open so more states can be queued up before saving once.
                 var savedBadge = document.getElementById('home-service-saved');
                 if (savedBadge) savedBadge.classList.add('d-none');
                 MultiSelect.clear('add-area-city');
+                populateAddAreaCity(state);
                 renderAddAreaPreview();
+                var noteParts = [mergeResult.added.length + ' area(s) added to draft'];
+                if (mergeResult.replaced > 0) {
+                    noteParts.push(mergeResult.replaced + ' specific city entries replaced by All Cities');
+                }
+                if (mergeResult.skipped.length > 0) {
+                    noteParts.push(mergeResult.skipped.length + ' skipped (already covered)');
+                }
                 document.getElementById('modal-add-area-note').textContent =
-                    added.length + ' area(s) added to draft (' + State.serviceableAreas.length + ' total). Close and hit Save Areas when done.';
+                    noteParts.join('. ') + ' (' + State.serviceableAreas.length + ' total). Close and hit Save Areas when done.';
+            });
+        }
+
+        var btnCleanupRedundant = document.getElementById('btn-cleanup-redundant-areas');
+        if (btnCleanupRedundant) {
+            btnCleanupRedundant.addEventListener('click', function () {
+                var before = State.serviceableAreas.length;
+                var cleaned = dedupeServiceableAreas(State.serviceableAreas);
+                if (cleaned.length === before) {
+                    showHomeServiceAlert('info', 'No redundant areas to remove.');
+                    return;
+                }
+                State.serviceableAreas = cleaned;
+                State.serviceableAreasDirty = true;
+                renderServiceableAreas(State.serviceableAreas);
+                updateDraftBanner();
+                showHomeServiceAlert('success', 'Removed ' + (before - cleaned.length) + ' redundant area(s). Save to publish.');
             });
         }
 

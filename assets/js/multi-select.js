@@ -42,8 +42,37 @@ const MultiSelect = (function () {
 
     function openList(state) {
         if (state.select.disabled) return;
+        if (state.locked) {
+            renderLockedList(state);
+            state.list.style.display = 'block';
+            return;
+        }
         renderList(state, state.input.value);
         state.list.style.display = state.list.children.length ? 'block' : 'none';
+    }
+
+    function renderLockedList(state) {
+        var msg = state.lockMessage || 'Selection is not available.';
+        var actionHtml = '';
+        if (state.lockActionLabel && state.lockAction) {
+            actionHtml = '<button type="button" class="btn btn-sm btn-primary w-100 mt-2 ms-lock-action">' +
+                escapeHtml(state.lockActionLabel) + '</button>';
+        }
+        state.list.innerHTML =
+            '<div class="ms-empty ms-locked-msg">' + escapeHtml(msg) + '</div>' + actionHtml;
+        var btn = state.list.querySelector('.ms-lock-action');
+        if (btn) {
+            btn.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (state.lockAction) state.lockAction();
+                closeList(state);
+            });
+        }
     }
 
     function renderList(state, query) {
@@ -162,12 +191,13 @@ const MultiSelect = (function () {
         field.appendChild(input);
         field.appendChild(clearBtn);
 
-        const state = { select: select, wrap: wrap, field: field, chips: chips, input: input, clearBtn: clearBtn, list: list, options: readOptions(select) };
+        const state = { select: select, wrap: wrap, field: field, chips: chips, input: input, clearBtn: clearBtn, list: list, options: readOptions(select), locked: false, lockMessage: '', lockActionLabel: '', lockAction: null };
         registry[selectId] = state;
 
         input.disabled = select.disabled;
         renderChips(state);
         if (select.disabled) input.placeholder = 'Select a state first\u2026';
+        else if (state.locked && state.lockPlaceholder) input.placeholder = state.lockPlaceholder;
 
         field.addEventListener('mousedown', function (e) {
             if (e.target.closest('.ms-chip-x') || e.target.closest('.ms-clear-all')) return;
@@ -228,7 +258,27 @@ const MultiSelect = (function () {
             closeList(state);
         } else {
             state.input.disabled = false;
+            if (state.locked && state.lockPlaceholder) {
+                state.input.placeholder = state.lockPlaceholder;
+            }
         }
+    }
+
+    function setLocked(selectId, locked, opts) {
+        const state = registry[selectId];
+        if (!state) return;
+        opts = opts || {};
+        state.locked = !!locked;
+        state.lockMessage = opts.message || '';
+        state.lockActionLabel = opts.actionLabel || '';
+        state.lockAction = opts.onAction || null;
+        state.lockPlaceholder = opts.placeholder || '';
+        if (state.locked && state.lockPlaceholder) {
+            state.input.placeholder = state.lockPlaceholder;
+        } else if (!state.select.disabled) {
+            state.input.placeholder = selectedValues(state.select).length ? 'Add more\u2026' : 'Search\u2026';
+        }
+        closeList(state);
     }
 
     function clear(selectId) {
@@ -276,11 +326,12 @@ const MultiSelect = (function () {
             'box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:2000;font-size:.875rem;}' +
             '.ms-item{padding:8px 12px;cursor:pointer;}' +
             '.ms-item:hover{background:var(--tblr-primary-lt,#f1f5f9);}' +
-            '.ms-empty{padding:8px 12px;color:var(--tblr-secondary,#6c757d);}';
+            '.ms-empty{padding:8px 12px;color:var(--tblr-secondary,#6c757d);}' +
+            '.ms-locked-msg{line-height:1.45;}';
         document.head.appendChild(style);
     }
 
-    return { attach: attach, refresh: refresh, clear: clear, detach: detach };
+    return { attach: attach, refresh: refresh, clear: clear, detach: detach, setLocked: setLocked };
 })();
 
     global.MultiSelect = MultiSelect;

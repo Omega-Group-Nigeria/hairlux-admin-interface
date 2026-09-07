@@ -33,6 +33,9 @@
         /** True while local area edits have not been persisted to the API yet */
         serviceableAreasDirty: false,
 
+        /** State name when admin chose to override an existing All Cities entry in the add modal */
+        addAreaCityOverride: null,
+
         /** Bundled state -> cities reference data (window.NG_CITIES) */
         ngCities: window.NG_CITIES || {},
 

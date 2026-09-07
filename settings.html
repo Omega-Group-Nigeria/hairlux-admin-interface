@@ -514,11 +514,28 @@
                                         <div class="d-flex flex-wrap align-items-center gap-2 mb-3"
                                             id="home-service-summary">
                                             <span class="badge bg-secondary-lt px-3 py-2 fs-6">
-                                                <span id="stat-home-service-count">—</span> area(s)
+                                                <span id="stat-home-service-effective">—</span> active area(s)
+                                            </span>
+                                            <span class="badge bg-secondary-lt px-3 py-2 d-none" id="stat-home-service-total-wrap">
+                                                <span id="stat-home-service-count">—</span> total in list
                                             </span>
                                             <span class="badge bg-warning-lt px-3 py-2 d-none" id="home-service-disabled">
                                                 Home service disabled everywhere
                                             </span>
+                                        </div>
+
+                                        <!-- Redundant areas notice -->
+                                        <div id="home-service-redundant-banner" class="d-none mb-3">
+                                            <div class="alert alert-info mb-0 py-2 px-3 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                                <span class="small">
+                                                    <strong id="home-service-redundant-count">0</strong> area(s) are redundant —
+                                                    already covered by a broader entry (e.g. <em>All Cities</em> for the same state).
+                                                    They have no effect until removed.
+                                                </span>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-cleanup-redundant-areas">
+                                                    Remove redundant
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <!-- Areas table -->
@@ -528,12 +545,13 @@
                                                     <tr>
                                                         <th>State</th>
                                                         <th>City</th>
+                                                        <th>Status</th>
                                                         <th class="w-1"></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="home-service-tbody">
                                                     <tr>
-                                                        <td colspan="3" class="text-center text-secondary py-4">
+                                                        <td colspan="4" class="text-center text-secondary py-4">
                                                             Loading…
                                                         </td>
                                                     </tr>
@@ -898,13 +916,15 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required">City / Cities <span class="text-secondary fw-normal">(multi-select)</span></label>
-                            <select multiple class="form-select" id="add-area-city" disabled>
+                            <label class="form-label required" id="add-area-city-label">City / Cities <span class="text-secondary fw-normal">(multi-select)</span></label>
+                            <div id="add-area-city-notice" class="alert alert-info py-2 px-3 small mb-2 d-none" role="status" aria-live="polite"></div>
+                            <select multiple class="form-select" id="add-area-city" disabled aria-describedby="add-area-city-hint add-area-city-notice">
                                 <option value="">Select a state first…</option>
                             </select>
-                            <div class="form-hint">
+                            <div class="form-hint" id="add-area-city-hint">
                                 Click cities to add them; each appears in the field with an <strong>×</strong> to remove it
-                                individually or clear all. Choose <strong>All Cities (*)</strong> to enable the whole state.
+                                individually or clear all. Choose <strong>All Cities (*)</strong> to enable the whole state —
+                                specific cities in that state become unnecessary and will be replaced automatically.
                             </div>
                         </div>
                         <div class="col-12">

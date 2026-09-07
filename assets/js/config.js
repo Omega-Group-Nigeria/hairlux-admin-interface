@@ -1,54 +1,86 @@
-/**
- * config.js — Hairlux Admin
- * Global configuration loaded before all other scripts.
- * Add this file to .gitignore and commit config.example.js instead.
- */
+// Global config — loaded before all other scripts.
 
-// API base URL (no trailing slash)
-// window.API_BASE = "https://api.hairlux.com.ng";
-// window.API_BASE = "http://localhost:3000"; // local
-window.API_BASE = "https://ez-staging-area.up.railway.app"; // staging area link
+(function (global) {
+  'use strict';
 
-// Cloudinary cloud_name (used by other admin features e.g. image upload helpers — not KYC video)
-// window.CLOUDINARY_CLOUD_NAME = "your_cloud_name";
-window.CLOUDINARY_CLOUD_NAME = "dkudoqsvl";
+  function stripTrailingSlash(url) {
+    return String(url || '').replace(/\/$/, '');
+  }
+
+  function configJsonUrl() {
+    var scripts = document.getElementsByTagName('script');
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].src;
+      if (src && /\/config\.js(?:\?|$)/.test(src)) {
+        return src.replace(/config\.js(?:\?.*)?$/, 'config.jsonc');
+      }
+    }
+    return './assets/js/config.jsonc';
+  }
+
+  function stripJsonComments(text) {
+    return String(text || '')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+  }
+
+  function loadConfig() {
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', configJsonUrl(), false);
+      xhr.send(null);
+      if (xhr.status === 200 && xhr.responseText) {
+        return JSON.parse(stripJsonComments(xhr.responseText)) || {};
+      }
+    } catch (err) {}
+    return {};
+  }
+
+  function fallbackApiBase() {
+    var host = (global.location && global.location.hostname) || '';
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000';
+    if (host.indexOf('hairlux.com.ng') !== -1) return 'https://api.hairlux.com.ng';
+    return 'http://localhost:3000';
+  }
+
+  var cfg = loadConfig();
+
+  global.API_BASE = stripTrailingSlash(cfg.API_BASE || fallbackApiBase());
+  global.CLOUDINARY_CLOUD_NAME = cfg.CLOUDINARY_CLOUD_NAME || '';
+})(window);
 
 (function setupBackdropCleanup() {
-	function removeAll(selector) {
-		document.querySelectorAll(selector).forEach(function (el) {
-			if (el && el.parentNode) el.parentNode.removeChild(el);
-		});
-	}
+  function removeAll(selector) {
+    document.querySelectorAll(selector).forEach(function (el) {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    });
+  }
 
-	function cleanupBackdrops() {
-		var shownModalCount = document.querySelectorAll('.modal.show').length;
-		var shownOffcanvasCount = document.querySelectorAll('.offcanvas.show').length;
+  function cleanupBackdrops() {
+    var shownModalCount = document.querySelectorAll('.modal.show').length;
+    var shownOffcanvasCount = document.querySelectorAll('.offcanvas.show').length;
 
-		if (shownModalCount === 0) {
-			removeAll('.modal-backdrop');
-			document.body.classList.remove('modal-open');
-			document.body.style.removeProperty('padding-right');
-		}
+    if (shownModalCount === 0) {
+      removeAll('.modal-backdrop');
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('padding-right');
+    }
 
-		if (shownOffcanvasCount === 0) {
-			removeAll('.offcanvas-backdrop');
-		}
+    if (shownOffcanvasCount === 0) {
+      removeAll('.offcanvas-backdrop');
+    }
 
-		if (shownModalCount === 0 && shownOffcanvasCount === 0) {
-			document.body.style.removeProperty('overflow');
-		}
-	}
+    if (shownModalCount === 0 && shownOffcanvasCount === 0) {
+      document.body.style.removeProperty('overflow');
+    }
+  }
 
-	function queueCleanup() {
-		window.setTimeout(cleanupBackdrops, 0);
-	}
+  function queueCleanup() {
+    window.setTimeout(cleanupBackdrops, 0);
+  }
 
-	document.addEventListener('hidden.bs.modal', queueCleanup);
-	document.addEventListener('hidden.bs.offcanvas', queueCleanup);
+  document.addEventListener('hidden.bs.modal', queueCleanup);
+  document.addEventListener('hidden.bs.offcanvas', queueCleanup);
 
-	// Expose for manual emergency cleanup from page scripts when needed.
-	window.HairluxCleanupBackdrops = cleanupBackdrops;
+  window.HairluxCleanupBackdrops = cleanupBackdrops;
 }());
-
-// Optional: set token directly instead of reading from localStorage
-// window.AUTH_TOKEN = "your-token-here";
