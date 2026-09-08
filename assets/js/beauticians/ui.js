@@ -1172,7 +1172,7 @@ function buildDetailActions(b) {
 function renderReviewsTable(rows, meta) {
     var tbody = document.getElementById('reviews-tbody');
     if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No pending profile reviews.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No pending profile reviews match the current filters.</td></tr>';
         return;
     }
     tbody.innerHTML = rows.map(function (b, i) {

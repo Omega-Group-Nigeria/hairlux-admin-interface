@@ -393,19 +393,27 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="modal-region-error"></div>
-                    <div class="mb-3" id="new-region-name-group">
-                        <label class="form-label" for="new-region-name">Region name <span class="text-danger" id="new-region-name-required">*</span> <span class="text-secondary fw-normal" id="new-region-name-hint">(single state only)</span></label>
-                        <input type="text" class="form-control" id="new-region-name" placeholder="e.g. Lagos Metro">
-                        <div class="form-hint" id="new-region-name-group-hint">Used when creating a region for a single state. Hidden when multiple states are selected (each region is then named after its state).</div>
+                    <div class="mb-3">
+                        <label class="form-label" for="new-region-state">State <span class="text-danger">*</span></label>
+                        <select class="form-select" id="new-region-state">
+                            <option value="">Select state…</option>
+                        </select>
+                        <div class="form-hint">With no cities selected, the fee applies state-wide. The customer's city is always matched first, falling back to the state-wide fee.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="new-region-state">State(s) <span class="text-secondary fw-normal">(multi-select)</span> <span class="text-danger">*</span></label>
-                        <select multiple class="form-select" id="new-region-state">
+                        <label class="form-label" for="new-region-city">City / Cities <span class="text-secondary fw-normal">(optional, multi-select)</span></label>
+                        <select multiple class="form-select" id="new-region-city" disabled>
+                            <option value="">Select a state first…</option>
                         </select>
-                        <div class="form-hint">
-                            Click states to add them; each appears in the field with an <strong>×</strong> to remove it
-                            individually or clear all. One delivery region will be created per selected state.
+                        <div class="form-hint" id="new-region-city-hint">
+                            Click cities to add them; each appears in the field with an <strong>×</strong> to remove it
+                            individually or clear all. Leave empty for a state-wide default fee.
                         </div>
+                    </div>
+                    <div class="mb-3" id="new-region-name-group">
+                        <label class="form-label" for="new-region-name">Region name <span class="text-secondary fw-normal">(optional)</span></label>
+                        <input type="text" class="form-control" id="new-region-name" placeholder="e.g. Lagos Metro">
+                        <div class="form-hint" id="new-region-name-group-hint">Defaults to the city (or state) name when left empty. Hidden when multiple cities are selected.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="new-region-fee">Delivery fee (₦) <span class="text-danger">*</span></label>
@@ -454,6 +462,7 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/shop.js"></script>
     <script src="assets/js/multi-select.js"></script>
+    <script src="assets/js/data/nigeria-cities.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
     <script src="assets/js/shop-product-images.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
