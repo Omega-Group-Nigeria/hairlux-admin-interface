@@ -36,6 +36,7 @@ async function loadNigerianStates() {
     var data = await res.json();
     State.nigerianStates = Array.isArray(data) ? data : (data.states || []);
     populateStateSelect(document.getElementById("new-region-state"), "");
+    if (global.MultiSelect) global.MultiSelect.refresh("new-region-state");
     return State.nigerianStates;
 }
 
@@ -457,6 +458,13 @@ async function openRegionModal() {
     try {
         await ensureNigerianStates();
         populateStateSelect(document.getElementById("new-region-state"), "");
+        if (global.MultiSelect) {
+            global.MultiSelect.attach("new-region-state");
+            global.MultiSelect.refresh("new-region-state");
+            global.MultiSelect.clear("new-region-state");
+        }
+        toggleRegionNameField();
+        bindRegionNameToggle();
     } catch (e) {
         flashPageAlert("danger", e.message || "Failed to load states list.");
         return;
@@ -465,16 +473,45 @@ async function openRegionModal() {
     setTimeout(function () { document.getElementById("new-region-name").focus(); }, 300);
 }
 
+/**
+ * The region name only applies when exactly one state is selected
+ * (single-state payload uses { name, state, ... }); with multiple states the
+ * bulk endpoint names each region after its state, so the field is hidden.
+ */
+function selectedRegionStates() {
+    var stateSelect = document.getElementById("new-region-state");
+    return Array.from(stateSelect.selectedOptions)
+        .map(function (opt) { return (opt.value || "").trim(); })
+        .filter(function (v) { return v !== ""; });
+}
+
+function toggleRegionNameField() {
+    var states = selectedRegionStates();
+    var single = states.length === 1;
+    document.getElementById("new-region-name-group").style.display = single ? "" : "none";
+    document.getElementById("new-region-name-required").style.display = single ? "" : "none";
+    document.getElementById("new-region-name-hint").style.display = single ? "none" : "";
+}
+
+var regionNameToggleBound = false;
+function bindRegionNameToggle() {
+    if (regionNameToggleBound) return;
+    regionNameToggleBound = true;
+    document.getElementById("new-region-state").addEventListener("change", toggleRegionNameField);
+}
+
 async function addDeliveryRegion() {
     if (!RBAC.can(Shop.PERMISSIONS.MANAGE_DELIVERY)) return;
     var errEl = document.getElementById("modal-region-error");
     errEl.classList.add("d-none");
+    var states = selectedRegionStates();
     var name = document.getElementById("new-region-name").value.trim();
-    var state = document.getElementById("new-region-state").value.trim();
     var deliveryFee = parseFloat(document.getElementById("new-region-fee").value);
     var isActive = document.getElementById("new-region-active").checked;
-    if (!name || !state || isNaN(deliveryFee)) {
-        errEl.textContent = "Please fill in all required fields.";
+    if (!states.length || isNaN(deliveryFee) || (states.length === 1 && !name)) {
+        errEl.textContent = states.length === 1 && !name
+            ? "Please enter a region name, select a state and enter a delivery fee."
+            : "Please select at least one state and enter a delivery fee.";
         errEl.classList.remove("d-none");
         return;
     }
@@ -482,10 +519,16 @@ async function addDeliveryRegion() {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Adding…';
     try {
-        await Api.createDeliveryRegion({ name: name, state: state, deliveryFee: deliveryFee, isActive: isActive });
+        if (states.length === 1) {
+            await Api.createDeliveryRegion({ name: name, state: states[0], deliveryFee: deliveryFee, isActive: isActive });
+            flashPageAlert("success", "Delivery region added successfully.");
+        } else {
+            await Api.createDeliveryRegionsBulk({ states: states, deliveryFee: deliveryFee, isActive: isActive });
+            flashPageAlert("success", "Delivery regions created successfully for " + states.length + " states.");
+        }
         bootstrap.Modal.getInstance(document.getElementById("modal-region")).hide();
+        if (global.MultiSelect) global.MultiSelect.clear("new-region-state");
         loadDeliveryTable();
-        flashPageAlert("success", "Delivery region added successfully.");
     } catch (e) {
         errEl.textContent = e.message || "Failed to add region.";
         errEl.classList.remove("d-none");
@@ -740,6 +783,7 @@ initSectionTabs();
         loadDeliveryTable: loadDeliveryTable,
         openRegionModal: openRegionModal,
         addDeliveryRegion: addDeliveryRegion,
+        toggleRegionNameField: toggleRegionNameField,
         editRegionInline: editRegionInline,
         saveRegionInline: saveRegionInline,
         confirmDeleteRegion: confirmDeleteRegion,

@@ -393,16 +393,19 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="modal-region-error"></div>
-                    <div class="mb-3">
-                        <label class="form-label" for="new-region-name">Region name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="new-region-name" placeholder="e.g. Lagos">
+                    <div class="mb-3" id="new-region-name-group">
+                        <label class="form-label" for="new-region-name">Region name <span class="text-danger" id="new-region-name-required">*</span> <span class="text-secondary fw-normal" id="new-region-name-hint">(single state only)</span></label>
+                        <input type="text" class="form-control" id="new-region-name" placeholder="e.g. Lagos Metro">
+                        <div class="form-hint" id="new-region-name-group-hint">Used when creating a region for a single state. Hidden when multiple states are selected (each region is then named after its state).</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="new-region-state">State <span class="text-danger">*</span></label>
-                        <select class="form-select" id="new-region-state">
-                            <option value="">Select state…</option>
+                        <label class="form-label" for="new-region-state">State(s) <span class="text-secondary fw-normal">(multi-select)</span> <span class="text-danger">*</span></label>
+                        <select multiple class="form-select" id="new-region-state">
                         </select>
-                        <div class="form-hint">Must match the state on customer delivery addresses (case-insensitive).</div>
+                        <div class="form-hint">
+                            Click states to add them; each appears in the field with an <strong>×</strong> to remove it
+                            individually or clear all. One delivery region will be created per selected state.
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="new-region-fee">Delivery fee (₦) <span class="text-danger">*</span></label>
@@ -450,6 +453,7 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/shop.js"></script>
+    <script src="assets/js/multi-select.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
     <script src="assets/js/shop-product-images.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
