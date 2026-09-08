@@ -13,22 +13,28 @@
         return;
     }
 
-    Auth.requireAuth();
     RBAC.loadFromStorage();
     RBAC.applyPageGuardForCurrentPage();
 
     function start() {
-        var maybePromise = A.Handlers.init();
-        if (maybePromise && typeof maybePromise.then === "function") {
-            maybePromise.catch(function (err) {
-                console.error("[Adverts] init failed", err);
+        A.Handlers.init();
+        RBAC.fetchMe().then(function () {
+            RBAC.applyPageGuardForCurrentPage();
+            RBAC.applyNavVisibility();
+        });
+    }
+
+    function boot() {
+        Auth.requireAuth()
+            .then(start)
+            .catch(function (err) {
+                console.error("[Adverts] auth failed", err);
             });
-        }
     }
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", start);
+        document.addEventListener("DOMContentLoaded", boot);
     } else {
-        start();
+        boot();
     }
 })(window);

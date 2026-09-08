@@ -26,6 +26,9 @@
             page: 1,
             limit: 20,
             submittedDaysAgoMin: '',
+            searchName: '',
+            specialty: '',
+            kycStatus: '',
             totalPages: 1,
         },
 
@@ -43,6 +46,7 @@
 
         payouts: {
             status: '',
+            search: '',
         },
 
         beauticianOptionsLoaded: false,

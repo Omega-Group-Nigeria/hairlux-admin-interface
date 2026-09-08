@@ -516,17 +516,44 @@ async function submitAccountSuspend() {
 }
 
 // ── Load reviews ──────────────────────────────────────────────────────────
+/**
+ * Client-side profile-review filters (name / specialty / KYC). The pending
+ * reviews endpoint doesn't support these params, so when a filter is active
+ * we fetch a single large page and filter before rendering.
+ */
+function reviewsFiltersActive() {
+    return !!(String(State.reviews.searchName || '').trim() ||
+        String(State.reviews.specialty || '').trim() ||
+        State.reviews.kycStatus);
+}
+
+function reviewRowMatchesFilters(b) {
+    var nameQ = String(State.reviews.searchName || '').trim().toLowerCase();
+    if (nameQ && String(Beauticians.fullName(b) || '').toLowerCase().indexOf(nameQ) === -1) return false;
+    var specQ = String(State.reviews.specialty || '').trim().toLowerCase();
+    if (specQ) {
+        var specs = Array.isArray(b.specialties) ? b.specialties.join(', ').toLowerCase() : '';
+        if (specs.indexOf(specQ) === -1) return false;
+    }
+    if (State.reviews.kycStatus && String(b.kycStatus || '').toUpperCase() !== State.reviews.kycStatus) return false;
+    return true;
+}
+
 async function loadReviews() {
     var tbody = document.getElementById('reviews-tbody');
     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
     try {
+        var filtered = reviewsFiltersActive();
         var result = await Api.getPendingProfileReviews({
-            page: State.reviews.page,
-            limit: State.reviews.limit,
+            page: filtered ? 1 : State.reviews.page,
+            limit: filtered ? 200 : State.reviews.limit,
             submittedDaysAgoMin: State.reviews.submittedDaysAgoMin,
         });
-        var rows = result.data || [];
-        var meta = result.meta || {};
+        var allRows = result.data || [];
+        var rows = filtered ? allRows.filter(reviewRowMatchesFilters) : allRows;
+        var meta = filtered
+            ? { page: 1, limit: 200, total: rows.length, totalPages: 1 }
+            : (result.meta || {});
         State.reviews.totalPages = meta.totalPages || 1;
         renderReviewsTable(rows, meta);
         renderPagination('reviews', meta);
@@ -655,10 +682,11 @@ async function loadServicesForBeautician() {
 
         list.innerHTML = allServices.map(function (s) {
             var checked = assignedIds[s.id] ? 'checked' : '';
-            return '<label class="service-check-label"><input type="checkbox" class="form-check-input svc-checkbox" value="' + s.id + '" ' + checked + '> <span>' + s.name + '</span> <span class="text-secondary ms-auto small">' + Services.formatMoney(s.homeServicePrice || 0) + '</span></label>';
+            return '<label class="service-check-label svc-catalog-row" data-name="' + escAttrLower(s.name) + '"><input type="checkbox" class="form-check-input svc-checkbox" value="' + s.id + '" ' + checked + '> <span>' + s.name + '</span> <span class="text-secondary ms-auto small">' + Services.formatMoney(s.homeServicePrice || 0) + '</span></label>';
         }).join('');
         selectAllWrap.classList.remove('d-none');
         updateSvcSelectedCount();
+        applySvcCatalogFilter();
 
         list.querySelectorAll('.svc-checkbox').forEach(function (cb) {
             cb.addEventListener('change', updateSvcSelectedCount);
@@ -666,6 +694,39 @@ async function loadServicesForBeautician() {
     } catch (err) {
         list.innerHTML = '<div class="text-center text-danger py-4">' + (err.message || 'Failed to load services.') + '</div>';
     }
+}
+
+/**
+ * Service name lookup for the assignment list — hides non-matching rows
+ * instead of re-rendering, so existing checkbox selections survive.
+ */
+function applySvcCatalogFilter() {
+    var list = document.getElementById('svc-catalog-list');
+    if (!list) return;
+    var q = String((document.getElementById('svc-service-search') || {}).value || '').trim().toLowerCase();
+    var rows = list.querySelectorAll('.svc-catalog-row');
+    var visible = 0;
+    rows.forEach(function (row) {
+        var match = !q || String(row.dataset.name || '').indexOf(q) !== -1;
+        row.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    var emptyEl = list.querySelector('.svc-catalog-empty');
+    if (rows.length && !visible) {
+        if (!emptyEl) {
+            emptyEl = document.createElement('div');
+            emptyEl.className = 'text-center text-secondary py-4 svc-catalog-empty';
+            list.appendChild(emptyEl);
+        }
+        emptyEl.textContent = 'No services match your search.';
+        emptyEl.style.display = '';
+    } else if (emptyEl) {
+        emptyEl.style.display = 'none';
+    }
+}
+
+function escAttrLower(s) {
+    return String(s == null ? '' : s).toLowerCase().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 async function saveServiceAssignments() {
@@ -1279,6 +1340,19 @@ async function saveDailyPayoutLimit() {
 }
 
 // ── Load payouts ──────────────────────────────────────────────────────────
+/** Client-side name filter over the fetched payout rows. */
+function payoutRowMatchesSearch(p) {
+    var q = String(State.payouts.search || '').trim().toLowerCase();
+    if (!q) return true;
+    var b = p.beautician || {};
+    var haystack = [
+        [b.firstName, b.lastName].filter(Boolean).join(' '),
+        b.email,
+        p.accountName,
+    ].filter(Boolean).join(' ').toLowerCase();
+    return haystack.indexOf(q) !== -1;
+}
+
 async function loadPayouts() {
     var tbody = document.getElementById('payouts-tbody');
     tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
@@ -1287,7 +1361,8 @@ async function loadPayouts() {
     try {
         var params = {};
         if (State.payouts.status) params.status = State.payouts.status;
-        var rows = await Api.listPayouts(params);
+        var allRows = await Api.listPayouts(params);
+        var rows = allRows.filter(payoutRowMatchesSearch);
         if (!rows.length) {
             var emptyMsg = State.payouts.status
                 ? 'No ' + State.payouts.status.toLowerCase().replace(/_/g, ' ') + ' payout requests.'
@@ -1528,6 +1603,22 @@ function init() {
         loadReviews();
     });
 
+    var reviewsFilterTimer;
+    function applyReviewsFilters() {
+        State.reviews.searchName = document.getElementById('reviews-filter-name').value;
+        State.reviews.specialty = document.getElementById('reviews-filter-specialty').value;
+        State.reviews.kycStatus = document.getElementById('reviews-filter-kyc').value;
+        State.reviews.page = 1;
+        loadReviews();
+    }
+    ['reviews-filter-name', 'reviews-filter-specialty'].forEach(function (id) {
+        document.getElementById(id).addEventListener('input', function () {
+            clearTimeout(reviewsFilterTimer);
+            reviewsFilterTimer = setTimeout(applyReviewsFilters, 300);
+        });
+    });
+    document.getElementById('reviews-filter-kyc').addEventListener('change', applyReviewsFilters);
+
     document.getElementById('reviews-pagination-btns').addEventListener('click', function (e) {
         e.preventDefault();
         var a = e.target.closest('a[data-page]');
@@ -1551,6 +1642,7 @@ function init() {
     // ── Services ──────────────────────────────────────────────────────────
     initSvcBeauticianPicker();
     document.getElementById('btn-svc-load').addEventListener('click', loadServicesForBeautician);
+    document.getElementById('svc-service-search').addEventListener('input', applySvcCatalogFilter);
     document.getElementById('btn-svc-save').addEventListener('click', saveServiceAssignments);
     document.getElementById('svc-select-all').addEventListener('change', function () {
         var checked = this.checked;
@@ -1698,6 +1790,15 @@ function init() {
     document.getElementById('payouts-status-filter').addEventListener('change', function () {
         State.payouts.status = this.value;
         loadPayouts();
+    });
+    var payoutsSearchTimer;
+    document.getElementById('payouts-search').addEventListener('input', function () {
+        clearTimeout(payoutsSearchTimer);
+        var val = this.value;
+        payoutsSearchTimer = setTimeout(function () {
+            State.payouts.search = val;
+            loadPayouts();
+        }, 300);
     });
     document.getElementById('payouts-tbody').addEventListener('click', function (e) {
         var btn = e.target.closest('.btn-process-payout');

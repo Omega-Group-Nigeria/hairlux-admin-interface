@@ -25,8 +25,9 @@
             headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
             body: body !== undefined ? JSON.stringify(body) : undefined,
         });
+        if (!res) throw new Error("Session expired. Please log in again.");
         const raw = await res.json().catch(() => ({}));
-        if (!res || !res.ok) throw new Error(raw.message || "Request failed (" + (res ? res.status : "no response") + ")");
+        if (!res.ok) throw new Error(raw.message || "Request failed (" + res.status + ")");
         return raw.data !== undefined ? raw.data : raw;
     }
 
@@ -62,10 +63,16 @@
         return [];
     }
 
+    function listBanners() {
+        return jsonFetch("/admin/advert-banners", "GET")
+            .then(parseList)
+            .then(function (items) {
+                return Array.isArray(items) ? items : parseList(items);
+            });
+    }
+
     var Api = {
-        list: function () {
-            return jsonFetch("/admin/advert-banners", "GET").then(parseList);
-        },
+        list: listBanners,
 
         create: function (formData) {
             return multipartFetch("/admin/advert-banners", "POST", formData);
