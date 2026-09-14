@@ -79,7 +79,8 @@
 
                     <div class="row row-deck row-cards mb-4">
                         <div class="col-sm-4">
-                            <div class="card">
+                            <div class="card" style="cursor:pointer" onclick="filterFromSummaryCard('')"
+                                title="View all items">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Products Tracked</div>
                                     <div class="h1 mb-0" id="stat-total">—</div>
@@ -87,7 +88,8 @@
                             </div>
                         </div>
                         <div class="col-sm-4">
-                            <div class="card">
+                            <div class="card" style="cursor:pointer" onclick="filterFromSummaryCard('LOW')"
+                                title="View low stock items">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Low Stock</div>
                                     <div class="h1 mb-0 text-warning" id="stat-low">—</div>
@@ -95,7 +97,8 @@
                             </div>
                         </div>
                         <div class="col-sm-4">
-                            <div class="card">
+                            <div class="card" style="cursor:pointer" onclick="filterFromSummaryCard('OUT')"
+                                title="View out of stock items">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Out of Stock</div>
                                     <div class="h1 mb-0 text-danger" id="stat-out">—</div>
@@ -146,11 +149,12 @@
                                         </select>
                                     </div>
                                     <div class="col-6 col-md-3">
-                                        <div class="form-check mt-4">
-                                            <input class="form-check-input" type="checkbox" id="filter-low-stock">
-                                            <label class="form-check-label" for="filter-low-stock">Low stock
-                                                only</label>
-                                        </div>
+                                        <label class="form-label text-secondary small mb-1">Stock Status</label>
+                                        <select id="filter-stock-status" class="form-select form-select-sm">
+                                            <option value="">All</option>
+                                            <option value="LOW">Low Stock</option>
+                                            <option value="OUT">Out of Stock</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -756,6 +760,29 @@
         var _vendorsCache = null;
         var _pendingPushAlertKind = null; // 'low-stock' | 'expiry'
 
+        // Dev Feedback Round 9: Inventory summary cards clickable.
+        function switchToTab(tabName) {
+            document.querySelectorAll("#main-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+            var link = document.querySelector('#main-tabs a[data-tab="' + tabName + '"]');
+            if (link) link.classList.add("active");
+            ["items", "alerts", "expiry", "transfers", "adjustments"].forEach(function (id) {
+                document.getElementById("tab-" + id).style.display = id === tabName ? "" : "none";
+            });
+            if (tabName === "alerts") loadAlerts(false);
+            if (tabName === "expiry") loadExpiryAlerts(false);
+            if (tabName === "transfers") loadTransfers();
+            if (tabName === "adjustments") loadAdjustmentRequests();
+        }
+
+        function filterFromSummaryCard(stockStatus) {
+            document.getElementById("filter-search").value = "";
+            document.getElementById("filter-branch").value = "";
+            document.getElementById("filter-category").value = "";
+            document.getElementById("filter-stock-status").value = stockStatus || "";
+            switchToTab("items");
+            loadItems();
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
@@ -779,32 +806,25 @@
             loadSupplierOptions();
             loadProductOptions();
             loadItems();
+            loadSummaryStats();
             refreshBadgeCounts();
 
             document.getElementById("main-tabs").addEventListener("click", function (e) {
                 e.preventDefault();
                 var tab = e.target.closest("a[data-tab]");
                 if (!tab) return;
-                document.querySelectorAll("#main-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
-                tab.classList.add("active");
-                ["items", "alerts", "expiry", "transfers", "adjustments"].forEach(function (id) {
-                    document.getElementById("tab-" + id).style.display = id === tab.dataset.tab ? "" : "none";
-                });
-                if (tab.dataset.tab === "alerts") loadAlerts(false);
-                if (tab.dataset.tab === "expiry") loadExpiryAlerts(false);
-                if (tab.dataset.tab === "transfers") loadTransfers();
-                if (tab.dataset.tab === "adjustments") loadAdjustmentRequests();
+                switchToTab(tab.dataset.tab);
             });
 
             document.getElementById("filter-branch").addEventListener("change", loadItems);
             document.getElementById("filter-category").addEventListener("change", loadItems);
-            document.getElementById("filter-low-stock").addEventListener("change", loadItems);
+            document.getElementById("filter-stock-status").addEventListener("change", loadItems);
             var _searchDebounce;
             document.getElementById("filter-search").addEventListener("input", function () {
                 clearTimeout(_searchDebounce);
                 _searchDebounce = setTimeout(loadItems, 300);
             });
-            document.getElementById("btn-refresh").addEventListener("click", function () { loadItems(); refreshBadgeCounts(); });
+            document.getElementById("btn-refresh").addEventListener("click", function () { loadItems(); loadSummaryStats(); refreshBadgeCounts(); });
             document.getElementById("btn-export-items").addEventListener("click", exportItems);
 
             document.getElementById("btn-new-item").addEventListener("click", function () {
@@ -1038,7 +1058,7 @@
                     search: document.getElementById("filter-search").value.trim() || undefined,
                     branchId: document.getElementById("filter-branch").value,
                     category: document.getElementById("filter-category").value,
-                    lowStockOnly: document.getElementById("filter-low-stock").checked || undefined,
+                    stockStatus: document.getElementById("filter-stock-status").value || undefined,
                     limit: 100000, // every matching item, not just the on-screen page
                 });
                 var items = result.data || [];
@@ -1065,6 +1085,22 @@
             }
         }
 
+        async function loadSummaryStats() {
+            try {
+                var result = await Inventory.getAll({ limit: 100000 });
+                var items = result.data || [];
+                var outOfStock = items.filter(function (i) { return totalStock(i) <= 0; }).length;
+                var lowStock = items.filter(function (i) { return totalStock(i) > 0 && totalStock(i) <= i.lowStockThreshold; }).length;
+                document.getElementById("stat-total").textContent = items.length;
+                document.getElementById("stat-low").textContent = lowStock;
+                document.getElementById("stat-out").textContent = outOfStock;
+            } catch (err) {
+                document.getElementById("stat-total").textContent = "—";
+                document.getElementById("stat-low").textContent = "—";
+                document.getElementById("stat-out").textContent = "—";
+            }
+        }
+
         async function loadItems() {
             var tbody = document.getElementById("items-tbody");
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
@@ -1073,17 +1109,10 @@
                     search: document.getElementById("filter-search").value.trim() || undefined,
                     branchId: document.getElementById("filter-branch").value,
                     category: document.getElementById("filter-category").value,
-                    lowStockOnly: document.getElementById("filter-low-stock").checked || undefined,
+                    stockStatus: document.getElementById("filter-stock-status").value || undefined,
                     limit: 100,
                 });
                 var items = result.data || [];
-
-
-                var outOfStock = items.filter(function (i) { return totalStock(i) <= 0; }).length;
-                var lowStock = items.filter(function (i) { return totalStock(i) > 0 && totalStock(i) <= i.lowStockThreshold; }).length;
-                document.getElementById("stat-total").textContent = items.length;
-                document.getElementById("stat-low").textContent = lowStock;
-                document.getElementById("stat-out").textContent = outOfStock;
 
                 if (!items.length) {
                     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No items found.</td></tr>';
@@ -1180,7 +1209,7 @@
             document.getElementById('ei-price').value = item.price != null ? item.price : '';
             document.getElementById('ei-expiry').value = item.expiryDate ? item.expiryDate.slice(0, 10) : '';
             document.getElementById('ei-supplier').value = item.supplierId || (item.supplier ? item.supplier.id : '') || '';
-                        document.getElementById('ei-product').value = item.productId || (item.product ? item.product.id : '') || '';
+            document.getElementById('ei-product').value = item.productId || (item.product ? item.product.id : '') || '';
             SearchableSelect.attach('ei-product');
             SearchableSelect.refresh('ei-product');
             updatePriceRequirement('ei-category', 'ei-price-hint', 'ei-price-required');
@@ -1224,6 +1253,7 @@
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modal-edit-item')).hide();
                 loadItems();
+                loadSummaryStats();
             } catch (err) {
                 errEl.textContent = err.message || 'Failed to update item.';
                 errEl.classList.remove('d-none');
@@ -1289,6 +1319,7 @@
                     alert('Created ' + result.createdCount + ' row(s). Skipped (already exists there): ' + skippedNames);
                 }
                 loadItems();
+                loadSummaryStats();
             } catch (err) {
                 errEl.textContent = err.message || "Failed to create item.";
                 errEl.classList.remove("d-none");
@@ -1371,6 +1402,7 @@
                 await Inventory.adjust(_pendingAdjustItemId, { stockType: stockType, quantityDelta: delta, reasonCategory: reasonCategory, reason: reason || undefined });
                 bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
                 loadItems();
+                loadSummaryStats();
                 refreshBadgeCounts();
             } catch (err) {
                 errEl.textContent = err.message || "Failed to adjust stock.";
@@ -1404,6 +1436,7 @@
                 await Inventory.transferStockType(_pendingAdjustItemId, { fromStockType: fromStockType, toStockType: toStockType, quantity: quantity, reason: reason || undefined });
                 bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
                 loadItems();
+                loadSummaryStats();
                 refreshBadgeCounts();
             } catch (err) {
                 errEl.textContent = err.message || "Failed to transfer stock.";
@@ -1642,6 +1675,7 @@
                 await Inventory.approveTransfer(id);
                 loadTransfers();
                 loadItems();
+                loadSummaryStats();
                 refreshBadgeCounts();
             } catch (err) {
                 alert(err.message || "Failed to approve transfer.");
@@ -1787,6 +1821,7 @@
                 await Inventory.approveAdjustment(id);
                 loadAdjustmentRequests();
                 loadItems();
+                loadSummaryStats();
                 refreshBadgeCounts();
             } catch (err) {
                 alert(err.message || "Failed to approve adjustment.");

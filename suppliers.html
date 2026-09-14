@@ -89,6 +89,38 @@
                                 <h3 class="card-title mb-0">All <span id="list-title-text">Suppliers</span></h3>
                                 <span class="text-secondary small" id="results-label">Loading…</span>
                             </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control" id="lf-search"
+                                        placeholder="Search name, contact, phone, or email…">
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-select" id="lf-status">
+                                        <option value="">All statuses</option>
+                                        <option value="ACTIVE">Active</option>
+                                        <option value="INACTIVE">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-select" id="lf-category">
+                                        <option value="">All categories</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-select" id="lf-city">
+                                        <option value="">All cities</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <select class="form-select" id="lf-state">
+                                        <option value="">All states</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button class="btn btn-outline-secondary w-100" id="btn-clear-list-filters"
+                                        title="Clear filters">Clear</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-vcenter card-table">
@@ -328,6 +360,8 @@
         var editingId = null;
         var _lastLoadedSuppliers = [];
 
+        var _currentlyDisplayedSuppliers = [];
+
         document.addEventListener('DOMContentLoaded', function () {
             RBAC.applyPageGuard('suppliers:read');
 
@@ -351,6 +385,24 @@
             document.getElementById('btn-export').addEventListener('click', exportSuppliers);
             document.getElementById('btn-save').addEventListener('click', save);
 
+            document.getElementById('lf-status').addEventListener('change', renderSupplierTable);
+            document.getElementById('lf-category').addEventListener('change', renderSupplierTable);
+            document.getElementById('lf-city').addEventListener('change', renderSupplierTable);
+            document.getElementById('lf-state').addEventListener('change', renderSupplierTable);
+            var listSearchTimer;
+            document.getElementById('lf-search').addEventListener('input', function () {
+                clearTimeout(listSearchTimer);
+                listSearchTimer = setTimeout(renderSupplierTable, 250);
+            });
+            document.getElementById('btn-clear-list-filters').addEventListener('click', function () {
+                document.getElementById('lf-search').value = '';
+                document.getElementById('lf-status').value = '';
+                document.getElementById('lf-category').value = '';
+                document.getElementById('lf-city').value = '';
+                document.getElementById('lf-state').value = '';
+                renderSupplierTable();
+            });
+
             load();
         });
 
@@ -361,8 +413,8 @@
         }
 
         function exportSuppliers() {
-            if (!_lastLoadedSuppliers.length) {
-                alert('No ' + typeLabel.toLowerCase() + 's to export.');
+            if (!_currentlyDisplayedSuppliers.length) {
+                alert('No ' + typeLabel.toLowerCase() + 's to export for the current filters.');
                 return;
             }
             CsvExport.download(typeLabel.toLowerCase() + 's.csv', [
@@ -370,42 +422,103 @@
                 { label: 'Contact Person', get: function (s) { return s.contactPerson || ''; } },
                 { label: 'Phone', get: function (s) { return s.phone || ''; } },
                 { label: 'Email', get: function (s) { return s.email || ''; } },
+                { label: 'Category', get: function (s) { return s.vendorCategory || ''; } },
+                { label: 'City', get: function (s) { return s.city || ''; } },
+                { label: 'State', get: function (s) { return s.state || ''; } },
                 { label: 'Preferred', get: function (s) { return s.isPreferred ? 'Yes' : 'No'; } },
                 { label: 'Status', get: function (s) { return s.isActive ? 'Active' : 'Inactive'; } },
-            ], _lastLoadedSuppliers);
+            ], _currentlyDisplayedSuppliers);
         }
 
         async function load() {
             var tbody = document.getElementById('tbody');
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
-                var list = await Suppliers.getAll(supplierType);
-                _lastLoadedSuppliers = list;
-                document.getElementById('results-label').textContent = list.length + ' ' + typeLabel.toLowerCase() + (list.length === 1 ? '' : 's');
-                tbody.innerHTML = list.length
-                    ? list.map(function (s) {
-                        var statusBadge = s.isActive
-                            ? '<span class="badge bg-green-lt">Active</span>'
-                            : '<span class="badge bg-secondary-lt">Inactive</span>';
-                        var preferredBadge = s.isPreferred ? ' <span class="badge bg-yellow-lt">Preferred</span>' : '';
-                        return '<tr>' +
-                            '<td class="fw-semibold">' + esc(s.name) + preferredBadge + '</td>' +
-                            '<td>' + esc(s.contactPerson || '\u2014') + '</td>' +
-                            '<td>' + esc(s.phone || '\u2014') + '</td>' +
-                            '<td>' + esc(s.email || '\u2014') + '</td>' +
-                            '<td class="text-center"><a href="#" onclick="viewItems(\'' + s.id + '\');return false;">' + (s._count ? s._count.inventoryItems : 0) + '</a></td>' +
-                            '<td>' + statusBadge + '</td>' +
-                            '<td class="text-nowrap">' +
-                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + s.id + '\')">Edit</button>' +
-                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewLedger(\'' + s.id + '\', \'' + esc(s.name).replace(/'/g, "\\'") + '\')">Ledger</button>' +
-                            '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + s.id + '\')">Delete</button>' +
-                            '</td>' +
-                            '</tr>';
-                    }).join('')
-                    : '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + typeLabel.toLowerCase() + 's yet.</td></tr>';
+                _lastLoadedSuppliers = await Suppliers.getAll(supplierType);
+                populateListFilterOptions();
+                renderSupplierTable();
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
+        }
+
+        /** Dev Feedback Round 9: category/city/state are free-text fields with no fixed enum on this model, so the filter options are built from whatever distinct values actually exist in the currently-loaded list, rather than a hardcoded list that could drift out of sync with real data. */
+        function populateListFilterOptions() {
+            var categories = [], cities = [], states = [];
+            var seenCategory = {}, seenCity = {}, seenState = {};
+            _lastLoadedSuppliers.forEach(function (s) {
+                if (s.vendorCategory && !seenCategory[s.vendorCategory]) { seenCategory[s.vendorCategory] = true; categories.push(s.vendorCategory); }
+                if (s.city && !seenCity[s.city]) { seenCity[s.city] = true; cities.push(s.city); }
+                if (s.state && !seenState[s.state]) { seenState[s.state] = true; states.push(s.state); }
+            });
+            categories.sort(); cities.sort(); states.sort();
+
+            var catSel = document.getElementById('lf-category');
+            var prevCat = catSel.value;
+            catSel.innerHTML = '<option value="">All categories</option>' + categories.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+            if (categories.indexOf(prevCat) !== -1) catSel.value = prevCat;
+
+            var citySel = document.getElementById('lf-city');
+            var prevCity = citySel.value;
+            citySel.innerHTML = '<option value="">All cities</option>' + cities.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+            if (cities.indexOf(prevCity) !== -1) citySel.value = prevCity;
+
+            var stateSel = document.getElementById('lf-state');
+            var prevState = stateSel.value;
+            stateSel.innerHTML = '<option value="">All states</option>' + states.map(function (s) { return '<option value="' + esc(s) + '">' + esc(s) + '</option>'; }).join('');
+            if (states.indexOf(prevState) !== -1) stateSel.value = prevState;
+        }
+
+        /** Filters _lastLoadedSuppliers by the search/status/category/city/state controls and renders the result -- no network call, the full list is already in memory. */
+        function renderSupplierTable() {
+            var tbody = document.getElementById('tbody');
+            var q = document.getElementById('lf-search').value.trim().toLowerCase();
+            var statusFilter = document.getElementById('lf-status').value;
+            var categoryFilter = document.getElementById('lf-category').value;
+            var cityFilter = document.getElementById('lf-city').value;
+            var stateFilter = document.getElementById('lf-state').value;
+
+            var list = _lastLoadedSuppliers.filter(function (s) {
+                if (statusFilter === 'ACTIVE' && !s.isActive) return false;
+                if (statusFilter === 'INACTIVE' && s.isActive) return false;
+                if (categoryFilter && s.vendorCategory !== categoryFilter) return false;
+                if (cityFilter && s.city !== cityFilter) return false;
+                if (stateFilter && s.state !== stateFilter) return false;
+                if (q) {
+                    var haystack = [s.name, s.contactPerson, s.phone, s.email].filter(Boolean).join(' ').toLowerCase();
+                    if (haystack.indexOf(q) === -1) return false;
+                }
+                return true;
+            });
+
+            document.getElementById('results-label').textContent = list.length + ' ' + typeLabel.toLowerCase() + (list.length === 1 ? '' : 's') +
+                (list.length !== _lastLoadedSuppliers.length ? ' (of ' + _lastLoadedSuppliers.length + ')' : '');
+
+            _currentlyDisplayedSuppliers = list;
+
+            tbody.innerHTML = list.length
+                ? list.map(function (s) {
+                    var statusBadge = s.isActive
+                        ? '<span class="badge bg-green-lt">Active</span>'
+                        : '<span class="badge bg-secondary-lt">Inactive</span>';
+                    var preferredBadge = s.isPreferred ? ' <span class="badge bg-yellow-lt">Preferred</span>' : '';
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + esc(s.name) + preferredBadge + '</td>' +
+                        '<td>' + esc(s.contactPerson || '\u2014') + '</td>' +
+                        '<td>' + esc(s.phone || '\u2014') + '</td>' +
+                        '<td>' + esc(s.email || '\u2014') + '</td>' +
+                        '<td class="text-center"><a href="#" onclick="viewItems(\'' + s.id + '\');return false;">' + (s._count ? s._count.inventoryItems : 0) + '</a></td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td class="text-nowrap">' +
+                        '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + s.id + '\')">Edit</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewLedger(\'' + s.id + '\', \'' + esc(s.name).replace(/'/g, "\\'") + '\')">Ledger</button>' +
+                        '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + s.id + '\')">Delete</button>' +
+                        '</td>' +
+                        '</tr>';
+                }).join('')
+                : (_lastLoadedSuppliers.length
+                    ? '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + typeLabel.toLowerCase() + 's match these filters.</td></tr>'
+                    : '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + typeLabel.toLowerCase() + 's yet.</td></tr>');
         }
 
         async function openForm(id) {
