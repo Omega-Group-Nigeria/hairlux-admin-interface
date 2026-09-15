@@ -52,6 +52,7 @@
     <script src="../assets/js/api-utils/bookings.js"></script>
     <script src="../assets/js/api-utils/beauticians.js"></script>
     <script src="../assets/js/force-assign-modal.js"></script>
+    <script src="../assets/js/booking-cancel-modal.js"></script>
     <div class="page">
 
         <!-- ===== NAVBAR ===== -->
@@ -301,7 +302,29 @@
                 RBAC.applyNavVisibility();
             });
             ForceAssignModal.init({
-                onSuccess: async function (id) {
+                onSuccess: async function (id, info) {
+                    loadCalendar();
+                    await openDetail(id);
+                    if (info && info.newName) {
+                        var body = document.getElementById("offcanvas-detail-body");
+                        if (body) {
+                            var oldName = info.oldName || "";
+                            var newName = info.newName || "";
+                            var msg = "";
+                            if (oldName && oldName !== newName) {
+                                msg = 'Booking reassigned from ' + escHtml(oldName) + ' to ' + escHtml(newName);
+                            } else if (!oldName && newName) {
+                                msg = 'Booking assigned to ' + escHtml(newName);
+                            } else if (info.isReassign) {
+                                msg = 'Booking reassigned to ' + escHtml(newName);
+                            }
+                            if (msg) body.insertAdjacentHTML('afterbegin', '<div class="alert alert-success py-2 small mb-3">' + msg + '</div>');
+                        }
+                    }
+                },
+            });
+            BookingCancelModal.init({
+                onSuccess: function (id) {
                     loadCalendar();
                     openDetail(id);
                 },
@@ -498,6 +521,7 @@
                     (b.guestPhone ? '<div class="col-md-6"><div class="detail-label">Guest Phone</div><div>' + escHtml(b.guestPhone) + '</div></div>' : '') +
                     (b.guestEmail ? '<div class="col-md-6"><div class="detail-label">Guest Email</div><div>' + escHtml(b.guestEmail) + '</div></div>' : '') +
                     (b.notes ? '<div class="col-12"><div class="detail-label">Notes</div><div class="text-secondary small">' + escHtml(b.notes) + '</div></div>' : '') +
+                    Bookings.renderCancellationDetailHtml(b, { esc: escHtml, labelClass: "detail-label" }) +
                     Bookings.renderCustomerFeedbackHtml(b, { esc: escHtml, labelClass: "detail-label", titleClass: "detail-label mb-2" }) +
                     '<div class="col-12 text-secondary small"><span class="fw-semibold">ID:</span> <span class="font-monospace">' + escHtml(id) + '</span></div>' +
                     '</div>';
@@ -517,7 +541,9 @@
             var safeCode = (b.reservationCode || "").replace(/'/g, "\\'");
             var safeId   = (b.id || "").replace(/'/g, "\\'");
             if (bookingType === "WALK_IN") {
-                if (!b.reservationUsed) {
+                if (b.status === "CANCELLED") {
+                    // No check-in for cancelled walk-in bookings
+                } else if (!b.reservationUsed) {
                     html += '<button class="btn btn-success" onclick="handleDetailAction(\'' + safeId + '\',\'checkin\',null,\'' + safeCode + '\')">\u2714\ufe0f Mark as Used / Check In</button>';
                 } else {
                     html += '<span class="text-secondary small">Reservation already used.</span>';
@@ -527,23 +553,44 @@
                     html += '<button class="btn btn-warning" onclick="handleDetailAction(\'' + safeId + '\',\'retry-matching\',null,null)">Retry Matching</button>';
                 }
                 if (Bookings.canAdminForceAssign(b)) {
-                    html += '<button class="btn btn-primary" onclick="openForceAssignModal(\'' + safeId + '\')">Force Assign</button>';
+                    var assignLabel = (Bookings.getForceAssignLabel ? Bookings.getForceAssignLabel(b) : (Bookings.isAssigned && Bookings.isAssigned(b) && !Bookings.isPendingAssignment(b) ? "Reassign" : "Force Assign"));
+                    html += '<button class="btn btn-primary" onclick="openForceAssignModal(\'' + safeId + '\')">' + assignLabel + '</button>';
                 }
-                var homeTransitions = { PENDING_ASSIGNMENT: ["CANCELLED"], PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
+                var homeTransitions = { PENDING_ASSIGNMENT: ["CANCELLED"], PENDING: ["CONFIRMED","CANCELLED"], ASSIGNED: ["CANCELLED"], EN_ROUTE: ["CANCELLED"], ARRIVED: ["CANCELLED"], ARRIVED_VERIFIED: ["CANCELLED"], AWAITING_CUSTOMER_CONFIRM: ["CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
                 var homeNexts = homeTransitions[b.status] || [];
+                if (homeNexts.indexOf("CANCELLED") === -1 && Bookings.canAdminCancelBooking && Bookings.canAdminCancelBooking(b)) {
+                    homeNexts = homeNexts.slice();
+                    homeNexts.push("CANCELLED");
+                }
                 homeNexts.forEach(function (s) {
+                    if (s === "CANCELLED") {
+                        html += '<button class="btn btn-danger" onclick="openCancelBookingModal(\'' + safeId + '\')">Cancel</button>';
+                        return;
+                    }
                     var col = { CONFIRMED: "primary", IN_PROGRESS: "warning", COMPLETED: "success", CANCELLED: "danger" }[s] || "secondary";
                     html += '<button class="btn btn-' + col + '" onclick="handleDetailAction(\'' + safeId + '\',\'status\',\'' + s + '\',null)">' + s.replace(/_/g, " ") + '</button>';
                 });
             } else {
                 var transitions = { PENDING: ["CONFIRMED","CANCELLED"], CONFIRMED: ["IN_PROGRESS","CANCELLED"], IN_PROGRESS: ["COMPLETED","CANCELLED"] };
                 var nexts = transitions[b.status] || [];
+                if (nexts.indexOf("CANCELLED") === -1 && Bookings.canAdminCancelBooking && Bookings.canAdminCancelBooking(b)) {
+                    nexts = nexts.slice();
+                    nexts.push("CANCELLED");
+                }
                 nexts.forEach(function (s) {
+                    if (s === "CANCELLED") {
+                        html += '<button class="btn btn-danger" onclick="openCancelBookingModal(\'' + safeId + '\')">Cancel</button>';
+                        return;
+                    }
                     var col = { CONFIRMED: "primary", IN_PROGRESS: "warning", COMPLETED: "success", CANCELLED: "danger" }[s] || "secondary";
                     html += '<button class="btn btn-' + col + '" onclick="handleDetailAction(\'' + safeId + '\',\'status\',\'' + s + '\',null)">' + s.replace(/_/g, " ") + '</button>';
                 });
             }
             return html;
+        }
+
+        function openCancelBookingModal(bookingId) {
+            BookingCancelModal.open(bookingId);
         }
 
         // ── Handle action ─────────────────────────────────────────────────────
@@ -561,6 +608,10 @@
                         '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
                 }
             } else if (action === "status") {
+                if (status === "CANCELLED") {
+                    openCancelBookingModal(id);
+                    return;
+                }
                 if (!confirm('Change booking status to "' + status.replace(/_/g, " ") + '"?')) return;
                 actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating\u2026';
                 try {
