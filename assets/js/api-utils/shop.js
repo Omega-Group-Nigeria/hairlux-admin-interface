@@ -206,6 +206,19 @@ const Shop = (() => {
         });
     }
 
+    /**
+     * Bulk-create delivery regions — one region per state, all sharing the
+     * same delivery fee / active flag.
+     *   POST /admin/shop/delivery-regions  { states: [...], deliveryFee, isActive }
+     * Response data is the array of created regions.
+     */
+    async function createDeliveryRegionsBulk(payload) {
+        return apiFetch("/admin/shop/delivery-regions", {
+            method: "POST",
+            body: JSON.stringify(payload),
+        });
+    }
+
     async function updateDeliveryRegion(id, payload) {
         return apiFetch(`/admin/shop/delivery-regions/${id}`, {
             method: "PUT",
@@ -338,6 +351,7 @@ const Shop = (() => {
         deleteProduct,
         getDeliveryRegions,
         createDeliveryRegion,
+        createDeliveryRegionsBulk,
         updateDeliveryRegion,
         deleteDeliveryRegion,
         getOrders,
