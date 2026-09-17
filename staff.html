@@ -333,6 +333,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none" id="modal-wc-error"></div>
+                    <div class="alert alert-warning py-2 px-3 small d-none" id="modal-wc-hybrid-warning">This staff member is set to <strong>Hybrid</strong> but no day below is set to Remote or Field/Mobile yet -- every day currently resolves to On-site.</div>
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="text-secondary small">Each day can be a full working day, a half day with its own
                             hours,
@@ -348,6 +349,37 @@
                         <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-work-calendar"></span>
                         Save Calendar
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-field-locations" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Field Locations</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="modal-fl-error"></div>
+                    <div class="text-secondary small mb-3">The approved GPS points a Field/Mobile staff member can clock in/out from -- e.g. a regular client site or service zone.</div>
+                    <div id="fl-list-body" class="mb-3"></div>
+                    <hr>
+                    <div class="fw-semibold mb-2">Add Field Location</div>
+                    <div class="row g-2">
+                        <div class="col-md-4"><input class="form-control form-control-sm" id="fl-name" placeholder="Name (e.g. Ikeja Client Zone)"></div>
+                        <div class="col-md-3"><input class="form-control form-control-sm" id="fl-lat" placeholder="Latitude" type="number" step="any"></div>
+                        <div class="col-md-3"><input class="form-control form-control-sm" id="fl-lng" placeholder="Longitude" type="number" step="any"></div>
+                        <div class="col-md-2"><input class="form-control form-control-sm" id="fl-radius" placeholder="Radius (m)" type="number" value="100"></div>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-fl-use-current">Use My Current Location</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="btn-fl-add">Add Location</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -536,7 +568,7 @@
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
                 if (editHist) return handleEditHistory(editHist.dataset.staffId, editHist.dataset.historyId);
                 if (delHist) return handleDeleteHistory(delHist.dataset.staffId, delHist.dataset.historyId);
-                if (editWorkCalendar) return openWorkCalendarModal(editWorkCalendar.dataset.id, editWorkCalendar.dataset.name);
+                if (editWorkCalendar) return openWorkCalendarModal(editWorkCalendar.dataset.id, editWorkCalendar.dataset.name, editWorkCalendar.dataset.workMode);
                 if (onboardingToggle) {
                     return handleToggleOnboardingItem(
                         onboardingToggle.dataset.staffId,
@@ -593,6 +625,139 @@
             if (state.locationOptions.length) return;
             await loadManagedLocations({ includeInactive: true, syncFilters: true });
         }
+
+        var _fieldLocationsCache = [];
+
+        async function ensureFieldLocationsLoaded() {
+            try {
+                _fieldLocationsCache = await Staff.getFieldLocations(true);
+            } catch (err) {
+                console.error("Failed to load field locations", err);
+                _fieldLocationsCache = [];
+            }
+        }
+
+        function populateFieldLocationDropdown() {
+            var sel = document.getElementById('sf-field-location');
+            var wrap = document.getElementById('sf-field-location-wrap');
+            if (!sel) return;
+            var preselected = wrap ? wrap.dataset.selected : '';
+            var current = sel.value || preselected || '';
+            var active = _fieldLocationsCache.filter(function (l) { return l.isActive; });
+            sel.innerHTML = '<option value="">Select field location...</option>' +
+                active.map(function (l) {
+                    return '<option value="' + esc(l.id) + '"' + (String(l.id) === String(current) ? ' selected' : '') + '>' + esc(l.name) + '</option>';
+                }).join('');
+        }
+
+        async function openFieldLocationsModal() {
+            document.getElementById('modal-fl-error').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('modal-field-locations')).show();
+            await refreshFieldLocationsList();
+        }
+
+        async function refreshFieldLocationsList() {
+            var body = document.getElementById('fl-list-body');
+            body.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+            try {
+                await ensureFieldLocationsLoaded();
+                var locations = _fieldLocationsCache;
+                if (!locations.length) {
+                    body.innerHTML = '<div class="text-secondary small">No field locations yet -- add one below.</div>';
+                } else {
+                    body.innerHTML = locations.map(function (l) {
+                        return '<div class="d-flex align-items-center justify-content-between border rounded p-2 mb-1 small">' +
+                            '<div><span class="fw-semibold">' + esc(l.name) + '</span>' + (l.isActive ? '' : ' <span class="badge bg-secondary-lt">Inactive</span>') +
+                            '<div class="text-secondary">' + Number(l.gpsLat).toFixed(5) + ', ' + Number(l.gpsLng).toFixed(5) + ' &middot; ' + (l.approvedRadiusMeters || 100) + 'm radius</div></div>' +
+                            '<button type="button" class="btn btn-xs btn-outline-' + (l.isActive ? 'warning' : 'success') + ' btn-fl-toggle" data-id="' + esc(l.id) + '" data-active="' + (l.isActive ? '1' : '0') + '">' + (l.isActive ? 'Deactivate' : 'Activate') + '</button>' +
+                            '</div>';
+                    }).join('');
+                }
+                populateFieldLocationDropdown();
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger py-2 px-3 small">Failed to load field locations.</div>';
+            }
+        }
+
+        document.getElementById('btn-fl-use-current').addEventListener('click', function () {
+            var errEl = document.getElementById('modal-fl-error');
+            errEl.classList.add('d-none');
+            if (!navigator.geolocation) {
+                errEl.textContent = 'Geolocation is not available in this browser.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Locating...';
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                document.getElementById('fl-lat').value = pos.coords.latitude.toFixed(7);
+                document.getElementById('fl-lng').value = pos.coords.longitude.toFixed(7);
+                btn.disabled = false;
+                btn.textContent = 'Use My Current Location';
+            }, function (err) {
+                errEl.textContent = 'Could not get current location: ' + (err.message || 'permission denied');
+                errEl.classList.remove('d-none');
+                btn.disabled = false;
+                btn.textContent = 'Use My Current Location';
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        });
+
+        document.getElementById('btn-fl-add').addEventListener('click', async function () {
+            var errEl = document.getElementById('modal-fl-error');
+            errEl.classList.add('d-none');
+            var name = document.getElementById('fl-name').value.trim();
+            var lat = document.getElementById('fl-lat').value;
+            var lng = document.getElementById('fl-lng').value;
+            var radius = document.getElementById('fl-radius').value;
+            if (!name || lat === '' || lng === '') {
+                errEl.textContent = 'Name, latitude, and longitude are required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            try {
+                await Staff.createFieldLocation({
+                    name: name,
+                    gpsLat: Number(lat),
+                    gpsLng: Number(lng),
+                    approvedRadiusMeters: radius ? Number(radius) : undefined,
+                });
+                document.getElementById('fl-name').value = '';
+                document.getElementById('fl-lat').value = '';
+                document.getElementById('fl-lng').value = '';
+                document.getElementById('fl-radius').value = '100';
+                await refreshFieldLocationsList();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to add field location.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('fl-list-body').addEventListener('click', async function (e) {
+            var toggleBtn = e.target.closest('.btn-fl-toggle');
+            if (!toggleBtn) return;
+            var id = toggleBtn.dataset.id;
+            var currentlyActive = toggleBtn.dataset.active === '1';
+            toggleBtn.disabled = true;
+            try {
+                await Staff.updateFieldLocation(id, { isActive: !currentlyActive });
+                await refreshFieldLocationsList();
+            } catch (err) {
+                alert(err.message || 'Failed to update field location.');
+                toggleBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('staff-action-form').addEventListener('click', function (e) {
+            var link = e.target.closest('#link-manage-field-locations');
+            if (!link) return;
+            e.preventDefault();
+            openFieldLocationsModal();
+        });
 
         async function ensureStaffOptionsLoaded() {
             if (state.staffOptions.length) return;
@@ -860,6 +1025,24 @@
         var DAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         var DAY_TYPE_BADGE = { WORKING: 'bg-success-lt', HALF_DAY: 'bg-warning-lt', OFF: 'bg-secondary-lt' };
 
+        function workModeAttentionBadge(s, calendar) {
+            if (s.workMode === 'HYBRID') {
+                var hasOverride = calendar && calendar.days && calendar.days.some(function (d) { return d.workMode === 'REMOTE' || d.workMode === 'FIELD_MOBILE'; });
+                if (!hasOverride) {
+                    return ' <span class="badge bg-warning-lt" title="No day set to Remote or Field/Mobile yet -- every day currently resolves to On-site">Not yet scheduled</span>';
+                }
+            } else if (s.workMode === 'FIELD_MOBILE' && !s.fieldLocationId) {
+                return ' <span class="badge bg-warning-lt" title="No field location assigned -- clock-in/out will be rejected">No location assigned</span>';
+            }
+            var unresolvedFieldDay = calendar && calendar.days && calendar.days.some(function (d) {
+                return d.workMode === 'FIELD_MOBILE' && !d.fieldLocationId && !s.fieldLocationId;
+            });
+            if (unresolvedFieldDay) {
+                return ' <span class="badge bg-warning-lt" title="A day is set to Field/Mobile with no location override and no staff default -- clock-in/out will be rejected on that day">Missing field location</span>';
+            }
+            return '';
+        }
+
         function renderWorkCalendarSummary(calendar) {
             if (!calendar || !calendar.days) {
                 return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load work calendar.</div>';
@@ -869,9 +1052,11 @@
                 var badgeClass = DAY_TYPE_BADGE[d.dayType] || 'bg-secondary-lt';
                 var times = d.dayType !== 'OFF' ? (esc(d.resumeTime) + ' – ' + esc(d.closingTime)) : '';
                 var altNote = d.alternatesBiweekly ? ' <span class="text-secondary">(alternate)</span>' : '';
+                var workModeNote = d.workMode ? ' ' + Staff.workModeBadge(d.workMode) : '';
+                var fieldLocNote = (d.workMode === 'FIELD_MOBILE' && d.fieldLocation) ? ' <span class="text-secondary">(' + esc(d.fieldLocation.name) + ')</span>' : '';
                 return '<div class="d-flex align-items-center justify-content-between small py-1">' +
                     '<span>' + DAY_SHORT_NAMES[d.dayOfWeek] + '</span>' +
-                    '<span><span class="badge ' + badgeClass + '">' + esc(d.dayType.replace('_', ' ')) + '</span>' + altNote + ' <span class="text-secondary ms-1">' + times + '</span></span>' +
+                    '<span><span class="badge ' + badgeClass + '">' + esc(d.dayType.replace('_', ' ')) + '</span>' + altNote + workModeNote + fieldLocNote + ' <span class="text-secondary ms-1">' + times + '</span></span>' +
                     '</div>';
             }).join('');
             var note = anyConfigured
@@ -881,6 +1066,7 @@
         }
 
         var _wcStaffId = null;
+        var _wcWorkMode = null;
 
         // Mirrors the backend's exact epoch/algorithm (staff-work-calendar.service.ts)
         // so "Week A"/"Week B" in this preview always agrees with what actually
@@ -950,6 +1136,25 @@
                 '<input type="checkbox" class="form-check-input wc-alt-check" title="Alternates every other week"' + (alt ? ' checked' : '') + '>' +
                 '</div>' +
                 '</div>' +
+                '<div class="row g-2 align-items-center mt-1">' +
+                '<div class="col-2"></div>' +
+                '<div class="col-10">' +
+                '<select class="form-select form-select-sm wc-work-mode" title="Work mode for this specific day">' +
+                '<option value=""' + (!d.workMode ? ' selected' : '') + '>Work mode: inherit from staff profile</option>' +
+                '<option value="ON_SITE"' + (d.workMode === 'ON_SITE' ? ' selected' : '') + '>Work mode: On-site</option>' +
+                '<option value="REMOTE"' + (d.workMode === 'REMOTE' ? ' selected' : '') + '>Work mode: Remote</option>' +
+                '<option value="FIELD_MOBILE"' + (d.workMode === 'FIELD_MOBILE' ? ' selected' : '') + '>Work mode: Field / Mobile</option>' +
+                '</select>' +
+                '</div>' +
+                '</div>' +
+                '<div class="row g-2 align-items-center mt-1 wc-field-location-row" style="' + (d.workMode === 'FIELD_MOBILE' ? '' : 'display:none') + '">' +
+                '<div class="col-2"></div>' +
+                '<div class="col-10">' +
+                '<select class="form-select form-select-sm wc-field-location" title="Field location for this specific day -- leave blank to use the staff member' + "&#39;" + 's default field location" data-selected="' + esc(d.fieldLocationId || '') + '">' +
+                '<option value="">Field location: use staff default</option>' +
+                '</select>' +
+                '</div>' +
+                '</div>' +
                 '<div class="row g-2 align-items-center mt-1 wc-alt-fields" style="' + (alt ? '' : 'display:none') + '">' +
                 '<div class="col-2"></div>' +
                 '<div class="col-4"><select class="form-select form-select-sm wc-alt-parity">' +
@@ -996,14 +1201,47 @@
                 altParitySelect.addEventListener('change', refreshPreview);
                 altTypeSelect.addEventListener('change', refreshPreview);
 
+                var workModeSelect = row.querySelector('.wc-work-mode');
+                var fieldLocationRow = row.querySelector('.wc-field-location-row');
+                if (workModeSelect) {
+                    workModeSelect.addEventListener('change', function () {
+                        if (fieldLocationRow) fieldLocationRow.style.display = workModeSelect.value === 'FIELD_MOBILE' ? '' : 'none';
+                        syncHybridWarningBanner();
+                    });
+                }
+
                 refreshPreview(); // show it immediately for rows that already have alternation configured
+            });
+            syncHybridWarningBanner();
+        }
+
+        function populateWorkCalendarFieldLocationSelects() {
+            var active = _fieldLocationsCache.filter(function (l) { return l.isActive; });
+            document.querySelectorAll('#wc-days-body .wc-field-location').forEach(function (sel) {
+                var current = sel.value || sel.dataset.selected || '';
+                sel.innerHTML = '<option value="">Field location: use staff default</option>' +
+                    active.map(function (l) {
+                        return '<option value="' + esc(l.id) + '"' + (String(l.id) === String(current) ? ' selected' : '') + '>Field location: ' + esc(l.name) + '</option>';
+                    }).join('');
             });
         }
 
-        async function openWorkCalendarModal(staffId, staffName) {
+        function syncHybridWarningBanner() {
+            var banner = document.getElementById('modal-wc-hybrid-warning');
+            if (!banner) return;
+            var hasOverride = false;
+            document.querySelectorAll('#wc-days-body .wc-work-mode').forEach(function (sel) {
+                if (sel.value === 'REMOTE' || sel.value === 'FIELD_MOBILE') hasOverride = true;
+            });
+            banner.classList.toggle('d-none', !(_wcWorkMode === 'HYBRID' && !hasOverride));
+        }
+
+        async function openWorkCalendarModal(staffId, staffName, workMode) {
             _wcStaffId = staffId;
+            _wcWorkMode = workMode || 'ON_SITE';
             document.getElementById('wc-staff-name').textContent = staffName || '—';
             document.getElementById('modal-wc-error').classList.add('d-none');
+            document.getElementById('modal-wc-hybrid-warning').classList.add('d-none');
             document.getElementById('wc-days-body').innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
             new bootstrap.Modal(document.getElementById('modal-work-calendar')).show();
 
@@ -1011,6 +1249,9 @@
                 var calendar = await Staff.getWorkCalendar(staffId);
                 document.getElementById('wc-days-body').innerHTML = calendar.days.map(renderWorkCalendarRow).join('');
                 bindWorkCalendarRowEvents();
+                syncHybridWarningBanner();
+                await ensureFieldLocationsLoaded();
+                populateWorkCalendarFieldLocationSelects();
             } catch (err) {
                 document.getElementById('wc-days-body').innerHTML = '<div class="alert alert-danger py-2 px-3 small">Failed to load calendar.</div>';
             }
@@ -1022,7 +1263,12 @@
                 var dayOfWeek = Number(row.dataset.day);
                 var dayType = row.querySelector('.wc-day-type').value;
                 var alt = row.querySelector('.wc-alt-check').checked;
+                var workModeValue = row.querySelector('.wc-work-mode').value;
+                var fieldLocationSelect = row.querySelector('.wc-field-location');
+                var fieldLocationValue = fieldLocationSelect ? fieldLocationSelect.value : '';
                 var day = { dayOfWeek: dayOfWeek, dayType: dayType };
+                if (workModeValue) day.workMode = workModeValue;
+                if (fieldLocationValue) day.fieldLocationId = fieldLocationValue;
                 if (dayType !== 'OFF') {
                     day.resumeTime = row.querySelector('.wc-resume').value;
                     day.closingTime = row.querySelector('.wc-closing').value;
@@ -1076,6 +1322,7 @@
                 var calendar = await Staff.applyWorkCalendarDefault(_wcStaffId, false);
                 document.getElementById('wc-days-body').innerHTML = calendar.days.map(renderWorkCalendarRow).join('');
                 bindWorkCalendarRowEvents();
+                syncHybridWarningBanner();
             } catch (err) {
                 errEl.textContent = err.message || 'Failed to apply default.';
                 errEl.classList.remove('d-none');
@@ -1145,6 +1392,7 @@
                     '</div>' +
                     '<dl class="row small mb-3">' +
                     '<dt class="col-5 text-secondary">Status</dt><dd class="col-7">' + Staff.statusBadge(s.employmentStatus) + '</dd>' +
+                    '<dt class="col-5 text-secondary">Work Mode</dt><dd class="col-7">' + Staff.workModeBadge(s.workMode) + workModeAttentionBadge(s, workCalendarResult) + '</dd>' +
                     '<dt class="col-5 text-secondary">Role</dt><dd class="col-7">' + esc(s.currentRole || '-') + '</dd>' +
                     '<dt class="col-5 text-secondary">Location</dt><dd class="col-7">' + esc(s.businessLocation || (s.location && locationLabel(s.location)) || '-') + '</dd>' +
                     '<dt class="col-5 text-secondary">Email</dt><dd class="col-7">' + esc(s.email || '-') + '</dd>' +
@@ -1165,7 +1413,7 @@
                     '<div class="mb-3">' +
                     '<div class="d-flex align-items-center justify-content-between mb-1">' +
                     '<div class="fw-semibold">Work Calendar</div>' +
-                    '<button class="btn btn-xs btn-outline-primary btn-edit-work-calendar" data-id="' + esc(s.id) + '" data-name="' + esc(Staff.fullName(s)) + '">Edit</button>' +
+                    '<button class="btn btn-xs btn-outline-primary btn-edit-work-calendar" data-id="' + esc(s.id) + '" data-name="' + esc(Staff.fullName(s)) + '" data-work-mode="' + esc(s.workMode || 'ON_SITE') + '">Edit</button>' +
                     '</div>' +
                     '<div id="work-calendar-summary">' + renderWorkCalendarSummary(workCalendarResult) + '</div>' +
                     '</div>' +
@@ -1285,6 +1533,43 @@
                 '</div>';
         }
 
+        // Only relevant when Work Mode is Field/Mobile -- wireFieldLocationToggle()
+        // shows/hides this row as that selection changes. Options are filled in by
+        // populateFieldLocationDropdown() once the saved field locations are loaded.
+        function buildFieldLocationRow(selectedFieldLocationId) {
+            return '<div class="col-md-6 d-none" id="sf-field-location-wrap" data-selected="' + esc(selectedFieldLocationId || '') + '">' +
+                '<label class="form-label" for="sf-field-location">Field Location</label>' +
+                '<select class="form-select" id="sf-field-location"><option value="">Select field location...</option></select>' +
+                '<div class="form-hint">Required for GPS clock-in verification when Work Mode is Field/Mobile. <a href="#" id="link-manage-field-locations">Manage field locations</a></div>' +
+                '</div>';
+        }
+
+        function wireFieldLocationToggle(workModeSelectId, wrapId) {
+            var modeEl = document.getElementById(workModeSelectId);
+            var wrapEl = document.getElementById(wrapId);
+            if (!modeEl || !wrapEl) return;
+
+            function sync() {
+                wrapEl.classList.toggle("d-none", modeEl.value !== "FIELD_MOBILE");
+            }
+
+            sync();
+            modeEl.addEventListener("change", sync);
+        }
+
+        function wireWorkModeHint(workModeSelectId, hintId) {
+            var modeEl = document.getElementById(workModeSelectId);
+            var hintEl = document.getElementById(hintId);
+            if (!modeEl || !hintEl) return;
+
+            function sync() {
+                hintEl.classList.toggle("d-none", modeEl.value !== "HYBRID");
+            }
+
+            sync();
+            modeEl.addEventListener("change", sync);
+        }
+
         function normalizePhoneInput(value) {
             var digits = String(value || "").replace(/\D/g, "");
             if (digits.length > 11) {
@@ -1345,6 +1630,7 @@
             var form = document.getElementById("staff-action-form");
             var d = action.data || {};
             var statusOpts = ["ACTIVE", "ON_LEAVE", "SUSPENDED", "EXITED", "ARCHIVED"];
+            var workModeOpts = ["ON_SITE", "HYBRID", "REMOTE", "FIELD_MOBILE"];
             var selectedLocationId = String(locationValueId(d.locationId || d.location));
             var locationOptions = resolveLocationOptions(action.type, selectedLocationId);
 
@@ -1357,10 +1643,16 @@
                     buildInput('col-md-4', 'Current Role', 'sf-current-role', d.currentRole || '') +
                     buildOptionSelect('col-md-4', 'Location', 'sf-location-id', selectedLocationId, locationOptions, 'Select location', true) +
                     buildSelect('col-md-4', 'Employment Status', 'sf-employment-status', d.employmentStatus || 'ACTIVE', statusOpts) +
+                    buildSelect('col-md-4', 'Work Mode', 'sf-work-mode', d.workMode || 'ON_SITE', workModeOpts) +
+                    buildFieldLocationRow(d.fieldLocationId) +
+                    '<div class="col-12 d-none" id="sf-work-mode-hint"><div class="alert alert-warning py-2 px-3 small mb-0">Hybrid requires each day\'s mode to be set individually in <strong>Work Calendar</strong> after saving -- any day left unset behaves as On-site.</div></div>' +
                     buildSelect('col-md-6', 'Employment Type', 'sf-employment-type', d.employmentType || 'FULL_TIME', ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN']) +
                     buildInput('col-md-6', 'Employment Start Date', 'sf-employment-start-date', d.employmentStartDate || '', 'date') +
                     '<div class="col-12"><label class="form-label" for="sf-employment-notes">Employment Notes</label><textarea class="form-control" id="sf-employment-notes" rows="2" placeholder="Optional notes">' + esc(d.employmentNotes || '') + '</textarea></div>';
                 attachPhoneInputGuard('sf-phone');
+                ensureFieldLocationsLoaded().then(function () { populateFieldLocationDropdown(); });
+                wireFieldLocationToggle('sf-work-mode', 'sf-field-location-wrap');
+                wireWorkModeHint('sf-work-mode', 'sf-work-mode-hint');
                 return;
             }
 
@@ -1379,6 +1671,9 @@
                     '<div class="form-hint">Use "Transfer Branch" to move this staff member \u2014 it issues a new Staff ID and keeps history intact.</div>' +
                     '</div>' +
                     buildSelect('col-md-4', 'Employment Status', 'sf-employment-status', d.employmentStatus || 'ACTIVE', statusOpts) +
+                    buildSelect('col-md-4', 'Work Mode', 'sf-work-mode', d.workMode || 'ON_SITE', workModeOpts) +
+                    buildFieldLocationRow(d.fieldLocationId) +
+                    '<div class="col-12 d-none" id="sf-work-mode-hint"><div class="alert alert-warning py-2 px-3 small mb-0">Hybrid requires each day\'s mode to be set individually in <strong>Work Calendar</strong> after saving -- any day left unset behaves as On-site.</div></div>' +
                     buildOptionSelect('col-md-6', 'Reports To', 'sf-reporting-to-id', String(d.reportingToId || ''), managerOptions, 'No manager assigned', false) +
                     '<div class="col-md-6"><label class="form-label" for="sf-grace-override">Personal Late Grace Period (minutes)</label>' +
                     '<input type="number" min="0" step="1" class="form-control" id="sf-grace-override" value="' + esc(d.lateGracePeriodOverride != null ? d.lateGracePeriodOverride : '') + '" placeholder="Leave blank to use branch default">' +
@@ -1392,6 +1687,9 @@
                     '</div>';
                 attachPhoneInputGuard('sf-phone');
                 wireExitFieldsToggle('sf-employment-status', 'sf-exit-fields-wrap');
+                ensureFieldLocationsLoaded().then(function () { populateFieldLocationDropdown(); });
+                wireFieldLocationToggle('sf-work-mode', 'sf-field-location-wrap');
+                wireWorkModeHint('sf-work-mode', 'sf-work-mode-hint');
                 SearchableSelect.attach('sf-permission-role-id');
                 return;
             }
@@ -1525,6 +1823,8 @@
                     currentRole: trimOrUndef(document.getElementById("sf-current-role").value),
                     locationId: trimOrUndef(document.getElementById("sf-location-id").value),
                     employmentStatus: document.getElementById("sf-employment-status").value,
+                    workMode: document.getElementById("sf-work-mode").value,
+                    fieldLocationId: document.getElementById("sf-field-location").value || null,
                     employmentType: document.getElementById("sf-employment-type").value,
                     employmentStartDate: trimOrUndef(document.getElementById("sf-employment-start-date").value),
                     employmentNotes: trimOrUndef(document.getElementById("sf-employment-notes").value),
@@ -1540,6 +1840,8 @@
                     phone: trimOrUndef(normalizePhoneInput(document.getElementById("sf-phone").value)),
                     dateOfBirth: trimOrUndef(document.getElementById("sf-dob").value),
                     employmentStatus: document.getElementById("sf-employment-status").value,
+                    workMode: document.getElementById("sf-work-mode").value,
+                    fieldLocationId: document.getElementById("sf-field-location").value || null,
                     reasonForExit: trimOrUndef(document.getElementById("sf-reason-for-exit").value),
                     exitDate: trimOrUndef(document.getElementById("sf-exit-date").value),
                     reportingToId: document.getElementById("sf-reporting-to-id").value || null,
@@ -1649,6 +1951,11 @@
             if (_staffFormAction.type === "create" || _staffFormAction.type === "update") {
                 if (payload.phone && !/^\d{11}$/.test(payload.phone)) {
                     errorEl.textContent = "Phone number must be exactly 11 digits.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
+                if (payload.workMode === "FIELD_MOBILE" && !payload.fieldLocationId) {
+                    errorEl.textContent = "Please assign a Field Location -- required for GPS clock-in verification when Work Mode is Field/Mobile.";
                     errorEl.classList.remove("d-none");
                     return;
                 }
@@ -1763,6 +2070,8 @@
                         currentRole: s.currentRole || "",
                         locationId: String(s.locationId || locationValueId(s.location) || ""),
                         locationName: (s.location && s.location.name) || "", employmentStatus: s.employmentStatus || "ACTIVE",
+                        workMode: s.workMode || "ON_SITE",
+                        fieldLocationId: s.fieldLocationId || "",
                         reasonForExit: s.reasonForExit || "",
                         exitDate: (s.exitDate || "").slice(0, 10),
                         reportingToId: String(s.reportingToId || (s.reportingTo && s.reportingTo.id) || ""),

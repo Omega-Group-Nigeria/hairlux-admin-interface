@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Performance &amp; Comparison</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Business Intelligence</div>
+                            <h2 class="page-title">Performance &amp; Comparison</h2>
+                        </div>
+                        <div class="col-auto d-none" id="pc-backfill-btn-wrap">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-pc-backfill">Backfill
+                                History</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Metric</label>
+                                    <select id="pc-metric" class="form-select form-select-sm">
+                                        <option value="REVENUE">Revenue</option>
+                                        <option value="GROSS_PROFIT" class="pc-metric-branch-only">Gross Profit</option>
+                                        <option value="EXPENSES" class="pc-metric-branch-only">Expenses</option>
+                                        <option value="CUSTOMERS" class="pc-metric-branch-only">Customers (visits)</option>
+                                        <option value="TRANSACTIONS">Transactions</option>
+                                        <option value="PRODUCTIVITY">Productivity (avg. revenue/transaction)</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Compare</label>
+                                    <select id="pc-comparison-mode" class="form-select form-select-sm">
+                                        <option value="TODAY_VS_YESTERDAY">Today vs Yesterday</option>
+                                        <option value="THIS_WEEK_VS_LAST">This Week vs Last Week</option>
+                                        <option value="THIS_MONTH_VS_LAST" selected>This Month vs Last Month</option>
+                                        <option value="SAME_PERIOD_LAST_YEAR">Same Period Last Year</option>
+                                        <option value="CUSTOM">Custom Range</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Entity</label>
+                                    <select id="pc-entity-type" class="form-select form-select-sm">
+                                        <option value="COMPANY">Company-wide</option>
+                                        <option value="BRANCH">Branch</option>
+                                        <option value="STAFF">Staff (walk-in)</option>
+                                        <option value="STYLIST">Stylist (self-service)</option>
+                                        <option value="SERVICE">Service</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 d-none" id="pc-branch-wrap">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="pc-branch" class="form-select form-select-sm">
+                                        <option value="">All Branches (side by side)</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-3 d-none" id="pc-entity-id-wrap">
+                                    <label class="form-label text-secondary small mb-1" id="pc-entity-id-label">Pick one</label>
+                                    <select id="pc-entity-id" class="form-select form-select-sm">
+                                        <option value="">All (side by side)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="text-secondary small mt-1 d-none" id="pc-entity-target-note">Target/% Achievement/Status aren't configurable at this granularity yet -- only Company- and Branch-level targets exist.</div>
+                            <div class="row g-2 align-items-end mt-1 d-none" id="pc-custom-range-wrap">
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Period from</label>
+                                    <input type="date" id="pc-date-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Period to</label>
+                                    <input type="date" id="pc-date-to" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Compare from</label>
+                                    <input type="date" id="pc-compare-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Compare to</label>
+                                    <input type="date" id="pc-compare-to" class="form-control form-control-sm">
+                                </div>
+                            </div>
+                            <div class="row g-2 mt-1">
+                                <div class="col-12 col-md-auto">
+                                    <button type="button" class="btn btn-outline-secondary w-100"
+                                        id="btn-pc-reset">Reset</button>
+                                </div>
+                            </div>
+                            <div class="text-secondary small mt-2" id="pc-period-note">—</div>
+                        </div>
+                    </div>
+
+                    <div id="pc-error" class="alert alert-danger d-none"></div>
+                    <div id="pc-info" class="alert alert-info d-none"></div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="text-secondary small mb-2">Actual vs Previous, by entity</div>
+                            <div id="pc-chart" style="height:280px"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Entity</th>
+                                        <th class="text-end">Actual</th>
+                                        <th class="text-end">Previous</th>
+                                        <th class="text-end">Variance</th>
+                                        <th class="text-end">% Change</th>
+                                        <th class="text-end">Target</th>
+                                        <th class="text-end">% Achievement</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pc-tbody">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-secondary py-3">Loading…</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backfill modal -->
+    <div class="modal modal-blur fade" id="modal-pc-backfill" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Backfill KPI History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="pc-backfill-error"></div>
+                    <p class="text-secondary small">Precomputes daily revenue/profit/expenses/customer figures per
+                        branch so comparisons above have history to work with, instead of waiting for the nightly job
+                        to build it up one day at a time. Safe to re-run.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Branch <span class="text-secondary">(blank = every branch)</span></label>
+                        <select class="form-select" id="pc-backfill-branch">
+                            <option value="">All Branches</option>
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label">From <span class="text-secondary">(default: 30 days
+                                    back)</span></label>
+                            <input type="date" class="form-control" id="pc-backfill-from">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">To <span class="text-secondary">(default: yesterday)</span></label>
+                            <input type="date" class="form-control" id="pc-backfill-to">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-run-pc-backfill">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-pc-backfill"></span>
+                        Run Backfill
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="./assets/js/apexcharts.min.js"></script>
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/staff.js"></script>
+    <script src="./assets/js/api-utils/services.js"></script>
+    <script src="./assets/js/api-utils/beauticians.js"></script>
+    <script src="./assets/js/api-utils/business-intelligence.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('business_intelligence:performance_comparison:read');
+
+        var isAdmin = false;
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = (s === null || s === undefined) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function statusBadgeClass(status) {
+            if (status === 'GOOD') return 'badge bg-success-lt';
+            if (status === 'ATTENTION') return 'badge bg-warning-lt';
+            if (status === 'CRITICAL') return 'badge bg-danger-lt';
+            return '';
+        }
+
+        function formatMetric(metric, value) {
+            if (metric === 'CUSTOMERS' || metric === 'TRANSACTIONS') return Number(value || 0).toLocaleString('en-NG');
+            return BusinessIntelligence.formatMoney(value);
+        }
+
+        var _pcChart = null;
+
+        /** Grouped bar, Actual vs Previous per entity -- scales from a
+         * single Company-wide bar pair up to every branch side by side.
+         * Same ApexCharts house style as the Dashboard's area charts
+         * (assets/js/api-utils/analytics.js), just a bar type instead. */
+        function renderComparisonChart(metric, rows) {
+            var el = document.getElementById('pc-chart');
+            if (!el || !window.ApexCharts) return;
+            if (_pcChart) { _pcChart.destroy(); _pcChart = null; }
+            el.innerHTML = '';
+            if (!rows.length) {
+                el.innerHTML = '<div class="text-secondary small text-center pt-5">No data for this view</div>';
+                return;
+            }
+            _pcChart = new ApexCharts(el, {
+                chart: { type: 'bar', fontFamily: 'inherit', height: 280, animations: { enabled: false }, toolbar: { show: false } },
+                plotOptions: { bar: { columnWidth: rows.length <= 2 ? '35%' : '55%', borderRadius: 3 } },
+                dataLabels: { enabled: false },
+                series: [
+                    { name: 'Actual', data: rows.map(function (r) { return r.actual; }) },
+                    { name: 'Previous', data: rows.map(function (r) { return r.previous; }) },
+                ],
+                xaxis: { categories: rows.map(function (r) { return r.entityName; }), axisBorder: { show: false } },
+                yaxis: { labels: { formatter: function (v) { return (metric === 'CUSTOMERS' || metric === 'TRANSACTIONS') ? Math.round(v) : '₦' + (v / 1000).toFixed(0) + 'k'; } } },
+                tooltip: { theme: 'dark', y: { formatter: function (v) { return formatMetric(metric, v); } } },
+                grid: { strokeDashArray: 4 },
+                colors: ['var(--tblr-primary)', 'var(--tblr-secondary)'],
+                legend: { show: true, position: 'top', horizontalAlign: 'left' },
+            });
+            _pcChart.render();
+        }
+
+        async function init() {
+            var user = Auth.getUser();
+            isAdmin = !!(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
+
+            if (RBAC.can('business_intelligence:manage_targets')) {
+                document.getElementById('pc-backfill-btn-wrap').classList.remove('d-none');
+            }
+
+            try {
+                var branches = await Branches.getBranches();
+                var options = branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                document.getElementById('pc-branch').insertAdjacentHTML('beforeend', options);
+                document.getElementById('pc-backfill-branch').insertAdjacentHTML('beforeend', options);
+            } catch (err) { /* branch pickers just stay at their default option */ }
+
+            try { _pcStaffOptions = await Staff.getOptions({}); } catch (err) { _pcStaffOptions = []; }
+            try {
+                var beauticians = await Beauticians.listBeauticians({ limit: 200 });
+                _pcStylistOptions = (beauticians.data || []).map(function (b) {
+                    return { id: b.user ? b.user.id : b.id, name: b.user ? (b.user.firstName + ' ' + b.user.lastName).trim() : 'Unknown' };
+                });
+            } catch (err) { _pcStylistOptions = []; }
+            try {
+                var services = await Services.getAll({ status: 'ACTIVE' });
+                _pcServiceOptions = [{ id: 'PRODUCTS', name: 'Product Sales' }].concat(
+                    services.map(function (s) { return { id: s.id, name: s.name }; }));
+            } catch (err) { _pcServiceOptions = []; }
+
+            // Filters apply themselves -- no separate "apply" step. Each
+            // control reloads on change; entityType/comparisonMode also
+            // toggle the branch/custom-range fields into view first.
+            document.getElementById('pc-entity-type').addEventListener('change', function () {
+                document.getElementById('pc-branch-wrap').classList.toggle('d-none', this.value !== 'BRANCH');
+                onEntityTypeChanged(this.value);
+                load();
+            });
+            document.getElementById('pc-comparison-mode').addEventListener('change', function () {
+                document.getElementById('pc-custom-range-wrap').classList.toggle('d-none', this.value !== 'CUSTOM');
+                load();
+            });
+            ['pc-metric', 'pc-branch', 'pc-entity-id', 'pc-date-from', 'pc-date-to', 'pc-compare-from', 'pc-compare-to'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', load);
+            });
+
+            load();
+        }
+
+        var _pcStaffOptions = [];
+        var _pcStylistOptions = [];
+        var _pcServiceOptions = [];
+        var TRANSACTION_ENTITY_TYPES = ['STAFF', 'STYLIST', 'SERVICE'];
+
+        // Staff/Stylist/Service only support Revenue/Transactions/
+        // Productivity on the backend (see performance-comparison.service.ts's
+        // TRANSACTION_ENTITY_METRICS) -- Gross Profit/Expenses/Customers
+        // don't carry a staff/service attribution yet, so those options are
+        // hidden rather than left in to produce a 400 on selection.
+        function onEntityTypeChanged(entityType) {
+            var isTransactionEntity = TRANSACTION_ENTITY_TYPES.indexOf(entityType) !== -1;
+            document.querySelectorAll('#pc-metric .pc-metric-branch-only').forEach(function (opt) {
+                opt.disabled = isTransactionEntity;
+            });
+            var metricSel = document.getElementById('pc-metric');
+            if (isTransactionEntity && metricSel.options[metricSel.selectedIndex].disabled) {
+                metricSel.value = 'REVENUE';
+            }
+
+            var idWrap = document.getElementById('pc-entity-id-wrap');
+            var idSel = document.getElementById('pc-entity-id');
+            var idLabel = document.getElementById('pc-entity-id-label');
+            document.getElementById('pc-entity-target-note').classList.toggle('d-none', !isTransactionEntity);
+            idWrap.classList.toggle('d-none', !isTransactionEntity);
+            if (!isTransactionEntity) { idSel.value = ''; return; }
+
+            var list = entityType === 'STAFF' ? _pcStaffOptions : entityType === 'STYLIST' ? _pcStylistOptions : _pcServiceOptions;
+            idLabel.textContent = entityType === 'STAFF' ? 'Staff' : entityType === 'STYLIST' ? 'Stylist' : 'Service';
+            idSel.innerHTML = '<option value="">All (side by side)</option>' +
+                list.map(function (o) { return '<option value="' + o.id + '">' + esc(o.name) + '</option>'; }).join('');
+        }
+
+        async function load() {
+            var errEl = document.getElementById('pc-error');
+            var infoEl = document.getElementById('pc-info');
+            errEl.classList.add('d-none');
+            infoEl.classList.add('d-none');
+            document.getElementById('pc-tbody').innerHTML =
+                '<tr><td colspan="8" class="text-center text-secondary py-3">Loading…</td></tr>';
+
+            var metric = document.getElementById('pc-metric').value;
+            var comparisonMode = document.getElementById('pc-comparison-mode').value;
+            var entityType = document.getElementById('pc-entity-type').value;
+            var branchId = entityType === 'BRANCH' ? document.getElementById('pc-branch').value : undefined;
+            var entityId = TRANSACTION_ENTITY_TYPES.indexOf(entityType) !== -1 ? document.getElementById('pc-entity-id').value : undefined;
+
+            var params = { metric: metric, comparisonMode: comparisonMode, entityType: entityType, branchId: branchId || undefined, entityId: entityId || undefined };
+            if (comparisonMode === 'CUSTOM') {
+                params.dateFrom = document.getElementById('pc-date-from').value;
+                params.dateTo = document.getElementById('pc-date-to').value;
+                params.compareFrom = document.getElementById('pc-compare-from').value;
+                params.compareTo = document.getElementById('pc-compare-to').value;
+                if (!params.dateFrom || !params.dateTo || !params.compareFrom || !params.compareTo) {
+                    document.getElementById('pc-tbody').innerHTML =
+                        '<tr><td colspan="8" class="text-center text-secondary py-3">Fill in all four custom dates above.</td></tr>';
+                    return;
+                }
+            }
+
+            try {
+                var rows = await BusinessIntelligence.getPerformanceComparison(params);
+                renderRows(metric, rows);
+                var entityLabel = { COMPANY: 'Company-wide', BRANCH: 'branch', STAFF: 'staff member', STYLIST: 'stylist', SERVICE: 'service' }[entityType] || entityType;
+                var label = entityType === 'COMPANY' ? 'Company-wide'
+                    : (entityId ? 'One ' + entityLabel + ' vs its own prior period' : 'Every ' + entityLabel + ', side by side');
+                document.getElementById('pc-period-note').textContent = label + ' — ' + comparisonMode.replace(/_/g, ' ').toLowerCase();
+                if (!rows.length) {
+                    infoEl.textContent = 'No branches in scope for this view.';
+                    infoEl.classList.remove('d-none');
+                }
+            } catch (err) {
+                document.getElementById('pc-tbody').innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-3">—</td></tr>';
+                errEl.textContent = err.message || 'Failed to load comparison.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        function renderRows(metric, rows) {
+            renderComparisonChart(metric, rows);
+            var tbody = document.getElementById('pc-tbody');
+            if (!rows.length) { tbody.innerHTML = ''; return; }
+            tbody.innerHTML = rows.map(function (r) {
+                var varianceClass = r.varianceAbs > 0 ? 'text-green' : (r.varianceAbs < 0 ? 'text-red' : 'text-secondary');
+                return '<tr>' +
+                    '<td>' + esc(r.entityName) + '</td>' +
+                    '<td class="text-end">' + formatMetric(metric, r.actual) + '</td>' +
+                    '<td class="text-end text-secondary">' + formatMetric(metric, r.previous) + '</td>' +
+                    '<td class="text-end ' + varianceClass + '">' + (r.varianceAbs >= 0 ? '+' : '') + formatMetric(metric, r.varianceAbs) + '</td>' +
+                    '<td class="text-end ' + varianceClass + '">' + BusinessIntelligence.formatPercent(r.variancePercent) + '</td>' +
+                    '<td class="text-end">' + (r.target === null ? '<span class="text-secondary">No target</span>' : formatMetric(metric, r.target)) + '</td>' +
+                    '<td class="text-end">' + (r.achievementPercent === null ? '—' : r.achievementPercent.toFixed(1) + '%') + '</td>' +
+                    '<td>' + (r.status ? '<span class="' + statusBadgeClass(r.status) + '">' + r.status + '</span>' : '—') + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function resetFilters() {
+            document.getElementById('pc-metric').value = 'REVENUE';
+            document.getElementById('pc-comparison-mode').value = 'THIS_MONTH_VS_LAST';
+            document.getElementById('pc-entity-type').value = 'COMPANY';
+            document.getElementById('pc-branch').value = '';
+            document.getElementById('pc-branch-wrap').classList.add('d-none');
+            onEntityTypeChanged('COMPANY');
+            document.getElementById('pc-custom-range-wrap').classList.add('d-none');
+            document.getElementById('pc-date-from').value = '';
+            document.getElementById('pc-date-to').value = '';
+            document.getElementById('pc-compare-from').value = '';
+            document.getElementById('pc-compare-to').value = '';
+            load();
+        }
+
+        document.getElementById('btn-pc-reset').addEventListener('click', resetFilters);
+
+        document.getElementById('btn-pc-backfill').addEventListener('click', function () {
+            document.getElementById('pc-backfill-error').classList.add('d-none');
+            document.getElementById('pc-backfill-from').value = '';
+            document.getElementById('pc-backfill-to').value = '';
+            new bootstrap.Modal(document.getElementById('modal-pc-backfill')).show();
+        });
+
+        document.getElementById('btn-run-pc-backfill').addEventListener('click', async function () {
+            var errEl = document.getElementById('pc-backfill-error');
+            errEl.classList.add('d-none');
+            var payload = {
+                branchId: document.getElementById('pc-backfill-branch').value || undefined,
+                dateFrom: document.getElementById('pc-backfill-from').value || undefined,
+                dateTo: document.getElementById('pc-backfill-to').value || undefined,
+            };
+            var btn = this;
+            var spinner = document.getElementById('spinner-pc-backfill');
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+            try {
+                var result = await BusinessIntelligence.backfillDailyKpiSnapshot(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-pc-backfill')).hide();
+                var infoEl = document.getElementById('pc-info');
+                infoEl.textContent = 'Backfilled ' + result.snapshotsComputed + ' branch-day snapshot(s) from ' + result.dateFrom + ' to ' + result.dateTo + '.';
+                infoEl.classList.remove('d-none');
+                load();
+            } catch (err) {
+                errEl.textContent = err.message || 'Backfill failed.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        init();
+    </script>
+</body>
+
+</html>

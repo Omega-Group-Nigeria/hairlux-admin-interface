@@ -182,20 +182,46 @@ const RBAC = (() => {
      * Works for both root-level pages (./page.html) and sub-directory pages
      * (../page.html) without any per-page HTML changes.
      */
+    function _pageFromHref(href) {
+        return (href || '').replace(/^(\.\.\/|\.\/)+/, '').split('#')[0].split('?')[0];
+    }
+
+    function _ruleAllows(rule) {
+        if (!rule) return null; // no rule found -- caller decides the default
+        return rule.type === 'require'
+            ? can(rule.perm)
+            : rule.perms.some(function (p) { return can(p); });
+    }
+
     function applyNavVisibility() {
         var sidebar = document.getElementById('app-sidebar');
         if (!sidebar) return;
 
         var navMap = _getNavMap();
         sidebar.querySelectorAll(':scope > .nav-item').forEach(function (li) {
+            var dropdownLinks = Array.from(li.querySelectorAll('.dropdown-menu a[href]'));
+
+            if (dropdownLinks.length) {
+                // Dropdown group: gate each child link by its OWN rule (a
+                // child with its own permission in NavConfig -- e.g. each
+                // Business Intelligence sub-module -- is shown/hidden
+                // independently of its siblings, not as a group). The group
+                // itself stays visible as long as at least one child is.
+                var anyVisible = false;
+                dropdownLinks.forEach(function (a) {
+                    var allowed = _ruleAllows(navMap[_pageFromHref(a.getAttribute('href'))]);
+                    if (allowed === null) allowed = true; // no rule -- session-only access
+                    a.style.display = allowed ? '' : 'none';
+                    if (allowed) anyVisible = true;
+                });
+                li.style.display = anyVisible ? '' : 'none';
+                li.style.visibility = anyVisible ? 'visible' : 'hidden';
+                return;
+            }
+
             var hrefs = Array.from(li.querySelectorAll('a[href]'))
                 .map(function (a) { return a.getAttribute('href') || ''; });
-
-            var pages = hrefs
-                .map(function (h) {
-                    return h.replace(/^(\.\.\/|\.\/)+/, '').split('#')[0].split('?')[0];
-                })
-                .filter(Boolean);
+            var pages = hrefs.map(_pageFromHref).filter(Boolean);
 
             var rule = null;
             for (var i = 0; i < pages.length; i++) {
@@ -207,10 +233,7 @@ const RBAC = (() => {
                 return;
             }
 
-            var allowed = rule.type === 'require'
-                ? can(rule.perm)
-                : rule.perms.some(function (p) { return can(p); });
-
+            var allowed = _ruleAllows(rule);
             li.style.display = allowed ? '' : 'none';
             li.style.visibility = allowed ? 'visible' : 'hidden';
         });

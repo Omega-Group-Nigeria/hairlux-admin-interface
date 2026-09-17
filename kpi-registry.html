@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — KPI Engine Registry</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Business Intelligence</div>
+                            <h2 class="page-title">KPI Engine Registry</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <div class="alert alert-info">
+                        <div class="fw-semibold mb-1">What this page is</div>
+                        <div class="small">A read-only reference documenting every KPI the Business Intelligence
+                            module computes: what it means, exactly how it's calculated, which tables/services it
+                            comes from, and which permission (if any) gates it. This is architecture reference for
+                            whoever administers Roles and Targets -- not a dashboard card. Card-level permission
+                            granularity exists only on Business Snapshot today; every other sub-module is still
+                            page-gated only by "View the Business Intelligence dashboard".</div>
+                    </div>
+
+                    <div id="kr-error" class="alert alert-danger d-none"></div>
+                    <div id="kr-loading" class="text-secondary text-center py-4">Loading registry…</div>
+
+                    <div id="kr-groups"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/business-intelligence.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script>
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('business_intelligence:kpi_registry:read');
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = (s === null || s === undefined) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        var SUB_MODULE_LABELS = {
+            BUSINESS_SNAPSHOT: 'Business Snapshot',
+            CUSTOMERS_SALES: 'Customers & Sales',
+            COST_INVENTORY_FINANCIAL: 'Cost, Inventory & Financial Position',
+            PERFORMANCE_COMPARISON: 'Performance & Comparison',
+            FORECAST_ALERTS: 'Forecast & Alerts',
+        };
+        var SUB_MODULE_ORDER = ['BUSINESS_SNAPSHOT', 'CUSTOMERS_SALES', 'COST_INVENTORY_FINANCIAL', 'PERFORMANCE_COMPARISON', 'FORECAST_ALERTS'];
+
+        function permissionBadge(kpi) {
+            if (!kpi.cardPermission) {
+                return '<span class="badge bg-secondary-lt">Page-level only</span>';
+            }
+            return '<span class="badge bg-blue-lt">' + esc(kpi.cardPermission) + '</span>';
+        }
+
+        function renderGroup(subModule, kpis) {
+            var rows = kpis.map(function (k) {
+                return '<tr>' +
+                    '<td>' +
+                    '<div class="fw-semibold">' + esc(k.label) + '</div>' +
+                    '<div class="text-secondary small">' + esc(k.description) + '</div>' +
+                    '<div class="text-secondary small mt-1"><span class="fw-semibold">Endpoint:</span> <code class="small">' + esc(k.endpoint) + '</code></div>' +
+                    (k.notes ? '<div class="text-secondary small mt-1 fst-italic">' + esc(k.notes) + '</div>' : '') +
+                    '</td>' +
+                    '<td class="small">' + esc(k.calculation) + '</td>' +
+                    '<td class="small">' + k.dataSources.map(function (s) { return '<span class="badge bg-secondary-lt me-1 mb-1">' + esc(s) + '</span>'; }).join('') + '</td>' +
+                    '<td>' + permissionBadge(k) + '</td>' +
+                    '<td class="text-center">' + (k.targetable ? '<span class="badge bg-green-lt">Yes</span>' : '<span class="badge bg-secondary-lt">No</span>') + '</td>' +
+                    '<td class="small">' + (k.scopeGranularity.length ? k.scopeGranularity.join(', ') : '—') + '</td>' +
+                    '</tr>';
+            }).join('');
+
+            return '<div class="card mb-4">' +
+                '<div class="card-header"><h3 class="card-title mb-0">' + esc(SUB_MODULE_LABELS[subModule] || subModule) + '</h3></div>' +
+                '<div class="table-responsive">' +
+                '<table class="table table-vcenter card-table">' +
+                '<thead><tr>' +
+                '<th style="min-width:260px">KPI</th>' +
+                '<th style="min-width:280px">Calculation</th>' +
+                '<th style="min-width:160px">Data Sources</th>' +
+                '<th>Card Permission</th>' +
+                '<th class="text-center">Targetable</th>' +
+                '<th>Scope</th>' +
+                '</tr></thead>' +
+                '<tbody>' + rows + '</tbody>' +
+                '</table>' +
+                '</div>' +
+                '</div>';
+        }
+
+        async function init() {
+            var errEl = document.getElementById('kr-error');
+            var loadingEl = document.getElementById('kr-loading');
+            try {
+                var registry = await BusinessIntelligence.getKpiRegistry();
+                loadingEl.classList.add('d-none');
+
+                var bySubModule = {};
+                registry.forEach(function (k) {
+                    (bySubModule[k.subModule] = bySubModule[k.subModule] || []).push(k);
+                });
+
+                var html = SUB_MODULE_ORDER
+                    .filter(function (sm) { return bySubModule[sm] && bySubModule[sm].length; })
+                    .map(function (sm) { return renderGroup(sm, bySubModule[sm]); })
+                    .join('');
+                document.getElementById('kr-groups').innerHTML = html;
+            } catch (err) {
+                loadingEl.classList.add('d-none');
+                errEl.textContent = err.message || 'Failed to load the KPI registry.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
