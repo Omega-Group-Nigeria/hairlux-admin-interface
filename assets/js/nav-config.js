@@ -22,6 +22,11 @@ var NavConfig = window.NavConfig || (() => {
         beauticians: '<svg ' + SVG_ATTRS + '><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>',
         history: '<svg ' + SVG_ATTRS + '><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>',
         businessIntelligence: '<svg ' + SVG_ATTRS + '><path d="M3 12m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M9 8m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v11a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M15 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v15a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M4 20h14" /></svg>',
+        // Frontend Build Roadmap: Academy (Commerce Core, Training,
+        // Cohorts shipped; Courses child arrives with Phase 4).
+        academy: '<svg ' + SVG_ATTRS + '><path d="M22 9l-10 -4l-10 4l10 4l10 -4v6" /><path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4" /></svg>',
+        // Frontend Build Roadmap Phase 3: Rewards & Loyalty (rewards.html).
+        rewards: '<svg ' + SVG_ATTRS + '><path d="M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" /><path d="M12 8l0 13" /><path d="M19 12l0 7a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1l0 -7" /><path d="M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5" /></svg>',
     };
 
     /** @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string}>, permission?:object}>} */
@@ -85,6 +90,39 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Forecast & Alerts", href: "forecast-alerts.html", permission: { type: "require", perm: "business_intelligence:forecast_alerts:read" } },
                 { label: "KPI Engine Registry", href: "kpi-registry.html", permission: { type: "require", perm: "business_intelligence:kpi_registry:read" } },
             ],
+        },
+        {
+            id: "academy",
+            label: "Academy",
+            icon: "academy",
+            // Frontend Build Roadmap: group visible with ANY Academy
+            // permission; each child (Commerce, Training, Cohorts, Digital
+            // Courses) is additionally gated on its own -- same convention
+            // as the Business Intelligence item above.
+            permission: {
+                type: "requireAny",
+                perms: ["academy_commerce:read", "academy_commerce:manage", "academy_commerce:approve_refund", "academy_training:read", "academy_training:manage", "academy_courses:read", "academy_courses:manage", "academy_courses:moderate_reviews"],
+            },
+            children: [
+                { label: "Commerce (Orders, Refunds, Certificates)", href: "academy-commerce.html", permission: { type: "require", perm: "academy_commerce:read" } },
+                { label: "Trainings & Curriculum", href: "academy-training.html", permission: { type: "require", perm: "academy_training:read" } },
+                { label: "Cohorts", href: "academy-cohorts.html", permission: { type: "require", perm: "academy_training:read" } },
+                { label: "Digital Courses", href: "academy-courses.html", permission: { type: "require", perm: "academy_courses:read" } },
+            ],
+        },
+        {
+            id: "rewards",
+            label: "Rewards & Loyalty",
+            icon: "rewards",
+            href: "rewards.html",
+            // Frontend Build Roadmap Phase 3: single page (Dashboard / Tiers
+            // / Settings / Customer Lookup tabs live inside it), so this is
+            // a direct link rather than a parent with children -- same
+            // shape as any other single-page module in this sidebar.
+            permission: {
+                type: "requireAny",
+                perms: ["rewards:read", "rewards:manage", "rewards:apply", "rewards:adjust"],
+            },
         },
         {
             id: "contacts",
@@ -314,6 +352,11 @@ var NavConfig = window.NavConfig || (() => {
         return [
             "bookings.html",
             "payments.html",
+            "academy-commerce.html",
+            "academy-training.html",
+            "academy-cohorts.html",
+            "academy-courses.html",
+            "rewards.html",
             "users.html",
             "services.html",
             "branches.html",

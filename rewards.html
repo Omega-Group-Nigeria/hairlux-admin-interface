@@ -1,0 +1,1592 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Rewards &amp; Loyalty</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        table td {
+            vertical-align: middle;
+        }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        .tier-row,
+        .lookup-item {
+            cursor: pointer;
+        }
+
+        .tier-row:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        code.code-badge {
+            font-family: monospace;
+            letter-spacing: .06em;
+            font-size: .85em;
+        }
+
+        /* Customer typeahead (Customer Lookup tab) -- same widget as
+           academy-commerce.html's certificate Holder picker. */
+        .typeahead-wrap {
+            position: relative;
+        }
+
+        .typeahead-results {
+            position: absolute;
+            z-index: 20;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--tblr-bg-surface, #fff);
+            border: 1px solid var(--tblr-border-color);
+            border-radius: .375rem;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, .12);
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .typeahead-results .item {
+            padding: .5rem .75rem;
+            cursor: pointer;
+        }
+
+        .typeahead-results .item:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        .typeahead-selected {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            padding: .375rem .75rem;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: .375rem;
+            background: var(--tblr-bg-surface-tertiary);
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path
+                                        d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path
+                                        d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Academy</div>
+                            <h2 class="page-title">Rewards &amp; Loyalty</h2>
+                            <div class="text-secondary small mt-1">Tiers, earning &amp; redemption rules, dashboard
+                                reports, and staff-side customer lookups for cashback and points.</div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- SECTION TABS -->
+                    <ul class="nav nav-tabs mb-3" id="section-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-section="dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="tiers">Tiers</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="settings">Settings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="lookup">Customer Lookup</a>
+                        </li>
+                    </ul>
+
+                    <!-- ========== DASHBOARD SECTION ========== -->
+                    <div id="section-dashboard">
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label">From</label>
+                                        <input type="date" class="form-control" id="dash-from">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">To</label>
+                                        <input type="date" class="form-control" id="dash-to">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Branch</label>
+                                        <select class="form-select" id="dash-branch">
+                                            <option value="">All branches</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100" id="btn-dash-apply">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="dash-error" class="alert alert-danger d-none" role="alert"></div>
+                        <div id="dash-loading" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+
+                        <div id="dash-content" class="d-none">
+                            <div class="row row-deck row-cards mb-3">
+                                <div class="col-sm-6 col-xl-3">
+                                    <div class="card" data-kpi-card="cashback-issued">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Cashback Issued</div>
+                                            <div class="h2 mb-0" id="dash-cashback-issued">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-3">
+                                    <div class="card" data-kpi-card="cashback-transferred">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Cashback Transferred</div>
+                                            <div class="h2 mb-0" id="dash-cashback-transferred">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-3">
+                                    <div class="card" data-kpi-card="points-issued">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Points Issued</div>
+                                            <div class="h2 mb-0" id="dash-points-issued">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-3">
+                                    <div class="card" data-kpi-card="active-members">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Active Members</div>
+                                            <div class="h2 mb-0" id="dash-active-members">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row row-deck row-cards mb-3">
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card" data-kpi-card="revenue">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Reward-Generated Revenue</div>
+                                            <div class="h2 mb-0" id="dash-revenue">—</div>
+                                            <div class="text-secondary small mt-1">Purchase value that qualified for a
+                                                reward -- not an attempt to trace what transferred cashback was later
+                                                spent on.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card" data-kpi-card="referrals">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Referral Rewards</div>
+                                            <div class="h2 mb-0" id="dash-referrals-count">—</div>
+                                            <div class="text-secondary small mt-1" id="dash-referrals-total"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" data-kpi-card="customers-by-tier">
+                                <div class="card-header">
+                                    <h3 class="card-title">Customers by Tier</h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table card-table table-vcenter">
+                                        <thead>
+                                            <tr>
+                                                <th>Tier</th>
+                                                <th class="text-end">Customers</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dash-tier-breakdown-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ========== END DASHBOARD SECTION ========== -->
+
+                    <!-- ========== TIERS SECTION ========== -->
+                    <div id="section-tiers" class="d-none">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Reward Tiers</h3>
+                                <div class="card-actions">
+                                    <button type="button" class="btn btn-primary" id="btn-add-tier">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                                            <path d="M12 5l0 14" />
+                                            <path d="M5 12l14 0" />
+                                        </svg>
+                                        Add Tier
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table card-table table-vcenter">
+                                    <thead>
+                                        <tr>
+                                            <th>Order</th>
+                                            <th>Name</th>
+                                            <th>Min Spend</th>
+                                            <th>Max Spend</th>
+                                            <th>Cashback %</th>
+                                            <th>Points Multiplier</th>
+                                            <th>Eval. Period</th>
+                                            <th>Status</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tiers-tbody">
+                                        <tr>
+                                            <td colspan="9" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-2">Tiers are a ladder evaluated on ROLLING spend (each
+                            tier's own evaluation window), never lifetime spend. Deleting a tier still referenced by a
+                            customer's wallet deactivates it instead, so no customer is silently dropped out of their
+                            tier.</div>
+                    </div>
+                    <!-- ========== END TIERS SECTION ========== -->
+
+                    <!-- ========== SETTINGS SECTION ========== -->
+                    <div id="section-settings" class="d-none">
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h3 class="card-title">Reward Earning &amp; Redemption Settings</h3>
+                            </div>
+                            <form id="form-reward-settings">
+                                <div class="card-body">
+                                    <div id="reward-settings-alert" class="alert d-none mb-3" role="alert"></div>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Default Cashback % <span
+                                                    class="text-secondary fw-normal">(no tier yet)</span></label>
+                                            <input type="number" step="0.01" min="0" class="form-control"
+                                                id="rs-cashback-percentage">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Default Points per ₦ <span
+                                                    class="text-secondary fw-normal">(no tier yet)</span></label>
+                                            <input type="number" step="0.0001" min="0" class="form-control"
+                                                id="rs-points-per-naira">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Min Qualifying Transaction</label>
+                                            <input type="number" step="0.01" min="0" class="form-control"
+                                                id="rs-min-qualifying">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Max Cashback per Transaction</label>
+                                            <input type="number" step="0.01" min="0" class="form-control"
+                                                id="rs-max-cashback" placeholder="No cap">
+                                            <div class="form-text">Blank = no cap.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Redemption Limit (per transaction)</label>
+                                            <input type="number" step="0.01" min="0" class="form-control"
+                                                id="rs-redemption-limit" placeholder="No cap">
+                                            <div class="form-text">Blank = no cap.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Transfer Limit (per transfer)</label>
+                                            <input type="number" step="0.01" min="0" class="form-control"
+                                                id="rs-transfer-limit" placeholder="No cap">
+                                            <div class="form-text">Blank = no cap.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Reward Expiry (days)</label>
+                                            <input type="number" step="1" min="1" class="form-control"
+                                                id="rs-reward-expiry-days" placeholder="Never expires">
+                                            <div class="form-text">Blank = never expires.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Point Redemption Value (₦ per point)</label>
+                                            <input type="number" step="0.0001" min="0" class="form-control"
+                                                id="rs-point-redemption-value">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Min Points Redemption</label>
+                                            <input type="number" step="1" min="0" class="form-control"
+                                                id="rs-min-points-redemption">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Max Points per Transaction</label>
+                                            <input type="number" step="1" min="1" class="form-control"
+                                                id="rs-max-points-per-transaction" placeholder="No cap">
+                                            <div class="form-text">Blank = no cap.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Promotional Bonus Points <span
+                                                    class="text-secondary fw-normal">(per qualifying txn, while
+                                                    active)</span></label>
+                                            <input type="number" step="1" min="0" class="form-control"
+                                                id="rs-promotional-bonus-points">
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-3">
+                                    <div class="mb-2">
+                                        <div class="fw-semibold">Eligibility <span
+                                                class="text-secondary fw-normal">(optional -- leave blank for
+                                                everything to qualify)</span></div>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Branches</label>
+                                            <select multiple class="form-select" id="rs-eligible-branches"
+                                                size="6"></select>
+                                            <div class="form-text">Nothing selected = every branch qualifies.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Services</label>
+                                            <select multiple class="form-select" id="rs-eligible-services"
+                                                size="6"></select>
+                                            <div class="form-text">Nothing selected = every service qualifies.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Products</label>
+                                            <select multiple class="form-select" id="rs-eligible-products"
+                                                size="6"></select>
+                                            <div class="form-text">Nothing selected = every product qualifies.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-end">
+                                    <button type="submit" class="btn btn-primary" id="btn-save-reward-settings">Save
+                                        Reward Settings</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Birthday Reward Settings</h3>
+                            </div>
+                            <form id="form-birthday-settings">
+                                <div class="card-body">
+                                    <div id="birthday-settings-alert" class="alert d-none mb-3" role="alert"></div>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Reward Type</label>
+                                            <select class="form-select" id="bs-reward-type">
+                                                <option value="CASHBACK">Cashback</option>
+                                                <option value="POINTS">Points</option>
+                                                <option value="DISCOUNT_PERCENTAGE">Discount %</option>
+                                                <option value="FREE_SERVICE">Free Service</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Reward Value</label>
+                                            <input type="number" step="0.01" min="0" class="form-control"
+                                                id="bs-reward-value">
+                                            <div class="form-text" id="bs-reward-value-hint">Naira, points, or % --
+                                                depends on the reward type above.</div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Validity (days)</label>
+                                            <input type="number" step="1" min="1" class="form-control"
+                                                id="bs-validity-days">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Eligibility Note <span
+                                                    class="text-secondary fw-normal">(free text, shown to admins
+                                                    only)</span></label>
+                                            <textarea class="form-control" id="bs-eligibility" rows="2"
+                                                placeholder="e.g. Every customer with a birthday on file"></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Eligible Branches</label>
+                                            <select multiple class="form-select" id="bs-eligible-branches"
+                                                size="5"></select>
+                                            <div class="form-text">Nothing selected = every branch qualifies.</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Eligible Services <span
+                                                    class="text-secondary fw-normal">(for DISCOUNT_PERCENTAGE /
+                                                    FREE_SERVICE)</span></label>
+                                            <select multiple class="form-select" id="bs-eligible-services"
+                                                size="5"></select>
+                                            <div class="form-text">Nothing selected = every service qualifies.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-end">
+                                    <button type="submit" class="btn btn-primary"
+                                        id="btn-save-birthday-settings">Save Birthday Settings</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="text-secondary small mt-2">CASHBACK/POINTS credit the customer's Wallet
+                            automatically on their birthday (daily 1am cron). DISCOUNT_PERCENTAGE/FREE_SERVICE are
+                            recorded as a redeemable ledger entry for a Front Desk/Cashier to honor at checkout --
+                            automatic redemption of those two types at the point of sale is out of scope for this
+                            phase.</div>
+                    </div>
+                    <!-- ========== END SETTINGS SECTION ========== -->
+
+                    <!-- ========== CUSTOMER LOOKUP SECTION ========== -->
+                    <div id="section-lookup" class="d-none">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <label class="form-label">Find a customer</label>
+                                <div class="typeahead-wrap" style="max-width: 480px;">
+                                    <input type="text" class="form-control" id="lookup-search"
+                                        placeholder="Search by name or email…" autocomplete="off">
+                                    <div class="typeahead-results" id="lookup-results"></div>
+                                    <div class="typeahead-selected mt-2" id="lookup-selected">
+                                        <span id="lookup-selected-label"></span>
+                                        <button type="button" class="btn btn-sm btn-ghost-secondary"
+                                            id="lookup-clear">Change</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="lookup-empty" class="text-secondary text-center py-5">Search for a customer above to
+                            view their reward profile, balances, and transaction history.</div>
+
+                        <div id="lookup-loading" class="text-center py-5 d-none">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+
+                        <div id="lookup-profile" class="d-none">
+                            <div id="lookup-error" class="alert alert-danger d-none" role="alert"></div>
+
+                            <div class="row row-deck row-cards mb-3">
+                                <div class="col-sm-6 col-xl-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Cashback Balance</div>
+                                            <div class="h2 mb-0" id="lookup-cashback">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Loyalty Points</div>
+                                            <div class="h2 mb-0" id="lookup-points">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Current Tier</div>
+                                            <div class="h3 mb-0" id="lookup-tier">—</div>
+                                            <div class="text-secondary small mt-1" id="lookup-period-spend"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Next Tier</div>
+                                            <div class="h3 mb-0" id="lookup-next-tier">—</div>
+                                            <div class="text-secondary small mt-1" id="lookup-next-tier-progress">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-3" id="lookup-expiring-card" style="display:none">
+                                <div class="card-header">
+                                    <h3 class="card-title">Expiring Within 30 Days</h3>
+                                </div>
+                                <div class="card-body" id="lookup-expiring-body"></div>
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="card-title">Actions</h3>
+                                    <div class="card-actions d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-outline-primary"
+                                            id="btn-lookup-transfer">Transfer Cashback</button>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            id="btn-lookup-redeem">Redeem Points</button>
+                                        <button type="button" class="btn btn-outline-warning"
+                                            id="btn-lookup-adjust">Manual Adjustment</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Transaction History</h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table card-table table-vcenter">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Type</th>
+                                                <th>Reward</th>
+                                                <th class="text-end">Amount</th>
+                                                <th class="text-end">Balance After</th>
+                                                <th>Status</th>
+                                                <th>Reason</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="lookup-tx-tbody">
+                                            <tr>
+                                                <td colspan="7" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <div class="text-secondary small" id="lookup-tx-summary">—</div>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            id="btn-lookup-tx-prev">Prev</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            id="btn-lookup-tx-next">Next</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ========== END CUSTOMER LOOKUP SECTION ========== -->
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center flex-row-reverse">
+                        <div class="col-lg-auto ms-lg-auto">
+                        </div>
+                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">
+                                    Copyright &copy; 2026 Hairlux. All rights reserved.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/users.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/services.js"></script>
+    <script src="assets/js/api-utils/inventory-products.js"></script>
+    <script src="assets/js/api-utils/rewards.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- ===== TIER MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-tier" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tier-modal-title">Add Tier</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-tier" novalidate>
+                    <div class="modal-body">
+                        <div id="tier-alert" class="alert alert-danger d-none mb-3" role="alert"></div>
+                        <input type="hidden" id="tier-id">
+
+                        <div class="mb-3">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="tier-name" required>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Min Spend <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="tier-min-spend"
+                                    required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Max Spend</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="tier-max-spend"
+                                    placeholder="No cap">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Cashback % <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="tier-cashback-pct"
+                                    required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Points Multiplier</label>
+                                <input type="number" step="0.01" min="0" class="form-control"
+                                    id="tier-points-multiplier" placeholder="1">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Evaluation Period (days)</label>
+                                <input type="number" step="1" min="1" class="form-control" id="tier-eval-period"
+                                    placeholder="90">
+                                <div class="form-text">Rolling window this tier's spend is judged over.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Display Order</label>
+                                <input type="number" step="1" min="0" class="form-control" id="tier-order"
+                                    placeholder="0">
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="tier-active" checked>
+                                    <label class="form-check-label" for="tier-active">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" class="btn w-100" data-bs-dismiss="modal">Cancel</a>
+                        <button type="submit" class="btn btn-primary w-100" id="btn-save-tier">Save Tier</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END TIER MODAL ===== -->
+
+    <!-- ===== TRANSFER CASHBACK MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-transfer" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Transfer Cashback to Wallet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-transfer" novalidate>
+                    <div class="modal-body">
+                        <div id="transfer-alert" class="alert alert-danger d-none mb-3" role="alert"></div>
+                        <div class="mb-1 text-secondary small">Customer: <span id="transfer-customer-label"
+                                class="fw-semibold"></span></div>
+                        <div class="mb-3 text-secondary small">Available cashback: <span
+                                id="transfer-available"></span></div>
+                        <label class="form-label">Amount <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" min="0.01" class="form-control" id="transfer-amount"
+                            required>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" class="btn w-100" data-bs-dismiss="modal">Cancel</a>
+                        <button type="submit" class="btn btn-primary w-100" id="btn-confirm-transfer">Transfer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END TRANSFER CASHBACK MODAL ===== -->
+
+    <!-- ===== REDEEM POINTS MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-redeem" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Redeem Points to Wallet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-redeem" novalidate>
+                    <div class="modal-body">
+                        <div id="redeem-alert" class="alert alert-danger d-none mb-3" role="alert"></div>
+                        <div class="mb-1 text-secondary small">Customer: <span id="redeem-customer-label"
+                                class="fw-semibold"></span></div>
+                        <div class="mb-3 text-secondary small">Available points: <span
+                                id="redeem-available"></span></div>
+                        <label class="form-label">Points <span class="text-danger">*</span></label>
+                        <input type="number" step="1" min="1" class="form-control" id="redeem-points" required>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" class="btn w-100" data-bs-dismiss="modal">Cancel</a>
+                        <button type="submit" class="btn btn-primary w-100" id="btn-confirm-redeem">Redeem</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END REDEEM POINTS MODAL ===== -->
+
+    <!-- ===== MANUAL ADJUSTMENT MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-adjust" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manual Adjustment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-adjust" novalidate>
+                    <div class="modal-body">
+                        <div id="adjust-alert" class="alert alert-danger d-none mb-3" role="alert"></div>
+                        <div class="mb-3 text-secondary small">Customer: <span id="adjust-customer-label"
+                                class="fw-semibold"></span></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Balance <span class="text-danger">*</span></label>
+                                <select class="form-select" id="adjust-reward-type" required>
+                                    <option value="CASHBACK">Cashback</option>
+                                    <option value="POINTS">Points</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" class="form-control" id="adjust-amount" required>
+                                <div class="form-text">Positive to add, negative to deduct.</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Reason <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="adjust-reason" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Reference <span
+                                        class="text-secondary fw-normal">(optional)</span></label>
+                                <input type="text" class="form-control" id="adjust-reference">
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-3">Fully audited -- the authorizing staff member and this
+                            entry itself are recorded server-side and cannot be forged by the client.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="#" class="btn w-100" data-bs-dismiss="modal">Cancel</a>
+                        <button type="submit" class="btn btn-warning w-100" id="btn-confirm-adjust">Save
+                            Adjustment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MANUAL ADJUSTMENT MODAL ===== -->
+
+    <script>
+        // ── RBAC guard (synchronous, from cached permissions) ──────────────────
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('rewards:read');
+
+        // ── State ────────────────────────────────────────────────────────────
+        var tiersData = [];
+        var loadedSections = { dashboard: false, tiers: false, settings: false, lookup: false };
+        var branchesCache = null, servicesCache = null, productsCache = null;
+        var typeaheadTimer = null;
+        var selectedLookupUserId = null;
+        var selectedLookupLabel = "";
+        var lookupProfileData = null;
+        var lookupTxPage = 1;
+        var lookupTxLimit = 20;
+        var lookupTxTotal = 0;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // ── RBAC: re-hydrate from server, apply guard + hide unauthorized UI ──
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuard('rewards:read');
+                RBAC.applyNavVisibility();
+                if (!RBAC.can('rewards:manage')) {
+                    var b1 = document.getElementById('btn-add-tier'); if (b1) b1.style.display = 'none';
+                    var b2 = document.getElementById('btn-save-reward-settings'); if (b2) b2.style.display = 'none';
+                    var b3 = document.getElementById('btn-save-birthday-settings'); if (b3) b3.style.display = 'none';
+                }
+                if (!RBAC.can('rewards:apply')) {
+                    var b4 = document.getElementById('btn-lookup-transfer'); if (b4) b4.style.display = 'none';
+                    var b5 = document.getElementById('btn-lookup-redeem'); if (b5) b5.style.display = 'none';
+                }
+                if (!RBAC.can('rewards:adjust')) {
+                    var b6 = document.getElementById('btn-lookup-adjust'); if (b6) b6.style.display = 'none';
+                }
+            });
+
+            loadBranchFilterOptions();
+            loadDashboard();
+
+            // ── Section tabs ─────────────────────────────────────────────────
+            document.getElementById("section-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-section]");
+                if (!tab) return;
+                document.querySelectorAll("#section-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                var section = tab.dataset.section;
+                document.getElementById("section-dashboard").classList.toggle("d-none", section !== "dashboard");
+                document.getElementById("section-tiers").classList.toggle("d-none", section !== "tiers");
+                document.getElementById("section-settings").classList.toggle("d-none", section !== "settings");
+                document.getElementById("section-lookup").classList.toggle("d-none", section !== "lookup");
+                if (section === "tiers" && !loadedSections.tiers) loadTiers();
+                if (section === "settings" && !loadedSections.settings) loadSettingsTab();
+            });
+
+            // ── Global refresh (re-fetches the active tab) ─────────────────────
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                var active = (document.querySelector("#section-tabs .nav-link.active") || {}).dataset.section || "dashboard";
+                if (active === "dashboard") loadDashboard();
+                if (active === "tiers") loadTiers();
+                if (active === "settings") loadSettingsTab(true);
+                if (active === "lookup" && selectedLookupUserId) loadLookupProfile(selectedLookupUserId);
+            });
+
+            document.getElementById("btn-dash-apply").addEventListener("click", loadDashboard);
+
+            // ── Tiers: add / edit / delete ──────────────────────────────────────
+            document.getElementById("btn-add-tier").addEventListener("click", function () {
+                openTierModal(null);
+            });
+
+            document.getElementById("tiers-tbody").addEventListener("click", function (e) {
+                var editBtn = e.target.closest(".btn-edit-tier");
+                var deleteBtn = e.target.closest(".btn-delete-tier");
+                if (editBtn) {
+                    var tier = tiersData.find(function (t) { return t.id === editBtn.dataset.id; });
+                    if (tier) openTierModal(tier);
+                    return;
+                }
+                if (deleteBtn) {
+                    if (!confirm('Remove the "' + deleteBtn.dataset.name + '" tier? If any customer wallet still references it, it will be deactivated instead of deleted.')) return;
+                    Rewards.deleteTier(deleteBtn.dataset.id).then(function () {
+                        loadTiers();
+                    }).catch(function (err) {
+                        alert(err.message || "Failed to remove tier.");
+                    });
+                    return;
+                }
+            });
+
+            document.getElementById("form-tier").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("tier-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-tier");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var maxSpendVal = document.getElementById("tier-max-spend").value;
+                    var payload = {
+                        name: document.getElementById("tier-name").value.trim(),
+                        minSpend: Number(document.getElementById("tier-min-spend").value || 0),
+                        maxSpend: maxSpendVal !== "" ? Number(maxSpendVal) : undefined,
+                        cashbackPercentage: Number(document.getElementById("tier-cashback-pct").value || 0),
+                        pointsMultiplier: Number(document.getElementById("tier-points-multiplier").value || 1),
+                        evaluationPeriodDays: Number(document.getElementById("tier-eval-period").value || 90),
+                        order: Number(document.getElementById("tier-order").value || 0),
+                        active: document.getElementById("tier-active").checked,
+                    };
+                    var id = document.getElementById("tier-id").value;
+                    if (id) await Rewards.updateTier(id, payload);
+                    else await Rewards.createTier(payload);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-tier")).hide();
+                    loadTiers();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save tier.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Tier";
+                }
+            });
+
+            // ── Settings: save handlers ──────────────────────────────────────────
+            document.getElementById("form-reward-settings").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("reward-settings-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-reward-settings");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var numOrNull = function (id) {
+                        var v = document.getElementById(id).value;
+                        return v === "" ? null : Number(v);
+                    };
+                    var payload = {
+                        cashbackPercentage: Number(document.getElementById("rs-cashback-percentage").value || 0),
+                        pointsPerNaira: Number(document.getElementById("rs-points-per-naira").value || 0),
+                        minQualifyingTransaction: Number(document.getElementById("rs-min-qualifying").value || 0),
+                        maxCashback: numOrNull("rs-max-cashback"),
+                        redemptionLimit: numOrNull("rs-redemption-limit"),
+                        transferLimit: numOrNull("rs-transfer-limit"),
+                        rewardExpiryDays: numOrNull("rs-reward-expiry-days"),
+                        pointRedemptionValue: Number(document.getElementById("rs-point-redemption-value").value || 0),
+                        minPointsRedemption: Number(document.getElementById("rs-min-points-redemption").value || 0),
+                        maxPointsPerTransaction: numOrNull("rs-max-points-per-transaction"),
+                        promotionalBonusPoints: Number(document.getElementById("rs-promotional-bonus-points").value || 0),
+                        eligibleBranchIds: getSelectedValues("rs-eligible-branches"),
+                        eligibleServiceIds: getSelectedValues("rs-eligible-services"),
+                        eligibleProductIds: getSelectedValues("rs-eligible-products"),
+                    };
+                    await Rewards.updateSettings(payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Reward settings saved -- takes effect immediately, no deployment required.";
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save reward settings.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Reward Settings";
+                }
+            });
+
+            document.getElementById("form-birthday-settings").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("birthday-settings-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-birthday-settings");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var payload = {
+                        rewardType: document.getElementById("bs-reward-type").value,
+                        rewardValue: Number(document.getElementById("bs-reward-value").value || 0),
+                        eligibility: document.getElementById("bs-eligibility").value.trim() || undefined,
+                        validityDays: Number(document.getElementById("bs-validity-days").value || 30),
+                        eligibleBranchIds: getSelectedValues("bs-eligible-branches"),
+                        eligibleServiceIds: getSelectedValues("bs-eligible-services"),
+                    };
+                    await Rewards.updateBirthdaySettings(payload);
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Birthday reward settings saved.";
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save birthday settings.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Birthday Settings";
+                }
+            });
+
+            document.getElementById("bs-reward-type").addEventListener("change", function () {
+                var hint = document.getElementById("bs-reward-value-hint");
+                var map = {
+                    CASHBACK: "Naira value credited to the customer's Wallet.",
+                    POINTS: "Loyalty points credited to the customer's account.",
+                    DISCOUNT_PERCENTAGE: "Percentage off, recorded as a redeemable ledger entry.",
+                    FREE_SERVICE: "Value of the free service, recorded as a redeemable ledger entry.",
+                };
+                hint.textContent = map[this.value] || "";
+            });
+
+            // ── Customer Lookup: typeahead ────────────────────────────────────────
+            document.getElementById("lookup-search").addEventListener("input", function () {
+                var q = this.value.trim();
+                clearTimeout(typeaheadTimer);
+                var resultsEl = document.getElementById("lookup-results");
+                if (q.length < 2) { resultsEl.style.display = "none"; resultsEl.innerHTML = ""; return; }
+                typeaheadTimer = setTimeout(async function () {
+                    try {
+                        var res = await Users.getAll({ search: q, limit: 8 });
+                        var list = (res && res.data) || [];
+                        if (!list.length) {
+                            resultsEl.innerHTML = '<div class="item text-secondary">No users found</div>';
+                            resultsEl.style.display = "block";
+                            return;
+                        }
+                        resultsEl.innerHTML = list.map(function (u) {
+                            var name = [u.firstName, u.lastName].filter(Boolean).join(" ") || "(no name)";
+                            return '<div class="item" data-id="' + u.id + '" data-label="' + (name + " — " + (u.email || "")).replace(/"/g, "&quot;") + '">' +
+                                '<div class="fw-semibold">' + name + '</div>' +
+                                '<div class="text-secondary small">' + (u.email || "") + '</div></div>';
+                        }).join("");
+                        resultsEl.style.display = "block";
+                    } catch (err) {
+                        resultsEl.innerHTML = '<div class="item text-danger">' + err.message + '</div>';
+                        resultsEl.style.display = "block";
+                    }
+                }, 300);
+            });
+
+            document.getElementById("lookup-results").addEventListener("click", function (e) {
+                var item = e.target.closest(".item[data-id]");
+                if (!item) return;
+                selectedLookupUserId = item.dataset.id;
+                selectedLookupLabel = item.dataset.label;
+                document.getElementById("lookup-selected-label").textContent = selectedLookupLabel;
+                document.getElementById("lookup-selected").style.display = "flex";
+                document.getElementById("lookup-search").style.display = "none";
+                document.getElementById("lookup-results").style.display = "none";
+                document.getElementById("lookup-results").innerHTML = "";
+                lookupTxPage = 1;
+                loadLookupProfile(selectedLookupUserId);
+            });
+
+            document.getElementById("lookup-clear").addEventListener("click", function () {
+                selectedLookupUserId = null;
+                selectedLookupLabel = "";
+                document.getElementById("lookup-selected").style.display = "none";
+                document.getElementById("lookup-search").style.display = "block";
+                document.getElementById("lookup-search").value = "";
+                document.getElementById("lookup-profile").classList.add("d-none");
+                document.getElementById("lookup-empty").classList.remove("d-none");
+            });
+
+            // ── Customer Lookup: actions ─────────────────────────────────────────
+            document.getElementById("btn-lookup-transfer").addEventListener("click", function () {
+                if (!selectedLookupUserId || !lookupProfileData) return;
+                document.getElementById("transfer-alert").className = "alert alert-danger d-none mb-3";
+                document.getElementById("transfer-customer-label").textContent = selectedLookupLabel;
+                document.getElementById("transfer-available").textContent = Rewards.formatMoney(lookupProfileData.cashbackBalance);
+                document.getElementById("transfer-amount").value = "";
+                new bootstrap.Modal(document.getElementById("modal-transfer")).show();
+            });
+
+            document.getElementById("form-transfer").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("transfer-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-confirm-transfer");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Transferring…';
+                try {
+                    var amount = Number(document.getElementById("transfer-amount").value || 0);
+                    await Rewards.transferCashback(selectedLookupUserId, amount);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-transfer")).hide();
+                    loadLookupProfile(selectedLookupUserId);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to transfer cashback.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Transfer";
+                }
+            });
+
+            document.getElementById("btn-lookup-redeem").addEventListener("click", function () {
+                if (!selectedLookupUserId || !lookupProfileData) return;
+                document.getElementById("redeem-alert").className = "alert alert-danger d-none mb-3";
+                document.getElementById("redeem-customer-label").textContent = selectedLookupLabel;
+                document.getElementById("redeem-available").textContent = Rewards.formatNumber(lookupProfileData.loyaltyPoints);
+                document.getElementById("redeem-points").value = "";
+                new bootstrap.Modal(document.getElementById("modal-redeem")).show();
+            });
+
+            document.getElementById("form-redeem").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("redeem-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-confirm-redeem");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Redeeming…';
+                try {
+                    var points = Number(document.getElementById("redeem-points").value || 0);
+                    await Rewards.redeemPoints(selectedLookupUserId, points);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-redeem")).hide();
+                    loadLookupProfile(selectedLookupUserId);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to redeem points.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Redeem";
+                }
+            });
+
+            document.getElementById("btn-lookup-adjust").addEventListener("click", function () {
+                if (!selectedLookupUserId) return;
+                document.getElementById("adjust-alert").className = "alert alert-danger d-none mb-3";
+                document.getElementById("adjust-customer-label").textContent = selectedLookupLabel;
+                document.getElementById("adjust-reward-type").value = "CASHBACK";
+                document.getElementById("adjust-amount").value = "";
+                document.getElementById("adjust-reason").value = "";
+                document.getElementById("adjust-reference").value = "";
+                new bootstrap.Modal(document.getElementById("modal-adjust")).show();
+            });
+
+            document.getElementById("form-adjust").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("adjust-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-confirm-adjust");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var payload = {
+                        userId: selectedLookupUserId,
+                        rewardType: document.getElementById("adjust-reward-type").value,
+                        amount: Number(document.getElementById("adjust-amount").value || 0),
+                        reason: document.getElementById("adjust-reason").value.trim(),
+                        reference: document.getElementById("adjust-reference").value.trim() || undefined,
+                    };
+                    await Rewards.adjust(payload);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
+                    loadLookupProfile(selectedLookupUserId);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save adjustment.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Adjustment";
+                }
+            });
+
+            document.getElementById("btn-lookup-tx-prev").addEventListener("click", function () {
+                if (lookupTxPage <= 1) return;
+                lookupTxPage -= 1;
+                loadLookupTransactions(selectedLookupUserId);
+            });
+            document.getElementById("btn-lookup-tx-next").addEventListener("click", function () {
+                if (lookupTxPage * lookupTxLimit >= lookupTxTotal) return;
+                lookupTxPage += 1;
+                loadLookupTransactions(selectedLookupUserId);
+            });
+        });
+
+        // ── Helpers ──────────────────────────────────────────────────────────────
+
+        function getSelectedValues(selectId) {
+            var el = document.getElementById(selectId);
+            return Array.prototype.slice.call(el.selectedOptions).map(function (o) { return o.value; });
+        }
+
+        function setSelectedValues(selectId, ids) {
+            var el = document.getElementById(selectId);
+            var set = new Set(ids || []);
+            Array.prototype.forEach.call(el.options, function (o) { o.selected = set.has(o.value); });
+        }
+
+        function populateOptions(selectId, items, labelFn) {
+            var el = document.getElementById(selectId);
+            el.innerHTML = items.map(function (item) {
+                return '<option value="' + item.id + '">' + labelFn(item) + '</option>';
+            }).join("");
+        }
+
+        async function loadBranchFilterOptions() {
+            try {
+                if (!branchesCache) branchesCache = await Branches.getBranches();
+                var sel = document.getElementById("dash-branch");
+                branchesCache.forEach(function (b) {
+                    var opt = document.createElement("option");
+                    opt.value = b.id;
+                    opt.textContent = b.name;
+                    sel.appendChild(opt);
+                });
+            } catch (err) { /* non-fatal -- dashboard still works without the branch filter */ }
+        }
+
+        /** Per-KPI-card permission redaction, same pattern as
+         * AdminBusinessIntelligenceController.applyKpiCardPermissions /
+         * business-intelligence.html's applyKpiRestriction (Build Roadmap
+         * Phase 5's "every new KPI has its own permission" requirement). */
+        function applyKpiRestriction(cardKey, fieldValue) {
+            var card = document.querySelector('[data-kpi-card="' + cardKey + '"]');
+            if (!card) return false;
+            var isRestricted = !!(fieldValue && fieldValue.restricted);
+            var overlay = card.querySelector('.kpi-restricted-overlay');
+            if (isRestricted) {
+                card.classList.add('kpi-restricted');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.className = 'kpi-restricted-overlay d-flex flex-column align-items-center justify-content-center text-center p-3';
+                    overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.94);border-radius:inherit;z-index:2;';
+                    overlay.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary mb-1"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M8 11v-4a4 4 0 1 1 8 0v4" /></svg><div class="small text-secondary">' + (fieldValue.reason || 'Restricted') + '</div>';
+                    card.style.position = 'relative';
+                    card.appendChild(overlay);
+                }
+            } else {
+                card.classList.remove('kpi-restricted');
+                if (overlay) overlay.remove();
+            }
+            return isRestricted;
+        }
+
+        // ── Dashboard ────────────────────────────────────────────────────────────
+
+        async function loadDashboard() {
+            var errorEl = document.getElementById("dash-error");
+            var loadingEl = document.getElementById("dash-loading");
+            var contentEl = document.getElementById("dash-content");
+            errorEl.className = "alert alert-danger d-none";
+            loadingEl.classList.remove("d-none");
+            contentEl.classList.add("d-none");
+            try {
+                var filters = {
+                    from: document.getElementById("dash-from").value || undefined,
+                    to: document.getElementById("dash-to").value || undefined,
+                    branchId: document.getElementById("dash-branch").value || undefined,
+                };
+                var data = await Rewards.getReports(filters);
+                renderDashboard(data);
+                loadedSections.dashboard = true;
+                contentEl.classList.remove("d-none");
+            } catch (err) {
+                errorEl.className = "alert alert-danger";
+                errorEl.textContent = err.message || "Failed to load the Rewards dashboard.";
+            } finally {
+                loadingEl.classList.add("d-none");
+            }
+        }
+
+        function renderDashboard(data) {
+            var r1 = applyKpiRestriction('cashback-issued', data.cashbackIssued);
+            document.getElementById('dash-cashback-issued').textContent = r1 ? '—' : Rewards.formatMoney(data.cashbackIssued);
+
+            var r2 = applyKpiRestriction('cashback-transferred', data.cashbackTransferred);
+            document.getElementById('dash-cashback-transferred').textContent = r2 ? '—' : Rewards.formatMoney(data.cashbackTransferred);
+
+            var r3 = applyKpiRestriction('points-issued', data.pointsIssued);
+            document.getElementById('dash-points-issued').textContent = r3 ? '—' : Rewards.formatNumber(data.pointsIssued);
+
+            var r4 = applyKpiRestriction('active-members', data.activeMembers);
+            document.getElementById('dash-active-members').textContent = r4 ? '—' : Rewards.formatNumber(data.activeMembers);
+
+            var r5 = applyKpiRestriction('revenue', data.rewardGeneratedRevenue);
+            document.getElementById('dash-revenue').textContent = r5 ? '—' : Rewards.formatMoney(data.rewardGeneratedRevenue);
+
+            var r6 = applyKpiRestriction('referrals', data.referralRewards);
+            if (r6) {
+                document.getElementById('dash-referrals-count').textContent = '—';
+                document.getElementById('dash-referrals-total').textContent = '';
+            } else {
+                var ref = data.referralRewards || { count: 0, totalPaid: 0 };
+                document.getElementById('dash-referrals-count').textContent = Rewards.formatNumber(ref.count);
+                document.getElementById('dash-referrals-total').textContent = Rewards.formatMoney(ref.totalPaid) + ' paid out';
+            }
+
+            var r7 = applyKpiRestriction('customers-by-tier', data.customersByTier);
+            var tbody = document.getElementById('dash-tier-breakdown-tbody');
+            if (r7) {
+                tbody.innerHTML = '';
+            } else {
+                var rows = data.customersByTier || [];
+                tbody.innerHTML = !rows.length
+                    ? '<tr><td colspan="2" class="text-center text-secondary py-3">No customer wallets yet.</td></tr>'
+                    : rows.map(function (row) {
+                        return '<tr><td>' + row.tierName + '</td><td class="text-end">' + Rewards.formatNumber(row.customerCount) + '</td></tr>';
+                    }).join('');
+            }
+        }
+
+        // ── Tiers ────────────────────────────────────────────────────────────────
+
+        async function loadTiers() {
+            var tbody = document.getElementById("tiers-tbody");
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                tiersData = await Rewards.getTiers();
+                loadedSections.tiers = true;
+                renderTiers();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-3">' + err.message + '</td></tr>';
+            }
+        }
+
+        function renderTiers() {
+            var tbody = document.getElementById("tiers-tbody");
+            if (!tiersData.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-4">No tiers yet. Add one to start rewarding higher-spend customers with better rates.</td></tr>';
+                return;
+            }
+            var canManage = RBAC.can('rewards:manage');
+            tbody.innerHTML = tiersData.map(function (t) {
+                var actions = canManage
+                    ? '<button class="btn btn-sm btn-outline-secondary btn-edit-tier" data-id="' + t.id + '">Edit</button> ' +
+                      '<button class="btn btn-sm btn-outline-danger btn-delete-tier" data-id="' + t.id + '" data-name="' + t.name.replace(/"/g, "&quot;") + '">Remove</button>'
+                    : '';
+                return '<tr class="tier-row">' +
+                    '<td>' + t.order + '</td>' +
+                    '<td class="fw-semibold">' + t.name + '</td>' +
+                    '<td>' + Rewards.formatMoney(t.minSpend) + '</td>' +
+                    '<td>' + (t.maxSpend != null ? Rewards.formatMoney(t.maxSpend) : '—') + '</td>' +
+                    '<td>' + Number(t.cashbackPercentage) + '%</td>' +
+                    '<td>' + Number(t.pointsMultiplier) + 'x</td>' +
+                    '<td>' + t.evaluationPeriodDays + ' days</td>' +
+                    '<td>' + (t.active ? '<span class="badge bg-success-lt text-success">Active</span>' : '<span class="badge bg-secondary-lt text-secondary">Inactive</span>') + '</td>' +
+                    '<td class="text-end">' + actions + '</td>' +
+                    '</tr>';
+            }).join("");
+        }
+
+        function openTierModal(tier) {
+            document.getElementById("tier-alert").className = "alert alert-danger d-none mb-3";
+            document.getElementById("form-tier").reset();
+            document.getElementById("tier-modal-title").textContent = tier ? "Edit Tier" : "Add Tier";
+            document.getElementById("tier-id").value = tier ? tier.id : "";
+            document.getElementById("tier-name").value = tier ? tier.name : "";
+            document.getElementById("tier-min-spend").value = tier ? Number(tier.minSpend) : "";
+            document.getElementById("tier-max-spend").value = tier && tier.maxSpend != null ? Number(tier.maxSpend) : "";
+            document.getElementById("tier-cashback-pct").value = tier ? Number(tier.cashbackPercentage) : "";
+            document.getElementById("tier-points-multiplier").value = tier ? Number(tier.pointsMultiplier) : "";
+            document.getElementById("tier-eval-period").value = tier ? tier.evaluationPeriodDays : "";
+            document.getElementById("tier-order").value = tier ? tier.order : "";
+            document.getElementById("tier-active").checked = tier ? !!tier.active : true;
+            new bootstrap.Modal(document.getElementById("modal-tier")).show();
+        }
+
+        // ── Settings ─────────────────────────────────────────────────────────────
+
+        async function loadSettingsTab(forceReload) {
+            try {
+                if (!branchesCache || forceReload) branchesCache = await Branches.getBranches();
+                if (!servicesCache || forceReload) servicesCache = await Services.getAll();
+                if (!productsCache || forceReload) productsCache = await InventoryProducts.getAll();
+
+                populateOptions("rs-eligible-branches", branchesCache, function (b) { return b.name; });
+                populateOptions("rs-eligible-services", servicesCache, function (s) { return s.name; });
+                populateOptions("rs-eligible-products", productsCache, function (p) { return p.name; });
+                populateOptions("bs-eligible-branches", branchesCache, function (b) { return b.name; });
+                populateOptions("bs-eligible-services", servicesCache, function (s) { return s.name; });
+
+                var settings = await Rewards.getSettings();
+                document.getElementById("rs-cashback-percentage").value = Number(settings.cashbackPercentage);
+                document.getElementById("rs-points-per-naira").value = Number(settings.pointsPerNaira);
+                document.getElementById("rs-min-qualifying").value = Number(settings.minQualifyingTransaction);
+                document.getElementById("rs-max-cashback").value = settings.maxCashback != null ? Number(settings.maxCashback) : "";
+                document.getElementById("rs-redemption-limit").value = settings.redemptionLimit != null ? Number(settings.redemptionLimit) : "";
+                document.getElementById("rs-transfer-limit").value = settings.transferLimit != null ? Number(settings.transferLimit) : "";
+                document.getElementById("rs-reward-expiry-days").value = settings.rewardExpiryDays != null ? settings.rewardExpiryDays : "";
+                document.getElementById("rs-point-redemption-value").value = Number(settings.pointRedemptionValue);
+                document.getElementById("rs-min-points-redemption").value = settings.minPointsRedemption;
+                document.getElementById("rs-max-points-per-transaction").value = settings.maxPointsPerTransaction != null ? settings.maxPointsPerTransaction : "";
+                document.getElementById("rs-promotional-bonus-points").value = settings.promotionalBonusPoints;
+                setSelectedValues("rs-eligible-branches", settings.eligibleBranchIds);
+                setSelectedValues("rs-eligible-services", settings.eligibleServiceIds);
+                setSelectedValues("rs-eligible-products", settings.eligibleProductIds);
+
+                var birthday = await Rewards.getBirthdaySettings();
+                document.getElementById("bs-reward-type").value = birthday.rewardType;
+                document.getElementById("bs-reward-type").dispatchEvent(new Event("change"));
+                document.getElementById("bs-reward-value").value = Number(birthday.rewardValue);
+                document.getElementById("bs-eligibility").value = birthday.eligibility || "";
+                document.getElementById("bs-validity-days").value = birthday.validityDays;
+                setSelectedValues("bs-eligible-branches", birthday.eligibleBranchIds);
+                setSelectedValues("bs-eligible-services", birthday.eligibleServiceIds);
+
+                loadedSections.settings = true;
+            } catch (err) {
+                document.getElementById("reward-settings-alert").className = "alert alert-danger";
+                document.getElementById("reward-settings-alert").textContent = err.message || "Failed to load Rewards Settings.";
+            }
+        }
+
+        // ── Customer Lookup ──────────────────────────────────────────────────────
+
+        async function loadLookupProfile(userId) {
+            document.getElementById("lookup-empty").classList.add("d-none");
+            document.getElementById("lookup-profile").classList.add("d-none");
+            document.getElementById("lookup-loading").classList.remove("d-none");
+            document.getElementById("lookup-error").className = "alert alert-danger d-none";
+            try {
+                lookupProfileData = await Rewards.getCustomerProfile(userId);
+                renderLookupProfile(lookupProfileData);
+                document.getElementById("lookup-profile").classList.remove("d-none");
+                lookupTxPage = 1;
+                await loadLookupTransactions(userId);
+            } catch (err) {
+                document.getElementById("lookup-error").className = "alert alert-danger";
+                document.getElementById("lookup-error").textContent = err.message || "Failed to load this customer's reward profile.";
+                document.getElementById("lookup-profile").classList.remove("d-none");
+            } finally {
+                document.getElementById("lookup-loading").classList.add("d-none");
+            }
+        }
+
+        function renderLookupProfile(profile) {
+            document.getElementById("lookup-cashback").textContent = Rewards.formatMoney(profile.cashbackBalance);
+            document.getElementById("lookup-points").textContent = Rewards.formatNumber(profile.loyaltyPoints);
+            document.getElementById("lookup-tier").textContent = profile.currentTier ? profile.currentTier.name : "No tier yet";
+            document.getElementById("lookup-period-spend").textContent = "Current period spend: " + Rewards.formatMoney(profile.currentPeriodSpend);
+
+            if (profile.nextTier) {
+                document.getElementById("lookup-next-tier").textContent = profile.nextTier.name;
+                document.getElementById("lookup-next-tier-progress").textContent =
+                    profile.spendNeededForNextTier > 0
+                        ? Rewards.formatMoney(profile.spendNeededForNextTier) + " more spend needed"
+                        : "Qualifies now";
+            } else {
+                document.getElementById("lookup-next-tier").textContent = "Top tier";
+                document.getElementById("lookup-next-tier-progress").textContent = "";
+            }
+
+            var expiringCard = document.getElementById("lookup-expiring-card");
+            var expiringBody = document.getElementById("lookup-expiring-body");
+            var expiring = profile.expiringRewards || [];
+            if (!expiring.length) {
+                expiringCard.style.display = "none";
+            } else {
+                expiringCard.style.display = "block";
+                expiringBody.innerHTML = '<ul class="list-unstyled mb-0">' + expiring.map(function (r) {
+                    return '<li class="mb-1">' + Rewards.rewardTypeBadge(r.rewardType) + ' ' +
+                        (r.rewardType === "CASHBACK" ? Rewards.formatMoney(r.amount) : Rewards.formatNumber(r.amount) + ' pts') +
+                        ' — expires ' + Rewards.formatDate(r.expiresAt) + '</li>';
+                }).join('') + '</ul>';
+            }
+        }
+
+        async function loadLookupTransactions(userId) {
+            var tbody = document.getElementById("lookup-tx-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                var result = await Rewards.getCustomerTransactions(userId, lookupTxPage, lookupTxLimit);
+                var items = result.items || [];
+                lookupTxTotal = result.total || 0;
+                tbody.innerHTML = !items.length
+                    ? '<tr><td colspan="7" class="text-center text-secondary py-4">No transactions recorded yet.</td></tr>'
+                    : items.map(function (tx) {
+                        return '<tr>' +
+                            '<td class="text-secondary small">' + Rewards.formatDateTime(tx.createdAt) + '</td>' +
+                            '<td>' + Rewards.transactionTypeBadge(tx.transactionType) + '</td>' +
+                            '<td>' + Rewards.rewardTypeBadge(tx.rewardType) + '</td>' +
+                            '<td class="text-end">' + (tx.rewardType === "CASHBACK" ? Rewards.formatMoney(tx.amount) : Rewards.formatNumber(tx.amount)) + '</td>' +
+                            '<td class="text-end">' + (tx.rewardType === "CASHBACK" ? Rewards.formatMoney(tx.newBalance) : Rewards.formatNumber(tx.newBalance)) + '</td>' +
+                            '<td>' + (tx.status || "—") + '</td>' +
+                            '<td class="text-secondary small">' + (tx.reason || "—") + '</td>' +
+                            '</tr>';
+                    }).join("");
+                var start = lookupTxTotal ? (lookupTxPage - 1) * lookupTxLimit + 1 : 0;
+                var end = Math.min(lookupTxPage * lookupTxLimit, lookupTxTotal);
+                document.getElementById("lookup-tx-summary").textContent = lookupTxTotal
+                    ? "Showing " + start + "–" + end + " of " + lookupTxTotal
+                    : "No transactions";
+                document.getElementById("btn-lookup-tx-prev").disabled = lookupTxPage <= 1;
+                document.getElementById("btn-lookup-tx-next").disabled = lookupTxPage * lookupTxLimit >= lookupTxTotal;
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">' + err.message + '</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>
