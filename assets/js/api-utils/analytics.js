@@ -11,6 +11,17 @@
 const Analytics = (() => {
   // ─── Chart instance cache (so we can destroy before re-rendering) ───────────
   let _revenueChart       = null;
+
+  /**
+   * Resolve Tabler's primary colour to a real hex/rgb value for ApexCharts.
+   * ApexCharts can stroke a CSS color-mix()/var() string, but it can't blend
+   * one into a gradient -- the fill silently fell back to grey/black (a black
+   * block in dark mode). Read the computed value instead.
+   */
+  function primaryColor() {
+    const v = getComputedStyle(document.documentElement).getPropertyValue("--tblr-primary").trim();
+    return v || "#206bc4";
+  }
   let _bookingTrendsChart = null;
 
   // ─── Config ─────────────────────────────────────────────────────────────────
@@ -196,7 +207,7 @@ const Analytics = (() => {
         y: { formatter: (v) => formatCurrency(v) },
       },
       grid: { strokeDashArray: 4, padding: { top: -20, right: 0 } },
-      colors: ["color-mix(in srgb, transparent, var(--tblr-primary) 100%)"],
+      colors: [primaryColor()],
       legend: { show: false },
     });
     _revenueChart.render();
@@ -341,8 +352,8 @@ const Analytics = (() => {
       },
       dataLabels: { enabled: false },
       fill: {
-        colors: ["color-mix(in srgb, transparent, var(--tblr-primary) 16%)"],
         type: "solid",
+        opacity: 0.16,
       },
       stroke: {
         width: 2,
@@ -359,6 +370,9 @@ const Analytics = (() => {
       },
       yaxis: {
         min: 0,
+        // Whole-number ticks only: with small counts (e.g. max 1) the default
+        // fractional ticks rounded to duplicate labels ("0, 1, 1, 1").
+        tickAmount: Math.max(1, Math.min(4, Math.max(...counts, 0))),
         labels: { formatter: (v) => Math.round(v), padding: 4 },
       },
       tooltip: {
@@ -370,7 +384,7 @@ const Analytics = (() => {
         strokeDashArray: 4,
         padding: { top: -20, right: 0, left: -4, bottom: -4 },
       },
-      colors: ["color-mix(in srgb, transparent, var(--tblr-primary) 100%)"],
+      colors: [primaryColor()],
       legend: { show: false },
     });
     _bookingTrendsChart.render();

@@ -26,11 +26,60 @@ var NavConfig = window.NavConfig || (() => {
         // Cohorts shipped; Courses child arrives with Phase 4).
         academy: '<svg ' + SVG_ATTRS + '><path d="M22 9l-10 -4l-10 4l10 4l10 -4v6" /><path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4" /></svg>',
         // Frontend Build Roadmap Phase 3: Rewards & Loyalty (rewards.html).
+        inventory: '<svg ' + SVG_ATTRS + '><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /><path d="M12 12l8 -4.5" /><path d="M12 12l0 9" /><path d="M12 12l-8 -4.5" /></svg>',
+        finance: '<svg ' + SVG_ATTRS + '><path d="M9 14c0 1.657 2.686 3 6 3s6 -1.343 6 -3s-2.686 -3 -6 -3s-6 1.343 -6 3z" /><path d="M9 14v4c0 1.656 2.686 3 6 3s6 -1.344 6 -3v-4" /><path d="M3 6c0 1.072 1.144 2.062 3 2.598s4.144 .536 6 0c1.856 -.536 3 -1.526 3 -2.598c0 -1.072 -1.144 -2.062 -3 -2.598s-4.144 -.536 -6 0c-1.856 .536 -3 1.526 -3 2.598z" /><path d="M3 6v10c0 .888 .772 1.45 2 2" /><path d="M3 11c0 .888 .772 1.45 2 2" /></svg>',
         rewards: '<svg ' + SVG_ATTRS + '><path d="M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" /><path d="M12 8l0 13" /><path d="M19 12l0 7a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1l0 -7" /><path d="M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5" /></svg>',
         apps: '<svg ' + SVG_ATTRS + '><path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M4 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /></svg>',
     };
 
-    /** @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string}>, permission?:object}>} */
+    // Page-access rules shared by pages that were regrouped in the sidebar
+    // reorganisation -- each moved page keeps EXACTLY the rule it had under
+    // its old group, so nobody gains or loses access to any page.
+    const PERM_BOOKINGS = {
+        type: "requireAny",
+        perms: ["bookings:read", "staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations"],
+    };
+    const PERM_OPERATIONS = { // formerly the "Business Operations" group
+        type: "requireAny",
+        perms: ["users:read", "bookings:read", "suppliers:read", "expense_requests:read"],
+    };
+    const PERM_BRANCHES = {
+        type: "requireAny",
+        perms: [
+            "branches:read", "branches:create", "branches:update",
+            "branches:manage_manager", "branches:delete", "branches:manage_services",
+            "branch_finance:read", "branch_finance:reconcile",
+        ],
+    };
+    const PERM_REWARDS = { type: "requireAny", perms: ["rewards:read", "rewards:manage", "rewards:apply", "rewards:adjust"] };
+    const PERM_REFERRALS = { type: "require", perm: "referrals:read" };
+    const PERM_DISCOUNTS = { type: "require", perm: "discounts:read" };
+    const PERM_JOBS = { type: "require", perm: "jobs:read" };
+    const PERM_APPLICATIONS = { type: "requireAny", perms: ["application:read", "application:manage_status", "application:convert"] };
+
+    /** Group is visible if the user can reach ANY of its children. */
+    function anyOf() {
+        const perms = [];
+        Array.prototype.forEach.call(arguments, function (rule) {
+            (rule.type === "require" ? [rule.perm] : rule.perms).forEach(function (p) {
+                if (perms.indexOf(p) === -1) perms.push(p);
+            });
+        });
+        return { type: "requireAny", perms: perms };
+    }
+
+    /**
+     * Sidebar order (Business Intelligence deliberately unchanged, 4th):
+     *   Daily operations  -> Dashboard, Bookings, Payments
+     *   Insight           -> Business Intelligence
+     *   Customers         -> Customers & Marketing
+     *   What we sell      -> Services, Beauticians, Shop
+     *   Back office       -> Inventory & Procurement, Finance, Branches
+     *   Academy
+     *   People            -> Staff, Payroll, Recruitment
+     *   System            -> Site Stats, Audit Trail
+     * @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string,permission?:object}>, permission?:object}>}
+     */
     const ITEMS = [
         {
             id: "dashboard",
@@ -43,18 +92,13 @@ var NavConfig = window.NavConfig || (() => {
             id: "bookings",
             label: "Bookings",
             icon: "bookings",
-            permission: {
-                type: "requireAny",
-                perms: ["bookings:read", "staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations"],
-            },
+            permission: PERM_BOOKINGS,
             children: [
                 { label: "Overview", href: "bookings.html" },
-                { label: "Verify Booking", href: "bookings/index.html" },
-                { label: "Calendar", href: "bookings/calendar.html" },
-                { label: "Salon Bookings", href: "salon-bookings.html" },
                 { label: "Booking Overview", href: "booking-overview.html" },
-                { label: "Inventory Items", href: "inventory-items.html" },
-                { label: "Inventory Log (Legacy)", href: "staff-inventory.html" },
+                { label: "Salon Bookings", href: "salon-bookings.html" },
+                { label: "Calendar", href: "bookings/calendar.html" },
+                { label: "Verify Booking", href: "bookings/index.html" },
             ],
         },
         {
@@ -93,6 +137,99 @@ var NavConfig = window.NavConfig || (() => {
             ],
         },
         {
+            id: "customers",
+            label: "Customers & Marketing",
+            icon: "users",
+            permission: anyOf(PERM_OPERATIONS, PERM_REWARDS, PERM_DISCOUNTS, PERM_REFERRALS),
+            children: [
+                { label: "Users", href: "users.html", permission: PERM_OPERATIONS },
+                { label: "Customer Contacts", href: "customer-contacts.html", permission: PERM_OPERATIONS },
+                { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html", permission: PERM_OPERATIONS },
+                { label: "Rewards & Loyalty", href: "rewards.html", permission: PERM_REWARDS },
+                { label: "Discounts", href: "discounts.html", permission: PERM_DISCOUNTS },
+                { label: "Referrals", href: "referrals.html", permission: PERM_REFERRALS },
+                { label: "Referral Campaigns", href: "referral-campaigns.html", permission: PERM_REFERRALS },
+            ],
+        },
+        {
+            id: "services",
+            label: "Services",
+            icon: "services",
+            href: "services.html",
+            permission: {
+                type: "requireAny",
+                perms: ["services:create", "services:update", "services:toggle_status", "services:delete", "services:manage_categories"],
+            },
+        },
+        {
+            id: "beauticians",
+            label: "Beauticians",
+            icon: "beauticians",
+            permission: {
+                type: "requireAny",
+                perms: ["beauticians:read", "beauticians:manage", "beauticians:review", "beauticians:assign_services", "beauticians:process_payouts"],
+            },
+            children: [
+                { label: "List", href: "beauticians.html#list" },
+                { label: "Profile Reviews", href: "beauticians.html#reviews" },
+                { label: "Services", href: "beauticians.html#services" },
+                { label: "Settings", href: "beauticians.html#settings" },
+                { label: "Payouts", href: "beauticians.html#payouts" },
+            ],
+        },
+        {
+            id: "shop",
+            label: "Shop",
+            icon: "shop",
+            badge: "confirmedOrders",
+            permission: {
+                type: "requireAny",
+                perms: ["shop:manage_products", "shop:manage_categories", "shop:manage_delivery", "shop:update_status"],
+            },
+            children: [
+                { label: "Products", href: "shop.html#products" },
+                { label: "Categories", href: "shop.html#categories" },
+                { label: "Delivery Regions", href: "shop.html#delivery" },
+                { label: "Orders", href: "shop.html#orders" },
+            ],
+        },
+        {
+            id: "inventory",
+            label: "Inventory & Procurement",
+            icon: "inventory",
+            permission: anyOf(PERM_OPERATIONS, PERM_BOOKINGS),
+            children: [
+                { label: "Inventory Products", href: "inventory-products.html", permission: PERM_OPERATIONS },
+                { label: "Inventory Items", href: "inventory-items.html", permission: PERM_BOOKINGS },
+                { label: "Product Sales", href: "product-sales.html", permission: PERM_OPERATIONS },
+                { label: "Purchase Requests", href: "purchase-requests.html", permission: PERM_OPERATIONS },
+                { label: "Purchases", href: "purchases.html", permission: PERM_OPERATIONS },
+                { label: "Suppliers", href: "suppliers.html", permission: PERM_OPERATIONS },
+                { label: "Vendors", href: "vendors.html", permission: PERM_OPERATIONS },
+                { label: "Inventory Log (Legacy)", href: "staff-inventory.html", permission: PERM_BOOKINGS },
+            ],
+        },
+        {
+            id: "finance",
+            label: "Finance",
+            icon: "finance",
+            permission: anyOf(PERM_OPERATIONS, PERM_BRANCHES),
+            children: [
+                { label: "Financial Dashboard", href: "financial-dashboard.html", permission: PERM_OPERATIONS },
+                { label: "Financial Transactions", href: "financial-transactions.html", permission: PERM_OPERATIONS },
+                { label: "Profitability Report", href: "profitability-report.html", permission: PERM_OPERATIONS },
+                { label: "Expense Requests", href: "expense-requests.html", permission: PERM_OPERATIONS },
+                { label: "Branch Finance", href: "branch-finance.html", permission: PERM_BRANCHES },
+            ],
+        },
+        {
+            id: "branches",
+            label: "Branches",
+            icon: "branches",
+            href: "branches.html",
+            permission: PERM_BRANCHES,
+        },
+        {
             id: "academy",
             label: "Academy",
             icon: "academy",
@@ -112,41 +249,23 @@ var NavConfig = window.NavConfig || (() => {
             ],
         },
         {
-            id: "rewards",
-            label: "Rewards & Loyalty",
-            icon: "rewards",
-            href: "rewards.html",
-            // Frontend Build Roadmap Phase 3: single page (Dashboard / Tiers
-            // / Settings / Customer Lookup tabs live inside it), so this is
-            // a direct link rather than a parent with children -- same
-            // shape as any other single-page module in this sidebar.
+            id: "staff",
+            label: "Staff",
+            icon: "staff",
+
             permission: {
                 type: "requireAny",
-                perms: ["rewards:read", "rewards:manage", "rewards:apply", "rewards:adjust"],
-            },
-        },
-        {
-            id: "contacts",
-            label: "Business Operations",
-            icon: "users",
-            permission: {
-                type: "requireAny",
-                perms: ["users:read", "bookings:read", "suppliers:read", "expense_requests:read"],
+                perms: ["staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations", "lms:read", "approval_chains:read"],
             },
             children: [
-                { label: "Users", href: "users.html" },
-                { label: "Customer Contacts", href: "customer-contacts.html" },
-                { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html" },
-                { label: "Inventory Products", href: "inventory-products.html" },
-                { label: "Product Sales", href: "product-sales.html" },
-                { label: "Purchase Requests", href: "purchase-requests.html" },
-                { label: "Expense Requests", href: "expense-requests.html" },
-                { label: "Purchases", href: "purchases.html" },
-                { label: "Financial Dashboard", href: "financial-dashboard.html" },
-                { label: "Financial Transactions", href: "financial-transactions.html" },
-                { label: "Profitability Report", href: "profitability-report.html" },
-                { label: "Suppliers", href: "suppliers.html" },
-                { label: "Vendors", href: "vendors.html" },
+                { label: "Staff Records", href: "staff.html" },
+                { label: "Company Documents", href: "staff-documents.html" },
+                { label: "Announcements", href: "staff-announcements.html" },
+                { label: "Tasks & Directives", href: "staff-directives.html" },
+                { label: "Attendance", href: "staff-attendance.html" },
+                { label: "Leave Requests", href: "leave-requests.html" },
+                { label: "Training Library (LMS)", href: "lms.html" },
+                { label: "Approval Chains", href: "approval-chains.html" },
             ],
         },
         {
@@ -177,125 +296,14 @@ var NavConfig = window.NavConfig || (() => {
             ],
         },
         {
-            id: "services",
-            label: "Services",
-            icon: "services",
-            href: "services.html",
-            permission: {
-                type: "requireAny",
-                perms: ["services:create", "services:update", "services:toggle_status", "services:delete", "services:manage_categories"],
-            },
-        },
-        {
-            id: "branches",
-            label: "Branches",
-            icon: "branches",
-            // Permission set now covers both nested pages — Branches itself
-            // and Branch Finance (formerly its own top-level item) — since
-            // the group's visibility gates access to both.
-            permission: {
-                type: "requireAny",
-                // Dev Feedback Round 4, item #43: branches:manage was
-                // split into 5 granular permissions -- listed here so a
-                // user with even a subset of them still sees this nav item.
-                perms: [
-                    "branches:read", "branches:create", "branches:update",
-                    "branches:manage_manager", "branches:delete", "branches:manage_services",
-                    "branch_finance:read", "branch_finance:reconcile",
-                ],
-            },
-            children: [
-                { label: "Overview", href: "branches.html" },
-                { label: "Branch Finance", href: "branch-finance.html" },
-            ],
-        },
-        {
-            id: "shop",
-            label: "Shop",
-            icon: "shop",
-            badge: "confirmedOrders",
-            permission: {
-                type: "requireAny",
-                perms: ["shop:manage_products", "shop:manage_categories", "shop:manage_delivery", "shop:update_status"],
-            },
-            children: [
-                { label: "Products", href: "shop.html#products" },
-                { label: "Categories", href: "shop.html#categories" },
-                { label: "Delivery Regions", href: "shop.html#delivery" },
-                { label: "Orders", href: "shop.html#orders" },
-            ],
-        },
-        {
-            id: "referrals",
-            label: "Referrals",
-            icon: "referrals",
-            permission: { type: "require", perm: "referrals:read" },
-            children: [
-                { label: "Regular Referrals", href: "referrals.html" },
-                { label: "Referral Campaigns", href: "referral-campaigns.html" },
-            ],
-        },
-        {
-            id: "discounts",
-            label: "Discounts",
-            icon: "discounts",
-            href: "discounts.html",
-            permission: { type: "require", perm: "discounts:read" },
-        },
-        {
-            id: "careers",
-            label: "Careers",
+            id: "recruitment",
+            label: "Recruitment",
             icon: "careers",
-            href: "careers.html",
-            permission: { type: "require", perm: "jobs:read" },
-        },
-        {
-            id: "applications",
-            label: "Applications",
-            icon: "applications",
-            permission: {
-                type: "requireAny",
-                perms: ["application:read", "application:manage_status", "application:convert"],
-            },
+            permission: anyOf(PERM_JOBS, PERM_APPLICATIONS),
             children: [
-                { label: "All Applications", href: "applications.html" },
-                { label: "Interview Schedule", href: "applications.html?status=INTERVIEW_SCHEDULED" },
-            ],
-        },
-        {
-            id: "staff",
-            label: "Staff",
-            icon: "staff",
-
-            permission: {
-                type: "requireAny",
-                perms: ["staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations", "lms:read", "approval_chains:read"],
-            },
-            children: [
-                { label: "Staff Records", href: "staff.html" },
-                { label: "Company Documents", href: "staff-documents.html" },
-                { label: "Announcements", href: "staff-announcements.html" },
-                { label: "Tasks & Directives", href: "staff-directives.html" },
-                { label: "Attendance", href: "staff-attendance.html" },
-                { label: "Leave Requests", href: "leave-requests.html" },
-                { label: "Training Library (LMS)", href: "lms.html" },
-                { label: "Approval Chains", href: "approval-chains.html" },
-            ],
-        },
-        {
-            id: "beauticians",
-            label: "Beauticians",
-            icon: "beauticians",
-            permission: {
-                type: "requireAny",
-                perms: ["beauticians:read", "beauticians:manage", "beauticians:review", "beauticians:assign_services", "beauticians:process_payouts"],
-            },
-            children: [
-                { label: "List", href: "beauticians.html#list" },
-                { label: "Profile Reviews", href: "beauticians.html#reviews" },
-                { label: "Services", href: "beauticians.html#services" },
-                { label: "Settings", href: "beauticians.html#settings" },
-                { label: "Payouts", href: "beauticians.html#payouts" },
+                { label: "Job Postings", href: "careers.html", permission: PERM_JOBS },
+                { label: "All Applications", href: "applications.html", permission: PERM_APPLICATIONS },
+                { label: "Interview Schedule", href: "applications.html?status=INTERVIEW_SCHEDULED", permission: PERM_APPLICATIONS },
             ],
         },
         {
@@ -365,21 +373,25 @@ var NavConfig = window.NavConfig || (() => {
         return [
             "bookings.html",
             "payments.html",
+            "users.html",
+            "customer-contacts.html",
+            "rewards.html",
+            "discounts.html",
+            "referrals.html",
+            "services.html",
+            "beauticians.html",
+            "shop.html",
+            "inventory-products.html",
+            "financial-dashboard.html",
+            "branches.html",
             "academy-commerce.html",
             "academy-training.html",
             "academy-cohorts.html",
             "academy-courses.html",
-            "rewards.html",
-            "users.html",
-            "services.html",
-            "branches.html",
-            "shop.html",
-            "referrals.html",
-            "discounts.html",
+            "staff.html",
+            "payroll.html",
             "careers.html",
             "applications.html",
-            "staff.html",
-            "beauticians.html",
         ];
     }
 
