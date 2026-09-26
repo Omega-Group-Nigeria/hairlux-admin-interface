@@ -2140,9 +2140,48 @@ async function sbStart(id) {
   try { await SalonBookingsSelf.start(id); await loadSalonBookings(); } catch (err) { alert(err.message); }
 }
 
-async function sbComplete(id) {
-  if (!confirm('Complete this booking? This deducts inventory used and calculates commission.')) return;
-  try { await SalonBookingsSelf.complete(id); await loadSalonBookings(); } catch (err) { alert(err.message); }
+var _sbPendingCompleteId = null;
+
+function sbComplete(id) {
+  _sbPendingCompleteId = id;
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="sbc-error" style="display:none"></div>' +
+    '<h3>Complete Booking</h3>' +
+    '<div class="oc-modal-sub">This deducts inventory used and calculates commission.</div>' +
+    '<div class="oc-field"><label>Payment Method</label><select id="sbc-payment-method">' +
+    '<option value="">Select how the customer paid…</option>' +
+    '<option value="CASH">Cash</option>' +
+    '<option value="BANK_TRANSFER">Bank Transfer</option>' +
+    '<option value="POS">POS</option>' +
+    '<option value="CARD">Card</option>' +
+    '<option value="WALLET">Wallet</option>' +
+    '</select></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="sbc-submit-btn" onclick="sbSubmitComplete()">Complete Booking</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function sbSubmitComplete() {
+  var method = document.getElementById('sbc-payment-method').value;
+  var errEl = document.getElementById('sbc-error');
+  if (!method) {
+    errEl.textContent = 'Select how the customer paid.';
+    errEl.style.display = 'block';
+    return;
+  }
+  var btn = document.getElementById('sbc-submit-btn');
+  btn.disabled = true;
+  try {
+    await SalonBookingsSelf.complete(_sbPendingCompleteId, method);
+    closeProfileModal();
+    await loadSalonBookings();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+  }
 }
 
 async function sbCancel(id) {

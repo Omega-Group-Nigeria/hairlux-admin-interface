@@ -87,8 +87,12 @@ const SalonBookingsSelf = (function () {
         return jsonFetch(`/staff/me/salon-bookings/${id}/start`, { method: 'PATCH' });
     }
 
-    async function complete(id) {
-        return jsonFetch(`/staff/me/salon-bookings/${id}/complete`, { method: 'PATCH' });
+    async function complete(id, paymentMethod) {
+        return jsonFetch(`/staff/me/salon-bookings/${id}/complete`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentMethod: paymentMethod }),
+        });
     }
 
     async function cancel(id, reason) {

@@ -204,7 +204,14 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Payment Method</label>
-                            <input type="text" class="form-control" id="p-method" placeholder="e.g. Bank Transfer">
+                            <select class="form-select" id="p-method">
+                                <option value="">Select...</option>
+                                <option value="CASH">Cash</option>
+                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                                <option value="POS">POS</option>
+                                <option value="CARD">Card</option>
+                                <option value="WALLET">Wallet</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Payment Date</label>
@@ -508,10 +515,10 @@
             var errEl = document.getElementById('payment-error');
             errEl.classList.add('d-none');
             var amount = Number(document.getElementById('p-amount').value);
-            var method = document.getElementById('p-method').value.trim();
+            var method = document.getElementById('p-method').value;
             var date = document.getElementById('p-date').value;
             if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount.'; errEl.classList.remove('d-none'); return; }
-            if (!method) { errEl.textContent = 'Payment method is required.'; errEl.classList.remove('d-none'); return; }
+            if (!method) { errEl.textContent = 'Select a payment method.'; errEl.classList.remove('d-none'); return; }
             if (!date) { errEl.textContent = 'Payment date is required.'; errEl.classList.remove('d-none'); return; }
 
             var btn = document.getElementById('btn-save-payment');

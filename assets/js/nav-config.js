@@ -21,6 +21,7 @@ var NavConfig = window.NavConfig || (() => {
         staff: '<svg ' + SVG_ATTRS + '><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>',
         beauticians: '<svg ' + SVG_ATTRS + '><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>',
         history: '<svg ' + SVG_ATTRS + '><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>',
+        businessIntelligence: '<svg ' + SVG_ATTRS + '><path d="M3 12m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M9 8m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v11a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M15 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v15a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M4 20h14" /></svg>',
     };
 
     /** @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string}>, permission?:object}>} */
@@ -58,21 +59,52 @@ var NavConfig = window.NavConfig || (() => {
             permission: { type: "require", perm: "users:view_wallet" },
         },
         {
+            id: "business-intelligence",
+            label: "Business Intelligence",
+            icon: "businessIntelligence",
+            // Group-level rule: visible if the user has ANY of the 6 sub-module
+            // permissions below -- each child link additionally carries its own
+            // specific permission (see buildPagePermissionMap), so a role
+            // granted only one sub-module sees only that one link, not all 6.
+            permission: {
+                type: "requireAny",
+                perms: [
+                    "business_intelligence:read",
+                    "business_intelligence:performance_comparison:read",
+                    "business_intelligence:customers_sales:read",
+                    "business_intelligence:cost_inventory_financial:read",
+                    "business_intelligence:forecast_alerts:read",
+                    "business_intelligence:kpi_registry:read",
+                ],
+            },
+            children: [
+                { label: "Business Snapshot", href: "business-intelligence.html", permission: { type: "require", perm: "business_intelligence:read" } },
+                { label: "Performance & Comparison", href: "performance-comparison.html", permission: { type: "require", perm: "business_intelligence:performance_comparison:read" } },
+                { label: "Customers & Sales", href: "customers-sales.html", permission: { type: "require", perm: "business_intelligence:customers_sales:read" } },
+                { label: "Cost, Inventory & Financial Position", href: "cost-inventory-financial.html", permission: { type: "require", perm: "business_intelligence:cost_inventory_financial:read" } },
+                { label: "Forecast & Alerts", href: "forecast-alerts.html", permission: { type: "require", perm: "business_intelligence:forecast_alerts:read" } },
+                { label: "KPI Engine Registry", href: "kpi-registry.html", permission: { type: "require", perm: "business_intelligence:kpi_registry:read" } },
+            ],
+        },
+        {
             id: "contacts",
             label: "Business Operations",
             icon: "users",
             permission: {
                 type: "requireAny",
-                perms: ["users:read", "bookings:read", "suppliers:read"],
+                perms: ["users:read", "bookings:read", "suppliers:read", "expense_requests:read"],
             },
             children: [
                 { label: "Users", href: "users.html" },
                 { label: "Customer Contacts", href: "customer-contacts.html" },
                 { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html" },
                 { label: "Inventory Products", href: "inventory-products.html" },
+                { label: "Product Sales", href: "product-sales.html" },
                 { label: "Purchase Requests", href: "purchase-requests.html" },
+                { label: "Expense Requests", href: "expense-requests.html" },
                 { label: "Purchases", href: "purchases.html" },
                 { label: "Financial Dashboard", href: "financial-dashboard.html" },
+                { label: "Financial Transactions", href: "financial-transactions.html" },
                 { label: "Profitability Report", href: "profitability-report.html" },
                 { label: "Suppliers", href: "suppliers.html" },
                 { label: "Vendors", href: "vendors.html" },
@@ -260,13 +292,17 @@ var NavConfig = window.NavConfig || (() => {
     function buildPagePermissionMap() {
         const map = {};
         ITEMS.forEach(function (item) {
-            if (!item.permission) return;
-            if (item.href) {
+            if (item.href && item.permission) {
                 map[normalizePage(item.href)] = item.permission;
             }
             if (item.children) {
                 item.children.forEach(function (child) {
-                    map[normalizePage(child.href)] = item.permission;
+                    // A child's own permission (e.g. each Business Intelligence
+                    // sub-module) takes precedence; groups where every child
+                    // still shares one permission fall back to the group's,
+                    // unchanged from before.
+                    const rule = child.permission || item.permission;
+                    if (rule) map[normalizePage(child.href)] = rule;
                 });
             }
         });

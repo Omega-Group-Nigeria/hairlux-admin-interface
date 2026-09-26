@@ -18,6 +18,7 @@ const FinancialTransactions = (function () {
         if (filters.branchId) params.set('branchId', filters.branchId);
         if (filters.from) params.set('from', filters.from);
         if (filters.to) params.set('to', filters.to);
+        if (filters.paymentMethod) params.set('paymentMethod', filters.paymentMethod);
         if (page) params.set('page', page);
         const qs = params.toString();
         return apiFetch('/admin/financial-transactions' + (qs ? '?' + qs : ''));
@@ -41,6 +42,7 @@ const FinancialTransactions = (function () {
         if (filters.branchId) params.set('branchId', filters.branchId);
         if (filters.from) params.set('from', filters.from);
         if (filters.to) params.set('to', filters.to);
+        if (filters.paymentMethod) params.set('paymentMethod', filters.paymentMethod);
         const qs = params.toString();
         return apiFetch('/admin/financial-transactions/export' + (qs ? '?' + qs : ''));
     }

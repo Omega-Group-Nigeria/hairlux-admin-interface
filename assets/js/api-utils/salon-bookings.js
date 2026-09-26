@@ -88,8 +88,12 @@ const SalonBookings = (function () {
         return apiFetch(`/admin/salon-bookings/${id}/start`, { method: 'PATCH' });
     }
 
-    async function complete(id) {
-        return apiFetch(`/admin/salon-bookings/${id}/complete`, { method: 'PATCH' });
+    async function complete(id, paymentMethod) {
+        return apiFetch(`/admin/salon-bookings/${id}/complete`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentMethod: paymentMethod }),
+        });
     }
 
     async function cancel(id, reason) {
@@ -169,6 +173,14 @@ const SalonBookings = (function () {
         return apiFetch(`/admin/salon-bookings/${id}`, { method: 'DELETE' });
     }
 
+    async function reverseCompletion(id, reason) {
+        return apiFetch(`/admin/salon-bookings/${id}/reverse-completion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
+    }
+
     async function confirmVerification(code, assignedStaffId) {
         return apiFetch(`/admin/salon-bookings/verify/${encodeURIComponent(code)}/confirm`, {
             method: 'PATCH',
@@ -183,7 +195,7 @@ const SalonBookings = (function () {
         verifyCode, confirmVerification, searchCustomers, checkPhoneMatch, findAllCustomers,
         getCustomerContactsPerformance, getCustomerProfile,
         getCustomerClassificationSettings, updateCustomerClassificationSettings,
-        getOverview, deleteBooking,
+        getOverview, deleteBooking, reverseCompletion,
         statusBadge, formatMoney, formatDate,
     };
 })();
