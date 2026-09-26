@@ -39,6 +39,26 @@ const AcademyTraining = (() => {
   function updateTraining(id, payload) {
     return apiFetch(`/admin/academy/trainings/${id}`, { method: "PUT", body: JSON.stringify(payload) });
   }
+  /**
+   * Bypasses apiFetch/Auth.fetch (multipart needs its own boundary
+   * Content-Type) -- same pattern as AcademyCourses.uploadCoverImage /
+   * uploadLessonFile.
+   * @param {File} file
+   * @returns {Promise<{coverImageKey: string, coverImageUrl: string}>}
+   */
+  async function uploadCoverImage(file) {
+    const base = (window.API_BASE || "").replace(/\/$/, "");
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch(base + "/admin/academy/trainings/cover-image/upload", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + Auth.getToken() },
+      body: formData,
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || `Upload failed (${res.status})`);
+    return raw.data !== undefined ? raw.data : raw;
+  }
   function deleteTraining(id) {
     return apiFetch(`/admin/academy/trainings/${id}`, { method: "DELETE" });
   }
@@ -206,7 +226,7 @@ const AcademyTraining = (() => {
   }
 
   return {
-    getTrainings, getTraining, createTraining, updateTraining, deleteTraining,
+    getTrainings, getTraining, createTraining, updateTraining, deleteTraining, uploadCoverImage,
     addCurriculumModule, updateCurriculumModule, removeCurriculumModule,
     getCohorts, getCohort, createCohort, updateCohort, getCohortRegistrations, getCohortWaitlist, promoteWaitlist, decideBelowMinimum,
     getSettings, updateSettings,

@@ -63,6 +63,7 @@
             white-space: normal;
         }
     </style>
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -508,6 +509,8 @@
     <script src="assets/js/api-utils/academy-courses.js"></script>
     <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/tabler.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="assets/js/rich-text-editor.js"></script>
 
     <!-- ===== COURSE CREATE/EDIT MODAL ===== -->
     <div class="modal modal-blur fade" id="modal-course" tabindex="-1" role="dialog">
@@ -521,6 +524,7 @@
                     <div class="modal-body">
                         <div id="course-alert" class="alert d-none mb-3" role="alert"></div>
                         <input type="hidden" id="course-id">
+                        <input type="hidden" id="course-cover-image-key">
                         <div class="row g-3">
                             <div class="col-md-8">
                                 <label class="form-label">Title <span class="text-danger">*</span></label>
@@ -530,6 +534,20 @@
                                 <label class="form-label">Category</label>
                                 <input type="text" class="form-control" id="course-category"
                                     placeholder="e.g. Hairstyling">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Cover Image (optional)</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img id="course-cover-preview" src="" alt="" class="d-none rounded"
+                                        style="width:80px;height:80px;object-fit:cover;border:1px solid var(--tblr-border-color);">
+                                    <div class="flex-fill">
+                                        <input type="file" class="form-control form-control-sm" id="course-cover-input"
+                                            accept="image/*">
+                                        <span id="course-cover-status" class="text-secondary small"></span>
+                                    </div>
+                                </div>
+                                <div class="form-hint">Shown on the course catalogue and detail page. JPG/PNG/WebP, up
+                                    to 10MB.</div>
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label">Short Description</label>
@@ -766,10 +784,23 @@
                                     <option value="PDF">PDF</option>
                                 </select>
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-md-12" id="lesson-media-wrap">
                                 <label class="form-label">Content Key / URL</label>
                                 <input type="text" class="form-control" id="lesson-content-key"
                                     placeholder="Storage key or URL for the video/audio/PDF asset">
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <input type="file" class="form-control form-control-sm" id="lesson-file-input"
+                                        accept="video/*,audio/*,application/pdf" style="max-width:320px;">
+                                    <span id="lesson-upload-status" class="text-secondary small"></span>
+                                </div>
+                                <div class="form-hint">Upload a video, audio, or PDF file directly, or paste an
+                                    external URL (YouTube, Vimeo, an existing CDN link) above instead.</div>
+                            </div>
+                            <div class="col-md-12 d-none" id="lesson-text-wrap">
+                                <label class="form-label">Lesson Content <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="lesson-text-body" rows="8"
+                                    placeholder="Write the lesson here…"></textarea>
+                                <div class="form-hint">Shown to learners as the lesson itself.</div>
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label">Resources</label>
@@ -867,7 +898,7 @@
                             <div class="col-md-4">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="assessment-retake" checked>
-                                    <label class="form-check-label" for="assessment-retake">Retake Allowed</label>
+                                    <label class="form-check-label" for="assessment-retake" title="Learners who fail can try again, up to the max attempts. Once passed, an assessment can never be retaken.">Retake After Failing</label>
                                 </div>
                             </div>
                         </div>
@@ -924,6 +955,10 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
+            // Same rich-text editor as Staff → Training Library (LMS).
+            ["course-description", "course-requirements", "course-objectives", "course-dos", "course-donts", "module-description", "lesson-text-body"]
+                .forEach(function (id) { RichTextEditor.attach(id); });
+            document.getElementById("lesson-type").addEventListener("change", syncLessonTypeFields);
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuard('academy_courses:read');
                 RBAC.applyNavVisibility();
@@ -986,6 +1021,31 @@
             });
             document.getElementById("modal-course").addEventListener("hidden.bs.modal", resetCourseForm);
 
+            document.getElementById("course-cover-input").addEventListener("change", async function (e) {
+                var file = e.target.files && e.target.files[0];
+                if (!file) return;
+                var statusEl = document.getElementById("course-cover-status");
+                var saveBtn = document.getElementById("btn-save-course");
+                statusEl.className = "text-secondary small";
+                statusEl.textContent = "Uploading…";
+                saveBtn.disabled = true;
+                try {
+                    var result = await AcademyCourses.uploadCoverImage(file);
+                    document.getElementById("course-cover-image-key").value = result.coverImageKey;
+                    var preview = document.getElementById("course-cover-preview");
+                    preview.src = result.coverImageUrl;
+                    preview.classList.remove("d-none");
+                    statusEl.className = "text-success small";
+                    statusEl.textContent = "Uploaded";
+                } catch (err) {
+                    statusEl.className = "text-danger small";
+                    statusEl.textContent = err.message || "Upload failed.";
+                    e.target.value = "";
+                } finally {
+                    saveBtn.disabled = false;
+                }
+            });
+
             document.getElementById("course-access-type").addEventListener("change", function () {
                 document.getElementById("course-access-days-wrap").classList.toggle("d-none", this.value !== "FIXED_DAYS");
                 document.getElementById("course-access-expiry-wrap").classList.toggle("d-none", this.value !== "FIXED_EXPIRY");
@@ -1016,6 +1076,7 @@
                         dos: document.getElementById("course-dos").value.trim() || undefined,
                         donts: document.getElementById("course-donts").value.trim() || undefined,
                         certificateEnabled: document.getElementById("course-certificate-enabled").checked,
+                        coverImageKey: document.getElementById("course-cover-image-key").value || undefined,
                         accessType: accessType,
                         accessDurationDays: accessType === "FIXED_DAYS" && document.getElementById("course-access-days").value ? Number(document.getElementById("course-access-days").value) : undefined,
                         accessExpiryDate: accessType === "FIXED_EXPIRY" ? (document.getElementById("course-access-expiry").value || undefined) : undefined,
@@ -1184,7 +1245,10 @@
                     document.getElementById("lesson-module-id").value = lesson.moduleId;
                     document.getElementById("lesson-title").value = lesson.title || "";
                     document.getElementById("lesson-type").value = lesson.type || "VIDEO";
-                    document.getElementById("lesson-content-key").value = lesson.contentKey || "";
+                    var isTextLesson = lesson.type === "TEXT";
+                    document.getElementById("lesson-content-key").value = isTextLesson ? "" : (lesson.contentKey || "");
+                    document.getElementById("lesson-text-body").value = isTextLesson ? (lesson.contentKey || "") : "";
+                    syncLessonTypeFields();
                     document.getElementById("lesson-resources").value = (lesson.resources || []).join("\n");
                     document.getElementById("lesson-duration").value = lesson.duration != null ? lesson.duration : "";
                     document.getElementById("lesson-status").value = lesson.status || "DRAFT";
@@ -1214,6 +1278,30 @@
             });
 
             document.getElementById("modal-lesson").addEventListener("hidden.bs.modal", resetLessonForm);
+            document.getElementById("lesson-file-input").addEventListener("change", async function (e) {
+                var file = e.target.files && e.target.files[0];
+                if (!file) return;
+                var statusEl = document.getElementById("lesson-upload-status");
+                var saveBtn = document.getElementById("btn-save-lesson");
+                statusEl.className = "text-secondary small";
+                statusEl.textContent = "Uploading " + file.name + "…";
+                saveBtn.disabled = true;
+                try {
+                    var result = await AcademyCourses.uploadLessonFile(file);
+                    document.getElementById("lesson-content-key").value = result.contentKey;
+                    if (file.type.indexOf("video/") === 0) document.getElementById("lesson-type").value = "VIDEO";
+                    else if (file.type.indexOf("audio/") === 0) document.getElementById("lesson-type").value = "AUDIO";
+                    else if (file.type === "application/pdf") document.getElementById("lesson-type").value = "PDF";
+                    statusEl.className = "text-success small";
+                    statusEl.textContent = "Uploaded: " + file.name;
+                } catch (err) {
+                    statusEl.className = "text-danger small";
+                    statusEl.textContent = err.message || "Upload failed.";
+                    e.target.value = "";
+                } finally {
+                    saveBtn.disabled = false;
+                }
+            });
             document.getElementById("form-lesson").addEventListener("submit", async function (e) {
                 e.preventDefault();
                 var alertEl = document.getElementById("lesson-alert");
@@ -1225,10 +1313,16 @@
                     var id = document.getElementById("lesson-id").value;
                     var moduleId = document.getElementById("lesson-module-id").value;
                     var resourcesRaw = document.getElementById("lesson-resources").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+                    var lessonType = document.getElementById("lesson-type").value;
+                    // TEXT lessons: the body from the rich-text editor IS the content.
+                    var lessonContent = lessonType === "TEXT"
+                        ? document.getElementById("lesson-text-body").value.trim()
+                        : document.getElementById("lesson-content-key").value.trim();
+                    if (lessonType === "TEXT" && !lessonContent) throw new Error("Write the lesson content before saving.");
                     var payload = {
                         title: document.getElementById("lesson-title").value.trim(),
-                        type: document.getElementById("lesson-type").value,
-                        contentKey: document.getElementById("lesson-content-key").value.trim() || undefined,
+                        type: lessonType,
+                        contentKey: lessonContent || undefined,
                         resources: resourcesRaw.length ? resourcesRaw : undefined,
                         duration: document.getElementById("lesson-duration").value ? Number(document.getElementById("lesson-duration").value) : undefined,
                         previewAvailable: document.getElementById("lesson-preview").checked,
@@ -1460,6 +1554,10 @@
         function resetCourseForm() {
             document.getElementById("form-course").reset();
             document.getElementById("course-id").value = "";
+            document.getElementById("course-cover-image-key").value = "";
+            document.getElementById("course-cover-preview").classList.add("d-none");
+            document.getElementById("course-cover-preview").src = "";
+            document.getElementById("course-cover-status").textContent = "";
             document.getElementById("course-alert").className = "alert d-none";
             document.getElementById("course-level").value = "ALL";
             document.getElementById("course-status").value = "DRAFT";
@@ -1492,6 +1590,10 @@
             document.getElementById("course-unlock-mode").value = course.unlockMode || "OPEN_ACCESS";
             document.getElementById("course-access-days-wrap").classList.toggle("d-none", course.accessType !== "FIXED_DAYS");
             document.getElementById("course-access-expiry-wrap").classList.toggle("d-none", course.accessType !== "FIXED_EXPIRY");
+            document.getElementById("course-cover-image-key").value = course.coverImageKey || "";
+            var coverPreview = document.getElementById("course-cover-preview");
+            if (course.coverImageUrl) { coverPreview.src = course.coverImageUrl; coverPreview.classList.remove("d-none"); }
+            else { coverPreview.classList.add("d-none"); coverPreview.src = ""; }
             document.getElementById("course-modal-title").textContent = "Edit Course";
         }
 
@@ -1595,7 +1697,7 @@
                     '<div class="card-header d-flex justify-content-between align-items-center">' +
                     '<div><strong>' + escAttr(m.name) + '</strong> ' + AcademyCourses.contentStatusBadge(m.status) +
                     (m.estimatedDuration != null ? '<span class="text-secondary small ms-2">' + m.estimatedDuration + ' min</span>' : "") +
-                    (m.description ? '<div class="text-secondary small mt-1">' + escAttr(m.description) + '</div>' : "") +
+                    (m.description ? '<div class="text-secondary small mt-1">' + escAttr(RichTextEditor.toText(m.description)) + '</div>' : "") +
                     '</div>' +
                     '<div class="btn-group btn-group-sm">' +
                     '<button type="button" class="btn btn-outline-secondary" data-mod-action="move-up" data-module-id="' + m.id + '"' + (mi === 0 ? " disabled" : "") + '>↑</button>' +
@@ -1627,6 +1729,16 @@
             document.getElementById("lesson-required").checked = true;
             document.getElementById("lesson-preview").checked = false;
             document.getElementById("lesson-alert").className = "alert d-none";
+            document.getElementById("lesson-upload-status").textContent = "";
+            document.getElementById("lesson-text-body").value = "";
+            syncLessonTypeFields();
+        }
+
+        /** TEXT lessons are written in the rich-text editor; every other type uses a file/URL. */
+        function syncLessonTypeFields() {
+            var isText = document.getElementById("lesson-type").value === "TEXT";
+            document.getElementById("lesson-media-wrap").classList.toggle("d-none", isText);
+            document.getElementById("lesson-text-wrap").classList.toggle("d-none", !isText);
         }
 
         // ── Assessments ──────────────────────────────────────────────────────────

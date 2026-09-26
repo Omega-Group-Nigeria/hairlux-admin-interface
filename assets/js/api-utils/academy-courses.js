@@ -44,6 +44,25 @@ const AcademyCourses = (() => {
   function updateCourse(id, payload) {
     return apiFetch(`/admin/academy/courses/${id}`, { method: "PUT", body: JSON.stringify(payload) });
   }
+  /**
+   * Bypasses apiFetch/Auth.fetch (multipart needs its own boundary
+   * Content-Type) -- same pattern as uploadLessonFile below.
+   * @param {File} file
+   * @returns {Promise<{coverImageKey: string, coverImageUrl: string}>}
+   */
+  async function uploadCoverImage(file) {
+    const base = (window.API_BASE || "").replace(/\/$/, "");
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await fetch(base + "/admin/academy/courses/cover-image/upload", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + Auth.getToken() },
+      body: formData,
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || `Upload failed (${res.status})`);
+    return raw.data !== undefined ? raw.data : raw;
+  }
 
   // ─── PRICING ─────────────────────────────────────────────────────────────
 
@@ -91,6 +110,29 @@ const AcademyCourses = (() => {
   }
   function unpublishLesson(lessonId) {
     return apiFetch(`/admin/academy/courses/lessons/${lessonId}/unpublish`, { method: "PUT" });
+  }
+
+  /**
+   * Bypasses apiFetch/Auth.fetch entirely (the browser needs to set its
+   * own Content-Type including the multipart boundary, which Auth.fetch's
+   * forced 'application/json' default would break) -- same proven
+   * pattern as the existing LMS upload (Lms.submitFormData) and
+   * staff-documents.js's uploadFile.
+   * @param {File} file
+   * @returns {Promise<{contentKey: string}>}
+   */
+  async function uploadLessonFile(file) {
+    const base = (window.API_BASE || "").replace(/\/$/, "");
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(base + "/admin/academy/courses/lessons/upload", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + Auth.getToken() },
+      body: formData,
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || `Upload failed (${res.status})`);
+    return raw.data !== undefined ? raw.data : raw;
   }
 
   // ─── ASSESSMENTS ─────────────────────────────────────────────────────────
@@ -263,10 +305,10 @@ const AcademyCourses = (() => {
   }
 
   return {
-    getCourses, getCourse, createCourse, updateCourse,
+    getCourses, getCourse, createCourse, updateCourse, uploadCoverImage,
     getPricing, addPricing, updatePricing,
     createModule, updateModule, reorderModules, publishModule, unpublishModule,
-    createLesson, updateLesson, reorderLessons, publishLesson, unpublishLesson,
+    createLesson, updateLesson, reorderLessons, publishLesson, unpublishLesson, uploadLessonFile,
     getAssessment, listAssessmentsForCourse, createAssessment, updateAssessment, deleteAssessment,
     listReviews, moderateReview,
     formatMoney, formatDate, formatDateTime,
