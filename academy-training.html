@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Academy Trainings</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        table td {
+            vertical-align: middle;
+        }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        .training-row {
+            cursor: pointer;
+        }
+
+        .training-row:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        .module-row td {
+            vertical-align: middle;
+        }
+
+        .reorder-btn {
+            padding: 0 .35rem;
+            line-height: 1;
+        }
+
+        .reorder-btn[disabled] {
+            opacity: .3;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Academy</div>
+                            <h2 class="page-title">Trainings &amp; Curriculum</h2>
+                            <div class="text-secondary small mt-1">The training catalogue in-branch cohorts are run
+                                against. Cohorts and scheduling live on the Cohorts page.</div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-new-training" data-bs-toggle="modal"
+                                data-bs-target="#modal-training">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Training
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="row g-2 w-100 align-items-center">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control form-control-sm" id="trainings-search"
+                                        placeholder="Search trainings…">
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select form-select-sm" id="trainings-filter-status">
+                                        <option value="">All Statuses</option>
+                                        <option value="DRAFT">Draft</option>
+                                        <option value="PUBLISHED">Published</option>
+                                        <option value="UNPUBLISHED">Unpublished</option>
+                                        <option value="COMING_SOON">Coming Soon</option>
+                                        <option value="ARCHIVED">Archived</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-5 text-secondary small text-md-end" id="trainings-count-label"></div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Certification</th>
+                                            <th>Status</th>
+                                            <th class="w-1"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="trainings-tbody">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center flex-row-reverse">
+                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">Copyright &copy; 2026 Hairlux. All rights reserved.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/academy-training.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- ===== TRAINING CREATE/EDIT MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-training" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="training-modal-title">New Training</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-training" novalidate>
+                    <div class="modal-body">
+                        <div id="training-alert" class="alert d-none mb-3" role="alert"></div>
+                        <input type="hidden" id="training-id">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="training-name" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Category</label>
+                                <input type="text" class="form-control" id="training-category" placeholder="e.g. Hair Styling">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Price (₦) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="training-price" min="0" step="0.01" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="training-status">
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="PUBLISHED">Published</option>
+                                    <option value="UNPUBLISHED">Unpublished</option>
+                                    <option value="COMING_SOON">Coming Soon</option>
+                                    <option value="ARCHIVED">Archived</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="training-cert-enabled" checked>
+                                    <label class="form-check-label" for="training-cert-enabled">Certification enabled</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" id="training-description" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Requirements</label>
+                                <textarea class="form-control" id="training-requirements" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Do's &amp; Don'ts</label>
+                                <textarea class="form-control" id="training-do-donts" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-training">Save Training</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== DELETE TRAINING CONFIRM ===== -->
+    <div class="modal modal-blur fade" id="modal-delete-training" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-status bg-danger"></div>
+                <div class="modal-body text-center py-4">
+                    <h3>Delete this training?</h3>
+                    <div class="text-secondary" id="delete-training-name"></div>
+                    <div id="delete-training-alert" class="alert alert-danger d-none mt-3 text-start"></div>
+                </div>
+                <div class="modal-footer">
+                    <div class="w-100">
+                        <div class="row">
+                            <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">Cancel</a></div>
+                            <div class="col"><button type="button" class="btn btn-danger w-100"
+                                    id="btn-confirm-delete-training">Delete</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CURRICULUM MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-curriculum" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Curriculum — <span id="curriculum-training-name"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="curriculum-alert" class="alert d-none mb-3" role="alert"></div>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th class="w-1">#</th>
+                                    <th>Name</th>
+                                    <th>Duration</th>
+                                    <th>Practical</th>
+                                    <th>Assessment</th>
+                                    <th class="w-1"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="curriculum-tbody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-2" id="curriculum-form-title">Add Module</h6>
+                    <form id="form-curriculum-module" novalidate>
+                        <input type="hidden" id="module-id">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" id="module-name"
+                                    placeholder="Module name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control form-control-sm" id="module-description"
+                                    placeholder="Description (optional)">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" class="form-control form-control-sm" id="module-duration"
+                                    placeholder="Duration (min)" min="0">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-center">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" id="module-practical">
+                                    <label class="form-check-label small" for="module-practical">Practical</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-center">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" id="module-assessment-required">
+                                    <label class="form-check-label small" for="module-assessment-required">Assessment
+                                        required</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <button type="button" class="btn btn-sm btn-link" id="btn-cancel-module-edit"
+                                    style="display:none;">Cancel Edit</button>
+                                <button type="submit" class="btn btn-sm btn-primary" id="btn-save-module">Add
+                                    Module</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('academy_training:read');
+
+        var trainingsData = [];
+        var currentCurriculumTrainingId = null;
+        var currentCurriculumModules = [];
+        var pendingDeleteTrainingId = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuard('academy_training:read');
+                RBAC.applyNavVisibility();
+                if (!RBAC.can('academy_training:manage')) {
+                    var b = document.getElementById('btn-new-training'); if (b) b.style.display = 'none';
+                }
+            });
+
+            loadTrainings();
+
+            document.getElementById("btn-refresh").addEventListener("click", loadTrainings);
+            document.getElementById("trainings-search").addEventListener("input", renderTrainings);
+            document.getElementById("trainings-filter-status").addEventListener("change", renderTrainings);
+
+            document.getElementById("modal-training").addEventListener("hidden.bs.modal", function () {
+                document.getElementById("form-training").reset();
+                document.getElementById("training-id").value = "";
+                document.getElementById("training-cert-enabled").checked = true;
+                document.getElementById("training-alert").className = "alert d-none";
+                document.getElementById("training-modal-title").textContent = "New Training";
+            });
+
+            document.getElementById("form-training").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("training-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-training");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var payload = {
+                        name: document.getElementById("training-name").value.trim(),
+                        price: Number(document.getElementById("training-price").value || 0),
+                        category: document.getElementById("training-category").value.trim() || undefined,
+                        description: document.getElementById("training-description").value.trim() || undefined,
+                        requirements: document.getElementById("training-requirements").value.trim() || undefined,
+                        doAndDonts: document.getElementById("training-do-donts").value.trim() || undefined,
+                        certificationEnabled: document.getElementById("training-cert-enabled").checked,
+                        status: document.getElementById("training-status").value,
+                    };
+                    var id = document.getElementById("training-id").value;
+                    if (id) await AcademyTraining.updateTraining(id, payload);
+                    else await AcademyTraining.createTraining(payload);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-training")).hide();
+                    loadTrainings();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save training.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Training";
+                }
+            });
+
+            document.getElementById("trainings-tbody").addEventListener("click", function (e) {
+                var editBtn = e.target.closest(".btn-edit-training");
+                var curriculumBtn = e.target.closest(".btn-curriculum");
+                var deleteBtn = e.target.closest(".btn-delete-training");
+                if (editBtn) { openEditTraining(editBtn.dataset.id); return; }
+                if (curriculumBtn) { openCurriculum(curriculumBtn.dataset.id, curriculumBtn.dataset.name); return; }
+                if (deleteBtn) {
+                    pendingDeleteTrainingId = deleteBtn.dataset.id;
+                    document.getElementById("delete-training-name").textContent = deleteBtn.dataset.name;
+                    document.getElementById("delete-training-alert").className = "alert alert-danger d-none mt-3 text-start";
+                    new bootstrap.Modal(document.getElementById("modal-delete-training")).show();
+                    return;
+                }
+            });
+
+            document.getElementById("btn-confirm-delete-training").addEventListener("click", async function () {
+                if (!pendingDeleteTrainingId) return;
+                var btn = this;
+                var alertEl = document.getElementById("delete-training-alert");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Deleting…';
+                try {
+                    await AcademyTraining.deleteTraining(pendingDeleteTrainingId);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-delete-training")).hide();
+                    pendingDeleteTrainingId = null;
+                    loadTrainings();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger mt-3 text-start";
+                    alertEl.textContent = err.message || "Failed to delete training.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Delete";
+                }
+            });
+
+            // ── Curriculum modal ────────────────────────────────────────────────
+            document.getElementById("modal-curriculum").addEventListener("hidden.bs.modal", resetModuleForm);
+            document.getElementById("btn-cancel-module-edit").addEventListener("click", resetModuleForm);
+
+            document.getElementById("curriculum-tbody").addEventListener("click", async function (e) {
+                var upBtn = e.target.closest(".btn-move-up");
+                var downBtn = e.target.closest(".btn-move-down");
+                var editBtn = e.target.closest(".btn-edit-module");
+                var deleteBtn = e.target.closest(".btn-delete-module");
+                if (upBtn) { moveModule(upBtn.dataset.id, -1); return; }
+                if (downBtn) { moveModule(downBtn.dataset.id, 1); return; }
+                if (editBtn) { openEditModule(editBtn.dataset.id); return; }
+                if (deleteBtn) {
+                    if (!confirm("Remove this curriculum module?")) return;
+                    try {
+                        await AcademyTraining.removeCurriculumModule(currentCurriculumTrainingId, deleteBtn.dataset.id);
+                        reloadCurriculum();
+                    } catch (err) {
+                        showCurriculumAlert(err.message || "Failed to remove module.");
+                    }
+                }
+            });
+
+            document.getElementById("form-curriculum-module").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("curriculum-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-module");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var payload = {
+                        name: document.getElementById("module-name").value.trim(),
+                        description: document.getElementById("module-description").value.trim() || undefined,
+                        estimatedDuration: document.getElementById("module-duration").value ? Number(document.getElementById("module-duration").value) : undefined,
+                        isPractical: document.getElementById("module-practical").checked,
+                        assessmentRequired: document.getElementById("module-assessment-required").checked,
+                    };
+                    var moduleId = document.getElementById("module-id").value;
+                    if (moduleId) {
+                        await AcademyTraining.updateCurriculumModule(currentCurriculumTrainingId, moduleId, payload);
+                    } else {
+                        payload.order = currentCurriculumModules.length;
+                        await AcademyTraining.addCurriculumModule(currentCurriculumTrainingId, payload);
+                    }
+                    resetModuleForm();
+                    reloadCurriculum();
+                } catch (err) {
+                    showCurriculumAlert(err.message || "Failed to save module.");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = document.getElementById("module-id").value ? "Update Module" : "Add Module";
+                }
+            });
+        });
+
+        async function loadTrainings() {
+            var tbody = document.getElementById("trainings-tbody");
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                trainingsData = await AcademyTraining.getTrainings() || [];
+                renderTrainings();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+        }
+
+        function renderTrainings() {
+            var q = (document.getElementById("trainings-search").value || "").trim().toLowerCase();
+            var statusFilter = document.getElementById("trainings-filter-status").value;
+            var canManage = RBAC.can('academy_training:manage');
+            var rows = trainingsData.filter(function (t) {
+                if (statusFilter && t.status !== statusFilter) return false;
+                if (!q) return true;
+                return (t.name || "").toLowerCase().indexOf(q) !== -1 || (t.category || "").toLowerCase().indexOf(q) !== -1;
+            });
+
+            var tbody = document.getElementById("trainings-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No trainings match.</td></tr>';
+            } else {
+                tbody.innerHTML = rows.map(function (t) {
+                    var actions = '<button class="btn btn-sm btn-outline-secondary btn-curriculum me-1" data-id="' + t.id + '" data-name="' + (t.name || "").replace(/"/g, "&quot;") + '">Curriculum</button>';
+                    if (canManage) {
+                        actions += '<button class="btn btn-sm btn-outline-primary btn-edit-training me-1" data-id="' + t.id + '">Edit</button>';
+                        actions += '<button class="btn btn-sm btn-outline-danger btn-delete-training" data-id="' + t.id + '" data-name="' + (t.name || "").replace(/"/g, "&quot;") + '">Delete</button>';
+                    }
+                    return '<tr class="training-row">' +
+                        '<td class="fw-semibold">' + t.name + '</td>' +
+                        '<td class="text-secondary small">' + (t.category || "—") + '</td>' +
+                        '<td>' + AcademyTraining.formatMoney(t.price) + '</td>' +
+                        '<td>' + (t.certificationEnabled ? '<span class="badge bg-success-lt text-success">Yes</span>' : '<span class="badge bg-secondary-lt text-secondary">No</span>') + '</td>' +
+                        '<td>' + AcademyTraining.trainingStatusBadge(t.status) + '</td>' +
+                        '<td class="text-nowrap">' + actions + '</td>' +
+                        '</tr>';
+                }).join("");
+            }
+            document.getElementById("trainings-count-label").textContent = rows.length + " of " + trainingsData.length + " trainings";
+        }
+
+        function openEditTraining(id) {
+            var t = trainingsData.find(function (x) { return x.id === id; });
+            if (!t) return;
+            document.getElementById("training-modal-title").textContent = "Edit Training";
+            document.getElementById("training-id").value = t.id;
+            document.getElementById("training-name").value = t.name || "";
+            document.getElementById("training-category").value = t.category || "";
+            document.getElementById("training-price").value = t.price != null ? Number(t.price) : "";
+            document.getElementById("training-description").value = t.description || "";
+            document.getElementById("training-requirements").value = t.requirements || "";
+            document.getElementById("training-do-donts").value = t.doAndDonts || "";
+            document.getElementById("training-cert-enabled").checked = !!t.certificationEnabled;
+            document.getElementById("training-status").value = t.status || "DRAFT";
+            new bootstrap.Modal(document.getElementById("modal-training")).show();
+        }
+
+        // ── Curriculum ───────────────────────────────────────────────────────
+
+        function openCurriculum(trainingId, trainingName) {
+            currentCurriculumTrainingId = trainingId;
+            document.getElementById("curriculum-training-name").textContent = trainingName || "";
+            resetModuleForm();
+            new bootstrap.Modal(document.getElementById("modal-curriculum")).show();
+            reloadCurriculum();
+        }
+
+        async function reloadCurriculum() {
+            var tbody = document.getElementById("curriculum-tbody");
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>';
+            try {
+                var training = await AcademyTraining.getTraining(currentCurriculumTrainingId);
+                currentCurriculumModules = (training.curriculumModules || []).slice().sort(function (a, b) { return a.order - b.order; });
+                renderCurriculum();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">' + err.message + '</td></tr>';
+            }
+        }
+
+        function renderCurriculum() {
+            var canManage = RBAC.can('academy_training:manage');
+            var tbody = document.getElementById("curriculum-tbody");
+            if (!currentCurriculumModules.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-3">No modules yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = currentCurriculumModules.map(function (m, idx) {
+                var actions = "";
+                if (canManage) {
+                    actions =
+                        '<button class="btn btn-sm btn-outline-secondary reorder-btn btn-move-up" data-id="' + m.id + '" ' + (idx === 0 ? "disabled" : "") + ' title="Move up">↑</button>' +
+                        '<button class="btn btn-sm btn-outline-secondary reorder-btn btn-move-down" data-id="' + m.id + '" ' + (idx === currentCurriculumModules.length - 1 ? "disabled" : "") + ' title="Move down">↓</button>' +
+                        '<button class="btn btn-sm btn-outline-primary btn-edit-module ms-1" data-id="' + m.id + '">Edit</button>' +
+                        '<button class="btn btn-sm btn-outline-danger btn-delete-module ms-1" data-id="' + m.id + '">Remove</button>';
+                }
+                return '<tr class="module-row">' +
+                    '<td class="text-secondary">' + (idx + 1) + '</td>' +
+                    '<td>' + m.name + (m.description ? '<div class="text-secondary small">' + m.description + '</div>' : '') + '</td>' +
+                    '<td class="text-secondary small">' + (m.estimatedDuration ? m.estimatedDuration + ' min' : '—') + '</td>' +
+                    '<td>' + (m.isPractical ? '<span class="badge bg-info-lt text-info">Practical</span>' : '—') + '</td>' +
+                    '<td>' + (m.assessmentRequired ? '<span class="badge bg-warning-lt text-warning">Required</span>' : '—') + '</td>' +
+                    '<td class="text-nowrap">' + actions + '</td>' +
+                    '</tr>';
+            }).join("");
+        }
+
+        async function moveModule(moduleId, direction) {
+            var idx = currentCurriculumModules.findIndex(function (m) { return m.id === moduleId; });
+            var swapIdx = idx + direction;
+            if (idx === -1 || swapIdx < 0 || swapIdx >= currentCurriculumModules.length) return;
+            var a = currentCurriculumModules[idx], b = currentCurriculumModules[swapIdx];
+            try {
+                // Swap `order` values via two PUT calls -- there is no bulk
+                // reorder endpoint (see the Frontend Build Roadmap's own note
+                // on this: arrows over drag-and-drop, calling the existing
+                // per-module update, not a `.../reorder` route that doesn't exist).
+                await Promise.all([
+                    AcademyTraining.updateCurriculumModule(currentCurriculumTrainingId, a.id, { order: b.order }),
+                    AcademyTraining.updateCurriculumModule(currentCurriculumTrainingId, b.id, { order: a.order }),
+                ]);
+                reloadCurriculum();
+            } catch (err) {
+                showCurriculumAlert(err.message || "Failed to reorder modules.");
+            }
+        }
+
+        function openEditModule(moduleId) {
+            var m = currentCurriculumModules.find(function (x) { return x.id === moduleId; });
+            if (!m) return;
+            document.getElementById("curriculum-form-title").textContent = "Edit Module";
+            document.getElementById("module-id").value = m.id;
+            document.getElementById("module-name").value = m.name || "";
+            document.getElementById("module-description").value = m.description || "";
+            document.getElementById("module-duration").value = m.estimatedDuration || "";
+            document.getElementById("module-practical").checked = !!m.isPractical;
+            document.getElementById("module-assessment-required").checked = !!m.assessmentRequired;
+            document.getElementById("btn-save-module").textContent = "Update Module";
+            document.getElementById("btn-cancel-module-edit").style.display = "inline-block";
+        }
+
+        function resetModuleForm() {
+            document.getElementById("form-curriculum-module").reset();
+            document.getElementById("module-id").value = "";
+            document.getElementById("curriculum-form-title").textContent = "Add Module";
+            document.getElementById("btn-save-module").textContent = "Add Module";
+            document.getElementById("btn-cancel-module-edit").style.display = "none";
+            document.getElementById("curriculum-alert").className = "alert d-none";
+        }
+
+        function showCurriculumAlert(msg) {
+            var el = document.getElementById("curriculum-alert");
+            el.className = "alert alert-danger";
+            el.textContent = msg;
+        }
+    </script>
+</body>
+
+</html>

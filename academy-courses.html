@@ -1,0 +1,1807 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Academy Digital Courses</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        table td {
+            vertical-align: middle;
+        }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        .course-row {
+            cursor: pointer;
+        }
+
+        .course-row:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        .detail-stat-label {
+            font-size: .72rem;
+            color: var(--tblr-secondary);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: .15rem;
+        }
+
+        .detail-stat-value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .module-card {
+            border-left: 3px solid var(--tblr-primary);
+        }
+
+        .lesson-row td {
+            font-size: .9rem;
+        }
+
+        .review-text {
+            max-width: 360px;
+            white-space: normal;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Academy</div>
+                            <h2 class="page-title">Digital Courses</h2>
+                            <div class="text-secondary small mt-1">Course catalogue, pricing, modules &amp; lessons,
+                                assessments, and customer review moderation.</div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-new-course" data-bs-toggle="modal"
+                                data-bs-target="#modal-course">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Course
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- SECTION TABS -->
+                    <ul class="nav nav-tabs mb-3" id="section-tabs">
+                        <li class="nav-item"><a class="nav-link active" href="#" data-section="courses">Courses</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-section="reviews">Reviews</a></li>
+                    </ul>
+
+                    <!-- ========== COURSES SECTION ========== -->
+                    <div id="section-courses">
+
+                        <!-- ===== LIST VIEW ===== -->
+                        <div id="view-list">
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="row g-2 w-100 align-items-center">
+                                        <div class="col-md-3">
+                                            <select class="form-select form-select-sm" id="courses-filter-status">
+                                                <option value="">All Statuses</option>
+                                                <option value="DRAFT">Draft</option>
+                                                <option value="PUBLISHED">Published</option>
+                                                <option value="UNPUBLISHED">Unpublished</option>
+                                                <option value="COMING_SOON">Coming Soon</option>
+                                                <option value="ARCHIVED">Archived</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <select class="form-select form-select-sm" id="courses-filter-category">
+                                                <option value="">All Categories</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 text-secondary small text-md-end" id="courses-count-label">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter card-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Course</th>
+                                                    <th>Category</th>
+                                                    <th>Level</th>
+                                                    <th>Instructor</th>
+                                                    <th>Latest Price</th>
+                                                    <th>Status</th>
+                                                    <th class="w-1"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="courses-tbody">
+                                                <tr>
+                                                    <td colspan="7" class="text-center py-4">
+                                                        <div class="spinner-border text-primary" role="status"></div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ===== END LIST VIEW ===== -->
+
+                        <!-- ===== DETAIL VIEW ===== -->
+                        <div id="view-detail" class="d-none">
+                            <button type="button" class="btn btn-link ps-0 mb-2" id="btn-back-to-list">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M15 6l-6 6l6 6" />
+                                </svg>
+                                Back to Courses
+                            </button>
+
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="row align-items-center g-3">
+                                        <div class="col-md-8">
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <h2 class="mb-0" id="detail-course-title">—</h2>
+                                                <span id="detail-course-status"></span>
+                                            </div>
+                                            <div class="text-secondary" id="detail-course-category-level">—</div>
+                                        </div>
+                                        <div class="col-md-4 text-md-end">
+                                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                                id="btn-edit-course">Edit Course</button>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row g-3">
+                                        <div class="col-6 col-md-2">
+                                            <div class="detail-stat-label">Instructor</div>
+                                            <div class="detail-stat-value" id="detail-stat-instructor">—</div>
+                                        </div>
+                                        <div class="col-6 col-md-2">
+                                            <div class="detail-stat-label">Current Price</div>
+                                            <div class="detail-stat-value" id="detail-stat-price">—</div>
+                                        </div>
+                                        <div class="col-6 col-md-2">
+                                            <div class="detail-stat-label">Rating</div>
+                                            <div class="detail-stat-value" id="detail-stat-rating">—</div>
+                                        </div>
+                                        <div class="col-6 col-md-2">
+                                            <div class="detail-stat-label">Access</div>
+                                            <div class="detail-stat-value" id="detail-stat-access">—</div>
+                                        </div>
+                                        <div class="col-6 col-md-2">
+                                            <div class="detail-stat-label">Unlock Mode</div>
+                                            <div class="detail-stat-value" id="detail-stat-unlock">—</div>
+                                        </div>
+                                        <div class="col-6 col-md-2">
+                                            <div class="detail-stat-label">Certificate</div>
+                                            <div class="detail-stat-value" id="detail-stat-certificate">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <ul class="nav nav-tabs mb-3" id="detail-tabs">
+                                <li class="nav-item"><a class="nav-link active" href="#"
+                                        data-detail-section="overview">Overview &amp; Pricing</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-detail-section="content">Content</a>
+                                </li>
+                                <li class="nav-item"><a class="nav-link" href="#"
+                                        data-detail-section="assessments">Assessments</a></li>
+                            </ul>
+
+                            <!-- Overview & Pricing -->
+                            <div id="detail-section-overview">
+                                <div class="row row-cards mb-3">
+                                    <div class="col-md-7">
+                                        <div class="card h-100">
+                                            <div class="card-header"><h3 class="card-title">Course Details</h3></div>
+                                            <div class="card-body">
+                                                <div class="mb-2"><strong>Short Description:</strong>
+                                                    <div id="detail-short-desc" class="text-secondary">—</div>
+                                                </div>
+                                                <div class="mb-2"><strong>Description:</strong>
+                                                    <div id="detail-desc" class="text-secondary">—</div>
+                                                </div>
+                                                <div class="row g-2 mb-2">
+                                                    <div class="col-6">
+                                                        <div class="detail-stat-label">Total Duration</div>
+                                                        <div class="detail-stat-value" id="detail-duration">—</div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="detail-stat-label">Est. Completion Time</div>
+                                                        <div class="detail-stat-value" id="detail-completion-time">—
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-2"><strong>Requirements:</strong>
+                                                    <div id="detail-requirements" class="text-secondary">—</div>
+                                                </div>
+                                                <div class="mb-2"><strong>Learning Objectives:</strong>
+                                                    <div id="detail-objectives" class="text-secondary">—</div>
+                                                </div>
+                                                <div class="row g-2">
+                                                    <div class="col-6"><strong>Do's:</strong>
+                                                        <div id="detail-dos" class="text-secondary">—</div>
+                                                    </div>
+                                                    <div class="col-6"><strong>Don'ts:</strong>
+                                                        <div id="detail-donts" class="text-secondary">—</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="card h-100">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h3 class="card-title">Pricing Schedule</h3>
+                                                <button type="button" class="btn btn-sm btn-primary"
+                                                    id="btn-add-pricing" data-bs-toggle="modal"
+                                                    data-bs-target="#modal-pricing">Add Pricing</button>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-vcenter card-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Fee</th>
+                                                                <th>Discounted</th>
+                                                                <th>Promo</th>
+                                                                <th>Type</th>
+                                                                <th>Effective</th>
+                                                                <th>Expiry</th>
+                                                                <th class="w-1"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="pricing-tbody">
+                                                            <tr>
+                                                                <td colspan="7" class="text-center py-3 text-secondary">
+                                                                    No pricing configured yet.</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Content (Modules & Lessons) -->
+                            <div id="detail-section-content" class="d-none">
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-module"
+                                        data-bs-toggle="modal" data-bs-target="#modal-module">Add Module</button>
+                                </div>
+                                <div id="modules-container">
+                                    <div class="text-center py-4 text-secondary">No modules yet.</div>
+                                </div>
+                            </div>
+
+                            <!-- Assessments -->
+                            <div id="detail-section-assessments" class="d-none">
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-assessment"
+                                        data-bs-toggle="modal" data-bs-target="#modal-assessment">New
+                                        Assessment</button>
+                                </div>
+                                <div class="card">
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-vcenter card-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Scope</th>
+                                                        <th>Questions</th>
+                                                        <th>Passing Score</th>
+                                                        <th>Max Attempts</th>
+                                                        <th>Time Limit</th>
+                                                        <th>Required</th>
+                                                        <th class="w-1"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="assessments-tbody">
+                                                    <tr>
+                                                        <td colspan="7" class="text-center py-4 text-secondary">No
+                                                            assessments yet.</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <!-- ===== END DETAIL VIEW ===== -->
+
+                    </div>
+                    <!-- ========== END COURSES SECTION ========== -->
+
+                    <!-- ========== REVIEWS SECTION ========== -->
+                    <div id="section-reviews" class="d-none">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="row g-2 w-100 align-items-center">
+                                    <div class="col-md-4">
+                                        <select class="form-select form-select-sm" id="reviews-filter-course">
+                                            <option value="">All Courses</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="reviews-filter-status">
+                                            <option value="">All Statuses</option>
+                                            <option value="PENDING">Pending</option>
+                                            <option value="APPROVED">Approved</option>
+                                            <option value="HIDDEN">Hidden</option>
+                                            <option value="DELETED">Deleted</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Course</th>
+                                                <th>Customer</th>
+                                                <th>Rating</th>
+                                                <th>Review</th>
+                                                <th>Status</th>
+                                                <th>Submitted</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reviews-tbody">
+                                            <tr>
+                                                <td colspan="7" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ========== END REVIEWS SECTION ========== -->
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center flex-row-reverse">
+                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">Copyright &copy; 2026 Hairlux. All rights reserved.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/academy-courses.js"></script>
+    <script src="assets/js/searchable-select.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- ===== COURSE CREATE/EDIT MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-course" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="course-modal-title">New Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-course" novalidate>
+                    <div class="modal-body">
+                        <div id="course-alert" class="alert d-none mb-3" role="alert"></div>
+                        <input type="hidden" id="course-id">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="course-title" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Category</label>
+                                <input type="text" class="form-control" id="course-category"
+                                    placeholder="e.g. Hairstyling">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Short Description</label>
+                                <input type="text" class="form-control" id="course-short-description" maxlength="200">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" id="course-description" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Level</label>
+                                <select class="form-select" id="course-level">
+                                    <option value="ALL">All Levels</option>
+                                    <option value="BEGINNER">Beginner</option>
+                                    <option value="INTERMEDIATE">Intermediate</option>
+                                    <option value="ADVANCED">Advanced</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Instructor</label>
+                                <select class="form-select" id="course-instructor-id">
+                                    <option value="">— None —</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="course-status">
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="PUBLISHED">Published</option>
+                                    <option value="UNPUBLISHED">Unpublished</option>
+                                    <option value="COMING_SOON">Coming Soon</option>
+                                    <option value="ARCHIVED">Archived</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Total Duration (minutes)</label>
+                                <input type="number" min="0" class="form-control" id="course-duration">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Est. Completion Time (minutes)</label>
+                                <input type="number" min="0" class="form-control" id="course-completion-time">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Requirements</label>
+                                <textarea class="form-control" id="course-requirements" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Learning Objectives</label>
+                                <textarea class="form-control" id="course-objectives" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Do's</label>
+                                <textarea class="form-control" id="course-dos" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Don'ts</label>
+                                <textarea class="form-control" id="course-donts" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Access Type</label>
+                                <select class="form-select" id="course-access-type">
+                                    <option value="LIFETIME">Lifetime</option>
+                                    <option value="FIXED_DAYS">Fixed Days from Purchase</option>
+                                    <option value="FIXED_EXPIRY">Fixed Expiry Date</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-none" id="course-access-days-wrap">
+                                <label class="form-label">Access Duration (days)</label>
+                                <input type="number" min="1" class="form-control" id="course-access-days">
+                            </div>
+                            <div class="col-md-4 d-none" id="course-access-expiry-wrap">
+                                <label class="form-label">Access Expiry Date</label>
+                                <input type="date" class="form-control" id="course-access-expiry">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Unlock Mode</label>
+                                <select class="form-select" id="course-unlock-mode">
+                                    <option value="OPEN_ACCESS">Open Access</option>
+                                    <option value="SEQUENTIAL">Sequential</option>
+                                    <option value="ASSESSMENT_BASED">Assessment Based</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="course-certificate-enabled"
+                                        checked>
+                                    <label class="form-check-label" for="course-certificate-enabled">Certificate
+                                        Enabled</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-course">Save Course</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PRICING MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-pricing" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pricing-modal-title">Add Pricing</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-pricing" novalidate>
+                    <div class="modal-body">
+                        <div id="pricing-alert" class="alert d-none mb-3" role="alert"></div>
+                        <input type="hidden" id="pricing-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Fee <span class="text-danger">*</span></label>
+                                <input type="number" min="0" step="0.01" class="form-control" id="pricing-fee"
+                                    required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Currency</label>
+                                <input type="text" class="form-control" id="pricing-currency" value="NGN"
+                                    maxlength="3">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Discounted Price</label>
+                                <input type="number" min="0" step="0.01" class="form-control"
+                                    id="pricing-discounted">
+                                <div class="form-text">A persistent discount, used when set and no promo is active.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Promotional Price</label>
+                                <input type="number" min="0" step="0.01" class="form-control" id="pricing-promo">
+                                <div class="form-text">A flash-sale price — takes precedence while its window is
+                                    active.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Free / Paid</label>
+                                <select class="form-select" id="pricing-type">
+                                    <option value="PAID">Paid</option>
+                                    <option value="FREE">Free</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6"></div>
+                            <div class="col-md-6">
+                                <label class="form-label">Effective Date</label>
+                                <input type="date" class="form-control" id="pricing-effective">
+                                <div class="form-text">Defaults to now if left blank.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Expiry Date</label>
+                                <input type="date" class="form-control" id="pricing-expiry">
+                                <div class="form-text">Open-ended if left blank.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-pricing">Save Pricing</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODULE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-module" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="module-modal-title">Add Module</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-module" novalidate>
+                    <div class="modal-body">
+                        <div id="module-alert" class="alert d-none mb-3" role="alert"></div>
+                        <input type="hidden" id="module-id">
+                        <div class="mb-3">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="module-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="module-description" rows="2"></textarea>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Estimated Duration (minutes)</label>
+                                <input type="number" min="0" class="form-control" id="module-duration">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="module-status">
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="PUBLISHED">Published</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-module">Save Module</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== LESSON MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-lesson" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lesson-modal-title">Add Lesson</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-lesson" novalidate>
+                    <div class="modal-body">
+                        <div id="lesson-alert" class="alert d-none mb-3" role="alert"></div>
+                        <input type="hidden" id="lesson-id">
+                        <input type="hidden" id="lesson-module-id">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="lesson-title" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="lesson-type" required>
+                                    <option value="VIDEO">Video</option>
+                                    <option value="AUDIO">Audio</option>
+                                    <option value="TEXT">Text</option>
+                                    <option value="PDF">PDF</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Content Key / URL</label>
+                                <input type="text" class="form-control" id="lesson-content-key"
+                                    placeholder="Storage key or URL for the video/audio/PDF asset">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Resources</label>
+                                <textarea class="form-control" id="lesson-resources" rows="2"
+                                    placeholder="One supplementary link per line"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Duration (minutes)</label>
+                                <input type="number" min="0" class="form-control" id="lesson-duration">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="lesson-status">
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="PUBLISHED">Published</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex flex-column justify-content-center gap-1">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="lesson-preview">
+                                    <label class="form-check-label" for="lesson-preview">Preview Available</label>
+                                </div>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="lesson-required" checked>
+                                    <label class="form-check-label" for="lesson-required">Required for
+                                        Completion</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-lesson">Save Lesson</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ASSESSMENT MODAL (question builder) ===== -->
+    <div class="modal modal-blur fade" id="modal-assessment" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assessment-modal-title">New Assessment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-assessment" novalidate>
+                    <div class="modal-body">
+                        <div id="assessment-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div id="assessment-errors" class="alert alert-danger d-none mb-3"></div>
+                        <input type="hidden" id="assessment-id">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Scope</label>
+                                <select class="form-select" id="assessment-module-select">
+                                    <option value="">— Course-level final assessment —</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Passing Score (%)</label>
+                                <input type="number" min="0" max="100" class="form-control"
+                                    id="assessment-passing-score" value="70">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Max Attempts</label>
+                                <input type="number" min="1" class="form-control" id="assessment-max-attempts"
+                                    value="3">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Time Limit (min)</label>
+                                <input type="number" min="1" class="form-control" id="assessment-time-limit">
+                            </div>
+                            <div class="col-md-2 d-flex flex-column justify-content-end gap-1">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="assessment-required" checked>
+                                    <label class="form-check-label" for="assessment-required">Required</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="assessment-randomize">
+                                    <label class="form-check-label" for="assessment-randomize">Randomize
+                                        Questions</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="assessment-immediate"
+                                        checked>
+                                    <label class="form-check-label" for="assessment-immediate">Immediate
+                                        Result</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="assessment-retake" checked>
+                                    <label class="form-check-label" for="assessment-retake">Retake Allowed</label>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="mb-0">Questions</h4>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown">+ Add Question</button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" data-add-question-type="MULTIPLE_CHOICE">Multiple
+                                            Choice</a></li>
+                                    <li><a class="dropdown-item" href="#" data-add-question-type="MULTIPLE_ANSWER">Multiple
+                                            Answer</a></li>
+                                    <li><a class="dropdown-item" href="#" data-add-question-type="TRUE_FALSE">True /
+                                            False</a></li>
+                                    <li><a class="dropdown-item" href="#" data-add-question-type="SHORT_ANSWER">Short
+                                            Answer</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div id="assessment-questions-container"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-assessment">Save
+                            Assessment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('academy_courses:read');
+
+        var coursesData = [];
+        var staffData = [];
+        var currentCourse = null;
+        var currentPricing = [];
+        var currentAssessments = [];
+        var currentAssessmentEditId = null;
+        var assessmentQuestions = [];
+        var canManage = false;
+        var canModerate = false;
+
+        function escAttr(s) {
+            return String(s == null ? "" : s)
+                .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuard('academy_courses:read');
+                RBAC.applyNavVisibility();
+                canManage = RBAC.can('academy_courses:manage');
+                canModerate = RBAC.can('academy_courses:moderate_reviews') || canManage;
+                if (!canManage) {
+                    ['btn-new-course', 'btn-edit-course', 'btn-add-pricing', 'btn-add-module', 'btn-add-assessment'].forEach(function (id) {
+                        var el = document.getElementById(id); if (el) el.style.display = 'none';
+                    });
+                }
+            });
+
+            loadLookups();
+            loadCourses();
+
+            // ── Section tabs (Courses / Reviews) ────────────────────────────────
+            document.getElementById("section-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-section]");
+                if (!tab) return;
+                document.querySelectorAll("#section-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                var section = tab.dataset.section;
+                document.getElementById("section-courses").classList.toggle("d-none", section !== "courses");
+                document.getElementById("section-reviews").classList.toggle("d-none", section !== "reviews");
+                if (section === "reviews") loadReviews();
+            });
+
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                var activeSection = (document.querySelector("#section-tabs .nav-link.active") || {}).dataset.section || "courses";
+                if (activeSection === "reviews") { loadReviews(); return; }
+                if (currentCourse) openCourseDetail(currentCourse.id); else loadCourses();
+            });
+
+            document.getElementById("courses-filter-status").addEventListener("change", loadCourses);
+            document.getElementById("courses-filter-category").addEventListener("change", loadCourses);
+
+            document.getElementById("courses-tbody").addEventListener("click", function (e) {
+                var row = e.target.closest(".course-row");
+                if (!row) return;
+                openCourseDetail(row.dataset.id);
+            });
+
+            document.getElementById("btn-back-to-list").addEventListener("click", function () {
+                currentCourse = null;
+                document.getElementById("view-detail").classList.add("d-none");
+                document.getElementById("view-list").classList.remove("d-none");
+                loadCourses();
+            });
+
+            // ── Course create/edit ───────────────────────────────────────────────
+            document.getElementById("btn-new-course").addEventListener("click", function () {
+                resetCourseForm();
+                document.getElementById("course-modal-title").textContent = "New Course";
+            });
+            document.getElementById("btn-edit-course").addEventListener("click", function () {
+                if (!currentCourse) return;
+                openEditCourse(currentCourse);
+                new bootstrap.Modal(document.getElementById("modal-course")).show();
+            });
+            document.getElementById("modal-course").addEventListener("hidden.bs.modal", resetCourseForm);
+
+            document.getElementById("course-access-type").addEventListener("change", function () {
+                document.getElementById("course-access-days-wrap").classList.toggle("d-none", this.value !== "FIXED_DAYS");
+                document.getElementById("course-access-expiry-wrap").classList.toggle("d-none", this.value !== "FIXED_EXPIRY");
+            });
+
+            document.getElementById("form-course").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("course-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-course");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var id = document.getElementById("course-id").value;
+                    var accessType = document.getElementById("course-access-type").value;
+                    var payload = {
+                        title: document.getElementById("course-title").value.trim(),
+                        category: document.getElementById("course-category").value.trim() || undefined,
+                        shortDescription: document.getElementById("course-short-description").value.trim() || undefined,
+                        description: document.getElementById("course-description").value.trim() || undefined,
+                        level: document.getElementById("course-level").value,
+                        instructorId: document.getElementById("course-instructor-id").value || undefined,
+                        status: document.getElementById("course-status").value,
+                        duration: document.getElementById("course-duration").value ? Number(document.getElementById("course-duration").value) : undefined,
+                        estimatedCompletionTime: document.getElementById("course-completion-time").value ? Number(document.getElementById("course-completion-time").value) : undefined,
+                        requirements: document.getElementById("course-requirements").value.trim() || undefined,
+                        learningObjectives: document.getElementById("course-objectives").value.trim() || undefined,
+                        dos: document.getElementById("course-dos").value.trim() || undefined,
+                        donts: document.getElementById("course-donts").value.trim() || undefined,
+                        certificateEnabled: document.getElementById("course-certificate-enabled").checked,
+                        accessType: accessType,
+                        accessDurationDays: accessType === "FIXED_DAYS" && document.getElementById("course-access-days").value ? Number(document.getElementById("course-access-days").value) : undefined,
+                        accessExpiryDate: accessType === "FIXED_EXPIRY" ? (document.getElementById("course-access-expiry").value || undefined) : undefined,
+                        unlockMode: document.getElementById("course-unlock-mode").value,
+                    };
+                    if (id) {
+                        await AcademyCourses.updateCourse(id, payload);
+                    } else {
+                        await AcademyCourses.createCourse(payload);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById("modal-course")).hide();
+                    if (currentCourse) openCourseDetail(currentCourse.id); else loadCourses();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save course.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Course";
+                }
+            });
+
+            // ── Detail tabs ──────────────────────────────────────────────────────
+            document.getElementById("detail-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-detail-section]");
+                if (!tab) return;
+                document.querySelectorAll("#detail-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                var section = tab.dataset.detailSection;
+                ["overview", "content", "assessments"].forEach(function (s) {
+                    document.getElementById("detail-section-" + s).classList.toggle("d-none", s !== section);
+                });
+            });
+
+            // ── Pricing ──────────────────────────────────────────────────────────
+            document.getElementById("modal-pricing").addEventListener("hidden.bs.modal", resetPricingForm);
+            document.getElementById("form-pricing").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                if (!currentCourse) return;
+                var alertEl = document.getElementById("pricing-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-pricing");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var id = document.getElementById("pricing-id").value;
+                    var payload = {
+                        fee: Number(document.getElementById("pricing-fee").value),
+                        currency: document.getElementById("pricing-currency").value.trim() || "NGN",
+                        discountedPrice: document.getElementById("pricing-discounted").value ? Number(document.getElementById("pricing-discounted").value) : undefined,
+                        promotionalPrice: document.getElementById("pricing-promo").value ? Number(document.getElementById("pricing-promo").value) : undefined,
+                        freePaidStatus: document.getElementById("pricing-type").value,
+                        effectiveDate: document.getElementById("pricing-effective").value || undefined,
+                        expiryDate: document.getElementById("pricing-expiry").value || undefined,
+                    };
+                    if (id) {
+                        await AcademyCourses.updatePricing(id, payload);
+                    } else {
+                        await AcademyCourses.addPricing(currentCourse.id, payload);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById("modal-pricing")).hide();
+                    openCourseDetail(currentCourse.id);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save pricing.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Pricing";
+                }
+            });
+
+            document.getElementById("pricing-tbody").addEventListener("click", function (e) {
+                var btn = e.target.closest("[data-edit-pricing-id]");
+                if (!btn) return;
+                var p = currentPricing.find(function (x) { return x.id === btn.dataset.editPricingId; });
+                if (!p) return;
+                document.getElementById("pricing-modal-title").textContent = "Edit Pricing";
+                document.getElementById("pricing-id").value = p.id;
+                document.getElementById("pricing-fee").value = p.fee;
+                document.getElementById("pricing-currency").value = p.currency || "NGN";
+                document.getElementById("pricing-discounted").value = p.discountedPrice != null ? p.discountedPrice : "";
+                document.getElementById("pricing-promo").value = p.promotionalPrice != null ? p.promotionalPrice : "";
+                document.getElementById("pricing-type").value = p.freePaidStatus || "PAID";
+                document.getElementById("pricing-effective").value = p.effectiveDate ? p.effectiveDate.substring(0, 10) : "";
+                document.getElementById("pricing-expiry").value = p.expiryDate ? p.expiryDate.substring(0, 10) : "";
+                new bootstrap.Modal(document.getElementById("modal-pricing")).show();
+            });
+
+            // ── Modules ──────────────────────────────────────────────────────────
+            document.getElementById("modal-module").addEventListener("hidden.bs.modal", resetModuleForm);
+            document.getElementById("form-module").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                if (!currentCourse) return;
+                var alertEl = document.getElementById("module-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-module");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var id = document.getElementById("module-id").value;
+                    var payload = {
+                        name: document.getElementById("module-name").value.trim(),
+                        description: document.getElementById("module-description").value.trim() || undefined,
+                        estimatedDuration: document.getElementById("module-duration").value ? Number(document.getElementById("module-duration").value) : undefined,
+                        status: document.getElementById("module-status").value,
+                    };
+                    if (id) {
+                        await AcademyCourses.updateModule(id, payload);
+                    } else {
+                        await AcademyCourses.createModule(currentCourse.id, payload);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById("modal-module")).hide();
+                    openCourseDetail(currentCourse.id);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save module.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Module";
+                }
+            });
+
+            document.getElementById("modules-container").addEventListener("click", async function (e) {
+                var target = e.target.closest("[data-mod-action], [data-lesson-action]");
+                if (!target) return;
+
+                if (target.dataset.modAction === "edit") {
+                    var mod = (currentCourse.modules || []).find(function (m) { return m.id === target.dataset.moduleId; });
+                    if (!mod) return;
+                    document.getElementById("module-modal-title").textContent = "Edit Module";
+                    document.getElementById("module-id").value = mod.id;
+                    document.getElementById("module-name").value = mod.name || "";
+                    document.getElementById("module-description").value = mod.description || "";
+                    document.getElementById("module-duration").value = mod.estimatedDuration != null ? mod.estimatedDuration : "";
+                    document.getElementById("module-status").value = mod.status || "DRAFT";
+                    new bootstrap.Modal(document.getElementById("modal-module")).show();
+                } else if (target.dataset.modAction === "publish" || target.dataset.modAction === "unpublish") {
+                    target.disabled = true;
+                    try {
+                        if (target.dataset.modAction === "publish") await AcademyCourses.publishModule(target.dataset.moduleId);
+                        else await AcademyCourses.unpublishModule(target.dataset.moduleId);
+                        openCourseDetail(currentCourse.id);
+                    } catch (err) { alert(err.message || "Failed to update module status."); target.disabled = false; }
+                } else if (target.dataset.modAction === "move-up" || target.dataset.modAction === "move-down") {
+                    var mods = (currentCourse.modules || []).slice().sort(function (a, b) { return a.order - b.order; });
+                    var idx = mods.findIndex(function (m) { return m.id === target.dataset.moduleId; });
+                    var swapWith = target.dataset.modAction === "move-up" ? idx - 1 : idx + 1;
+                    if (idx < 0 || swapWith < 0 || swapWith >= mods.length) return;
+                    var tmp = mods[idx]; mods[idx] = mods[swapWith]; mods[swapWith] = tmp;
+                    try {
+                        await AcademyCourses.reorderModules(currentCourse.id, mods.map(function (m) { return m.id; }));
+                        openCourseDetail(currentCourse.id);
+                    } catch (err) { alert(err.message || "Failed to reorder modules."); }
+                } else if (target.dataset.modAction === "add-lesson") {
+                    resetLessonForm();
+                    document.getElementById("lesson-module-id").value = target.dataset.moduleId;
+                    document.getElementById("lesson-modal-title").textContent = "Add Lesson";
+                    new bootstrap.Modal(document.getElementById("modal-lesson")).show();
+                } else if (target.dataset.lessonAction === "edit") {
+                    var allLessons = [];
+                    (currentCourse.modules || []).forEach(function (m) { (m.lessons || []).forEach(function (l) { allLessons.push(Object.assign({ moduleId: m.id }, l)); }); });
+                    var lesson = allLessons.find(function (l) { return l.id === target.dataset.lessonId; });
+                    if (!lesson) return;
+                    document.getElementById("lesson-modal-title").textContent = "Edit Lesson";
+                    document.getElementById("lesson-id").value = lesson.id;
+                    document.getElementById("lesson-module-id").value = lesson.moduleId;
+                    document.getElementById("lesson-title").value = lesson.title || "";
+                    document.getElementById("lesson-type").value = lesson.type || "VIDEO";
+                    document.getElementById("lesson-content-key").value = lesson.contentKey || "";
+                    document.getElementById("lesson-resources").value = (lesson.resources || []).join("\n");
+                    document.getElementById("lesson-duration").value = lesson.duration != null ? lesson.duration : "";
+                    document.getElementById("lesson-status").value = lesson.status || "DRAFT";
+                    document.getElementById("lesson-preview").checked = !!lesson.previewAvailable;
+                    document.getElementById("lesson-required").checked = lesson.requiredLesson !== false;
+                    new bootstrap.Modal(document.getElementById("modal-lesson")).show();
+                } else if (target.dataset.lessonAction === "publish" || target.dataset.lessonAction === "unpublish") {
+                    target.disabled = true;
+                    try {
+                        if (target.dataset.lessonAction === "publish") await AcademyCourses.publishLesson(target.dataset.lessonId);
+                        else await AcademyCourses.unpublishLesson(target.dataset.lessonId);
+                        openCourseDetail(currentCourse.id);
+                    } catch (err) { alert(err.message || "Failed to update lesson status."); target.disabled = false; }
+                } else if (target.dataset.lessonAction === "move-up" || target.dataset.lessonAction === "move-down") {
+                    var mod2 = (currentCourse.modules || []).find(function (m) { return m.id === target.dataset.moduleId; });
+                    if (!mod2) return;
+                    var lessons = (mod2.lessons || []).slice().sort(function (a, b) { return a.order - b.order; });
+                    var li = lessons.findIndex(function (l) { return l.id === target.dataset.lessonId; });
+                    var swapWith2 = target.dataset.lessonAction === "move-up" ? li - 1 : li + 1;
+                    if (li < 0 || swapWith2 < 0 || swapWith2 >= lessons.length) return;
+                    var tmp2 = lessons[li]; lessons[li] = lessons[swapWith2]; lessons[swapWith2] = tmp2;
+                    try {
+                        await AcademyCourses.reorderLessons(mod2.id, lessons.map(function (l) { return l.id; }));
+                        openCourseDetail(currentCourse.id);
+                    } catch (err) { alert(err.message || "Failed to reorder lessons."); }
+                }
+            });
+
+            document.getElementById("modal-lesson").addEventListener("hidden.bs.modal", resetLessonForm);
+            document.getElementById("form-lesson").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("lesson-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-lesson");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var id = document.getElementById("lesson-id").value;
+                    var moduleId = document.getElementById("lesson-module-id").value;
+                    var resourcesRaw = document.getElementById("lesson-resources").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+                    var payload = {
+                        title: document.getElementById("lesson-title").value.trim(),
+                        type: document.getElementById("lesson-type").value,
+                        contentKey: document.getElementById("lesson-content-key").value.trim() || undefined,
+                        resources: resourcesRaw.length ? resourcesRaw : undefined,
+                        duration: document.getElementById("lesson-duration").value ? Number(document.getElementById("lesson-duration").value) : undefined,
+                        previewAvailable: document.getElementById("lesson-preview").checked,
+                        requiredLesson: document.getElementById("lesson-required").checked,
+                        status: document.getElementById("lesson-status").value,
+                    };
+                    if (id) {
+                        await AcademyCourses.updateLesson(id, payload);
+                    } else {
+                        await AcademyCourses.createLesson(moduleId, payload);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById("modal-lesson")).hide();
+                    openCourseDetail(currentCourse.id);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save lesson.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Lesson";
+                }
+            });
+
+            // ── Assessments ──────────────────────────────────────────────────────
+            document.getElementById("modal-assessment").addEventListener("hidden.bs.modal", resetAssessmentForm);
+
+            document.querySelectorAll("[data-add-question-type]").forEach(function (link) {
+                link.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    assessmentQuestions.push(AcademyCourses.defaultQuestion(this.dataset.addQuestionType));
+                    renderAssessmentQuestions();
+                });
+            });
+
+            document.getElementById("assessments-tbody").addEventListener("click", async function (e) {
+                var editBtn = e.target.closest("[data-edit-assessment-id]");
+                var delBtn = e.target.closest("[data-delete-assessment-id]");
+                if (editBtn) {
+                    openEditAssessment(editBtn.dataset.editAssessmentId);
+                } else if (delBtn) {
+                    if (!confirm("Delete this assessment? This can only be done if it has no recorded results yet.")) return;
+                    delBtn.disabled = true;
+                    try {
+                        await AcademyCourses.deleteAssessment(delBtn.dataset.deleteAssessmentId);
+                        openCourseDetail(currentCourse.id);
+                    } catch (err) {
+                        alert(err.message || "Failed to delete assessment.");
+                        delBtn.disabled = false;
+                    }
+                }
+            });
+
+            document.getElementById("assessment-questions-container").addEventListener("input", function (e) {
+                var field = e.target.dataset.qField;
+                if (!field) return;
+                var qi = Number(e.target.dataset.qIndex);
+                var q = assessmentQuestions[qi];
+                if (!q) return;
+                if (field === "prompt") q.prompt = e.target.value;
+                else if (field === "points") q.points = e.target.value;
+                else if (field === "option") q.options[Number(e.target.dataset.oIndex)] = e.target.value;
+                else if (field === "answer") q.shortAnswers[Number(e.target.dataset.aIndex)] = e.target.value;
+            });
+
+            document.getElementById("assessment-questions-container").addEventListener("change", function (e) {
+                var qi = Number(e.target.dataset.qIndex);
+                var q = assessmentQuestions[qi];
+                if (e.target.dataset.qField === "type") {
+                    assessmentQuestions[qi] = AcademyCourses.defaultQuestion(e.target.value);
+                    assessmentQuestions[qi].prompt = q ? q.prompt : "";
+                    renderAssessmentQuestions();
+                } else if (e.target.dataset.qAction === "toggle-correct" && q) {
+                    var oi = Number(e.target.dataset.oIndex);
+                    if (q.type === "MULTIPLE_CHOICE") {
+                        q.correctIndices = e.target.checked ? [oi] : [];
+                    } else {
+                        var pos = q.correctIndices.indexOf(oi);
+                        if (e.target.checked && pos === -1) q.correctIndices.push(oi);
+                        if (!e.target.checked && pos !== -1) q.correctIndices.splice(pos, 1);
+                    }
+                } else if (e.target.dataset.qAction === "set-bool" && q) {
+                    q.correctBool = e.target.value;
+                }
+            });
+
+            document.getElementById("assessment-questions-container").addEventListener("click", function (e) {
+                var target = e.target.closest("[data-q-action]");
+                if (!target) return;
+                var action = target.dataset.qAction;
+                var qi = Number(target.dataset.qIndex);
+                var q = assessmentQuestions[qi];
+                if (action === "remove-question") {
+                    assessmentQuestions.splice(qi, 1);
+                    renderAssessmentQuestions();
+                } else if (action === "add-option" && q) {
+                    q.options.push("");
+                    renderAssessmentQuestions();
+                } else if (action === "remove-option" && q) {
+                    var oi2 = Number(target.dataset.oIndex);
+                    q.options.splice(oi2, 1);
+                    q.correctIndices = q.correctIndices.filter(function (i) { return i !== oi2; }).map(function (i) { return i > oi2 ? i - 1 : i; });
+                    renderAssessmentQuestions();
+                } else if (action === "add-answer" && q) {
+                    q.shortAnswers.push("");
+                    renderAssessmentQuestions();
+                } else if (action === "remove-answer" && q) {
+                    q.shortAnswers.splice(Number(target.dataset.aIndex), 1);
+                    renderAssessmentQuestions();
+                }
+            });
+
+            document.getElementById("form-assessment").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                if (!currentCourse) return;
+                var alertEl = document.getElementById("assessment-alert");
+                var errorsEl = document.getElementById("assessment-errors");
+                alertEl.className = "alert d-none";
+                errorsEl.className = "alert alert-danger d-none";
+
+                var built = AcademyCourses.buildQuestionsPayload(assessmentQuestions);
+                if (built.errors.length) {
+                    errorsEl.className = "alert alert-danger";
+                    errorsEl.innerHTML = built.errors.map(function (m) { return "<div>" + m.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</div>"; }).join("");
+                    return;
+                }
+
+                var btn = document.getElementById("btn-save-assessment");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var payload = {
+                        courseId: currentCourse.id,
+                        moduleId: document.getElementById("assessment-module-select").value || undefined,
+                        passingScore: Number(document.getElementById("assessment-passing-score").value) || 70,
+                        maxAttempts: Number(document.getElementById("assessment-max-attempts").value) || 3,
+                        timeLimit: document.getElementById("assessment-time-limit").value ? Number(document.getElementById("assessment-time-limit").value) : undefined,
+                        randomizeQuestions: document.getElementById("assessment-randomize").checked,
+                        isRequired: document.getElementById("assessment-required").checked,
+                        immediateResult: document.getElementById("assessment-immediate").checked,
+                        retakeAllowed: document.getElementById("assessment-retake").checked,
+                        questions: built.questions,
+                    };
+                    if (currentAssessmentEditId) {
+                        await AcademyCourses.updateAssessment(currentAssessmentEditId, payload);
+                    } else {
+                        await AcademyCourses.createAssessment(payload);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById("modal-assessment")).hide();
+                    openCourseDetail(currentCourse.id);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save assessment.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Assessment";
+                }
+            });
+
+            // ── Reviews ──────────────────────────────────────────────────────────
+            document.getElementById("reviews-filter-course").addEventListener("change", loadReviews);
+            document.getElementById("reviews-filter-status").addEventListener("change", loadReviews);
+            document.getElementById("reviews-tbody").addEventListener("click", async function (e) {
+                var btn = e.target.closest("[data-moderate-id]");
+                if (!btn) return;
+                btn.disabled = true;
+                try {
+                    await AcademyCourses.moderateReview(btn.dataset.moderateId, btn.dataset.moderateStatus);
+                    loadReviews();
+                } catch (err) {
+                    alert(err.message || "Failed to moderate review.");
+                    btn.disabled = false;
+                }
+            });
+        });
+
+        // ── Lookups ──────────────────────────────────────────────────────────────
+
+        async function loadLookups() {
+            try {
+                var res = await Staff.getAll({ limit: 100 }); // capped by the /admin/staff DTO's @Max(100)
+                staffData = (res && res.data) || [];
+                var staffOptionsHtml = staffData.map(function (s) { return '<option value="' + s.id + '">' + s.name + ' (' + (s.currentRole || "") + ')</option>'; }).join("");
+                document.getElementById("course-instructor-id").innerHTML = '<option value="">— None —</option>' + staffOptionsHtml;
+                if (window.SearchableSelect) SearchableSelect.attach("course-instructor-id");
+            } catch (err) { /* non-fatal */ }
+        }
+
+        // ── Courses list ─────────────────────────────────────────────────────────
+
+        async function loadCourses() {
+            var tbody = document.getElementById("courses-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                var status = document.getElementById("courses-filter-status").value;
+                var category = document.getElementById("courses-filter-category").value;
+                coursesData = await AcademyCourses.getCourses({ status: status || undefined, category: category || undefined }) || [];
+
+                // Populate the category filter from the full unfiltered set the
+                // first time through, so options don't shrink to match a filter.
+                var catSelect = document.getElementById("courses-filter-category");
+                if (catSelect.options.length <= 1) {
+                    var cats = Array.from(new Set(coursesData.map(function (c) { return c.category; }).filter(Boolean))).sort();
+                    catSelect.innerHTML = '<option value="">All Categories</option>' + cats.map(function (c) { return '<option value="' + escAttr(c) + '">' + escAttr(c) + '</option>'; }).join("");
+                }
+
+                document.getElementById("courses-count-label").textContent = coursesData.length + " course" + (coursesData.length === 1 ? "" : "s");
+
+                if (!coursesData.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-secondary">No courses found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = coursesData.map(function (c) {
+                    var latest = (c.pricing || [])[0];
+                    var priceLabel = latest ? (latest.freePaidStatus === "FREE" ? "Free" : AcademyCourses.formatMoney(latest.discountedPrice || latest.fee, latest.currency)) : "—";
+                    return '<tr class="course-row" data-id="' + c.id + '">' +
+                        '<td><div class="fw-medium">' + escAttr(c.title) + '</div></td>' +
+                        '<td>' + escAttr(c.category || "—") + '</td>' +
+                        '<td>' + AcademyCourses.levelLabel(c.level) + '</td>' +
+                        '<td>' + (c.instructor ? escAttr(c.instructor.name) : "—") + '</td>' +
+                        '<td>' + priceLabel + '</td>' +
+                        '<td>' + AcademyCourses.courseStatusBadge(c.status) + '</td>' +
+                        '<td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-secondary"><path d="M9 6l6 6l-6 6" /></svg></td>' +
+                        '</tr>';
+                }).join("");
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">' + (err.message || "Failed to load courses.") + '</td></tr>';
+            }
+        }
+
+        function resetCourseForm() {
+            document.getElementById("form-course").reset();
+            document.getElementById("course-id").value = "";
+            document.getElementById("course-alert").className = "alert d-none";
+            document.getElementById("course-level").value = "ALL";
+            document.getElementById("course-status").value = "DRAFT";
+            document.getElementById("course-access-type").value = "LIFETIME";
+            document.getElementById("course-unlock-mode").value = "OPEN_ACCESS";
+            document.getElementById("course-certificate-enabled").checked = true;
+            document.getElementById("course-access-days-wrap").classList.add("d-none");
+            document.getElementById("course-access-expiry-wrap").classList.add("d-none");
+        }
+
+        function openEditCourse(course) {
+            document.getElementById("course-id").value = course.id;
+            document.getElementById("course-title").value = course.title || "";
+            document.getElementById("course-category").value = course.category || "";
+            document.getElementById("course-short-description").value = course.shortDescription || "";
+            document.getElementById("course-description").value = course.description || "";
+            document.getElementById("course-level").value = course.level || "ALL";
+            document.getElementById("course-instructor-id").value = course.instructorId || "";
+            document.getElementById("course-status").value = course.status || "DRAFT";
+            document.getElementById("course-duration").value = course.duration != null ? course.duration : "";
+            document.getElementById("course-completion-time").value = course.estimatedCompletionTime != null ? course.estimatedCompletionTime : "";
+            document.getElementById("course-requirements").value = course.requirements || "";
+            document.getElementById("course-objectives").value = course.learningObjectives || "";
+            document.getElementById("course-dos").value = course.dos || "";
+            document.getElementById("course-donts").value = course.donts || "";
+            document.getElementById("course-certificate-enabled").checked = course.certificateEnabled !== false;
+            document.getElementById("course-access-type").value = course.accessType || "LIFETIME";
+            document.getElementById("course-access-days").value = course.accessDurationDays != null ? course.accessDurationDays : "";
+            document.getElementById("course-access-expiry").value = course.accessExpiryDate ? String(course.accessExpiryDate).substring(0, 10) : "";
+            document.getElementById("course-unlock-mode").value = course.unlockMode || "OPEN_ACCESS";
+            document.getElementById("course-access-days-wrap").classList.toggle("d-none", course.accessType !== "FIXED_DAYS");
+            document.getElementById("course-access-expiry-wrap").classList.toggle("d-none", course.accessType !== "FIXED_EXPIRY");
+            document.getElementById("course-modal-title").textContent = "Edit Course";
+        }
+
+        // ── Course detail ────────────────────────────────────────────────────────
+
+        async function openCourseDetail(id) {
+            document.getElementById("view-list").classList.add("d-none");
+            document.getElementById("view-detail").classList.remove("d-none");
+            try {
+                currentCourse = await AcademyCourses.getCourse(id);
+                currentPricing = currentCourse.pricing || [];
+                currentAssessments = await AcademyCourses.listAssessmentsForCourse(id) || [];
+                renderCourseDetail();
+            } catch (err) {
+                alert(err.message || "Failed to load course.");
+            }
+        }
+
+        function renderCourseDetail() {
+            var c = currentCourse;
+            document.getElementById("detail-course-title").textContent = c.title;
+            document.getElementById("detail-course-status").innerHTML = AcademyCourses.courseStatusBadge(c.status);
+            document.getElementById("detail-course-category-level").textContent = (c.category || "Uncategorized") + " · " + AcademyCourses.levelLabel(c.level);
+            document.getElementById("detail-stat-instructor").textContent = c.instructor ? c.instructor.name : "—";
+            document.getElementById("detail-stat-price").textContent = c.currentPrice ? AcademyCourses.formatMoney(c.currentPrice.amount, c.currentPrice.currency) : "No active pricing";
+            document.getElementById("detail-stat-rating").innerHTML = AcademyCourses.starRating(c.averageRating);
+            document.getElementById("detail-stat-access").textContent = c.accessType === "FIXED_DAYS" ? (c.accessDurationDays + " days") : (c.accessType === "FIXED_EXPIRY" ? ("Until " + AcademyCourses.formatDate(c.accessExpiryDate)) : "Lifetime");
+            document.getElementById("detail-stat-unlock").textContent = (c.unlockMode || "OPEN_ACCESS").replace(/_/g, " ");
+            document.getElementById("detail-stat-certificate").textContent = c.certificateEnabled !== false ? "Enabled" : "Disabled";
+
+            document.getElementById("detail-short-desc").textContent = c.shortDescription || "—";
+            document.getElementById("detail-desc").textContent = c.description || "—";
+            document.getElementById("detail-duration").textContent = c.duration != null ? (c.duration + " min") : "—";
+            document.getElementById("detail-completion-time").textContent = c.estimatedCompletionTime != null ? (c.estimatedCompletionTime + " min") : "—";
+            document.getElementById("detail-requirements").textContent = c.requirements || "—";
+            document.getElementById("detail-objectives").textContent = c.learningObjectives || "—";
+            document.getElementById("detail-dos").textContent = c.dos || "—";
+            document.getElementById("detail-donts").textContent = c.donts || "—";
+
+            renderPricingTable();
+            renderModules();
+            renderAssessmentsTable();
+            populateAssessmentModuleSelect();
+        }
+
+        function renderPricingTable() {
+            var tbody = document.getElementById("pricing-tbody");
+            if (!currentPricing.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-secondary">No pricing configured yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = currentPricing.map(function (p) {
+                return '<tr>' +
+                    '<td>' + AcademyCourses.formatMoney(p.fee, p.currency) + '</td>' +
+                    '<td>' + (p.discountedPrice != null ? AcademyCourses.formatMoney(p.discountedPrice, p.currency) : "—") + '</td>' +
+                    '<td>' + (p.promotionalPrice != null ? AcademyCourses.formatMoney(p.promotionalPrice, p.currency) : "—") + '</td>' +
+                    '<td>' + (p.freePaidStatus === "FREE" ? '<span class="badge bg-info-lt text-info">Free</span>' : '<span class="badge bg-secondary-lt text-secondary">Paid</span>') + '</td>' +
+                    '<td>' + AcademyCourses.formatDate(p.effectiveDate) + '</td>' +
+                    '<td>' + (p.expiryDate ? AcademyCourses.formatDate(p.expiryDate) : "Open-ended") + '</td>' +
+                    '<td><button type="button" class="btn btn-sm btn-outline-secondary" data-edit-pricing-id="' + p.id + '">Edit</button></td>' +
+                    '</tr>';
+            }).join("");
+        }
+        function resetPricingForm() {
+            document.getElementById("form-pricing").reset();
+            document.getElementById("pricing-id").value = "";
+            document.getElementById("pricing-currency").value = "NGN";
+            document.getElementById("pricing-type").value = "PAID";
+            document.getElementById("pricing-alert").className = "alert d-none";
+            document.getElementById("pricing-modal-title").textContent = "Add Pricing";
+        }
+
+        function renderModules() {
+            var container = document.getElementById("modules-container");
+            var modules = (currentCourse.modules || []).slice().sort(function (a, b) { return a.order - b.order; });
+            if (!modules.length) {
+                container.innerHTML = '<div class="text-center py-4 text-secondary">No modules yet.</div>';
+                return;
+            }
+            container.innerHTML = modules.map(function (m, mi) {
+                var lessons = (m.lessons || []).slice().sort(function (a, b) { return a.order - b.order; });
+                var lessonRows = lessons.length ? lessons.map(function (l, li) {
+                    return '<tr class="lesson-row">' +
+                        '<td>' + escAttr(l.title) + '</td>' +
+                        '<td>' + (l.type || "—") + '</td>' +
+                        '<td>' + (l.duration != null ? l.duration + " min" : "—") + '</td>' +
+                        '<td>' + AcademyCourses.contentStatusBadge(l.status) + '</td>' +
+                        '<td>' + (l.previewAvailable ? '<span class="badge bg-info-lt text-info">Preview</span>' : "") + (l.requiredLesson === false ? ' <span class="badge bg-secondary-lt text-secondary">Optional</span>' : "") + '</td>' +
+                        '<td class="text-end">' +
+                        '<div class="btn-group btn-group-sm">' +
+                        '<button type="button" class="btn btn-outline-secondary" data-lesson-action="move-up" data-lesson-id="' + l.id + '" data-module-id="' + m.id + '"' + (li === 0 ? " disabled" : "") + '>↑</button>' +
+                        '<button type="button" class="btn btn-outline-secondary" data-lesson-action="move-down" data-lesson-id="' + l.id + '" data-module-id="' + m.id + '"' + (li === lessons.length - 1 ? " disabled" : "") + '>↓</button>' +
+                        '<button type="button" class="btn btn-outline-secondary" data-lesson-action="edit" data-lesson-id="' + l.id + '">Edit</button>' +
+                        (l.status === "PUBLISHED"
+                            ? '<button type="button" class="btn btn-outline-warning" data-lesson-action="unpublish" data-lesson-id="' + l.id + '">Unpublish</button>'
+                            : '<button type="button" class="btn btn-outline-success" data-lesson-action="publish" data-lesson-id="' + l.id + '">Publish</button>') +
+                        '</div></td></tr>';
+                }).join("") : '<tr><td colspan="6" class="text-center py-2 text-secondary">No lessons yet.</td></tr>';
+
+                return '<div class="card module-card mb-3">' +
+                    '<div class="card-header d-flex justify-content-between align-items-center">' +
+                    '<div><strong>' + escAttr(m.name) + '</strong> ' + AcademyCourses.contentStatusBadge(m.status) +
+                    (m.estimatedDuration != null ? '<span class="text-secondary small ms-2">' + m.estimatedDuration + ' min</span>' : "") +
+                    (m.description ? '<div class="text-secondary small mt-1">' + escAttr(m.description) + '</div>' : "") +
+                    '</div>' +
+                    '<div class="btn-group btn-group-sm">' +
+                    '<button type="button" class="btn btn-outline-secondary" data-mod-action="move-up" data-module-id="' + m.id + '"' + (mi === 0 ? " disabled" : "") + '>↑</button>' +
+                    '<button type="button" class="btn btn-outline-secondary" data-mod-action="move-down" data-module-id="' + m.id + '"' + (mi === modules.length - 1 ? " disabled" : "") + '>↓</button>' +
+                    '<button type="button" class="btn btn-outline-secondary" data-mod-action="edit" data-module-id="' + m.id + '">Edit</button>' +
+                    (m.status === "PUBLISHED"
+                        ? '<button type="button" class="btn btn-outline-warning" data-mod-action="unpublish" data-module-id="' + m.id + '">Unpublish</button>'
+                        : '<button type="button" class="btn btn-outline-success" data-mod-action="publish" data-module-id="' + m.id + '">Publish</button>') +
+                    '<button type="button" class="btn btn-primary" data-mod-action="add-lesson" data-module-id="' + m.id + '">+ Lesson</button>' +
+                    '</div></div>' +
+                    '<div class="table-responsive"><table class="table table-sm table-vcenter mb-0"><thead><tr><th>Lesson</th><th>Type</th><th>Duration</th><th>Status</th><th>Flags</th><th></th></tr></thead><tbody>' + lessonRows + '</tbody></table></div>' +
+                    '</div>';
+            }).join("");
+        }
+
+        function resetModuleForm() {
+            document.getElementById("form-module").reset();
+            document.getElementById("module-id").value = "";
+            document.getElementById("module-status").value = "DRAFT";
+            document.getElementById("module-alert").className = "alert d-none";
+            document.getElementById("module-modal-title").textContent = "Add Module";
+        }
+
+        function resetLessonForm() {
+            document.getElementById("form-lesson").reset();
+            document.getElementById("lesson-id").value = "";
+            document.getElementById("lesson-type").value = "VIDEO";
+            document.getElementById("lesson-status").value = "DRAFT";
+            document.getElementById("lesson-required").checked = true;
+            document.getElementById("lesson-preview").checked = false;
+            document.getElementById("lesson-alert").className = "alert d-none";
+        }
+
+        // ── Assessments ──────────────────────────────────────────────────────────
+
+        function populateAssessmentModuleSelect() {
+            var sel = document.getElementById("assessment-module-select");
+            var modules = (currentCourse.modules || []).slice().sort(function (a, b) { return a.order - b.order; });
+            sel.innerHTML = '<option value="">— Course-level final assessment —</option>' +
+                modules.map(function (m) { return '<option value="' + m.id + '">' + escAttr(m.name) + '</option>'; }).join("");
+        }
+
+        function renderAssessmentsTable() {
+            var tbody = document.getElementById("assessments-tbody");
+            if (!currentAssessments.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-secondary">No assessments yet.</td></tr>';
+                return;
+            }
+            var moduleNameById = {};
+            (currentCourse.modules || []).forEach(function (m) { moduleNameById[m.id] = m.name; });
+            tbody.innerHTML = currentAssessments.map(function (a) {
+                var scope = a.moduleId ? ("Module: " + escAttr(moduleNameById[a.moduleId] || "—")) : "Course-level Final";
+                return '<tr>' +
+                    '<td>' + scope + '</td>' +
+                    '<td>' + ((a.questions || []).length) + '</td>' +
+                    '<td>' + (a.passingScore != null ? a.passingScore + "%" : "—") + '</td>' +
+                    '<td>' + (a.maxAttempts != null ? a.maxAttempts : "—") + '</td>' +
+                    '<td>' + (a.timeLimit ? a.timeLimit + " min" : "No limit") + '</td>' +
+                    '<td>' + (a.isRequired !== false ? '<span class="badge bg-success-lt text-success">Required</span>' : '<span class="badge bg-secondary-lt text-secondary">Optional</span>') + '</td>' +
+                    '<td class="text-end"><div class="btn-group btn-group-sm">' +
+                    '<button type="button" class="btn btn-outline-secondary" data-edit-assessment-id="' + a.id + '">Edit</button>' +
+                    '<button type="button" class="btn btn-outline-danger" data-delete-assessment-id="' + a.id + '">Delete</button>' +
+                    '</div></td></tr>';
+            }).join("");
+        }
+
+        async function openEditAssessment(id) {
+            try {
+                var a = await AcademyCourses.getAssessment(id);
+                currentAssessmentEditId = a.id;
+                document.getElementById("assessment-modal-title").textContent = "Edit Assessment";
+                populateAssessmentModuleSelect();
+                document.getElementById("assessment-module-select").value = a.moduleId || "";
+                document.getElementById("assessment-passing-score").value = a.passingScore != null ? a.passingScore : 70;
+                document.getElementById("assessment-max-attempts").value = a.maxAttempts != null ? a.maxAttempts : 3;
+                document.getElementById("assessment-time-limit").value = a.timeLimit != null ? a.timeLimit : "";
+                document.getElementById("assessment-randomize").checked = !!a.randomizeQuestions;
+                document.getElementById("assessment-required").checked = a.isRequired !== false;
+                document.getElementById("assessment-immediate").checked = a.immediateResult !== false;
+                document.getElementById("assessment-retake").checked = a.retakeAllowed !== false;
+                assessmentQuestions = (a.questions || []).map(AcademyCourses.fromApiQuestion);
+                renderAssessmentQuestions();
+                new bootstrap.Modal(document.getElementById("modal-assessment")).show();
+            } catch (err) {
+                alert(err.message || "Failed to load assessment.");
+            }
+        }
+
+        function resetAssessmentForm() {
+            document.getElementById("form-assessment").reset();
+            document.getElementById("assessment-id").value = "";
+            document.getElementById("assessment-passing-score").value = 70;
+            document.getElementById("assessment-max-attempts").value = 3;
+            document.getElementById("assessment-required").checked = true;
+            document.getElementById("assessment-immediate").checked = true;
+            document.getElementById("assessment-retake").checked = true;
+            document.getElementById("assessment-randomize").checked = false;
+            document.getElementById("assessment-alert").className = "alert d-none";
+            document.getElementById("assessment-errors").className = "alert alert-danger d-none";
+            document.getElementById("assessment-modal-title").textContent = "New Assessment";
+            currentAssessmentEditId = null;
+            assessmentQuestions = [];
+            renderAssessmentQuestions();
+        }
+
+        function renderAssessmentQuestions() {
+            var container = document.getElementById("assessment-questions-container");
+            if (!assessmentQuestions.length) {
+                container.innerHTML = '<div class="text-center py-3 text-secondary">No questions yet — use "+ Add Question" above.</div>';
+                return;
+            }
+            container.innerHTML = assessmentQuestions.map(function (q, qi) {
+                var typeOptionsHtml = ["MULTIPLE_CHOICE", "MULTIPLE_ANSWER", "TRUE_FALSE", "SHORT_ANSWER"].map(function (t) {
+                    var labels = { MULTIPLE_CHOICE: "Multiple Choice", MULTIPLE_ANSWER: "Multiple Answer", TRUE_FALSE: "True / False", SHORT_ANSWER: "Short Answer" };
+                    return '<option value="' + t + '"' + (q.type === t ? " selected" : "") + '>' + labels[t] + '</option>';
+                }).join("");
+
+                var bodyHtml = "";
+                if (q.type === "MULTIPLE_CHOICE" || q.type === "MULTIPLE_ANSWER") {
+                    var inputType = q.type === "MULTIPLE_CHOICE" ? "radio" : "checkbox";
+                    bodyHtml += '<label class="form-label">Options — mark the correct answer' + (q.type === "MULTIPLE_ANSWER" ? "s" : "") + '</label>' +
+                        (q.options || []).map(function (opt, oi) {
+                            return '<div class="input-group mb-1">' +
+                                '<span class="input-group-text"><input type="' + inputType + '" name="q' + qi + '-correct"' +
+                                ' data-q-action="toggle-correct" data-q-index="' + qi + '" data-o-index="' + oi + '"' +
+                                ((q.correctIndices || []).indexOf(oi) !== -1 ? " checked" : "") + '></span>' +
+                                '<input type="text" class="form-control" data-q-field="option" data-q-index="' + qi + '" data-o-index="' + oi + '" value="' + escAttr(opt) + '" placeholder="Option ' + (oi + 1) + '">' +
+                                '<button type="button" class="btn btn-outline-danger" data-q-action="remove-option" data-q-index="' + qi + '" data-o-index="' + oi + '"' + ((q.options || []).length <= 2 ? " disabled" : "") + '>&times;</button>' +
+                                '</div>';
+                        }).join("") +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary mt-1" data-q-action="add-option" data-q-index="' + qi + '">+ Add Option</button>';
+                } else if (q.type === "TRUE_FALSE") {
+                    bodyHtml += '<label class="form-label">Correct Answer</label><div>' +
+                        '<label class="form-check form-check-inline"><input class="form-check-input" type="radio" name="q' + qi + '-bool" value="true" data-q-action="set-bool" data-q-index="' + qi + '"' + (q.correctBool === "true" ? " checked" : "") + '> True</label>' +
+                        '<label class="form-check form-check-inline"><input class="form-check-input" type="radio" name="q' + qi + '-bool" value="false" data-q-action="set-bool" data-q-index="' + qi + '"' + (q.correctBool === "false" ? " checked" : "") + '> False</label>' +
+                        '</div>';
+                } else {
+                    bodyHtml += '<label class="form-label">Acceptable Answers (matched case-insensitively)</label>' +
+                        (q.shortAnswers || []).map(function (a, ai) {
+                            return '<div class="input-group mb-1">' +
+                                '<input type="text" class="form-control" data-q-field="answer" data-q-index="' + qi + '" data-a-index="' + ai + '" value="' + escAttr(a) + '" placeholder="Acceptable answer ' + (ai + 1) + '">' +
+                                '<button type="button" class="btn btn-outline-danger" data-q-action="remove-answer" data-q-index="' + qi + '" data-a-index="' + ai + '"' + ((q.shortAnswers || []).length <= 1 ? " disabled" : "") + '>&times;</button>' +
+                                '</div>';
+                        }).join("") +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary mt-1" data-q-action="add-answer" data-q-index="' + qi + '">+ Add Answer</button>';
+                }
+
+                return '<div class="card mb-3">' +
+                    '<div class="card-header d-flex justify-content-between align-items-center">' +
+                    '<div class="d-flex align-items-center gap-2">' +
+                    '<strong>Question ' + (qi + 1) + '</strong>' +
+                    '<select class="form-select form-select-sm w-auto" data-q-field="type" data-q-index="' + qi + '">' + typeOptionsHtml + '</select>' +
+                    '</div>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger" data-q-action="remove-question" data-q-index="' + qi + '">Remove</button>' +
+                    '</div>' +
+                    '<div class="card-body">' +
+                    '<div class="row g-2 mb-2">' +
+                    '<div class="col-md-9"><label class="form-label">Prompt</label><input type="text" class="form-control" data-q-field="prompt" data-q-index="' + qi + '" value="' + escAttr(q.prompt) + '"></div>' +
+                    '<div class="col-md-3"><label class="form-label">Points</label><input type="number" min="0" class="form-control" data-q-field="points" data-q-index="' + qi + '" value="' + escAttr(q.points) + '"></div>' +
+                    '</div>' +
+                    bodyHtml +
+                    '</div></div>';
+            }).join("");
+        }
+
+        // ── Reviews ──────────────────────────────────────────────────────────────
+
+        async function loadReviews() {
+            var tbody = document.getElementById("reviews-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                var courseSelect = document.getElementById("reviews-filter-course");
+                if (courseSelect.options.length <= 1) {
+                    if (!coursesData.length) coursesData = await AcademyCourses.getCourses({}) || [];
+                    courseSelect.innerHTML = '<option value="">All Courses</option>' + coursesData.map(function (c) { return '<option value="' + c.id + '">' + escAttr(c.title) + '</option>'; }).join("");
+                }
+                var courseId = courseSelect.value;
+                var status = document.getElementById("reviews-filter-status").value;
+                var reviews = await AcademyCourses.listReviews({ courseId: courseId || undefined, status: status || undefined }) || [];
+                if (!reviews.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-secondary">No reviews found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = reviews.map(function (r) {
+                    var customerName = r.user ? ((r.user.firstName || "") + " " + (r.user.lastName || "")).trim() : "—";
+                    var actions = "";
+                    if (canModerate) {
+                        if (r.status !== "APPROVED") actions += '<button type="button" class="btn btn-outline-success" data-moderate-id="' + r.id + '" data-moderate-status="APPROVED">Approve</button>';
+                        if (r.status !== "HIDDEN") actions += '<button type="button" class="btn btn-outline-warning" data-moderate-id="' + r.id + '" data-moderate-status="HIDDEN">Hide</button>';
+                        if (r.status !== "DELETED") actions += '<button type="button" class="btn btn-outline-danger" data-moderate-id="' + r.id + '" data-moderate-status="DELETED">Delete</button>';
+                    }
+                    return '<tr>' +
+                        '<td>' + escAttr(r.course ? r.course.title : "—") + '</td>' +
+                        '<td>' + escAttr(customerName || "—") + '<div class="text-secondary small">' + escAttr(r.user ? r.user.email : "") + '</div></td>' +
+                        '<td>' + AcademyCourses.starRating(r.rating) + '</td>' +
+                        '<td class="review-text">' + escAttr(r.review || "—") + '</td>' +
+                        '<td>' + AcademyCourses.reviewStatusBadge(r.status) + '</td>' +
+                        '<td>' + AcademyCourses.formatDate(r.createdAt) + '</td>' +
+                        '<td><div class="btn-group btn-group-sm">' + actions + '</div></td>' +
+                        '</tr>';
+                }).join("");
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">' + (err.message || "Failed to load reviews.") + '</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1408 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Academy Cohorts</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        table td {
+            vertical-align: middle;
+        }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        .cohort-row {
+            cursor: pointer;
+        }
+
+        .cohort-row:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        .session-row {
+            cursor: pointer;
+        }
+
+        .session-row:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        .detail-stat-label {
+            font-size: .72rem;
+            color: var(--tblr-secondary);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: .15rem;
+        }
+
+        .detail-stat-value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Academy</div>
+                            <h2 class="page-title" id="page-title">Cohorts</h2>
+                            <div class="text-secondary small mt-1" id="page-subtitle">Scheduling, registrations,
+                                attendance and certification for in-branch training.</div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2" id="header-actions-list">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-settings"
+                                data-bs-toggle="modal" data-bs-target="#modal-settings">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path
+                                        d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                Settings
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btn-new-cohort" data-bs-toggle="modal"
+                                data-bs-target="#modal-cohort">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Cohort
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- ========== LIST VIEW ========== -->
+                    <div id="view-list">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="row g-2 w-100 align-items-center">
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="cohorts-filter-training">
+                                            <option value="">All Trainings</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="cohorts-filter-branch">
+                                            <option value="">All Branches</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="cohorts-filter-status">
+                                            <option value="">All Statuses</option>
+                                            <option value="OPEN">Open</option>
+                                            <option value="FULL">Full</option>
+                                            <option value="ACTIVE">Active</option>
+                                            <option value="COMPLETED">Completed</option>
+                                            <option value="CANCELLED">Cancelled</option>
+                                            <option value="BELOW_MINIMUM">Below Minimum</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 text-secondary small text-md-end" id="cohorts-count-label">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Cohort</th>
+                                                <th>Training</th>
+                                                <th>Branch</th>
+                                                <th>Dates</th>
+                                                <th>Registered</th>
+                                                <th>Waitlist</th>
+                                                <th>Status</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cohorts-tbody">
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ========== END LIST VIEW ========== -->
+
+                    <!-- ========== DETAIL VIEW ========== -->
+                    <div id="view-detail" class="d-none">
+                        <button type="button" class="btn btn-link ps-0 mb-2" id="btn-back-to-list">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon me-1">
+                                <path d="M15 6l-6 6l6 6" />
+                            </svg>
+                            Back to Cohorts
+                        </button>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row align-items-center g-3">
+                                    <div class="col-md-8">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <h2 class="mb-0" id="detail-cohort-name">—</h2>
+                                            <span id="detail-cohort-status"></span>
+                                        </div>
+                                        <div class="text-secondary" id="detail-cohort-training-branch">—</div>
+                                    </div>
+                                    <div class="col-md-4 text-md-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                            id="btn-edit-cohort">Edit</button>
+                                        <button type="button" class="btn btn-danger btn-sm d-none"
+                                            id="btn-resolve-below-minimum" data-bs-toggle="modal"
+                                            data-bs-target="#modal-below-minimum">Resolve Below-Minimum</button>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row g-3">
+                                    <div class="col-6 col-md-2">
+                                        <div class="detail-stat-label">Dates</div>
+                                        <div class="detail-stat-value" id="detail-stat-dates">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <div class="detail-stat-label">Capacity</div>
+                                        <div class="detail-stat-value" id="detail-stat-capacity">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <div class="detail-stat-label">Confirmed / Seats Left</div>
+                                        <div class="detail-stat-value" id="detail-stat-seats">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <div class="detail-stat-label">Registration Window</div>
+                                        <div class="detail-stat-value" id="detail-stat-reg-window">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <div class="detail-stat-label">Trainer</div>
+                                        <div class="detail-stat-value" id="detail-stat-trainer">—</div>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <div class="detail-stat-label">Training Price</div>
+                                        <div class="detail-stat-value" id="detail-stat-price">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ul class="nav nav-tabs mb-3" id="detail-tabs">
+                            <li class="nav-item"><a class="nav-link active" href="#"
+                                    data-detail-section="registrations">Registrations</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#" data-detail-section="waitlist">Waitlist</a>
+                            </li>
+                            <li class="nav-item"><a class="nav-link" href="#"
+                                    data-detail-section="attendance">Attendance</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#"
+                                    data-detail-section="assessment">Assessment Results</a></li>
+                        </ul>
+
+                        <!-- Registrations -->
+                        <div id="detail-section-registrations">
+                            <div class="card">
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter card-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Applicant</th>
+                                                    <th>Registration Code</th>
+                                                    <th>Status</th>
+                                                    <th>Order</th>
+                                                    <th>Identity</th>
+                                                    <th>Registered</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="registrations-tbody">
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4">
+                                                        <div class="spinner-border text-primary" role="status"></div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Waitlist -->
+                        <div id="detail-section-waitlist" class="d-none">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div class="text-secondary small">Position order — first in line at the top.</div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        id="btn-promote-waitlist">Promote Next</button>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter card-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Applicant</th>
+                                                    <th>Status</th>
+                                                    <th>Offered At</th>
+                                                    <th>Offer Expires</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="waitlist-tbody">
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4">
+                                                        <div class="spinner-border text-primary" role="status"></div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attendance -->
+                        <div id="detail-section-attendance" class="d-none">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div class="text-secondary small">Sessions for this cohort. Click a session to mark
+                                        attendance.</div>
+                                    <button type="button" class="btn btn-sm btn-primary" id="btn-new-session"
+                                        data-bs-toggle="modal" data-bs-target="#modal-session">New Session</button>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter card-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Curriculum Module</th>
+                                                    <th>Time</th>
+                                                    <th class="w-1"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="sessions-tbody">
+                                                <tr>
+                                                    <td colspan="4" class="text-center py-4">
+                                                        <div class="spinner-border text-primary" role="status"></div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Assessment Results -->
+                        <div id="detail-section-assessment" class="d-none">
+                            <div class="row row-cards mb-3">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header"><h3 class="card-title">Record a Result</h3></div>
+                                        <div class="card-body">
+                                            <div id="assessment-record-alert" class="alert d-none mb-3"></div>
+                                            <form id="form-record-assessment">
+                                                <div class="mb-2">
+                                                    <label class="form-label">Registration (Confirmed learners)</label>
+                                                    <select class="form-select" id="assessment-registration"
+                                                        required></select>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Curriculum Module</label>
+                                                    <select class="form-select" id="assessment-module" required></select>
+                                                </div>
+                                                <div class="row g-2 align-items-end">
+                                                    <div class="col-6">
+                                                        <div class="form-check form-switch mt-2">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                id="assessment-passed" checked>
+                                                            <label class="form-check-label" for="assessment-passed">Passed</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="form-label">Score (0–100)</label>
+                                                        <input type="number" class="form-control" id="assessment-score"
+                                                            min="0" max="100">
+                                                    </div>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary mt-3"
+                                                    id="btn-save-assessment">Save Result</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header"><h3 class="card-title">Certification Eligibility</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="eligibility-alert" class="alert d-none mb-3"></div>
+                                            <label class="form-label">Registration</label>
+                                            <div class="input-group mb-3">
+                                                <select class="form-select" id="eligibility-registration"></select>
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                    id="btn-check-eligibility">Check</button>
+                                            </div>
+                                            <div id="eligibility-result" class="d-none">
+                                                <div class="row g-2 mb-2">
+                                                    <div class="col-6">
+                                                        <div class="detail-stat-label">Attendance</div>
+                                                        <div class="detail-stat-value" id="eligibility-attendance">—
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="detail-stat-label">Required Assessments</div>
+                                                        <div class="detail-stat-value" id="eligibility-assessments">—
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="eligibility-reasons" class="text-danger small mb-2"></div>
+                                                <button type="button" class="btn btn-success w-100 d-none"
+                                                    id="btn-issue-training-certificate">Issue Certificate</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Recorded Results</h3></div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter card-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Applicant</th>
+                                                    <th>Module</th>
+                                                    <th>Result</th>
+                                                    <th>Score</th>
+                                                    <th>Assessed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="assessment-results-tbody">
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4">
+                                                        <div class="spinner-border text-primary" role="status"></div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- ========== END DETAIL VIEW ========== -->
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center flex-row-reverse">
+                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">Copyright &copy; 2026 Hairlux. All rights reserved.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/academy-training.js"></script>
+    <script src="assets/js/searchable-select.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- ===== COHORT CREATE/EDIT MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-cohort" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cohort-modal-title">New Cohort</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-cohort" novalidate>
+                    <div class="modal-body">
+                        <div id="cohort-alert" class="alert d-none mb-3" role="alert"></div>
+                        <input type="hidden" id="cohort-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Training <span class="text-danger">*</span></label>
+                                <select class="form-select" id="cohort-training-id" required></select>
+                                <div class="form-text">Cannot be changed after the cohort is created.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Branch <span class="text-danger">*</span></label>
+                                <select class="form-select" id="cohort-branch-id" required></select>
+                                <div class="form-text">Cannot be changed after the cohort is created.</div>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Cohort Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="cohort-name"
+                                    placeholder="e.g. March 2026 Intake" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="cohort-start-date" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="cohort-end-date" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Capacity Min <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="cohort-capacity-min" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Capacity Max <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="cohort-capacity-max" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Registration Opens</label>
+                                <input type="date" class="form-control" id="cohort-reg-open">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Registration Closes</label>
+                                <input type="date" class="form-control" id="cohort-reg-close">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Assigned Trainer</label>
+                                <select class="form-select" id="cohort-trainer-id">
+                                    <option value="">— None —</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-cohort">Save Cohort</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SETTINGS MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-settings" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Academy Training Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-settings" novalidate>
+                    <div class="modal-body">
+                        <div id="settings-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div class="mb-3">
+                            <label class="form-label">Waitlist Offer Window (hours)</label>
+                            <input type="number" class="form-control" id="settings-waitlist-hours" min="1" max="336">
+                            <div class="form-text">How long a waitlist offer stays open before cascading to the next
+                                applicant.</div>
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label">Minimum Attendance % for Certification</label>
+                            <input type="number" class="form-control" id="settings-min-attendance" min="0" max="100">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-settings">Save Settings</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BELOW-MINIMUM DECISION MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-below-minimum" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Resolve Below-Minimum Cohort</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-below-minimum" novalidate>
+                    <div class="modal-body">
+                        <div id="below-minimum-alert" class="alert d-none mb-3" role="alert"></div>
+                        <p class="text-secondary">This cohort was below its minimum capacity at the registration
+                            deadline. Choose how to proceed.</p>
+                        <div class="mb-3">
+                            <label class="form-label">Decision</label>
+                            <select class="form-select" id="below-minimum-decision" required>
+                                <option value="PROCEED">Proceed anyway</option>
+                                <option value="CANCEL_AND_REFUND">Cancel &amp; refund all registrations</option>
+                                <option value="TRANSFER">Transfer registrations to another cohort</option>
+                                <option value="MERGE">Merge into another cohort</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 d-none" id="below-minimum-target-wrap">
+                            <label class="form-label">Target Cohort</label>
+                            <select class="form-select" id="below-minimum-target-cohort"></select>
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label">Note (optional)</label>
+                            <textarea class="form-control" id="below-minimum-note" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger" id="btn-save-below-minimum">Apply Decision</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== NEW SESSION MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-session" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Session</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-session" novalidate>
+                    <div class="modal-body">
+                        <div id="session-alert" class="alert d-none mb-3" role="alert"></div>
+                        <div class="mb-3">
+                            <label class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="session-date" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Start Time</label>
+                                <input type="time" class="form-control" id="session-start-time">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">End Time</label>
+                                <input type="time" class="form-control" id="session-end-time">
+                            </div>
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label">Curriculum Module (optional)</label>
+                            <select class="form-select" id="session-module">
+                                <option value="">— None —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-session">Create Session</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MARK ATTENDANCE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-attendance" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Mark Attendance — <span id="attendance-session-label"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="attendance-alert" class="alert d-none mb-3" role="alert"></div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Applicant</th>
+                                    <th style="width: 220px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-tbody">
+                                <tr>
+                                    <td colspan="2" class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-attendance">Save Attendance</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('academy_training:read');
+
+        var cohortsData = [];
+        var trainingsData = [];
+        var branchesData = [];
+        var staffData = [];
+        var currentCohort = null;
+        var currentCohortRegistrations = [];
+        var currentSessions = [];
+        var currentAssessmentResults = [];
+        var pendingAttendanceSessionId = null;
+        var canManage = false;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuard('academy_training:read');
+                RBAC.applyNavVisibility();
+                canManage = RBAC.can('academy_training:manage');
+                var canMark = RBAC.can('academy_training:mark_attendance') || canManage;
+                if (!canManage) {
+                    ['btn-new-cohort', 'btn-settings', 'btn-edit-cohort', 'btn-promote-waitlist'].forEach(function (id) {
+                        var el = document.getElementById(id); if (el) el.style.display = 'none';
+                    });
+                }
+                if (!canMark) {
+                    ['btn-new-session'].forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+                }
+            });
+
+            loadLookups();
+            loadCohorts();
+
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                if (currentCohort) openCohortDetail(currentCohort.id); else loadCohorts();
+            });
+            document.getElementById("cohorts-filter-training").addEventListener("change", loadCohorts);
+            document.getElementById("cohorts-filter-branch").addEventListener("change", loadCohorts);
+            document.getElementById("cohorts-filter-status").addEventListener("change", loadCohorts);
+
+            document.getElementById("cohorts-tbody").addEventListener("click", function (e) {
+                var row = e.target.closest(".cohort-row");
+                if (!row) return;
+                openCohortDetail(row.dataset.id);
+            });
+
+            document.getElementById("btn-back-to-list").addEventListener("click", function () {
+                currentCohort = null;
+                document.getElementById("view-detail").classList.add("d-none");
+                document.getElementById("view-list").classList.remove("d-none");
+                loadCohorts();
+            });
+
+            // ── Cohort create/edit ───────────────────────────────────────────────
+            document.getElementById("btn-new-cohort").addEventListener("click", function () {
+                resetCohortForm();
+                document.getElementById("cohort-modal-title").textContent = "New Cohort";
+            });
+            document.getElementById("btn-edit-cohort").addEventListener("click", function () {
+                if (!currentCohort) return;
+                openEditCohort(currentCohort);
+                new bootstrap.Modal(document.getElementById("modal-cohort")).show();
+            });
+            document.getElementById("modal-cohort").addEventListener("hidden.bs.modal", resetCohortForm);
+
+            document.getElementById("form-cohort").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("cohort-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-cohort");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var id = document.getElementById("cohort-id").value;
+                    var payload = {
+                        name: document.getElementById("cohort-name").value.trim(),
+                        startDate: document.getElementById("cohort-start-date").value,
+                        endDate: document.getElementById("cohort-end-date").value,
+                        capacityMax: Number(document.getElementById("cohort-capacity-max").value),
+                        capacityMin: Number(document.getElementById("cohort-capacity-min").value),
+                        registrationOpenDate: document.getElementById("cohort-reg-open").value || undefined,
+                        registrationCloseDate: document.getElementById("cohort-reg-close").value || undefined,
+                        assignedTrainerId: document.getElementById("cohort-trainer-id").value || undefined,
+                    };
+                    if (!id) {
+                        payload.trainingId = document.getElementById("cohort-training-id").value;
+                        payload.branchId = document.getElementById("cohort-branch-id").value;
+                        await AcademyTraining.createCohort(payload);
+                    } else {
+                        await AcademyTraining.updateCohort(id, payload);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById("modal-cohort")).hide();
+                    if (currentCohort) openCohortDetail(currentCohort.id); else loadCohorts();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save cohort.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Cohort";
+                }
+            });
+
+            // ── Settings ─────────────────────────────────────────────────────────
+            document.getElementById("modal-settings").addEventListener("show.bs.modal", async function () {
+                var alertEl = document.getElementById("settings-alert");
+                alertEl.className = "alert d-none";
+                try {
+                    var s = await AcademyTraining.getSettings();
+                    document.getElementById("settings-waitlist-hours").value = s.waitlistOfferWindowHours || "";
+                    document.getElementById("settings-min-attendance").value = s.minimumAttendancePercent || "";
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to load settings.";
+                }
+            });
+            document.getElementById("form-settings").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("settings-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-settings");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    await AcademyTraining.updateSettings({
+                        waitlistOfferWindowHours: Number(document.getElementById("settings-waitlist-hours").value) || undefined,
+                        minimumAttendancePercent: Number(document.getElementById("settings-min-attendance").value),
+                    });
+                    bootstrap.Modal.getInstance(document.getElementById("modal-settings")).hide();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save settings.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Settings";
+                }
+            });
+
+            // ── Below-minimum ────────────────────────────────────────────────────
+            document.getElementById("below-minimum-decision").addEventListener("change", function () {
+                var needsTarget = this.value === "TRANSFER" || this.value === "MERGE";
+                document.getElementById("below-minimum-target-wrap").classList.toggle("d-none", !needsTarget);
+            });
+            document.getElementById("modal-below-minimum").addEventListener("show.bs.modal", function () {
+                if (!currentCohort) return;
+                var sel = document.getElementById("below-minimum-target-cohort");
+                var others = cohortsData.filter(function (c) { return c.id !== currentCohort.id && c.trainingId === currentCohort.trainingId; });
+                sel.innerHTML = others.map(function (c) { return '<option value="' + c.id + '">' + c.name + '</option>'; }).join("") || '<option value="">No other cohorts of this training</option>';
+            });
+            document.getElementById("form-below-minimum").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                if (!currentCohort) return;
+                var alertEl = document.getElementById("below-minimum-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-below-minimum");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Applying…';
+                try {
+                    var decision = document.getElementById("below-minimum-decision").value;
+                    var payload = { decision: decision, note: document.getElementById("below-minimum-note").value || undefined };
+                    if (decision === "TRANSFER" || decision === "MERGE") {
+                        payload.targetCohortId = document.getElementById("below-minimum-target-cohort").value;
+                    }
+                    await AcademyTraining.decideBelowMinimum(currentCohort.id, payload);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-below-minimum")).hide();
+                    openCohortDetail(currentCohort.id);
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to apply decision.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Apply Decision";
+                }
+            });
+
+            // ── Detail tabs ──────────────────────────────────────────────────────
+            document.getElementById("detail-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-detail-section]");
+                if (!tab) return;
+                document.querySelectorAll("#detail-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                var section = tab.dataset.detailSection;
+                ["registrations", "waitlist", "attendance", "assessment"].forEach(function (s) {
+                    document.getElementById("detail-section-" + s).classList.toggle("d-none", s !== section);
+                });
+                if (section === "waitlist") loadWaitlist();
+                if (section === "attendance") loadSessions();
+                if (section === "assessment") loadAssessmentResults();
+            });
+
+            // ── Waitlist ─────────────────────────────────────────────────────────
+            document.getElementById("btn-promote-waitlist").addEventListener("click", async function () {
+                if (!currentCohort) return;
+                var btn = this;
+                btn.disabled = true;
+                try {
+                    await AcademyTraining.promoteWaitlist(currentCohort.id);
+                    loadWaitlist();
+                } catch (err) {
+                    alert(err.message || "Failed to promote waitlist.");
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+
+            // ── Sessions / Attendance ─────────────────────────────────────────────
+            document.getElementById("modal-session").addEventListener("hidden.bs.modal", function () {
+                document.getElementById("form-session").reset();
+                document.getElementById("session-alert").className = "alert d-none";
+            });
+            document.getElementById("form-session").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                if (!currentCohort) return;
+                var alertEl = document.getElementById("session-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-session");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Creating…';
+                try {
+                    var date = document.getElementById("session-date").value;
+                    var startTime = document.getElementById("session-start-time").value;
+                    var endTime = document.getElementById("session-end-time").value;
+                    await AcademyTraining.createSession(currentCohort.id, {
+                        date: date,
+                        startTime: startTime ? date + "T" + startTime + ":00" : undefined,
+                        endTime: endTime ? date + "T" + endTime + ":00" : undefined,
+                        curriculumModuleId: document.getElementById("session-module").value || undefined,
+                    });
+                    bootstrap.Modal.getInstance(document.getElementById("modal-session")).hide();
+                    loadSessions();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to create session.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Create Session";
+                }
+            });
+
+            document.getElementById("sessions-tbody").addEventListener("click", function (e) {
+                var row = e.target.closest(".session-row");
+                if (!row) return;
+                openMarkAttendance(row.dataset.id, row.dataset.label);
+            });
+
+            document.getElementById("btn-save-attendance").addEventListener("click", async function () {
+                if (!pendingAttendanceSessionId) return;
+                var alertEl = document.getElementById("attendance-alert");
+                alertEl.className = "alert d-none";
+                var btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var entries = Array.from(document.querySelectorAll("#attendance-tbody select[data-registration-id]")).map(function (sel) {
+                        return { registrationId: sel.dataset.registrationId, status: sel.value };
+                    });
+                    await AcademyTraining.markAttendance(pendingAttendanceSessionId, entries);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-attendance")).hide();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to save attendance.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Attendance";
+                }
+            });
+
+            // ── Assessment: record result ────────────────────────────────────────
+            document.getElementById("form-record-assessment").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("assessment-record-alert");
+                alertEl.className = "alert d-none";
+                var btn = document.getElementById("btn-save-assessment");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
+                try {
+                    var score = document.getElementById("assessment-score").value;
+                    await AcademyTraining.recordAssessmentResult({
+                        registrationId: document.getElementById("assessment-registration").value,
+                        curriculumModuleId: document.getElementById("assessment-module").value,
+                        passed: document.getElementById("assessment-passed").checked,
+                        score: score ? Number(score) : undefined,
+                    });
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Result recorded.";
+                    loadAssessmentResults();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to record result.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Save Result";
+                }
+            });
+
+            // ── Assessment: eligibility & certificate ────────────────────────────
+            document.getElementById("btn-check-eligibility").addEventListener("click", async function () {
+                var regId = document.getElementById("eligibility-registration").value;
+                if (!regId) return;
+                var alertEl = document.getElementById("eligibility-alert");
+                alertEl.className = "alert d-none";
+                document.getElementById("eligibility-result").classList.add("d-none");
+                try {
+                    var elig = await AcademyTraining.getEligibility(regId);
+                    document.getElementById("eligibility-attendance").textContent = elig.attendancePercent + "% (min " + elig.minimumAttendancePercent + "%)";
+                    document.getElementById("eligibility-assessments").innerHTML = elig.requiredAssessmentsPassed
+                        ? '<span class="text-success">All passed</span>'
+                        : '<span class="text-danger">Missing: ' + elig.missingAssessments.join(", ") + '</span>';
+                    document.getElementById("eligibility-reasons").textContent = elig.reasons.length ? elig.reasons.join(" · ") : "";
+                    document.getElementById("btn-issue-training-certificate").classList.toggle("d-none", !elig.eligible);
+                    document.getElementById("btn-issue-training-certificate").dataset.registrationId = regId;
+                    document.getElementById("eligibility-result").classList.remove("d-none");
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to check eligibility.";
+                }
+            });
+
+            document.getElementById("btn-issue-training-certificate").addEventListener("click", async function () {
+                var regId = this.dataset.registrationId;
+                if (!regId) return;
+                var btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Issuing…';
+                try {
+                    await AcademyTraining.issueCertificateForRegistration(regId);
+                    btn.classList.add("d-none");
+                    var alertEl = document.getElementById("eligibility-alert");
+                    alertEl.className = "alert alert-success";
+                    alertEl.textContent = "Certificate issued.";
+                } catch (err) {
+                    var alertEl2 = document.getElementById("eligibility-alert");
+                    alertEl2.className = "alert alert-danger";
+                    alertEl2.textContent = err.message || "Failed to issue certificate.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Issue Certificate";
+                }
+            });
+        });
+
+        // ── Lookups (Trainings / Branches / Staff) ──────────────────────────────
+
+        async function loadLookups() {
+            try {
+                trainingsData = await AcademyTraining.getTrainings() || [];
+                var trainingOptionsHtml = trainingsData.map(function (t) { return '<option value="' + t.id + '">' + t.name + '</option>'; }).join("");
+                document.getElementById("cohorts-filter-training").innerHTML = '<option value="">All Trainings</option>' + trainingOptionsHtml;
+                document.getElementById("cohort-training-id").innerHTML = trainingOptionsHtml;
+                if (window.SearchableSelect) { SearchableSelect.attach("cohorts-filter-training"); SearchableSelect.attach("cohort-training-id"); }
+            } catch (err) { /* non-fatal for the list view */ }
+
+            try {
+                branchesData = await Branches.getBranches() || [];
+                var branchOptionsHtml = branchesData.map(function (b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join("");
+                document.getElementById("cohorts-filter-branch").innerHTML = '<option value="">All Branches</option>' + branchOptionsHtml;
+                document.getElementById("cohort-branch-id").innerHTML = branchOptionsHtml;
+                if (window.SearchableSelect) { SearchableSelect.attach("cohorts-filter-branch"); SearchableSelect.attach("cohort-branch-id"); }
+            } catch (err) { /* non-fatal */ }
+
+            try {
+                var res = await Staff.getAll({ limit: 100 }); // capped by the /admin/staff DTO's @Max(100)
+                staffData = (res && res.data) || [];
+                var staffOptionsHtml = staffData.map(function (s) { return '<option value="' + s.id + '">' + s.name + ' (' + (s.currentRole || "") + ')</option>'; }).join("");
+                document.getElementById("cohort-trainer-id").innerHTML = '<option value="">— None —</option>' + staffOptionsHtml;
+                if (window.SearchableSelect) SearchableSelect.attach("cohort-trainer-id");
+            } catch (err) { /* non-fatal */ }
+        }
+
+        // ── List view ────────────────────────────────────────────────────────
+
+        async function loadCohorts() {
+            var tbody = document.getElementById("cohorts-tbody");
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                var filters = {
+                    trainingId: document.getElementById("cohorts-filter-training").value,
+                    branchId: document.getElementById("cohorts-filter-branch").value,
+                    status: document.getElementById("cohorts-filter-status").value,
+                };
+                cohortsData = await AcademyTraining.getCohorts(filters) || [];
+                renderCohorts();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+        }
+
+        function renderCohorts() {
+            var tbody = document.getElementById("cohorts-tbody");
+            if (!cohortsData.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No cohorts match.</td></tr>';
+            } else {
+                tbody.innerHTML = cohortsData.map(function (c) {
+                    var counts = c._count || {};
+                    return '<tr class="cohort-row" data-id="' + c.id + '">' +
+                        '<td class="fw-semibold">' + c.name + '</td>' +
+                        '<td>' + ((c.training || {}).name || "—") + '</td>' +
+                        '<td>' + ((c.branch || {}).name || "—") + '</td>' +
+                        '<td class="text-secondary small">' + AcademyTraining.formatDate(c.startDate) + ' – ' + AcademyTraining.formatDate(c.endDate) + '</td>' +
+                        '<td>' + (counts.registrations || 0) + ' / ' + c.capacityMax + '</td>' +
+                        '<td>' + (counts.waitlistEntries ? '<span class="badge bg-info-lt text-info">' + counts.waitlistEntries + '</span>' : '—') + '</td>' +
+                        '<td>' + AcademyTraining.cohortStatusBadge(c.status) + '</td>' +
+                        '<td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-secondary"><path d="M9 6l6 6l-6 6"/></svg></td>' +
+                        '</tr>';
+                }).join("");
+            }
+            document.getElementById("cohorts-count-label").textContent = cohortsData.length + " cohorts";
+        }
+
+        // ── Detail view ──────────────────────────────────────────────────────
+
+        async function openCohortDetail(id) {
+            document.getElementById("view-list").classList.add("d-none");
+            document.getElementById("view-detail").classList.remove("d-none");
+            document.getElementById("detail-cohort-name").textContent = "Loading…";
+            try {
+                currentCohort = await AcademyTraining.getCohort(id);
+                renderCohortHeader();
+                populateSessionModuleOptions();
+                // Registrations tab is the default -- load it immediately;
+                // the others load lazily on first click (Roadmap's own
+                // recommendation for this page's 4-way fan-out).
+                document.querySelectorAll("#detail-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                document.querySelector('#detail-tabs .nav-link[data-detail-section="registrations"]').classList.add("active");
+                ["registrations", "waitlist", "attendance", "assessment"].forEach(function (s) {
+                    document.getElementById("detail-section-" + s).classList.toggle("d-none", s !== "registrations");
+                });
+                loadRegistrations();
+            } catch (err) {
+                document.getElementById("detail-cohort-name").textContent = "Error";
+                document.getElementById("detail-cohort-training-branch").textContent = err.message || "Failed to load cohort.";
+            }
+        }
+
+        function renderCohortHeader() {
+            var c = currentCohort;
+            document.getElementById("detail-cohort-name").textContent = c.name;
+            document.getElementById("detail-cohort-status").innerHTML = AcademyTraining.cohortStatusBadge(c.status);
+            document.getElementById("detail-cohort-training-branch").textContent = (c.training ? c.training.name : "—") + " · " + (c.branch ? c.branch.name : "—");
+            document.getElementById("detail-stat-dates").textContent = AcademyTraining.formatDate(c.startDate) + " – " + AcademyTraining.formatDate(c.endDate);
+            document.getElementById("detail-stat-capacity").textContent = c.capacityMin + " – " + c.capacityMax;
+            document.getElementById("detail-stat-seats").textContent = (c.confirmedCount != null ? c.confirmedCount : "—") + " / " + (c.seatsRemaining != null ? c.seatsRemaining + " left" : "—");
+            document.getElementById("detail-stat-reg-window").textContent = (c.registrationOpenDate ? AcademyTraining.formatDate(c.registrationOpenDate) : "—") + " – " + (c.registrationCloseDate ? AcademyTraining.formatDate(c.registrationCloseDate) : "—");
+            document.getElementById("detail-stat-trainer").textContent = c.assignedTrainer ? c.assignedTrainer.name : "Unassigned";
+            document.getElementById("detail-stat-price").textContent = c.training ? AcademyTraining.formatMoney(c.training.price) : "—";
+            document.getElementById("btn-resolve-below-minimum").classList.toggle("d-none", c.status !== "BELOW_MINIMUM" || !canManage);
+        }
+
+        function openEditCohort(c) {
+            document.getElementById("cohort-modal-title").textContent = "Edit Cohort";
+            document.getElementById("cohort-id").value = c.id;
+            document.getElementById("cohort-training-id").value = c.trainingId;
+            document.getElementById("cohort-training-id").disabled = true;
+            document.getElementById("cohort-branch-id").value = c.branchId;
+            document.getElementById("cohort-branch-id").disabled = true;
+            if (window.SearchableSelect) { SearchableSelect.refresh("cohort-training-id"); SearchableSelect.refresh("cohort-branch-id"); }
+            document.getElementById("cohort-name").value = c.name || "";
+            document.getElementById("cohort-start-date").value = AcademyTraining.toDateInputValue(c.startDate);
+            document.getElementById("cohort-end-date").value = AcademyTraining.toDateInputValue(c.endDate);
+            document.getElementById("cohort-capacity-min").value = c.capacityMin;
+            document.getElementById("cohort-capacity-max").value = c.capacityMax;
+            document.getElementById("cohort-reg-open").value = AcademyTraining.toDateInputValue(c.registrationOpenDate);
+            document.getElementById("cohort-reg-close").value = AcademyTraining.toDateInputValue(c.registrationCloseDate);
+            document.getElementById("cohort-trainer-id").value = c.assignedTrainerId || "";
+            if (window.SearchableSelect) SearchableSelect.refresh("cohort-trainer-id");
+        }
+
+        function resetCohortForm() {
+            document.getElementById("form-cohort").reset();
+            document.getElementById("cohort-id").value = "";
+            document.getElementById("cohort-training-id").disabled = false;
+            document.getElementById("cohort-branch-id").disabled = false;
+            document.getElementById("cohort-alert").className = "alert d-none";
+            if (window.SearchableSelect) { SearchableSelect.refresh("cohort-training-id"); SearchableSelect.refresh("cohort-branch-id"); SearchableSelect.refresh("cohort-trainer-id"); }
+        }
+
+        // ── Registrations tab ────────────────────────────────────────────────
+
+        async function loadRegistrations() {
+            var tbody = document.getElementById("registrations-tbody");
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                currentCohortRegistrations = await AcademyTraining.getCohortRegistrations(currentCohort.id) || [];
+                if (!currentCohortRegistrations.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No registrations yet.</td></tr>';
+                } else {
+                    tbody.innerHTML = currentCohortRegistrations.map(function (r) {
+                        var a = r.applicant || {};
+                        var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "—";
+                        var order = r.order ? AcademyTraining.formatMoney(r.order.amount) + " (" + r.order.status + ")" : "—";
+                        return '<tr>' +
+                            '<td>' + name + '<div class="text-secondary small">' + (a.email || "") + '</div></td>' +
+                            '<td><code class="text-primary">' + r.registrationCode + '</code></td>' +
+                            '<td>' + AcademyTraining.registrationStatusBadge(r.status) + '</td>' +
+                            '<td class="text-secondary small">' + order + '</td>' +
+                            '<td>' + AcademyTraining.identityStatusBadge(r.identityVerification ? r.identityVerification.status : null) + '</td>' +
+                            '<td class="text-secondary small">' + AcademyTraining.formatDate(r.createdAt) + '</td>' +
+                            '</tr>';
+                    }).join("");
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+            populateRegistrationSelects();
+        }
+
+        function populateRegistrationSelects() {
+            var confirmed = currentCohortRegistrations.filter(function (r) { return r.status === "CONFIRMED"; });
+            var optionsHtml = confirmed.map(function (r) {
+                var a = r.applicant || {};
+                var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || r.registrationCode;
+                return '<option value="' + r.id + '">' + name + ' — ' + r.registrationCode + '</option>';
+            }).join("");
+            var placeholder = confirmed.length ? '<option value="">Select…</option>' + optionsHtml : '<option value="">No confirmed registrations</option>';
+            document.getElementById("assessment-registration").innerHTML = placeholder;
+            document.getElementById("eligibility-registration").innerHTML = placeholder;
+        }
+
+        // ── Waitlist tab ─────────────────────────────────────────────────────
+
+        async function loadWaitlist() {
+            var tbody = document.getElementById("waitlist-tbody");
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                var entries = await AcademyTraining.getCohortWaitlist(currentCohort.id) || [];
+                if (!entries.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-4">No one on the waitlist.</td></tr>';
+                } else {
+                    tbody.innerHTML = entries.map(function (w) {
+                        var a = w.applicant || {};
+                        var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "—";
+                        return '<tr>' +
+                            '<td>' + w.position + '</td>' +
+                            '<td>' + name + '<div class="text-secondary small">' + (a.email || "") + '</div></td>' +
+                            '<td>' + AcademyTraining.waitlistStatusBadge(w.status) + '</td>' +
+                            '<td class="text-secondary small">' + (w.offeredAt ? AcademyTraining.formatDateTime(w.offeredAt) : "—") + '</td>' +
+                            '<td class="text-secondary small">' + (w.offerExpiresAt ? AcademyTraining.formatDateTime(w.offerExpiresAt) : "—") + '</td>' +
+                            '</tr>';
+                    }).join("");
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+        }
+
+        // ── Attendance tab ───────────────────────────────────────────────────
+
+        function populateSessionModuleOptions() {
+            var modules = (currentCohort.training && currentCohort.training.curriculumModules) || [];
+            var sorted = modules.slice().sort(function (a, b) { return a.order - b.order; });
+            var optionsHtml = sorted.map(function (m) { return '<option value="' + m.id + '">' + m.name + (m.assessmentRequired ? ' (assessment required)' : '') + '</option>'; }).join("");
+            document.getElementById("session-module").innerHTML = '<option value="">— None —</option>' + optionsHtml;
+            document.getElementById("assessment-module").innerHTML = '<option value="">Select…</option>' + optionsHtml;
+        }
+
+        async function loadSessions() {
+            var tbody = document.getElementById("sessions-tbody");
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                currentSessions = await AcademyTraining.getSessions(currentCohort.id) || [];
+                if (!currentSessions.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">No sessions yet.</td></tr>';
+                } else {
+                    var modulesById = {};
+                    ((currentCohort.training && currentCohort.training.curriculumModules) || []).forEach(function (m) { modulesById[m.id] = m.name; });
+                    tbody.innerHTML = currentSessions.map(function (s) {
+                        var label = AcademyTraining.formatDate(s.date) + (s.curriculumModuleId && modulesById[s.curriculumModuleId] ? ' — ' + modulesById[s.curriculumModuleId] : '');
+                        var time = s.startTime ? new Date(s.startTime).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" }) : "—";
+                        if (s.endTime) time += " – " + new Date(s.endTime).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" });
+                        return '<tr class="session-row" data-id="' + s.id + '" data-label="' + label.replace(/"/g, "&quot;") + '">' +
+                            '<td>' + AcademyTraining.formatDate(s.date) + '</td>' +
+                            '<td>' + (s.curriculumModuleId ? (modulesById[s.curriculumModuleId] || "—") : "—") + '</td>' +
+                            '<td class="text-secondary small">' + time + '</td>' +
+                            '<td><span class="btn btn-sm btn-outline-secondary">Mark Attendance</span></td>' +
+                            '</tr>';
+                    }).join("");
+                }
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+        }
+
+        async function openMarkAttendance(sessionId, label) {
+            pendingAttendanceSessionId = sessionId;
+            document.getElementById("attendance-session-label").textContent = label || "";
+            document.getElementById("attendance-alert").className = "alert d-none";
+            var tbody = document.getElementById("attendance-tbody");
+            tbody.innerHTML = '<tr><td colspan="2" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById("modal-attendance")).show();
+            try {
+                var existing = await AcademyTraining.getSessionAttendance(sessionId) || [];
+                var existingByRegId = {};
+                existing.forEach(function (r) { existingByRegId[r.registrationId] = r.status; });
+                var confirmed = currentCohortRegistrations.filter(function (r) { return r.status === "CONFIRMED"; });
+                if (!confirmed.length) {
+                    tbody.innerHTML = '<tr><td colspan="2" class="text-center text-secondary py-3">No confirmed registrations to mark.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = confirmed.map(function (r) {
+                    var a = r.applicant || {};
+                    var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || r.registrationCode;
+                    var current = existingByRegId[r.id] || "PRESENT";
+                    var options = ["PRESENT", "ABSENT", "LATE", "EXCUSED"].map(function (s) {
+                        return '<option value="' + s + '" ' + (s === current ? "selected" : "") + '>' + s + '</option>';
+                    }).join("");
+                    return '<tr><td>' + name + '</td><td><select class="form-select form-select-sm" data-registration-id="' + r.id + '">' + options + '</select></td></tr>';
+                }).join("");
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="2" class="text-center text-danger py-3">' + err.message + '</td></tr>';
+            }
+        }
+
+        // ── Assessment Results tab ───────────────────────────────────────────
+
+        async function loadAssessmentResults() {
+            populateRegistrationSelects();
+            var tbody = document.getElementById("assessment-results-tbody");
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                currentAssessmentResults = await AcademyTraining.getAssessmentResults(currentCohort.id) || [];
+                if (!currentAssessmentResults.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-4">No results recorded yet.</td></tr>';
+                } else {
+                    tbody.innerHTML = currentAssessmentResults.map(function (r) {
+                        var reg = r.registration || {};
+                        var a = reg.applicant || {};
+                        var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || reg.registrationCode || "—";
+                        var mod = r.curriculumModule || {};
+                        return '<tr>' +
+                            '<td>' + name + '</td>' +
+                            '<td>' + (mod.name || "—") + '</td>' +
+                            '<td>' + (r.passed ? '<span class="badge bg-success-lt text-success">Passed</span>' : '<span class="badge bg-danger-lt text-danger">Failed</span>') + '</td>' +
+                            '<td>' + (r.score != null ? r.score : "—") + '</td>' +
+                            '<td class="text-secondary small">' + AcademyTraining.formatDateTime(r.assessedAt) + '</td>' +
+                            '</tr>';
+                    }).join("");
+                }
+            } catch (err) {
+                currentAssessmentResults = [];
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>
