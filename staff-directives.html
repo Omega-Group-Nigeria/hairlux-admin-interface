@@ -29,6 +29,7 @@
             vertical-align: middle;
         }
     </style>
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -310,6 +311,8 @@
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-comms.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="./assets/js/rich-text-editor.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
 
@@ -393,6 +396,7 @@
                 '<div class="form-hint">Creates one independent task per staff member there — each tracks their own status separately.</div>' +
                 '</div>';
             container.appendChild(row);
+            RichTextEditor.attach(row.querySelector('.task-body'));
 
             var removeBtn = row.querySelector(".task-remove-row");
             removeBtn.addEventListener("click", function () {
@@ -679,7 +683,7 @@
             document.getElementById("directive-preview-list").innerHTML = tasks.map(function (t, i) {
                 return '<div class="card card-body mb-2">' +
                     '<div class="fw-semibold">' + esc(t.title) + '</div>' +
-                    '<div class="text-secondary small mb-1">' + esc(t.body) + '</div>' +
+                    '<div class="text-secondary small mb-1">' + t.body + '</div>' /* rich-text HTML from the editor */ +
                     '<div class="small"><strong>To:</strong> ' + esc(t._recipientLabel) + '</div>' +
                     (t.dueDate ? '<div class="small"><strong>Due:</strong> ' + esc(t.dueDate) + '</div>' : '') +
                     '</div>';
@@ -725,6 +729,8 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
+            // Same rich-text editor as Staff → Training Library (LMS).
+            RichTextEditor.attach("edit-directive-body");
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
                 RBAC.applyNavVisibility();

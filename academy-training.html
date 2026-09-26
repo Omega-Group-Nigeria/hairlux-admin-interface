@@ -50,6 +50,7 @@
             opacity: .3;
         }
     </style>
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -235,6 +236,8 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/academy-training.js"></script>
     <script src="assets/js/tabler.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="assets/js/rich-text-editor.js"></script>
 
     <!-- ===== TRAINING CREATE/EDIT MODAL ===== -->
     <div class="modal modal-blur fade" id="modal-training" tabindex="-1" role="dialog">
@@ -248,6 +251,7 @@
                     <div class="modal-body">
                         <div id="training-alert" class="alert d-none mb-3" role="alert"></div>
                         <input type="hidden" id="training-id">
+                        <input type="hidden" id="training-cover-image-key">
                         <div class="row g-3">
                             <div class="col-md-8">
                                 <label class="form-label">Name <span class="text-danger">*</span></label>
@@ -256,6 +260,20 @@
                             <div class="col-md-4">
                                 <label class="form-label">Category</label>
                                 <input type="text" class="form-control" id="training-category" placeholder="e.g. Hair Styling">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Cover Image (optional)</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img id="training-cover-preview" src="" alt="" class="d-none rounded"
+                                        style="width:80px;height:80px;object-fit:cover;border:1px solid var(--tblr-border-color);">
+                                    <div class="flex-fill">
+                                        <input type="file" class="form-control form-control-sm" id="training-cover-input"
+                                            accept="image/*">
+                                        <span id="training-cover-status" class="text-secondary small"></span>
+                                    </div>
+                                </div>
+                                <div class="form-hint">Shown on the programme catalogue and detail page. JPG/PNG/WebP,
+                                    up to 10MB.</div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Price (₦) <span class="text-danger">*</span></label>
@@ -414,6 +432,9 @@
         var pendingDeleteTrainingId = null;
 
         document.addEventListener("DOMContentLoaded", function () {
+            // Same rich-text editor as Staff → Training Library (LMS).
+            ["training-description", "training-requirements", "training-do-donts"]
+                .forEach(function (id) { RichTextEditor.attach(id); });
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuard('academy_training:read');
                 RBAC.applyNavVisibility();
@@ -431,9 +452,38 @@
             document.getElementById("modal-training").addEventListener("hidden.bs.modal", function () {
                 document.getElementById("form-training").reset();
                 document.getElementById("training-id").value = "";
+                document.getElementById("training-cover-image-key").value = "";
+                document.getElementById("training-cover-preview").classList.add("d-none");
+                document.getElementById("training-cover-preview").src = "";
+                document.getElementById("training-cover-status").textContent = "";
                 document.getElementById("training-cert-enabled").checked = true;
                 document.getElementById("training-alert").className = "alert d-none";
                 document.getElementById("training-modal-title").textContent = "New Training";
+            });
+
+            document.getElementById("training-cover-input").addEventListener("change", async function (e) {
+                var file = e.target.files && e.target.files[0];
+                if (!file) return;
+                var statusEl = document.getElementById("training-cover-status");
+                var saveBtn = document.getElementById("btn-save-training");
+                statusEl.className = "text-secondary small";
+                statusEl.textContent = "Uploading…";
+                saveBtn.disabled = true;
+                try {
+                    var result = await AcademyTraining.uploadCoverImage(file);
+                    document.getElementById("training-cover-image-key").value = result.coverImageKey;
+                    var preview = document.getElementById("training-cover-preview");
+                    preview.src = result.coverImageUrl;
+                    preview.classList.remove("d-none");
+                    statusEl.className = "text-success small";
+                    statusEl.textContent = "Uploaded";
+                } catch (err) {
+                    statusEl.className = "text-danger small";
+                    statusEl.textContent = err.message || "Upload failed.";
+                    e.target.value = "";
+                } finally {
+                    saveBtn.disabled = false;
+                }
             });
 
             document.getElementById("form-training").addEventListener("submit", async function (e) {
@@ -452,6 +502,7 @@
                         requirements: document.getElementById("training-requirements").value.trim() || undefined,
                         doAndDonts: document.getElementById("training-do-donts").value.trim() || undefined,
                         certificationEnabled: document.getElementById("training-cert-enabled").checked,
+                        coverImageKey: document.getElementById("training-cover-image-key").value || undefined,
                         status: document.getElementById("training-status").value,
                     };
                     var id = document.getElementById("training-id").value;
@@ -616,6 +667,10 @@
             document.getElementById("training-do-donts").value = t.doAndDonts || "";
             document.getElementById("training-cert-enabled").checked = !!t.certificationEnabled;
             document.getElementById("training-status").value = t.status || "DRAFT";
+            document.getElementById("training-cover-image-key").value = t.coverImageKey || "";
+            var trnCoverPreview = document.getElementById("training-cover-preview");
+            if (t.coverImageUrl) { trnCoverPreview.src = t.coverImageUrl; trnCoverPreview.classList.remove("d-none"); }
+            else { trnCoverPreview.classList.add("d-none"); trnCoverPreview.src = ""; }
             new bootstrap.Modal(document.getElementById("modal-training")).show();
         }
 

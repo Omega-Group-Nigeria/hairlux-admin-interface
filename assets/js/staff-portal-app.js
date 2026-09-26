@@ -332,7 +332,7 @@ function renderDashboard() {
       const fromName = topDirective.createdBy ? [topDirective.createdBy.firstName, topDirective.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
       previewHtml +=
         '<div class="banner urgent"><div class="tag" style="color:var(--red)">\uD83D\uDEA8 Directive</div>' +
-        '<h3 style="font-size:14px">' + escapeHtml(topDirective.title) + '</h3><p>' + escapeHtml(topDirective.body) + '</p>' +
+        '<h3 style="font-size:14px">' + escapeHtml(topDirective.title) + '</h3><div class="ann-body">' + richTextHtml(topDirective.body) + '</div>' +
         '<div class="meta" style="color:var(--red)">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(topDirective.createdAt) + '</div></div>';
     }
 
@@ -714,11 +714,15 @@ function openAddressVerificationModal() {
     '<h3>Physical Address Verification</h3>' +
     '<div class="oc-modal-sub">QoreID field agents will visit within 24-48 hours to confirm this address. Fill in every field accurately -- an agent physically checks against what you enter here.</div>' +
 
-    '<div class="oc-field"><label>Street</label><input type="text" id="av-street" value="' + escapeHtml((av && av.street) || '') + '"></div>' +
+    '<div class="oc-field"><label>Full Address</label><input type="text" id="av-street" value="' + escapeHtml((av && av.street) || '') + '"></div>' +
     '<div class="oc-field"><label>City</label><input type="text" id="av-city" value="' + escapeHtml((av && av.city) || '') + '"></div>' +
     '<div class="oc-field"><label>LGA (Local Government Area)</label><input type="text" id="av-lga" value="' + escapeHtml((av && av.lgaName) || '') + '"></div>' +
     '<div class="oc-field"><label>State</label><input type="text" id="av-state" value="' + escapeHtml((av && av.stateName) || '') + '"></div>' +
     '<div class="oc-field"><label>Landmark <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
+    // Everything below maps to QoreID's addressExtraData -- all optional in
+    // the API and hidden here. Markup kept (not deleted) so it can be
+    // switched back on by removing display:none from this wrapper.
+    '<div id="av-extra-fields" style="display:none">' +
     '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
     '<div class="oc-field"><label>Description</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
 
@@ -752,6 +756,7 @@ function openAddressVerificationModal() {
     '<div style="font-size:11px;color:var(--muted);margin:6px 0 4px;">House number photo</div><input type="file" id="av-photo2" accept="image/jpeg,image/png">' +
     '<div style="font-size:11px;color:var(--muted);margin:6px 0 4px;">Nearest landmark photo</div><input type="file" id="av-photo3" accept="image/jpeg,image/png">' +
     '</div>' +
+    '</div>' + // end #av-extra-fields
 
     '<div class="oc-modal-actions">' +
     '<button class="btn btn-ghost btn-sm" onclick="closeOnboardingModal()">Cancel</button>' +
@@ -784,14 +789,8 @@ function captureAddressVerificationLocation() {
 async function submitAddressVerificationForm() {
   const val = (id) => document.getElementById(id).value.trim();
   const street = val('av-street'), city = val('av-city'), lga = val('av-lga'), state = val('av-state');
-  const generalDescription = val('av-general-description');
-  const latitude = val('av-latitude'), longitude = val('av-longitude');
-  const buildingColour = val('av-building-colour');
 
-  if (!street || !city || !lga || !state) { showOnboardingModalError('Street, City, LGA, and State are all required.'); return; }
-  if (!generalDescription) { showOnboardingModalError('Please add a short description to help the field agent locate the address.'); return; }
-  if (!latitude || !longitude) { showOnboardingModalError('Location is required -- use the button or enter coordinates manually.'); return; }
-  if (!buildingColour) { showOnboardingModalError('Please enter the building colour.'); return; }
+  if (!street || !city || !lga || !state) { showOnboardingModalError('Full Address, City, LGA, and State are all required.'); return; }
 
   const formData = new FormData();
   formData.append('street', street);
@@ -799,20 +798,9 @@ async function submitAddressVerificationForm() {
   formData.append('lgaName', lga);
   formData.append('stateName', state);
   const landmark = val('av-landmark'); if (landmark) formData.append('landmark', landmark);
-  const houseNumber = val('av-house-number'); if (houseNumber) formData.append('houseNumber', houseNumber);
-  formData.append('generalDescription', generalDescription);
-  formData.append('latitude', latitude);
-  formData.append('longitude', longitude);
-  formData.append('buildingDescription', document.getElementById('av-building-description').value);
-  formData.append('buildingStatus', document.getElementById('av-building-status').value);
-  formData.append('buildingType', document.getElementById('av-building-type').value);
-  formData.append('buildingColour', buildingColour);
-  formData.append('hasGateAndFence', document.getElementById('av-has-gate-and-fence').checked ? 'true' : 'false');
-
-  ['av-photo1', 'av-photo2', 'av-photo3'].forEach((id, i) => {
-    const file = document.getElementById(id).files[0];
-    if (file) formData.append('photo' + (i + 1), file);
-  });
+  // addressExtraData fields (house number, description, location, building
+  // details, photos) are hidden and optional -- not sent. Sending the hidden
+  // dropdowns' default values would report details nobody actually chose.
 
   const btn = document.getElementById('oc-modal-submit-btn');
   btn.disabled = true;
@@ -1540,7 +1528,8 @@ function directiveRow(d) {
   return (
     '<div class="task' + (isUrgent ? ' urgent' : '') + '"><div class="task-chk">' + (d.status === 'PENDING' ? '!' : '\u2192') + '</div>' +
     '<div style="flex:1"><div class="task-title">' + escapeHtml(d.title) + '</div>' +
-    '<div class="task-due">' + escapeHtml(d.body) + ' \u00B7 From ' + escapeHtml(fromName) + dueLine + '</div></div>' +
+    '<div class="ann-body" style="font-size:12.5px;margin:2px 0">' + richTextHtml(d.body) + '</div>' +
+    '<div class="task-due">From ' + escapeHtml(fromName) + dueLine + '</div></div>' +
     nextAction + '</div>'
   );
 }
@@ -3890,6 +3879,17 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str == null ? '' : String(str);
   return div.innerHTML;
+}
+
+/**
+ * Directive bodies are rich text from the admin editor, sanitised
+ * server-side (sanitizeRichText) -- render as HTML. Older directives saved
+ * before the editor are plain text: escape them and keep their line breaks.
+ */
+function richTextHtml(value) {
+  const s = value == null ? '' : String(value);
+  if (/<\/?[a-z][\s\S]*>/i.test(s)) return s;
+  return escapeHtml(s).replace(/\n/g, '<br>');
 }
 
 function htmlToTextPreview(html, maxLength) {
