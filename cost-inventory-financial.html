@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Cost, Inventory &amp; Financial Position</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Business Intelligence</div>
+                            <h2 class="page-title">Cost, Inventory &amp; Financial Position</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-3 d-none" id="cif-branch-wrap">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="cif-branch" class="form-select form-select-sm">
+                                        <option value="">All Branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Expense period from</label>
+                                    <input type="date" id="cif-date-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Expense period to</label>
+                                    <input type="date" id="cif-date-to" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-12 col-md-auto">
+                                    <button type="button" class="btn btn-outline-secondary w-100"
+                                        id="btn-cif-reset">Reset</button>
+                                </div>
+                            </div>
+                            <div class="text-secondary small mt-2">Branch and period apply to Cost &amp; Inventory
+                                below. Financial Position is always company-wide and as-of-now.</div>
+                        </div>
+                    </div>
+
+                    <div id="cif-error" class="alert alert-danger d-none"></div>
+
+                    <h3 class="mb-2">Cost &amp; Expenses</h3>
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Total Expenses</div>
+                            <div class="h3 mb-0" id="cif-total-expenses">—</div>
+                            <div class="small" id="cif-expense-growth">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Expense Ratio (of Revenue)</div>
+                            <div class="h3 mb-0" id="cif-expense-ratio">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Budget vs Actual</div>
+                            <div class="h4 mb-0" id="cif-budget-status">—</div>
+                            <div class="small text-secondary" id="cif-budget-detail">No target set for this period.</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Unusual Movements</div>
+                            <div class="h3 mb-0" id="cif-unusual-count">—</div>
+                            <div class="small text-secondary">categories flagged this period</div>
+                        </div></div></div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Expenses by Category</h3></div>
+                                <div class="card-body pb-0"><div id="cif-category-chart" style="height:200px"></div></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Category</th><th class="text-end">Amount</th><th class="text-end">vs Prior</th></tr></thead>
+                                        <tbody id="cif-category-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Expenses by Branch</h3></div>
+                                <div class="card-body pb-0"><div id="cif-branch-chart" style="height:200px"></div></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Branch</th><th class="text-end">Amount</th></tr></thead>
+                                        <tbody id="cif-branch-tbody"><tr><td colspan="2" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Daily Expense Trend</h3></div>
+                                <div class="card-body pb-0"><div id="cif-trend-chart" style="height:220px"></div></div>
+                                <div class="table-responsive" style="max-height: 260px;">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Date</th><th class="text-end">Expenses</th></tr></thead>
+                                        <tbody id="cif-trend-tbody"><tr><td colspan="2" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h3 class="mb-2">Inventory</h3>
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Inventory Value</div>
+                            <div class="h3 mb-0" id="cif-inv-value">—</div>
+                            <div class="small text-secondary" id="cif-inv-unknown-cost">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Wastage (30 days, est. value)</div>
+                            <div class="h3 mb-0 text-red" id="cif-wastage-value">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Dead Stock Items</div>
+                            <div class="h3 mb-0 text-yellow" id="cif-dead-count">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Reorder Needed</div>
+                            <div class="h3 mb-0 text-orange" id="cif-reorder-count">—</div>
+                        </div></div></div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Fast Moving Items (30 days)</h3></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Item</th><th class="text-end">Units Moved</th><th class="text-end">Stock On Hand</th></tr></thead>
+                                        <tbody id="cif-fast-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Slow Moving Items (30 days)</h3></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Item</th><th class="text-end">Units Moved</th><th class="text-end">Stock On Hand</th></tr></thead>
+                                        <tbody id="cif-slow-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Dead Stock</h3></div>
+                                <div class="card-body py-2 text-secondary small">No movement in 30 days, stock still held.</div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Item</th><th class="text-end">Stock On Hand</th></tr></thead>
+                                        <tbody id="cif-dead-tbody"><tr><td colspan="2" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Reorder Needed</h3></div>
+                                <div class="card-body py-2 text-secondary small">Suggested quantity is a lightweight heuristic, not demand forecasting.</div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Item</th><th class="text-end">Stock</th><th class="text-end">Threshold</th><th class="text-end">Suggested Reorder</th></tr></thead>
+                                        <tbody id="cif-reorder-tbody"><tr><td colspan="4" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Low Stock Alerts (unresolved)</h3></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Item</th><th>Stage</th><th>Triggered</th></tr></thead>
+                                        <tbody id="cif-lowstock-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Expiry Alerts (unresolved)</h3></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Item</th><th>Severity</th><th>Triggered</th></tr></thead>
+                                        <tbody id="cif-expiry-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h3 class="mb-2">Financial Position <span class="badge bg-secondary-lt">Company-wide</span></h3>
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Outstanding Payables</div>
+                            <div class="h3 mb-0" id="cif-payables">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Vendor Overpayments</div>
+                            <div class="h3 mb-0" id="cif-vendor-overpayments">—</div>
+                            <div class="small text-secondary" id="cif-vendor-overpayments-note">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Total Obligations</div>
+                            <div class="h3 mb-0 text-red" id="cif-obligations">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Outstanding Receivables</div>
+                            <div class="h3 mb-0" id="cif-receivables">—</div>
+                            <div class="small text-secondary" id="cif-receivables-note">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Loans / Debt</div>
+                            <div class="h3 mb-0" id="cif-loans">—</div>
+                            <div class="small text-secondary" id="cif-loans-note">—</div>
+                        </div></div></div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Obligations Breakdown</h3></div>
+                                <div class="card-body pb-0"><div id="cif-obligations-chart" style="height:190px"></div></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Source</th><th class="text-end">Amount</th></tr></thead>
+                                        <tbody id="cif-obligations-tbody"><tr><td colspan="2" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Purchases by Payment Status</h3></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Status</th><th class="text-end">Count</th><th class="text-end">Grand Total</th><th class="text-end">Paid</th></tr></thead>
+                                        <tbody id="cif-purchases-tbody"><tr><td colspan="4" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Outstanding Payables by Vendor</h3></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Vendor</th><th>Type</th><th class="text-end">Outstanding Payable</th><th class="text-end">Outstanding Goods Value</th></tr></thead>
+                                        <tbody id="cif-vendor-tbody"><tr><td colspan="4" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="./assets/js/apexcharts.min.js"></script>
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/business-intelligence.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script>
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('business_intelligence:cost_inventory_financial:read');
+
+        var isAdmin = false;
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = (s === null || s === undefined) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function fmtDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function statusClass(status) {
+            if (status === 'GOOD') return 'text-green';
+            if (status === 'ATTENTION') return 'text-yellow';
+            if (status === 'CRITICAL') return 'text-red';
+            return 'text-secondary';
+        }
+
+        async function init() {
+            var user = Auth.getUser();
+            isAdmin = !!(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
+
+            if (isAdmin) {
+                try {
+                    var branches = await Branches.getBranches();
+                    var sel = document.getElementById('cif-branch');
+                    sel.innerHTML = '<option value="">All Branches</option>' +
+                        branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    document.getElementById('cif-branch-wrap').classList.remove('d-none');
+                } catch (err) { /* branch picker just stays hidden */ }
+            }
+
+            // Business Intelligence's Expenses / Outstanding Payables / Vendor
+            // Overpayments / Inventory Value cards link here with these as
+            // query params -- pre-apply whichever are present before the
+            // first load, so the deep-linked view matches what was on screen.
+            (function applyIncomingFilters() {
+                var params = new URLSearchParams(window.location.search);
+                var branchId = params.get('branchId');
+                var dateFrom = params.get('dateFrom');
+                var dateTo = params.get('dateTo');
+                if (branchId) document.getElementById('cif-branch').value = branchId;
+                if (dateFrom) document.getElementById('cif-date-from').value = dateFrom;
+                if (dateTo) document.getElementById('cif-date-to').value = dateTo;
+            })();
+
+            ['cif-branch', 'cif-date-from', 'cif-date-to'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', load);
+            });
+            document.getElementById('btn-cif-reset').addEventListener('click', resetFilters);
+
+            load();
+        }
+
+        function resetFilters() {
+            document.getElementById('cif-branch').value = '';
+            document.getElementById('cif-date-from').value = '';
+            document.getElementById('cif-date-to').value = '';
+            load();
+        }
+
+        async function load() {
+            var errEl = document.getElementById('cif-error');
+            errEl.classList.add('d-none');
+            var branchId = document.getElementById('cif-branch').value || undefined;
+            var dateFrom = document.getElementById('cif-date-from').value || undefined;
+            var dateTo = document.getElementById('cif-date-to').value || undefined;
+
+            try {
+                var results = await Promise.all([
+                    BusinessIntelligence.getCostInsights({ branchId: branchId, dateFrom: dateFrom, dateTo: dateTo }),
+                    BusinessIntelligence.getInventoryInsights({ branchId: branchId }),
+                    BusinessIntelligence.getFinancialPositionInsights(),
+                ]);
+                renderCostInsights(results[0]);
+                renderInventoryInsights(results[1]);
+                renderFinancialPosition(results[2]);
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to load Cost, Inventory & Financial Position.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        var _cifCategoryChart = null;
+        var _cifBranchChart = null;
+        var _cifTrendChart = null;
+        var _cifObligationsChart = null;
+
+        /** Same ApexCharts house style as the rest of the BI module and the
+         * Dashboard's charts (assets/js/api-utils/analytics.js) -- bar
+         * helper duplicated per-file per this codebase's existing
+         * convention for this class of small render helper. */
+        function destroyChart(chart) { if (chart) chart.destroy(); return null; }
+
+        function renderVBar(containerId, height, categories, values, valueFormatter, color) {
+            var el = document.getElementById(containerId);
+            if (!el || !window.ApexCharts) return null;
+            el.innerHTML = '';
+            if (!categories.length || values.every(function (v) { return !v; })) {
+                el.innerHTML = '<div class="text-secondary small text-center pt-4">No data for this period</div>';
+                return null;
+            }
+            var chart = new ApexCharts(el, {
+                chart: { type: 'bar', fontFamily: 'inherit', height: height, animations: { enabled: false }, toolbar: { show: false } },
+                plotOptions: { bar: { columnWidth: categories.length <= 3 ? '35%' : '55%', borderRadius: 3 } },
+                dataLabels: { enabled: false },
+                series: [{ name: 'Amount', data: values }],
+                xaxis: { categories: categories, axisBorder: { show: false } },
+                yaxis: { labels: { formatter: function (v) { return '₦' + (v / 1000).toFixed(0) + 'k'; } } },
+                tooltip: { theme: 'dark', y: { formatter: valueFormatter } },
+                grid: { strokeDashArray: 4 },
+                colors: [color || 'var(--tblr-primary)'],
+                legend: { show: false },
+            });
+            chart.render();
+            return chart;
+        }
+
+        function renderExpenseTrendChart(trendRows) {
+            var el = document.getElementById('cif-trend-chart');
+            if (!el || !window.ApexCharts) return null;
+            el.innerHTML = '';
+            if (!trendRows.length) {
+                el.innerHTML = '<div class="text-secondary small text-center pt-5">No data for this period</div>';
+                return null;
+            }
+            var chart = new ApexCharts(el, {
+                chart: { type: 'area', fontFamily: 'inherit', height: 220, animations: { enabled: false }, toolbar: { show: false }, zoom: { enabled: false } },
+                dataLabels: { enabled: false },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } },
+                stroke: { width: 2, lineCap: 'round', curve: 'smooth' },
+                series: [{ name: 'Expenses (₦)', data: trendRows.map(function (t) { return t.value; }) }],
+                xaxis: {
+                    type: 'datetime',
+                    categories: trendRows.map(function (t) { return t.date; }),
+                    labels: { padding: 0, datetimeUTC: false },
+                    tooltip: { enabled: false },
+                    axisBorder: { show: false },
+                },
+                yaxis: { labels: { formatter: function (v) { return '₦' + (v / 1000).toFixed(0) + 'k'; }, padding: 4 } },
+                tooltip: { theme: 'dark', x: { format: 'dd MMM yyyy' }, y: { formatter: function (v) { return BusinessIntelligence.formatMoney(v); } } },
+                grid: { strokeDashArray: 4, padding: { top: -20, right: 0 } },
+                colors: ['var(--tblr-red)'],
+                legend: { show: false },
+            });
+            chart.render();
+            return chart;
+        }
+
+        function renderObligationsDonut(ob) {
+            var el = document.getElementById('cif-obligations-chart');
+            if (!el || !window.ApexCharts) return null;
+            el.innerHTML = '';
+            var labels = ['Vendor Payables', 'Staff Wallet Balances', 'Customer Wallet Balances', 'Unpaid Staff Commission'];
+            var values = [ob.vendorPayables, ob.staffWalletBalances, ob.customerWalletBalances, ob.unpaidStaffCommission];
+            if (values.every(function (v) { return !v; })) {
+                el.innerHTML = '<div class="text-secondary small text-center pt-4">No obligations recorded</div>';
+                return null;
+            }
+            var chart = new ApexCharts(el, {
+                chart: { type: 'donut', fontFamily: 'inherit', height: 190, animations: { enabled: false } },
+                labels: labels,
+                series: values,
+                colors: ['var(--tblr-orange)', 'var(--tblr-blue)', 'var(--tblr-azure)', 'var(--tblr-yellow)'],
+                dataLabels: { enabled: false },
+                legend: { show: true, position: 'bottom', fontSize: '11px', itemMargin: { horizontal: 6, vertical: 0 } },
+                tooltip: { theme: 'dark', y: { formatter: function (v) { return BusinessIntelligence.formatMoney(v); } } },
+                stroke: { width: 1 },
+            });
+            chart.render();
+            return chart;
+        }
+
+        function renderCostInsights(d) {
+            document.getElementById('cif-total-expenses').textContent = BusinessIntelligence.formatMoney(d.totalExpenses);
+            var growthEl = document.getElementById('cif-expense-growth');
+            growthEl.textContent = 'vs prior: ' + BusinessIntelligence.formatPercent(d.growthPercent);
+            growthEl.className = 'small ' + (d.growthPercent > 0 ? 'text-red' : (d.growthPercent < 0 ? 'text-green' : 'text-secondary'));
+
+            document.getElementById('cif-expense-ratio').textContent = d.expenseRatioPercent === null ? '—' : d.expenseRatioPercent.toFixed(1) + '%';
+
+            var budgetStatusEl = document.getElementById('cif-budget-status');
+            var budgetDetailEl = document.getElementById('cif-budget-detail');
+            if (d.budgetVsActual) {
+                budgetStatusEl.textContent = d.budgetVsActual.status || '—';
+                budgetStatusEl.className = 'h4 mb-0 ' + statusClass(d.budgetVsActual.status);
+                budgetDetailEl.textContent = (d.budgetVsActual.achievementPercent === null ? '—' : d.budgetVsActual.achievementPercent.toFixed(1) + '%') +
+                    ' of ' + BusinessIntelligence.formatMoney(d.budgetVsActual.targetValue) + ' budget used';
+            } else {
+                budgetStatusEl.textContent = '—';
+                budgetStatusEl.className = 'h4 mb-0';
+                budgetDetailEl.textContent = 'No target set for this period.';
+            }
+
+            var unusual = d.byCategory.filter(function (c) { return c.unusualMovement; });
+            document.getElementById('cif-unusual-count').textContent = unusual.length;
+
+            _cifCategoryChart = destroyChart(_cifCategoryChart);
+            _cifCategoryChart = renderVBar(
+                'cif-category-chart', 200,
+                d.byCategory.map(function (c) { return c.category; }),
+                d.byCategory.map(function (c) { return c.amount; }),
+                function (v) { return BusinessIntelligence.formatMoney(v); },
+                'var(--tblr-red)'
+            );
+
+            var catTbody = document.getElementById('cif-category-tbody');
+            catTbody.innerHTML = d.byCategory.length ? d.byCategory.map(function (c) {
+                var growthClass = c.growthPercent > 0 ? 'text-red' : (c.growthPercent < 0 ? 'text-green' : 'text-secondary');
+                return '<tr><td>' + esc(c.category) + (c.unusualMovement ? ' <span class="badge bg-orange-lt ms-1">unusual</span>' : '') + '</td>' +
+                    '<td class="text-end">' + BusinessIntelligence.formatMoney(c.amount) + '</td>' +
+                    '<td class="text-end ' + growthClass + '">' + BusinessIntelligence.formatPercent(c.growthPercent) + '</td></tr>';
+            }).join('') : '<tr><td colspan="3" class="text-center text-secondary py-3">No expenses recorded in this period.</td></tr>';
+
+            _cifBranchChart = destroyChart(_cifBranchChart);
+            _cifBranchChart = renderVBar(
+                'cif-branch-chart', 200,
+                d.byBranch.map(function (b) { return b.branchName; }),
+                d.byBranch.map(function (b) { return b.amount; }),
+                function (v) { return BusinessIntelligence.formatMoney(v); },
+                'var(--tblr-primary)'
+            );
+
+            var branchTbody = document.getElementById('cif-branch-tbody');
+            branchTbody.innerHTML = d.byBranch.length ? d.byBranch.map(function (b) {
+                return '<tr><td>' + esc(b.branchName) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(b.amount) + '</td></tr>';
+            }).join('') : '<tr><td colspan="2" class="text-center text-secondary py-3">No expenses recorded in this period.</td></tr>';
+
+            _cifTrendChart = destroyChart(_cifTrendChart);
+            _cifTrendChart = renderExpenseTrendChart((d.trend || []).slice());
+
+            var trendTbody = document.getElementById('cif-trend-tbody');
+            var trendRows = (d.trend || []).slice().reverse();
+            trendTbody.innerHTML = trendRows.length ? trendRows.map(function (t) {
+                return '<tr><td>' + fmtDate(t.date) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(t.value) + '</td></tr>';
+            }).join('') : '<tr><td colspan="2" class="text-center text-secondary py-3">No data for this period.</td></tr>';
+        }
+
+        function renderInventoryInsights(d) {
+            document.getElementById('cif-inv-value').textContent = BusinessIntelligence.formatMoney(d.inventoryValue.value);
+            document.getElementById('cif-inv-unknown-cost').textContent = d.inventoryValue.itemsWithUnknownCost > 0
+                ? d.inventoryValue.itemsWithUnknownCost + ' item(s) missing a cost price' : 'All items costed';
+            document.getElementById('cif-wastage-value').textContent = BusinessIntelligence.formatMoney(d.wastage.totalEstimatedValue);
+            document.getElementById('cif-dead-count').textContent = d.deadStock.length;
+            document.getElementById('cif-reorder-count').textContent = d.reorderNeeded.length;
+
+            var fastTbody = document.getElementById('cif-fast-tbody');
+            fastTbody.innerHTML = d.fastMoving.length ? d.fastMoving.map(function (i) {
+                return '<tr><td>' + esc(i.itemName) + '</td><td class="text-end">' + i.unitsMovedLast30Days + '</td><td class="text-end">' + i.currentStock + '</td></tr>';
+            }).join('') : '<tr><td colspan="3" class="text-center text-secondary py-3">No movement in the last 30 days.</td></tr>';
+
+            var slowTbody = document.getElementById('cif-slow-tbody');
+            slowTbody.innerHTML = d.slowMoving.length ? d.slowMoving.map(function (i) {
+                return '<tr><td>' + esc(i.itemName) + '</td><td class="text-end">' + i.unitsMovedLast30Days + '</td><td class="text-end">' + i.currentStock + '</td></tr>';
+            }).join('') : '<tr><td colspan="3" class="text-center text-secondary py-3">No slow-moving items.</td></tr>';
+
+            var deadTbody = document.getElementById('cif-dead-tbody');
+            deadTbody.innerHTML = d.deadStock.length ? d.deadStock.map(function (i) {
+                return '<tr><td>' + esc(i.itemName) + '</td><td class="text-end">' + i.currentStock + '</td></tr>';
+            }).join('') : '<tr><td colspan="2" class="text-center text-secondary py-3">No dead stock.</td></tr>';
+
+            var reorderTbody = document.getElementById('cif-reorder-tbody');
+            reorderTbody.innerHTML = d.reorderNeeded.length ? d.reorderNeeded.map(function (i) {
+                return '<tr><td>' + esc(i.itemName) + '</td><td class="text-end">' + i.currentStock + '</td>' +
+                    '<td class="text-end">' + i.lowStockThreshold + '</td><td class="text-end">' + i.suggestedReorderQuantity + '</td></tr>';
+            }).join('') : '<tr><td colspan="4" class="text-center text-secondary py-3">Nothing needs reordering.</td></tr>';
+
+            var lowStockTbody = document.getElementById('cif-lowstock-tbody');
+            lowStockTbody.innerHTML = d.lowStockAlerts.length ? d.lowStockAlerts.map(function (a) {
+                return '<tr><td>' + esc(a.itemName) + '</td><td>' + esc(a.currentStage) + '</td><td>' + fmtDate(a.triggeredAt) + '</td></tr>';
+            }).join('') : '<tr><td colspan="3" class="text-center text-secondary py-3">No unresolved low-stock alerts.</td></tr>';
+
+            var expiryTbody = document.getElementById('cif-expiry-tbody');
+            expiryTbody.innerHTML = d.expiryAlerts.length ? d.expiryAlerts.map(function (a) {
+                return '<tr><td>' + esc(a.itemName) + '</td><td>' + esc(a.severity) + '</td><td>' + fmtDate(a.triggeredAt) + '</td></tr>';
+            }).join('') : '<tr><td colspan="3" class="text-center text-secondary py-3">No unresolved expiry alerts.</td></tr>';
+        }
+
+        function renderFinancialPosition(d) {
+            document.getElementById('cif-payables').textContent = BusinessIntelligence.formatMoney(d.outstandingPayables.value);
+            document.getElementById('cif-vendor-overpayments').textContent = BusinessIntelligence.formatMoney(d.vendorOverpayments.value);
+            document.getElementById('cif-vendor-overpayments-note').textContent = d.vendorOverpayments.value > 0
+                ? d.vendorOverpayments.byVendor.length + ' vendor(s) in credit'
+                : 'No vendor credit balances';
+            document.getElementById('cif-obligations').textContent = BusinessIntelligence.formatMoney(d.obligations.total);
+            document.getElementById('cif-receivables').textContent = BusinessIntelligence.formatMoney(d.outstandingReceivables.value);
+            document.getElementById('cif-receivables-note').textContent = d.outstandingReceivables.note || '';
+            document.getElementById('cif-loans').textContent = BusinessIntelligence.formatMoney(d.loans.value);
+            document.getElementById('cif-loans-note').textContent = d.loans.note || '';
+
+            var ob = d.obligations.breakdown;
+            _cifObligationsChart = destroyChart(_cifObligationsChart);
+            _cifObligationsChart = renderObligationsDonut(ob);
+
+            var obTbody = document.getElementById('cif-obligations-tbody');
+            obTbody.innerHTML =
+                '<tr><td>Vendor Payables</td><td class="text-end">' + BusinessIntelligence.formatMoney(ob.vendorPayables) + '</td></tr>' +
+                '<tr><td>Staff Wallet Balances</td><td class="text-end">' + BusinessIntelligence.formatMoney(ob.staffWalletBalances) + '</td></tr>' +
+                '<tr><td>Customer Wallet Balances</td><td class="text-end">' + BusinessIntelligence.formatMoney(ob.customerWalletBalances) + '</td></tr>' +
+                '<tr><td>Unpaid Staff Commission</td><td class="text-end">' + BusinessIntelligence.formatMoney(ob.unpaidStaffCommission) + '</td></tr>';
+
+            var purchasesTbody = document.getElementById('cif-purchases-tbody');
+            purchasesTbody.innerHTML = d.purchasesByPaymentStatus.length ? d.purchasesByPaymentStatus.map(function (p) {
+                return '<tr><td>' + esc(p.status) + '</td><td class="text-end">' + p.count + '</td>' +
+                    '<td class="text-end">' + BusinessIntelligence.formatMoney(p.grandTotal) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(p.amountPaid) + '</td></tr>';
+            }).join('') : '<tr><td colspan="4" class="text-center text-secondary py-3">No purchases recorded.</td></tr>';
+
+            var vendorTbody = document.getElementById('cif-vendor-tbody');
+            vendorTbody.innerHTML = d.outstandingPayables.byVendor.length ? d.outstandingPayables.byVendor.map(function (v) {
+                return '<tr><td>' + esc(v.vendorName) + '</td><td>' + esc(v.vendorType) + '</td>' +
+                    '<td class="text-end">' + BusinessIntelligence.formatMoney(v.outstandingPayable) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(v.outstandingGoodsValue) + '</td></tr>';
+            }).join('') : '<tr><td colspan="4" class="text-center text-secondary py-3">No outstanding vendor balances.</td></tr>';
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

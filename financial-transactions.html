@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Hairlux Admin — Financial Transactions</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Finance</div>
+                            <h2 class="page-title">Financial Transactions</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-export">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                                    <path d="M12 17v-6" />
+                                    <path d="M9.5 14.5l2.5 2.5l2.5 -2.5" />
+                                </svg>
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="alert alert-danger d-none" id="page-error"></div>
+
+                    <!-- Summary -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Inflow</div>
+                                    <div class="h3 mb-0 text-green" id="sum-inflow">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Outflow</div>
+                                    <div class="h3 mb-0 text-red" id="sum-outflow">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Net Cash Flow</div>
+                                    <div class="h3 mb-0" id="sum-net">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-branch">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-direction">
+                                        <option value="">All directions</option>
+                                        <option value="INFLOW">Inflow</option>
+                                        <option value="OUTFLOW">Outflow</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-category">
+                                        <option value="">All categories</option>
+                                        <optgroup label="Inflows">
+                                            <option value="SALON_BOOKING_REVENUE">Salon Booking Revenue</option>
+                                            <option value="PRODUCT_SALE">Product Sale</option>
+                                            <option value="ACADEMY_PAYMENT">Academy Payment</option>
+                                            <option value="MEMBERSHIP_PAYMENT">Membership Payment</option>
+                                            <option value="WALLET_FUNDING">Wallet Funding</option>
+                                            <option value="OTHER_INCOME">Other Income</option>
+                                        </optgroup>
+                                        <optgroup label="Outflows">
+                                            <option value="VENDOR_PAYMENT">Vendor Payment</option>
+                                            <option value="SALARY">Salary</option>
+                                            <option value="REFUND">Refund</option>
+                                            <option value="OPERATIONAL_EXPENSE">Operational Expense</option>
+                                            <option value="LOGISTICS">Logistics</option>
+                                            <option value="OTHER_EXPENSE">Other Expense</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-payment-method">
+                                        <option value="">All payment methods</option>
+                                        <option value="CASH">Cash</option>
+                                        <option value="BANK_TRANSFER">Bank Transfer</option>
+                                        <option value="POS">POS</option>
+                                        <option value="CARD">Card</option>
+                                        <option value="WALLET">Wallet</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="f-from" placeholder="From">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="f-to" placeholder="To">
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear
+                                        Filters</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Reference</th>
+                                        <th>Direction</th>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                        <th>Branch</th>
+                                        <th>Recorded By</th>
+                                        <th class="text-end">Amount</th>
+                                        <th>Reversal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="9" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center">
+                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/financial-transactions.js"></script>
+    <script src="assets/js/csv-export.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var state = { page: 1, limit: 50, total: 0 };
+
+        var CATEGORY_LABEL = {
+            SALON_BOOKING_REVENUE: 'Salon Booking Revenue', PRODUCT_SALE: 'Product Sale',
+            ACADEMY_PAYMENT: 'Academy Payment', MEMBERSHIP_PAYMENT: 'Membership Payment',
+            WALLET_FUNDING: 'Wallet Funding', OTHER_INCOME: 'Other Income',
+            VENDOR_PAYMENT: 'Vendor Payment', SALARY: 'Salary', REFUND: 'Refund',
+            OPERATIONAL_EXPENSE: 'Operational Expense', LOGISTICS: 'Logistics', OTHER_EXPENSE: 'Other Expense',
+        };
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.loadFromStorage();
+            RBAC.applyPageGuard('financial_transactions:read');
+
+            document.getElementById('f-branch').addEventListener('change', function () { state.page = 1; load(); });
+            document.getElementById('f-direction').addEventListener('change', function () { state.page = 1; load(); });
+            document.getElementById('f-category').addEventListener('change', function () { state.page = 1; load(); });
+            document.getElementById('f-payment-method').addEventListener('change', function () { state.page = 1; load(); });
+            document.getElementById('f-from').addEventListener('change', function () { state.page = 1; load(); });
+            document.getElementById('f-to').addEventListener('change', function () { state.page = 1; load(); });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-branch').value = '';
+                document.getElementById('f-direction').value = '';
+                document.getElementById('f-category').value = '';
+                document.getElementById('f-payment-method').value = '';
+                document.getElementById('f-from').value = '';
+                document.getElementById('f-to').value = '';
+                state.page = 1;
+                load();
+            });
+            document.getElementById('btn-export').addEventListener('click', exportCsv);
+            document.getElementById('pagination-btns').addEventListener('click', function (e) {
+                e.preventDefault();
+                var a = e.target.closest('a[data-page]');
+                if (!a) return;
+                var p = parseInt(a.dataset.page, 10);
+                if (p < 1 || p > totalPages()) return;
+                state.page = p;
+                load();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            try {
+                var branches = await Branches.getBranches();
+                document.getElementById('f-branch').innerHTML += branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+                RBAC.applyBranchScope(document.getElementById('f-branch'));
+            } catch (e) { /* branch filter degrades gracefully */ }
+
+            // Business Intelligence's KPI-card drill-through links here with
+            // these as query params (e.g. Total Bank Transfers ->
+            // ?paymentMethod=BANK_TRANSFER&from=...&to=...) -- pre-apply
+            // whichever of them are present before the first load.
+            (function applyIncomingFilters() {
+                var params = new URLSearchParams(window.location.search);
+                var branchId = params.get('branchId');
+                var paymentMethod = params.get('paymentMethod');
+                var from = params.get('from');
+                var to = params.get('to');
+                if (branchId) document.getElementById('f-branch').value = branchId;
+                if (paymentMethod) document.getElementById('f-payment-method').value = paymentMethod;
+                if (from) document.getElementById('f-from').value = from;
+                if (to) document.getElementById('f-to').value = to;
+            })();
+
+            load();
+            loadSummary();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function formatMoney(v) {
+            if (v == null) return '—';
+            return '₦' + Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function currentFilters() {
+            return {
+                branchId: document.getElementById('f-branch').value,
+                direction: document.getElementById('f-direction').value,
+                category: document.getElementById('f-category').value,
+                paymentMethod: document.getElementById('f-payment-method').value,
+                from: document.getElementById('f-from').value,
+                to: document.getElementById('f-to').value,
+            };
+        }
+
+        function totalPages() { return Math.max(1, Math.ceil(state.total / state.limit)); }
+
+        async function loadSummary() {
+            try {
+                var s = await FinancialTransactions.getSummary(currentFilters());
+                document.getElementById('sum-inflow').textContent = formatMoney(s.totalInflow);
+                document.getElementById('sum-outflow').textContent = formatMoney(s.totalOutflow);
+                var netEl = document.getElementById('sum-net');
+                netEl.textContent = formatMoney(s.netCashFlow);
+                netEl.className = 'h3 mb-0 ' + (s.netCashFlow >= 0 ? 'text-green' : 'text-red');
+            } catch (e) { /* summary is supplementary -- table load surfaces real errors */ }
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            var errEl = document.getElementById('page-error');
+            errEl.classList.add('d-none');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await FinancialTransactions.getAll(currentFilters(), state.page);
+                var rows = result.items || [];
+                state.total = result.total || 0;
+                state.limit = result.limit || state.limit;
+                renderTable(rows);
+                renderPagination();
+                loadSummary();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to load transactions.';
+                errEl.classList.remove('d-none');
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        function reversalBadge(r) {
+            if (r.reversalOf) {
+                return '<span class="badge bg-orange-lt" title="Reverses ' + esc(r.reversalOf.reference) + '">Reversal of ' + esc(r.reversalOf.reference) + '</span>';
+            }
+            if (r.reversedBy) {
+                return '<span class="badge bg-red-lt" title="Reversed by ' + esc(r.reversedBy.reference) + '">Reversed</span>';
+            }
+            return '<span class="text-secondary">—</span>';
+        }
+
+        function renderTable(rows) {
+            var tbody = document.getElementById('tbody');
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No transactions found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (r) {
+                var amountClass = r.direction === 'INFLOW' ? 'text-green' : 'text-red';
+                var sign = Number(r.amount) < 0 ? '' : (r.direction === 'INFLOW' ? '+' : '-');
+                var recordedBy = r.recordedBy ? [r.recordedBy.firstName, r.recordedBy.lastName].filter(Boolean).join(' ') : '—';
+                return '<tr>' +
+                    '<td class="text-secondary small">' + new Date(r.createdAt).toLocaleString('en-NG') + '</td>' +
+                    '<td class="fw-semibold">' + esc(r.reference) + '</td>' +
+                    '<td><span class="badge ' + (r.direction === 'INFLOW' ? 'bg-green-lt' : 'bg-red-lt') + '">' + r.direction + '</span></td>' +
+                    '<td>' + esc(CATEGORY_LABEL[r.category] || r.category) + '</td>' +
+                    '<td class="text-truncate" style="max-width:220px" title="' + esc(r.description) + '">' + esc(r.description || '—') + '</td>' +
+                    '<td>' + esc(r.branch ? r.branch.name : 'Company-wide') + '</td>' +
+                    '<td class="text-secondary small">' + esc(recordedBy) + '</td>' +
+                    '<td class="text-end fw-semibold ' + amountClass + '">' + sign + formatMoney(Math.abs(Number(r.amount))) + '</td>' +
+                    '<td>' + reversalBadge(r) + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function renderPagination() {
+            var total = state.total, page = state.page, limit = state.limit, pages = totalPages();
+            var from = total ? (page - 1) * limit + 1 : 0;
+            var to = Math.min(page * limit, total);
+            document.getElementById('pagination-info').textContent = total ? 'Showing ' + from + '–' + to + ' of ' + total : 'No results';
+            var ul = document.getElementById('pagination-btns');
+            ul.innerHTML = '';
+            ul.insertAdjacentHTML('beforeend', '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
+            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+            for (var p = start; p <= end; p++) {
+                ul.insertAdjacentHTML('beforeend', '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            }
+            ul.insertAdjacentHTML('beforeend', '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
+        }
+
+        async function exportCsv() {
+            var btn = document.getElementById('btn-export');
+            btn.disabled = true;
+            try {
+                var rows = await FinancialTransactions.exportAll(currentFilters());
+                if (!rows || !rows.length) { alert('No transactions to export for the current filters.'); return; }
+                CsvExport.download('financial-transactions.csv', [
+                    { label: 'Date', get: function (r) { return new Date(r.createdAt).toLocaleString('en-NG'); } },
+                    { label: 'Reference', get: function (r) { return r.reference; } },
+                    { label: 'Direction', get: function (r) { return r.direction; } },
+                    { label: 'Category', get: function (r) { return CATEGORY_LABEL[r.category] || r.category; } },
+                    { label: 'Description', get: function (r) { return r.description || ''; } },
+                    { label: 'Branch', get: function (r) { return r.branch ? r.branch.name : 'Company-wide'; } },
+                    { label: 'Recorded By', get: function (r) { return r.recordedBy ? [r.recordedBy.firstName, r.recordedBy.lastName].filter(Boolean).join(' ') : ''; } },
+                    { label: 'Amount', get: function (r) { return Number(r.amount); } },
+                    { label: 'Payment Method', get: function (r) { return r.paymentMethod || ''; } },
+                ], rows);
+            } catch (e) {
+                alert(e.message || 'Failed to export.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

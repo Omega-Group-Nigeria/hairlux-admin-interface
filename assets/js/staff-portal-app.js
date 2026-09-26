@@ -317,10 +317,15 @@ function renderDashboard() {
       // editor (already e.g. "<p>...</p>"), not plain text -- rendered directly,
       // not escaped, and without an extra wrapping <p> since the body supplies
       // its own block-level tags already.
+      // Dev Feedback Round 9: video announcements -- same treatment as the
+      // full announcements list view below.
+      const topVideoHtml = topAnnouncement.videoUrl
+        ? '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:8px;margin-bottom:10px" src="' + topAnnouncement.videoUrl + '"></video>'
+        : '';
       previewHtml +=
         '<div class="banner"><div class="tag">\uD83D\uDCE2 Management \u2014 ' +
         (topAnnouncement.target === 'ALL' ? 'All Staff' : topAnnouncement.target === 'BRANCH' ? 'Your Branch' : 'You') +
-        '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3><div class="ann-body">' + topAnnouncement.body + '</div>' +
+        '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3>' + topVideoHtml + '<div class="ann-body">' + topAnnouncement.body + '</div>' +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(topAnnouncement.createdAt) + '</div></div>';
     }
     if (topDirective) {
@@ -596,7 +601,9 @@ async function openTrainingViewer(id) {
     // them short-lived in the first place.
     const course = await StaffSelf.getLmsCourse(id);
 
-    let mediaHtml = '';
+
+    var mainContentHtml = '';
+    var attachmentsHtml = '';
     if (course.videoUrl) {
       // controlsList="nodownload" hides the native download button in
       // Chrome/Edge's video controls; disablePictureInPicture removes one
@@ -604,13 +611,17 @@ async function openTrainingViewer(id) {
       // right-click save. None of this is unbypassable -- it's the same
       // "inconvenient, not impossible" mitigation level already agreed on
       // for this feature.
-      mediaHtml += '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:var(--r2);margin-bottom:12px" src="' + course.videoUrl + '"></video>';
-    }
-    if (course.pdfUrl) {
+      mainContentHtml = '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:var(--r2);margin-bottom:12px" src="' + course.videoUrl + '"></video>';
+      if (course.pdfUrl) {
+        attachmentsHtml =
+          '<div style="font-size:13px;font-weight:600;color:var(--muted);margin:16px 0 8px">Attachments</div>' +
+          '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2)"></iframe>';
+      }
+    } else if (course.pdfUrl) {
       // #toolbar=0&navpanes=0 hides the browser's built-in PDF viewer
       // toolbar (including its own download button) in Chrome/Firefox --
       // not honored by every browser, same caveat as above.
-      mediaHtml += '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px"></iframe>';
+      mainContentHtml = '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px"></iframe>';
     }
 
     box.innerHTML =
@@ -618,8 +629,9 @@ async function openTrainingViewer(id) {
       '<h3 style="margin:0">' + escapeHtml(course.title) + '</h3>' +
       '<button class="btn btn-ghost btn-sm" onclick="closeTrainingViewer()">Close</button>' +
       '</div>' +
-      mediaHtml +
-      '<div style="font-size:14px;line-height:1.6">' + course.description + '</div>';
+      mainContentHtml +
+      '<div style="font-size:14px;line-height:1.6">' + course.description + '</div>' +
+      attachmentsHtml;
   } catch (err) {
     box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red)">' + escapeHtml(err.message || 'Could not load this course.') + '</div>' +
       '<div style="text-align:center;margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="closeTrainingViewer()">Close</button></div>';
@@ -1133,11 +1145,11 @@ function renderNotifications() {
   }
 
   container.innerHTML = items.map(function (i) {
-    return '<div class="notif' + (i.unread ? ' unread' : '') + '" style="cursor:pointer" onclick="' + i.onClick + '">' +
+    return '<div class="notif' + (i.unread ? ' unread' : '') + '"' + ' style="cursor:pointer" onclick="' + i.onClick + '">' +
       '<div class="ndot2' + (i.unread ? '' : ' read') + '"></div>' +
       '<div>' +
       '<div class="n-t">' + i.icon + ' ' + escapeHtml(i.title) + '</div>' +
-      '<div class="n-b">' + escapeHtml(i.body || '') + '</div>' +
+      '<div class="n-b">' + escapeHtml(htmlToTextPreview(i.body || '')) + '</div>' +
       '<div class="n-d">' + i.meta + '</div>' +
       '</div></div>';
   }).join('');
@@ -1443,11 +1455,19 @@ async function loadAnnouncements() {
       const fromName = a.createdBy ? [a.createdBy.firstName, a.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
       // a.body is server-sanitized HTML, not plain text (see note above) --
       // rendered directly, no escaping, no extra wrapping <p>.
+      // Dev Feedback Round 9: video announcements -- videoUrl is a
+      // presigned S3 URL, generated fresh server-side on every load
+      // (never stored/cached), same convention as LMS course videos.
+      // Same anti-download mitigations as the LMS staff viewer.
+      const videoHtml = a.videoUrl
+        ? '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:8px;margin-bottom:10px" src="' + a.videoUrl + '"></video>'
+        : '';
       return (
         '<div class="banner" data-announcement-id="' + a.id + '" ' +
         (a.isRead ? '' : 'style="border-color:var(--gold)"') + '>' +
         '<div class="tag">\uD83D\uDCE2 ' + targetLabel + (a.isRead ? '' : ' \u00B7 New') + '</div>' +
         '<h3>' + escapeHtml(a.title) + '</h3>' +
+        videoHtml +
         '<div class="ann-body">' + a.body + '</div>' +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(a.createdAt) + '</div>' +
         '</div>'
@@ -2120,9 +2140,48 @@ async function sbStart(id) {
   try { await SalonBookingsSelf.start(id); await loadSalonBookings(); } catch (err) { alert(err.message); }
 }
 
-async function sbComplete(id) {
-  if (!confirm('Complete this booking? This deducts inventory used and calculates commission.')) return;
-  try { await SalonBookingsSelf.complete(id); await loadSalonBookings(); } catch (err) { alert(err.message); }
+var _sbPendingCompleteId = null;
+
+function sbComplete(id) {
+  _sbPendingCompleteId = id;
+  document.getElementById('profile-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="sbc-error" style="display:none"></div>' +
+    '<h3>Complete Booking</h3>' +
+    '<div class="oc-modal-sub">This deducts inventory used and calculates commission.</div>' +
+    '<div class="oc-field"><label>Payment Method</label><select id="sbc-payment-method">' +
+    '<option value="">Select how the customer paid…</option>' +
+    '<option value="CASH">Cash</option>' +
+    '<option value="BANK_TRANSFER">Bank Transfer</option>' +
+    '<option value="POS">POS</option>' +
+    '<option value="CARD">Card</option>' +
+    '<option value="WALLET">Wallet</option>' +
+    '</select></div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="sbc-submit-btn" onclick="sbSubmitComplete()">Complete Booking</button>' +
+    '</div>';
+  document.getElementById('profile-modal-overlay').style.display = 'flex';
+}
+
+async function sbSubmitComplete() {
+  var method = document.getElementById('sbc-payment-method').value;
+  var errEl = document.getElementById('sbc-error');
+  if (!method) {
+    errEl.textContent = 'Select how the customer paid.';
+    errEl.style.display = 'block';
+    return;
+  }
+  var btn = document.getElementById('sbc-submit-btn');
+  btn.disabled = true;
+  try {
+    await SalonBookingsSelf.complete(_sbPendingCompleteId, method);
+    closeProfileModal();
+    await loadSalonBookings();
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+  }
 }
 
 async function sbCancel(id) {
@@ -3831,6 +3890,14 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str == null ? '' : String(str);
   return div.innerHTML;
+}
+
+function htmlToTextPreview(html, maxLength) {
+  const div = document.createElement('div');
+  div.innerHTML = html == null ? '' : String(html);
+  const text = (div.textContent || '').replace(/\s+/g, ' ').trim();
+  const limit = maxLength || 140;
+  return text.length > limit ? text.slice(0, limit).trimEnd() + '\u2026' : text;
 }
 
 // Digits only, plus an optional leading "+" for international format

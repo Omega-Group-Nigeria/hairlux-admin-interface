@@ -266,6 +266,26 @@ const Staff = (() => {
         });
     }
 
+    async function getFieldLocations(includeInactive) {
+        return jsonFetch("/admin/attendance/field-locations" + (includeInactive ? "?includeInactive=true" : ""));
+    }
+
+    async function createFieldLocation(payload) {
+        return jsonFetch("/admin/attendance/field-locations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function updateFieldLocation(id, payload) {
+        return jsonFetch("/admin/attendance/field-locations/" + id, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
     async function getOnboardingSummary() {
         return jsonFetch("/admin/staff/onboarding-summary");
     }
@@ -348,6 +368,19 @@ const Staff = (() => {
         return '<span class="badge bg-' + color + '-lt">' + value.replace(/_/g, " ") + "</span>";
     }
 
+    const WORK_MODE_COLORS = {
+        ON_SITE: "blue",
+        HYBRID: "purple",
+        REMOTE: "teal",
+        FIELD_MOBILE: "orange",
+    };
+
+    function workModeBadge(workMode) {
+        const value = String(workMode || "ON_SITE").toUpperCase();
+        const color = WORK_MODE_COLORS[value] || "secondary";
+        return '<span class="badge bg-' + color + '-lt">' + value.replace(/_/g, " ") + "</span>";
+    }
+
     function formatDate(value) {
         if (!value) return "-";
         const d = new Date(value);
@@ -385,6 +418,7 @@ const Staff = (() => {
         removeHistory,
         getOnboarding,
         getWorkCalendar, setWorkCalendar, applyWorkCalendarDefault,
+        getFieldLocations, createFieldLocation, updateFieldLocation,
         getOnboardingSummary,
         updateOnboardingItem,
         getDocumentStatus,
@@ -395,6 +429,7 @@ const Staff = (() => {
         idCardUrl,
         downloadIdCard,
         statusBadge,
+        workModeBadge,
         formatDate,
         fullName,
     };

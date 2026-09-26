@@ -100,6 +100,11 @@
                         <div class="card-header d-block pb-0">
                             <div class="row g-2 mb-3">
                                 <div class="col-md-4">
+                                    <select class="form-select" id="f-branch-filter">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
                                     <select class="form-select" id="f-vendor-filter">
                                         <option value="">All vendors</option>
                                     </select>
@@ -115,18 +120,20 @@
                                         <option value="COMPLETED">Completed</option>
                                     </select>
                                 </div>
+                            </div>
+                            <div class="row g-2 mb-3">
                                 <div class="col-md-4">
                                     <input type="text" class="form-control" id="f-search-filter"
                                         placeholder="Search PO # e.g. PO-2026-000123">
                                 </div>
-                            </div>
-                            <div class="row g-2 mb-3">
                                 <div class="col-md-4">
                                     <input type="date" class="form-control" id="f-from-filter" placeholder="From">
                                 </div>
                                 <div class="col-md-4">
                                     <input type="date" class="form-control" id="f-to-filter" placeholder="To">
                                 </div>
+                            </div>
+                            <div class="row g-2 mb-3">
                                 <div class="col-md-4">
                                     <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear
                                         Filters</button>
@@ -197,7 +204,14 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Payment Method</label>
-                            <input type="text" class="form-control" id="p-method" placeholder="e.g. Bank Transfer">
+                            <select class="form-select" id="p-method">
+                                <option value="">Select...</option>
+                                <option value="CASH">Cash</option>
+                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                                <option value="POS">POS</option>
+                                <option value="CARD">Card</option>
+                                <option value="WALLET">Wallet</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Payment Date</label>
@@ -309,6 +323,7 @@
         document.addEventListener('DOMContentLoaded', async function () {
             RBAC.applyPageGuard('purchases:read');
 
+            document.getElementById('f-branch-filter').addEventListener('change', load);
             document.getElementById('f-vendor-filter').addEventListener('change', load);
             document.getElementById('f-status-filter').addEventListener('change', load);
             document.getElementById('f-from-filter').addEventListener('change', load);
@@ -319,6 +334,7 @@
                 searchTimer = setTimeout(load, 400);
             });
             document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-branch-filter').value = '';
                 document.getElementById('f-vendor-filter').value = '';
                 document.getElementById('f-status-filter').value = '';
                 document.getElementById('f-search-filter').value = '';
@@ -328,8 +344,19 @@
             });
             document.getElementById('btn-export').addEventListener('click', exportPurchases);
             document.getElementById('btn-save-payment').addEventListener('click', savePayment);
-                        document.getElementById('btn-save-receive').addEventListener('click', saveReceive);
+            document.getElementById('btn-save-receive').addEventListener('click', saveReceive);
             document.getElementById('btn-save-accept').addEventListener('click', saveAccept);
+
+            try {
+                var branches = await Branches.getBranches();
+                var branchSel = document.getElementById('f-branch-filter');
+                branchSel.innerHTML += branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+                // Dev Feedback Round 9: Branch Filter automation -- locks
+                // this list to a branch-manager admin's own branch(es).
+                RBAC.applyBranchScope(branchSel);
+            } catch (e) { /* non-fatal — filter just stays at "All branches" */ }
 
             try {
                 _allVendors = await Suppliers.getAll();
@@ -377,7 +404,8 @@
             var tbody = document.getElementById('tbody');
             tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
-                var list = await Purchases.getAll({
+                                var list = await Purchases.getAll({
+                    branchId: document.getElementById('f-branch-filter').value,
                     vendorId: document.getElementById('f-vendor-filter').value,
                     status: document.getElementById('f-status-filter').value,
                     search: document.getElementById('f-search-filter').value,
@@ -487,10 +515,10 @@
             var errEl = document.getElementById('payment-error');
             errEl.classList.add('d-none');
             var amount = Number(document.getElementById('p-amount').value);
-            var method = document.getElementById('p-method').value.trim();
+            var method = document.getElementById('p-method').value;
             var date = document.getElementById('p-date').value;
             if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount.'; errEl.classList.remove('d-none'); return; }
-            if (!method) { errEl.textContent = 'Payment method is required.'; errEl.classList.remove('d-none'); return; }
+            if (!method) { errEl.textContent = 'Select a payment method.'; errEl.classList.remove('d-none'); return; }
             if (!date) { errEl.textContent = 'Payment date is required.'; errEl.classList.remove('d-none'); return; }
 
             var btn = document.getElementById('btn-save-payment');
@@ -514,176 +542,176 @@
         }
 
         // ── Receive Goods ─────────────────────────────────────────────────
-                function openReceiveForm() {
-                        document.getElementById('receive-error').classList.add('d-none');
+        function openReceiveForm() {
+            document.getElementById('receive-error').classList.add('d-none');
 
-                        var deliveredByLine = {};
-                        (_currentPurchase.goodsReceipts || []).forEach(function (r) {
-                            r.lines.forEach(function (l) {
-                                deliveredByLine[l.purchaseLineId] = (deliveredByLine[l.purchaseLineId] || 0) + l.deliveredQty;
-                            });
-                        });
+            var deliveredByLine = {};
+            (_currentPurchase.goodsReceipts || []).forEach(function (r) {
+                r.lines.forEach(function (l) {
+                    deliveredByLine[l.purchaseLineId] = (deliveredByLine[l.purchaseLineId] || 0) + l.deliveredQty;
+                });
+            });
 
-                        _receiveLines = _currentPurchase.lines
-                            .filter(function (l) { return (deliveredByLine[l.id] || 0) < l.quantity; })
-                            .map(function (l) {
-                                return {
-                                    purchaseLineId: l.id,
-                                    productName: l.product ? l.product.name : '',
-                                    ordered: l.quantity,
-                                    previouslyReceived: deliveredByLine[l.id] || 0,
-                                    deliveredQty: '',
-                                    damagedQty: 0,
-                                    batchLotNumber: '',
-                                    expiryDate: '',
-                                };
-                            });
+            _receiveLines = _currentPurchase.lines
+                .filter(function (l) { return (deliveredByLine[l.id] || 0) < l.quantity; })
+                .map(function (l) {
+                    return {
+                        purchaseLineId: l.id,
+                        productName: l.product ? l.product.name : '',
+                        ordered: l.quantity,
+                        previouslyReceived: deliveredByLine[l.id] || 0,
+                        deliveredQty: '',
+                        damagedQty: 0,
+                        batchLotNumber: '',
+                        expiryDate: '',
+                    };
+                });
 
-                        renderReceiveLines();
-                        new bootstrap.Modal(document.getElementById('modal-receive')).show();
-                    }
+            renderReceiveLines();
+            new bootstrap.Modal(document.getElementById('modal-receive')).show();
+        }
 
-                    function renderReceiveLines() {
-                        var container = document.getElementById('receive-lines-container');
-                        if (!_receiveLines.length) {
-                            container.innerHTML = '<div class="text-secondary text-center py-3">Every line on this purchase has already been fully received.</div>';
-                            return;
-                        }
-                        container.innerHTML = _receiveLines.map(function (l, i) {
-                            return '<div class="receive-line-row">' +
-                                '<div>' + esc(l.productName) + '<div class="text-secondary small">Outstanding: ' + (l.ordered - l.previouslyReceived) + '</div></div>' +
-                                '<div class="readonly-figure">' + l.ordered + '</div>' +
-                                '<div class="readonly-figure">' + l.previouslyReceived + '</div>' +
-                                '<input type="number" min="0" class="form-control form-control-sm" value="' + l.deliveredQty + '" oninput="onReceiveFieldChange(' + i + ',\'deliveredQty\',this.value)">' +
-                                '<input type="number" min="0" class="form-control form-control-sm" value="' + l.damagedQty + '" oninput="onReceiveFieldChange(' + i + ',\'damagedQty\',this.value)">' +
-                                '<div><input type="text" class="form-control form-control-sm mb-1" placeholder="Batch/Lot" value="' + esc(l.batchLotNumber) + '" oninput="onReceiveFieldChange(' + i + ',\'batchLotNumber\',this.value)">' +
-                                '<input type="date" class="form-control form-control-sm" value="' + l.expiryDate + '" oninput="onReceiveFieldChange(' + i + ',\'expiryDate\',this.value)"></div>' +
-                                '</div>';
-                        }).join('');
-                    }
+        function renderReceiveLines() {
+            var container = document.getElementById('receive-lines-container');
+            if (!_receiveLines.length) {
+                container.innerHTML = '<div class="text-secondary text-center py-3">Every line on this purchase has already been fully received.</div>';
+                return;
+            }
+            container.innerHTML = _receiveLines.map(function (l, i) {
+                return '<div class="receive-line-row">' +
+                    '<div>' + esc(l.productName) + '<div class="text-secondary small">Outstanding: ' + (l.ordered - l.previouslyReceived) + '</div></div>' +
+                    '<div class="readonly-figure">' + l.ordered + '</div>' +
+                    '<div class="readonly-figure">' + l.previouslyReceived + '</div>' +
+                    '<input type="number" min="0" class="form-control form-control-sm" value="' + l.deliveredQty + '" oninput="onReceiveFieldChange(' + i + ',\'deliveredQty\',this.value)">' +
+                    '<input type="number" min="0" class="form-control form-control-sm" value="' + l.damagedQty + '" oninput="onReceiveFieldChange(' + i + ',\'damagedQty\',this.value)">' +
+                    '<div><input type="text" class="form-control form-control-sm mb-1" placeholder="Batch/Lot" value="' + esc(l.batchLotNumber) + '" oninput="onReceiveFieldChange(' + i + ',\'batchLotNumber\',this.value)">' +
+                    '<input type="date" class="form-control form-control-sm" value="' + l.expiryDate + '" oninput="onReceiveFieldChange(' + i + ',\'expiryDate\',this.value)"></div>' +
+                    '</div>';
+            }).join('');
+        }
 
-                    function onReceiveFieldChange(index, field, value) {
-                        // No full re-render on every keystroke -- same reasoning as
-                        // Purchase Requests' line items -- just updates the backing array.
-                        _receiveLines[index][field] = value;
-                    }
+        function onReceiveFieldChange(index, field, value) {
+            // No full re-render on every keystroke -- same reasoning as
+            // Purchase Requests' line items -- just updates the backing array.
+            _receiveLines[index][field] = value;
+        }
 
-                    async function saveReceive() {
-                        var errEl = document.getElementById('receive-error');
-                        errEl.classList.add('d-none');
+        async function saveReceive() {
+            var errEl = document.getElementById('receive-error');
+            errEl.classList.add('d-none');
 
-                        var linesToSubmit = _receiveLines.filter(function (l) { return Number(l.deliveredQty) > 0; });
-                        if (!linesToSubmit.length) {
-                            errEl.textContent = 'Enter a delivered quantity for at least one line.';
-                            errEl.classList.remove('d-none');
-                            return;
-                        }
+            var linesToSubmit = _receiveLines.filter(function (l) { return Number(l.deliveredQty) > 0; });
+            if (!linesToSubmit.length) {
+                errEl.textContent = 'Enter a delivered quantity for at least one line.';
+                errEl.classList.remove('d-none');
+                return;
+            }
 
-                        var payload = {
-                            lines: linesToSubmit.map(function (l) {
-                                return {
-                                    purchaseLineId: l.purchaseLineId,
-                                    deliveredQty: Number(l.deliveredQty),
-                                    damagedQty: Number(l.damagedQty) || 0,
-                                    batchLotNumber: l.batchLotNumber || undefined,
-                                    expiryDate: l.expiryDate || undefined,
-                                };
-                            }),
-                        };
+            var payload = {
+                lines: linesToSubmit.map(function (l) {
+                    return {
+                        purchaseLineId: l.purchaseLineId,
+                        deliveredQty: Number(l.deliveredQty),
+                        damagedQty: Number(l.damagedQty) || 0,
+                        batchLotNumber: l.batchLotNumber || undefined,
+                        expiryDate: l.expiryDate || undefined,
+                    };
+                }),
+            };
 
-                        var btn = document.getElementById('btn-save-receive');
-                        btn.disabled = true;
-                        try {
-                            await Purchases.receiveGoods(_currentPurchase.id, payload);
-                            bootstrap.Modal.getInstance(document.getElementById('modal-receive')).hide();
-                            viewOne(_currentPurchase.id);
-                            load();
-                        } catch (e) {
-                            errEl.textContent = e.message || 'Failed to record receipt.';
-                            errEl.classList.remove('d-none');
-                        } finally {
-                            btn.disabled = false;
-                        }
-                    }
+            var btn = document.getElementById('btn-save-receive');
+            btn.disabled = true;
+            try {
+                await Purchases.receiveGoods(_currentPurchase.id, payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-receive')).hide();
+                viewOne(_currentPurchase.id);
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to record receipt.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
 
-                    // ── Accept Products (Dev Feedback Round 9) ─────────────────────────
-                    // [{ goodsReceiptLineId, productName, deliveredQty, damagedQty, acceptedQty }]
-                    var _acceptLines = [];
+        // ── Accept Products (Dev Feedback Round 9) ─────────────────────────
+        // [{ goodsReceiptLineId, productName, deliveredQty, damagedQty, acceptedQty }]
+        var _acceptLines = [];
 
-                    function openAcceptForm() {
-                        document.getElementById('accept-error').classList.add('d-none');
+        function openAcceptForm() {
+            document.getElementById('accept-error').classList.add('d-none');
 
-                        _acceptLines = [];
-                        (_currentPurchase.goodsReceipts || []).forEach(function (r) {
-                            r.lines.forEach(function (l) {
-                                if (l.acceptedAt) return; // already reviewed -- nothing left to do for this line
-                                _acceptLines.push({
-                                    goodsReceiptLineId: l.id,
-                                    productName: l.purchaseLine && l.purchaseLine.product ? l.purchaseLine.product.name : '',
-                                    deliveredQty: l.deliveredQty,
-                                    damagedQty: l.damagedQty || 0,
-                                    acceptedQty: '',
-                                });
-                            });
-                        });
+            _acceptLines = [];
+            (_currentPurchase.goodsReceipts || []).forEach(function (r) {
+                r.lines.forEach(function (l) {
+                    if (l.acceptedAt) return; // already reviewed -- nothing left to do for this line
+                    _acceptLines.push({
+                        goodsReceiptLineId: l.id,
+                        productName: l.purchaseLine && l.purchaseLine.product ? l.purchaseLine.product.name : '',
+                        deliveredQty: l.deliveredQty,
+                        damagedQty: l.damagedQty || 0,
+                        acceptedQty: '',
+                    });
+                });
+            });
 
-                        renderAcceptLines();
-                        new bootstrap.Modal(document.getElementById('modal-accept')).show();
-                    }
+            renderAcceptLines();
+            new bootstrap.Modal(document.getElementById('modal-accept')).show();
+        }
 
-                    function renderAcceptLines() {
-                        var container = document.getElementById('accept-lines-container');
-                        if (!_acceptLines.length) {
-                            container.innerHTML = '<div class="text-secondary text-center py-3">Every delivered line has already been reviewed.</div>';
-                            return;
-                        }
-                        container.innerHTML = _acceptLines.map(function (l, i) {
-                            var maxAcceptable = l.deliveredQty - l.damagedQty;
-                            return '<div class="receive-line-row" style="grid-template-columns: 1.5fr 0.8fr 0.8fr 1fr;">' +
-                                '<div>' + esc(l.productName) + '</div>' +
-                                '<div class="readonly-figure">' + l.deliveredQty + '</div>' +
-                                '<div class="readonly-figure">' + l.damagedQty + '</div>' +
-                                '<input type="number" min="0" max="' + maxAcceptable + '" class="form-control form-control-sm" value="' + l.acceptedQty + '" placeholder="Up to ' + maxAcceptable + '" oninput="onAcceptFieldChange(' + i + ',this.value)">' +
-                                '</div>';
-                        }).join('');
-                    }
+        function renderAcceptLines() {
+            var container = document.getElementById('accept-lines-container');
+            if (!_acceptLines.length) {
+                container.innerHTML = '<div class="text-secondary text-center py-3">Every delivered line has already been reviewed.</div>';
+                return;
+            }
+            container.innerHTML = _acceptLines.map(function (l, i) {
+                var maxAcceptable = l.deliveredQty - l.damagedQty;
+                return '<div class="receive-line-row" style="grid-template-columns: 1.5fr 0.8fr 0.8fr 1fr;">' +
+                    '<div>' + esc(l.productName) + '</div>' +
+                    '<div class="readonly-figure">' + l.deliveredQty + '</div>' +
+                    '<div class="readonly-figure">' + l.damagedQty + '</div>' +
+                    '<input type="number" min="0" max="' + maxAcceptable + '" class="form-control form-control-sm" value="' + l.acceptedQty + '" placeholder="Up to ' + maxAcceptable + '" oninput="onAcceptFieldChange(' + i + ',this.value)">' +
+                    '</div>';
+            }).join('');
+        }
 
-                    function onAcceptFieldChange(index, value) {
-                        _acceptLines[index].acceptedQty = value;
-                    }
+        function onAcceptFieldChange(index, value) {
+            _acceptLines[index].acceptedQty = value;
+        }
 
-                    async function saveAccept() {
-                        var errEl = document.getElementById('accept-error');
-                        errEl.classList.add('d-none');
+        async function saveAccept() {
+            var errEl = document.getElementById('accept-error');
+            errEl.classList.add('d-none');
 
-                        var linesToSubmit = _acceptLines.filter(function (l) { return l.acceptedQty !== '' && l.acceptedQty != null; });
-                        if (!linesToSubmit.length) {
-                            errEl.textContent = 'Enter an accept quantity for at least one line.';
-                            errEl.classList.remove('d-none');
-                            return;
-                        }
+            var linesToSubmit = _acceptLines.filter(function (l) { return l.acceptedQty !== '' && l.acceptedQty != null; });
+            if (!linesToSubmit.length) {
+                errEl.textContent = 'Enter an accept quantity for at least one line.';
+                errEl.classList.remove('d-none');
+                return;
+            }
 
-                        var payload = {
-                            lines: linesToSubmit.map(function (l) {
-                                return { goodsReceiptLineId: l.goodsReceiptLineId, acceptedQty: Number(l.acceptedQty) };
-                            }),
-                        };
+            var payload = {
+                lines: linesToSubmit.map(function (l) {
+                    return { goodsReceiptLineId: l.goodsReceiptLineId, acceptedQty: Number(l.acceptedQty) };
+                }),
+            };
 
-                        var btn = document.getElementById('btn-save-accept');
-                        btn.disabled = true;
-                        try {
-                            await Purchases.acceptGoods(_currentPurchase.id, payload);
-                            bootstrap.Modal.getInstance(document.getElementById('modal-accept')).hide();
-                            viewOne(_currentPurchase.id);
-                            load();
-                        } catch (e) {
-                            errEl.textContent = e.message || 'Failed to record acceptance.';
-                            errEl.classList.remove('d-none');
-                        } finally {
-                            btn.disabled = false;
-                        }
-                    }
-                </script>
-    </body>
-    
-    </html>
+            var btn = document.getElementById('btn-save-accept');
+            btn.disabled = true;
+            try {
+                await Purchases.acceptGoods(_currentPurchase.id, payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-accept')).hide();
+                viewOne(_currentPurchase.id);
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to record acceptance.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

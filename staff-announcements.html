@@ -188,6 +188,17 @@
                             <div id="announcement-quill-editor"></div>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label" for="announcement-video">Video <span
+                                    class="text-muted">(optional)</span></label>
+                            <input type="file" class="form-control" id="announcement-video" accept="video/*">
+                            <div class="form-hint" id="announcement-video-status"></div>
+                            <div class="form-check mt-1 d-none" id="announcement-remove-video-wrap">
+                                <input class="form-check-input" type="checkbox" id="announcement-remove-video">
+                                <label class="form-check-label" for="announcement-remove-video">Remove the existing
+                                    video</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label" for="announcement-expires">Expires <span
                                     class="text-muted">(optional)</span></label>
                             <input type="date" class="form-control" id="announcement-expires">
@@ -230,6 +241,8 @@
                                     <span class="text-secondary small" id="preview-sent-label">Just now</span>
                                 </div>
                                 <h3 class="mb-1" id="preview-title"></h3>
+                                <video id="preview-video" controls class="w-100 mb-2 d-none"
+                                    style="border-radius:4px"></video>
                                 <div id="preview-body"></div>
                                 <div class="text-secondary small mt-3" id="preview-sender"></div>
                             </div>
@@ -321,7 +334,7 @@
                             ? '<button class="btn btn-sm btn-ghost-secondary btn-edit-announcement" data-id="' + a.id + '">Edit</button> ' +
                             '<button class="btn btn-sm btn-ghost-danger btn-delete-announcement" data-id="' + a.id + '">Delete</button>'
                             : '';
-                        return '<tr><td class="fw-semibold">' + esc(a.title) + '</td>' +
+                        return '<tr><td class="fw-semibold">' + esc(a.title) + (a.videoKey ? ' <span class="badge bg-blue-lt">Video</span>' : '') + '</td>' +
                             '<td><span class="badge bg-purple-lt">' + esc(StaffComms.announcementTargetLabel(a)) + '</span></td>' +
                             '<td>' + esc(StaffComms.createdByName(a)) + '</td>' +
                             '<td class="text-secondary small">' + timeAgo(a.createdAt) + '</td>' +
@@ -405,6 +418,7 @@
         }
 
         var _editingAnnouncementId = null;
+        var _previewVideoObjectUrl = null;
 
         function showFormStep() {
             document.getElementById("announcement-form-step").classList.remove("d-none");
@@ -433,6 +447,18 @@
             document.getElementById("announcement-expires").value = editing && editing.expiresAt ? editing.expiresAt.slice(0, 10) : "";
             document.getElementById("announcement-target").value = editing ? editing.target : "ALL";
             onTargetChange();
+
+            // Dev Feedback Round 9: video announcements.
+            document.getElementById("announcement-video").value = "";
+            document.getElementById("announcement-remove-video").checked = false;
+            var removeVideoWrap = document.getElementById("announcement-remove-video-wrap");
+            if (editing && editing.videoKey) {
+                document.getElementById("announcement-video-status").textContent = "A video is already attached — choose a new file only to replace it.";
+                removeVideoWrap.classList.remove("d-none");
+            } else {
+                document.getElementById("announcement-video-status").textContent = "";
+                removeVideoWrap.classList.add("d-none");
+            }
 
             if (editing) {
                 // dangerouslyPasteHTML (not a direct .innerHTML assignment) keeps
@@ -472,6 +498,15 @@
             }
             if (target === "BRANCH") payload.targetLocationId = document.getElementById("announcement-branch").value;
             if (target === "INDIVIDUAL") payload.targetStaffId = document.getElementById("announcement-staff").value;
+            // Dev Feedback Round 9: video announcements -- a new file always
+            // takes priority; removeVideo only sent when there's no new file
+            // (matches the backend's own precedence, see updateAnnouncement).
+            var videoFile = document.getElementById("announcement-video").files[0];
+            if (videoFile) {
+                payload.video = videoFile;
+            } else if (document.getElementById("announcement-remove-video").checked) {
+                payload.removeVideo = "true";
+            }
             return { payload: payload, title: title, bodyText: bodyText, target: target };
         }
 
@@ -512,6 +547,25 @@
             document.getElementById("preview-sent-label").textContent = _editingAnnouncementId ? "Updated just now" : "Sending now";
             var senderName = (document.getElementById("dropdown-user-name") || {}).textContent || "You";
             document.getElementById("preview-sender").textContent = "From: " + senderName.trim();
+
+            // Dev Feedback Round 9: video announcements -- a locally-selected
+            // File previews via an object URL (nothing's uploaded yet at this
+            // step); editing an announcement that already has a video and
+            // hasn't been replaced/removed shows that existing video instead.
+            var previewVideoEl = document.getElementById("preview-video");
+            if (_previewVideoObjectUrl) { URL.revokeObjectURL(_previewVideoObjectUrl); _previewVideoObjectUrl = null; }
+            var editingForPreview = _announcementsCache.find(function (a) { return a.id === _editingAnnouncementId; });
+            if (payload.video) {
+                _previewVideoObjectUrl = URL.createObjectURL(payload.video);
+                previewVideoEl.src = _previewVideoObjectUrl;
+                previewVideoEl.classList.remove("d-none");
+            } else if (!payload.removeVideo && editingForPreview && editingForPreview.videoUrl) {
+                previewVideoEl.src = editingForPreview.videoUrl;
+                previewVideoEl.classList.remove("d-none");
+            } else {
+                previewVideoEl.removeAttribute("src");
+                previewVideoEl.classList.add("d-none");
+            }
 
             showPreviewStep();
         }
