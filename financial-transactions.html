@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Financial Transactions</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -235,7 +244,7 @@
             document.getElementById('f-from').addEventListener('change', function () { state.page = 1; load(); });
             document.getElementById('f-to').addEventListener('change', function () { state.page = 1; load(); });
             document.getElementById('btn-clear-filters').addEventListener('click', function () {
-                document.getElementById('f-branch').value = '';
+                document.getElementById('f-branch').value = RBAC.scopeBranchId('');
                 document.getElementById('f-direction').value = '';
                 document.getElementById('f-category').value = '';
                 document.getElementById('f-payment-method').value = '';
@@ -274,7 +283,7 @@
                 var paymentMethod = params.get('paymentMethod');
                 var from = params.get('from');
                 var to = params.get('to');
-                if (branchId) document.getElementById('f-branch').value = branchId;
+                if (branchId) document.getElementById('f-branch').value = RBAC.scopeBranchId(branchId);
                 if (paymentMethod) document.getElementById('f-payment-method').value = paymentMethod;
                 if (from) document.getElementById('f-from').value = from;
                 if (to) document.getElementById('f-to').value = to;
@@ -297,7 +306,7 @@
 
         function currentFilters() {
             return {
-                branchId: document.getElementById('f-branch').value,
+                branchId: RBAC.scopeBranchId(document.getElementById('f-branch').value),
                 direction: document.getElementById('f-direction').value,
                 category: document.getElementById('f-category').value,
                 paymentMethod: document.getElementById('f-payment-method').value,
@@ -412,6 +421,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

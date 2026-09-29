@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Services</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -688,6 +697,21 @@
                         </div>
                     </div>
 
+                    <!-- Estimated completion time (optional) -->
+                    <div class="row g-3 mt-0">
+                        <div class="col-md-8">
+                            <label class="form-label">Estimated completion time <span class="text-secondary fw-normal">(optional)</span></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="service-est-hours" min="0" max="72" step="1" placeholder="0">
+                                <span class="input-group-text">hours</span>
+                                <input type="number" class="form-control" id="service-est-minutes" min="0" max="59" step="5" placeholder="0">
+                                <span class="input-group-text">minutes</span>
+                            </div>
+                            <div class="form-hint">How long this service really takes from start to finish. When set, booking
+                                forms warn if a booking would run past the branch's closing time. Leave blank to skip the check.</div>
+                        </div>
+                    </div>
+
                     <!-- Category + conditional pricing -->
                     <div class="row g-3 mt-0">
                         <div class="col-md-4">
@@ -1100,7 +1124,8 @@
                     '<div><span class="text-secondary">Home:</span> <span class="fw-semibold text-info">' + Services.formatMoney(s.homeServicePrice) + '</span></div>' +
                     '</td>' +
                     '<td class="small">' + renderAvailabilityBadges(s) + '</td>' +
-                    '<td class="text-secondary">' + Services.formatDuration(s.duration) + '</td>' +
+                    '<td class="text-secondary">' + Services.formatDuration(s.duration) +
+                    (s.estimatedCompletionMinutes ? '<div class="small">Est. finish: ' + Services.formatDuration(s.estimatedCompletionMinutes) + '</div>' : '') + '</td>' +
                     '<td>' + Services.statusBadge(s.status) + '</td>' +
                     '<td>' +
                     '<div class="d-flex gap-1">' +
@@ -1156,6 +1181,7 @@
                     '<div class="col-4">' +
                     '<div class="small text-secondary mb-1">Duration</div>' +
                     '<div class="fw-bold fs-4">' + Services.formatDuration(s.duration) + '</div>' +
+                    (s.estimatedCompletionMinutes ? '<div class="small text-secondary">Est. completion ' + Services.formatDuration(s.estimatedCompletionMinutes) + '</div>' : '') +
                     '</div>' +
                     '</div>' +
                     '<div class="mt-3 text-center">' + renderAvailabilityBadges(s) + '</div>' +
@@ -1202,6 +1228,8 @@
             document.getElementById("service-walkin-price").value = "";
             document.getElementById("service-home-price").value = "";
             document.getElementById("service-duration").value = "";
+            document.getElementById("service-est-hours").value = "";
+            document.getElementById("service-est-minutes").value = "";
             document.getElementById("service-walkin-available").checked = true;
             document.getElementById("service-home-available").checked = true;
             syncPriceFieldVisibility();
@@ -1271,6 +1299,8 @@
                     document.getElementById("service-home-available").checked = s.isHomeServiceAvailable !== false;
                     syncPriceFieldVisibility();
                     document.getElementById("service-duration").value = s.duration || "";
+                    document.getElementById("service-est-hours").value = s.estimatedCompletionMinutes ? Math.floor(s.estimatedCompletionMinutes / 60) : "";
+                    document.getElementById("service-est-minutes").value = s.estimatedCompletionMinutes ? s.estimatedCompletionMinutes % 60 : "";
                     document.getElementById("service-status").value = s.status || "ACTIVE";
                     _editOriginalStatus = s.status || "ACTIVE";
                     if (s.imageUrl) {
@@ -1304,6 +1334,26 @@
             var isHomeServiceAvailable = document.getElementById("service-home-available").checked;
             var duration = parseInt(document.getElementById("service-duration").value, 10);
             var selectedStatus = document.getElementById("service-status").value;
+
+            // Estimated completion time: both boxes blank = no estimate (clears it on edit).
+            var estHoursRaw = document.getElementById("service-est-hours").value.trim();
+            var estMinutesRaw = document.getElementById("service-est-minutes").value.trim();
+            var estimatedCompletionMinutes = null;
+            if (estHoursRaw !== "" || estMinutesRaw !== "") {
+                var estHours = estHoursRaw === "" ? 0 : Number(estHoursRaw);
+                var estMinutes = estMinutesRaw === "" ? 0 : Number(estMinutesRaw);
+                if (!Number.isInteger(estHours) || !Number.isInteger(estMinutes) || estHours < 0 || estMinutes < 0 || estMinutes > 59) {
+                    errEl.textContent = "Estimated completion time: enter whole hours and 0–59 minutes.";
+                    errEl.classList.remove("d-none");
+                    return;
+                }
+                estimatedCompletionMinutes = estHours * 60 + estMinutes;
+                if (estimatedCompletionMinutes < 1 || estimatedCompletionMinutes > 4320) {
+                    errEl.textContent = "Estimated completion time must be between 1 minute and 72 hours.";
+                    errEl.classList.remove("d-none");
+                    return;
+                }
+            }
 
             if (!name || !categoryId || isNaN(duration)) {
                 errEl.textContent = "Please fill in all required fields.";
@@ -1340,6 +1390,7 @@
             appendBooleanField(fd, "isWalkInAvailable", isWalkInAvailable);
             appendBooleanField(fd, "isHomeServiceAvailable", isHomeServiceAvailable);
             fd.append("duration", duration);
+            fd.append("estimatedCompletionMinutes", estimatedCompletionMinutes === null ? "" : String(estimatedCompletionMinutes));
             if (_imageFile) fd.append("image", _imageFile);
 
             var btn = document.getElementById("btn-save-service");
@@ -1731,6 +1782,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

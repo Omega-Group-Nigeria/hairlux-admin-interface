@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Business Snapshot</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -437,6 +446,8 @@
     <script src="./assets/js/api-utils/services.js"></script>
     <script src="./assets/js/api-utils/business-intelligence.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
+    <!-- Page guard: same read permission that shows this page in the sidebar (NavConfig). -->
+    <script>document.addEventListener('DOMContentLoaded', function () { RBAC.applyPageGuardForCurrentPage(); });</script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         Auth.requireAuth();
@@ -475,6 +486,7 @@
                     var sel = document.getElementById('bi-branch');
                     sel.innerHTML = '<option value="">All Branches</option>' +
                         branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(sel);
                     branchWrap.classList.remove('d-none');
                 } catch (err) { /* branch picker just stays hidden/empty */ }
             } else {
@@ -1159,6 +1171,7 @@
                     var branches = await Branches.getBranches();
                     branches.forEach(function (b) { _branchNameById[b.id] = b.name; });
                     branchSel.innerHTML = branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(branchSel);
                 } catch (err) { /* leave empty -- BRANCH scope simply won't be selectable */ }
             }
             var now = new Date(Date.now() + 60 * 60 * 1000); // WAT
@@ -1222,6 +1235,7 @@
 
         init();
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

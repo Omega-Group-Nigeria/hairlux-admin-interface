@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Applications</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -479,10 +488,10 @@
             document.getElementById("btn-clear").addEventListener("click", function () {
                 document.getElementById("filter-search").value = "";
                 document.getElementById("filter-limit").value = "20";
-                document.getElementById("filter-branch").value = "";
+                document.getElementById("filter-branch").value = RBAC.scopeBranchId("");
                 document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
-                state.page = 1; state.limit = 20; state.status = ""; state.search = ""; state.locationId = "";
+                state.page = 1; state.limit = 20; state.status = ""; state.search = ""; state.locationId = RBAC.scopeBranchId("");
                 loadApplications();
             });
 
@@ -564,7 +573,7 @@
                         dateTo: document.getElementById("report-filter-date-to").value || undefined,
                         appliedRole: document.getElementById("report-filter-role").value || undefined,
                         status: document.getElementById("report-filter-status").value || undefined,
-                        preferredLocationId: document.getElementById("report-filter-branch").value || undefined,
+                        preferredLocationId: RBAC.scopeBranchId(document.getElementById("report-filter-branch").value) || undefined,
                     });
 
                     var roleRows = (r.byRole || []).map(function (x) {
@@ -604,7 +613,7 @@
                     var result = await Applications.getAll({
                         page: state.page, limit: state.limit,
                         status: state.status, search: state.search,
-                        preferredLocationId: state.locationId
+                        preferredLocationId: RBAC.scopeBranchId(state.locationId)
                     });
                     var rows = result.data || (Array.isArray(result) ? result : []);
                     var meta = result.meta || {};
@@ -870,7 +879,7 @@
             async function showScheduleInterviewForm() {
                 var actions = document.getElementById('offcanvas-detail-actions');
                 actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-                var locations = await ensureLocations();
+                var locations = RBAC.filterBranches(await ensureLocations());
                 var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
                 actions.innerHTML =
                     '<div class="w-100">' +
@@ -1113,7 +1122,7 @@
             async function showConvertToStaffForm() {
                 var actions = document.getElementById('offcanvas-detail-actions');
                 actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-                var locations = await ensureLocations();
+                var locations = RBAC.filterBranches(await ensureLocations());
                 var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
                 actions.innerHTML =
                     '<div class="w-100">' +
@@ -1145,6 +1154,7 @@
                 }
             }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

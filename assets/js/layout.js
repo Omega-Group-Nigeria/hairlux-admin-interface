@@ -123,7 +123,7 @@ var Layout = window.Layout || (() => {
             if (item.children && item.children.length) {
                 const childrenHtml = item.children.map(function (child) {
                     const childActive = isChildActive(child.href) ? " active" : "";
-                    return '<a class="dropdown-item' + childActive + '" href="' + resolveHref(child.href) + '">' + child.label + "</a>";
+                    return '<a class="dropdown-item' + childActive + '" href="' + resolveHref(child.href) + '" data-nav-key="' + child.href + '">' + child.label + "</a>";
                 }).join("");
                 return (
                     '<li class="nav-item dropdown' + (active ? " active" : "") + '">' +
@@ -137,7 +137,7 @@ var Layout = window.Layout || (() => {
 
             return (
                 '<li class="nav-item' + (active ? " active" : "") + '">' +
-                '<a class="' + linkClass + '" href="' + resolveHref(item.href) + '">' +
+                '<a class="' + linkClass + '" href="' + resolveHref(item.href) + '" data-nav-key="' + item.href + '">' +
                 iconHtml + titleHtml + badgeHtml +
                 "</a></li>"
             );

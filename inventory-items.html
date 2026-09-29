@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Inventory Items</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -776,7 +785,7 @@
 
         function filterFromSummaryCard(stockStatus) {
             document.getElementById("filter-search").value = "";
-            document.getElementById("filter-branch").value = "";
+            document.getElementById("filter-branch").value = RBAC.scopeBranchId("");
             document.getElementById("filter-category").value = "";
             document.getElementById("filter-stock-status").value = stockStatus || "";
             switchToTab("items");
@@ -929,7 +938,7 @@
                 _branchesCache = branches;
                 var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
                 document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
-                renderNewItemBranchList(branches);
+                renderNewItemBranchList(RBAC.filterBranches(branches));
                 if (RBAC.applyBranchScope(document.getElementById("filter-branch"))) loadItems();
             } catch (err) {
                 console.error("Failed to load branches", err);
@@ -1014,7 +1023,7 @@
 
         async function refreshBadgeCounts() {
             try {
-                var alerts = await Inventory.getAlerts(undefined, false);
+                var alerts = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getAlerts(id, false); });
                 var alertList = alerts.data || alerts || [];
                 var badge = document.getElementById("alert-count-badge");
                 if (alertList.length) { badge.textContent = alertList.length; badge.style.display = ""; }
@@ -1022,7 +1031,7 @@
             } catch (err) { /* non-fatal */ }
 
             try {
-                var expiryAlerts = await Inventory.getExpiryAlerts(undefined, false);
+                var expiryAlerts = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getExpiryAlerts(id, false); });
                 var expiryList = expiryAlerts.data || expiryAlerts || [];
                 var expiryBadge = document.getElementById("expiry-count-badge");
                 if (expiryList.length) { expiryBadge.textContent = expiryList.length; expiryBadge.style.display = ""; }
@@ -1030,7 +1039,7 @@
             } catch (err) { /* non-fatal */ }
 
             try {
-                var transfers = await Inventory.getTransfers();
+                var transfers = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getTransfers(id); });
                 var pending = (transfers.data || transfers || []).filter(function (t) { return t.status === "PENDING"; });
                 var tbadge = document.getElementById("transfer-count-badge");
                 if (pending.length) { tbadge.textContent = pending.length; tbadge.style.display = ""; }
@@ -1038,7 +1047,7 @@
             } catch (err) { /* non-fatal */ }
 
             try {
-                var adjustments = await Inventory.getAdjustmentRequests();
+                var adjustments = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getAdjustmentRequests(id); });
                 var pendingAdj = (adjustments.data || adjustments || []).filter(function (a) { return a.status === "PENDING"; });
                 var abadge = document.getElementById("adjustment-count-badge");
                 if (pendingAdj.length) { abadge.textContent = pendingAdj.length; abadge.style.display = ""; }
@@ -1056,7 +1065,7 @@
             try {
                 var result = await Inventory.getAll({
                     search: document.getElementById("filter-search").value.trim() || undefined,
-                    branchId: document.getElementById("filter-branch").value,
+                    branchId: RBAC.scopeBranchId(document.getElementById("filter-branch").value),
                     category: document.getElementById("filter-category").value,
                     stockStatus: document.getElementById("filter-stock-status").value || undefined,
                     limit: 100000, // every matching item, not just the on-screen page
@@ -1087,7 +1096,7 @@
 
         async function loadSummaryStats() {
             try {
-                var result = await Inventory.getAll({ limit: 100000 });
+                var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getAll({ branchId: id, limit: 100000 }); });
                 var items = result.data || [];
                 var outOfStock = items.filter(function (i) { return totalStock(i) <= 0; }).length;
                 var lowStock = items.filter(function (i) { return totalStock(i) > 0 && totalStock(i) <= i.lowStockThreshold; }).length;
@@ -1107,7 +1116,7 @@
             try {
                 var result = await Inventory.getAll({
                     search: document.getElementById("filter-search").value.trim() || undefined,
-                    branchId: document.getElementById("filter-branch").value,
+                    branchId: RBAC.scopeBranchId(document.getElementById("filter-branch").value),
                     category: document.getElementById("filter-category").value,
                     stockStatus: document.getElementById("filter-stock-status").value || undefined,
                     limit: 100,
@@ -1457,7 +1466,7 @@
             _selectedLowStockAlertIds = {};
             updatePushButton('low-stock');
             try {
-                var result = await Inventory.getAlerts(undefined, resolved);
+                var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getAlerts(id, resolved); });
                 var alerts = result.data || result || [];
                 if (!alerts.length) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' alerts.</td></tr>';
@@ -1502,7 +1511,7 @@
             _selectedExpiryAlertIds = {};
             updatePushButton('expiry');
             try {
-                var result = await Inventory.getExpiryAlerts(undefined, resolved);
+                var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getExpiryAlerts(id, resolved); });
                 var alerts = result.data || result || [];
                 if (!alerts.length) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' expiry alerts.</td></tr>';
@@ -1642,7 +1651,7 @@
             var tbody = document.getElementById("transfers-tbody");
             tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
-                var result = await Inventory.getTransfers();
+                var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getTransfers(id); });
                 var transfers = result.data || result || [];
                 if (!transfers.length) {
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No transfer requests.</td></tr>';
@@ -1724,7 +1733,7 @@
 
             try {
                 var [itemsResult, branches] = await Promise.all([
-                    Inventory.getAll({ limit: 1000 }),
+                    RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getAll({ branchId: id, limit: 1000 }); }),
                     Branches.getBranches(),
                 ]);
                 var items = itemsResult.data || itemsResult || [];
@@ -1785,7 +1794,7 @@
             var tbody = document.getElementById("adjustments-tbody");
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
-                var result = await Inventory.getAdjustmentRequests();
+                var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getAdjustmentRequests(id); });
                 var requests = result.data || result || [];
                 if (!requests.length) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No adjustment requests.</td></tr>';
@@ -1922,6 +1931,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Company Documents</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -100,7 +109,7 @@
                         </div>
                         <div class="col-auto ms-auto d-flex gap-2">
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">Refresh</button>
-                            <button type="button" class="btn btn-primary" id="btn-add-type">Add Document Type</button>
+                            <button type="button" class="btn btn-primary d-none" id="btn-add-type">Add Document Type</button>
                         </div>
                     </div>
                 </div>
@@ -246,6 +255,8 @@
 
         function renderDocumentsTable() {
             var canManage = RBAC.can(StaffDocuments.PERMISSIONS.MANAGE);
+            var canDelete = RBAC.can(StaffDocuments.PERMISSIONS.DELETE);
+            var canManageTypes = RBAC.can(StaffDocuments.PERMISSIONS.MANAGE_CATEGORIES);
             var tbody = document.getElementById("documents-tbody");
             tbody.innerHTML = _allTypes.map(function (t) {
                 var doc = _activeDocsByType[t.id];
@@ -253,10 +264,10 @@
                     ? '<button type="button" class="btn btn-sm btn-outline-primary btn-doc-version" data-id="' + t.id + '">' + (doc ? "New Version" : "Create") + '</button>'
                     : "";
                 var typeActions = "";
-                if (canManage && doc) {
+                if (canDelete && doc) {
                     typeActions += ' <button type="button" class="btn btn-sm btn-outline-danger btn-delete-document" data-id="' + doc.id + '" data-name="' + esc(t.name) + '">Delete</button>';
                 }
-                if (canManage && !t.isSystem) {
+                if (canManageTypes && !t.isSystem) {
                     typeActions += ' <button type="button" class="btn btn-sm btn-outline-secondary btn-deactivate-type" data-id="' + t.id + '" data-name="' + esc(t.name) + '">Deactivate</button>';
                     if (!doc) {
                         typeActions += ' <button type="button" class="btn btn-sm btn-outline-danger btn-delete-type" data-id="' + t.id + '" data-name="' + esc(t.name) + '">Delete Type</button>';
@@ -430,6 +441,7 @@
             document.getElementById("btn-refresh").addEventListener("click", function () { loadDocuments({ notifySuccess: true }); });
             document.getElementById("btn-save-document").addEventListener("click", saveDocument);
             document.getElementById("btn-add-type").addEventListener("click", openAddTypeModal);
+            if (RBAC.can(StaffDocuments.PERMISSIONS.MANAGE_CATEGORIES)) document.getElementById("btn-add-type").classList.remove("d-none");
             document.getElementById("btn-save-type").addEventListener("click", saveNewType);
 
             document.getElementById("documents-tbody").addEventListener("click", function (e) {
@@ -446,6 +458,7 @@
             loadDocuments();
         });
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

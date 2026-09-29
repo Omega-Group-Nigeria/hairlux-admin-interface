@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Profitability Report</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -232,7 +241,7 @@
                 document.getElementById(id).addEventListener('change', load);
             });
             document.getElementById('btn-clear-filters').addEventListener('click', function () {
-                document.getElementById('f-branch').value = '';
+                document.getElementById('f-branch').value = RBAC.scopeBranchId('');
                 document.getElementById('f-product').value = '';
                 document.getElementById('f-source').value = '';
                 document.getElementById('f-from').value = '';
@@ -246,6 +255,7 @@
                 document.getElementById('f-branch').innerHTML += branches.map(function (b) {
                     return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
                 }).join('');
+                RBAC.applyBranchScope(document.getElementById('f-branch'));
             } catch (e) { /* branch filter just stays with "All branches" */ }
 
             try {
@@ -271,7 +281,7 @@
 
         function currentFilters() {
             return {
-                branchId: document.getElementById('f-branch').value,
+                branchId: RBAC.scopeBranchId(document.getElementById('f-branch').value),
                 productId: document.getElementById('f-product').value,
                 source: document.getElementById('f-source').value,
                 from: document.getElementById('f-from').value,
@@ -346,6 +356,7 @@
             ], _lastReport.products);
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

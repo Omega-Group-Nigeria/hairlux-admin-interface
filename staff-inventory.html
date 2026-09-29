@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Inventory</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -266,7 +275,7 @@
             options = options || {};
             document.getElementById("results-label").textContent = "Loading…";
             try {
-                var totals = await StaffOps.getInventoryDashboard(_locationId || undefined);
+                var totals = await StaffOps.getInventoryDashboard(RBAC.scopeBranchId(_locationId) || undefined);
                 var lowStock = totals.filter(function (t) { return t.total > 0 && t.total <= StaffOps.LOW_STOCK_THRESHOLD; });
                 var outOfStock = totals.filter(function (t) { return t.total <= 0; });
 
@@ -303,7 +312,7 @@
 
         async function loadEntries() {
             try {
-                var entries = await StaffOps.getInventoryEntries({ locationId: _locationId || undefined });
+                var entries = await StaffOps.getInventoryEntries({ locationId: RBAC.scopeBranchId(_locationId) || undefined });
                 var tbody = document.getElementById("entries-tbody");
                 if (!entries.length) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">No entries logged yet.</td></tr>';
@@ -348,6 +357,7 @@
             loadAll();
         });
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

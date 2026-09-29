@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Dashboard</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -742,7 +751,9 @@
             }
 
             try {
-                const directives = await StaffComms.getAllDirectives({ status: "PENDING" });
+                const directives = await RBAC.fetchAcrossScope(undefined, function (id) {
+                    return StaffComms.getAllDirectives({ status: "PENDING", locationId: id });
+                });
                 setText("hr-snap-directives", directives.length);
             } catch (err) {
                 console.error("Failed to load directives", err);
@@ -750,7 +761,9 @@
             }
 
             try {
-                const totals = await StaffOps.getInventoryDashboard();
+                const totals = await RBAC.fetchAcrossScope(undefined, function (id) {
+                    return StaffOps.getInventoryDashboard(id);
+                });
                 const lowStock = totals.filter(function (t) { return t.total <= StaffOps.LOW_STOCK_THRESHOLD; }).length;
                 setText("hr-snap-lowstock", lowStock);
             } catch (err) {
@@ -764,6 +777,7 @@
             if (el) el.textContent = String(value);
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

@@ -75,6 +75,9 @@ const AcademyCourses = (() => {
   function updatePricing(pricingId, payload) {
     return apiFetch(`/admin/academy/courses/pricing/${pricingId}`, { method: "PUT", body: JSON.stringify(payload) });
   }
+  function deletePricing(pricingId) {
+    return apiFetch(`/admin/academy/courses/pricing/${pricingId}`, { method: "DELETE" });
+  }
 
   // ─── MODULES ─────────────────────────────────────────────────────────────
 
@@ -306,7 +309,7 @@ const AcademyCourses = (() => {
 
   return {
     getCourses, getCourse, createCourse, updateCourse, uploadCoverImage,
-    getPricing, addPricing, updatePricing,
+    getPricing, addPricing, updatePricing, deletePricing,
     createModule, updateModule, reorderModules, publishModule, unpublishModule,
     createLesson, updateLesson, reorderLessons, publishLesson, unpublishLesson, uploadLessonFile,
     getAssessment, listAssessmentsForCourse, createAssessment, updateAssessment, deleteAssessment,
