@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Attendance</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -464,7 +473,7 @@
         // was previously selected.
         async function loadFilterStaffOptions(branchId) {
             try {
-                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
+                var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
                 document.getElementById("filter-staff").innerHTML =
                     '<option value="">All staff</option>' +
                     staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + '</option>'; }).join("");
@@ -479,6 +488,7 @@
             options = options || {};
             document.getElementById("results-label").textContent = "Loading…";
             try {
+                listState.locationId = RBAC.scopeBranchId(listState.locationId);
                 var result = await StaffOps.getAttendanceReport(listState);
                 var records = result.data;
                 var tbody = document.getElementById("attendance-tbody");
@@ -698,7 +708,12 @@
         async function loadExtraWorkDayQueue() {
             var tbody = document.getElementById("ewd-tbody");
             try {
-                var records = await StaffOps.getExtraWorkDayQueue({ status: "PENDING" });
+                // Branch managers: one request per managed branch (the endpoint takes a single branchId).
+                var scopeIds = RBAC.isManagerScoped() ? RBAC.getManagedBranchIds() : [undefined];
+                var lists = await Promise.all(scopeIds.map(function (id) {
+                    return StaffOps.getExtraWorkDayQueue({ status: "PENDING", branchId: id });
+                }));
+                var records = [].concat.apply([], lists);
                 renderExtraWorkDayQueue(records);
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Failed to load.</td></tr>';
@@ -823,7 +838,7 @@
                 document.getElementById("filter-from").value = "";
                 document.getElementById("filter-to").value = "";
                 document.getElementById("filter-status").value = "";
-                document.getElementById("filter-branch").value = "";
+                document.getElementById("filter-branch").value = RBAC.scopeBranchId("");
                 document.getElementById("filter-staff").value = "";
                 // Dev Feedback Round 9: page/limit were missing from this
                 // reset object -- left listState.page as undefined after
@@ -862,6 +877,7 @@
                 document.getElementById("summary-branch").innerHTML =
                     '<option value="">All branches</option>' +
                     branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join("");
+                RBAC.applyBranchScope(document.getElementById("summary-branch"));
             } catch (e) {
                 console.error("Failed to load branches for summary", e);
             }
@@ -873,7 +889,7 @@
             var tbody = document.getElementById("summary-tbody");
             var from = document.getElementById("summary-from").value;
             var to = document.getElementById("summary-to").value;
-            var branchId = document.getElementById("summary-branch").value;
+            var branchId = RBAC.scopeBranchId(document.getElementById("summary-branch").value);
 
             if (!from || !to) {
                 flashPageAlert("danger", "Choose both a From and To date for the summary.");
@@ -930,6 +946,7 @@
             ], _lastSummaryRows);
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

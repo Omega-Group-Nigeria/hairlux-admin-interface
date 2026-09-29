@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Performance &amp; Comparison</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -314,9 +323,22 @@
                 var options = branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
                 document.getElementById('pc-branch').insertAdjacentHTML('beforeend', options);
                 document.getElementById('pc-backfill-branch').insertAdjacentHTML('beforeend', options);
+                RBAC.applyBranchScope(document.getElementById('pc-branch'));
+                RBAC.applyBranchScope(document.getElementById('pc-backfill-branch'));
             } catch (err) { /* branch pickers just stay at their default option */ }
 
-            try { _pcStaffOptions = await Staff.getOptions({}); } catch (err) { _pcStaffOptions = []; }
+            // Branch managers: no Company-wide view -- default to their branch.
+            if (RBAC.isManagerScoped()) {
+                var entitySel = document.getElementById('pc-entity-type');
+                var companyOpt = entitySel.querySelector('option[value="COMPANY"]');
+                if (companyOpt) companyOpt.remove();
+                entitySel.value = 'BRANCH';
+                document.getElementById('pc-branch-wrap').classList.remove('d-none');
+            }
+
+            try {
+                _pcStaffOptions = await Staff.getOptions(RBAC.isManagerScoped() ? { locationId: RBAC.scopeBranchId('') } : {});
+            } catch (err) { _pcStaffOptions = []; }
             try {
                 var beauticians = await Beauticians.listBeauticians({ limit: 200 });
                 _pcStylistOptions = (beauticians.data || []).map(function (b) {
@@ -393,6 +415,8 @@
             var comparisonMode = document.getElementById('pc-comparison-mode').value;
             var entityType = document.getElementById('pc-entity-type').value;
             var branchId = entityType === 'BRANCH' ? document.getElementById('pc-branch').value : undefined;
+            // Branch managers: every entity type is filtered to their branch.
+            if (RBAC.isManagerScoped()) branchId = RBAC.scopeBranchId(document.getElementById('pc-branch').value);
             var entityId = TRANSACTION_ENTITY_TYPES.indexOf(entityType) !== -1 ? document.getElementById('pc-entity-id').value : undefined;
 
             var params = { metric: metric, comparisonMode: comparisonMode, entityType: entityType, branchId: branchId || undefined, entityId: entityId || undefined };
@@ -473,7 +497,7 @@
             var errEl = document.getElementById('pc-backfill-error');
             errEl.classList.add('d-none');
             var payload = {
-                branchId: document.getElementById('pc-backfill-branch').value || undefined,
+                branchId: RBAC.scopeBranchId(document.getElementById('pc-backfill-branch').value) || undefined,
                 dateFrom: document.getElementById('pc-backfill-from').value || undefined,
                 dateTo: document.getElementById('pc-backfill-to').value || undefined,
             };
@@ -499,6 +523,7 @@
 
         init();
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

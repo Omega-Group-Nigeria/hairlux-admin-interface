@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Customer Contacts</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -395,7 +404,7 @@
         var VALUE_BADGE = { STANDARD: 'bg-secondary-lt', PREMIUM: 'bg-purple-lt', VIP: 'bg-gold-lt' };
 
         document.addEventListener('DOMContentLoaded', function () {
-            RBAC.applyPageGuard('bookings:read');
+            RBAC.applyPageGuard('customer_contacts:read');
             profileOffcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvas-profile'));
 
             document.getElementById('search-input').addEventListener('input', function () {
@@ -520,7 +529,7 @@
         function getFilterParams() {
             return {
                 q: currentQuery,
-                branchIds: selectedValues('filter-branch').join(','),
+                branchIds: (RBAC.scopeBranchIds(selectedValues('filter-branch')) || []).join(','),
                 lifecycle: document.getElementById('filter-lifecycle').value,
                 value: document.getElementById('filter-value').value,
                 hasAccount: document.getElementById('filter-account').value,
@@ -640,6 +649,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

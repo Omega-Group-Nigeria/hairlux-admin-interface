@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Commission Plans</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -239,6 +248,11 @@
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var plans = await CommissionPlans.getAll();
+                // Branch managers: only group-wide plans and plans for their own branch(es).
+                var managedIds = RBAC.getManagedBranchIds();
+                if (RBAC.isManagerScoped()) {
+                    plans = plans.filter(function (p) { return !p.applicableBranchId || managedIds.indexOf(p.applicableBranchId) !== -1; });
+                }
                 document.getElementById('results-label').textContent = plans.length + ' plan' + (plans.length !== 1 ? 's' : '');
                 if (!plans.length) {
                     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No commission plans yet.</td></tr>';
@@ -250,8 +264,11 @@
                     var scope = [p.applicableBranch ? p.applicableBranch.name : null, p.applicableRole || null].filter(Boolean).join(' \u00b7 ') || 'Any branch/role';
                     var statusBadge = p.isActive ? '<span class="badge bg-success-lt text-success">Active</span>' : '<span class="badge bg-secondary-lt text-secondary">Inactive</span>';
                     var actions = '';
-                    if (canUpdate) actions += '<button class="btn btn-sm btn-ghost-primary btn-edit" data-id="' + p.id + '">Edit</button> ';
-                    if (canDelete) actions += '<button class="btn btn-sm btn-ghost-danger btn-delete" data-id="' + p.id + '" data-name="' + esc(p.name) + '">Delete</button>';
+                    // A group-wide plan is read-only for a branch manager -- editing it from a
+                    // branch-locked form would silently re-scope it to their branch.
+                    var lockedForManager = RBAC.isManagerScoped() && !p.applicableBranchId;
+                    if (canUpdate && !lockedForManager) actions += '<button class="btn btn-sm btn-ghost-primary btn-edit" data-id="' + p.id + '">Edit</button> ';
+                    if (canDelete && !lockedForManager) actions += '<button class="btn btn-sm btn-ghost-danger btn-delete" data-id="' + p.id + '" data-name="' + esc(p.name) + '">Delete</button>';
                     return '<tr>' +
                         '<td class="fw-semibold">' + esc(p.name) + '</td>' +
                         '<td>' + CommissionPlans.formatRate(p.commissionRate) + '</td>' +
@@ -284,6 +301,7 @@
                 var branchSelect = document.getElementById('f-branch');
                 branchSelect.innerHTML = '<option value="">Any branch</option>' +
                     _branchesCache.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                RBAC.applyBranchScope(branchSelect);
             }
         }
 
@@ -315,7 +333,7 @@
                 document.getElementById('f-name').value = '';
                 document.getElementById('f-rate').value = '';
                 document.getElementById('f-effective-date').value = new Date().toISOString().slice(0, 10);
-                document.getElementById('f-branch').value = '';
+                document.getElementById('f-branch').value = RBAC.scopeBranchId('');
                 document.getElementById('f-role').value = '';
                 document.getElementById('f-requires-approval').checked = false;
                 document.getElementById('f-active').checked = true;
@@ -344,7 +362,7 @@
                 name: name,
                 commissionRate: ratePercent / 100,
                 eligibleServiceIds: selectedServiceIds,
-                applicableBranchId: document.getElementById('f-branch').value || undefined,
+                applicableBranchId: RBAC.scopeBranchId(document.getElementById('f-branch').value) || undefined,
                 applicableRole: document.getElementById('f-role').value.trim() || undefined,
                 effectiveDate: effectiveDate,
                 requiresApproval: document.getElementById('f-requires-approval').checked,
@@ -386,6 +404,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

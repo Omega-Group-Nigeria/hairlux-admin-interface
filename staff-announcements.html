@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Announcements</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -323,17 +332,29 @@
             document.getElementById("results-label").textContent = "Loading…";
             try {
                 var announcements = await StaffComms.getAllAnnouncements();
+                // Branch managers: company-wide announcements, plus those aimed at
+                // their branch(es) or at individual staff in their branch(es).
+                if (RBAC.isManagerScoped()) {
+                    var managedIds = RBAC.getManagedBranchIds();
+                    var myStaffIds = {};
+                    (await Staff.getOptions()).forEach(function (s) {
+                        if (managedIds.indexOf(s.locationId) !== -1) myStaffIds[s.id] = true;
+                    });
+                    announcements = announcements.filter(function (a) {
+                        if (a.target === "BRANCH") return managedIds.indexOf(a.targetLocationId) !== -1;
+                        if (a.target === "INDIVIDUAL") return !!myStaffIds[a.targetStaffId];
+                        return true;
+                    });
+                }
                 _announcementsCache = announcements;
                 var tbody = document.getElementById("announcements-tbody");
                 if (!announcements.length) {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-4">No announcements have been sent yet.</td></tr>';
                 } else {
                     tbody.innerHTML = announcements.map(function (a) {
-                        var canManage = RBAC.can(StaffComms.PERMISSIONS.MANAGE);
-                        var actions = canManage
-                            ? '<button class="btn btn-sm btn-ghost-secondary btn-edit-announcement" data-id="' + a.id + '">Edit</button> ' +
-                            '<button class="btn btn-sm btn-ghost-danger btn-delete-announcement" data-id="' + a.id + '">Delete</button>'
-                            : '';
+                        var actions =
+                            (RBAC.can(StaffComms.PERMISSIONS.ANNOUNCEMENTS_UPDATE) ? '<button class="btn btn-sm btn-ghost-secondary btn-edit-announcement" data-id="' + a.id + '">Edit</button> ' : '') +
+                            (RBAC.can(StaffComms.PERMISSIONS.ANNOUNCEMENTS_DELETE) ? '<button class="btn btn-sm btn-ghost-danger btn-delete-announcement" data-id="' + a.id + '">Delete</button>' : '');
                         return '<tr><td class="fw-semibold">' + esc(a.title) + (a.videoKey ? ' <span class="badge bg-blue-lt">Video</span>' : '') + '</td>' +
                             '<td><span class="badge bg-purple-lt">' + esc(StaffComms.announcementTargetLabel(a)) + '</span></td>' +
                             '<td>' + esc(StaffComms.createdByName(a)) + '</td>' +
@@ -372,7 +393,7 @@
         async function ensureBranchesLoaded() {
             if (_branchesLoaded) return;
             try {
-                var branches = await Staff.getLocations();
+                var branches = RBAC.filterBranches(await Staff.getLocations());
                 var sel = document.getElementById("announcement-branch");
                 sel.innerHTML = branches.map(function (b) {
                     return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
@@ -386,7 +407,10 @@
         async function ensureStaffLoaded() {
             if (_staffLoaded) return;
             try {
-                var staffList = await Staff.getOptions();
+                var managedIds = RBAC.getManagedBranchIds();
+                var staffList = (await Staff.getOptions()).filter(function (s) {
+                    return !RBAC.isManagerScoped() || managedIds.indexOf(s.locationId) !== -1;
+                });
                 var sel = document.getElementById("announcement-staff");
                 sel.innerHTML = staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + ' (' + esc(s.staffCode || "") + ')</option>';
@@ -435,7 +459,7 @@
         }
 
         function openAnnouncementModal(editId) {
-            if (!RBAC.can(StaffComms.PERMISSIONS.MANAGE)) return;
+            if (!RBAC.can(editId ? StaffComms.PERMISSIONS.ANNOUNCEMENTS_UPDATE : StaffComms.PERMISSIONS.ANNOUNCEMENTS_CREATE)) return;
             document.getElementById("modal-announcement-error").classList.add("d-none");
             _initAnnouncementQuill();
 
@@ -445,7 +469,13 @@
             document.getElementById("modal-announcement-title").textContent = editing ? "Edit Announcement" : "New Announcement";
             document.getElementById("announcement-title").value = editing ? editing.title : "";
             document.getElementById("announcement-expires").value = editing && editing.expiresAt ? editing.expiresAt.slice(0, 10) : "";
-            document.getElementById("announcement-target").value = editing ? editing.target : "ALL";
+            // Branch managers can't publish company-wide -- Branch or Individual only.
+            var targetSel = document.getElementById("announcement-target");
+            if (RBAC.isManagerScoped()) {
+                var allOpt = targetSel.querySelector('option[value="ALL"]');
+                if (allOpt) allOpt.remove();
+            }
+            targetSel.value = editing ? editing.target : (RBAC.isManagerScoped() ? "BRANCH" : "ALL");
             onTargetChange();
 
             // Dev Feedback Round 9: video announcements.
@@ -607,7 +637,7 @@
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
                 RBAC.applyNavVisibility();
-                if (RBAC.can(StaffComms.PERMISSIONS.MANAGE)) {
+                if (RBAC.can(StaffComms.PERMISSIONS.ANNOUNCEMENTS_CREATE)) {
                     document.getElementById("btn-add-announcement").classList.remove("d-none");
                 }
             });
@@ -622,6 +652,7 @@
             loadAnnouncements();
         });
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

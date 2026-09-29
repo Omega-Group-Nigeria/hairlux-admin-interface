@@ -3,9 +3,17 @@
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const StaffComms = (() => {
+    // Announcements and Tasks & Directives have their own permissions
+    // (Settings -> Roles); "View/Edit staff records" no longer grant them.
     const PERMISSIONS = {
-        READ: "staff:read",
-        MANAGE: "staff:update",
+        ANNOUNCEMENTS_READ: "announcements:read",
+        ANNOUNCEMENTS_CREATE: "announcements:create",
+        ANNOUNCEMENTS_UPDATE: "announcements:update",
+        ANNOUNCEMENTS_DELETE: "announcements:delete",
+        TASKS_READ: "tasks:read",
+        TASKS_CREATE: "tasks:create",
+        TASKS_UPDATE: "tasks:update",
+        TASKS_DELETE: "tasks:delete",
     };
 
     async function jsonFetch(path, options = {}) {

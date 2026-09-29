@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Expense Requests</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -307,7 +316,7 @@
                 searchTimer = setTimeout(load, 400);
             });
             document.getElementById('btn-clear-filters').addEventListener('click', function () {
-                document.getElementById('f-branch-filter').value = '';
+                document.getElementById('f-branch-filter').value = RBAC.scopeBranchId('');
                 document.getElementById('f-category-filter').value = '';
                 document.getElementById('f-status-filter').value = '';
                 document.getElementById('f-search-filter').value = '';
@@ -324,6 +333,7 @@
                 document.getElementById('f-branch-filter').innerHTML += branchOptions;
                 document.getElementById('f-branch').innerHTML += branchOptions;
                 RBAC.applyBranchScope(document.getElementById('f-branch-filter'));
+                RBAC.applyBranchScope(document.getElementById('f-branch'));
             } catch (e) { _allBranches = []; }
 
             load();
@@ -350,7 +360,7 @@
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var list = await ExpenseRequests.getAll({
-                    branchId: document.getElementById('f-branch-filter').value,
+                    branchId: RBAC.scopeBranchId(document.getElementById('f-branch-filter').value),
                     category: document.getElementById('f-category-filter').value,
                     status: document.getElementById('f-status-filter').value,
                     search: document.getElementById('f-search-filter').value,
@@ -411,7 +421,7 @@
                     return;
                 }
             } else {
-                document.getElementById('f-branch').value = '';
+                document.getElementById('f-branch').value = RBAC.scopeBranchId('');
                 document.getElementById('f-category').value = 'OPERATIONAL_EXPENSE';
                 document.getElementById('f-amount').value = '';
                 document.getElementById('f-description').value = '';
@@ -440,7 +450,7 @@
             }
 
             var payload = {
-                branchId: document.getElementById('f-branch').value || undefined,
+                branchId: RBAC.scopeBranchId(document.getElementById('f-branch').value) || undefined,
                 category: document.getElementById('f-category').value,
                 amount: Number(amount),
                 description: description,
@@ -542,6 +552,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

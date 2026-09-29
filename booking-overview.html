@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Booking Overview</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -235,6 +244,8 @@
 
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
+    <!-- Page guard: same read permission that shows this page in the sidebar (NavConfig). -->
+    <script>document.addEventListener('DOMContentLoaded', function () { RBAC.applyPageGuardForCurrentPage(); });</script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/services.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
@@ -277,7 +288,7 @@
             document.getElementById('btn-reset-filters').addEventListener('click', function () {
                 document.getElementById('ov-date-from').value = '';
                 document.getElementById('ov-date-to').value = '';
-                document.getElementById('ov-branch').value = '';
+                document.getElementById('ov-branch').value = RBAC.scopeBranchId('');
                 document.getElementById('ov-source').value = 'all';
                 document.getElementById('ov-search').value = '';
                 document.getElementById('ov-status').value = '';
@@ -305,6 +316,7 @@
                     opt.textContent = b.name;
                     select.appendChild(opt);
                 });
+                RBAC.applyBranchScope(select);
             } catch (e) { /* non-fatal — branch filter just stays at "All branches" */ }
         }
 
@@ -329,7 +341,7 @@
         // it's now called more than once per page load.
         async function loadStaffFilter(branchId) {
             try {
-                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
+                var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
                 var select = document.getElementById('ov-staff');
                 select.innerHTML = '<option value="">All staff</option>';
                 staffList.forEach(function (s) {
@@ -359,7 +371,7 @@
             var params = {
                 dateFrom: document.getElementById('ov-date-from').value || undefined,
                 dateTo: document.getElementById('ov-date-to').value || undefined,
-                branchId: document.getElementById('ov-branch').value || undefined,
+                branchId: RBAC.scopeBranchId(document.getElementById('ov-branch').value) || undefined,
                 source: document.getElementById('ov-source').value || 'all',
                 search: document.getElementById('ov-search').value.trim() || undefined,
                 status: document.getElementById('ov-status').value || undefined,
@@ -427,6 +439,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

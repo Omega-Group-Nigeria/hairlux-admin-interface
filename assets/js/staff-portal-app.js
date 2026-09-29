@@ -2075,7 +2075,8 @@ async function loadSalonBookings() {
         var services = (b.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
         return '<tr>' +
           '<td style="font-family:monospace;font-size:12px">' + escapeHtml(b.bookingCode || '—') + '</td>' +
-          '<td>' + StaffSelf.formatDate(b.bookingDate) + ' · ' + escapeHtml(b.bookingTime) + '</td>' +
+          '<td>' + StaffSelf.formatDate(b.bookingDate) + ' · ' + escapeHtml(b.bookingTime) +
+          (b.continuesNextDay ? ' <span class="badge bg-orange-lt" title="Estimated to run past closing time -- continues the next day">Continues next day</span>' : '') + '</td>' +
           '<td>' + escapeHtml(b.customerName) + '</td>' +
           '<td>' + escapeHtml(b.assignedStaff ? b.assignedStaff.name : '—') + '</td>' +
           '<td class="text-secondary small">' + (services || '—') + '</td>' +
@@ -2937,6 +2938,21 @@ async function submitBookingForm() {
     return;
   }
 
+  // Closing hours: start + the services' estimated completion time past this
+  // branch's closing time -> blocking prompt (reschedule, or start today and
+  // complete tomorrow).
+  var branchIdForCheck = currentStaff.locationId || (currentStaff.location && currentStaff.location.id) || undefined;
+  var closing = await ClosingTimeGuard.check({ branchId: branchIdForCheck, date: bookingDate, time: bookingTime, services: services });
+  if (closing.action === 'reschedule') {
+    if (closing.date) document.getElementById('sb-date').value = closing.date;
+    document.getElementById('sb-time').value = '';
+    alert(closing.date
+      ? 'Moved to ' + new Date(closing.date + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) + '. Pick a start time' + (closing.openTime ? ' (the branch opens at ' + closing.openTime + ')' : '') + ', then save the booking.'
+      : 'Choose another date and time, then save the booking.');
+    document.getElementById('sb-time').focus();
+    return;
+  }
+
   try {
     await SalonBookingsSelf.create({
       customerName: customerName, customerPhone: customerPhone || undefined,
@@ -2945,6 +2961,7 @@ async function submitBookingForm() {
       services: services, inventoryItems: inventoryItems.length ? inventoryItems : undefined,
       notes: notes || undefined,
       discountCode: _sbAppliedCoupon ? _sbAppliedCoupon.code : undefined,
+      continuesNextDay: closing.continuesNextDay || undefined,
     });
     cancelBookingForm();
     await loadSalonBookings();
