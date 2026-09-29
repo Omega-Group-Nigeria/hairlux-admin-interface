@@ -29,6 +29,7 @@ var NavConfig = window.NavConfig || (() => {
         inventory: '<svg ' + SVG_ATTRS + '><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /><path d="M12 12l8 -4.5" /><path d="M12 12l0 9" /><path d="M12 12l-8 -4.5" /></svg>',
         finance: '<svg ' + SVG_ATTRS + '><path d="M9 14c0 1.657 2.686 3 6 3s6 -1.343 6 -3s-2.686 -3 -6 -3s-6 1.343 -6 3z" /><path d="M9 14v4c0 1.656 2.686 3 6 3s6 -1.344 6 -3v-4" /><path d="M3 6c0 1.072 1.144 2.062 3 2.598s4.144 .536 6 0c1.856 -.536 3 -1.526 3 -2.598c0 -1.072 -1.144 -2.062 -3 -2.598s-4.144 -.536 -6 0c-1.856 .536 -3 1.526 -3 2.598z" /><path d="M3 6v10c0 .888 .772 1.45 2 2" /><path d="M3 11c0 .888 .772 1.45 2 2" /></svg>',
         rewards: '<svg ' + SVG_ATTRS + '><path d="M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" /><path d="M12 8l0 13" /><path d="M19 12l0 7a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1l0 -7" /><path d="M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5" /></svg>',
+        apps: '<svg ' + SVG_ATTRS + '><path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M4 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /></svg>',
     };
 
     // ── Page-access rules ────────────────────────────────────────────────────
@@ -261,6 +262,18 @@ var NavConfig = window.NavConfig || (() => {
             icon: "history",
             href: "audit-trail.html",
             permission: read("audit_trail:read"),
+        },
+        {
+            id: "app-mgt",
+            label: "App Mgt",
+            icon: "apps",
+            permission: {
+                type: "requireAny",
+                perms: ["adverts:read", "adverts:manage"],
+            },
+            children: [
+                { label: "Adverts", href: "app/adverts.html" },
+            ],
         },
     ];
 

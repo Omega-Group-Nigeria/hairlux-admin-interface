@@ -35,6 +35,47 @@ function showAlert(msg, type) {
     }, 5000);
 }
 
+/**
+ * Bootstrap/Tabler toast. Success, danger or warning. Creates a single
+ * fixed-position container on demand and auto-removes each toast after
+ * it hides.
+ */
+function showToast(msg, type) {
+    if (!msg) return;
+    var bs = (global.tabler && global.tabler.bootstrap) || global.bootstrap;
+    if (!bs || !bs.Toast) {
+        showAlert(msg, type || 'success');
+        return;
+    }
+    var container = document.getElementById('app-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'app-toast-container';
+        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '1080';
+        document.body.appendChild(container);
+    }
+    var colors = { success: 'text-bg-success', danger: 'text-bg-danger', warning: 'text-bg-warning' };
+    var colorClass = colors[type] || 'text-bg-dark';
+    var el = document.createElement('div');
+    el.className = 'toast align-items-center ' + colorClass + ' border-0';
+    el.setAttribute('role', 'alert');
+    el.setAttribute('aria-live', 'assertive');
+    el.setAttribute('aria-atomic', 'true');
+    el.innerHTML =
+        '<div class="d-flex">' +
+        '<div class="toast-body"></div>' +
+        '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+        '</div>';
+    el.querySelector('.toast-body').textContent = String(msg);
+    container.appendChild(el);
+    var toast = new bs.Toast(el, { delay: 4000 });
+    toast.show();
+    el.addEventListener('hidden.bs.toast', function () {
+        if (el.parentNode) el.parentNode.removeChild(el);
+    });
+}
+
 function showOffcanvasAlert(msg, type) {
     var wrap = document.getElementById('offcanvas-detail-alert-wrap');
     var el = document.getElementById('offcanvas-detail-alert');
@@ -86,6 +127,7 @@ function canAccessSection(section) {
     if (section === 'reviews') return RBAC.can('beauticians:review');
     if (section === 'services') return RBAC.can('beauticians:assign_services');
     if (section === 'service-rates') return RBAC.can('settings:read') || RBAC.can('settings:manage');
+    if (section === 'beautician-rates') return RBAC.can('settings:read') || RBAC.can('settings:manage');
     if (section === 'settings') return RBAC.can('settings:read') || RBAC.can('settings:manage');
     if (section === 'payouts') return RBAC.can('beauticians:process_payouts');
     return true;
@@ -305,6 +347,7 @@ function scrServiceSearchHaystack(s) {
 
     BP.Utils = {
         showAlert: showAlert,
+        showToast: showToast,
         showOffcanvasAlert: showOffcanvasAlert,
         clearOffcanvasAlert: clearOffcanvasAlert,
         isDetailOffcanvasOpen: isDetailOffcanvasOpen,

@@ -16,6 +16,8 @@
     var _esc = Utils._esc;
     var showAdminAlert = Utils.showAdminAlert;
     var fuzzyScore = Utils.fuzzyScore;
+    var analyzeServiceableAreas = Utils.analyzeServiceableAreas;
+    var isAreaCoveredBy = Utils.isAreaCoveredBy;
 
     function switchSection(sectionId) {
         document.querySelectorAll('.settings-section').forEach(function (el) { el.classList.remove('active'); });
@@ -29,7 +31,7 @@
 
     function routeOnLoad() {
         var hash = (location.hash || '#profile').replace('#', '');
-        var valid = ['profile', 'security', 'admin-management', 'business-hours'];
+        var valid = ['profile', 'security', 'home-service', 'admin-management', 'business-hours', 'customer-classification', 'cancellation-policy'];
         switchSection(valid.indexOf(hash) !== -1 ? hash : 'profile');
     }
 
@@ -386,6 +388,291 @@
 
     var DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+    // ── Home service: serviceable areas ────────────────────────────────────
+
+    function updateDraftBanner() {
+        var banner = document.getElementById('home-service-draft-banner');
+        if (!banner) return;
+        banner.classList.toggle('d-none', !State.serviceableAreasDirty);
+        var countEl = document.getElementById('home-service-draft-count');
+        if (countEl) countEl.textContent = State.serviceableAreas ? State.serviceableAreas.length : 0;
+    }
+
+    function formatAreaLabel(area) {
+        var city = area.city === '*' ? 'All Cities' : area.city;
+        return area.state + ' · ' + city;
+    }
+
+    function renderServiceableAreas(areas) {
+        var tbody = document.getElementById('home-service-tbody');
+        var countEl = document.getElementById('stat-home-service-count');
+        var effectiveEl = document.getElementById('stat-home-service-effective');
+        var totalWrap = document.getElementById('stat-home-service-total-wrap');
+        var disabledEl = document.getElementById('home-service-disabled');
+        var redundantBanner = document.getElementById('home-service-redundant-banner');
+        var redundantCountEl = document.getElementById('home-service-redundant-count');
+        var btnCleanup = document.getElementById('btn-cleanup-redundant-areas');
+        if (!tbody) return;
+        areas = areas || [];
+        var analysis = analyzeServiceableAreas(areas);
+
+        if (countEl) countEl.textContent = areas.length;
+        if (effectiveEl) effectiveEl.textContent = analysis.effective;
+        if (totalWrap) totalWrap.classList.toggle('d-none', analysis.redundant === 0);
+        if (disabledEl) disabledEl.classList.toggle('d-none', areas.length > 0);
+
+        if (redundantBanner) {
+            redundantBanner.classList.toggle('d-none', analysis.redundant === 0);
+        }
+        if (redundantCountEl) redundantCountEl.textContent = analysis.redundant;
+        if (btnCleanup) btnCleanup.classList.toggle('d-none', analysis.redundant === 0);
+
+        if (!areas.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">' +
+                'No service areas configured. Home service bookings are <strong>disabled everywhere</strong> until you add one.</td></tr>';
+            updateDraftBanner();
+            return;
+        }
+
+        tbody.innerHTML = analysis.coverage.map(function (item) {
+            var a = item.area;
+            var cityBadge = a.city === '*'
+                ? '<span class="badge bg-primary-lt">All Cities</span>'
+                : '<span class="badge bg-secondary-lt">' + _esc(a.city) + '</span>';
+            var statusCell = item.redundant
+                ? '<span class="badge bg-yellow-lt text-yellow-fg" title="Covered by ' + _esc(formatAreaLabel(item.coveredBy)) + '">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M12 9v4"/><path d="M12 16h.01"/></svg>' +
+                'Covered by ' + _esc(item.coveredBy.city === '*' ? item.coveredBy.state + ' · All Cities' : formatAreaLabel(item.coveredBy)) +
+                '</span>'
+                : '<span class="badge bg-success-lt text-success">Active</span>';
+            var rowClass = item.redundant ? 'opacity-75 bg-light' : '';
+            return '<tr class="' + rowClass + '">' +
+                '<td class="fw-medium">' + _esc(a.state) + '</td>' +
+                '<td>' + cityBadge + '</td>' +
+                '<td class="small">' + statusCell + '</td>' +
+                '<td class="w-1">' +
+                '<button type="button" class="btn btn-sm btn-ghost-danger" data-remove-area="' + item.index + '" title="Remove area">' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>' +
+                '</button></td></tr>';
+        }).join('');
+
+        tbody.onclick = function (e) {
+            var btn = e.target.closest('[data-remove-area]');
+            if (!btn) return;
+            var idx = parseInt(btn.dataset.removeArea, 10);
+            var areasCopy = State.serviceableAreas.slice();
+            areasCopy.splice(idx, 1);
+            State.serviceableAreas = areasCopy;
+            State.serviceableAreasDirty = true;
+            renderServiceableAreas(State.serviceableAreas);
+            updateDraftBanner();
+        };
+        updateDraftBanner();
+    }
+
+    function renderAddAreaPreview() {
+        var wrap = document.getElementById('home-service-add-preview');
+        if (!wrap) return;
+        var state = document.getElementById('add-area-state').value;
+        var cityEl = document.getElementById('add-area-city');
+        var cities = cityEl
+            ? Array.from(cityEl.selectedOptions).map(function (o) { return o.value; }).filter(function (v) { return v !== ''; })
+            : [];
+        if (!state || !cities.length) {
+            wrap.innerHTML = '<div class="text-secondary small">No cities selected yet — they will show here as they are added.</div>';
+            return;
+        }
+
+        var existing = State.serviceableAreas || [];
+        var hasWildcard = existing.some(function (a) {
+            return a.city === '*' && a.state.toLowerCase() === state.toLowerCase();
+        });
+
+        var chips = cities.map(function (city) {
+            var label = city === '*' ? 'All Cities' : city;
+            var candidate = { state: state, city: city };
+            var covered = isAreaCoveredBy(candidate, existing);
+            var willReplace = city === '*' && existing.some(function (a) {
+                return a.state.toLowerCase() === state.toLowerCase() && a.city !== '*';
+            });
+            var chipClass = covered ? 'bg-secondary-lt text-secondary' : (willReplace ? 'bg-warning-lt' : 'bg-primary-lt');
+            var statusNote = covered
+                ? ' <span class="text-secondary">(already covered)</span>'
+                : (willReplace ? ' <span class="text-warning">(replaces specific cities)</span>' : '');
+            return '<span class="badge ' + chipClass + ' py-1 ps-2 pe-1 d-inline-flex align-items-center gap-1">' +
+                _esc(state) + ' &middot; <strong>' + _esc(label) + '</strong>' + statusNote +
+                '<button type="button" class="btn btn-icon btn-sm btn-link text-danger p-0 ms-1" ' +
+                'data-preview-remove="' + _esc(city) + '" title="Remove ' + _esc(label) + '" aria-label="Remove ' + _esc(label) + '">&times;</button>' +
+                '</span>';
+        });
+
+        var addable = cities.filter(function (city) {
+            return !isAreaCoveredBy({ state: state, city: city }, existing);
+        });
+
+        var summary = '';
+        if (hasWildcard && cities.some(function (c) { return c !== '*'; })) {
+            summary = '<div class="text-secondary small mb-2">Specific cities were chosen — All Cities was dropped for this selection.</div>';
+        } else if (addable.length === 0) {
+            summary = '<div class="text-secondary small mb-2">All selected entries are already covered by existing areas.</div>';
+        } else if (addable.length < cities.length) {
+            summary = '<div class="text-secondary small mb-2">' + (cities.length - addable.length) +
+                ' selection(s) skipped — already covered. ' + addable.length + ' will be added.</div>';
+        } else if (cities.indexOf('*') !== -1) {
+            summary = '<div class="text-warning small mb-2">All Cities will replace any specific cities already listed for ' + _esc(state) + '.</div>';
+        }
+
+        wrap.innerHTML =
+            summary +
+            '<div class="mb-1 text-secondary small fw-medium">Preview</div>' +
+            '<div class="d-flex flex-wrap align-items-center gap-2">' +
+            chips.join('') +
+            '<button type="button" class="btn btn-sm btn-link link-danger p-0 ms-1" id="btn-preview-clear-all">Clear all</button>' +
+            '</div>';
+    }
+
+    function populateAddAreaState() {
+        var sel = document.getElementById('add-area-state');
+        if (!sel) return;
+        // Preserve current selection id before repopulating
+        var prev = sel.value;
+        var names = Object.keys(State.ngCities).sort();
+        if (!names.length) {
+            sel.innerHTML = '<option value="" disabled selected>State list unavailable</option>';
+            return;
+        }
+        sel.innerHTML = '<option value="">Select a state…</option>' + names.map(function (s) {
+            return '<option value="' + _esc(s) + '">' + _esc(s) + '</option>';
+        }).join('');
+        if (sel.value !== prev) sel.value = prev;
+    }
+
+    function stateHasWildcardArea(state) {
+        if (!state) return false;
+        return (State.serviceableAreas || []).some(function (a) {
+            return a.city === '*' && a.state.toLowerCase() === state.toLowerCase();
+        });
+    }
+
+    function removeWildcardForState(state) {
+        if (!state) return;
+        State.serviceableAreas = (State.serviceableAreas || []).filter(function (a) {
+            return !(a.city === '*' && a.state.toLowerCase() === state.toLowerCase());
+        });
+        State.serviceableAreasDirty = true;
+        State.addAreaCityOverride = state;
+        renderServiceableAreas(State.serviceableAreas);
+        updateDraftBanner();
+    }
+
+    function updateAddAreaCityNotice(state) {
+        var notice = document.getElementById('add-area-city-notice');
+        var cityEl = document.getElementById('add-area-city');
+        if (!notice) return;
+
+        var wildcardSaved = state && stateHasWildcardArea(state);
+        var overrideActive = State.addAreaCityOverride &&
+            State.addAreaCityOverride.toLowerCase() === (state || '').toLowerCase();
+        var selected = cityEl
+            ? Array.from(cityEl.selectedOptions).map(function (o) { return o.value; }).filter(Boolean)
+            : [];
+        var wildcardPicked = selected.indexOf('*') !== -1;
+
+        if (!state) {
+            notice.classList.add('d-none');
+            notice.innerHTML = '';
+            MultiSelect.setLocked('add-area-city', false);
+            return;
+        }
+
+        if (wildcardSaved && !overrideActive) {
+            notice.className = 'alert alert-info py-2 px-3 small mb-2';
+            notice.innerHTML =
+                '<div class="d-flex flex-wrap align-items-start justify-content-between gap-2">' +
+                '<div><strong>All Cities is already active for ' + _esc(state) + '.</strong> ' +
+                'Every city in this state is already covered — you do not need to pick individual cities.</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" id="btn-override-all-cities">' +
+                'Choose specific cities instead</button></div>';
+            notice.classList.remove('d-none');
+            MultiSelect.setLocked('add-area-city', true, {
+                message: 'All Cities is already active for ' + state + '. Individual cities are not needed.',
+                actionLabel: 'Choose specific cities instead',
+                placeholder: 'All Cities already active — click to see options',
+                onAction: function () {
+                    removeWildcardForState(state);
+                    populateAddAreaCity(state);
+                    updateAddAreaCityNotice(state);
+                    renderAddAreaPreview();
+                    document.dispatchEvent(new CustomEvent('hairlux:add-area-override'));
+                },
+            });
+            return;
+        }
+
+        if (wildcardPicked) {
+            notice.className = 'alert alert-primary py-2 px-3 small mb-2';
+            notice.innerHTML =
+                '<strong>All Cities selected.</strong> This will cover every city in ' + _esc(state) + '. ' +
+                'To limit coverage, pick one or more specific cities below — that will replace All Cities for this add.';
+            notice.classList.remove('d-none');
+            MultiSelect.setLocked('add-area-city', false);
+            return;
+        }
+
+        notice.classList.add('d-none');
+        notice.innerHTML = '';
+        MultiSelect.setLocked('add-area-city', false);
+    }
+
+    function reconcileCityPickerSelection(state) {
+        var cityEl = document.getElementById('add-area-city');
+        if (!cityEl || !state) return;
+        var selected = Array.from(cityEl.selectedOptions).map(function (o) { return o.value; }).filter(Boolean);
+        var hasStar = selected.indexOf('*') !== -1;
+        var specific = selected.filter(function (v) { return v !== '*'; });
+        if (!hasStar || !specific.length) return;
+
+        Array.from(cityEl.options).forEach(function (opt) {
+            if (opt.value === '*') opt.selected = false;
+        });
+        MultiSelect.refresh('add-area-city');
+        var notice = document.getElementById('add-area-city-notice');
+        if (notice) {
+            notice.className = 'alert alert-warning py-2 px-3 small mb-2';
+            notice.innerHTML =
+                '<strong>Switched to specific cities.</strong> All Cities was removed because you selected ' +
+                (specific.length === 1 ? _esc(specific[0]) : specific.length + ' cities') + '.';
+            notice.classList.remove('d-none');
+        }
+    }
+
+    function populateAddAreaCity(state) {
+        var sel = document.getElementById('add-area-city');
+        if (!sel) return;
+        if (!state) {
+            sel.innerHTML = '<option value="" disabled selected>Select a state first…</option>';
+            sel.disabled = true;
+            MultiSelect.refresh('add-area-city');
+            updateAddAreaCityNotice('');
+            return;
+        }
+        var cities = State.ngCities[state] || [];
+        var existing = State.serviceableAreas || [];
+        var overrideActive = State.addAreaCityOverride &&
+            State.addAreaCityOverride.toLowerCase() === state.toLowerCase();
+
+        var allOpt = '<option value="*">All Cities (*)</option>';
+
+        sel.innerHTML = allOpt + cities.map(function (c) {
+            var covered = !overrideActive && isAreaCoveredBy({ state: state, city: c }, existing);
+            var suffix = covered ? ' (already covered)' : '';
+            return '<option value="' + _esc(c) + '">' + _esc(c) + suffix + '</option>';
+        }).join('');
+        sel.disabled = false;
+        MultiSelect.refresh('add-area-city');
+        updateAddAreaCityNotice(state);
+    }
+
     function renderBusinessHoursTable(hours) {
         var byDay = {};
         (hours || []).forEach(function (h) { byDay[h.dayOfWeek] = h; });
@@ -417,6 +704,110 @@
         });
     }
 
+    function renderCancellationPolicyRuleRow(rule, category, canManage) {
+        var scenario = rule.scenario || '';
+        var needsWindow = Bookings.CANCELLATION_SCENARIOS_WITH_WINDOW.indexOf(scenario) !== -1;
+        var refund = rule.refundPercent != null ? rule.refundPercent : 0;
+        var forfeiture = rule.forfeiturePercent != null ? rule.forfeiturePercent : 0;
+        var windowVal = rule.windowMinutes != null ? rule.windowMinutes : '';
+        var disabled = canManage ? '' : ' disabled';
+        return '<tr data-policy-category="' + _esc(category) + '" data-policy-scenario="' + _esc(scenario) + '">' +
+            '<td class="small">' +
+            '<div class="fw-medium">' + _esc(Bookings.scenarioLabel(scenario)) + '</div>' +
+            '<div class="text-secondary small mt-1">' + _esc(Bookings.scenarioGuide(scenario, category)) + '</div></td>' +
+            '<td>' +
+            (needsWindow
+                ? '<input type="number" class="form-control form-control-sm policy-window" min="1" max="10080" value="' + _esc(windowVal) + '"' + disabled + ' style="max-width:6rem">'
+                : '<span class="text-secondary small">—</span>') +
+            '</td>' +
+            '<td><input type="number" class="form-control form-control-sm policy-refund" min="0" max="100" value="' + _esc(refund) + '"' + disabled + ' style="max-width:5rem"></td>' +
+            '<td><input type="number" class="form-control form-control-sm policy-forfeiture" min="0" max="100" value="' + _esc(forfeiture) + '"' + disabled + ' style="max-width:5rem"></td>' +
+            '<td class="text-center"><input type="checkbox" class="form-check-input policy-customer-cancel"' + (rule.customerCanCancel ? ' checked' : '') + disabled + '></td>' +
+            '<td class="text-center"><input type="checkbox" class="form-check-input policy-admin-cancel"' + (rule.adminCanCancel ? ' checked' : '') + disabled + '></td>' +
+            '</tr>';
+    }
+
+    function renderCancellationPolicyTable(category, rules, canManage) {
+        var tbodyId = category === 'walkInBranch' ? 'cancellation-policy-walkin-tbody' : 'cancellation-policy-home-tbody';
+        var tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        rules = rules || [];
+        if (!rules.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No rules configured.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = rules.map(function (rule) {
+            return renderCancellationPolicyRuleRow(rule, category, canManage);
+        }).join('');
+    }
+
+    function renderCancellationPolicy(policy) {
+        var canManage = RBAC.can('settings:manage');
+        var walkIn = policy && policy.walkInBranch ? policy.walkInBranch : [];
+        var home = policy && policy.homeService ? policy.homeService : [];
+        renderCancellationPolicyTable('walkInBranch', walkIn, canManage);
+        renderCancellationPolicyTable('homeService', home, canManage);
+        var saveBtn = document.getElementById('btn-save-cancellation-policy');
+        if (saveBtn) saveBtn.classList.toggle('d-none', !canManage);
+        var draftBanner = document.getElementById('cancellation-policy-draft-banner');
+        if (draftBanner) draftBanner.classList.toggle('d-none', !State.cancellationPolicyDirty);
+    }
+
+    function collectCancellationPolicyRules(category) {
+        var tbodyId = category === 'walkInBranch' ? 'cancellation-policy-walkin-tbody' : 'cancellation-policy-home-tbody';
+        var tbody = document.getElementById(tbodyId);
+        if (!tbody) return [];
+        return Array.from(tbody.querySelectorAll('tr[data-policy-scenario]')).map(function (row) {
+            var scenario = row.dataset.policyScenario;
+            var refundEl = row.querySelector('.policy-refund');
+            var forfeitureEl = row.querySelector('.policy-forfeiture');
+            var windowEl = row.querySelector('.policy-window');
+            var customerEl = row.querySelector('.policy-customer-cancel');
+            var adminEl = row.querySelector('.policy-admin-cancel');
+            var rule = {
+                scenario: scenario,
+                refundPercent: parseInt(refundEl && refundEl.value, 10) || 0,
+                forfeiturePercent: parseInt(forfeitureEl && forfeitureEl.value, 10) || 0,
+                customerCanCancel: !!(customerEl && customerEl.checked),
+                adminCanCancel: !!(adminEl && adminEl.checked),
+            };
+            if (Bookings.CANCELLATION_SCENARIOS_WITH_WINDOW.indexOf(scenario) !== -1) {
+                rule.windowMinutes = parseInt(windowEl && windowEl.value, 10) || 0;
+            }
+            return rule;
+        });
+    }
+
+    function wireCancellationPolicyInputs() {
+        var container = document.getElementById('section-cancellation-policy');
+        if (!container || container.dataset.policyWired === '1') return;
+        container.dataset.policyWired = '1';
+        container.addEventListener('input', function (e) {
+            var row = e.target.closest('tr[data-policy-scenario]');
+            if (!row) return;
+            if (e.target.classList.contains('policy-refund')) {
+                var refund = parseInt(e.target.value, 10);
+                if (!Number.isFinite(refund)) return;
+                var forfeitureEl = row.querySelector('.policy-forfeiture');
+                if (forfeitureEl) forfeitureEl.value = String(Math.max(0, 100 - refund));
+            } else if (e.target.classList.contains('policy-forfeiture')) {
+                var forfeiture = parseInt(e.target.value, 10);
+                if (!Number.isFinite(forfeiture)) return;
+                var refundEl = row.querySelector('.policy-refund');
+                if (refundEl) refundEl.value = String(Math.max(0, 100 - forfeiture));
+            }
+            State.cancellationPolicyDirty = true;
+            var draftBanner = document.getElementById('cancellation-policy-draft-banner');
+            if (draftBanner) draftBanner.classList.remove('d-none');
+        });
+        container.addEventListener('change', function (e) {
+            if (!e.target.closest('tr[data-policy-scenario]')) return;
+            State.cancellationPolicyDirty = true;
+            var draftBanner = document.getElementById('cancellation-policy-draft-banner');
+            if (draftBanner) draftBanner.classList.remove('d-none');
+        });
+    }
+
     SP.UI = {
         switchSection: switchSection,
         routeOnLoad: routeOnLoad,
@@ -432,5 +823,17 @@
         renderPermMatrix: renderPermMatrix,
         filterPermMatrix: filterPermMatrix,
         renderBusinessHoursTable: renderBusinessHoursTable,
+        renderServiceableAreas: renderServiceableAreas,
+        populateAddAreaState: populateAddAreaState,
+        populateAddAreaCity: populateAddAreaCity,
+        updateAddAreaCityNotice: updateAddAreaCityNotice,
+        reconcileCityPickerSelection: reconcileCityPickerSelection,
+        removeWildcardForState: removeWildcardForState,
+        updateDraftBanner: updateDraftBanner,
+        renderAddAreaPreview: renderAddAreaPreview,
+        formatAreaLabel: formatAreaLabel,
+        renderCancellationPolicy: renderCancellationPolicy,
+        collectCancellationPolicyRules: collectCancellationPolicyRules,
+        wireCancellationPolicyInputs: wireCancellationPolicyInputs,
     };
 })(window);
