@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Branch Finance</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -261,6 +270,8 @@
     <script src="./assets/js/api-utils/branches.js"></script>
     <script src="./assets/js/api-utils/branch-finance.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
+    <!-- Page guard: same read permission that shows this page in the sidebar (NavConfig). -->
+    <script>document.addEventListener('DOMContentLoaded', function () { RBAC.applyPageGuardForCurrentPage(); });</script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         Auth.requireAuth();
@@ -326,6 +337,7 @@
                     var sel = document.getElementById('bf-branch');
                     sel.innerHTML = '<option value="">All Branches</option>' +
                         branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(sel);
                 } catch (err) {
                     document.getElementById('bf-error').textContent = 'Failed to load branches.';
                     document.getElementById('bf-error').classList.remove('d-none');
@@ -361,6 +373,7 @@
 
         async function loadSummary() {
             var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bf-branch').value : undefined;
+            if (isAdmin) branchId = RBAC.scopeBranchId(branchId);
 
             var dateFrom = document.getElementById('bf-date-from').value;
             var dateTo = document.getElementById('bf-date-to').value;
@@ -479,6 +492,7 @@
             _recExpectedCash = null;
             try {
                 var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bf-branch').value : undefined;
+                if (isAdmin) branchId = RBAC.scopeBranchId(branchId);
                 var summary = await BranchFinance.getDailySummary({ branchId: branchId, dateFrom: date, dateTo: date });
                 _recExpectedCash = Number(summary.totals.expectedCash);
                 expectedEl.textContent = BranchFinance.formatMoney(_recExpectedCash);
@@ -544,7 +558,7 @@
 
             try {
                 var payload = { date: date, cashCounted: Number(cashCounted), notes: notes || undefined };
-                if (isAdmin || isMultiBranch) payload.branchId = document.getElementById('bf-branch').value;
+                if (isAdmin || isMultiBranch) payload.branchId = isAdmin ? RBAC.scopeBranchId(document.getElementById('bf-branch').value) : document.getElementById('bf-branch').value;
                 await BranchFinance.submitReconciliation(payload);
                 bootstrap.Modal.getInstance(document.getElementById('modal-reconcile')).hide();
                 loadSummary();
@@ -600,6 +614,7 @@
 
         init();
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

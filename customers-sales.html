@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Customers &amp; Sales</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -285,6 +294,7 @@
                     var sel = document.getElementById('cs-branch');
                     sel.innerHTML = '<option value="">All Branches</option>' +
                         branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(sel);
                     document.getElementById('cs-branch-wrap').classList.remove('d-none');
                 } catch (err) { /* branch picker just stays hidden */ }
             }
@@ -297,7 +307,7 @@
                 var branchId = params.get('branchId');
                 var dateFrom = params.get('dateFrom');
                 var dateTo = params.get('dateTo');
-                if (branchId) document.getElementById('cs-branch').value = branchId;
+                if (branchId) document.getElementById('cs-branch').value = RBAC.scopeBranchId(branchId);
                 if (dateFrom) document.getElementById('cs-date-from').value = dateFrom;
                 if (dateTo) document.getElementById('cs-date-to').value = dateTo;
             })();
@@ -311,7 +321,7 @@
         }
 
         function resetFilters() {
-            document.getElementById('cs-branch').value = '';
+            document.getElementById('cs-branch').value = RBAC.scopeBranchId('');
             document.getElementById('cs-date-from').value = '';
             document.getElementById('cs-date-to').value = '';
             load();
@@ -320,7 +330,7 @@
         async function load() {
             var errEl = document.getElementById('cs-error');
             errEl.classList.add('d-none');
-            var branchId = document.getElementById('cs-branch').value || undefined;
+            var branchId = RBAC.scopeBranchId(document.getElementById('cs-branch').value) || undefined;
             var dateFrom = document.getElementById('cs-date-from').value || undefined;
             var dateTo = document.getElementById('cs-date-to').value || undefined;
 
@@ -502,6 +512,7 @@
 
         init();
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

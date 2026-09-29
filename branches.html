@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Branches</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -673,10 +682,10 @@
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             document.getElementById("results-label").textContent = "Loading…";
             try {
-                _branches = await Branches.getBranches({
+                _branches = RBAC.filterBranches(await Branches.getBranches({
                     search: listState.search || undefined,
                     includeInactive: listState.includeInactive,
-                });
+                }));
                 var open = _branches.filter(function (b) { return b.isActive !== false; }).length;
                 document.getElementById("stat-total").textContent = _branches.length;
                 document.getElementById("stat-open").textContent = open;
@@ -1117,6 +1126,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

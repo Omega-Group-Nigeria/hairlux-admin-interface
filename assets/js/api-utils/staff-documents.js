@@ -3,9 +3,13 @@
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const StaffDocuments = (() => {
+    // Company Documents has its own permissions (Settings -> Roles -> Company
+    // Documents); "View staff records" no longer opens this page.
     const PERMISSIONS = {
-        READ: "staff:read",
-        MANAGE: "staff:manage_documents",
+        READ: "company_documents:read",
+        MANAGE: "company_documents:upload",           // create / new version
+        DELETE: "company_documents:delete",
+        MANAGE_CATEGORIES: "company_documents:manage_categories", // add / deactivate / delete document types
     };
 
     async function jsonFetch(path, options = {}) {

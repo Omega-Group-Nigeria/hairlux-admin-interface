@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Payroll</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -720,7 +729,7 @@
         async function loadWithdrawalStaffOptions(branchId) {
             var select = document.getElementById('withdrawal-staff-filter');
             try {
-                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
+                var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
                 select.innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + esc(s.name) + '</option>';
                 }).join('');
@@ -1091,7 +1100,7 @@
         function renderAdjustmentsTable() {
             var tbody = document.getElementById('adjustments-tbody');
             var q = document.getElementById('adj-list-search').value.trim().toLowerCase();
-            var branchId = document.getElementById('adj-list-branch-filter').value;
+            var branchId = RBAC.scopeBranchId(document.getElementById('adj-list-branch-filter').value);
             var staffId = document.getElementById('adj-list-staff-filter').value;
 
             var list = _currentAdjustments.filter(function (a) {
@@ -1183,7 +1192,7 @@
         async function ensureBranchOptions() {
             if (!branchOptionsCache) {
                 try {
-                    branchOptionsCache = await Branches.getBranches();
+                    branchOptionsCache = RBAC.filterBranches(await Branches.getBranches());
                 } catch (e) { branchOptionsCache = []; }
             }
             return branchOptionsCache;
@@ -1194,7 +1203,10 @@
         async function ensureStaffOptions() {
             if (!staffOptionsCache) {
                 try {
-                    staffOptionsCache = await Staff.getOptions();
+                    var managedIds = RBAC.getManagedBranchIds();
+                    staffOptionsCache = (await Staff.getOptions()).filter(function (s) {
+                        return !RBAC.isManagerScoped() || managedIds.indexOf(s.locationId) !== -1;
+                    });
                 } catch (e) { staffOptionsCache = []; }
             }
             return staffOptionsCache;
@@ -1220,6 +1232,7 @@
         function populateBranchSelect(selectEl, branches, placeholder) {
             selectEl.innerHTML = '<option value="">' + placeholder + '</option>' +
                 branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+            RBAC.applyBranchScope(selectEl);
         }
 
         async function openAdjustmentModal() {
@@ -1357,7 +1370,7 @@
                 var result = await Payroll.listWithdrawals({
                     status: document.getElementById('withdrawal-status-filter').value,
                     staffId: document.getElementById('withdrawal-staff-filter').value,
-                    locationId: document.getElementById('withdrawal-branch-filter').value,
+                    locationId: RBAC.scopeBranchId(document.getElementById('withdrawal-branch-filter').value),
                     from: document.getElementById('withdrawal-from-filter').value,
                     to: document.getElementById('withdrawal-to-filter').value,
                     limit: 100000, // every matching withdrawal, not just the on-screen page
@@ -1391,7 +1404,7 @@
                 var result = await Payroll.listWithdrawals({
                     status: document.getElementById('withdrawal-status-filter').value,
                     staffId: document.getElementById('withdrawal-staff-filter').value,
-                    locationId: document.getElementById('withdrawal-branch-filter').value,
+                    locationId: RBAC.scopeBranchId(document.getElementById('withdrawal-branch-filter').value),
                     from: document.getElementById('withdrawal-from-filter').value,
                     to: document.getElementById('withdrawal-to-filter').value,
                     page: _withdrawalPage,
@@ -1493,6 +1506,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Academy Cohorts</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -1113,10 +1122,11 @@
             } catch (err) { /* non-fatal for the list view */ }
 
             try {
-                branchesData = await Branches.getBranches() || [];
+                branchesData = RBAC.filterBranches(await Branches.getBranches() || []);
                 var branchOptionsHtml = branchesData.map(function (b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join("");
                 document.getElementById("cohorts-filter-branch").innerHTML = '<option value="">All Branches</option>' + branchOptionsHtml;
                 document.getElementById("cohort-branch-id").innerHTML = branchOptionsHtml;
+                RBAC.applyBranchScope(document.getElementById("cohorts-filter-branch"));
                 if (window.SearchableSelect) { SearchableSelect.attach("cohorts-filter-branch"); SearchableSelect.attach("cohort-branch-id"); }
             } catch (err) { /* non-fatal */ }
 
@@ -1137,7 +1147,7 @@
             try {
                 var filters = {
                     trainingId: document.getElementById("cohorts-filter-training").value,
-                    branchId: document.getElementById("cohorts-filter-branch").value,
+                    branchId: RBAC.scopeBranchId(document.getElementById("cohorts-filter-branch").value),
                     status: document.getElementById("cohorts-filter-status").value,
                 };
                 cohortsData = await AcademyTraining.getCohorts(filters) || [];
@@ -1403,6 +1413,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

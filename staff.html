@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Staff</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -404,7 +413,7 @@
         ];
         Auth.requireAuth();
         RBAC.loadFromStorage();
-        RBAC.applyPageGuard(STAFF_PERMISSIONS);
+        RBAC.applyPageGuard('staff:read');
 
         var state = {
             page: 1,
@@ -424,7 +433,7 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             RBAC.fetchMe().then(function () {
-                RBAC.applyPageGuard(STAFF_PERMISSIONS);
+                RBAC.applyPageGuard('staff:read');
                 RBAC.applyNavVisibility();
             }).catch(function () { });
             document.getElementById("btn-refresh").addEventListener("click", function () {
@@ -456,13 +465,13 @@
             document.getElementById("btn-clear").addEventListener("click", function () {
                 document.getElementById("filter-search").value = "";
                 document.getElementById("filter-status").value = "";
-                document.getElementById("filter-location-id").value = "";
+                document.getElementById("filter-location-id").value = RBAC.scopeBranchId("");
                 document.getElementById("filter-role").value = "";
                 document.getElementById("filter-include-archived").value = "false";
                 state.page = 1;
                 state.search = "";
                 state.employmentStatus = "";
-                state.locationId = "";
+                state.locationId = RBAC.scopeBranchId("");
                 state.currentRole = "";
                 state.includeArchived = false;
                 loadStaff();
@@ -808,6 +817,7 @@
                     var selected = current === x.value ? ' selected' : '';
                     return '<option value="' + esc(x.value) + '"' + selected + '>' + esc(x.label) + '</option>';
                 }).join("");
+            if (RBAC.applyBranchScope(select)) state.locationId = select.value;
         }
 
         function buildOptionSelect(col, label, id, value, options, placeholder, required) {
@@ -828,6 +838,7 @@
             var tbody = document.getElementById("staff-tbody");
             tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
             try {
+                state.locationId = RBAC.scopeBranchId(state.locationId);
                 var result = await Staff.getAll(state);
                 var rows = result.data || [];
                 var meta = result.meta || {};
@@ -891,6 +902,10 @@
                 var daysAhead = Math.max(1, Math.min(365, daysAheadRaw || 30));
                 var includeFormer = document.getElementById("birthdays-include-former").value === "true";
                 var rows = await Staff.getUpcomingBirthdays({ daysAhead: daysAhead, includeFormer: includeFormer });
+                if (RBAC.isManagerScoped()) {
+                    var managedIds = RBAC.getManagedBranchIds();
+                    rows = rows.filter(function (x) { return x.location && managedIds.indexOf(x.location.id) !== -1; });
+                }
                 if (!rows.length) {
                     list.innerHTML = '<div class="text-secondary small">No upcoming birthdays in this window.</div>';
                     return;
@@ -2314,6 +2329,7 @@
         }
 
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>
