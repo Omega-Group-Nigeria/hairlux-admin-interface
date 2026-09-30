@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Leave Requests</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -321,7 +330,7 @@
             document.getElementById("btn-clear").addEventListener("click", function () {
                 document.getElementById("filter-type").value = "";
                 document.getElementById("filter-staff").value = "";
-                document.getElementById("filter-branch").value = "";
+                document.getElementById("filter-branch").value = RBAC.scopeBranchId("");
                 document.getElementById("filter-from").value = "";
                 document.getElementById("filter-to").value = "";
                 document.getElementById("filter-limit").value = "20";
@@ -392,6 +401,7 @@
         async function loadFilterStaffOptions(branchId) {
             try {
                 var staffList = await LeaveRequests.getStaffOptions();
+                branchId = RBAC.scopeBranchId(branchId);
                 if (branchId) staffList = staffList.filter(function (s) { return s.locationId === branchId; });
                 document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
@@ -414,7 +424,7 @@
             try {
                 var result = await LeaveRequests.getAll({
                     status: state.status, type: state.type, staffId: state.staffId,
-                    locationId: state.locationId, from: state.from, to: state.to, limit: 10000,
+                    locationId: RBAC.scopeBranchId(state.locationId), from: state.from, to: state.to, limit: 10000,
                 });
                 var rows = result.data || (Array.isArray(result) ? result : []);
                 if (!rows.length) {
@@ -466,7 +476,7 @@
             try {
                 var result = await LeaveRequests.getAll({
                     page: state.page, limit: state.limit, status: state.status, type: state.type,
-                    staffId: state.staffId, locationId: state.locationId, from: state.from, to: state.to,
+                    staffId: state.staffId, locationId: RBAC.scopeBranchId(state.locationId), from: state.from, to: state.to,
                 });
                 var rows = result.data || (Array.isArray(result) ? result : []);
                 var meta = result.meta || {};
@@ -625,6 +635,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

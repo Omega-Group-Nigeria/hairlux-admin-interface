@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Login - Hairlux Admin</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -240,7 +249,13 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script>
         // Redirect immediately if already logged in
-        if (Auth.isLoggedIn()) { window.location.href = "./index.html"; }
+        // Already signed in (e.g. launching the installed app): go back to the
+        // portal they last signed in to -- staff land on their own workspace.
+        if (Auth.isLoggedIn()) {
+            var lastPortal = null;
+            try { lastPortal = localStorage.getItem('hairlux_last_portal'); } catch (_) { }
+            window.location.href = lastPortal === 'staff' ? "./staff-portal.html" : "./index.html";
+        }
 
         var ICON_DANGER = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>';
         var ICON_SUCCESS = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg>';
@@ -314,6 +329,7 @@
 
             try {
                 await Auth.login(email, password, loginType);
+                try { localStorage.setItem('hairlux_last_portal', loginType); } catch (_) { }
                 showAlert('success', 'Login successful! Loading your workspace…');
 
                 if (loginType === 'staff') {
@@ -334,6 +350,7 @@
             }
         });
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

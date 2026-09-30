@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Inventory</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -168,6 +177,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="dashboard-pager"></div>
                     </div>
 
                     <div class="card">
@@ -196,6 +206,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="entries-pager"></div>
                     </div>
                 </div>
             </div>
@@ -206,8 +217,15 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-operations.js"></script>
+    <script src="./assets/js/simple-pager.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
+        // Client-side paging for long lists (assets/js/simple-pager.js).
+        var _renderDashboardPage = null;
+        var _dashboardPager = SimplePager.attach('#dashboard-pager', { onChange: function () { if (_renderDashboardPage) _renderDashboardPage(); } });
+        var _renderEntriesPage = null;
+        var _entriesPager = SimplePager.attach('#entries-pager', { onChange: function () { if (_renderEntriesPage) _renderEntriesPage(); } });
+
         Auth.requireAuth();
         RBAC.loadFromStorage();
         RBAC.applyPageGuardForCurrentPage();
@@ -266,7 +284,7 @@
             options = options || {};
             document.getElementById("results-label").textContent = "Loading…";
             try {
-                var totals = await StaffOps.getInventoryDashboard(_locationId || undefined);
+                var totals = await StaffOps.getInventoryDashboard(RBAC.scopeBranchId(_locationId) || undefined);
                 var lowStock = totals.filter(function (t) { return t.total > 0 && t.total <= StaffOps.LOW_STOCK_THRESHOLD; });
                 var outOfStock = totals.filter(function (t) { return t.total <= 0; });
 
@@ -275,23 +293,26 @@
                 document.getElementById("stat-out").textContent = outOfStock.length;
 
                 var tbody = document.getElementById("dashboard-tbody");
-                if (!totals.length) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">No inventory logged yet.</td></tr>';
-                } else {
-                    tbody.innerHTML = totals
-                        .sort(function (a, b) { return a.productName.localeCompare(b.productName); })
-                        .map(function (t) {
-                            var statusBadge = t.total <= 0
-                                ? '<span class="badge bg-danger-lt">Out of Stock</span>'
-                                : t.total <= StaffOps.LOW_STOCK_THRESHOLD
-                                    ? '<span class="badge bg-warning-lt">Low</span>'
-                                    : '<span class="badge bg-success-lt">Good</span>';
-                            return '<tr><td class="fw-semibold">' + esc(t.productName) + '</td>' +
-                                '<td>' + esc(t.locationName) + '</td>' +
-                                '<td>' + t.total + ' units</td>' +
-                                '<td>' + statusBadge + '</td></tr>';
-                        }).join("");
-                }
+                totals.sort(function (a, b) { return a.productName.localeCompare(b.productName); });
+                _dashboardPager.reset();
+                (_renderDashboardPage = function () {
+                    var pageRows = _dashboardPager.slice(totals);
+                    if (!totals.length) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">No inventory logged yet.</td></tr>';
+                    } else {
+                        tbody.innerHTML = pageRows.map(function (t) {
+                                var statusBadge = t.total <= 0
+                                    ? '<span class="badge bg-danger-lt">Out of Stock</span>'
+                                    : t.total <= StaffOps.LOW_STOCK_THRESHOLD
+                                        ? '<span class="badge bg-warning-lt">Low</span>'
+                                        : '<span class="badge bg-success-lt">Good</span>';
+                                return '<tr><td class="fw-semibold">' + esc(t.productName) + '</td>' +
+                                    '<td>' + esc(t.locationName) + '</td>' +
+                                    '<td>' + t.total + ' units</td>' +
+                                    '<td>' + statusBadge + '</td></tr>';
+                            }).join("");
+                    }
+                })();
                 document.getElementById("results-label").textContent = totals.length + " product(s) tracked";
                 if (options.notifySuccess) flashPageAlert("success", "Refreshed.");
             } catch (e) {
@@ -303,24 +324,28 @@
 
         async function loadEntries() {
             try {
-                var entries = await StaffOps.getInventoryEntries({ locationId: _locationId || undefined });
+                var entries = await StaffOps.getInventoryEntries({ locationId: RBAC.scopeBranchId(_locationId) || undefined });
                 var tbody = document.getElementById("entries-tbody");
-                if (!entries.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">No entries logged yet.</td></tr>';
-                } else {
-                    tbody.innerHTML = entries.map(function (e) {
-                        var typeBadge = e.type === "RECEIVED"
-                            ? '<span class="badge bg-success-lt">Received</span>'
-                            : '<span class="badge bg-secondary-lt">Sold</span>';
-                        return '<tr><td class="fw-semibold">' + esc(e.productName) + '</td>' +
-                            '<td>' + esc(e.location ? e.location.name : "-") + '</td>' +
-                            '<td>' + typeBadge + '</td>' +
-                            '<td>' + e.quantity + '</td>' +
-                            '<td>' + esc(e.staff ? e.staff.name : "-") + '</td>' +
-                            '<td class="text-secondary small">' + esc(e.note || "-") + '</td>' +
-                            '<td class="text-secondary small">' + timeAgo(e.createdAt) + '</td></tr>';
-                    }).join("");
-                }
+                _entriesPager.reset();
+                (_renderEntriesPage = function () {
+                    var pageRows = _entriesPager.slice(entries);
+                    if (!entries.length) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">No entries logged yet.</td></tr>';
+                    } else {
+                        tbody.innerHTML = pageRows.map(function (e) {
+                            var typeBadge = e.type === "RECEIVED"
+                                ? '<span class="badge bg-success-lt">Received</span>'
+                                : '<span class="badge bg-secondary-lt">Sold</span>';
+                            return '<tr><td class="fw-semibold">' + esc(e.productName) + '</td>' +
+                                '<td>' + esc(e.location ? e.location.name : "-") + '</td>' +
+                                '<td>' + typeBadge + '</td>' +
+                                '<td>' + e.quantity + '</td>' +
+                                '<td>' + esc(e.staff ? e.staff.name : "-") + '</td>' +
+                                '<td class="text-secondary small">' + esc(e.note || "-") + '</td>' +
+                                '<td class="text-secondary small">' + timeAgo(e.createdAt) + '</td></tr>';
+                        }).join("");
+                    }
+                })();
             } catch (e) {
                 document.getElementById("entries-tbody").innerHTML =
                     '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || "Failed to load entries.") + '</td></tr>';
@@ -348,6 +373,7 @@
             loadAll();
         });
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

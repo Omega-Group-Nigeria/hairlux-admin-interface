@@ -15,6 +15,16 @@ const BranchFinance = (() => {
         return apiFetch('/branch-finance/daily-summary' + qs);
     }
 
+    /** Revenue-submission variance history: { items, total, page, limit, totals }. */
+    async function getReconciliationHistory(params = {}) {
+        const q = new URLSearchParams();
+        Object.keys(params).forEach((k) => {
+            if (params[k] !== undefined && params[k] !== null && params[k] !== '') q.set(k, params[k]);
+        });
+        const qs = q.toString() ? '?' + q.toString() : '';
+        return apiFetch('/branch-finance/reconciliations' + qs);
+    }
+
     async function submitReconciliation(payload) {
         return apiFetch('/branch-finance/reconciliation', {
             method: 'POST',
@@ -42,9 +52,10 @@ const BranchFinance = (() => {
 
     return {
         getDailySummary,
+        getReconciliationHistory,
         submitReconciliation,
         getSettings,
         updateSettings,
         formatMoney,
     };
-})();
+})();

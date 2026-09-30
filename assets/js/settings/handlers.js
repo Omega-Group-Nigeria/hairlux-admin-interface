@@ -717,14 +717,22 @@
         var btnRefreshAuditLog = document.getElementById('btn-refresh-audit-log');
         if (btnRefreshAuditLog) btnRefreshAuditLog.addEventListener('click', function () { loadAuditLog(); });
 
+        // Server-side paging for the role audit log (assets/js/simple-pager.js).
+        var auditLogPager = window.SimplePager
+            ? SimplePager.attach('#audit-log-pager', { onChange: function () { loadAuditLog(); } })
+            : null;
+
         async function loadAuditLog() {
             var tbody = document.getElementById('audit-log-tbody');
             if (!tbody) return;
             tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
 
             try {
-                var result = await Roles.getAuditLog({ limit: 50 });
+                var result = await Roles.getAuditLog(auditLogPager
+                    ? { page: auditLogPager.page, limit: auditLogPager.perPage }
+                    : { limit: 50 });
                 var entries = result.data || [];
+                if (auditLogPager) auditLogPager.setTotal(result.meta ? result.meta.total : entries.length);
 
                 var actionLabels = {
                     ROLE_CREATED: 'Role created',
@@ -1322,4 +1330,4 @@
         saveHomeService: saveHomeService,
         init: init,
     };
-})(window);
+})(window);

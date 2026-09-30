@@ -4,7 +4,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Hairlux" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
   <title>Hairlux Staff Portal</title>
+  <script src="./assets/js/theme-toggle.js"></script>
   <style>
     @font-face {
       font-family: 'Bdogrotesk Vf';
@@ -52,6 +62,41 @@
       --on-dark-title: #FFFFFF;
       --on-dark-text: rgba(255, 255, 255, .62);
     }
+
+    /* ── Dark mode ──
+       The portal is fully token-driven, so dark mode is a token swap. Set by
+       assets/js/theme-toggle.js via data-bs-theme on <html>, the same
+       attribute + storage key the Tabler admin pages use, so one choice
+       applies across the whole admin panel. Palette matches the main site. */
+    :root[data-bs-theme="dark"] {
+      color-scheme: dark;
+      --dark: #14171c;
+      --dark2: #1c2027;
+      --white: #F2F2F2;
+      --off: #22262e;
+      --border: #30353f;
+      --border2: rgba(255, 255, 255, .06);
+      --text: #e8eaed;
+      --muted: #8b919c;
+      --light: #a7adb8;
+      --sh: 0 2px 16px rgba(0, 0, 0, .35);
+      --sh2: 0 10px 28px rgba(0, 0, 0, .45);
+      --surface2: rgba(255, 255, 255, .04);
+      /* searchable-select.js dropdown reads Tabler's variables, which this
+         page doesn't load -- give it dark values so its list isn't white */
+      --tblr-bg-surface: #1c2027;
+      --tblr-border-color: #30353f;
+      --tblr-primary-lt: #262b33;
+      --tblr-secondary: #8b919c;
+    }
+
+    [data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4a505b; }
+    /* Sidebar logo: the default mark is black -- use the white version on dark */
+    [data-bs-theme="dark"] .sb-logo { background-image: url('assets/img/logo-light.webp'); }
+
+    .theme-btn .icon-moon { display: none; }
+    [data-bs-theme="dark"] .theme-btn .icon-sun { display: none; }
+    [data-bs-theme="dark"] .theme-btn .icon-moon { display: inline-block; }
 
     * {
       box-sizing: border-box;
@@ -1953,6 +1998,7 @@
   <script src="./assets/js/api-utils/suppliers-self.js"></script>
   <script src="./assets/js/api-utils/payroll-self.js"></script>
   <script src="./assets/js/api-utils/salon-bookings-self.js"></script>
+  <script src="./assets/js/closing-time-guard.js"></script>
   <script src="./assets/js/api-utils/product-sales.js"></script>
   <script src="./assets/js/searchable-select.js"></script>
 
@@ -2157,6 +2203,7 @@
         </div>
         <div class="tb-right">
           <button class="btn btn-gold btn-sm" id="tb-cta" onclick="handleTopBarCta()">⏵ Check In</button>
+          <button type="button" class="ico-btn theme-btn" data-theme-toggle aria-pressed="false" title="Switch to dark mode" aria-label="Toggle dark mode"><svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg><svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
           <div class="ico-btn" onclick="show('notifications')">🔔<div class="ndot" style="display:none"></div>
           </div>
           <div class="profile-dd-wrap" id="profile-dd-wrap">
@@ -3426,6 +3473,7 @@
   </div>
 
   <script src="./assets/js/staff-portal-app.js"></script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Branch Finance</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -178,6 +187,73 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="bf-pager"></div>
+                    </div>
+
+                    <!-- Revenue submission variance history -->
+                    <div class="card mt-3" id="bf-variance-card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">Revenue Submission Variance</h3>
+                                <div class="text-secondary small">Expected revenue the system recorded (completed bookings + product sales, excluding wallet payments) vs. the revenue each branch submitted, per day.</div>
+                            </div>
+                        </div>
+                        <div class="card-body border-bottom py-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-3" id="var-branch-wrap">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="var-branch" class="form-select form-select-sm">
+                                        <option value="">All Branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">From</label>
+                                    <input type="date" id="var-date-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">To</label>
+                                    <input type="date" id="var-date-to" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Variance</label>
+                                    <select id="var-status" class="form-select form-select-sm">
+                                        <option value="ALL">All submissions</option>
+                                        <option value="VARIANCE">Any variance</option>
+                                        <option value="SHORT">Short (received less)</option>
+                                        <option value="OVER">Over (received more)</option>
+                                        <option value="MATCHED">Matched</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mt-2 small" id="var-totals">
+                                <div class="col-6 col-md"><span class="text-secondary">Expected:</span> <span class="fw-semibold" id="var-t-expected">—</span></div>
+                                <div class="col-6 col-md"><span class="text-secondary">Submitted:</span> <span class="fw-semibold" id="var-t-submitted">—</span></div>
+                                <div class="col-6 col-md"><span class="text-secondary">Net variance:</span> <span class="fw-semibold" id="var-t-variance">—</span></div>
+                                <div class="col-6 col-md"><span class="text-secondary">Days short / over / matched:</span> <span class="fw-semibold" id="var-t-counts">—</span></div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Branch</th>
+                                        <th>Total Revenue</th>
+                                        <th>Expected</th>
+                                        <th>Submitted</th>
+                                        <th>Variance</th>
+                                        <th>Reason / Notes</th>
+                                        <th>Submitted By</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="var-tbody">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-secondary py-4">Loading…</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="var-pager"></div>
                     </div>
 
                 </div>
@@ -203,14 +279,37 @@
                             before 12:00pm today.</div>
                     </div>
                     <div class="mb-3" id="rec-expected-wrap">
-                        <div class="text-secondary small">Expected cash for this date</div>
+                        <div class="text-secondary small">Expected revenue for this date (system-recorded)</div>
                         <div class="h3 mb-0" id="rec-expected">—</div>
+                        <table class="table table-sm table-borderless small mb-0 mt-1 d-none" id="rec-breakdown">
+                            <tbody>
+                                <tr><td class="text-secondary ps-0">Walk-in bookings</td><td class="text-end pe-0" id="rec-bd-salon">—</td></tr>
+                                <tr><td class="text-secondary ps-0">Self-service bookings</td><td class="text-end pe-0" id="rec-bd-selfservice">—</td></tr>
+                                <tr><td class="text-secondary ps-0">Product sales</td><td class="text-end pe-0" id="rec-bd-products">—</td></tr>
+                                <tr class="border-top"><td class="text-secondary ps-0">Total revenue</td><td class="text-end pe-0" id="rec-bd-total">—</td></tr>
+                                <tr><td class="text-secondary ps-0">Less wallet-paid (not received at branch)</td><td class="text-end pe-0" id="rec-bd-wallet">—</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                     <div class="mb-3">
                         <label class="form-label required">Total Revenue Received</label>
                         <input type="number" step="0.01" min="0" class="form-control" id="rec-cash-counted"
                             placeholder="0.00">
                         <div class="small mt-1 d-none" id="rec-variance-line"></div>
+                    </div>
+                    <div class="row g-2 mb-3 text-center d-none" id="rec-preview">
+                        <div class="col-4">
+                            <div class="text-secondary small">Expected</div>
+                            <div class="fw-semibold" id="rec-pv-expected">—</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-secondary small">Entered</div>
+                            <div class="fw-semibold" id="rec-pv-entered">—</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-secondary small">Variance</div>
+                            <div class="fw-semibold" id="rec-pv-variance">—</div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" id="rec-notes-label">Notes <span class="text-muted">(required if
@@ -261,6 +360,9 @@
     <script src="./assets/js/api-utils/branches.js"></script>
     <script src="./assets/js/api-utils/branch-finance.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/simple-pager.js"></script>
+    <!-- Page guard: same read permission that shows this page in the sidebar (NavConfig). -->
+    <script>document.addEventListener('DOMContentLoaded', function () { RBAC.applyPageGuardForCurrentPage(); });</script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         Auth.requireAuth();
@@ -326,11 +428,13 @@
                     var sel = document.getElementById('bf-branch');
                     sel.innerHTML = '<option value="">All Branches</option>' +
                         branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(sel);
                 } catch (err) {
                     document.getElementById('bf-error').textContent = 'Failed to load branches.';
                     document.getElementById('bf-error').classList.remove('d-none');
                 }
                 loadSummary(); // All Branches, All Time by default
+                initVarianceHistory(true);
             } else {
                 // Non-admin: locked to their own branch(es), resolved
                 // server-side. Dev Feedback Round 4, item #25: a manager
@@ -356,11 +460,106 @@
                     branchWrap.classList.add('d-none');
                 }
                 loadSummary();
+                initVarianceHistory(isMultiBranch);
+            }
+        }
+
+        // ---- Revenue submission variance history ----------------------
+        var varPager = null;
+        var _varSeq = 0;
+
+        function initVarianceHistory(showBranchPicker) {
+            var varSel = document.getElementById('var-branch');
+            if (showBranchPicker) {
+                // Same (already RBAC-scoped) option set as the page's own branch picker.
+                varSel.innerHTML = document.getElementById('bf-branch').innerHTML;
+                varSel.value = document.getElementById('bf-branch').value;
+                varSel.disabled = document.getElementById('bf-branch').disabled;
+            } else {
+                document.getElementById('var-branch-wrap').classList.add('d-none');
+            }
+            // Default window: the last 30 days up to yesterday (the latest submittable day).
+            document.getElementById('var-date-to').value = yesterdayStr();
+            document.getElementById('var-date-from').value = new Date(Date.now() + 60 * 60 * 1000 - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+            varPager = SimplePager.attach('#var-pager', { perPage: 25, onChange: function () { loadVarianceHistory(); } });
+            ['var-branch', 'var-date-from', 'var-date-to', 'var-status'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', function () { varPager.reset(); loadVarianceHistory(); });
+            });
+            loadVarianceHistory();
+        }
+
+        function varianceHtml(v) {
+            var cls = v === 0 ? 'text-secondary' : (v > 0 ? 'text-success' : 'text-danger');
+            return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + BranchFinance.formatMoney(v) + '</span>';
+        }
+
+        async function loadVarianceHistory() {
+            if (!varPager) return;
+            var tbody = document.getElementById('var-tbody');
+            var dateFrom = document.getElementById('var-date-from').value;
+            var dateTo = document.getElementById('var-date-to').value;
+            if (dateFrom && dateTo && dateTo < dateFrom) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">"To" cannot be before "From".</td></tr>';
+                return;
+            }
+            var branchId = document.getElementById('var-branch-wrap').classList.contains('d-none') ? undefined : document.getElementById('var-branch').value;
+            if (isAdmin) branchId = RBAC.scopeBranchId(branchId);
+
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            var seq = ++_varSeq;
+            var requestedPage = varPager.page;
+            try {
+                var res = await BranchFinance.getReconciliationHistory({
+                    branchId: branchId,
+                    dateFrom: dateFrom,
+                    dateTo: dateTo,
+                    status: document.getElementById('var-status').value,
+                    page: requestedPage,
+                    limit: varPager.perPage,
+                });
+                if (seq !== _varSeq) return;
+                varPager.setTotal(res.total || 0);
+                if (varPager.page !== requestedPage) { loadVarianceHistory(); return; }
+
+                var t = res.totals || {};
+                document.getElementById('var-t-expected').textContent = BranchFinance.formatMoney(t.expectedCash);
+                document.getElementById('var-t-submitted').textContent = BranchFinance.formatMoney(t.cashCounted);
+                document.getElementById('var-t-variance').innerHTML = varianceHtml(Number(t.variance) || 0);
+                document.getElementById('var-t-counts').textContent = (t.shortCount || 0) + ' / ' + (t.overCount || 0) + ' / ' + (t.matchedCount || 0);
+
+                var items = res.items || [];
+                if (!items.length) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No submissions for these filters.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = items.map(function (r) {
+                    var badge = r.status === 'SHORT' ? '<span class="badge bg-red-lt ms-1">Short</span>'
+                        : r.status === 'OVER' ? '<span class="badge bg-green-lt ms-1">Over</span>'
+                            : '<span class="badge bg-secondary-lt ms-1">Matched</span>';
+                    var pct = r.variancePercent !== null && r.variancePercent !== undefined && r.variance !== 0
+                        ? '<div class="small text-secondary">' + (r.variancePercent > 0 ? '+' : '') + r.variancePercent + '%</div>' : '';
+                    return '<tr>' +
+                        '<td>' + esc(r.date) + '</td>' +
+                        '<td>' + esc(r.branch ? r.branch.name : '—') + '</td>' +
+                        '<td>' + BranchFinance.formatMoney(r.totalRevenue) + '</td>' +
+                        '<td>' + BranchFinance.formatMoney(r.expectedCash) + '</td>' +
+                        '<td>' + BranchFinance.formatMoney(r.cashCounted) + '</td>' +
+                        '<td class="text-nowrap">' + varianceHtml(r.variance) + badge + pct + '</td>' +
+                        '<td class="small" style="max-width:260px;white-space:normal">' + (r.notes ? esc(r.notes) : '<span class="text-secondary">—</span>') + '</td>' +
+                        '<td class="small">' + esc(r.submittedBy ? r.submittedBy.name : '—') +
+                        '<div class="text-secondary">' + (r.submittedAt ? esc(new Date(r.submittedAt).toLocaleString('en-NG')) : '') + '</div></td>' +
+                        '</tr>';
+                }).join('');
+            } catch (err) {
+                if (seq !== _varSeq) return;
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(err.message || 'Failed to load variance history.') + '</td></tr>';
             }
         }
 
         async function loadSummary() {
             var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bf-branch').value : undefined;
+            if (isAdmin) branchId = RBAC.scopeBranchId(branchId);
 
             var dateFrom = document.getElementById('bf-date-from').value;
             var dateTo = document.getElementById('bf-date-to').value;
@@ -382,7 +581,10 @@
                 _lastSummary = summary;
                 lockedBranchId = summary.branchId;
                 renderTotals(summary.totals);
-                renderTable(summary.days);
+                // Newest day first so page 1 is the most recent activity.
+                _bfDays = (summary.days || []).slice().reverse();
+                bfPager.reset();
+                renderTable();
             } catch (err) {
                 errEl.textContent = err.message || 'Failed to load summary.';
                 errEl.classList.remove('d-none');
@@ -401,8 +603,14 @@
             document.getElementById('bf-total-cash').textContent = BranchFinance.formatMoney(t.expectedCash);
         }
 
-        function renderTable(days) {
+        // Daily Breakdown: the API returns every day in the range at once
+        // (gap-filled), so it is paged client-side.
+        var _bfDays = [];
+        var bfPager = SimplePager.attach('#bf-pager', { perPage: 25, onChange: function () { renderTable(); } });
+
+        function renderTable() {
             var tbody = document.getElementById('bf-tbody');
+            var days = bfPager.slice(_bfDays);
             if (!days.length) {
                 tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-4">No data for this range.</td></tr>';
                 return;
@@ -477,11 +685,20 @@
             var expectedEl = document.getElementById('rec-expected');
             expectedEl.textContent = 'Loading…';
             _recExpectedCash = null;
+            document.getElementById('rec-breakdown').classList.add('d-none');
             try {
                 var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bf-branch').value : undefined;
+                if (isAdmin) branchId = RBAC.scopeBranchId(branchId);
                 var summary = await BranchFinance.getDailySummary({ branchId: branchId, dateFrom: date, dateTo: date });
-                _recExpectedCash = Number(summary.totals.expectedCash);
+                var t = summary.totals;
+                _recExpectedCash = Number(t.expectedCash);
                 expectedEl.textContent = BranchFinance.formatMoney(_recExpectedCash);
+                document.getElementById('rec-bd-salon').textContent = BranchFinance.formatMoney(t.salonBookingRevenue);
+                document.getElementById('rec-bd-selfservice').textContent = BranchFinance.formatMoney(t.selfServiceBookingRevenue);
+                document.getElementById('rec-bd-products').textContent = BranchFinance.formatMoney(t.productSaleRevenue);
+                document.getElementById('rec-bd-total').textContent = BranchFinance.formatMoney(t.totalRevenue);
+                document.getElementById('rec-bd-wallet').textContent = '\u2212' + BranchFinance.formatMoney(t.selfServiceWalletRevenue);
+                document.getElementById('rec-breakdown').classList.remove('d-none');
             } catch (err) {
                 expectedEl.textContent = '—';
             }
@@ -497,13 +714,20 @@
             var notesLabel = document.getElementById('rec-notes-label');
             var cashCounted = document.getElementById('rec-cash-counted').value;
 
+            var preview = document.getElementById('rec-preview');
             if (_recExpectedCash === null || cashCounted === '' || isNaN(Number(cashCounted))) {
+                preview.classList.add('d-none');
                 line.classList.add('d-none');
                 notesLabel.innerHTML = 'Notes <span class="text-muted">(required if there\'s a variance between cash counted and expected cash)</span>';
                 return;
             }
 
-            var variance = Number(cashCounted) - _recExpectedCash;
+            // Round to kobo so float noise (e.g. 0.1 + 0.2) never shows as a phantom variance.
+            var variance = Math.round((Number(cashCounted) - _recExpectedCash) * 100) / 100;
+            document.getElementById('rec-pv-expected').textContent = BranchFinance.formatMoney(_recExpectedCash);
+            document.getElementById('rec-pv-entered').textContent = BranchFinance.formatMoney(Number(cashCounted));
+            document.getElementById('rec-pv-variance').innerHTML = varianceHtml(variance);
+            preview.classList.remove('d-none');
             line.classList.remove('d-none');
             if (variance === 0) {
                 line.className = 'small mt-1 text-secondary';
@@ -531,7 +755,7 @@
                 errEl.classList.remove('d-none');
                 return;
             }
-            if (_recExpectedCash !== null && (Number(cashCounted) - _recExpectedCash) !== 0 && !notes) {
+            if (_recExpectedCash !== null && Math.round((Number(cashCounted) - _recExpectedCash) * 100) !== 0 && !notes) {
                 errEl.textContent = 'There is a variance between cash counted and expected cash \u2014 please explain it in Notes before submitting.';
                 errEl.classList.remove('d-none');
                 return;
@@ -544,10 +768,11 @@
 
             try {
                 var payload = { date: date, cashCounted: Number(cashCounted), notes: notes || undefined };
-                if (isAdmin || isMultiBranch) payload.branchId = document.getElementById('bf-branch').value;
+                if (isAdmin || isMultiBranch) payload.branchId = isAdmin ? RBAC.scopeBranchId(document.getElementById('bf-branch').value) : document.getElementById('bf-branch').value;
                 await BranchFinance.submitReconciliation(payload);
                 bootstrap.Modal.getInstance(document.getElementById('modal-reconcile')).hide();
                 loadSummary();
+                loadVarianceHistory();
             } catch (err) {
                 errEl.textContent = err.message || 'Failed to submit.';
                 errEl.classList.remove('d-none');
@@ -600,6 +825,7 @@
 
         init();
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>

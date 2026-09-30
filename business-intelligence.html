@@ -1,0 +1,1271 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin — Business Snapshot</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .card-link-hover:hover { box-shadow: 0 0 0 1px var(--tblr-primary) inset; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Business Intelligence</div>
+                            <h2 class="page-title">Business Snapshot</h2>
+                        </div>
+                        <div class="col-auto d-none" id="bi-targets-btn-wrap">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-bi-targets">Manage
+                                Targets</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-4 d-none" id="bi-branch-wrap">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="bi-branch" class="form-select form-select-sm">
+                                        <option value="">All Branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label text-secondary small mb-1">From</label>
+                                    <input type="date" id="bi-date-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <label class="form-label text-secondary small mb-1">To</label>
+                                    <input type="date" id="bi-date-to" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-12 col-md-auto">
+                                    <button type="button" class="btn btn-outline-secondary w-100"
+                                        id="btn-bi-refresh">Refresh</button>
+                                </div>
+                            </div>
+                            <div class="text-secondary small mt-2" id="bi-period-note">—</div>
+                            <hr class="my-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Staff</label>
+                                    <select id="bi-filter-staff" class="form-select form-select-sm">
+                                        <option value="">All Staff</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Service</label>
+                                    <select id="bi-filter-service" class="form-select form-select-sm">
+                                        <option value="">All Services</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-secondary small mb-1">Search (customer, staff, or reference)</label>
+                                    <input type="text" id="bi-filter-search" class="form-control form-control-sm" placeholder="e.g. a customer's name, or a booking reference">
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <button type="button" class="btn btn-link btn-sm w-100 d-none" id="btn-bi-filter-clear">Clear filters</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtered Revenue -- shown only while a Global Filter Bar filter above is active -->
+                    <div class="card mb-3 d-none" id="bi-filtered-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                                <div>
+                                    <div class="text-secondary small">Filtered Revenue</div>
+                                    <div class="h2 mb-0 text-green" id="bi-filtered-total">—</div>
+                                    <div class="small text-secondary" id="bi-filtered-summary">—</div>
+                                </div>
+                            </div>
+                            <div id="bi-filtered-body"><div class="text-center text-secondary py-4">Loading…</div></div>
+                        </div>
+                    </div>
+
+                    <div id="bi-error" class="alert alert-danger d-none"></div>
+
+                    <!-- KPI cards -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" id="bi-revenue-card" data-kpi-card="revenue" title="Click to see where this came from">
+                                <div class="card-body">
+                                    <div class="text-secondary small d-flex justify-content-between align-items-center">
+                                        <span>Revenue</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary"><path d="M9 6l6 6l-6 6" /></svg>
+                                    </div>
+                                    <div class="h3 mb-0 text-green" id="bi-revenue">—</div>
+                                    <div class="small mt-1" id="bi-revenue-growth">—</div>
+                                    <div class="small text-secondary" id="bi-revenue-target">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" data-kpi-card="grossProfit" title="Click for detail">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Gross Profit</div>
+                                    <div class="h3 mb-0" id="bi-gross-profit">—</div>
+                                    <div class="small mt-1" id="bi-gross-margin">—</div>
+                                    <div class="small text-secondary" id="bi-gross-profit-target">—</div>
+                                    <div class="small text-warning mt-1 d-none" id="bi-obligation-line">—</div>
+                                    <div class="form-check form-switch mt-2 mb-0">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="bi-obligation-toggle" checked>
+                                        <label class="form-check-label small text-secondary" for="bi-obligation-toggle">Exclude obligations from profit</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" data-kpi-card="outstandingPayables" title="Click for detail">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Outstanding Obligations</div>
+                                    <div class="h3 mb-0" id="bi-payables">—</div>
+                                    <div class="small text-secondary">Unpaid vendor purchases · company-wide</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" data-kpi-card="inventoryValue" title="Click for detail">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Inventory Value</div>
+                                    <div class="h3 mb-0" id="bi-inventory-value">—</div>
+                                    <div class="small text-secondary" id="bi-inventory-note">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" data-kpi-card="expenses" title="Click for detail">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Expenses</div>
+                                    <div class="h3 mb-0" id="bi-expenses">—</div>
+                                    <div class="small mt-1" id="bi-expenses-growth">—</div>
+                                    <div class="small text-secondary" id="bi-expenses-ratio">—</div>
+                                    <div class="small text-secondary" id="bi-expenses-target">—</div>
+                                    <div class="small text-warning mt-1 d-none" id="bi-expenses-note">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card card-sm" data-kpi-card="outstandingReceivables">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Outstanding Receivables</div>
+                                    <div class="h3 mb-0" id="bi-receivables">—</div>
+                                    <div class="small text-secondary" id="bi-receivables-note">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" data-kpi-card="vendorOverpayments" title="Click for detail">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Vendor Overpayments</div>
+                                    <div class="h3 mb-0" id="bi-vendor-overpayments">—</div>
+                                    <div class="small text-secondary">Credit with vendors · not netted against payables</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" data-kpi-card="customers" title="Click for detail">
+                                <div class="card-body">
+                                    <div class="text-secondary small mb-2">Customers</div>
+                                    <div class="row text-center g-2">
+                                        <div class="col">
+                                            <div class="h3 mb-0" id="bi-cust-total">—</div>
+                                            <div class="text-secondary small">Total</div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h3 mb-0 text-green" id="bi-cust-new">—</div>
+                                            <div class="text-secondary small">New</div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h3 mb-0 text-blue" id="bi-cust-active">—</div>
+                                            <div class="text-secondary small">Active</div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h3 mb-0 text-yellow" id="bi-cust-atrisk">—</div>
+                                            <div class="text-secondary small">At Risk</div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="h3 mb-0 text-red" id="bi-cust-dormant">—</div>
+                                            <div class="text-secondary small">Dormant</div>
+                                        </div>
+                                    </div>
+                                    <div id="bi-customers-chart" style="height:170px"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small mb-2">Revenue Breakdown</div>
+                                    <div id="bi-revenue-breakdown-chart" style="height:170px"></div>
+                                    <div id="bi-revenue-breakdown" class="small">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" data-kpi-card="netProfit" title="Click for detail">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Net Profit</div>
+                                    <div class="h3 mb-0" id="bi-net-profit">—</div>
+                                    <div class="small mt-1" id="bi-net-profit-growth">—</div>
+                                    <div class="small text-secondary" id="bi-net-profit-notes">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="card card-sm card-link-hover" style="cursor:pointer" data-kpi-card="totalBankTransfers" title="Click for detail">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Bank Transfers</div>
+                                    <div class="h3 mb-0" id="bi-bank-transfers">—</div>
+                                    <div class="small text-secondary" id="bi-bank-transfers-count">—</div>
+                                    <div class="small text-warning mt-1 d-none" id="bi-bank-transfers-note">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Not yet available -->
+                    <div class="card d-none" id="bi-held-back-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Not Yet Available</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-secondary small mb-2">These cards are intentionally left out of this
+                                Snapshot until the underlying data is captured reliably enough to show — shown here so
+                                nothing looks silently missing.</div>
+                            <div id="bi-held-back">—</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Targets Modal -->
+    <div class="modal modal-blur fade" id="modal-bi-targets" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage KPI Targets</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div id="bi-target-error" class="alert alert-danger d-none mx-3 mt-3 mb-0 py-2"></div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Metric</label>
+                            <select id="bi-target-metric" class="form-select">
+                                <option value="REVENUE">Revenue</option>
+                                <option value="GROSS_PROFIT">Gross Profit</option>
+                                <option value="EXPENSES">Expenses</option>
+                                <option value="CUSTOMERS">Customers (visits)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Scope</label>
+                            <select id="bi-target-scope" class="form-select">
+                                <option value="COMPANY">Company-wide</option>
+                                <option value="BRANCH">Specific Branch</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-none" id="bi-target-branch-wrap">
+                            <label class="form-label">Branch</label>
+                            <select id="bi-target-branch" class="form-select"></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Month</label>
+                            <input type="month" id="bi-target-month" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Target Value (₦)</label>
+                            <input type="number" id="bi-target-value" class="form-control" min="0" step="1000">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Good threshold (%)</label>
+                            <input type="number" id="bi-target-good" class="form-control" placeholder="100"
+                                min="0" max="500">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Attention threshold (%)</label>
+                            <input type="number" id="bi-target-attention" class="form-control" placeholder="80"
+                                min="0" max="500">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btn-save-bi-target">
+                        <span class="spinner-border spinner-border-sm d-none me-1" id="spinner-bi-target"></span>
+                        Save Target
+                    </button>
+
+                    <hr>
+                    <h4>Configured Targets</h4>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Scope</th>
+                                    <th>Period</th>
+                                    <th>Target</th>
+                                    <th>Good / Attention</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bi-targets-tbody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-secondary py-3">Loading…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="bi-targets-pager"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue drill-down modal (Revenue -> Branch -> Date -> Service -> Staff -> Customer -> Transaction) -->
+    <div class="modal modal-blur fade" id="bi-drilldown-modal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Revenue Drill-Down</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-2" id="bi-drilldown-breadcrumb"></ol>
+                    </nav>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="text-secondary small" id="bi-drilldown-hint">Click a row to drill in further.</div>
+                        <div class="h4 mb-0" id="bi-drilldown-total">—</div>
+                    </div>
+                    <div id="bi-drilldown-body"><div class="text-center text-secondary py-4">Loading…</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick-insight modal for the other KPI cards -- decomposes the
+         figure from data the page already has (no extra request), and
+         links out to the dedicated sub-module page/existing Revenue
+         drill-down for the full breakdown, per the "reuse, don't rebuild"
+         drill-down approach (2026-09-16). -->
+    <div class="modal modal-blur fade" id="bi-insight-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bi-insight-title">Detail</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="bi-insight-body"><div class="text-center text-secondary py-4">Loading…</div></div>
+                <div class="modal-footer" id="bi-insight-footer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="./assets/js/apexcharts.min.js"></script>
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/staff.js"></script>
+    <script src="./assets/js/api-utils/services.js"></script>
+    <script src="./assets/js/api-utils/business-intelligence.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/simple-pager.js"></script>
+    <!-- Page guard: same read permission that shows this page in the sidebar (NavConfig). -->
+    <script>document.addEventListener('DOMContentLoaded', function () { RBAC.applyPageGuardForCurrentPage(); });</script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+
+        var isAdmin = false;
+        var isMultiBranch = false;
+        var _branchNameById = {};
+
+        /** Renders a table into `container` with a SimplePager under it --
+         * only the current page's rows are in the DOM. rowHtml(row, index)
+         * gets the row's index in the FULL array (for click handlers). */
+        function renderPagedTable(container, prefixHtml, theadHtml, rows, rowHtml, perPage) {
+            container.innerHTML = prefixHtml + '<div class="table-responsive"><table class="table table-vcenter card-table table-sm">' +
+                theadHtml + '<tbody></tbody></table></div><div class="bi-table-pager"></div>';
+            var tbody = container.querySelector('tbody');
+            var pager = SimplePager.attach(container.querySelector('.bi-table-pager'), { perPage: perPage || 25, onChange: paint });
+            function paint() {
+                var pageRows = pager.slice(rows);
+                var start = (pager.page - 1) * pager.perPage;
+                tbody.innerHTML = pageRows.map(function (r, i) { return rowHtml(r, start + i); }).join('');
+            }
+            paint();
+        }
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = (s === null || s === undefined) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function statusBadgeClass(status) {
+            if (status === 'GOOD') return 'badge bg-success-lt';
+            if (status === 'ATTENTION') return 'badge bg-warning-lt';
+            if (status === 'CRITICAL') return 'badge bg-danger-lt';
+            return '';
+        }
+
+        async function init() {
+            var user = Auth.getUser();
+            isAdmin = !!(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
+
+            if (RBAC.can('business_intelligence:manage_targets')) {
+                document.getElementById('bi-targets-btn-wrap').classList.remove('d-none');
+            }
+
+            var branchWrap = document.getElementById('bi-branch-wrap');
+            if (isAdmin) {
+                try {
+                    var branches = await Branches.getBranches();
+                    branches.forEach(function (b) { _branchNameById[b.id] = b.name; });
+                    var sel = document.getElementById('bi-branch');
+                    sel.innerHTML = '<option value="">All Branches</option>' +
+                        branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(sel);
+                    branchWrap.classList.remove('d-none');
+                } catch (err) { /* branch picker just stays hidden/empty */ }
+            } else {
+                try {
+                    var probe = await BusinessIntelligence.getBusinessSnapshot({});
+                    var myBranchIds = probe.branchIds || [];
+                    if (myBranchIds.length > 1) {
+                        isMultiBranch = true;
+                        var allBranches = await Branches.getBranches();
+                        allBranches.forEach(function (b) { _branchNameById[b.id] = b.name; });
+                        var mine = allBranches.filter(function (b) { return myBranchIds.indexOf(b.id) !== -1; });
+                        var sel = document.getElementById('bi-branch');
+                        sel.innerHTML = '<option value="">All My Branches</option>' +
+                            mine.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                        branchWrap.classList.remove('d-none');
+                    }
+                } catch (err) { /* fall through -- loadSnapshot below will surface any real error */ }
+            }
+
+            await loadFilterDropdowns();
+            loadSnapshot();
+        }
+
+        async function loadFilterDropdowns() {
+            var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bi-branch').value : undefined;
+            try {
+                var staffList = await Staff.getOptions(branchId ? { locationId: branchId } : {});
+                var staffSel = document.getElementById('bi-filter-staff');
+                var keptStaff = staffSel.value;
+                staffSel.innerHTML = '<option value="">All Staff</option>' +
+                    staffList.map(function (s) { return '<option value="STAFF:' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+                staffSel.value = keptStaff;
+            } catch (e) { /* dropdown just stays at "All Staff" */ }
+
+            try {
+                var services = await Services.getAll({ status: 'ACTIVE' });
+                var svcSel = document.getElementById('bi-filter-service');
+                var keptSvc = svcSel.value;
+                svcSel.innerHTML = '<option value="">All Services</option><option value="PRODUCTS">Product Sales</option>' +
+                    services.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+                svcSel.value = keptSvc;
+            } catch (e) { /* dropdown just stays at "All Services" */ }
+        }
+
+        async function loadSnapshot() {
+            var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bi-branch').value : undefined;
+            var dateFrom = document.getElementById('bi-date-from').value;
+            var dateTo = document.getElementById('bi-date-to').value;
+            var errEl = document.getElementById('bi-error');
+            errEl.classList.add('d-none');
+
+            try {
+                var snapshot = await BusinessIntelligence.getBusinessSnapshot({ branchId: branchId, dateFrom: dateFrom, dateTo: dateTo });
+                renderSnapshot(snapshot);
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to load snapshot.';
+                errEl.classList.remove('d-none');
+            }
+            loadFilteredRevenue();
+        }
+
+        // ── Global Filter Bar (Staff / Service / Search) -- a flat filtered
+        // total + transaction list layered on top of the snapshot above,
+        // rather than changing what the KPI cards themselves mean. ──
+        var _biFilterDebounce = null;
+
+        function currentGlobalFilters() {
+            return {
+                staffKey: document.getElementById('bi-filter-staff').value || undefined,
+                serviceKey: document.getElementById('bi-filter-service').value || undefined,
+                search: document.getElementById('bi-filter-search').value.trim() || undefined,
+            };
+        }
+
+        function hasActiveGlobalFilter() {
+            var f = currentGlobalFilters();
+            return !!(f.staffKey || f.serviceKey || f.search);
+        }
+
+        async function loadFilteredRevenue() {
+            var card = document.getElementById('bi-filtered-card');
+            var clearBtn = document.getElementById('btn-bi-filter-clear');
+            if (!hasActiveGlobalFilter()) {
+                card.classList.add('d-none');
+                clearBtn.classList.add('d-none');
+                return;
+            }
+            clearBtn.classList.remove('d-none');
+            card.classList.remove('d-none');
+            var body = document.getElementById('bi-filtered-body');
+            body.innerHTML = '<div class="text-center text-secondary py-4">Loading…</div>';
+
+            var branchId = (isAdmin || isMultiBranch) ? document.getElementById('bi-branch').value : undefined;
+            var dateFrom = document.getElementById('bi-date-from').value;
+            var dateTo = document.getElementById('bi-date-to').value;
+            var filters = currentGlobalFilters();
+
+            try {
+                var result = await BusinessIntelligence.getRevenueFiltered(Object.assign(
+                    { branchId: branchId, dateFrom: dateFrom, dateTo: dateTo }, filters));
+                document.getElementById('bi-filtered-total').textContent = BusinessIntelligence.formatMoney(result.total);
+                var parts = [];
+                var staffLabel = document.getElementById('bi-filter-staff');
+                var svcLabel = document.getElementById('bi-filter-service');
+                if (staffLabel.value) parts.push('Staff: ' + staffLabel.options[staffLabel.selectedIndex].text);
+                if (svcLabel.value) parts.push('Service: ' + svcLabel.options[svcLabel.selectedIndex].text);
+                if (filters.search) parts.push('Search: "' + filters.search + '"');
+                document.getElementById('bi-filtered-summary').textContent =
+                    result.transactionCount + ' transaction' + (result.transactionCount === 1 ? '' : 's') +
+                    (parts.length ? ' — ' + parts.join(', ') : '') +
+                    (result.byBranch.length > 1 ? ' across ' + result.byBranch.length + ' branches' : '');
+                renderFilteredTransactions(result);
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger mb-0">' + esc(err.message || 'Failed to load filtered revenue.') + '</div>';
+            }
+        }
+
+        function renderFilteredTransactions(result) {
+            var body = document.getElementById('bi-filtered-body');
+            var txns = result.transactions || [];
+            if (!txns.length) { body.innerHTML = '<div class="text-secondary small text-center py-4">No matching transactions in this period.</div>'; return; }
+            var showingNote = txns.length >= 2000 ? '<div class="text-secondary small mb-2">Showing the most recent 2,000 matching transactions.</div>' : '';
+            renderPagedTable(body, showingNote,
+                '<thead><tr><th>Reference</th><th>Branch</th><th>Staff</th><th>Customer</th><th>Service</th><th>Date</th><th class="text-end">Amount</th><th>Status</th></tr></thead>',
+                txns, function (t) {
+                    return '<tr>' +
+                        '<td>' + esc(t.reference) + '</td>' +
+                        '<td>' + esc(t.branchName) + '</td>' +
+                        '<td>' + esc(t.staffName || '—') + '</td>' +
+                        '<td>' + esc(t.customerName || 'Walk-in') + '</td>' +
+                        '<td>' + esc(t.serviceName || '—') + '</td>' +
+                        '<td>' + fmtDateTime(t.date) + '</td>' +
+                        '<td class="text-end">' + BusinessIntelligence.formatMoney(t.amount) + '</td>' +
+                        '<td>' + esc(t.status) + '</td>' +
+                        (t.note ? '</tr><tr><td colspan="8" class="text-secondary small pt-0">' + esc(t.note) + '</td>' : '') +
+                        '</tr>';
+                });
+        }
+
+        function clearGlobalFilters() {
+            document.getElementById('bi-filter-staff').value = '';
+            document.getElementById('bi-filter-service').value = '';
+            document.getElementById('bi-filter-search').value = '';
+            loadFilteredRevenue();
+        }
+
+        var _biGrossProfitRaw = 0;
+        var _biNetOfObligations = 0;
+        var _biObligationValue = 0;
+
+        // Obligation toggle: ON (default) shows profit net of outstanding vendor obligations,
+        // with the excluded amount called out beneath it, matching how the Business Snapshot's
+        // "Outstanding Obligations" card is meant to be read as a separate liability, not spendable
+        // profit. Turning it OFF folds the obligation back into the headline number (old behavior)
+        // and hides the line -- e.g. for a moment where you want the pre-obligation figure.
+        function renderGrossProfitWithObligationToggle() {
+            var excludeObligations = document.getElementById('bi-obligation-toggle').checked;
+            var shown = excludeObligations ? _biNetOfObligations : _biGrossProfitRaw;
+            document.getElementById('bi-gross-profit').textContent = BusinessIntelligence.formatMoney(shown);
+            var oblLine = document.getElementById('bi-obligation-line');
+            if (excludeObligations && _biObligationValue > 0) {
+                oblLine.textContent = 'Excl. ' + BusinessIntelligence.formatMoney(_biObligationValue) + ' in outstanding obligations';
+                oblLine.classList.remove('d-none');
+            } else {
+                oblLine.classList.add('d-none');
+            }
+            try { localStorage.setItem('hairlux_bi_exclude_obligations', excludeObligations ? '1' : '0'); } catch (e) { /* ignore */ }
+        }
+
+        function renderVsTarget(el, vsTarget) {
+            if (!vsTarget) { el.textContent = 'No target set for this month'; return; }
+            var pct = vsTarget.achievementPercent;
+            el.innerHTML = (pct === null ? '—' : pct.toFixed(1) + '% of target') +
+                (vsTarget.status ? ' <span class="' + statusBadgeClass(vsTarget.status) + '">' + vsTarget.status + '</span>' : '');
+        }
+
+        var _biCustomersChart = null;
+        var _biRevenueBreakdownChart = null;
+
+        /** Small donut, matching this app's ApexCharts house style (see
+         * assets/js/api-utils/analytics.js's Dashboard charts) but with a
+         * categorical palette instead of that file's single-series
+         * gradient, since a donut's whole point is comparing categories. */
+        function renderDonut(containerId, existingChartVar, labels, values, colors, valueFormatter) {
+            var el = document.getElementById(containerId);
+            if (!el || !window.ApexCharts) return existingChartVar;
+            if (existingChartVar) { existingChartVar.destroy(); }
+            el.innerHTML = '';
+            var chart = new ApexCharts(el, {
+                chart: { type: 'donut', fontFamily: 'inherit', height: 170, animations: { enabled: false } },
+                labels: labels,
+                series: values,
+                colors: colors,
+                dataLabels: { enabled: false },
+                legend: { show: true, position: 'bottom', fontSize: '11px', itemMargin: { horizontal: 6, vertical: 0 } },
+                tooltip: { theme: 'dark', y: { formatter: valueFormatter } },
+                stroke: { width: 1 },
+            });
+            chart.render();
+            return chart;
+        }
+
+        function renderCustomersDonut(s) {
+            var labels = ['New', 'Active', 'At Risk', 'Dormant'];
+            var values = [s.customers.new, s.customers.active, s.customers.atRisk, s.customers.dormant];
+            var colors = ['var(--tblr-green)', 'var(--tblr-blue)', 'var(--tblr-yellow)', 'var(--tblr-red)'];
+            if (values.every(function (v) { return !v; })) {
+                document.getElementById('bi-customers-chart').innerHTML = '<div class="text-secondary small text-center pt-4">No customers in scope yet</div>';
+                return;
+            }
+            _biCustomersChart = renderDonut('bi-customers-chart', _biCustomersChart, labels, values, colors, function (v) { return v + ' customer' + (v !== 1 ? 's' : ''); });
+        }
+
+        function renderRevenueBreakdownDonut(s) {
+            var b = s.revenue.breakdown;
+            var labels = ['Walk-in Bookings', 'Self-Service Bookings', 'Product Sales'];
+            var values = [b.salonBookingRevenue, b.selfServiceBookingRevenue, b.productSaleRevenue];
+            var colors = ['var(--tblr-primary)', 'var(--tblr-azure)', 'var(--tblr-teal)'];
+            if (values.every(function (v) { return !v; })) {
+                document.getElementById('bi-revenue-breakdown-chart').innerHTML = '<div class="text-secondary small text-center pt-4">No revenue in this period yet</div>';
+                return;
+            }
+            _biRevenueBreakdownChart = renderDonut('bi-revenue-breakdown-chart', _biRevenueBreakdownChart, labels, values, colors, function (v) { return BusinessIntelligence.formatMoney(v); });
+        }
+
+        // ── Revenue drill-down (Revenue -> Branch -> Date -> Service -> Staff -> Customer -> Transaction) ──
+        var _drilldownModal = null;
+        var _drilldownStack = []; // each entry is the filters object sent for that level, oldest first
+        var _drilldownBaseFilters = {};
+
+        function openRevenueDrilldown() {
+            _drilldownBaseFilters = {
+                branchId: document.getElementById('bi-branch').value || undefined,
+                dateFrom: document.getElementById('bi-date-from').value,
+                dateTo: document.getElementById('bi-date-to').value,
+            };
+            _drilldownStack = [Object.assign({}, _drilldownBaseFilters)];
+            if (!_drilldownModal) _drilldownModal = new bootstrap.Modal(document.getElementById('bi-drilldown-modal'));
+            _drilldownModal.show();
+            loadDrilldown();
+        }
+
+        async function loadDrilldown() {
+            var body = document.getElementById('bi-drilldown-body');
+            body.innerHTML = '<div class="text-center text-secondary py-4">Loading…</div>';
+            try {
+                var filters = _drilldownStack[_drilldownStack.length - 1];
+                var result = await BusinessIntelligence.getRevenueDrilldown(filters);
+                renderDrilldownBreadcrumb(result);
+                document.getElementById('bi-drilldown-total').textContent = BusinessIntelligence.formatMoney(result.total);
+                if (result.level === 'TRANSACTION') {
+                    renderDrilldownTransactions(result);
+                } else {
+                    renderDrilldownRows(result);
+                }
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger mb-0">' + esc(err.message || 'Failed to load drill-down.') + '</div>';
+            }
+        }
+
+        function renderDrilldownBreadcrumb(result) {
+            // The API's own breadcrumb array is label-only; we render one chip per
+            // _drilldownStack entry instead so clicking "back" always jumps to an
+            // exact filters snapshot we already have, rather than re-parsing labels.
+            var nav = document.getElementById('bi-drilldown-breadcrumb');
+            nav.innerHTML = _drilldownStack.map(function (_, idx) {
+                var label = idx === 0 ? 'Revenue' : (result.breadcrumb[idx - 1] ? result.breadcrumb[idx - 1].value : ('Level ' + idx));
+                var isLast = idx === _drilldownStack.length - 1;
+                return '<li class="breadcrumb-item' + (isLast ? ' active' : '') + '">' +
+                    (isLast ? esc(label) : '<a href="#" onclick="jumpDrilldown(' + idx + ');return false;">' + esc(label) + '</a>') +
+                    '</li>';
+            }).join('');
+        }
+
+        function jumpDrilldown(idx) {
+            _drilldownStack = _drilldownStack.slice(0, idx + 1);
+            loadDrilldown();
+        }
+
+        function drillInto(result, row) {
+            var next = Object.assign({}, _drilldownStack[_drilldownStack.length - 1]);
+            if (result.level === 'BRANCH') next.branchId = row.key;
+            else if (result.level === 'DATE') next.date = row.key;
+            else if (result.level === 'SERVICE') next.serviceKey = row.key;
+            else if (result.level === 'STAFF') next.staffKey = row.key;
+            else if (result.level === 'CUSTOMER') next.customerKey = row.key;
+            else return;
+            _drilldownStack.push(next);
+            loadDrilldown();
+        }
+
+        function renderDrilldownRows(result) {
+            var body = document.getElementById('bi-drilldown-body');
+            var rows = result.rows || [];
+            document.getElementById('bi-drilldown-hint').textContent = rows.length ? 'Click a row to drill in further.' : 'Nothing recorded at this level.';
+            if (!rows.length) { body.innerHTML = '<div class="text-secondary small text-center py-4">No revenue in this bucket.</div>'; return; }
+            window._biDrilldownResult = result;
+            renderPagedTable(body, '',
+                '<thead><tr><th>' + esc(levelColumnLabel(result.level)) + '</th><th class="text-end">Revenue</th><th class="text-end">Transactions</th><th></th></tr></thead>',
+                rows, function (r, idx) {
+                    return '<tr style="cursor:pointer" onclick="drillInto(window._biDrilldownResult, window._biDrilldownResult.rows[' + idx + '])">' +
+                        '<td>' + esc(r.label) + '</td>' +
+                        '<td class="text-end">' + BusinessIntelligence.formatMoney(r.revenue) + '</td>' +
+                        '<td class="text-end">' + r.transactionCount + '</td>' +
+                        '<td class="text-end text-secondary">›</td>' +
+                        '</tr>';
+                });
+        }
+
+        function levelColumnLabel(level) {
+            if (level === 'BRANCH') return 'Branch';
+            if (level === 'DATE') return 'Date';
+            if (level === 'SERVICE') return 'Service';
+            if (level === 'STAFF') return 'Staff';
+            if (level === 'CUSTOMER') return 'Customer';
+            return level;
+        }
+
+        function sourceLabel(source) {
+            if (source === 'SALON_BOOKING') return 'Walk-in Booking';
+            if (source === 'SELF_SERVICE_BOOKING') return 'Self-Service Booking';
+            if (source === 'PRODUCT_SALE') return 'Product Sale';
+            return source;
+        }
+
+        function renderDrilldownTransactions(result) {
+            var body = document.getElementById('bi-drilldown-body');
+            var txns = result.transactions || [];
+            document.getElementById('bi-drilldown-hint').textContent = 'Individual transactions -- end of the drill-down.';
+            if (!txns.length) { body.innerHTML = '<div class="text-secondary small text-center py-4">No transactions in this bucket.</div>'; return; }
+            renderPagedTable(body, '',
+                '<thead><tr><th>Reference</th><th>Type</th><th>Date</th><th class="text-end">Amount</th><th>Status</th></tr></thead>',
+                txns, function (t) {
+                    return '<tr>' +
+                        '<td>' + esc(t.reference) + '</td>' +
+                        '<td>' + esc(sourceLabel(t.source)) + '</td>' +
+                        '<td>' + fmtDateTime(t.date) + '</td>' +
+                        '<td class="text-end">' + BusinessIntelligence.formatMoney(t.amount) + '</td>' +
+                        '<td>' + esc(t.status) + '</td>' +
+                        (t.note ? '</tr><tr><td colspan="5" class="text-secondary small pt-0">' + esc(t.note) + '</td>' : '') +
+                        '</tr>';
+                });
+        }
+
+        function fmtDateTime(iso) {
+            try { return new Date(iso).toLocaleString('en-NG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+            catch (e) { return iso; }
+        }
+
+        /**
+         * Per-KPI-card permission redaction (Business Snapshot only -- see
+         * kpi-registry.ts). The API keeps every field present but swaps a
+         * restricted field's value for { restricted: true, reason }, so the
+         * frontend never needs a "field missing" case -- only this check.
+         */
+        function applyKpiRestriction(cardKey, fieldValue) {
+            var card = document.querySelector('[data-kpi-card="' + cardKey + '"]');
+            if (!card) return false;
+            var isRestricted = !!(fieldValue && fieldValue.restricted);
+            var overlay = card.querySelector('.kpi-restricted-overlay');
+            if (isRestricted) {
+                card.classList.add('kpi-restricted');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.className = 'kpi-restricted-overlay d-flex flex-column align-items-center justify-content-center text-center p-3';
+                    overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.94);border-radius:inherit;z-index:2;';
+                    overlay.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary mb-1"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M8 11v-4a4 4 0 1 1 8 0v4" /></svg><div class="small text-secondary">' + esc(fieldValue.reason || 'Restricted') + '</div>';
+                    card.style.position = 'relative';
+                    card.appendChild(overlay);
+                }
+            } else {
+                card.classList.remove('kpi-restricted');
+                if (overlay) overlay.remove();
+            }
+            return isRestricted;
+        }
+
+        function renderSnapshot(s) {
+            window._biSnapshot = s;
+            document.getElementById('bi-date-from').value = s.period.dateFrom;
+            document.getElementById('bi-date-to').value = s.period.dateTo;
+            document.getElementById('bi-period-note').textContent =
+                'Showing ' + s.period.dateFrom + ' to ' + s.period.dateTo + ' — compared against ' + s.previousPeriod.dateFrom + ' to ' + s.previousPeriod.dateTo + ' (' + s.previousPeriod.note + ')';
+
+            var revenueRestricted = applyKpiRestriction('revenue', s.revenue);
+            if (!revenueRestricted) {
+                document.getElementById('bi-revenue').textContent = BusinessIntelligence.formatMoney(s.revenue.value);
+                var growthEl = document.getElementById('bi-revenue-growth');
+                growthEl.textContent = s.revenue.growthPercent === null ? 'No prior-period data' : (BusinessIntelligence.formatPercent(s.revenue.growthPercent) + ' vs previous period');
+                growthEl.className = 'small mt-1 ' + (s.revenue.growthPercent > 0 ? 'text-success' : (s.revenue.growthPercent < 0 ? 'text-danger' : 'text-secondary'));
+                renderVsTarget(document.getElementById('bi-revenue-target'), s.revenue.vsTarget);
+            }
+
+            var payablesRestricted = !!(s.outstandingPayables && s.outstandingPayables.restricted);
+
+            if (!applyKpiRestriction('grossProfit', s.grossProfit)) {
+                _biGrossProfitRaw = s.grossProfit.value;
+                _biNetOfObligations = (typeof s.grossProfit.netOfObligations === 'number') ? s.grossProfit.netOfObligations : (s.grossProfit.value - (payablesRestricted ? 0 : s.outstandingPayables.value));
+                _biObligationValue = payablesRestricted ? 0 : s.outstandingPayables.value;
+                document.getElementById('bi-gross-margin').textContent = s.grossProfit.marginPercent.toFixed(1) + '% margin' +
+                    (s.grossProfit.linesWithUnknownCost > 0 ? ' · ' + s.grossProfit.linesWithUnknownCost + ' line(s) missing cost data' : '');
+                renderVsTarget(document.getElementById('bi-gross-profit-target'), s.grossProfit.vsTarget);
+                renderGrossProfitWithObligationToggle();
+            }
+
+            if (!applyKpiRestriction('outstandingPayables', s.outstandingPayables)) {
+                document.getElementById('bi-payables').textContent = BusinessIntelligence.formatMoney(s.outstandingPayables.value);
+            }
+            if (!applyKpiRestriction('vendorOverpayments', s.vendorOverpayments)) {
+                document.getElementById('bi-vendor-overpayments').textContent = BusinessIntelligence.formatMoney(s.vendorOverpayments.value);
+            }
+            if (!applyKpiRestriction('inventoryValue', s.inventoryValue)) {
+                document.getElementById('bi-inventory-value').textContent = BusinessIntelligence.formatMoney(s.inventoryValue.value);
+                document.getElementById('bi-inventory-note').textContent = s.inventoryValue.itemsWithUnknownCost > 0
+                    ? s.inventoryValue.itemsWithUnknownCost + ' item(s) excluded — no cost price on file'
+                    : 'Valued at cost price';
+            }
+
+            if (!applyKpiRestriction('expenses', s.expenses)) {
+                document.getElementById('bi-expenses').textContent = BusinessIntelligence.formatMoney(s.expenses.value);
+                var expGrowthEl = document.getElementById('bi-expenses-growth');
+                expGrowthEl.textContent = s.expenses.growthPercent === null ? 'No prior-period data' : (BusinessIntelligence.formatPercent(s.expenses.growthPercent) + ' vs previous period');
+                expGrowthEl.className = 'small mt-1 ' + (s.expenses.growthPercent > 0 ? 'text-danger' : (s.expenses.growthPercent < 0 ? 'text-success' : 'text-secondary'));
+                document.getElementById('bi-expenses-ratio').textContent = s.expenses.ratioPercent === null ? '—' : s.expenses.ratioPercent.toFixed(1) + '% of revenue';
+                renderVsTarget(document.getElementById('bi-expenses-target'), s.expenses.vsTarget);
+                var expNoteEl = document.getElementById('bi-expenses-note');
+                if (s.expenses.note) {
+                    expNoteEl.textContent = s.expenses.note;
+                    expNoteEl.classList.remove('d-none');
+                } else {
+                    expNoteEl.classList.add('d-none');
+                }
+            }
+
+            if (!applyKpiRestriction('outstandingReceivables', s.outstandingReceivables)) {
+                document.getElementById('bi-receivables').textContent = BusinessIntelligence.formatMoney(s.outstandingReceivables.value);
+                document.getElementById('bi-receivables-note').textContent = s.outstandingReceivables.note;
+            }
+
+            if (!applyKpiRestriction('customers', s.customers)) {
+                document.getElementById('bi-cust-total').textContent = s.customers.total;
+                document.getElementById('bi-cust-new').textContent = s.customers.new;
+                document.getElementById('bi-cust-active').textContent = s.customers.active;
+                document.getElementById('bi-cust-atrisk').textContent = s.customers.atRisk;
+                document.getElementById('bi-cust-dormant').textContent = s.customers.dormant;
+                renderCustomersDonut(s);
+            }
+
+            if (!applyKpiRestriction('netProfit', s.netProfit)) {
+                document.getElementById('bi-net-profit').textContent = BusinessIntelligence.formatMoney(s.netProfit.value);
+                var npGrowthEl = document.getElementById('bi-net-profit-growth');
+                npGrowthEl.textContent = s.netProfit.growthPercent === null ? 'No prior-period data' : (BusinessIntelligence.formatPercent(s.netProfit.growthPercent) + ' vs previous period');
+                npGrowthEl.className = 'small mt-1 ' + (s.netProfit.growthPercent > 0 ? 'text-success' : (s.netProfit.growthPercent < 0 ? 'text-danger' : 'text-secondary'));
+                document.getElementById('bi-net-profit-notes').textContent = (s.netProfit.notes || []).join(' ');
+            }
+
+            if (!applyKpiRestriction('totalBankTransfers', s.totalBankTransfers)) {
+                document.getElementById('bi-bank-transfers').textContent = BusinessIntelligence.formatMoney(s.totalBankTransfers.value);
+                document.getElementById('bi-bank-transfers-count').textContent = s.totalBankTransfers.transactionCount + ' transaction(s) in period';
+                var btNoteEl = document.getElementById('bi-bank-transfers-note');
+                if (s.totalBankTransfers.note) {
+                    btNoteEl.textContent = s.totalBankTransfers.note;
+                    btNoteEl.classList.remove('d-none');
+                } else {
+                    btNoteEl.classList.add('d-none');
+                }
+            }
+
+            if (!revenueRestricted) {
+                document.getElementById('bi-revenue-breakdown').innerHTML =
+                    '<div class="d-flex justify-content-between py-1"><span class="text-secondary">Walk-in Bookings</span><span>' + BusinessIntelligence.formatMoney(s.revenue.breakdown.salonBookingRevenue) + '</span></div>' +
+                    '<div class="d-flex justify-content-between py-1"><span class="text-secondary">Self-Service Bookings</span><span>' + BusinessIntelligence.formatMoney(s.revenue.breakdown.selfServiceBookingRevenue) + '</span></div>' +
+                    '<div class="d-flex justify-content-between py-1"><span class="text-secondary">Product Sales</span><span>' + BusinessIntelligence.formatMoney(s.revenue.breakdown.productSaleRevenue) + '</span></div>';
+                renderRevenueBreakdownDonut(s);
+            }
+
+            var heldBackCard = document.getElementById('bi-held-back-card');
+            if (s.heldBack && s.heldBack.length) {
+                document.getElementById('bi-held-back').innerHTML = s.heldBack.map(function (h) {
+                    return '<div class="mb-2"><span class="badge bg-secondary-lt me-2">' + esc(h.metric.replace(/_/g, ' ')) + '</span><span class="text-secondary small">' + esc(h.reason) + '</span></div>';
+                }).join('');
+                heldBackCard.classList.remove('d-none');
+            } else {
+                heldBackCard.classList.add('d-none');
+            }
+        }
+
+        document.getElementById('btn-bi-refresh').addEventListener('click', loadSnapshot);
+        document.getElementById('bi-branch').addEventListener('change', function () { loadFilterDropdowns(); loadSnapshot(); });
+        document.getElementById('bi-filter-staff').addEventListener('change', loadFilteredRevenue);
+        document.getElementById('bi-filter-service').addEventListener('change', loadFilteredRevenue);
+        document.getElementById('bi-filter-search').addEventListener('input', function () {
+            clearTimeout(_biFilterDebounce);
+            _biFilterDebounce = setTimeout(loadFilteredRevenue, 300);
+        });
+        document.getElementById('btn-bi-filter-clear').addEventListener('click', clearGlobalFilters);
+
+        (function restoreObligationTogglePreference() {
+            try {
+                var saved = localStorage.getItem('hairlux_bi_exclude_obligations');
+                if (saved === '0') document.getElementById('bi-obligation-toggle').checked = false;
+            } catch (e) { /* ignore -- defaults to checked (exclude obligations) */ }
+        })();
+        document.getElementById('bi-obligation-toggle').addEventListener('change', renderGrossProfitWithObligationToggle);
+        document.getElementById('bi-revenue-card').addEventListener('click', openRevenueDrilldown);
+
+        // ── Quick-insight modal for the other 8 KPI cards ──────────────────
+        var _insightModal = null;
+
+        function biRangeQuery() {
+            var branchId = document.getElementById('bi-branch').value;
+            var dateFrom = document.getElementById('bi-date-from').value;
+            var dateTo = document.getElementById('bi-date-to').value;
+            var p = new URLSearchParams();
+            if (branchId) p.set('branchId', branchId);
+            if (dateFrom) p.set('dateFrom', dateFrom);
+            if (dateTo) p.set('dateTo', dateTo);
+            return p.toString();
+        }
+
+        // Financial Transactions uses from/to (not dateFrom/dateTo) for its
+        // own date filters -- matched here rather than changing that page's
+        // established query-param names.
+        function biLedgerQuery(extra) {
+            var branchId = document.getElementById('bi-branch').value;
+            var dateFrom = document.getElementById('bi-date-from').value;
+            var dateTo = document.getElementById('bi-date-to').value;
+            var p = new URLSearchParams();
+            if (branchId) p.set('branchId', branchId);
+            if (dateFrom) p.set('from', dateFrom);
+            if (dateTo) p.set('to', dateTo);
+            Object.keys(extra || {}).forEach(function (k) { p.set(k, extra[k]); });
+            return p.toString();
+        }
+
+        function biInsightRow(label, value) {
+            return '<div class="d-flex justify-content-between py-1"><span class="text-secondary">' + esc(label) + '</span><span>' + value + '</span></div>';
+        }
+
+        function renderPayablesInsight() {
+            var s = window._biSnapshot;
+            var rows = biInsightRow('Outstanding Payables', BusinessIntelligence.formatMoney(s.outstandingPayables.value)) +
+                biInsightRow('Vendor Overpayments', BusinessIntelligence.formatMoney(s.vendorOverpayments.value));
+            if (s.outstandingPayables.note) rows += '<div class="text-secondary small mt-2">' + esc(s.outstandingPayables.note) + '</div>';
+            return {
+                title: 'Financial Position',
+                body: rows,
+                footer: '<a class="btn btn-primary" href="cost-inventory-financial.html?' + biRangeQuery() + '">View vendor-by-vendor balances \u2192</a>',
+            };
+        }
+
+        var BI_INSIGHT_RENDERERS = {
+            grossProfit: function (s) {
+                var d = s.grossProfit;
+                var rows = biInsightRow('Gross Profit', BusinessIntelligence.formatMoney(d.value)) +
+                    biInsightRow('Margin', d.marginPercent.toFixed(1) + '%') +
+                    biInsightRow('Cost of Goods Sold (COGS)', BusinessIntelligence.formatMoney(d.cogs)) +
+                    biInsightRow('Net of Outstanding Obligations', BusinessIntelligence.formatMoney(d.netOfObligations));
+                if (d.linesWithUnknownCost > 0) rows += '<div class="text-warning small mt-2">' + d.linesWithUnknownCost + ' revenue line(s) missing cost data are excluded from this figure.</div>';
+                return {
+                    title: 'Gross Profit',
+                    body: rows,
+                    footer: '<button type="button" class="btn btn-outline-primary" onclick="_insightModal.hide();openRevenueDrilldown();">Explore Revenue breakdown</button>' +
+                        '<a class="btn btn-primary" href="cost-inventory-financial.html?' + biRangeQuery() + '">View Cost, Inventory &amp; Financial Position \u2192</a>',
+                };
+            },
+            expenses: function (s) {
+                var d = s.expenses;
+                var rows = biInsightRow('Total Expenses', BusinessIntelligence.formatMoney(d.value)) +
+                    biInsightRow('vs Previous Period', d.growthPercent === null ? 'No prior-period data' : BusinessIntelligence.formatPercent(d.growthPercent)) +
+                    biInsightRow('Expense Ratio', d.ratioPercent === null ? '—' : d.ratioPercent.toFixed(1) + '% of revenue');
+                if (d.note) rows += '<div class="text-warning small mt-2">' + esc(d.note) + '</div>';
+                return {
+                    title: 'Expenses',
+                    body: rows,
+                    footer: '<a class="btn btn-primary" href="cost-inventory-financial.html?' + biRangeQuery() + '">View full Cost breakdown by category &amp; branch \u2192</a>',
+                };
+            },
+            outstandingPayables: function () { return renderPayablesInsight(); },
+            vendorOverpayments: function () { return renderPayablesInsight(); },
+            inventoryValue: function (s) {
+                var d = s.inventoryValue;
+                var rows = biInsightRow('Inventory Value', BusinessIntelligence.formatMoney(d.value)) +
+                    biInsightRow('Valuation basis', 'Cost price');
+                if (d.itemsWithUnknownCost > 0) rows += '<div class="text-warning small mt-2">' + d.itemsWithUnknownCost + ' item(s) excluded — no cost price on file.</div>';
+                return {
+                    title: 'Inventory Value',
+                    body: rows,
+                    footer: '<a class="btn btn-primary" href="cost-inventory-financial.html?' + biRangeQuery() + '">View stock movement, dead stock &amp; reorder detail \u2192</a>',
+                };
+            },
+            customers: function (s) {
+                var d = s.customers;
+                var rows = biInsightRow('Total Customers', d.total) +
+                    biInsightRow('New', d.new) + biInsightRow('Active', d.active) + biInsightRow('At Risk', d.atRisk) + biInsightRow('Dormant', d.dormant);
+                return {
+                    title: 'Customers',
+                    body: rows,
+                    footer: '<a class="btn btn-primary" href="customers-sales.html?' + biRangeQuery() + '">View customer lifecycle &amp; top customers \u2192</a>',
+                };
+            },
+            netProfit: function (s) {
+                var rows = biInsightRow('Net Profit', BusinessIntelligence.formatMoney(s.netProfit.value)) +
+                    biInsightRow('= Gross Profit', BusinessIntelligence.formatMoney(s.grossProfit.value)) +
+                    biInsightRow('− Expenses', BusinessIntelligence.formatMoney(s.expenses.value));
+                (s.netProfit.notes || []).forEach(function (n) { rows += '<div class="text-secondary small mt-2">' + esc(n) + '</div>'; });
+                return {
+                    title: 'Net Profit',
+                    body: rows,
+                    footer: '<button type="button" class="btn btn-outline-primary" onclick="openInsight(\'grossProfit\')">Gross Profit detail</button>' +
+                        '<button type="button" class="btn btn-outline-primary" onclick="openInsight(\'expenses\')">Expenses detail</button>',
+                };
+            },
+            totalBankTransfers: function (s) {
+                var d = s.totalBankTransfers;
+                var rows = biInsightRow('Total Bank Transfers', BusinessIntelligence.formatMoney(d.value)) +
+                    biInsightRow('Transactions in period', d.transactionCount);
+                if (d.unknownPaymentMethodCount > 0 && d.note) rows += '<div class="text-warning small mt-2">' + esc(d.note) + '</div>';
+                return {
+                    title: 'Total Bank Transfers',
+                    body: rows,
+                    footer: '<a class="btn btn-primary" href="financial-transactions.html?' + biLedgerQuery({ paymentMethod: 'BANK_TRANSFER' }) + '">View every bank-transfer transaction \u2192</a>',
+                };
+            },
+        };
+
+        function openInsight(cardKey) {
+            var card = document.querySelector('[data-kpi-card="' + cardKey + '"]');
+            if (card && card.classList.contains('kpi-restricted')) return; // overlay already explains why
+            var s = window._biSnapshot;
+            var renderer = BI_INSIGHT_RENDERERS[cardKey];
+            if (!s || !renderer) return;
+            var result = renderer(s);
+            document.getElementById('bi-insight-title').textContent = result.title;
+            document.getElementById('bi-insight-body').innerHTML = result.body;
+            document.getElementById('bi-insight-footer').innerHTML = result.footer;
+            if (!_insightModal) _insightModal = new bootstrap.Modal(document.getElementById('bi-insight-modal'));
+            _insightModal.show();
+        }
+
+        Object.keys(BI_INSIGHT_RENDERERS).forEach(function (cardKey) {
+            var card = document.querySelector('[data-kpi-card="' + cardKey + '"]');
+            if (card) card.addEventListener('click', function () { openInsight(cardKey); });
+        });
+
+        // ---- Targets modal ----
+
+        document.getElementById('bi-target-scope').addEventListener('change', function () {
+            document.getElementById('bi-target-branch-wrap').classList.toggle('d-none', this.value !== 'BRANCH');
+        });
+
+        var _biTargets = [];
+        var _biTargetsPager = null;
+
+        function paintTargets() {
+            var tbody = document.getElementById('bi-targets-tbody');
+            tbody.innerHTML = _biTargetsPager.slice(_biTargets).map(function (t) {
+                var scope = t.entityType === 'COMPANY' ? 'Company-wide' : (_branchNameById[t.entityId] || 'Unknown branch');
+                var period = new Date(t.periodStart).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+                return '<tr>' +
+                    '<td>' + esc(t.metric.replace(/_/g, ' ')) + '</td>' +
+                    '<td>' + esc(scope) + '</td>' +
+                    '<td>' + esc(period) + '</td>' +
+                    '<td>' + BusinessIntelligence.formatMoney(t.targetValue) + '</td>' +
+                    '<td>' + (t.goodThreshold || 100) + '% / ' + (t.attentionThreshold || 80) + '%</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        async function refreshTargetsList() {
+            if (!_biTargetsPager) _biTargetsPager = SimplePager.attach('#bi-targets-pager', { perPage: 10, onChange: paintTargets });
+            _biTargetsPager.slice([]);
+            var tbody = document.getElementById('bi-targets-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            try {
+                var targets = await BusinessIntelligence.listTargets('MONTH');
+                if (!targets.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No targets configured yet.</td></tr>';
+                    return;
+                }
+                _biTargets = targets;
+                _biTargetsPager.reset();
+                paintTargets();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Failed to load targets.</td></tr>';
+            }
+        }
+
+        document.getElementById('btn-bi-targets').addEventListener('click', async function () {
+            document.getElementById('bi-target-error').classList.add('d-none');
+            var branchSel = document.getElementById('bi-target-branch');
+            if (!branchSel.options.length) {
+                try {
+                    var branches = await Branches.getBranches();
+                    branches.forEach(function (b) { _branchNameById[b.id] = b.name; });
+                    branchSel.innerHTML = branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(branchSel);
+                } catch (err) { /* leave empty -- BRANCH scope simply won't be selectable */ }
+            }
+            var now = new Date(Date.now() + 60 * 60 * 1000); // WAT
+            document.getElementById('bi-target-month').value = now.toISOString().slice(0, 7);
+            new bootstrap.Modal(document.getElementById('modal-bi-targets')).show();
+            refreshTargetsList();
+        });
+
+        document.getElementById('btn-save-bi-target').addEventListener('click', async function () {
+            var errEl = document.getElementById('bi-target-error');
+            errEl.classList.add('d-none');
+
+            var scope = document.getElementById('bi-target-scope').value;
+            var month = document.getElementById('bi-target-month').value;
+            var value = document.getElementById('bi-target-value').value;
+
+            if (!month) { errEl.textContent = 'Choose a month.'; errEl.classList.remove('d-none'); return; }
+            if (value === '' || isNaN(Number(value)) || Number(value) < 0) {
+                errEl.textContent = 'Enter a valid target value.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            if (scope === 'BRANCH' && !document.getElementById('bi-target-branch').value) {
+                errEl.textContent = 'Select a branch for a branch-scoped target.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            var payload = {
+                metric: document.getElementById('bi-target-metric').value,
+                entityType: scope,
+                periodType: 'MONTH',
+                periodStart: month + '-01',
+                targetValue: Number(value),
+            };
+            if (scope === 'BRANCH') payload.entityId = document.getElementById('bi-target-branch').value;
+            var good = document.getElementById('bi-target-good').value;
+            var attention = document.getElementById('bi-target-attention').value;
+            if (good !== '') payload.goodThreshold = Number(good);
+            if (attention !== '') payload.attentionThreshold = Number(attention);
+
+            var btn = this;
+            var spinner = document.getElementById('spinner-bi-target');
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+            try {
+                await BusinessIntelligence.setTarget(payload);
+                document.getElementById('bi-target-value').value = '';
+                document.getElementById('bi-target-good').value = '';
+                document.getElementById('bi-target-attention').value = '';
+                await refreshTargetsList();
+                loadSnapshot();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to save target.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        init();
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

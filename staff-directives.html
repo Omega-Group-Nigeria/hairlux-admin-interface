@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Tasks &amp; Directives</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -29,6 +38,7 @@
             vertical-align: middle;
         }
     </style>
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -205,6 +215,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="list-pager"></div>
                     </div>
                 </div>
             </div>
@@ -309,8 +320,15 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-comms.js"></script>
+    <script src="./assets/js/simple-pager.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="./assets/js/rich-text-editor.js"></script>
     <script>
+        // Client-side paging for long lists (assets/js/simple-pager.js).
+        var _renderPage = null;
+        var _pager = SimplePager.attach('#list-pager', { onChange: function () { if (_renderPage) _renderPage(); } });
+
         var bootstrap = window.tabler.bootstrap;
 
         Auth.requireAuth();
@@ -325,13 +343,16 @@
 
         async function ensureBranchesCache() {
             if (_branchesCache) return _branchesCache;
-            _branchesCache = await Staff.getLocations();
+            _branchesCache = RBAC.filterBranches(await Staff.getLocations());
             return _branchesCache;
         }
 
         async function ensureStaffCache() {
             if (_staffCache) return _staffCache;
-            _staffCache = await Staff.getOptions();
+            var managedIds = RBAC.getManagedBranchIds();
+            _staffCache = (await Staff.getOptions()).filter(function (s) {
+                return !RBAC.isManagerScoped() || managedIds.indexOf(s.locationId) !== -1;
+            });
             return _staffCache;
         }
 
@@ -393,6 +414,7 @@
                 '<div class="form-hint">Creates one independent task per staff member there — each tracks their own status separately.</div>' +
                 '</div>';
             container.appendChild(row);
+            RichTextEditor.attach(row.querySelector('.task-body'));
 
             var removeBtn = row.querySelector(".task-remove-row");
             removeBtn.addEventListener("click", function () {
@@ -456,34 +478,39 @@
             options = options || {};
             document.getElementById("results-label").textContent = "Loading…";
             try {
+                _currentFilters.locationId = RBAC.scopeBranchId(_currentFilters.locationId) || undefined;
                 var directives = await StaffComms.getAllDirectives(_currentFilters);
                 _directivesCache = directives;
                 var tbody = document.getElementById("directives-tbody");
-                if (!directives.length) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No tasks found.</td></tr>';
-                } else {
-                    tbody.innerHTML = directives.map(function (d) {
-                        var assignedTo = d.targetStaff ? d.targetStaff.name + " (" + (d.targetStaff.staffCode || "") + ")" : "-";
-                        var dueCell = d.dueDate
-                            ? '<span class="' + (isOverdue(d) ? "text-danger fw-semibold" : "") + '">' + StaffComms.formatDate(d.dueDate) + (isOverdue(d) ? " (overdue)" : "") + '</span>'
-                            : '<span class="text-secondary">—</span>';
-                        var evidenceCell = d.evidenceUrl
-                            ? '<button type="button" class="btn btn-ghost-primary btn-sm directive-view-evidence" data-id="' + d.id + '">View</button>'
-                            : '<span class="text-secondary small">—</span>';
-                        return '<tr>' +
-                            '<td class="fw-semibold">' + esc(d.title) + '</td>' +
-                            '<td>' + esc(assignedTo) + '</td>' +
-                            '<td>' + dueCell + '</td>' +
-                            '<td>' + StaffComms.directiveStatusBadge(d.status) + '</td>' +
-                            '<td>' + evidenceCell + '</td>' +
-                            '<td>' + esc(StaffComms.createdByName(d)) + '</td>' +
-                            '<td class="text-secondary small">' + timeAgo(d.createdAt) + '</td>' +
-                            '<td class="text-nowrap">' +
-                            '<button type="button" class="btn btn-ghost-secondary btn-sm directive-edit" data-id="' + d.id + '">Edit</button> ' +
-                            '<button type="button" class="btn btn-ghost-danger btn-sm directive-delete" data-id="' + d.id + '">Delete</button>' +
-                            '</td></tr>';
-                    }).join("");
-                }
+                _pager.reset();
+                (_renderPage = function () {
+                    var pageRows = _pager.slice(directives);
+                    if (!directives.length) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No tasks found.</td></tr>';
+                    } else {
+                        tbody.innerHTML = pageRows.map(function (d) {
+                            var assignedTo = d.targetStaff ? d.targetStaff.name + " (" + (d.targetStaff.staffCode || "") + ")" : "-";
+                            var dueCell = d.dueDate
+                                ? '<span class="' + (isOverdue(d) ? "text-danger fw-semibold" : "") + '">' + StaffComms.formatDate(d.dueDate) + (isOverdue(d) ? " (overdue)" : "") + '</span>'
+                                : '<span class="text-secondary">—</span>';
+                            var evidenceCell = d.evidenceUrl
+                                ? '<button type="button" class="btn btn-ghost-primary btn-sm directive-view-evidence" data-id="' + d.id + '">View</button>'
+                                : '<span class="text-secondary small">—</span>';
+                            return '<tr>' +
+                                '<td class="fw-semibold">' + esc(d.title) + '</td>' +
+                                '<td>' + esc(assignedTo) + '</td>' +
+                                '<td>' + dueCell + '</td>' +
+                                '<td>' + StaffComms.directiveStatusBadge(d.status) + '</td>' +
+                                '<td>' + evidenceCell + '</td>' +
+                                '<td>' + esc(StaffComms.createdByName(d)) + '</td>' +
+                                '<td class="text-secondary small">' + timeAgo(d.createdAt) + '</td>' +
+                                '<td class="text-nowrap">' +
+                                (RBAC.can(StaffComms.PERMISSIONS.TASKS_UPDATE) ? '<button type="button" class="btn btn-ghost-secondary btn-sm directive-edit" data-id="' + d.id + '">Edit</button> ' : '') +
+                                (RBAC.can(StaffComms.PERMISSIONS.TASKS_DELETE) ? '<button type="button" class="btn btn-ghost-danger btn-sm directive-delete" data-id="' + d.id + '">Delete</button>' : '') +
+                                '</td></tr>';
+                        }).join("");
+                    }
+                })();
                 document.getElementById("results-label").textContent = directives.length + " total";
 
                 document.getElementById("stat-pending").textContent = directives.filter(function (d) { return d.status === "PENDING"; }).length;
@@ -502,6 +529,7 @@
             try {
                 var branches = await ensureBranchesCache();
                 document.getElementById("filter-location").innerHTML = '<option value="">All branches</option>' + branchOptionsHtml(branches);
+                RBAC.applyBranchScope(document.getElementById("filter-location"));
                 await loadFilterStaffOptions();
             } catch (e) {
                 flashPageAlert("danger", "Failed to load filter options: " + (e.message || ""));
@@ -516,7 +544,7 @@
         // re-fetch pattern already applied elsewhere.
         async function loadFilterStaffOptions(branchId) {
             try {
-                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
+                var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
                 document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffOptionsHtml(staffList);
             } catch (e) { /* non-fatal — staff filter just stays at "All staff" */ }
         }
@@ -536,6 +564,7 @@
             ["filter-status", "filter-location", "filter-staff", "filter-due-after", "filter-due-before"].forEach(function (id) {
                 document.getElementById(id).value = "";
             });
+            document.getElementById("filter-location").value = RBAC.scopeBranchId("");
             _currentFilters = {};
             loadFilterStaffOptions();
             loadDirectives();
@@ -607,7 +636,7 @@
         }
 
         function openDirectiveModal() {
-            if (!RBAC.can(StaffComms.PERMISSIONS.MANAGE)) return;
+            if (!RBAC.can(StaffComms.PERMISSIONS.TASKS_CREATE)) return;
             document.getElementById("modal-directive-error").classList.add("d-none");
             document.getElementById("directive-task-rows").innerHTML = "";
             addTaskRow();
@@ -679,7 +708,7 @@
             document.getElementById("directive-preview-list").innerHTML = tasks.map(function (t, i) {
                 return '<div class="card card-body mb-2">' +
                     '<div class="fw-semibold">' + esc(t.title) + '</div>' +
-                    '<div class="text-secondary small mb-1">' + esc(t.body) + '</div>' +
+                    '<div class="text-secondary small mb-1">' + t.body + '</div>' /* rich-text HTML from the editor */ +
                     '<div class="small"><strong>To:</strong> ' + esc(t._recipientLabel) + '</div>' +
                     (t.dueDate ? '<div class="small"><strong>Due:</strong> ' + esc(t.dueDate) + '</div>' : '') +
                     '</div>';
@@ -725,10 +754,12 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
+            // Same rich-text editor as Staff → Training Library (LMS).
+            RichTextEditor.attach("edit-directive-body");
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
                 RBAC.applyNavVisibility();
-                if (RBAC.can(StaffComms.PERMISSIONS.MANAGE)) {
+                if (RBAC.can(StaffComms.PERMISSIONS.TASKS_CREATE)) {
                     document.getElementById("btn-add-directive").classList.remove("d-none");
                 }
             });
@@ -765,6 +796,7 @@
             loadDirectives();
         });
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

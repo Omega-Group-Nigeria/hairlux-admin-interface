@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin — Forecast &amp; Alerts</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Business Intelligence</div>
+                            <h2 class="page-title">Forecast &amp; Alerts</h2>
+                        </div>
+                        <div class="col-auto d-none" id="fa-run-detection-wrap">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-fa-run-detection">Run
+                                Detection Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-3 d-none" id="fa-branch-wrap">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="fa-branch" class="form-select form-select-sm">
+                                        <option value="">All Branches (Forecast: Company-wide)</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Alert Status</label>
+                                    <select id="fa-status" class="form-select form-select-sm">
+                                        <option value="">All</option>
+                                        <option value="OPEN" selected>Open</option>
+                                        <option value="ACKNOWLEDGED">Acknowledged</option>
+                                        <option value="RESOLVED">Resolved</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Severity</label>
+                                    <select id="fa-severity" class="form-select form-select-sm">
+                                        <option value="">All</option>
+                                        <option value="CRITICAL">Critical</option>
+                                        <option value="WARNING">Warning</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-auto">
+                                    <button type="button" class="btn btn-outline-secondary w-100"
+                                        id="btn-fa-reset">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="fa-error" class="alert alert-danger d-none"></div>
+
+                    <h3 class="mb-2">Forecast <span class="text-secondary small" id="fa-forecast-month"></span></h3>
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-6 col-lg">
+                            <div class="card card-sm"><div class="card-body">
+                                <div class="text-secondary small">Projected Revenue</div>
+                                <div class="h3 mb-0" id="fa-fc-revenue">—</div>
+                                <div class="small" id="fa-fc-revenue-target">—</div>
+                            </div></div>
+                        </div>
+                        <div class="col-6 col-lg">
+                            <div class="card card-sm"><div class="card-body">
+                                <div class="text-secondary small">Projected Gross Profit</div>
+                                <div class="h3 mb-0" id="fa-fc-gp">—</div>
+                                <div class="small" id="fa-fc-gp-target">—</div>
+                            </div></div>
+                        </div>
+                        <div class="col-6 col-lg">
+                            <div class="card card-sm"><div class="card-body">
+                                <div class="text-secondary small">Projected Net Profit</div>
+                                <div class="h3 mb-0" id="fa-fc-np">—</div>
+                                <div class="small text-secondary">Gross Profit − Expenses</div>
+                            </div></div>
+                        </div>
+                        <div class="col-6 col-lg">
+                            <div class="card card-sm"><div class="card-body">
+                                <div class="text-secondary small">Projected Expenses</div>
+                                <div class="h3 mb-0" id="fa-fc-expenses">—</div>
+                                <div class="small" id="fa-fc-expenses-target">—</div>
+                            </div></div>
+                        </div>
+                        <div class="col-6 col-lg">
+                            <div class="card card-sm"><div class="card-body">
+                                <div class="text-secondary small">Projected Customers</div>
+                                <div class="h3 mb-0" id="fa-fc-customers">—</div>
+                                <div class="small text-secondary" id="fa-fc-days">—</div>
+                            </div></div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="text-secondary small mb-2">Month to Date vs Projected (full month)</div>
+                            <div id="fa-forecast-chart" style="height:260px"></div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h3 class="mb-2">Alerts</h3>
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-5">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="text-secondary small mb-2">Alerts by Severity</div>
+                                    <div id="fa-alert-severity-chart" style="height:200px"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-7">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="text-secondary small mb-2">Alerts by Type</div>
+                                    <div id="fa-alert-type-chart" style="height:200px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Severity</th>
+                                        <th>Type</th>
+                                        <th>Scope</th>
+                                        <th>Alert</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fa-alerts-tbody">
+                                    <tr><td colspan="7" class="text-center text-secondary py-3">Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="fa-alerts-pager"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evidence modal -->
+    <div class="modal modal-blur fade" id="fa-evidence-modal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Alert Evidence</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="fa-evidence-title" class="fw-bold mb-1"></p>
+                    <p id="fa-evidence-message" class="mb-0" style="white-space: pre-wrap;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="./assets/js/apexcharts.min.js"></script>
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/business-intelligence.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/simple-pager.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('business_intelligence:forecast_alerts:read');
+
+        var isAdmin = false;
+        var latestAlerts = [];
+        var branchNameById = {};
+        var alertsPager = null;
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = (s === null || s === undefined) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function fmtDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function severityBadge(sev) {
+            if (sev === 'CRITICAL') return '<span class="badge bg-red-lt">Critical</span>';
+            if (sev === 'WARNING') return '<span class="badge bg-yellow-lt">Warning</span>';
+            return '<span class="badge bg-secondary-lt">' + esc(sev) + '</span>';
+        }
+
+        function statusBadge(status) {
+            if (status === 'OPEN') return '<span class="badge bg-red-lt">Open</span>';
+            if (status === 'ACKNOWLEDGED') return '<span class="badge bg-yellow-lt">Acknowledged</span>';
+            if (status === 'RESOLVED') return '<span class="badge bg-green-lt">Resolved</span>';
+            return '<span class="badge bg-secondary-lt">' + esc(status) + '</span>';
+        }
+
+        function typeLabel(type) {
+            return String(type || '').replace(/_/g, ' ').replace(/\w\S*/g, function (t) {
+                return t.charAt(0).toUpperCase() + t.substr(1).toLowerCase();
+            });
+        }
+
+        function statusClass(status) {
+            if (status === 'GOOD') return 'text-green';
+            if (status === 'ATTENTION') return 'text-yellow';
+            if (status === 'CRITICAL') return 'text-red';
+            return 'text-secondary';
+        }
+
+        async function init() {
+            var user = Auth.getUser();
+            isAdmin = !!(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
+
+            if (isAdmin) {
+                try {
+                    var branches = await Branches.getBranches();
+                    branches.forEach(function (b) { branchNameById[b.id] = b.name; });
+                    var sel = document.getElementById('fa-branch');
+                    sel.innerHTML = '<option value="">All Branches (Forecast: Company-wide)</option>' +
+                        branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(sel);
+                    document.getElementById('fa-branch-wrap').classList.remove('d-none');
+                    document.getElementById('fa-run-detection-wrap').classList.remove('d-none');
+                } catch (err) { /* branch picker just stays hidden */ }
+            }
+
+            alertsPager = SimplePager.attach('#fa-alerts-pager', { perPage: 25, onChange: paintAlertRows });
+
+            ['fa-branch', 'fa-status', 'fa-severity'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', load);
+            });
+            document.getElementById('btn-fa-reset').addEventListener('click', resetFilters);
+            document.getElementById('btn-fa-run-detection').addEventListener('click', runDetectionNow);
+
+            load();
+        }
+
+        function resetFilters() {
+            document.getElementById('fa-branch').value = '';
+            document.getElementById('fa-status').value = 'OPEN';
+            document.getElementById('fa-severity').value = '';
+            load();
+        }
+
+        async function runDetectionNow() {
+            var btn = document.getElementById('btn-fa-run-detection');
+            btn.disabled = true;
+            btn.textContent = 'Running…';
+            try {
+                await BusinessIntelligence.runAlertDetection();
+                await load();
+            } catch (err) {
+                var errEl = document.getElementById('fa-error');
+                errEl.textContent = err.message || 'Detection run failed.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Run Detection Now';
+            }
+        }
+
+        async function load() {
+            var errEl = document.getElementById('fa-error');
+            errEl.classList.add('d-none');
+            var branchId = RBAC.scopeBranchId(document.getElementById('fa-branch').value) || undefined;
+            var status = document.getElementById('fa-status').value || undefined;
+            var severity = document.getElementById('fa-severity').value || undefined;
+
+            try {
+                var results = await Promise.all([
+                    BusinessIntelligence.getForecast({ branchId: branchId }),
+                    BusinessIntelligence.getAlerts({ branchId: branchId, status: status, severity: severity }),
+                ]);
+                renderForecast(results[0]);
+                renderAlerts(results[1]);
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to load Forecast & Alerts.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        var _faForecastChart = null;
+        var _faAlertSeverityChart = null;
+        var _faAlertTypeChart = null;
+
+        /** Same ApexCharts house style as the rest of the BI module --
+         * duplicated per-file per this codebase's existing convention. */
+        function destroyChart(chart) { if (chart) chart.destroy(); return null; }
+
+        function renderForecastChart(d) {
+            var el = document.getElementById('fa-forecast-chart');
+            if (!el || !window.ApexCharts) return null;
+            el.innerHTML = '';
+            var metrics = [
+                { name: 'Revenue', f: d.revenue },
+                { name: 'Gross Profit', f: d.grossProfit },
+                { name: 'Expenses', f: d.expenses },
+            ];
+            var chart = new ApexCharts(el, {
+                chart: { type: 'bar', fontFamily: 'inherit', height: 260, animations: { enabled: false }, toolbar: { show: false } },
+                plotOptions: { bar: { columnWidth: '45%', borderRadius: 3 } },
+                dataLabels: { enabled: false },
+                series: [
+                    { name: 'Month to Date', data: metrics.map(function (m) { return m.f.monthToDate; }) },
+                    { name: 'Projected (full month)', data: metrics.map(function (m) { return m.f.projected; }) },
+                ],
+                xaxis: { categories: metrics.map(function (m) { return m.name; }), axisBorder: { show: false } },
+                yaxis: { labels: { formatter: function (v) { return '₦' + (v / 1000).toFixed(0) + 'k'; } } },
+                tooltip: { theme: 'dark', y: { formatter: function (v) { return BusinessIntelligence.formatMoney(v); } } },
+                grid: { strokeDashArray: 4 },
+                colors: ['var(--tblr-secondary)', 'var(--tblr-primary)'],
+                legend: { show: true, position: 'top', horizontalAlign: 'left' },
+            });
+            chart.render();
+            return chart;
+        }
+
+        function renderAlertCharts(alerts) {
+            var sevEl = document.getElementById('fa-alert-severity-chart');
+            var typeEl = document.getElementById('fa-alert-type-chart');
+
+            if (sevEl && window.ApexCharts) {
+                sevEl.innerHTML = '';
+                var critCount = alerts.filter(function (a) { return a.severity === 'CRITICAL'; }).length;
+                var warnCount = alerts.filter(function (a) { return a.severity === 'WARNING'; }).length;
+                if (!critCount && !warnCount) {
+                    sevEl.innerHTML = '<div class="text-secondary small text-center pt-4">No alerts match these filters</div>';
+                } else {
+                    var sevChart = new ApexCharts(sevEl, {
+                        chart: { type: 'donut', fontFamily: 'inherit', height: 200, animations: { enabled: false } },
+                        labels: ['Critical', 'Warning'],
+                        series: [critCount, warnCount],
+                        colors: ['var(--tblr-red)', 'var(--tblr-yellow)'],
+                        dataLabels: { enabled: false },
+                        legend: { show: true, position: 'bottom', fontSize: '11px' },
+                        tooltip: { theme: 'dark', y: { formatter: function (v) { return v + ' alert' + (v !== 1 ? 's' : ''); } } },
+                        stroke: { width: 1 },
+                    });
+                    sevChart.render();
+                    _faAlertSeverityChart = sevChart;
+                }
+            }
+
+            if (typeEl && window.ApexCharts) {
+                typeEl.innerHTML = '';
+                var counts = {};
+                alerts.forEach(function (a) { counts[a.type] = (counts[a.type] || 0) + 1; });
+                var types = Object.keys(counts);
+                if (!types.length) {
+                    typeEl.innerHTML = '<div class="text-secondary small text-center pt-4">No alerts match these filters</div>';
+                } else {
+                    var typeChart = new ApexCharts(typeEl, {
+                        chart: { type: 'bar', fontFamily: 'inherit', height: 200, animations: { enabled: false }, toolbar: { show: false } },
+                        plotOptions: { bar: { horizontal: true, borderRadius: 3, barHeight: '55%' } },
+                        dataLabels: { enabled: false },
+                        series: [{ name: 'Alerts', data: types.map(function (t) { return counts[t]; }) }],
+                        xaxis: { categories: types.map(typeLabel), labels: { formatter: function (v) { return Math.round(v); } } },
+                        tooltip: { theme: 'dark', y: { formatter: function (v) { return v + ' alert' + (v !== 1 ? 's' : ''); } } },
+                        grid: { strokeDashArray: 4 },
+                        colors: ['var(--tblr-azure)'],
+                        legend: { show: false },
+                    });
+                    typeChart.render();
+                    _faAlertTypeChart = typeChart;
+                }
+            }
+        }
+
+        function renderMetricCard(valueId, targetId, forecast, label) {
+            document.getElementById(valueId).textContent = BusinessIntelligence.formatMoney(forecast.projected);
+            var targetEl = document.getElementById(targetId);
+            if (forecast.target === null || forecast.target === undefined) {
+                targetEl.textContent = 'No target set';
+                targetEl.className = 'small text-secondary';
+            } else {
+                targetEl.textContent = forecast.achievementPercent + '% of ' + BusinessIntelligence.formatMoney(forecast.target) + ' target';
+                targetEl.className = 'small ' + statusClass(forecast.status);
+            }
+        }
+
+        function renderForecast(d) {
+            document.getElementById('fa-forecast-month').textContent = '(' + d.month + ', day ' + d.daysElapsed + ' of ' + d.daysInMonth + ')';
+            _faForecastChart = destroyChart(_faForecastChart);
+            _faForecastChart = renderForecastChart(d);
+            renderMetricCard('fa-fc-revenue', 'fa-fc-revenue-target', d.revenue);
+            renderMetricCard('fa-fc-gp', 'fa-fc-gp-target', d.grossProfit);
+            renderMetricCard('fa-fc-expenses', 'fa-fc-expenses-target', d.expenses);
+            document.getElementById('fa-fc-np').textContent = BusinessIntelligence.formatMoney(d.netProfit.projected);
+            document.getElementById('fa-fc-customers').textContent = Math.round(d.customers.projected);
+            document.getElementById('fa-fc-days').textContent = Math.round(d.customers.monthToDate) + ' so far this month';
+        }
+
+        function renderAlerts(alerts) {
+            latestAlerts = alerts;
+            _faAlertSeverityChart = destroyChart(_faAlertSeverityChart);
+            _faAlertTypeChart = destroyChart(_faAlertTypeChart);
+            renderAlertCharts(alerts);
+            if (alertsPager) alertsPager.reset();
+            paintAlertRows();
+        }
+
+        /** Scope label: API-resolved scopeName first, then the branch list
+         * this page already loaded -- never the raw branch id. */
+        function scopeLabel(a) {
+            if (a.entityType === 'COMPANY') return 'Company-wide';
+            return a.scopeName || branchNameById[a.entityId] || 'Branch';
+        }
+
+        function paintAlertRows() {
+            var alerts = latestAlerts;
+            var tbody = document.getElementById('fa-alerts-tbody');
+            var pageRows = alertsPager ? alertsPager.slice(alerts) : alerts;
+            if (!alerts.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-3">No alerts match these filters.</td></tr>';
+                return;
+            }
+            var offset = alertsPager ? (alertsPager.page - 1) * alertsPager.perPage : 0;
+            tbody.innerHTML = pageRows.map(function (a, i) {
+                var idx = offset + i;
+                var scope = scopeLabel(a);
+                var actions = '<button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="showEvidence(' + idx + ')">Evidence</button>';
+                if (a.status === 'OPEN') {
+                    actions += '<button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="doAcknowledge(\'' + a.id + '\')">Acknowledge</button>';
+                }
+                if (a.status !== 'RESOLVED') {
+                    actions += '<button type="button" class="btn btn-sm btn-outline-success" onclick="doResolve(\'' + a.id + '\')">Resolve</button>';
+                }
+                return '<tr>' +
+                    '<td>' + severityBadge(a.severity) + '</td>' +
+                    '<td>' + esc(typeLabel(a.type)) + '</td>' +
+                    '<td>' + esc(scope) + '</td>' +
+                    '<td>' + esc(a.title) + '</td>' +
+                    '<td>' + fmtDate(a.date) + '</td>' +
+                    '<td>' + statusBadge(a.status) + '</td>' +
+                    '<td class="text-end text-nowrap">' + actions + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function showEvidence(idx) {
+            var a = latestAlerts[idx];
+            if (!a) return;
+            document.getElementById('fa-evidence-message').textContent = a.message || '';
+            document.getElementById('fa-evidence-title').textContent = (a.title || '') + ' — ' + scopeLabel(a);
+            new bootstrap.Modal(document.getElementById('fa-evidence-modal')).show();
+        }
+
+        async function doAcknowledge(id) {
+            try {
+                await BusinessIntelligence.acknowledgeAlert(id);
+                load();
+            } catch (err) {
+                var errEl = document.getElementById('fa-error');
+                errEl.textContent = err.message || 'Failed to acknowledge alert.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        async function doResolve(id) {
+            try {
+                await BusinessIntelligence.resolveAlert(id);
+                load();
+            } catch (err) {
+                var errEl = document.getElementById('fa-error');
+                errEl.textContent = err.message || 'Failed to resolve alert.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        init();
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Profitability Report</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -182,8 +191,8 @@
 
                     <div class="card">
                         <div class="card-header d-block">
-                            <h3 class="card-title mb-0">Top Products by Revenue</h3>
-                            <div class="text-secondary small mt-1">Showing the top 10 — Export CSV includes every
+                            <h3 class="card-title mb-0">Products by Revenue</h3>
+                            <div class="text-secondary small mt-1">Highest revenue first — Export CSV includes every
                                 product in this range.</div>
                         </div>
                         <div class="table-responsive">
@@ -207,6 +216,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="products-pager"></div>
                     </div>
                 </div>
             </div>
@@ -220,10 +230,32 @@
     <script src="assets/js/api-utils/reports.js"></script>
     <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/searchable-select.js"></script>
+    <script src="assets/js/simple-pager.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var _lastReport = null;
+        var _productsPager = null;
+
+        function productRowHtml(p) {
+            return '<tr>' +
+                '<td class="fw-semibold">' + esc(p.productName) + '</td>' +
+                '<td class="text-end">' + p.quantitySold + '</td>' +
+                '<td class="text-end">' + formatMoney(p.revenue) + '</td>' +
+                '<td class="text-end">' + formatMoney(p.cogs) + '</td>' +
+                '<td class="text-end">' + formatMoney(p.grossProfit) + '</td>' +
+                '<td class="text-end">' + p.grossMarginPercent.toFixed(1) + '%</td>' +
+                '</tr>';
+        }
+
+        function paintProducts() {
+            var products = (_lastReport && _lastReport.products) || [];
+            if (!_productsPager) _productsPager = SimplePager.attach('#products-pager', { perPage: 10, onChange: paintProducts });
+            var pageRows = _productsPager.slice(products);
+            document.getElementById('products-tbody').innerHTML = products.length
+                ? pageRows.map(productRowHtml).join('')
+                : '<tr><td colspan="6" class="text-center text-secondary py-5">No product sales in this range yet.</td></tr>';
+        }
 
         document.addEventListener('DOMContentLoaded', async function () {
             RBAC.applyPageGuard('reports:read_profitability');
@@ -232,7 +264,7 @@
                 document.getElementById(id).addEventListener('change', load);
             });
             document.getElementById('btn-clear-filters').addEventListener('click', function () {
-                document.getElementById('f-branch').value = '';
+                document.getElementById('f-branch').value = RBAC.scopeBranchId('');
                 document.getElementById('f-product').value = '';
                 document.getElementById('f-source').value = '';
                 document.getElementById('f-from').value = '';
@@ -246,6 +278,7 @@
                 document.getElementById('f-branch').innerHTML += branches.map(function (b) {
                     return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
                 }).join('');
+                RBAC.applyBranchScope(document.getElementById('f-branch'));
             } catch (e) { /* branch filter just stays with "All branches" */ }
 
             try {
@@ -271,7 +304,7 @@
 
         function currentFilters() {
             return {
-                branchId: document.getElementById('f-branch').value,
+                branchId: RBAC.scopeBranchId(document.getElementById('f-branch').value),
                 productId: document.getElementById('f-product').value,
                 source: document.getElementById('f-source').value,
                 from: document.getElementById('f-from').value,
@@ -313,21 +346,12 @@
                             '</tr>';
                     }).join('');
 
-                document.getElementById('products-tbody').innerHTML = report.products.length
-                    ? report.products.slice(0, 10).map(function (p) {
-                        return '<tr>' +
-                            '<td class="fw-semibold">' + esc(p.productName) + '</td>' +
-                            '<td class="text-end">' + p.quantitySold + '</td>' +
-                            '<td class="text-end">' + formatMoney(p.revenue) + '</td>' +
-                            '<td class="text-end">' + formatMoney(p.cogs) + '</td>' +
-                            '<td class="text-end">' + formatMoney(p.grossProfit) + '</td>' +
-                            '<td class="text-end">' + p.grossMarginPercent.toFixed(1) + '%</td>' +
-                            '</tr>';
-                    }).join('')
-                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No product sales in this range yet.</td></tr>';
+                if (_productsPager) _productsPager.reset();
+                paintProducts();
             } catch (e) {
                 document.getElementById('source-tbody').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
                 document.getElementById('products-tbody').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                if (_productsPager) _productsPager.slice([]);
             }
         }
 
@@ -346,6 +370,7 @@
             ], _lastReport.products);
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>

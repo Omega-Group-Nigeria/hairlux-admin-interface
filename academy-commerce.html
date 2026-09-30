@@ -1,0 +1,1386 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Hairlux Admin — Academy Commerce</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-marketing.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        table td {
+            vertical-align: middle;
+        }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        .order-row,
+        .refund-row,
+        .certificate-row {
+            cursor: pointer;
+        }
+
+        .order-row:hover,
+        .refund-row:hover,
+        .certificate-row:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        code.code-badge {
+            font-family: monospace;
+            letter-spacing: .06em;
+            font-size: .85em;
+        }
+
+        /* Holder typeahead (Issue Certificate modal) */
+        .typeahead-wrap {
+            position: relative;
+        }
+
+        .typeahead-results {
+            position: absolute;
+            z-index: 20;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--tblr-bg-surface, #fff);
+            border: 1px solid var(--tblr-border-color);
+            border-radius: .375rem;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, .12);
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .typeahead-results .item {
+            padding: .5rem .75rem;
+            cursor: pointer;
+        }
+
+        .typeahead-results .item:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        .typeahead-selected {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            padding: .375rem .75rem;
+            border: 1px solid var(--tblr-border-color);
+            border-radius: .375rem;
+            background: var(--tblr-bg-surface-tertiary);
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+
+        <!-- ===== NAVBAR ===== -->
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark">
+                    <img src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px">
+                </a>
+
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item me-2">
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
+                        </a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path
+                                        d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                </svg>
+                                Settings
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon icon-1 me-2">
+                                    <path
+                                        d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path d="M9 12h12l-3 -3" />
+                                    <path d="M18 15l3 -3" />
+                                </svg>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+        <!-- ===== END NAVBAR ===== -->
+
+        <div class="page-wrapper">
+
+            <!-- ===== PAGE HEADER ===== -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Academy</div>
+                            <h2 class="page-title">Commerce Core</h2>
+                            <div class="text-secondary small mt-1">Orders, refunds and certificates shared by
+                                In-Branch Training and Digital Courses.</div>
+                        </div>
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                    <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ===== END PAGE HEADER ===== -->
+
+            <!-- ===== PAGE BODY ===== -->
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- SECTION TABS -->
+                    <ul class="nav nav-tabs mb-3" id="section-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-section="orders">Orders</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="refunds">Refunds</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="certificates">Certificates</a>
+                        </li>
+                    </ul>
+
+                    <!-- ========== DASHBOARD SECTION ========== -->
+                    <div id="section-dashboard" class="d-none">
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label">From</label>
+                                        <input type="date" class="form-control" id="dash-from">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">To</label>
+                                        <input type="date" class="form-control" id="dash-to">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Branch</label>
+                                        <select class="form-select" id="dash-branch">
+                                            <option value="">All branches</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-primary w-100" id="btn-dash-apply">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="dash-error" class="alert alert-danger d-none" role="alert"></div>
+                        <div id="dash-loading" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+
+                        <div id="dash-content" class="d-none">
+                            <div class="row row-deck row-cards mb-3">
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card" data-kpi-card="learners">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Total Learners</div>
+                                            <div class="h2 mb-0" id="dash-total-learners">—</div>
+                                            <div class="text-secondary small mt-1" id="dash-learners-breakdown"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card" data-kpi-card="active-programs">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Active Cohorts &amp; Courses</div>
+                                            <div class="h2 mb-0" id="dash-active-programs">—</div>
+                                            <div class="text-secondary small mt-1" id="dash-programs-breakdown"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card" data-kpi-card="certificates">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Certificates Issued</div>
+                                            <div class="h2 mb-0" id="dash-certificates">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row row-deck row-cards mb-3">
+                                <div class="col-sm-6 col-xl-4">
+                                    <div class="card" data-kpi-card="revenue">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Academy Revenue</div>
+                                            <div class="h2 mb-0" id="dash-revenue">—</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-xl-8">
+                                    <div class="card" data-kpi-card="access-health">
+                                        <div class="card-body">
+                                            <div class="subheader mb-2">Payments &amp; Access Health</div>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <div class="h3 mb-0" id="dash-pending-payments">—</div>
+                                                    <div class="text-secondary small">Pending Payments</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="h3 mb-0" id="dash-expiring-access">—</div>
+                                                    <div class="text-secondary small" id="dash-expiring-label">Expiring Access</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ========== END DASHBOARD SECTION ========== -->
+
+                    <!-- ========== ORDERS SECTION ========== -->
+                    <div id="section-orders">
+
+                        <div class="row row-deck row-cards mb-4">
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Orders Loaded</div>
+                                        <div class="h1 mb-0" id="orders-stat-total">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Paid</div>
+                                        <div class="h1 mb-0 text-success" id="orders-stat-paid">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Pending</div>
+                                        <div class="h1 mb-0 text-warning" id="orders-stat-pending">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Revenue (Paid)</div>
+                                        <div class="h1 mb-0" id="orders-stat-revenue">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="row g-2 w-100 align-items-center">
+                                    <div class="col-md-3">
+                                        <input type="text" class="form-control form-control-sm"
+                                            id="orders-search" placeholder="Search order code, customer, email…">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="orders-filter-program">
+                                            <option value="">All Programs</option>
+                                            <option value="TRAINING">Training</option>
+                                            <option value="COURSE">Digital Course</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="orders-filter-status">
+                                            <option value="">All Statuses</option>
+                                            <option value="PENDING">Pending</option>
+                                            <option value="PAID">Paid</option>
+                                            <option value="EXPIRED">Expired</option>
+                                            <option value="CANCELLED">Cancelled</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 text-secondary small text-md-end" id="orders-count-label">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Order Code</th>
+                                                <th>Customer</th>
+                                                <th>Program</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th>Created</th>
+                                                <th>Expires</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="orders-tbody">
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-2">Showing up to 200 most recent orders (server cap —
+                            no pagination on this endpoint yet). Use the filters above to narrow results.</div>
+                    </div>
+                    <!-- ========== END ORDERS SECTION ========== -->
+
+                    <!-- ========== REFUNDS SECTION ========== -->
+                    <div id="section-refunds" class="d-none">
+
+                        <div class="row row-deck row-cards mb-4">
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Requests Loaded</div>
+                                        <div class="h1 mb-0" id="refunds-stat-total">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Awaiting Review</div>
+                                        <div class="h1 mb-0 text-warning" id="refunds-stat-pending">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Approved / Processing</div>
+                                        <div class="h1 mb-0 text-info" id="refunds-stat-processing">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Refunded Amount</div>
+                                        <div class="h1 mb-0 text-success" id="refunds-stat-refunded">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="row g-2 w-100 align-items-center">
+                                    <div class="col-md-4">
+                                        <select class="form-select form-select-sm" id="refunds-filter-status">
+                                            <option value="">All Statuses</option>
+                                            <option value="REQUESTED">Requested</option>
+                                            <option value="PENDING">Pending</option>
+                                            <option value="APPROVED">Approved</option>
+                                            <option value="PROCESSING">Processing</option>
+                                            <option value="REFUNDED">Refunded</option>
+                                            <option value="REJECTED">Rejected</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-8 text-secondary small text-md-end" id="refunds-count-label">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Order Code</th>
+                                                <th>Customer</th>
+                                                <th>Amount</th>
+                                                <th>Reason</th>
+                                                <th>Status</th>
+                                                <th>Requested</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="refunds-tbody">
+                                            <tr>
+                                                <td colspan="7" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-2">Approving moves a refund to Processing and pays out
+                            immediately — this cannot be undone from here. Only Management-or-above roles
+                            (<code>academy_commerce:approve_refund</code>) can approve or reject.</div>
+                    </div>
+                    <!-- ========== END REFUNDS SECTION ========== -->
+
+                    <!-- ========== CERTIFICATES SECTION ========== -->
+                    <div id="section-certificates" class="d-none">
+
+                        <div class="row row-deck row-cards mb-4">
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Certificates Loaded</div>
+                                        <div class="h1 mb-0" id="certs-stat-total">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Issued</div>
+                                        <div class="h1 mb-0 text-success" id="certs-stat-issued">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Eligible (Not Yet Issued)</div>
+                                        <div class="h1 mb-0 text-info" id="certs-stat-eligible">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="subheader mb-2">Revoked</div>
+                                        <div class="h1 mb-0 text-danger" id="certs-stat-revoked">—</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="row g-2 w-100 align-items-center">
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="certs-filter-program">
+                                            <option value="">All Programs</option>
+                                            <option value="TRAINING">Training</option>
+                                            <option value="COURSE">Digital Course</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select class="form-select form-select-sm" id="certs-filter-status">
+                                            <option value="">All Statuses</option>
+                                            <option value="NOT_ELIGIBLE">Not Eligible</option>
+                                            <option value="ELIGIBLE">Eligible</option>
+                                            <option value="ISSUED">Issued</option>
+                                            <option value="REVOKED">Revoked</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <button type="button" class="btn btn-primary btn-sm" id="btn-issue-certificate"
+                                            data-bs-toggle="modal" data-bs-target="#modal-issue-certificate">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                class="icon me-1">
+                                                <path d="M12 5l0 14" />
+                                                <path d="M5 12l14 0" />
+                                            </svg>
+                                            Issue Certificate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Certificate #</th>
+                                                <th>Holder</th>
+                                                <th>Program</th>
+                                                <th>Completion Date</th>
+                                                <th>Status</th>
+                                                <th class="w-1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="certs-tbody">
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-secondary small mt-2">Digital Course certificates issue automatically on
+                            completion. In-Branch Training certificates are issued manually here until Academy
+                            Training Phase 2's own completion trigger ships.</div>
+                    </div>
+                    <!-- ========== END CERTIFICATES SECTION ========== -->
+
+                </div>
+            </div>
+            <!-- ===== END PAGE BODY ===== -->
+
+            <!-- ===== FOOTER ===== -->
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center flex-row-reverse">
+                        <div class="col-lg-auto ms-lg-auto">
+                        </div>
+                        <div class="col-12 col-lg-auto mt-3 mt-lg-0">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">
+                                    Copyright &copy; 2026 Hairlux. All rights reserved.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- ===== END FOOTER ===== -->
+
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/users.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/academy-commerce.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+
+    <!-- ===== ORDER DETAIL MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-order-detail" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Order Detail</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="order-detail-body">
+                    <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== APPROVE REFUND MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-approve-refund" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Approve Refund</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="approve-refund-alert" class="alert d-none mb-3" role="alert"></div>
+                    <p>This moves the refund to <strong>Processing</strong> and pays out
+                        <strong id="approve-refund-amount"></strong> to <span id="approve-refund-customer"></span>.
+                        This cannot be undone from here.</p>
+                    <label class="form-label">Comment (optional)</label>
+                    <textarea id="approve-refund-comment" class="form-control" rows="2"
+                        placeholder="Internal note (not shown to the customer)"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="btn-confirm-approve-refund">Approve &amp;
+                        Process</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== REJECT REFUND MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-reject-refund" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject Refund</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reject-refund-alert" class="alert d-none mb-3" role="alert"></div>
+                    <label class="form-label">Reason</label>
+                    <textarea id="reject-refund-reason" class="form-control" rows="2"
+                        placeholder="Shown to the customer — explain why the refund was declined"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-reject-refund">Reject Refund</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ISSUE CERTIFICATE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-issue-certificate" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Issue Certificate</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-issue-certificate" novalidate>
+                    <div class="modal-body">
+                        <div id="issue-cert-alert" class="alert d-none mb-3" role="alert"></div>
+
+                        <div class="mb-3 typeahead-wrap">
+                            <label class="form-label">Holder <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="cert-holder-search"
+                                placeholder="Search by name or email…" autocomplete="off">
+                            <div class="typeahead-results" id="cert-holder-results"></div>
+                            <div class="typeahead-selected mt-2" id="cert-holder-selected">
+                                <span id="cert-holder-selected-label"></span>
+                                <button type="button" class="btn btn-sm btn-ghost-secondary"
+                                    id="cert-holder-clear">Change</button>
+                            </div>
+                            <input type="hidden" id="cert-holder-id" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Program Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="cert-program-type" required>
+                                <option value="">Select…</option>
+                                <option value="TRAINING">Training (In-Branch)</option>
+                                <option value="COURSE">Digital Course</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Program ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="cert-program-id" required
+                                placeholder="Paste the ID">
+                            <div class="form-text" id="cert-program-id-hint">The Cohort ID (Training) or Course ID
+                                (Digital Course) this certificate is for.</div>
+                        </div>
+
+                        <div class="mb-1">
+                            <label class="form-label">Completion Date</label>
+                            <input type="date" class="form-control" id="cert-completion-date">
+                            <div class="form-text">Leave blank to use today's date.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link link-secondary"
+                            data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-issue-certificate">Issue
+                            Certificate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== REVOKE CERTIFICATE MODAL ===== -->
+    <div class="modal modal-blur fade" id="modal-revoke-certificate" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-status bg-danger"></div>
+                <div class="modal-body text-center py-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="icon mb-2 text-danger icon-lg">
+                        <path d="M12 9v4" />
+                        <path
+                            d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                        <path d="M12 16h.01" />
+                    </svg>
+                    <h3>Revoke this certificate?</h3>
+                    <div class="text-secondary" id="revoke-cert-name">This action cannot be undone.</div>
+                </div>
+                <div class="modal-footer">
+                    <div class="w-100">
+                        <div class="row">
+                            <div class="col"><a href="#" class="btn w-100" data-bs-dismiss="modal">Cancel</a></div>
+                            <div class="col"><button type="button" class="btn btn-danger w-100"
+                                    id="btn-confirm-revoke-certificate">Revoke</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── RBAC guard (synchronous, from cached permissions) ──────────────────
+        var bootstrap = window.tabler.bootstrap;
+
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('academy_commerce:read');
+
+        // ── State ────────────────────────────────────────────────────────────
+        var ordersData = [];
+        var refundsData = [];
+        var certsData = [];
+        var loadedSections = { dashboard: false, orders: false, refunds: false, certificates: false };
+        var branchesCache = null;
+        var pendingRefundId = null;
+        var pendingRevokeCertId = null;
+        var selectedHolderId = null;
+        var typeaheadTimer = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // ── RBAC: re-hydrate from server, apply guard + hide unauthorized UI ──
+            RBAC.fetchMe().then(function () {
+                RBAC.applyPageGuard('academy_commerce:read');
+                RBAC.applyNavVisibility();
+                if (!RBAC.can('academy_commerce:manage')) {
+                    var b1 = document.getElementById('btn-issue-certificate'); if (b1) b1.style.display = 'none';
+                }
+            });
+
+            loadOrders();
+            loadBranchFilterOptions();
+
+            // ── Section tabs ─────────────────────────────────────────────────
+            document.getElementById("section-tabs").addEventListener("click", function (e) {
+                e.preventDefault();
+                var tab = e.target.closest("a[data-section]");
+                if (!tab) return;
+                document.querySelectorAll("#section-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
+                tab.classList.add("active");
+                var section = tab.dataset.section;
+                document.getElementById("section-dashboard").classList.toggle("d-none", section !== "dashboard");
+                document.getElementById("section-orders").classList.toggle("d-none", section !== "orders");
+                document.getElementById("section-refunds").classList.toggle("d-none", section !== "refunds");
+                document.getElementById("section-certificates").classList.toggle("d-none", section !== "certificates");
+                if (section === "dashboard" && !loadedSections.dashboard) loadDashboard();
+                if (section === "refunds" && !loadedSections.refunds) loadRefunds();
+                if (section === "certificates" && !loadedSections.certificates) loadCertificates();
+            });
+
+            document.getElementById("btn-dash-apply").addEventListener("click", loadDashboard);
+
+            // ── Global refresh (re-fetches the active tab) ─────────────────────
+            document.getElementById("btn-refresh").addEventListener("click", function () {
+                var active = (document.querySelector("#section-tabs .nav-link.active") || {}).dataset.section || "orders";
+                if (active === "dashboard") loadDashboard();
+                if (active === "orders") loadOrders();
+                if (active === "refunds") loadRefunds();
+                if (active === "certificates") loadCertificates();
+            });
+
+            // ── Orders: filters ─────────────────────────────────────────────────
+            document.getElementById("orders-filter-program").addEventListener("change", loadOrders);
+            document.getElementById("orders-filter-status").addEventListener("change", loadOrders);
+            document.getElementById("orders-search").addEventListener("input", function () { renderOrders(); });
+
+            // ── Refunds: filters ─────────────────────────────────────────────────
+            document.getElementById("refunds-filter-status").addEventListener("change", loadRefunds);
+
+            // ── Certificates: filters ────────────────────────────────────────────
+            document.getElementById("certs-filter-program").addEventListener("change", loadCertificates);
+            document.getElementById("certs-filter-status").addEventListener("change", loadCertificates);
+
+            // ── Order row click → detail modal ──────────────────────────────────
+            document.getElementById("orders-tbody").addEventListener("click", function (e) {
+                var row = e.target.closest(".order-row");
+                if (!row) return;
+                openOrderDetail(row.dataset.id);
+            });
+
+            // ── Refunds row actions ──────────────────────────────────────────────
+            document.getElementById("refunds-tbody").addEventListener("click", function (e) {
+                var approveBtn = e.target.closest(".btn-approve-refund");
+                var rejectBtn = e.target.closest(".btn-reject-refund");
+                if (approveBtn) { openApproveRefund(approveBtn.dataset.id, approveBtn.dataset.amount, approveBtn.dataset.customer); return; }
+                if (rejectBtn) { openRejectRefund(rejectBtn.dataset.id); return; }
+            });
+
+            document.getElementById("btn-confirm-approve-refund").addEventListener("click", async function () {
+                if (!pendingRefundId) return;
+                var btn = this;
+                var alertEl = document.getElementById("approve-refund-alert");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Processing…';
+                try {
+                    await AcademyCommerce.approveRefund(pendingRefundId, { comment: document.getElementById("approve-refund-comment").value || undefined });
+                    bootstrap.Modal.getInstance(document.getElementById("modal-approve-refund")).hide();
+                    loadRefunds();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to approve refund.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Approve & Process";
+                }
+            });
+
+            document.getElementById("btn-confirm-reject-refund").addEventListener("click", async function () {
+                if (!pendingRefundId) return;
+                var btn = this;
+                var alertEl = document.getElementById("reject-refund-alert");
+                alertEl.className = "alert d-none";
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Rejecting…';
+                try {
+                    await AcademyCommerce.rejectRefund(pendingRefundId, { reason: document.getElementById("reject-refund-reason").value || undefined });
+                    bootstrap.Modal.getInstance(document.getElementById("modal-reject-refund")).hide();
+                    loadRefunds();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to reject refund.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Reject Refund";
+                }
+            });
+
+            // ── Certificates: row actions ────────────────────────────────────────
+            document.getElementById("certs-tbody").addEventListener("click", function (e) {
+                var revokeBtn = e.target.closest(".btn-revoke-cert");
+                if (!revokeBtn) return;
+                pendingRevokeCertId = revokeBtn.dataset.id;
+                document.getElementById("revoke-cert-name").textContent = "Certificate " + (revokeBtn.dataset.number || "") + " for " + (revokeBtn.dataset.holder || "this holder") + " will no longer verify as valid.";
+                new bootstrap.Modal(document.getElementById("modal-revoke-certificate")).show();
+            });
+
+            document.getElementById("btn-confirm-revoke-certificate").addEventListener("click", async function () {
+                if (!pendingRevokeCertId) return;
+                var btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Revoking…';
+                try {
+                    await AcademyCommerce.revokeCertificate(pendingRevokeCertId);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-revoke-certificate")).hide();
+                    pendingRevokeCertId = null;
+                    loadCertificates();
+                } catch (err) {
+                    alert(err.message || "Failed to revoke certificate.");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Revoke";
+                }
+            });
+
+            // ── Issue Certificate: holder typeahead ──────────────────────────────
+            document.getElementById("cert-holder-search").addEventListener("input", function () {
+                var q = this.value.trim();
+                clearTimeout(typeaheadTimer);
+                var resultsEl = document.getElementById("cert-holder-results");
+                if (q.length < 2) { resultsEl.style.display = "none"; resultsEl.innerHTML = ""; return; }
+                typeaheadTimer = setTimeout(async function () {
+                    try {
+                        var res = await Users.getAll({ search: q, limit: 8 });
+                        var list = (res && res.data) || [];
+                        if (!list.length) {
+                            resultsEl.innerHTML = '<div class="item text-secondary">No users found</div>';
+                            resultsEl.style.display = "block";
+                            return;
+                        }
+                        resultsEl.innerHTML = list.map(function (u) {
+                            var name = [u.firstName, u.lastName].filter(Boolean).join(" ") || "(no name)";
+                            return '<div class="item" data-id="' + u.id + '" data-label="' + (name + " — " + (u.email || "")).replace(/"/g, "&quot;") + '">' +
+                                '<div class="fw-semibold">' + name + '</div>' +
+                                '<div class="text-secondary small">' + (u.email || "") + '</div></div>';
+                        }).join("");
+                        resultsEl.style.display = "block";
+                    } catch (err) {
+                        resultsEl.innerHTML = '<div class="item text-danger">' + err.message + '</div>';
+                        resultsEl.style.display = "block";
+                    }
+                }, 300);
+            });
+
+            document.getElementById("cert-holder-results").addEventListener("click", function (e) {
+                var item = e.target.closest(".item[data-id]");
+                if (!item) return;
+                selectedHolderId = item.dataset.id;
+                document.getElementById("cert-holder-id").value = selectedHolderId;
+                document.getElementById("cert-holder-selected-label").textContent = item.dataset.label;
+                document.getElementById("cert-holder-selected").style.display = "flex";
+                document.getElementById("cert-holder-search").style.display = "none";
+                document.getElementById("cert-holder-results").style.display = "none";
+                document.getElementById("cert-holder-results").innerHTML = "";
+            });
+
+            document.getElementById("cert-holder-clear").addEventListener("click", function () {
+                selectedHolderId = null;
+                document.getElementById("cert-holder-id").value = "";
+                document.getElementById("cert-holder-search").value = "";
+                document.getElementById("cert-holder-selected").style.display = "none";
+                document.getElementById("cert-holder-search").style.display = "block";
+            });
+
+            document.getElementById("cert-program-type").addEventListener("change", function () {
+                var hint = document.getElementById("cert-program-id-hint");
+                if (this.value === "TRAINING") hint.textContent = "The Cohort ID this certificate is for (from Academy Training → Cohorts once that page ships; for now, from the API/database).";
+                else if (this.value === "COURSE") hint.textContent = "The Course ID this certificate is for (from Academy Courses once that page ships; for now, from the API/database).";
+                else hint.textContent = "The Cohort ID (Training) or Course ID (Digital Course) this certificate is for.";
+            });
+
+            document.getElementById("modal-issue-certificate").addEventListener("hidden.bs.modal", function () {
+                document.getElementById("form-issue-certificate").reset();
+                selectedHolderId = null;
+                document.getElementById("cert-holder-id").value = "";
+                document.getElementById("cert-holder-selected").style.display = "none";
+                document.getElementById("cert-holder-search").style.display = "block";
+                document.getElementById("cert-holder-results").style.display = "none";
+                document.getElementById("issue-cert-alert").className = "alert d-none";
+            });
+
+            document.getElementById("form-issue-certificate").addEventListener("submit", async function (e) {
+                e.preventDefault();
+                var alertEl = document.getElementById("issue-cert-alert");
+                alertEl.className = "alert d-none";
+                if (!selectedHolderId) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = "Search for and select a holder first.";
+                    return;
+                }
+                var programType = document.getElementById("cert-program-type").value;
+                var programId = document.getElementById("cert-program-id").value.trim();
+                if (!programType || !programId) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = "Program type and Program ID are required.";
+                    return;
+                }
+                var btn = document.getElementById("btn-save-issue-certificate");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Issuing…';
+                try {
+                    var completionDate = document.getElementById("cert-completion-date").value;
+                    await AcademyCommerce.issueCertificate({
+                        holderId: selectedHolderId,
+                        programType: programType,
+                        programId: programId,
+                        completionDate: completionDate || undefined,
+                    });
+                    bootstrap.Modal.getInstance(document.getElementById("modal-issue-certificate")).hide();
+                    loadCertificates();
+                } catch (err) {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = err.message || "Failed to issue certificate.";
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Issue Certificate";
+                }
+            });
+        });
+
+        // ── Loaders ──────────────────────────────────────────────────────────
+
+        async function loadOrders() {
+            var tbody = document.getElementById("orders-tbody");
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                var filters = {
+                    programType: document.getElementById("orders-filter-program").value,
+                    status: document.getElementById("orders-filter-status").value,
+                };
+                ordersData = await AcademyCommerce.getOrders(filters) || [];
+                loadedSections.orders = true;
+                renderOrders();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+        }
+
+        async function loadRefunds() {
+            var tbody = document.getElementById("refunds-tbody");
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                var filters = { status: document.getElementById("refunds-filter-status").value };
+                refundsData = await AcademyCommerce.getRefunds(filters) || [];
+                loadedSections.refunds = true;
+                renderRefunds();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+        }
+
+        async function loadCertificates() {
+            var tbody = document.getElementById("certs-tbody");
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+            try {
+                var filters = {
+                    programType: document.getElementById("certs-filter-program").value,
+                    status: document.getElementById("certs-filter-status").value,
+                };
+                certsData = await AcademyCommerce.getCertificates(filters) || [];
+                loadedSections.certificates = true;
+                renderCertificates();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + err.message + '</td></tr>';
+            }
+        }
+
+        // ── Renderers ────────────────────────────────────────────────────────
+
+        function renderOrders() {
+            var q = (document.getElementById("orders-search").value || "").trim().toLowerCase();
+            var rows = ordersData.filter(function (o) {
+                if (!q) return true;
+                var u = o.user || {};
+                var hay = [o.orderCode, u.firstName, u.lastName, u.email].filter(Boolean).join(" ").toLowerCase();
+                return hay.indexOf(q) !== -1;
+            });
+
+            var tbody = document.getElementById("orders-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No orders match.</td></tr>';
+            } else {
+                tbody.innerHTML = rows.map(function (o) {
+                    var u = o.user || {};
+                    var name = [u.firstName, u.lastName].filter(Boolean).join(" ") || "—";
+                    return '<tr class="order-row" data-id="' + o.id + '">' +
+                        '<td><code class="code-badge">' + o.orderCode + '</code></td>' +
+                        '<td>' + name + '<div class="text-secondary small">' + (u.email || "") + '</div></td>' +
+                        '<td>' + AcademyCommerce.programLabel(o.programType) + '</td>' +
+                        '<td>' + AcademyCommerce.formatMoney(o.amount) + '</td>' +
+                        '<td>' + AcademyCommerce.orderStatusBadge(o.status) + '</td>' +
+                        '<td class="text-secondary small">' + AcademyCommerce.formatDate(o.createdAt) + '</td>' +
+                        '<td class="text-secondary small">' + (o.expiresAt ? AcademyCommerce.formatDate(o.expiresAt) : "—") + '</td>' +
+                        '<td><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-secondary"><path d="M9 6l6 6l-6 6"/></svg></td>' +
+                        '</tr>';
+                }).join("");
+            }
+
+            var paid = ordersData.filter(function (o) { return o.status === "PAID"; });
+            document.getElementById("orders-stat-total").textContent = ordersData.length;
+            document.getElementById("orders-stat-paid").textContent = paid.length;
+            document.getElementById("orders-stat-pending").textContent = ordersData.filter(function (o) { return o.status === "PENDING"; }).length;
+            document.getElementById("orders-stat-revenue").textContent = AcademyCommerce.formatMoney(paid.reduce(function (sum, o) { return sum + Number(o.amount || 0); }, 0));
+            document.getElementById("orders-count-label").textContent = rows.length + " of " + ordersData.length + " loaded";
+        }
+
+        function renderRefunds() {
+            var tbody = document.getElementById("refunds-tbody");
+            var canApprove = RBAC.can('academy_commerce:approve_refund');
+            if (!refundsData.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">No refund requests match.</td></tr>';
+            } else {
+                tbody.innerHTML = refundsData.map(function (r) {
+                    var order = r.order || {};
+                    var u = order.user || {};
+                    var name = [u.firstName, u.lastName].filter(Boolean).join(" ") || "—";
+                    var canAct = canApprove && (r.status === "REQUESTED" || r.status === "PENDING");
+                    var actions = canAct
+                        ? '<button class="btn btn-sm btn-outline-success btn-approve-refund me-1" data-id="' + r.id + '" data-amount="' + AcademyCommerce.formatMoney(r.amount) + '" data-customer="' + name.replace(/"/g, "&quot;") + '">Approve</button>' +
+                        '<button class="btn btn-sm btn-outline-danger btn-reject-refund" data-id="' + r.id + '">Reject</button>'
+                        : "";
+                    return '<tr class="refund-row">' +
+                        '<td><code class="code-badge">' + (order.orderCode || "—") + '</code></td>' +
+                        '<td>' + name + '<div class="text-secondary small">' + (u.email || "") + '</div></td>' +
+                        '<td>' + AcademyCommerce.formatMoney(r.amount) + '</td>' +
+                        '<td class="text-secondary small">' + (r.reason || "—") + '</td>' +
+                        '<td>' + AcademyCommerce.refundStatusBadge(r.status) + '</td>' +
+                        '<td class="text-secondary small">' + AcademyCommerce.formatDate(r.requestedAt) + '</td>' +
+                        '<td class="text-nowrap">' + actions + '</td>' +
+                        '</tr>';
+                }).join("");
+            }
+
+            document.getElementById("refunds-stat-total").textContent = refundsData.length;
+            document.getElementById("refunds-stat-pending").textContent = refundsData.filter(function (r) { return r.status === "REQUESTED" || r.status === "PENDING"; }).length;
+            document.getElementById("refunds-stat-processing").textContent = refundsData.filter(function (r) { return r.status === "APPROVED" || r.status === "PROCESSING"; }).length;
+            var refundedSum = refundsData.filter(function (r) { return r.status === "REFUNDED"; }).reduce(function (sum, r) { return sum + Number(r.amount || 0); }, 0);
+            document.getElementById("refunds-stat-refunded").textContent = AcademyCommerce.formatMoney(refundedSum);
+            document.getElementById("refunds-count-label").textContent = refundsData.length + " loaded";
+        }
+
+        function renderCertificates() {
+            var tbody = document.getElementById("certs-tbody");
+            var canManage = RBAC.can('academy_commerce:manage');
+            if (!certsData.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No certificates match.</td></tr>';
+            } else {
+                tbody.innerHTML = certsData.map(function (c) {
+                    var h = c.holder || {};
+                    var name = [h.firstName, h.lastName].filter(Boolean).join(" ") || "—";
+                    var program = AcademyCommerce.programLabel(c.programType) + (c.programName ? ' — ' + c.programName : '');
+                    var actions = (canManage && c.status === "ISSUED")
+                        ? '<button class="btn btn-sm btn-outline-danger btn-revoke-cert" data-id="' + c.id + '" data-number="' + (c.certificateNumber || "") + '" data-holder="' + name.replace(/"/g, "&quot;") + '">Revoke</button>'
+                        : "";
+                    return '<tr class="certificate-row">' +
+                        '<td><code class="code-badge">' + (c.certificateNumber || "—") + '</code></td>' +
+                        '<td>' + name + '<div class="text-secondary small">' + (h.email || "") + '</div></td>' +
+                        '<td>' + program + '</td>' +
+                        '<td class="text-secondary small">' + (c.completionDate ? AcademyCommerce.formatDate(c.completionDate) : "—") + '</td>' +
+                        '<td>' + AcademyCommerce.certificateStatusBadge(c.status) + '</td>' +
+                        '<td>' + actions + '</td>' +
+                        '</tr>';
+                }).join("");
+            }
+
+            document.getElementById("certs-stat-total").textContent = certsData.length;
+            document.getElementById("certs-stat-issued").textContent = certsData.filter(function (c) { return c.status === "ISSUED"; }).length;
+            document.getElementById("certs-stat-eligible").textContent = certsData.filter(function (c) { return c.status === "ELIGIBLE"; }).length;
+            document.getElementById("certs-stat-revoked").textContent = certsData.filter(function (c) { return c.status === "REVOKED"; }).length;
+        }
+
+        // ── Order detail modal ───────────────────────────────────────────────
+
+        async function openOrderDetail(id) {
+            var body = document.getElementById("order-detail-body");
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+            new bootstrap.Modal(document.getElementById("modal-order-detail")).show();
+            try {
+                var o = await AcademyCommerce.getOrder(id);
+                var u = o.user || {};
+                var name = [u.firstName, u.lastName].filter(Boolean).join(" ") || "—";
+                var payment = o.payment || {};
+                var refund = o.refund || null;
+                var consent = o.consent || null;
+
+                var html = '';
+                html += '<div class="row g-3">';
+                html += '<div class="col-6"><div class="text-secondary small">Order Code</div><div class="fw-semibold"><code class="code-badge">' + o.orderCode + '</code></div></div>';
+                html += '<div class="col-6"><div class="text-secondary small">Status</div><div>' + AcademyCommerce.orderStatusBadge(o.status) + '</div></div>';
+                html += '<div class="col-6"><div class="text-secondary small">Customer</div><div>' + name + '<div class="text-secondary small">' + (u.email || "") + '</div></div></div>';
+                html += '<div class="col-6"><div class="text-secondary small">Program</div><div>' + AcademyCommerce.programLabel(o.programType) + '</div></div>';
+                html += '<div class="col-6"><div class="text-secondary small">Reference ID</div><div><code class="code-badge">' + (o.referenceId || "—") + '</code></div></div>';
+                html += '<div class="col-6"><div class="text-secondary small">Amount</div><div class="fw-semibold">' + AcademyCommerce.formatMoney(o.amount) + '</div></div>';
+                html += '<div class="col-6"><div class="text-secondary small">Discount Code</div><div>' + (o.discountCode ? o.discountCode.code + ' (' + (o.discountCode.name || '') + ')' : '—') + '</div></div>';
+                html += '<div class="col-6"><div class="text-secondary small">Created</div><div>' + AcademyCommerce.formatDateTime(o.createdAt) + '</div></div>';
+                html += '<div class="col-6"><div class="text-secondary small">Expires</div><div>' + (o.expiresAt ? AcademyCommerce.formatDateTime(o.expiresAt) : '—') + '</div></div>';
+                html += '</div>';
+
+                html += '<hr>';
+                html += '<h6 class="mb-2">Payment</h6>';
+                if (payment && payment.id) {
+                    html += '<div class="row g-3">';
+                    html += '<div class="col-6"><div class="text-secondary small">Status</div><div>' + (payment.status || '—') + '</div></div>';
+                    html += '<div class="col-6"><div class="text-secondary small">Reference</div><div><code class="code-badge">' + (payment.gatewayReference || payment.reference || '—') + '</code></div></div>';
+                    html += '</div>';
+                } else {
+                    html += '<div class="text-secondary small">No payment recorded yet.</div>';
+                }
+
+                if (refund) {
+                    html += '<hr>';
+                    html += '<h6 class="mb-2">Refund</h6>';
+                    html += '<div class="row g-3">';
+                    html += '<div class="col-6"><div class="text-secondary small">Status</div><div>' + AcademyCommerce.refundStatusBadge(refund.status) + '</div></div>';
+                    html += '<div class="col-6"><div class="text-secondary small">Amount</div><div>' + AcademyCommerce.formatMoney(refund.amount) + '</div></div>';
+                    html += '<div class="col-12"><div class="text-secondary small">Reason</div><div>' + (refund.reason || '—') + '</div></div>';
+                    html += '</div>';
+                }
+
+                if (consent) {
+                    html += '<hr>';
+                    html += '<h6 class="mb-2">Consent</h6>';
+                    html += '<div class="text-secondary small">' + consent.consentType + ' (v' + consent.consentVersion + ') accepted ' + AcademyCommerce.formatDateTime(consent.acceptedAt) + '</div>';
+                }
+
+                body.innerHTML = html;
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+            }
+        }
+
+        // ── Refund action modals ─────────────────────────────────────────────
+
+        function openApproveRefund(id, amountLabel, customerLabel) {
+            pendingRefundId = id;
+            document.getElementById("approve-refund-alert").className = "alert d-none";
+            document.getElementById("approve-refund-comment").value = "";
+            document.getElementById("approve-refund-amount").textContent = amountLabel;
+            document.getElementById("approve-refund-customer").textContent = customerLabel;
+            new bootstrap.Modal(document.getElementById("modal-approve-refund")).show();
+        }
+
+        function openRejectRefund(id) {
+            pendingRefundId = id;
+            document.getElementById("reject-refund-alert").className = "alert d-none";
+            document.getElementById("reject-refund-reason").value = "";
+            new bootstrap.Modal(document.getElementById("modal-reject-refund")).show();
+        }
+
+        // ── Dashboard ────────────────────────────────────────────────────────
+
+        async function loadBranchFilterOptions() {
+            try {
+                if (!branchesCache) branchesCache = await Branches.getBranches();
+                var sel = document.getElementById("dash-branch");
+                branchesCache.forEach(function (b) {
+                    var opt = document.createElement("option");
+                    opt.value = b.id;
+                    opt.textContent = b.name;
+                    sel.appendChild(opt);
+                });
+                RBAC.applyBranchScope(sel);
+            } catch (err) { /* non-fatal -- dashboard still works without the branch filter */ }
+        }
+
+        /** Per-KPI-card permission redaction, same pattern as
+         * AdminAcademyCommerceController.applyKpiCardPermissions /
+         * rewards.html's own applyKpiRestriction (Build Roadmap Phase 5's
+         * "every new KPI has its own permission" requirement). */
+        function applyKpiRestriction(cardKey, fieldValue) {
+            var card = document.querySelector('[data-kpi-card="' + cardKey + '"]');
+            if (!card) return false;
+            var isRestricted = !!(fieldValue && fieldValue.restricted);
+            var overlay = card.querySelector('.kpi-restricted-overlay');
+            if (isRestricted) {
+                card.classList.add('kpi-restricted');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.className = 'kpi-restricted-overlay d-flex flex-column align-items-center justify-content-center text-center p-3';
+                    overlay.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.94);border-radius:inherit;z-index:2;';
+                    overlay.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary mb-1"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M8 11v-4a4 4 0 1 1 8 0v4" /></svg><div class="small text-secondary">' + (fieldValue.reason || 'Restricted') + '</div>';
+                    card.style.position = 'relative';
+                    card.appendChild(overlay);
+                }
+            } else {
+                card.classList.remove('kpi-restricted');
+                if (overlay) overlay.remove();
+            }
+            return isRestricted;
+        }
+
+        async function loadDashboard() {
+            var errorEl = document.getElementById("dash-error");
+            var loadingEl = document.getElementById("dash-loading");
+            var contentEl = document.getElementById("dash-content");
+            errorEl.className = "alert alert-danger d-none";
+            loadingEl.classList.remove("d-none");
+            contentEl.classList.add("d-none");
+            try {
+                var filters = {
+                    from: document.getElementById("dash-from").value || undefined,
+                    to: document.getElementById("dash-to").value || undefined,
+                    branchId: RBAC.scopeBranchId(document.getElementById("dash-branch").value) || undefined,
+                };
+                var data = await AcademyCommerce.getReports(filters);
+                renderDashboard(data);
+                loadedSections.dashboard = true;
+                contentEl.classList.remove("d-none");
+            } catch (err) {
+                errorEl.className = "alert alert-danger";
+                errorEl.textContent = err.message || "Failed to load the Academy dashboard.";
+            } finally {
+                loadingEl.classList.add("d-none");
+            }
+        }
+
+        function renderDashboard(data) {
+            var r1 = applyKpiRestriction('learners', data.totalLearners);
+            document.getElementById('dash-total-learners').textContent = r1 ? '—' : AcademyCommerce.formatNumber(data.totalLearners);
+            document.getElementById('dash-learners-breakdown').textContent = r1 ? '' : ('Training: ' + AcademyCommerce.formatNumber(data.breakdownByProgram.training) + ' · Courses: ' + AcademyCommerce.formatNumber(data.breakdownByProgram.courses));
+
+            var r2 = applyKpiRestriction('active-programs', data.activeCohortsAndCourses);
+            document.getElementById('dash-active-programs').textContent = r2 ? '—' : AcademyCommerce.formatNumber(data.activeCohortsAndCourses);
+            document.getElementById('dash-programs-breakdown').textContent = r2 ? '' : ('Cohorts: ' + AcademyCommerce.formatNumber(data.breakdownByType.activeCohorts) + ' · Courses: ' + AcademyCommerce.formatNumber(data.breakdownByType.activeCourses));
+
+            var r3 = applyKpiRestriction('certificates', data.certificatesIssued);
+            document.getElementById('dash-certificates').textContent = r3 ? '—' : AcademyCommerce.formatNumber(data.certificatesIssued);
+
+            var r4 = applyKpiRestriction('revenue', data.revenue);
+            document.getElementById('dash-revenue').textContent = r4 ? '—' : AcademyCommerce.formatMoney(data.revenue);
+
+            var r5 = applyKpiRestriction('access-health', data.pendingPayments);
+            document.getElementById('dash-pending-payments').textContent = r5 ? '—' : AcademyCommerce.formatNumber(data.pendingPayments);
+            document.getElementById('dash-expiring-access').textContent = r5 ? '—' : AcademyCommerce.formatNumber(data.expiringAccess);
+            document.getElementById('dash-expiring-label').textContent = r5 ? 'Expiring Access' : ('Expiring Access (next ' + data.expiringWindowDays + 'd)');
+        }
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

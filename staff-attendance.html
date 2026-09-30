@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Attendance</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -284,6 +293,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="summary-pager"></div>
                     </div>
                 </div>
             </div>
@@ -408,6 +418,7 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-operations.js"></script>
+    <script src="./assets/js/simple-pager.js"></script>
     <script src="./assets/js/csv-export.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
@@ -464,7 +475,7 @@
         // was previously selected.
         async function loadFilterStaffOptions(branchId) {
             try {
-                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
+                var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
                 document.getElementById("filter-staff").innerHTML =
                     '<option value="">All staff</option>' +
                     staffList.map(function (s) { return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + '</option>'; }).join("");
@@ -479,6 +490,7 @@
             options = options || {};
             document.getElementById("results-label").textContent = "Loading…";
             try {
+                listState.locationId = RBAC.scopeBranchId(listState.locationId);
                 var result = await StaffOps.getAttendanceReport(listState);
                 var records = result.data;
                 var tbody = document.getElementById("attendance-tbody");
@@ -698,7 +710,12 @@
         async function loadExtraWorkDayQueue() {
             var tbody = document.getElementById("ewd-tbody");
             try {
-                var records = await StaffOps.getExtraWorkDayQueue({ status: "PENDING" });
+                // Branch managers: one request per managed branch (the endpoint takes a single branchId).
+                var scopeIds = RBAC.isManagerScoped() ? RBAC.getManagedBranchIds() : [undefined];
+                var lists = await Promise.all(scopeIds.map(function (id) {
+                    return StaffOps.getExtraWorkDayQueue({ status: "PENDING", branchId: id });
+                }));
+                var records = [].concat.apply([], lists);
                 renderExtraWorkDayQueue(records);
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Failed to load.</td></tr>';
@@ -823,7 +840,7 @@
                 document.getElementById("filter-from").value = "";
                 document.getElementById("filter-to").value = "";
                 document.getElementById("filter-status").value = "";
-                document.getElementById("filter-branch").value = "";
+                document.getElementById("filter-branch").value = RBAC.scopeBranchId("");
                 document.getElementById("filter-staff").value = "";
                 // Dev Feedback Round 9: page/limit were missing from this
                 // reset object -- left listState.page as undefined after
@@ -862,6 +879,7 @@
                 document.getElementById("summary-branch").innerHTML =
                     '<option value="">All branches</option>' +
                     branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join("");
+                RBAC.applyBranchScope(document.getElementById("summary-branch"));
             } catch (e) {
                 console.error("Failed to load branches for summary", e);
             }
@@ -869,11 +887,15 @@
 
         var _lastSummaryRows = [];
 
+        // Client-side paging for the per-staff summary (assets/js/simple-pager.js).
+        var _renderSummaryPage = null;
+        var _summaryPager = SimplePager.attach('#summary-pager', { onChange: function () { if (_renderSummaryPage) _renderSummaryPage(); } });
+
         async function loadAttendanceSummary() {
             var tbody = document.getElementById("summary-tbody");
             var from = document.getElementById("summary-from").value;
             var to = document.getElementById("summary-to").value;
-            var branchId = document.getElementById("summary-branch").value;
+            var branchId = RBAC.scopeBranchId(document.getElementById("summary-branch").value);
 
             if (!from || !to) {
                 flashPageAlert("danger", "Choose both a From and To date for the summary.");
@@ -885,24 +907,28 @@
             try {
                 var rows = await StaffOps.getAllStaffSummary(from, to, branchId || undefined);
                 _lastSummaryRows = rows;
-                if (!rows.length) {
-                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-secondary py-4">No active staff found for this branch.</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = rows.map(function (r) {
-                    return '<tr>' +
-                        '<td class="fw-semibold">' + esc(r.staffName) + '</td>' +
-                        '<td>' + r.expectedWorkingDays + '</td>' +
-                        '<td>' + r.daysWorked + '</td>' +
-                        '<td>' + r.halfDaysWorked + '</td>' +
-                        '<td>' + r.approvedExtraWorkDays + ' / ' + r.pendingExtraWorkDays + '</td>' +
-                        '<td>' + r.approvedLeaveDays + '</td>' +
-                        '<td>' + r.publicHolidaysWorked + '</td>' +
-                        '<td' + (r.lateArrivals > 0 ? ' class="text-warning"' : '') + '>' + r.lateArrivals + '</td>' +
-                        '<td>' + r.earlyDepartures + '</td>' +
-                        '<td' + (r.absentDays > 0 ? ' class="text-danger"' : '') + '>' + r.absentDays + '</td>' +
-                        '</tr>';
-                }).join('');
+                _summaryPager.reset();
+                (_renderSummaryPage = function () {
+                    var pageRows = _summaryPager.slice(rows);
+                    if (!rows.length) {
+                        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-secondary py-4">No active staff found for this branch.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = pageRows.map(function (r) {
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(r.staffName) + '</td>' +
+                            '<td>' + r.expectedWorkingDays + '</td>' +
+                            '<td>' + r.daysWorked + '</td>' +
+                            '<td>' + r.halfDaysWorked + '</td>' +
+                            '<td>' + r.approvedExtraWorkDays + ' / ' + r.pendingExtraWorkDays + '</td>' +
+                            '<td>' + r.approvedLeaveDays + '</td>' +
+                            '<td>' + r.publicHolidaysWorked + '</td>' +
+                            '<td' + (r.lateArrivals > 0 ? ' class="text-warning"' : '') + '>' + r.lateArrivals + '</td>' +
+                            '<td>' + r.earlyDepartures + '</td>' +
+                            '<td' + (r.absentDays > 0 ? ' class="text-danger"' : '') + '>' + r.absentDays + '</td>' +
+                            '</tr>';
+                    }).join('');
+                })();
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">' + esc(err.message || "Failed to load summary.") + '</td></tr>';
             }
@@ -930,6 +956,7 @@
             ], _lastSummaryRows);
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>

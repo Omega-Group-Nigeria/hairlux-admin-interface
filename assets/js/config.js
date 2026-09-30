@@ -1,5 +1,8 @@
 // Global config — loaded before all other scripts.
 
+// API base URL (no trailing slash)
+window.API_BASE = "https://dev-hairlux-api.up.railway.app";
+// window.API_BASE = "http://localhost:3000"; // local
 (function (global) {
   'use strict';
 

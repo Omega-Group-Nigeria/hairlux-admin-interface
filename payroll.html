@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Payroll</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -145,6 +154,7 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <div id="periods-pager"></div>
                             </div>
                         </div>
 
@@ -630,9 +640,14 @@
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/payroll.js"></script>
+    <script src="assets/js/simple-pager.js"></script>
     <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
+        // Client-side paging for the payroll periods list (assets/js/simple-pager.js).
+        var _renderPeriodsPage = null;
+        var _periodsPager = SimplePager.attach('#periods-pager', { onChange: function () { if (_renderPeriodsPage) _renderPeriodsPage(); } });
+
         var bootstrap = window.tabler.bootstrap;
         var _payrollSettingsCache = null;
         var currentPeriodId = null;
@@ -720,7 +735,7 @@
         async function loadWithdrawalStaffOptions(branchId) {
             var select = document.getElementById('withdrawal-staff-filter');
             try {
-                var staffList = await Staff.getOptions({ locationId: branchId || undefined });
+                var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
                 select.innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + esc(s.name) + '</option>';
                 }).join('');
@@ -807,26 +822,30 @@
             var tbody = document.getElementById('periods-tbody');
             try {
                 var periods = await Payroll.listPeriods();
-                tbody.innerHTML = periods.length
-                    ? periods.map(function (p) {
-                        var statusBadge = { DRAFT: 'bg-secondary-lt', AWAITING_RELEASE: 'bg-amber-lt', RELEASED: 'bg-green-lt' }[p.status] || 'bg-secondary-lt';
-                        var actions = '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewPeriod(\'' + p.id + '\')">View</button>';
-                        if (p.status === 'DRAFT') {
-                            actions += '<button class="btn btn-sm btn-primary" onclick="runGenerate(\'' + p.id + '\')">Generate</button>';
-                        } else if (p.status === 'AWAITING_RELEASE') {
-                            actions += '<button class="btn btn-sm btn-success me-1" onclick="runApprove(\'' + p.id + '\')">Approve</button>';
-                            if (RBAC.can('payroll:correct')) {
-                                actions += '<button class="btn btn-sm btn-outline-warning" onclick="runRequestCorrection(\'' + p.id + '\')">Send for Correction</button>';
+                _periodsPager.reset();
+                (_renderPeriodsPage = function () {
+                    var pageRows = _periodsPager.slice(periods);
+                    tbody.innerHTML = periods.length
+                        ? pageRows.map(function (p) {
+                            var statusBadge = { DRAFT: 'bg-secondary-lt', AWAITING_RELEASE: 'bg-amber-lt', RELEASED: 'bg-green-lt' }[p.status] || 'bg-secondary-lt';
+                            var actions = '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewPeriod(\'' + p.id + '\')">View</button>';
+                            if (p.status === 'DRAFT') {
+                                actions += '<button class="btn btn-sm btn-primary" onclick="runGenerate(\'' + p.id + '\')">Generate</button>';
+                            } else if (p.status === 'AWAITING_RELEASE') {
+                                actions += '<button class="btn btn-sm btn-success me-1" onclick="runApprove(\'' + p.id + '\')">Approve</button>';
+                                if (RBAC.can('payroll:correct')) {
+                                    actions += '<button class="btn btn-sm btn-outline-warning" onclick="runRequestCorrection(\'' + p.id + '\')">Send for Correction</button>';
+                                }
                             }
-                        }
-                        return '<tr>' +
-                            '<td class="fw-semibold">' + esc(p.label) + '<div class="text-secondary small">' + Payroll.formatDate(p.periodStart) + ' \u2013 ' + Payroll.formatDate(p.periodEnd) + '</div></td>' +
-                            '<td><span class="badge ' + statusBadge + '">' + p.status.replace(/_/g, ' ') + '</span></td>' +
-                            '<td class="text-center">' + (p._count ? p._count.payslips : 0) + '</td>' +
-                            '<td class="text-nowrap">' + actions + '</td>' +
-                            '</tr>';
-                    }).join('')
-                    : '<tr><td colspan="4" class="text-center text-secondary py-5">No payroll periods yet.</td></tr>';
+                            return '<tr>' +
+                                '<td class="fw-semibold">' + esc(p.label) + '<div class="text-secondary small">' + Payroll.formatDate(p.periodStart) + ' \u2013 ' + Payroll.formatDate(p.periodEnd) + '</div></td>' +
+                                '<td><span class="badge ' + statusBadge + '">' + p.status.replace(/_/g, ' ') + '</span></td>' +
+                                '<td class="text-center">' + (p._count ? p._count.payslips : 0) + '</td>' +
+                                '<td class="text-nowrap">' + actions + '</td>' +
+                                '</tr>';
+                        }).join('')
+                        : '<tr><td colspan="4" class="text-center text-secondary py-5">No payroll periods yet.</td></tr>';
+                })();
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
@@ -1091,7 +1110,7 @@
         function renderAdjustmentsTable() {
             var tbody = document.getElementById('adjustments-tbody');
             var q = document.getElementById('adj-list-search').value.trim().toLowerCase();
-            var branchId = document.getElementById('adj-list-branch-filter').value;
+            var branchId = RBAC.scopeBranchId(document.getElementById('adj-list-branch-filter').value);
             var staffId = document.getElementById('adj-list-staff-filter').value;
 
             var list = _currentAdjustments.filter(function (a) {
@@ -1183,7 +1202,7 @@
         async function ensureBranchOptions() {
             if (!branchOptionsCache) {
                 try {
-                    branchOptionsCache = await Branches.getBranches();
+                    branchOptionsCache = RBAC.filterBranches(await Branches.getBranches());
                 } catch (e) { branchOptionsCache = []; }
             }
             return branchOptionsCache;
@@ -1194,7 +1213,10 @@
         async function ensureStaffOptions() {
             if (!staffOptionsCache) {
                 try {
-                    staffOptionsCache = await Staff.getOptions();
+                    var managedIds = RBAC.getManagedBranchIds();
+                    staffOptionsCache = (await Staff.getOptions()).filter(function (s) {
+                        return !RBAC.isManagerScoped() || managedIds.indexOf(s.locationId) !== -1;
+                    });
                 } catch (e) { staffOptionsCache = []; }
             }
             return staffOptionsCache;
@@ -1220,6 +1242,7 @@
         function populateBranchSelect(selectEl, branches, placeholder) {
             selectEl.innerHTML = '<option value="">' + placeholder + '</option>' +
                 branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+            RBAC.applyBranchScope(selectEl);
         }
 
         async function openAdjustmentModal() {
@@ -1357,7 +1380,7 @@
                 var result = await Payroll.listWithdrawals({
                     status: document.getElementById('withdrawal-status-filter').value,
                     staffId: document.getElementById('withdrawal-staff-filter').value,
-                    locationId: document.getElementById('withdrawal-branch-filter').value,
+                    locationId: RBAC.scopeBranchId(document.getElementById('withdrawal-branch-filter').value),
                     from: document.getElementById('withdrawal-from-filter').value,
                     to: document.getElementById('withdrawal-to-filter').value,
                     limit: 100000, // every matching withdrawal, not just the on-screen page
@@ -1391,7 +1414,7 @@
                 var result = await Payroll.listWithdrawals({
                     status: document.getElementById('withdrawal-status-filter').value,
                     staffId: document.getElementById('withdrawal-staff-filter').value,
-                    locationId: document.getElementById('withdrawal-branch-filter').value,
+                    locationId: RBAC.scopeBranchId(document.getElementById('withdrawal-branch-filter').value),
                     from: document.getElementById('withdrawal-from-filter').value,
                     to: document.getElementById('withdrawal-to-filter').value,
                     page: _withdrawalPage,
@@ -1493,6 +1516,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>

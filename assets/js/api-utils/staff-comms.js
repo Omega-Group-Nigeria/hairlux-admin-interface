@@ -3,9 +3,17 @@
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const StaffComms = (() => {
+    // Announcements and Tasks & Directives have their own permissions
+    // (Settings -> Roles); "View/Edit staff records" no longer grant them.
     const PERMISSIONS = {
-        READ: "staff:read",
-        MANAGE: "staff:update",
+        ANNOUNCEMENTS_READ: "announcements:read",
+        ANNOUNCEMENTS_CREATE: "announcements:create",
+        ANNOUNCEMENTS_UPDATE: "announcements:update",
+        ANNOUNCEMENTS_DELETE: "announcements:delete",
+        TASKS_READ: "tasks:read",
+        TASKS_CREATE: "tasks:create",
+        TASKS_UPDATE: "tasks:update",
+        TASKS_DELETE: "tasks:delete",
     };
 
     async function jsonFetch(path, options = {}) {
@@ -15,7 +23,45 @@ const StaffComms = (() => {
         return raw.data !== undefined ? raw.data : raw;
     }
 
+    // Dev Feedback Round 9: video announcements. Auth.fetch always sets
+    // Content-Type: application/json, which breaks a multipart upload --
+    // the browser needs to set its own Content-Type with the multipart
+    // boundary itself. Bypasses Auth.fetch entirely for this, same
+    // pattern already proven in lms.js's submitFormData.
+    async function submitFormData(path, method, formData) {
+        const base = (window.API_BASE || "").replace(/\/$/, "");
+        const res = await fetch(base + path, {
+            method,
+            headers: { Authorization: "Bearer " + Auth.getToken() },
+            body: formData,
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || `Request failed (${res.status})`);
+        return raw.data !== undefined ? raw.data : raw;
+    }
+
+    /**
+     * Dev Feedback Round 9: video announcements -- payload may now
+     * contain a `video` File (or `removeVideo`, update only). When it
+     * does, sends multipart/form-data via submitFormData; otherwise
+     * keeps sending plain JSON via the existing jsonFetch, unchanged --
+     * the vast majority of announcements have no video, so there's no
+     * reason to pay the FormData/multipart cost for those.
+     */
+    function toFormData(payload) {
+        const fd = new FormData();
+        Object.keys(payload).forEach((key) => {
+            var value = payload[key];
+            if (value === undefined || value === null) return;
+            fd.append(key, value);
+        });
+        return fd;
+    }
+
     async function createAnnouncement(payload) {
+        if (payload.video) {
+            return submitFormData("/admin/announcements", "POST", toFormData(payload));
+        }
         return jsonFetch("/admin/announcements", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -24,6 +70,9 @@ const StaffComms = (() => {
     }
 
     async function updateAnnouncement(id, payload) {
+        if (payload.video || payload.removeVideo) {
+            return submitFormData("/admin/announcements/" + id, "PATCH", toFormData(payload));
+        }
         return jsonFetch("/admin/announcements/" + id, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },

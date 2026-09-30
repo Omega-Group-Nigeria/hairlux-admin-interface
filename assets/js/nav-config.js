@@ -21,232 +21,247 @@ var NavConfig = window.NavConfig || (() => {
         staff: '<svg ' + SVG_ATTRS + '><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>',
         beauticians: '<svg ' + SVG_ATTRS + '><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 7v5l3 3" /></svg>',
         history: '<svg ' + SVG_ATTRS + '><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>',
+        businessIntelligence: '<svg ' + SVG_ATTRS + '><path d="M3 12m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M9 8m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v11a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M15 4m0 1a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v15a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1z" /><path d="M4 20h14" /></svg>',
+        // Frontend Build Roadmap: Academy (Commerce Core, Training,
+        // Cohorts shipped; Courses child arrives with Phase 4).
+        academy: '<svg ' + SVG_ATTRS + '><path d="M22 9l-10 -4l-10 4l10 4l10 -4v6" /><path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4" /></svg>',
+        // Frontend Build Roadmap Phase 3: Rewards & Loyalty (rewards.html).
+        inventory: '<svg ' + SVG_ATTRS + '><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /><path d="M12 12l8 -4.5" /><path d="M12 12l0 9" /><path d="M12 12l-8 -4.5" /></svg>',
+        finance: '<svg ' + SVG_ATTRS + '><path d="M9 14c0 1.657 2.686 3 6 3s6 -1.343 6 -3s-2.686 -3 -6 -3s-6 1.343 -6 3z" /><path d="M9 14v4c0 1.656 2.686 3 6 3s6 -1.344 6 -3v-4" /><path d="M3 6c0 1.072 1.144 2.062 3 2.598s4.144 .536 6 0c1.856 -.536 3 -1.526 3 -2.598c0 -1.072 -1.144 -2.062 -3 -2.598s-4.144 -.536 -6 0c-1.856 .536 -3 1.526 -3 2.598z" /><path d="M3 6v10c0 .888 .772 1.45 2 2" /><path d="M3 11c0 .888 .772 1.45 2 2" /></svg>',
+        rewards: '<svg ' + SVG_ATTRS + '><path d="M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z" /><path d="M12 8l0 13" /><path d="M19 12l0 7a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1l0 -7" /><path d="M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5" /></svg>',
         apps: '<svg ' + SVG_ATTRS + '><path d="M4 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M4 15m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 4m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 14m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /></svg>',
     };
 
-    /** @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string}>, permission?:object}>} */
+    // ── Page-access rules ────────────────────────────────────────────────────
+    // Every sidebar link is gated on the READ permission its page needs to
+    // load its data -- the same permission the page's main API endpoint
+    // checks (@Permission on the admin controller). No read permission ->
+    // the link is not shown at all. Write-only permissions (create/update/
+    // approve...) never make a page visible on their own: without read, the
+    // page could only ever show "you do not have permission".
+    //
+    // A group (dropdown) is visible when at least one of its links is --
+    // derived from the children below, never a separate hand-kept list.
+    function read(perm) { return { type: "require", perm: perm }; }
+    function readAny() { return { type: "requireAny", perms: Array.prototype.slice.call(arguments) }; }
+
+    /** Group is visible if the user can reach ANY of its children. */
+    function anyOf() {
+        const perms = [];
+        Array.prototype.forEach.call(arguments, function (rule) {
+            (rule.type === "require" ? [rule.perm] : rule.perms).forEach(function (p) {
+                if (perms.indexOf(p) === -1) perms.push(p);
+            });
+        });
+        return { type: "requireAny", perms: perms };
+    }
+
+    /** Group rule derived from its children's rules. */
+    function childrenRule(children) {
+        return anyOf.apply(null, children.map(function (c) { return c.permission; }));
+    }
+
+    function group(item) {
+        item.permission = childrenRule(item.children);
+        return item;
+    }
+
+    /**
+     * Sidebar order (Business Intelligence deliberately unchanged, 4th):
+     *   Daily operations  -> Dashboard, Bookings, Payments
+     *   Insight           -> Business Intelligence
+     *   Customers         -> Customers & Marketing
+     *   What we sell      -> Services, Beauticians, Shop
+     *   Back office       -> Inventory & Procurement, Finance, Branches
+     *   Academy
+     *   People            -> Staff, Payroll, Recruitment
+     *   System            -> Site Stats, Audit Trail
+     * @type {Array<{id:string, label:string, icon:string, href?:string, children?:Array<{label:string,href:string,permission:object}>, permission:object}>}
+     */
     const ITEMS = [
         {
             id: "dashboard",
             label: "Dashboard",
             icon: "dashboard",
             href: "index.html",
-            permission: { type: "require", perm: "analytics:read" },
+            permission: read("analytics:read"),
         },
-        {
+        group({
             id: "bookings",
             label: "Bookings",
             icon: "bookings",
-            permission: {
-                type: "requireAny",
-                perms: ["bookings:read", "staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations"],
-            },
             children: [
-                { label: "Overview", href: "bookings.html" },
-                { label: "Verify Booking", href: "bookings/index.html" },
-                { label: "Calendar", href: "bookings/calendar.html" },
-                { label: "Salon Bookings", href: "salon-bookings.html" },
-                { label: "Booking Overview", href: "booking-overview.html" },
-                { label: "Inventory Items", href: "inventory-items.html" },
-                { label: "Inventory Log (Legacy)", href: "staff-inventory.html" },
+                { label: "Overview", href: "bookings.html", permission: read("bookings:read") },
+                { label: "Booking Overview", href: "booking-overview.html", permission: read("bookings:read") },
+                { label: "Salon Bookings", href: "salon-bookings.html", permission: read("bookings:read") },
+                { label: "Calendar", href: "bookings/calendar.html", permission: read("bookings:read") },
+                { label: "Verify Booking", href: "bookings/index.html", permission: read("bookings:read") },
             ],
-        },
+        }),
         {
             id: "payments",
             label: "Payments",
             icon: "payments",
             href: "payments.html",
-            permission: { type: "require", perm: "users:view_wallet" },
+            // Wallet stats/transactions endpoints require payments:read.
+            permission: read("payments:read"),
         },
-        {
-            id: "contacts",
-            label: "Business Operations",
-            icon: "users",
-            permission: {
-                type: "requireAny",
-                perms: ["users:read", "bookings:read", "suppliers:read"],
-            },
+        group({
+            id: "business-intelligence",
+            label: "Business Intelligence",
+            icon: "businessIntelligence",
             children: [
-                { label: "Users", href: "users.html" },
-                { label: "Customer Contacts", href: "customer-contacts.html" },
-                { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html" },
-                { label: "Inventory Products", href: "inventory-products.html" },
-                { label: "Purchase Requests", href: "purchase-requests.html" },
-                { label: "Purchases", href: "purchases.html" },
-                { label: "Financial Dashboard", href: "financial-dashboard.html" },
-                { label: "Profitability Report", href: "profitability-report.html" },
-                { label: "Suppliers", href: "suppliers.html" },
-                { label: "Vendors", href: "vendors.html" },
+                { label: "Business Snapshot", href: "business-intelligence.html", permission: read("business_intelligence:read") },
+                { label: "Performance & Comparison", href: "performance-comparison.html", permission: read("business_intelligence:performance_comparison:read") },
+                { label: "Customers & Sales", href: "customers-sales.html", permission: read("business_intelligence:customers_sales:read") },
+                { label: "Cost, Inventory & Financial Position", href: "cost-inventory-financial.html", permission: read("business_intelligence:cost_inventory_financial:read") },
+                { label: "Forecast & Alerts", href: "forecast-alerts.html", permission: read("business_intelligence:forecast_alerts:read") },
+                { label: "KPI Engine Registry", href: "kpi-registry.html", permission: read("business_intelligence:kpi_registry:read") },
             ],
-        },
-        {
-            id: "payroll",
-            label: "Payroll",
+        }),
+        group({
+            id: "customers",
+            label: "Customers & Marketing",
             icon: "users",
-            permission: {
-                type: "requireAny",
-                // Dev Feedback Round 4, item #37: payroll:manage was split
-                // into 7 granular permissions -- listed here so a user
-                // with even a subset of them (not necessarily all) still
-                // sees this nav item. Payroll Engine v2, Phase 4: the
-                // commission-plan permissions are included too, so a user
-                // with only those (and none of the period/payslip ones)
-                // still sees the group and can reach Commission Plans.
-                perms: [
-                    "payroll:read", "payroll:manage_compensation", "payroll:approve_bank_change",
-                    "payroll:create_period", "payroll:generate", "payroll:approve_period",
-                    "payroll:manage_adjustments", "payroll:manage_settings", "payroll:correct",
-                    "payroll:read_commission_plans", "payroll:create_commission_plan",
-                    "payroll:update_commission_plan", "payroll:delete_commission_plan",
-                    "payroll:assign_commission_plan",
-                ],
-            },
             children: [
-                { label: "Payroll", href: "payroll.html" },
-                { label: "Commission Plans", href: "commission-plans.html" },
+                { label: "Users", href: "users.html", permission: read("users:read") },
+                { label: "Customer Contacts", href: "customer-contacts.html", permission: read("customer_contacts:read") },
+                { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html", permission: read("lifecycle_campaigns:read") },
+                { label: "Rewards & Loyalty", href: "rewards.html", permission: read("rewards:read") },
+                { label: "Discounts", href: "discounts.html", permission: read("discounts:read") },
+                { label: "Referrals", href: "referrals.html", permission: read("referrals:read") },
+                { label: "Referral Campaigns", href: "referral-campaigns.html", permission: read("referrals:read") },
             ],
-        },
+        }),
         {
             id: "services",
             label: "Services",
             icon: "services",
             href: "services.html",
-            permission: {
-                type: "requireAny",
-                perms: ["services:create", "services:update", "services:toggle_status", "services:delete", "services:manage_categories"],
-            },
+            // No services:read exists in the permission catalogue -- the
+            // catalogue itself is public. Services is a management page, so
+            // it stays visible to holders of any services management permission.
+            permission: readAny("services:create", "services:update", "services:toggle_status", "services:delete", "services:manage_categories", "services:manage_recipe"),
         },
-        {
-            id: "branches",
-            label: "Branches",
-            icon: "branches",
-            // Permission set now covers both nested pages — Branches itself
-            // and Branch Finance (formerly its own top-level item) — since
-            // the group's visibility gates access to both.
-            permission: {
-                type: "requireAny",
-                // Dev Feedback Round 4, item #43: branches:manage was
-                // split into 5 granular permissions -- listed here so a
-                // user with even a subset of them still sees this nav item.
-                perms: [
-                    "branches:read", "branches:create", "branches:update",
-                    "branches:manage_manager", "branches:delete", "branches:manage_services",
-                    "branch_finance:read", "branch_finance:reconcile",
-                ],
-            },
+        group({
+            id: "beauticians",
+            label: "Beauticians",
+            icon: "beauticians",
             children: [
-                { label: "Overview", href: "branches.html" },
-                { label: "Branch Finance", href: "branch-finance.html" },
+                { label: "List", href: "beauticians.html#list", permission: read("beauticians:read") },
+                { label: "Profile Reviews", href: "beauticians.html#reviews", permission: read("beauticians:review") },
+                { label: "Services", href: "beauticians.html#services", permission: read("beauticians:read") },
+                { label: "Settings", href: "beauticians.html#settings", permission: read("settings:read") },
+                { label: "Payouts", href: "beauticians.html#payouts", permission: read("beauticians:process_payouts") },
             ],
-        },
-        {
+        }),
+        group({
             id: "shop",
             label: "Shop",
             icon: "shop",
             badge: "confirmedOrders",
-            permission: {
-                type: "requireAny",
-                perms: ["shop:manage_products", "shop:manage_categories", "shop:manage_delivery", "shop:update_status"],
-            },
             children: [
-                { label: "Products", href: "shop.html#products" },
-                { label: "Categories", href: "shop.html#categories" },
-                { label: "Delivery Regions", href: "shop.html#delivery" },
-                { label: "Orders", href: "shop.html#orders" },
+                { label: "Products", href: "shop.html#products", permission: read("shop:read") },
+                { label: "Categories", href: "shop.html#categories", permission: read("shop:read") },
+                { label: "Delivery Regions", href: "shop.html#delivery", permission: read("shop:read") },
+                { label: "Orders", href: "shop.html#orders", permission: read("shop:read") },
             ],
-        },
-        {
-            id: "referrals",
-            label: "Referrals",
-            icon: "referrals",
-            permission: { type: "require", perm: "referrals:read" },
+        }),
+        group({
+            id: "inventory",
+            label: "Inventory & Procurement",
+            icon: "inventory",
             children: [
-                { label: "Regular Referrals", href: "referrals.html" },
-                { label: "Referral Campaigns", href: "referral-campaigns.html" },
+                { label: "Inventory Products", href: "inventory-products.html", permission: read("inventory_products:read") },
+                { label: "Inventory Items", href: "inventory-items.html", permission: read("inventory:read") },
+                { label: "Product Sales", href: "product-sales.html", permission: read("product_sales:read") },
+                { label: "Purchase Requests", href: "purchase-requests.html", permission: read("purchase_requests:read") },
+                { label: "Purchases", href: "purchases.html", permission: read("purchases:read") },
+                { label: "Suppliers", href: "suppliers.html", permission: read("suppliers:read") },
+                { label: "Vendors", href: "vendors.html", permission: read("suppliers:read") },
+                { label: "Inventory Log (Legacy)", href: "staff-inventory.html", permission: read("inventory:read") },
             ],
-        },
-        {
-            id: "discounts",
-            label: "Discounts",
-            icon: "discounts",
-            href: "discounts.html",
-            permission: { type: "require", perm: "discounts:read" },
-        },
-        {
-            id: "careers",
-            label: "Careers",
-            icon: "careers",
-            href: "careers.html",
-            permission: { type: "require", perm: "jobs:read" },
-        },
-        {
-            id: "applications",
-            label: "Applications",
-            icon: "applications",
-            permission: {
-                type: "requireAny",
-                perms: ["application:read", "application:manage_status", "application:convert"],
-            },
+        }),
+        group({
+            id: "finance",
+            label: "Finance",
+            icon: "finance",
             children: [
-                { label: "All Applications", href: "applications.html" },
-                { label: "Interview Schedule", href: "applications.html?status=INTERVIEW_SCHEDULED" },
+                // financial-dashboard.html was merged into this page (it now just redirects here).
+                { label: "Financial Dashboard", href: "financial-transactions.html", permission: read("financial_transactions:read") },
+                { label: "Profitability Report", href: "profitability-report.html", permission: read("reports:read_profitability") },
+                { label: "Expense Requests", href: "expense-requests.html", permission: read("expense_requests:read") },
+                { label: "Branch Finance", href: "branch-finance.html", permission: read("branch_finance:read") },
             ],
-        },
+        }),
         {
+            id: "branches",
+            label: "Branches",
+            icon: "branches",
+            href: "branches.html",
+            permission: read("branches:read"),
+        },
+        group({
+            id: "academy",
+            label: "Academy",
+            icon: "academy",
+            children: [
+                { label: "Commerce (Orders, Refunds, Certificates)", href: "academy-commerce.html", permission: read("academy_commerce:read") },
+                { label: "Trainings & Curriculum", href: "academy-training.html", permission: read("academy_training:read") },
+                { label: "Cohorts", href: "academy-cohorts.html", permission: read("academy_training:read") },
+                { label: "Digital Courses", href: "academy-courses.html", permission: read("academy_courses:read") },
+                { label: "Free Resources & Leads", href: "academy-resources.html", permission: read("academy_resources:read") },
+            ],
+        }),
+        group({
             id: "staff",
             label: "Staff",
             icon: "staff",
-
-            permission: {
-                type: "requireAny",
-                perms: ["staff:read", "staff:create", "staff:update", "staff:archive", "staff:manage_status", "staff:manage_locations", "lms:read", "approval_chains:read"],
-            },
             children: [
-                { label: "Staff Records", href: "staff.html" },
-                { label: "Company Documents", href: "staff-documents.html" },
-                { label: "Announcements", href: "staff-announcements.html" },
-                { label: "Tasks & Directives", href: "staff-directives.html" },
-                { label: "Attendance", href: "staff-attendance.html" },
-                { label: "Leave Requests", href: "leave-requests.html" },
-                { label: "Training Library (LMS)", href: "lms.html" },
-                { label: "Approval Chains", href: "approval-chains.html" },
+                { label: "Staff Records", href: "staff.html", permission: read("staff:read") },
+                // Each has its own read permission, matching the API.
+                { label: "Company Documents", href: "staff-documents.html", permission: read("company_documents:read") },
+                { label: "Announcements", href: "staff-announcements.html", permission: read("announcements:read") },
+                { label: "Tasks & Directives", href: "staff-directives.html", permission: read("tasks:read") },
+                { label: "Attendance", href: "staff-attendance.html", permission: read("attendance:read") },
+                { label: "Leave Requests", href: "leave-requests.html", permission: read("leave:read") },
+                { label: "Training Library (LMS)", href: "lms.html", permission: read("lms:read") },
+                { label: "Approval Chains", href: "approval-chains.html", permission: read("approval_chains:read") },
             ],
-        },
-        {
-            id: "beauticians",
-            label: "Beauticians",
-            icon: "beauticians",
-            permission: {
-                type: "requireAny",
-                perms: ["beauticians:read", "beauticians:manage", "beauticians:review", "beauticians:assign_services", "beauticians:process_payouts"],
-            },
+        }),
+        group({
+            id: "payroll",
+            label: "Payroll",
+            icon: "users",
             children: [
-                { label: "List", href: "beauticians.html#list" },
-                { label: "Profile Reviews", href: "beauticians.html#reviews" },
-                { label: "Services", href: "beauticians.html#services" },
-                { label: "Settings", href: "beauticians.html#settings" },
-                { label: "Payouts", href: "beauticians.html#payouts" },
+                { label: "Payroll", href: "payroll.html", permission: read("payroll:read") },
+                { label: "Commission Plans", href: "commission-plans.html", permission: read("payroll:read_commission_plans") },
             ],
-        },
+        }),
+        group({
+            id: "recruitment",
+            label: "Recruitment",
+            icon: "careers",
+            children: [
+                { label: "Job Postings", href: "careers.html", permission: read("jobs:read") },
+                { label: "All Applications", href: "applications.html", permission: read("application:read") },
+                { label: "Interview Schedule", href: "applications.html?status=INTERVIEW_SCHEDULED", permission: read("application:read") },
+            ],
+        }),
         {
             id: "site-stats",
             label: "Site Stats",
             icon: "dashboard",
             href: "site-stats.html",
-            permission: {
-                type: "requireAny",
-                perms: ["site_stats:manage"],
-            },
+            // Only permission the site-stats API has.
+            permission: read("site_stats:manage"),
         },
         {
             id: "audit-trail",
             label: "Audit Trail",
             icon: "history",
             href: "audit-trail.html",
-            permission: {
-                type: "requireAny",
-                perms: ["audit_trail:read"],
-            },
+            permission: read("audit_trail:read"),
         },
         {
             id: "app-mgt",
@@ -269,17 +284,43 @@ var NavConfig = window.NavConfig || (() => {
             .split("?")[0];
     }
 
-    /** Build filename → permission rule map (used by RBAC). */
+    /**
+     * Build filename → permission rule map (used by RBAC for the page guard).
+     * A page reached through several links (tabbed pages such as
+     * beauticians.html#list / #payouts) gets the union of their rules: the
+     * page opens if ANY of its tabs is readable; each tab link is gated
+     * separately by buildLinkPermissionMap below.
+     */
     function buildPagePermissionMap() {
         const map = {};
+        function add(href, rule) {
+            if (!rule) return;
+            const page = normalizePage(href);
+            map[page] = map[page] ? anyOf(map[page], rule) : rule;
+        }
         ITEMS.forEach(function (item) {
-            if (!item.permission) return;
-            if (item.href) {
-                map[normalizePage(item.href)] = item.permission;
+            if (item.href) add(item.href, item.permission);
+            if (item.children) {
+                item.children.forEach(function (child) { add(child.href, child.permission || item.permission); });
             }
+        });
+        return map;
+    }
+
+    /**
+     * Link key (the href exactly as configured, hash/query included) →
+     * permission rule. The sidebar stamps each link with data-nav-key so
+     * RBAC can gate individual tab links (beauticians.html#payouts), which
+     * a filename-only lookup can't tell apart.
+     */
+    function buildLinkPermissionMap() {
+        const map = {};
+        ITEMS.forEach(function (item) {
+            if (item.href && item.permission) map[item.href] = item.permission;
             if (item.children) {
                 item.children.forEach(function (child) {
-                    map[normalizePage(child.href)] = item.permission;
+                    const rule = child.permission || item.permission;
+                    if (rule) map[child.href] = rule;
                 });
             }
         });
@@ -292,15 +333,25 @@ var NavConfig = window.NavConfig || (() => {
             "bookings.html",
             "payments.html",
             "users.html",
-            "services.html",
-            "branches.html",
-            "shop.html",
-            "referrals.html",
+            "customer-contacts.html",
+            "rewards.html",
             "discounts.html",
+            "referrals.html",
+            "services.html",
+            "beauticians.html",
+            "shop.html",
+            "inventory-products.html",
+            "financial-transactions.html",
+            "branches.html",
+            "academy-commerce.html",
+            "academy-training.html",
+            "academy-cohorts.html",
+            "academy-courses.html",
+            "academy-resources.html",
+            "staff.html",
+            "payroll.html",
             "careers.html",
             "applications.html",
-            "staff.html",
-            "beauticians.html",
         ];
     }
 
@@ -309,6 +360,7 @@ var NavConfig = window.NavConfig || (() => {
         ICONS,
         normalizePage,
         buildPagePermissionMap,
+        buildLinkPermissionMap,
         getAccessiblePageOrder,
     };
 })();

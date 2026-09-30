@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Salon Bookings</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -588,6 +597,36 @@
         </div>
     </div>
 
+    <!-- Payment method modal (booking completion) -->
+    <div class="modal modal-blur fade" id="modal-complete-payment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Complete Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="complete-payment-error"></div>
+                    <div class="text-secondary small mb-3">This deducts inventory used and calculates commission.</div>
+                    <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                    <select class="form-select" id="complete-payment-method">
+                        <option value="">Select how the customer paid…</option>
+                        <option value="CASH">Cash</option>
+                        <option value="BANK_TRANSFER">Bank Transfer</option>
+                        <option value="POS">POS</option>
+                        <option value="CARD">Card</option>
+                        <option value="WALLET">Wallet</option>
+                    </select>
+                    <div class="form-hint" id="complete-wallet-hint">Wallet deducts the full booking amount from the customer's Hairlux app wallet. Only available when the booking is linked to a customer with an app account.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Back</button>
+                    <button type="button" class="btn btn-success" id="btn-confirm-complete">Complete Booking</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Reason modal (cancel / no-show) -->
     <div class="modal modal-blur fade" id="modal-reason" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -639,11 +678,14 @@
 
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
+    <!-- Page guard: same read permission that shows this page in the sidebar (NavConfig). -->
+    <script>document.addEventListener('DOMContentLoaded', function () { RBAC.applyPageGuardForCurrentPage(); });</script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/services.js"></script>
     <script src="assets/js/api-utils/inventory.js"></script>
     <script src="assets/js/api-utils/salon-bookings.js"></script>
+    <script src="assets/js/closing-time-guard.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
         Auth.requireAuth();
@@ -680,6 +722,10 @@
             loadServices();
             loadBookings();
 
+            // Deep link from the Bookings calendar: salon-bookings.html?id=<bookingId>
+            var deepLinkId = new URLSearchParams(window.location.search).get('id');
+            if (deepLinkId) openDetail(deepLinkId);
+
             document.getElementById('status-tabs').addEventListener('click', function (e) {
                 var link = e.target.closest('[data-status]');
                 if (!link) return;
@@ -707,7 +753,7 @@
                 if (_page < _totalPages) { _page++; loadBookings(); }
             });
             document.getElementById('btn-clear-filters').addEventListener('click', function () {
-                document.getElementById('filter-branch').value = '';
+                document.getElementById('filter-branch').value = RBAC.scopeBranchId('');
                 document.getElementById('filter-date').value = '';
                 document.getElementById('filter-search').value = '';
                 document.getElementById('filter-limit').value = '50';
@@ -750,6 +796,7 @@
                 var opts = _branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
                 filterSel.innerHTML = '<option value="">All branches</option>' + opts;
                 formSel.innerHTML = '<option value="">Select branch…</option>' + opts;
+                RBAC.applyBranchScope(formSel);
                 if (RBAC.applyBranchScope(filterSel)) { _page = 1; loadBookings(); }
             } catch (e) { console.error(e); }
         }
@@ -769,7 +816,7 @@
 
             try {
                 var params = {
-                    branchId: document.getElementById('filter-branch').value,
+                    branchId: RBAC.scopeBranchId(document.getElementById('filter-branch').value),
                     date: document.getElementById('filter-date').value,
                     status: _statusFilter,
                     search: _search,
@@ -801,7 +848,7 @@
                 var services = (b.services || []).map(function (s) { return esc(s.service ? s.service.name : ''); }).join(', ');
                 return '<tr>' +
                     '<td class="font-monospace small">' + esc(b.bookingCode || '—') + '</td>' +
-                    '<td>' + SalonBookings.formatDate(b.bookingDate) + ' · ' + esc(b.bookingTime) + '</td>' +
+                    '<td>' + SalonBookings.formatDate(b.bookingDate) + ' · ' + esc(b.bookingTime) + (b.continuesNextDay ? ' <span class="badge bg-orange-lt" title="Estimated to run past closing time -- continues the next day">Continues next day</span>' : '') + '</td>' +
                     '<td>' + esc(b.customerName) + (b.customerPhone ? '<div class="text-secondary small">' + esc(b.customerPhone) + '</div>' : '') + '</td>' +
                     '<td>' + esc(b.assignedStaff ? b.assignedStaff.name : '—') + '</td>' +
                     '<td>' + esc(b.branch ? b.branch.name : '—') + '</td>' +
@@ -817,6 +864,7 @@
             tbody.querySelectorAll('.btn-start').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); doStart(btn.dataset.id); }); });
             tbody.querySelectorAll('.btn-complete').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); doComplete(btn.dataset.id); }); });
             tbody.querySelectorAll('.btn-cancel').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); openReasonModal('cancel', btn.dataset.id); }); });
+            tbody.querySelectorAll('.btn-reverse').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); openReasonModal('reverse', btn.dataset.id); }); });
             tbody.querySelectorAll('.btn-print').forEach(function (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); printBooking(btn.dataset.id); }); });
         }
 
@@ -836,6 +884,11 @@
                 items += '<a class="dropdown-item text-danger btn-cancel" href="#" data-id="' + b.id + '">Cancel</a>';
             } else if (b.status === 'IN_PROGRESS') {
                 items += '<a class="dropdown-item btn-complete" href="#" data-id="' + b.id + '">Complete</a>';
+            } else if (b.status === 'COMPLETED' && RBAC.isSuperAdmin()) {
+                // Data Accuracy & Audit, Phase 2: the only way to undo a
+                // Completed booking once money has moved -- Super Admin
+                // only, matching the backend's own gate.
+                items += '<a class="dropdown-item text-danger btn-reverse" href="#" data-id="' + b.id + '">Reverse</a>';
             }
             items += '<a class="dropdown-item btn-print" href="#" data-id="' + b.id + '">Print</a>';
 
@@ -853,18 +906,60 @@
             try { await SalonBookings.start(id); loadBookings(); } catch (e) { alert(e.message); }
         }
 
-        async function doComplete(id) {
-            if (!confirm('Complete this booking? This deducts inventory used and calculates commission.')) return;
-            try { await SalonBookings.complete(id); loadBookings(); } catch (e) { alert(e.message); }
+        var _pendingCompleteId = null;
+
+        function doComplete(id) {
+            _pendingCompleteId = id;
+            document.getElementById('complete-payment-method').value = '';
+            document.getElementById('complete-payment-error').classList.add('d-none');
+            // WALLET debits the linked customer's app wallet -- disable it up
+            // front when we already know there's no linked app account (the
+            // API enforces this too). customer === undefined means unknown.
+            var b = _bookings.find(function (x) { return x.id === id; });
+            var noAccount = !!b && (b.customer === null || (b.customer && !b.customer.userId));
+            var walletOpt = document.querySelector('#complete-payment-method option[value="WALLET"]');
+            walletOpt.disabled = noAccount;
+            walletOpt.textContent = noAccount ? 'Wallet (no linked app account)' : 'Wallet';
+            document.getElementById('btn-confirm-complete').disabled = false;
+            new bootstrap.Modal(document.getElementById('modal-complete-payment')).show();
+        }
+
+        async function submitComplete() {
+            var method = document.getElementById('complete-payment-method').value;
+            var errEl = document.getElementById('complete-payment-error');
+            if (!method) {
+                errEl.textContent = 'Select how the customer paid.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = document.getElementById('btn-confirm-complete');
+            btn.disabled = true;
+            errEl.classList.add('d-none');
+            try {
+                await SalonBookings.complete(_pendingCompleteId, method);
+                bootstrap.Modal.getInstance(document.getElementById('modal-complete-payment')).hide();
+                loadBookings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to complete booking.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
         }
 
         function openReasonModal(type, id) {
             _pendingReasonAction = { type: type, id: id };
-            document.getElementById('reason-modal-title').textContent = type === 'cancel' ? 'Cancel Booking' : 'Mark No-Show';
+            var titles = { cancel: 'Cancel Booking', reverse: 'Reverse Completed Booking' };
+            document.getElementById('reason-modal-title').textContent = titles[type] || 'Mark No-Show';
             document.getElementById('reason-text').value = '';
+            document.getElementById('reason-text').placeholder = type === 'reverse'
+                ? 'Required. Undoes posted revenue, restocks deducted items, rejects the commission, and refunds any wallet payment to the customer. Shown on the booking and the reversing ledger entry.'
+                : '';
             document.getElementById('reason-error').classList.add('d-none');
             new bootstrap.Modal(document.getElementById('modal-reason')).show();
         }
+
+        document.getElementById('btn-confirm-complete').addEventListener('click', submitComplete);
 
         async function submitReason() {
             var reason = document.getElementById('reason-text').value.trim();
@@ -877,6 +972,8 @@
             try {
                 if (_pendingReasonAction.type === 'cancel') {
                     await SalonBookings.cancel(_pendingReasonAction.id, reason);
+                } else if (_pendingReasonAction.type === 'reverse') {
+                    await SalonBookings.reverseCompletion(_pendingReasonAction.id, reason);
                 } else {
                     await SalonBookings.noShow(_pendingReasonAction.id, reason);
                 }
@@ -934,7 +1031,7 @@
                     '<div class="col-6"><strong>Customer:</strong> ' + esc(b.customerName) + (b.customerPhone ? ' (' + esc(b.customerPhone) + ')' : '') + '</div>' +
                     '<div class="col-6"><strong>Stylist:</strong> ' + esc(b.assignedStaff ? b.assignedStaff.name : '—') + '</div>' +
                     '<div class="col-6 mt-2"><strong>Branch:</strong> ' + esc(b.branch ? b.branch.name : '—') + '</div>' +
-                    '<div class="col-6 mt-2"><strong>Date/Time:</strong> ' + SalonBookings.formatDate(b.bookingDate) + ' · ' + esc(b.bookingTime) + '</div>' +
+                    '<div class="col-6 mt-2"><strong>Date/Time:</strong> ' + SalonBookings.formatDate(b.bookingDate) + ' · ' + esc(b.bookingTime) + (b.continuesNextDay ? ' <span class="badge bg-orange-lt" title="Estimated to run past closing time -- continues the next day">Continues next day</span>' : '') + '</div>' +
                     '<div class="col-6 mt-2"><strong>Status:</strong> ' + SalonBookings.statusBadge(b.status) + '</div>' +
                     '<div class="col-6 mt-2"><strong>Total:</strong> ' + SalonBookings.formatMoney(b.totalAmount) + '</div>' +
                     '</div>' +
@@ -985,6 +1082,12 @@
                 var result = await SalonBookings.verifyCode(code);
                 var source = result.source;
                 var booking = result.booking;
+                var bookingBranchId = booking.branchId || (booking.branch && booking.branch.id);
+                if (RBAC.isManagerScoped() && RBAC.getManagedBranchIds().indexOf(bookingBranchId) === -1) {
+                    errEl.textContent = 'This reservation belongs to a branch you do not manage.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
                 _verifyBooking = booking;
                 _verifySource = source;
                 _verifyCode = code;
@@ -1080,6 +1183,10 @@
             document.getElementById('nb-estimated-total').textContent = 'Estimated total: —';
             window._nbInventoryItems = [];
             addServiceLine();
+            if (RBAC.isManagerScoped()) {
+                document.getElementById('nb-branch').value = RBAC.scopeBranchId('');
+                onBranchChangeInForm();
+            }
             new bootstrap.Modal(document.getElementById('modal-new-booking')).show();
         }
 
@@ -1642,7 +1749,7 @@
             var errEl = document.getElementById('booking-form-error');
             errEl.classList.add('d-none');
 
-            var branchId = document.getElementById('nb-branch').value;
+            var branchId = RBAC.scopeBranchId(document.getElementById('nb-branch').value);
             var assignedStaffId = document.getElementById('nb-staff').value;
             var customerName = document.getElementById('nb-customer-name').value.trim();
             var customerPhone = document.getElementById('nb-customer-phone').value.trim();
@@ -1680,6 +1787,21 @@
                 return;
             }
 
+            // Closing hours: start + the services' estimated completion time
+            // past the branch's closing time -> blocking prompt (reschedule,
+            // or start today and complete tomorrow).
+            var closing = await ClosingTimeGuard.check({ branchId: branchId, date: bookingDate, time: bookingTime, services: services });
+            if (closing.action === 'reschedule') {
+                if (closing.date) document.getElementById('nb-date').value = closing.date;
+                document.getElementById('nb-time').value = '';
+                errEl.textContent = closing.date
+                    ? 'Moved to ' + new Date(closing.date + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) + '. Pick a start time' + (closing.openTime ? ' (the branch opens at ' + closing.openTime + ')' : '') + ', then create the booking.'
+                    : 'Choose another date and time, then create the booking.';
+                errEl.classList.remove('d-none');
+                document.getElementById('nb-time').focus();
+                return;
+            }
+
             var payload = {
                 branchId: branchId, assignedStaffId: assignedStaffId,
                 customerName: customerName, customerPhone: customerPhone || undefined,
@@ -1689,6 +1811,7 @@
                 inventoryItems: inventoryItems.length ? inventoryItems : undefined,
                 notes: notes || undefined,
                 discountCode: _nbAppliedCoupon ? _nbAppliedCoupon.code : undefined,
+                continuesNextDay: closing.continuesNextDay || undefined,
             };
 
             var btn = document.getElementById('btn-submit-booking');
@@ -1705,6 +1828,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>

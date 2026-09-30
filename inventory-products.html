@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <title>Hairlux Admin — Inventory Products</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -139,6 +148,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="list-pager"></div>
                     </div>
                 </div>
             </div>
@@ -247,10 +257,15 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
     <script src="assets/js/api-utils/inventory-products.js"></script>
+    <script src="assets/js/simple-pager.js"></script>
     <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
+        // Client-side paging for the main list (assets/js/simple-pager.js).
+        var _renderPage = null;
+        var _pager = SimplePager.attach('#list-pager', { onChange: function () { if (_renderPage) _renderPage(); } });
+
         var bootstrap = window.tabler.bootstrap;
         var editingId = null;
         var _allVendors = [];
@@ -382,29 +397,33 @@
                 var noVendor = vendorFilterVal === '__NONE__';
                 var list = await InventoryProducts.getAll(search, category, activeOnly, vendorId, noVendor);
                 _lastLoadedProducts = list;
-                tbody.innerHTML = list.length
-                    ? list.map(function (p) {
-                        var statusBadge = p.isActive
-                            ? '<span class="badge bg-green-lt">Active</span>'
-                            : '<span class="badge bg-secondary-lt">Inactive</span>';
-                        var vendorBadges = (p.suppliers || []).map(function (s) {
-                            return '<span class="badge bg-secondary-lt me-1">' + esc(s.vendor ? s.vendor.name : '') + '</span>';
-                        }).join('') || '<span class="text-secondary small">None</span>';
-                        var subtext = [p.sku, p.brand].filter(Boolean).join(' · ');
-                        return '<tr>' +
-                            '<td><div class="fw-semibold">' + esc(p.name) + '</div>' +
-                            (subtext ? '<div class="text-secondary small">' + esc(subtext) + '</div>' : '') + '</td>' +
-                            '<td>' + esc(formatCategories(p.category)) + '</td>' +
-                            '<td>' + formatMoney(p.costPrice) + ' / ' + formatMoney(p.sellingPrice) + '</td>' +
-                            '<td>' + vendorBadges + '</td>' +
-                            '<td>' + statusBadge + '</td>' +
-                            '<td class="text-nowrap">' +
-                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + p.id + '\')">Edit</button>' +
-                            '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + p.id + '\')">Delete</button>' +
-                            '</td>' +
-                            '</tr>';
-                    }).join('')
-                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No products found.</td></tr>';
+                _pager.reset();
+                (_renderPage = function () {
+                    var pageRows = _pager.slice(list);
+                    tbody.innerHTML = list.length
+                        ? pageRows.map(function (p) {
+                            var statusBadge = p.isActive
+                                ? '<span class="badge bg-green-lt">Active</span>'
+                                : '<span class="badge bg-secondary-lt">Inactive</span>';
+                            var vendorBadges = (p.suppliers || []).map(function (s) {
+                                return '<span class="badge bg-secondary-lt me-1">' + esc(s.vendor ? s.vendor.name : '') + '</span>';
+                            }).join('') || '<span class="text-secondary small">None</span>';
+                            var subtext = [p.sku, p.brand].filter(Boolean).join(' · ');
+                            return '<tr>' +
+                                '<td><div class="fw-semibold">' + esc(p.name) + '</div>' +
+                                (subtext ? '<div class="text-secondary small">' + esc(subtext) + '</div>' : '') + '</td>' +
+                                '<td>' + esc(formatCategories(p.category)) + '</td>' +
+                                '<td>' + formatMoney(p.costPrice) + ' / ' + formatMoney(p.sellingPrice) + '</td>' +
+                                '<td>' + vendorBadges + '</td>' +
+                                '<td>' + statusBadge + '</td>' +
+                                '<td class="text-nowrap">' +
+                                '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + p.id + '\')">Edit</button>' +
+                                '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + p.id + '\')">Delete</button>' +
+                                '</td>' +
+                                '</tr>';
+                        }).join('')
+                        : '<tr><td colspan="6" class="text-center text-secondary py-5">No products found.</td></tr>';
+                })();
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
@@ -508,6 +527,7 @@
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>
