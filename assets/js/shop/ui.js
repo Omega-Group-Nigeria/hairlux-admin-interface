@@ -126,11 +126,12 @@ function ensureProductImageManager() {
     return State.productImages;
 }
 
-function updateOrderStats(rows) {
-    document.getElementById("stat-orders-total").textContent = rows.length;
-    document.getElementById("stat-orders-pending").textContent = rows.filter(function (o) { return o.status === "CONFIRMED" || o.status === "PROCESSING"; }).length;
-    document.getElementById("stat-orders-shipped").textContent = rows.filter(function (o) { return o.status === "SHIPPED"; }).length;
-    document.getElementById("stat-orders-delivered").textContent = rows.filter(function (o) { return o.status === "DELIVERED"; }).length;
+/** counts: { total, pending, shipped, delivered } (see handlers.js loadOrderStats). */
+function updateOrderStats(counts) {
+    document.getElementById("stat-orders-total").textContent = counts.total;
+    document.getElementById("stat-orders-pending").textContent = counts.pending;
+    document.getElementById("stat-orders-shipped").textContent = counts.shipped;
+    document.getElementById("stat-orders-delivered").textContent = counts.delivered;
 }
 
     SP.UI = {

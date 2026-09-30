@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin — Training Library (LMS)</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+
+        #quill-editor {
+            min-height: 160px;
+            background: #fff;
+        }
+
+        .file-status {
+            font-size: 12px;
+            color: var(--tblr-secondary);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <h2 class="page-title">Training Library (LMS)</h2>
+                            <div class="text-secondary small mt-1">Role-gated training material — staff can only
+                                view; there is no completion tracking.</div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-primary" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                New Course
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Content</th>
+                                        <th>Visible to</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="list-pager"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-form-title">New Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="form-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" id="f-title" placeholder="e.g. Hair Coloring Basics">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <div id="quill-editor"></div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Video <span class="text-secondary">(optional)</span></label>
+                            <input type="file" class="form-control" id="f-video" accept="video/*">
+                            <div class="file-status" id="f-video-status"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">PDF <span class="text-secondary">(optional)</span></label>
+                            <input type="file" class="form-control" id="f-pdf" accept="application/pdf">
+                            <div class="file-status" id="f-pdf-status"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Visible to</label>
+                        <select class="form-select mb-2" id="f-visibility-mode">
+                            <option value="ROLE">Specific roles</option>
+                            <option value="BRANCH">Specific branches</option>
+                            <option value="STAFF">Specific staff</option>
+                            <option value="ALL">Everyone</option>
+                        </select>
+
+                        <div id="f-visibility-role-wrap">
+                            <select class="form-select" id="f-roles" multiple></select>
+                            <div class="form-hint">Staff need at least one of the selected roles to see this course.
+                            </div>
+                        </div>
+                        <div id="f-visibility-branch-wrap" style="display:none">
+                            <select class="form-select" id="f-branches" multiple></select>
+                            <div class="form-hint">Staff at any of the selected branches will see this course.</div>
+                        </div>
+                        <div id="f-visibility-staff-wrap" style="display:none">
+                            <select class="form-select" id="f-staff" multiple></select>
+                            <div class="form-hint">Only the selected staff members will see this course.</div>
+                        </div>
+                        <div id="f-visibility-all-wrap" style="display:none">
+                            <div class="text-secondary small">Every active staff member will see this course — no
+                                selection needed.</div>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="f-active" checked>
+                        <label class="form-check-label" for="f-active">Active (visible to staff)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dev Feedback Round 9: "As a staff member would see it" preview,
+                                         before flipping a course Active. Sourced from the admin's own
+                                         GET /admin/lms/:id (Lms.getOne), not the staff-scoped
+                                         GET /lms/me/courses/:id -- an admin previewing a course targeted
+                                         at a branch/role/specific staff they don't personally belong to
+                                         would otherwise get a 403 from the staff-scoped endpoint, which
+                                         defeats the entire point of a preview. Same Title -> main
+                                         content -> Description -> Attachments ordering as the real staff
+                                         viewer (assets/js/staff-portal-app.js's openTrainingViewer). -->
+    <div class="modal modal-blur fade" id="modal-preview" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Preview — as staff will see it</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="preview-body">
+                    <div class="text-center text-secondary py-4">Loading…</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/roles.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/lms.js"></script>
+    <script src="assets/js/simple-pager.js"></script>
+    <script src="assets/js/multi-select-dropdown.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script>
+        // Client-side paging for the main list (assets/js/simple-pager.js).
+        var _renderPage = null;
+        var _pager = SimplePager.attach('#list-pager', { onChange: function () { if (_renderPage) _renderPage(); } });
+
+        var bootstrap = window.tabler.bootstrap;
+        var editingId = null;
+        var _quill = null;
+        var _allRoles = [];
+        var _allBranches = [];
+        var _allStaff = [];
+        var _existingVideoKey = null;
+        var _existingPdfKey = null;
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.applyPageGuard('lms:read');
+
+            _initQuill();
+            document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
+            document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('f-visibility-mode').addEventListener('change', applyVisibilityModeUI);
+
+            try {
+                _allRoles = await Roles.fetchRoles ? await Roles.fetchRoles() : [];
+            } catch (e) {
+                _allRoles = [];
+            }
+            renderRoleCheckboxes();
+
+            try {
+                _allBranches = await Branches.getBranches();
+            } catch (e) {
+                _allBranches = [];
+            }
+            renderBranchCheckboxes();
+
+            try {
+                _allStaff = await Staff.getOptions();
+            } catch (e) {
+                _allStaff = [];
+            }
+            renderStaffCheckboxes();
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function _initQuill() {
+            _quill = new Quill('#quill-editor', {
+                theme: 'snow',
+                placeholder: 'What this course covers…',
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        ['link'],
+                        ['clean'],
+                    ],
+                },
+            });
+        }
+
+        function renderRoleCheckboxes() {
+            var select = document.getElementById('f-roles');
+            if (!_allRoles.length) {
+                select.innerHTML = '';
+                select.disabled = true;
+                select.insertAdjacentHTML('afterend', '<div class="text-secondary small mt-1" id="f-roles-empty">No roles found — create roles first under Settings → Roles & Permissions.</div>');
+                return;
+            }
+            select.disabled = false;
+            select.innerHTML = _allRoles.map(function (r) {
+                return '<option value="' + esc(r.id) + '">' + esc(r.name) + '</option>';
+            }).join('');
+            MultiSelectDropdown.attach('f-roles', { placeholder: 'Select roles…' });
+        }
+
+        function checkedRoleIds() {
+            return Array.from(document.getElementById('f-roles').selectedOptions).map(function (o) { return o.value; });
+        }
+
+        function setCheckedRoles(ids) {
+            var set = new Set(ids || []);
+            Array.from(document.getElementById('f-roles').options).forEach(function (o) { o.selected = set.has(o.value); });
+            MultiSelectDropdown.refresh('f-roles');
+        }
+
+        // Dev Feedback Round 9: LMS Assignment Options -- branches/staff
+        // mirror the role checkboxes above exactly, just against a
+        // different source list.
+        function renderBranchCheckboxes() {
+            var select = document.getElementById('f-branches');
+            select.innerHTML = _allBranches.map(function (b) {
+                return '<option value="' + esc(b.id) + '">' + esc(b.name) + '</option>';
+            }).join('');
+            MultiSelectDropdown.attach('f-branches', { placeholder: 'Select branches…' });
+        }
+
+        function checkedBranchIds() {
+            return Array.from(document.getElementById('f-branches').selectedOptions).map(function (o) { return o.value; });
+        }
+
+        function setCheckedBranches(ids) {
+            var set = new Set(ids || []);
+            Array.from(document.getElementById('f-branches').options).forEach(function (o) { o.selected = set.has(o.value); });
+            MultiSelectDropdown.refresh('f-branches');
+        }
+
+        function renderStaffCheckboxes() {
+            var select = document.getElementById('f-staff');
+            select.innerHTML = _allStaff.map(function (s) {
+                return '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>';
+            }).join('');
+            MultiSelectDropdown.attach('f-staff', { placeholder: 'Select staff…' });
+        }
+
+        function checkedStaffIds() {
+            return Array.from(document.getElementById('f-staff').selectedOptions).map(function (o) { return o.value; });
+        }
+
+        function setCheckedStaff(ids) {
+            var set = new Set(ids || []);
+            Array.from(document.getElementById('f-staff').options).forEach(function (o) { o.selected = set.has(o.value); });
+            MultiSelectDropdown.refresh('f-staff');
+        }
+
+        /** Shows only the multi-select matching the currently selected visibility mode. */
+        function applyVisibilityModeUI() {
+            var mode = document.getElementById('f-visibility-mode').value;
+            document.getElementById('f-visibility-role-wrap').style.display = mode === 'ROLE' ? 'block' : 'none';
+            document.getElementById('f-visibility-branch-wrap').style.display = mode === 'BRANCH' ? 'block' : 'none';
+            document.getElementById('f-visibility-staff-wrap').style.display = mode === 'STAFF' ? 'block' : 'none';
+            document.getElementById('f-visibility-all-wrap').style.display = mode === 'ALL' ? 'block' : 'none';
+        }
+
+        /** Dev Feedback Round 9: LMS Assignment Options -- summarizes whichever targeting mode is actually active, not just roles. */
+        function visibilitySummary(c) {
+            var mode = c.visibilityMode || 'ROLE';
+            if (mode === 'ALL') return '<span class="badge bg-blue-lt">Everyone</span>';
+            if (mode === 'BRANCH') {
+                var branchBadges = (c.branches || []).map(function (b) {
+                    return '<span class="badge bg-secondary-lt me-1">' + esc(b.branch ? b.branch.name : '') + '</span>';
+                }).join('');
+                return branchBadges || '<span class="text-secondary small">No branches assigned</span>';
+            }
+            if (mode === 'STAFF') {
+                var staffBadges = (c.staff || []).map(function (s) {
+                    return '<span class="badge bg-secondary-lt me-1">' + esc(s.staff ? s.staff.name : '') + '</span>';
+                }).join('');
+                return staffBadges || '<span class="text-secondary small">No staff assigned</span>';
+            }
+            var roleBadges = (c.roles || []).map(function (r) {
+                return '<span class="badge bg-secondary-lt me-1">' + esc(r.adminRole ? r.adminRole.name : '') + '</span>';
+            }).join('');
+            return roleBadges || '<span class="text-secondary small">No roles assigned</span>';
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var list = await Lms.getAll();
+                _pager.reset();
+                (_renderPage = function () {
+                    var pageRows = _pager.slice(list);
+                    tbody.innerHTML = list.length
+                        ? pageRows.map(function (c) {
+                            var statusBadge = c.isActive
+                                ? '<span class="badge bg-green-lt">Active</span>'
+                                : '<span class="badge bg-secondary-lt">Inactive</span>';
+                            var contentBadges = (c.videoKey ? '<span class="badge bg-blue-lt me-1">Video</span>' : '') +
+                                (c.pdfKey ? '<span class="badge bg-azure-lt">PDF</span>' : '') +
+                                (!c.videoKey && !c.pdfKey ? '<span class="text-secondary small">Text only</span>' : '');
+                            return '<tr>' +
+                                '<td class="fw-semibold">' + esc(c.title) + '</td>' +
+                                '<td>' + contentBadges + '</td>' +
+                                '<td>' + visibilitySummary(c) + '</td>' +
+                                '<td>' + statusBadge + '</td>' +
+                                '<td class="text-nowrap">' +
+                                '<button class="btn btn-sm btn-outline-primary me-1" onclick="openPreview(\'' + c.id + '\')">Preview</button>' +
+                                '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + c.id + '\')">Edit</button>' +
+                                '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + c.id + '\')">Delete</button>' +
+                                '</td>' +
+                                '</tr>';
+                        }).join('')
+                        : '<tr><td colspan="5" class="text-center text-secondary py-5">No courses yet.</td></tr>';
+                })();
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function openForm(id) {
+            editingId = id;
+            document.getElementById('form-error').classList.add('d-none');
+            document.getElementById('modal-form-title').textContent = id ? 'Edit Course' : 'New Course';
+            document.getElementById('f-video').value = '';
+            document.getElementById('f-pdf').value = '';
+            document.getElementById('f-video-status').textContent = '';
+            document.getElementById('f-pdf-status').textContent = '';
+            _existingVideoKey = null;
+            _existingPdfKey = null;
+
+            if (id) {
+                try {
+                    var c = await Lms.getOne(id);
+                    document.getElementById('f-title').value = c.title;
+                    _quill.root.innerHTML = c.description || '';
+                    document.getElementById('f-active').checked = !!c.isActive;
+                    document.getElementById('f-visibility-mode').value = c.visibilityMode || 'ROLE';
+                    setCheckedRoles((c.roles || []).map(function (r) { return r.adminRoleId; }));
+                    setCheckedBranches((c.branches || []).map(function (b) { return b.branchId; }));
+                    setCheckedStaff((c.staff || []).map(function (s) { return s.staffId; }));
+                    applyVisibilityModeUI();
+                    _existingVideoKey = c.videoKey;
+                    _existingPdfKey = c.pdfKey;
+                    if (c.videoKey) document.getElementById('f-video-status').textContent = 'A video is already attached — choose a new file only to replace it.';
+                    if (c.pdfKey) document.getElementById('f-pdf-status').textContent = 'A PDF is already attached — choose a new file only to replace it.';
+                } catch (e) {
+                    alert(e.message || 'Failed to load.');
+                    return;
+                }
+            } else {
+                document.getElementById('f-title').value = '';
+                _quill.root.innerHTML = '';
+                document.getElementById('f-active').checked = true;
+                document.getElementById('f-visibility-mode').value = 'ROLE';
+                setCheckedRoles([]);
+                setCheckedBranches([]);
+                setCheckedStaff([]);
+                applyVisibilityModeUI();
+            }
+            new bootstrap.Modal(document.getElementById('modal-form')).show();
+        }
+
+        async function save() {
+            var errEl = document.getElementById('form-error');
+            errEl.classList.add('d-none');
+            var title = document.getElementById('f-title').value.trim();
+            var description = _quill.root.innerHTML.trim();
+            var mode = document.getElementById('f-visibility-mode').value;
+            var roleIds = checkedRoleIds();
+            var branchIds = checkedBranchIds();
+            var staffIds = checkedStaffIds();
+
+            if (!title) { errEl.textContent = 'Title is required.'; errEl.classList.remove('d-none'); return; }
+            if (_quill.getText().trim().length === 0) { errEl.textContent = 'Description is required.'; errEl.classList.remove('d-none'); return; }
+            if (mode === 'ROLE' && !roleIds.length) { errEl.textContent = 'Select at least one role who can see this course.'; errEl.classList.remove('d-none'); return; }
+            if (mode === 'BRANCH' && !branchIds.length) { errEl.textContent = 'Select at least one branch who can see this course.'; errEl.classList.remove('d-none'); return; }
+            if (mode === 'STAFF' && !staffIds.length) { errEl.textContent = 'Select at least one staff member who can see this course.'; errEl.classList.remove('d-none'); return; }
+
+            var formData = new FormData();
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('visibilityMode', mode);
+            formData.append('roleIds', JSON.stringify(roleIds));
+            formData.append('branchIds', JSON.stringify(branchIds));
+            formData.append('staffIds', JSON.stringify(staffIds));
+            formData.append('isActive', document.getElementById('f-active').checked ? 'true' : 'false');
+            var videoFile = document.getElementById('f-video').files[0];
+            var pdfFile = document.getElementById('f-pdf').files[0];
+            if (videoFile) formData.append('video', videoFile);
+            if (pdfFile) formData.append('pdf', pdfFile);
+
+            var btn = document.getElementById('btn-save');
+            btn.disabled = true;
+            try {
+                if (editingId) await Lms.update(editingId, formData);
+                else await Lms.create(formData);
+                bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function remove(id) {
+            if (!confirm('Delete this course permanently? This cannot be undone.')) return;
+            try {
+                await Lms.remove(id);
+                load();
+            } catch (e) {
+                alert(e.message || 'Failed to delete.');
+            }
+        }
+
+        /**
+         * Dev Feedback Round 9: "As a staff member would see it" preview.
+         * Same Title -> main content -> Description -> Attachments
+         * ordering as the real staff viewer (openTrainingViewer in
+         * staff-portal-app.js) -- video is the main content when present
+         * (a course's primary teaching material), with the PDF as an
+         * Attachments section shown after the description; if there's no
+         * video, the PDF takes the main-content slot instead and there's
+         * nothing left for a separate Attachments section.
+         */
+        async function openPreview(id) {
+            var body = document.getElementById('preview-body');
+            body.innerHTML = '<div class="text-center text-secondary py-4">Loading…</div>';
+            new bootstrap.Modal(document.getElementById('modal-preview')).show();
+
+            try {
+                var c = await Lms.getOne(id);
+
+                var mainContentHtml = '';
+                var attachmentsHtml = '';
+                if (c.videoUrl) {
+                    mainContentHtml = '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" class="w-100 mb-3" style="border-radius:4px" src="' + c.videoUrl + '"></video>';
+                    if (c.pdfUrl) {
+                        attachmentsHtml =
+                            '<div class="fw-semibold text-secondary small mt-3 mb-2">Attachments</div>' +
+                            '<iframe src="' + c.pdfUrl + '#toolbar=0&navpanes=0" class="w-100" style="height:60vh;border:1px solid var(--tblr-border-color);border-radius:4px"></iframe>';
+                    }
+                } else if (c.pdfUrl) {
+                    mainContentHtml = '<iframe src="' + c.pdfUrl + '#toolbar=0&navpanes=0" class="w-100 mb-3" style="height:60vh;border:1px solid var(--tblr-border-color);border-radius:4px"></iframe>';
+                }
+
+                body.innerHTML =
+                    '<h3 class="mb-3">' + esc(c.title) + '</h3>' +
+                    mainContentHtml +
+                    '<div>' + c.description + '</div>' +
+                    attachmentsHtml;
+            } catch (e) {
+                body.innerHTML = '<div class="text-center text-danger py-4">' + esc(e.message || 'Failed to load preview.') + '</div>';
+            }
+        }
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

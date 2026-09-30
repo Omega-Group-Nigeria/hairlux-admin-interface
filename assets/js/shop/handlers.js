@@ -29,6 +29,12 @@
     var ensureProductImageManager = UI.ensureProductImageManager;
     var updateOrderStats = UI.updateOrderStats;
 
+    // Server-side paging for the products and orders lists
+    // (assets/js/simple-pager.js). A plain loadProducts()/loadOrders() call
+    // (filter change, refresh) goes back to page 1; pager clicks keep the page.
+    var productsPager = SimplePager.attach("#products-pager", { onChange: function () { loadProducts({ keepPage: true }); } });
+    var ordersPager = SimplePager.attach("#orders-pager", { onChange: function () { loadOrders({ keepPage: true }); } });
+
 async function loadNigerianStates() {
     if (State.nigerianStates) return State.nigerianStates;
     var res = await fetch("./assets/data/nigeria-states.json");
@@ -194,18 +200,23 @@ async function loadCategoriesForFilters() {
     } catch (e) { console.warn(e); }
 }
 
+function listTotal(result) {
+    return result.meta && result.meta.total != null ? Number(result.meta.total) : result.items.length;
+}
+
 async function loadProductStats() {
     try {
-        var all = await Api.getProducts({});
-        var active = await Api.getProducts({ status: "ACTIVE" });
-        var inactive = await Api.getProducts({ status: "INACTIVE" });
-        document.getElementById("stat-products-total").textContent = all.items.length;
-        document.getElementById("stat-products-active").textContent = active.items.length;
-        document.getElementById("stat-products-inactive").textContent = inactive.items.length;
+        var all = await Api.getProducts({ limit: 1 });
+        var active = await Api.getProducts({ status: "ACTIVE", limit: 1 });
+        var inactive = await Api.getProducts({ status: "INACTIVE", limit: 1 });
+        document.getElementById("stat-products-total").textContent = listTotal(all);
+        document.getElementById("stat-products-active").textContent = listTotal(active);
+        document.getElementById("stat-products-inactive").textContent = listTotal(inactive);
     } catch (e) { console.warn(e); }
 }
 
-async function loadProducts() {
+async function loadProducts(opts) {
+    if (!(opts && opts.keepPage)) productsPager.reset();
     setTableLoading("products-tbody", 7);
     document.getElementById("products-results-label").textContent = "Loading…";
     var tbody = document.getElementById("products-tbody");
@@ -214,10 +225,14 @@ async function loadProducts() {
             status: State.product.status || undefined,
             search: State.product.search || undefined,
             categoryId: State.product.categoryId || undefined,
+            page: productsPager.page,
+            limit: productsPager.perPage,
         });
         var rows = result.items;
-        document.getElementById("products-results-label").textContent = rows.length + " product" + (rows.length !== 1 ? "s" : "");
-        document.getElementById("products-pagination").textContent = rows.length + " product" + (rows.length !== 1 ? "s" : "") + " found";
+        var total = listTotal(result);
+        productsPager.setTotal(total);
+        document.getElementById("products-results-label").textContent = total + " product" + (total !== 1 ? "s" : "");
+        document.getElementById("products-pagination").textContent = total + " product" + (total !== 1 ? "s" : "") + " found";
         renderProductsTable(rows);
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
@@ -539,7 +554,27 @@ function confirmDeleteRegion(id, name) {
     new bootstrap.Modal(document.getElementById("modal-confirm")).show();
 }
 
-async function loadOrders() {
+/** Order stat cards: counted server-side (one limit=1 query per status,
+ * reading meta.total) so they cover every matching order, not just the
+ * current page. Uses the date/search filters but not the status tab. */
+async function loadOrderStats() {
+    var base = {
+        startDate: State.order.startDate || undefined,
+        endDate: State.order.endDate || undefined,
+        search: State.order.search || undefined,
+        limit: 1,
+    };
+    function count(status) {
+        return Api.getOrders(Object.assign({}, base, { status: status })).then(listTotal);
+    }
+    try {
+        var c = await Promise.all([count(undefined), count("CONFIRMED"), count("PROCESSING"), count("SHIPPED"), count("DELIVERED")]);
+        updateOrderStats({ total: c[0], pending: c[1] + c[2], shipped: c[3], delivered: c[4] });
+    } catch (e) { console.warn(e); }
+}
+
+async function loadOrders(opts) {
+    if (!(opts && opts.keepPage)) ordersPager.reset();
     setTableLoading("orders-tbody", 6);
     document.getElementById("orders-results-label").textContent = "Loading…";
     var tbody = document.getElementById("orders-tbody");
@@ -549,10 +584,14 @@ async function loadOrders() {
             startDate: State.order.startDate || undefined,
             endDate: State.order.endDate || undefined,
             search: State.order.search || undefined,
+            page: ordersPager.page,
+            limit: ordersPager.perPage,
         });
         var rows = result.items;
-        updateOrderStats(rows);
-        document.getElementById("orders-results-label").textContent = rows.length + " order" + (rows.length !== 1 ? "s" : "");
+        var total = listTotal(result);
+        ordersPager.setTotal(total);
+        loadOrderStats();
+        document.getElementById("orders-results-label").textContent = total + " order" + (total !== 1 ? "s" : "");
         if (typeof Layout !== "undefined" && Layout.refreshShopOrderBadge) Layout.refreshShopOrderBadge();
         if (!rows.length) {
             tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No orders found.</td></tr>';
@@ -655,7 +694,7 @@ async function executeConfirmedOp() {
             await Api.updateOrderStatus(orderId, newStatus, notes || undefined);
             bootstrap.Modal.getInstance(document.getElementById("modal-confirm")).hide();
             if (typeof Layout !== "undefined" && Layout.refreshShopOrderBadge) Layout.refreshShopOrderBadge();
-            loadOrders();
+            loadOrders({ keepPage: true });
             openOrderDetail(orderId);
             flashPageAlert("success", newStatus === "CANCELLED"
                 ? "Order cancelled successfully."

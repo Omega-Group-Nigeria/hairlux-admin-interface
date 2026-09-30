@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin — Product Sales</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Finance</div>
+                            <h2 class="page-title">Product Sales</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-primary" id="btn-new">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon me-1">
+                                    <path d="M12 5l0 14" />
+                                    <path d="M5 12l14 0" />
+                                </svg>
+                                Record Sale
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Sales Shown</div>
+                                    <div class="h3 mb-0" id="stat-count">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Completed Revenue</div>
+                                    <div class="h3 mb-0 text-green" id="stat-revenue">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Voided</div>
+                                    <div class="h3 mb-0 text-red" id="stat-voided">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-branch">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="f-status">
+                                        <option value="">All statuses</option>
+                                        <option value="COMPLETED">Completed</option>
+                                        <option value="VOIDED">Voided</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="f-from" placeholder="From">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="f-to" placeholder="To">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" id="f-search"
+                                        placeholder="Search customer name/phone">
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-outline-secondary w-100" id="btn-clear-filters">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Branch</th>
+                                        <th>Sold By</th>
+                                        <th>Customer</th>
+                                        <th>Items</th>
+                                        <th>Payment</th>
+                                        <th class="text-end">Amount</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr>
+                                        <td colspan="9" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="list-pager"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Sale modal -->
+    <div class="modal modal-blur fade" id="modal-new-sale" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Record Product Sale</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="sale-error"></div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Branch</label>
+                            <select class="form-select" id="sale-branch">
+                                <option value="">Select branch…</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" id="sale-payment-method">
+                                <option value="">Select…</option>
+                                <option value="CASH">Cash</option>
+                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                                <option value="POS">POS</option>
+                                <option value="CARD">Card</option>
+                                <option value="WALLET">Wallet</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Customer Name <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="sale-customer-name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Customer Phone <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="sale-customer-phone">
+                        </div>
+                    </div>
+                    <label class="form-label">Items</label>
+                    <div id="sale-items-rows"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="btn-add-item-row"
+                        disabled>+ Add Item</button>
+                    <div class="text-secondary small mt-1" id="sale-items-hint">Select a branch first to choose from
+                        its sellable items.</div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <div class="text-end">
+                            <div class="text-secondary small">Total</div>
+                            <div class="h3 mb-0" id="sale-total">₦0.00</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save-sale">Record Sale</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View modal -->
+    <div class="modal modal-blur fade" id="modal-view" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sale Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="view-body">
+                    <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Void modal -->
+    <div class="modal modal-blur fade" id="modal-void" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Void Sale</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary">This reverses the sale's ledger entry and restocks every item sold. The
+                        sale record itself is kept for audit — it is marked Voided, never deleted.</p>
+                    <div class="alert alert-danger d-none" id="void-error"></div>
+                    <label class="form-label">Reason <span class="text-secondary">(required, min. 5 characters)</span></label>
+                    <textarea class="form-control" id="void-reason" rows="2"
+                        placeholder="e.g. Wrong item rung up — customer actually bought a different product"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" id="btn-confirm-void">Void Sale</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/inventory.js"></script>
+    <script src="assets/js/api-utils/product-sales-admin.js"></script>
+    <script src="assets/js/simple-pager.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var _allBranches = [];
+        var _lastLoaded = [];
+        var _sellableItems = [];
+        var _pendingVoidId = null;
+        var _pager = null;
+        var _filteredRows = [];
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            RBAC.loadFromStorage();
+            RBAC.applyPageGuardForCurrentPage(); // same read rule as the sidebar link (NavConfig)
+            _pager = SimplePager.attach('#list-pager', { onChange: function () { renderTable(_filteredRows); } });
+
+            document.getElementById('btn-new').addEventListener('click', openNewSale);
+            document.getElementById('btn-save-sale').addEventListener('click', saveSale);
+            document.getElementById('btn-add-item-row').addEventListener('click', function () { addItemRow(); });
+            document.getElementById('sale-branch').addEventListener('change', onSaleBranchChange);
+            document.getElementById('btn-confirm-void').addEventListener('click', confirmVoid);
+
+            document.getElementById('f-branch').addEventListener('change', load);
+            document.getElementById('f-status').addEventListener('change', load);
+            document.getElementById('f-from').addEventListener('change', load);
+            document.getElementById('f-to').addEventListener('change', load);
+            var searchTimer;
+            document.getElementById('f-search').addEventListener('input', function () {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(renderFromCache, 300);
+            });
+            document.getElementById('btn-clear-filters').addEventListener('click', function () {
+                document.getElementById('f-branch').value = RBAC.scopeBranchId('');
+                document.getElementById('f-status').value = '';
+                document.getElementById('f-from').value = '';
+                document.getElementById('f-to').value = '';
+                document.getElementById('f-search').value = '';
+                load();
+            });
+
+            try {
+                _allBranches = await Branches.getBranches();
+                var opts = _allBranches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                document.getElementById('f-branch').innerHTML += opts;
+                document.getElementById('sale-branch').innerHTML += opts;
+                RBAC.applyBranchScope(document.getElementById('f-branch'));
+                RBAC.applyBranchScope(document.getElementById('sale-branch'));
+            } catch (e) { _allBranches = []; }
+
+            load();
+        });
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        // ── List ─────────────────────────────────────────────────────────
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                _lastLoaded = await ProductSales.getAll({
+                    branchId: RBAC.scopeBranchId(document.getElementById('f-branch').value),
+                    from: document.getElementById('f-from').value,
+                    to: document.getElementById('f-to').value,
+                });
+                renderFromCache();
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        function renderFromCache() {
+            var status = document.getElementById('f-status').value;
+            var search = document.getElementById('f-search').value.trim().toLowerCase();
+            var rows = _lastLoaded.filter(function (s) {
+                if (status && s.status !== status) return false;
+                if (search) {
+                    var hay = ((s.customerName || '') + ' ' + (s.customerPhone || '')).toLowerCase();
+                    if (hay.indexOf(search) === -1) return false;
+                }
+                return true;
+            });
+            renderStats(rows);
+            _pager.reset();
+            renderTable(rows);
+        }
+
+        function renderStats(rows) {
+            var completed = rows.filter(function (r) { return r.status === 'COMPLETED'; });
+            var voided = rows.filter(function (r) { return r.status === 'VOIDED'; });
+            document.getElementById('stat-count').textContent = rows.length;
+            document.getElementById('stat-revenue').textContent = ProductSales.formatMoney(
+                completed.reduce(function (sum, r) { return sum + Number(r.totalAmount); }, 0)
+            );
+            document.getElementById('stat-voided').textContent = voided.length;
+        }
+
+        function renderTable(rows) {
+            var tbody = document.getElementById('tbody');
+            _filteredRows = rows;
+            var pageRows = _pager.slice(rows);
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No product sales found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = pageRows.map(function (s) {
+                var itemsSummary = (s.items || []).map(function (i) {
+                    return (i.item ? esc(i.item.name) : 'Item') + ' ×' + i.quantity;
+                }).join(', ');
+                var soldBy = s.soldBy ? esc(s.soldBy.name) : '—';
+                var customer = s.customerName || s.customerPhone
+                    ? esc(s.customerName || '') + (s.customerPhone ? ' (' + esc(s.customerPhone) + ')' : '')
+                    : '<span class="text-secondary">Walk-in</span>';
+                var canVoid = s.status === 'COMPLETED';
+                return '<tr>' +
+                    '<td class="text-secondary small">' + new Date(s.createdAt).toLocaleString('en-NG') + '</td>' +
+                    '<td>' + esc(s.branch ? s.branch.name : '—') + '</td>' +
+                    '<td>' + soldBy + '</td>' +
+                    '<td>' + customer + '</td>' +
+                    '<td class="text-truncate" style="max-width:220px" title="' + esc(itemsSummary) + '">' + esc(itemsSummary) + '</td>' +
+                    '<td>' + esc((s.paymentMethod || '—').replace('_', ' ')) + '</td>' +
+                    '<td class="text-end fw-semibold">' + ProductSales.formatMoney(s.totalAmount) + '</td>' +
+                    '<td>' + ProductSales.statusBadge(s.status) + '</td>' +
+                    '<td class="text-nowrap">' +
+                    '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewOne(\'' + s.id + '\')">View</button>' +
+                    (canVoid ? '<button class="btn btn-sm btn-outline-danger" onclick="openVoid(\'' + s.id + '\')">Void</button>' : '') +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        // ── View ─────────────────────────────────────────────────────────
+        async function viewOne(id) {
+            document.getElementById('view-body').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+            new bootstrap.Modal(document.getElementById('modal-view')).show();
+            try {
+                var s = await ProductSales.getOne(id);
+                var itemsRows = (s.items || []).map(function (i) {
+                    return '<tr><td>' + esc(i.item ? i.item.name : '—') + '</td><td>' + i.quantity + '</td>' +
+                        '<td>' + ProductSales.formatMoney(i.unitPrice) + '</td>' +
+                        '<td>' + ProductSales.formatMoney(Number(i.unitPrice) * i.quantity) + '</td></tr>';
+                }).join('');
+                var voidInfo = s.status === 'VOIDED'
+                    ? '<div class="alert alert-danger mt-3"><strong>Voided</strong>' +
+                    (s.voidedAt ? ' on ' + new Date(s.voidedAt).toLocaleString('en-NG') : '') +
+                    (s.voidedBy ? ' by ' + esc(s.voidedBy.name) : '') +
+                    (s.voidReason ? '<div class="mt-1">' + esc(s.voidReason) + '</div>' : '') + '</div>'
+                    : '';
+                document.getElementById('view-body').innerHTML =
+                    '<div class="row g-2 mb-3">' +
+                    '<div class="col-6"><div class="text-secondary small">Branch</div><div>' + esc(s.branch ? s.branch.name : '—') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Sold By</div><div>' + esc(s.soldBy ? s.soldBy.name : '—') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Customer</div><div>' + esc(s.customerName || 'Walk-in') + (s.customerPhone ? ' — ' + esc(s.customerPhone) : '') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Payment Method</div><div>' + esc((s.paymentMethod || '—').replace('_', ' ')) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Status</div><div>' + ProductSales.statusBadge(s.status) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Date</div><div>' + new Date(s.createdAt).toLocaleString('en-NG') + '</div></div>' +
+                    '</div>' +
+                    '<table class="table table-sm"><thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr></thead><tbody>' + itemsRows + '</tbody>' +
+                    '<tfoot><tr><td colspan="3" class="text-end fw-semibold">Total</td><td class="fw-semibold">' + ProductSales.formatMoney(s.totalAmount) + '</td></tr></tfoot></table>' +
+                    voidInfo;
+            } catch (e) {
+                document.getElementById('view-body').innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
+            }
+        }
+
+        // ── Void ─────────────────────────────────────────────────────────
+        function openVoid(id) {
+            _pendingVoidId = id;
+            document.getElementById('void-reason').value = '';
+            document.getElementById('void-error').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('modal-void')).show();
+        }
+
+        async function confirmVoid() {
+            var reason = document.getElementById('void-reason').value.trim();
+            var errEl = document.getElementById('void-error');
+            if (reason.length < 5) {
+                errEl.textContent = 'Enter a reason of at least 5 characters.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            try {
+                await ProductSales.voidSale(_pendingVoidId, reason);
+                bootstrap.Modal.getInstance(document.getElementById('modal-void')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to void sale.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        // ── New Sale ─────────────────────────────────────────────────────
+        function openNewSale() {
+            document.getElementById('sale-error').classList.add('d-none');
+            document.getElementById('sale-branch').value = RBAC.scopeBranchId('');
+            document.getElementById('sale-payment-method').value = '';
+            document.getElementById('sale-customer-name').value = '';
+            document.getElementById('sale-customer-phone').value = '';
+            document.getElementById('sale-items-rows').innerHTML = '';
+            document.getElementById('sale-total').textContent = '₦0.00';
+            document.getElementById('btn-add-item-row').disabled = true;
+            document.getElementById('sale-items-hint').textContent = 'Select a branch first to choose from its sellable items.';
+            document.getElementById('sale-items-hint').classList.remove('d-none');
+            _sellableItems = [];
+            if (RBAC.isManagerScoped()) onSaleBranchChange();
+            new bootstrap.Modal(document.getElementById('modal-new-sale')).show();
+        }
+
+        async function onSaleBranchChange() {
+            var branchId = document.getElementById('sale-branch').value;
+            document.getElementById('sale-items-rows').innerHTML = '';
+            updateSaleTotal();
+            if (!branchId) {
+                document.getElementById('btn-add-item-row').disabled = true;
+                document.getElementById('sale-items-hint').textContent = 'Select a branch first to choose from its sellable items.';
+                document.getElementById('sale-items-hint').classList.remove('d-none');
+                return;
+            }
+            try {
+                var result = await Inventory.getAll({ branchId: branchId, category: 'FOR_SALE', limit: 1000 });
+                var items = (result.data || result.items || result || []).filter(function (i) {
+                    return Number(i.salesStock) > 0 && i.price != null;
+                });
+                _sellableItems = items;
+                if (!items.length) {
+                    document.getElementById('sale-items-hint').textContent = 'This branch has no sellable items with stock available.';
+                    document.getElementById('sale-items-hint').classList.remove('d-none');
+                    document.getElementById('btn-add-item-row').disabled = true;
+                    return;
+                }
+                document.getElementById('sale-items-hint').classList.add('d-none');
+                document.getElementById('btn-add-item-row').disabled = false;
+                addItemRow();
+            } catch (e) {
+                document.getElementById('sale-items-hint').textContent = 'Failed to load items for this branch.';
+                document.getElementById('sale-items-hint').classList.remove('d-none');
+            }
+        }
+
+        var _rowCounter = 0;
+        function addItemRow() {
+            if (!_sellableItems.length) return;
+            var rowId = 'item-row-' + (++_rowCounter);
+            var options = _sellableItems.map(function (i) {
+                return '<option value="' + i.id + '" data-price="' + i.price + '" data-stock="' + i.salesStock + '">' +
+                    esc(i.name) + ' (₦' + Number(i.price).toLocaleString() + ', ' + i.salesStock + ' in stock)</option>';
+            }).join('');
+            var html = '<div class="row g-2 mb-2 align-items-center" id="' + rowId + '">' +
+                '<div class="col-7"><select class="form-select form-select-sm sale-item-select">' + options + '</select></div>' +
+                '<div class="col-3"><input type="number" min="1" value="1" class="form-control form-control-sm sale-item-qty"></div>' +
+                '<div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100 btn-remove-row">×</button></div>' +
+                '</div>';
+            document.getElementById('sale-items-rows').insertAdjacentHTML('beforeend', html);
+            var rowEl = document.getElementById(rowId);
+            rowEl.querySelector('.btn-remove-row').addEventListener('click', function () { rowEl.remove(); updateSaleTotal(); });
+            rowEl.querySelector('.sale-item-select').addEventListener('change', updateSaleTotal);
+            rowEl.querySelector('.sale-item-qty').addEventListener('input', updateSaleTotal);
+            updateSaleTotal();
+        }
+
+        function collectSaleItems() {
+            var rows = Array.from(document.querySelectorAll('#sale-items-rows > div'));
+            return rows.map(function (row) {
+                var select = row.querySelector('.sale-item-select');
+                var qty = Number(row.querySelector('.sale-item-qty').value);
+                var opt = select.options[select.selectedIndex];
+                return { itemId: select.value, quantity: qty, price: Number(opt ? opt.dataset.price : 0) };
+            });
+        }
+
+        function updateSaleTotal() {
+            var items = collectSaleItems();
+            var total = items.reduce(function (sum, i) { return sum + (i.price * (i.quantity || 0)); }, 0);
+            document.getElementById('sale-total').textContent = ProductSales.formatMoney(total);
+        }
+
+        async function saveSale() {
+            var errEl = document.getElementById('sale-error');
+            errEl.classList.add('d-none');
+            var branchId = RBAC.scopeBranchId(document.getElementById('sale-branch').value);
+            var paymentMethod = document.getElementById('sale-payment-method').value;
+            var items = collectSaleItems();
+
+            if (!branchId) { errEl.textContent = 'Select a branch.'; errEl.classList.remove('d-none'); return; }
+            if (!paymentMethod) { errEl.textContent = 'Select a payment method.'; errEl.classList.remove('d-none'); return; }
+            if (!items.length) { errEl.textContent = 'Add at least one item.'; errEl.classList.remove('d-none'); return; }
+            for (var i = 0; i < items.length; i++) {
+                if (!items[i].itemId || !items[i].quantity || items[i].quantity < 1) {
+                    errEl.textContent = 'Every item row needs a valid quantity of at least 1.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+            }
+
+            var payload = {
+                branchId: branchId,
+                paymentMethod: paymentMethod,
+                customerName: document.getElementById('sale-customer-name').value.trim() || undefined,
+                customerPhone: document.getElementById('sale-customer-phone').value.trim() || undefined,
+                items: items.map(function (i) { return { itemId: i.itemId, quantity: i.quantity }; }),
+            };
+
+            var btn = document.getElementById('btn-save-sale');
+            btn.disabled = true;
+            try {
+                await ProductSales.create(payload);
+                bootstrap.Modal.getInstance(document.getElementById('modal-new-sale')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to record sale.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

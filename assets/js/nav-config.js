@@ -66,6 +66,60 @@ var NavConfig = window.NavConfig || (() => {
                 perms: ["services:create", "services:update", "services:toggle_status", "services:delete", "services:manage_categories"],
             },
         },
+<<<<<<< Updated upstream
+=======
+        group({
+            id: "beauticians",
+            label: "Beauticians",
+            icon: "beauticians",
+            children: [
+                { label: "List", href: "beauticians.html#list", permission: read("beauticians:read") },
+                { label: "Profile Reviews", href: "beauticians.html#reviews", permission: read("beauticians:review") },
+                { label: "Services", href: "beauticians.html#services", permission: read("beauticians:read") },
+                { label: "Settings", href: "beauticians.html#settings", permission: read("settings:read") },
+                { label: "Payouts", href: "beauticians.html#payouts", permission: read("beauticians:process_payouts") },
+            ],
+        }),
+        group({
+            id: "shop",
+            label: "Shop",
+            icon: "shop",
+            badge: "confirmedOrders",
+            children: [
+                { label: "Products", href: "shop.html#products", permission: read("shop:read") },
+                { label: "Categories", href: "shop.html#categories", permission: read("shop:read") },
+                { label: "Delivery Regions", href: "shop.html#delivery", permission: read("shop:read") },
+                { label: "Orders", href: "shop.html#orders", permission: read("shop:read") },
+            ],
+        }),
+        group({
+            id: "inventory",
+            label: "Inventory & Procurement",
+            icon: "inventory",
+            children: [
+                { label: "Inventory Products", href: "inventory-products.html", permission: read("inventory_products:read") },
+                { label: "Inventory Items", href: "inventory-items.html", permission: read("inventory:read") },
+                { label: "Product Sales", href: "product-sales.html", permission: read("product_sales:read") },
+                { label: "Purchase Requests", href: "purchase-requests.html", permission: read("purchase_requests:read") },
+                { label: "Purchases", href: "purchases.html", permission: read("purchases:read") },
+                { label: "Suppliers", href: "suppliers.html", permission: read("suppliers:read") },
+                { label: "Vendors", href: "vendors.html", permission: read("suppliers:read") },
+                { label: "Inventory Log (Legacy)", href: "staff-inventory.html", permission: read("inventory:read") },
+            ],
+        }),
+        group({
+            id: "finance",
+            label: "Finance",
+            icon: "finance",
+            children: [
+                // financial-dashboard.html was merged into this page (it now just redirects here).
+                { label: "Financial Dashboard", href: "financial-transactions.html", permission: read("financial_transactions:read") },
+                { label: "Profitability Report", href: "profitability-report.html", permission: read("reports:read_profitability") },
+                { label: "Expense Requests", href: "expense-requests.html", permission: read("expense_requests:read") },
+                { label: "Branch Finance", href: "branch-finance.html", permission: read("branch_finance:read") },
+            ],
+        }),
+>>>>>>> Stashed changes
         {
             id: "branches",
             label: "Branches",
@@ -185,6 +239,13 @@ var NavConfig = window.NavConfig || (() => {
             "payments.html",
             "users.html",
             "services.html",
+<<<<<<< Updated upstream
+=======
+            "beauticians.html",
+            "shop.html",
+            "inventory-products.html",
+            "financial-transactions.html",
+>>>>>>> Stashed changes
             "branches.html",
             "shop.html",
             "referrals.html",

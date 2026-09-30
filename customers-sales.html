@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin — Customers &amp; Sales</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Business Intelligence</div>
+                            <h2 class="page-title">Customers &amp; Sales</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-3 d-none" id="cs-branch-wrap">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="cs-branch" class="form-select form-select-sm">
+                                        <option value="">All Branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Sales period from</label>
+                                    <input type="date" id="cs-date-from" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-secondary small mb-1">Sales period to</label>
+                                    <input type="date" id="cs-date-to" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-12 col-md-auto">
+                                    <button type="button" class="btn btn-outline-secondary w-100"
+                                        id="btn-cs-reset">Reset</button>
+                                </div>
+                            </div>
+                            <div class="text-secondary small mt-2">Customer figures below are always all-time
+                                (lifecycle is a standing classification, not a date range) — only the Sales section
+                                respects the period above.</div>
+                        </div>
+                    </div>
+
+                    <div id="cs-error" class="alert alert-danger d-none"></div>
+
+                    <!-- Customer summary -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-6 col-lg-2"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Total Customers</div>
+                            <div class="h3 mb-0" id="cs-total">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-2"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">New</div>
+                            <div class="h3 mb-0 text-green" id="cs-new">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-2"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Active</div>
+                            <div class="h3 mb-0 text-blue" id="cs-active">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-2"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">At Risk</div>
+                            <div class="h3 mb-0 text-yellow" id="cs-atrisk">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-2"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Dormant</div>
+                            <div class="h3 mb-0 text-red" id="cs-dormant">—</div>
+                        </div></div></div>
+                        <div class="col-6 col-lg-2"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Avg Spend / Visit Freq.</div>
+                            <div class="h4 mb-0" id="cs-avg-spend">—</div>
+                            <div class="small text-secondary" id="cs-visit-freq">—</div>
+                        </div></div></div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="text-secondary small mb-2">Customer Composition</div>
+                                    <div id="cs-lifecycle-chart" style="height:150px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Top Customers</h3></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Name</th><th>Lifecycle</th><th class="text-end">Visits</th><th class="text-end">Total Spend</th><th>Last Visit</th></tr></thead>
+                                        <tbody id="cs-top-tbody"><tr><td colspan="5" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                                <div id="cs-top-pager"></div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Customers Likely to Return</h3></div>
+                                <div class="card-body py-2 text-secondary small">At-risk customers already overdue relative to their own typical visit gap.</div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Name</th><th class="text-end">Last Visit</th><th class="text-end">Usual Gap</th><th class="text-end">Overdue By</th></tr></thead>
+                                        <tbody id="cs-likely-tbody"><tr><td colspan="4" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                                <div id="cs-likely-pager"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Dormant Customers</h3></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Name</th><th>Phone</th><th class="text-end">Lifetime Visits</th><th class="text-end">Lifetime Spend</th><th>Last Visit</th></tr></thead>
+                                        <tbody id="cs-dormant-tbody"><tr><td colspan="5" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                                <div id="cs-dormant-pager"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Sales summary -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Average Transaction Value</div>
+                            <div class="h3 mb-0" id="cs-avg-txn">—</div>
+                        </div></div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Highest Revenue Service</div>
+                            <div class="h4 mb-0" id="cs-top-service">—</div>
+                        </div></div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Fastest Growing Service</div>
+                            <div class="h4 mb-0 text-green" id="cs-growing-service">—</div>
+                        </div></div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Fastest Declining Service</div>
+                            <div class="h4 mb-0 text-red" id="cs-declining-service">—</div>
+                        </div></div></div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12 col-lg-4">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Revenue by Branch</h3></div>
+                                <div class="card-body pb-0"><div id="cs-branch-chart" style="height:180px"></div></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Branch</th><th class="text-end">Revenue</th></tr></thead>
+                                        <tbody id="cs-branch-tbody"><tr><td colspan="2" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                                <div id="cs-branch-pager"></div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Revenue by Service</h3></div>
+                                <div class="card-body pb-0">
+                                    <div class="text-secondary small mb-1">Top 10 by revenue</div>
+                                    <div id="cs-service-chart" style="height:220px"></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Service</th><th class="text-end">Revenue</th><th class="text-end">vs Prior</th></tr></thead>
+                                        <tbody id="cs-service-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                                <div id="cs-service-pager"></div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Revenue by Staff</h3></div>
+                                <div class="card-body pb-0"><div id="cs-staff-chart" style="height:220px"></div></div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Staff</th><th class="text-end">Revenue</th><th class="text-end">Bookings</th></tr></thead>
+                                        <tbody id="cs-staff-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                                <div id="cs-staff-pager"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="./assets/js/apexcharts.min.js"></script>
+    <script src="./assets/js/api-utils/auth.js"></script>
+    <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/business-intelligence.js"></script>
+    <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/simple-pager.js"></script>
+    <script>
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuard('business_intelligence:customers_sales:read');
+
+        var isAdmin = false;
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = (s === null || s === undefined) ? '' : String(s);
+            return d.innerHTML;
+        }
+
+        function fmtDate(d) {
+            if (!d) return '—';
+            return new Date(d).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        /** Client-side paging for one of this page's long tables: keeps the
+         * latest rows and re-renders only the current page on pager clicks. */
+        function pagedTable(tbodyId, pagerId, rowHtml, emptyHtml, perPage) {
+            var rows = [];
+            var pager = SimplePager.attach('#' + pagerId, { perPage: perPage || 10, onChange: paint });
+            function paint() {
+                var tbody = document.getElementById(tbodyId);
+                var page = pager.slice(rows);
+                tbody.innerHTML = page.length ? page.map(rowHtml).join('') : emptyHtml;
+            }
+            return { set: function (data) { rows = data || []; pager.reset(); paint(); } };
+        }
+
+        var tables = {};
+
+        async function init() {
+            tables.top = pagedTable('cs-top-tbody', 'cs-top-pager', function (c) {
+                return '<tr><td>' + esc(c.name) + '</td><td><span class="badge bg-secondary-lt">' + esc(c.lifecycle) + '</span></td>' +
+                    '<td class="text-end">' + c.visitCount + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(c.totalSpend) + '</td>' +
+                    '<td>' + fmtDate(c.lastVisitDate) + '</td></tr>';
+            }, '<tr><td colspan="5" class="text-center text-secondary py-3">No customers yet.</td></tr>');
+            tables.likely = pagedTable('cs-likely-tbody', 'cs-likely-pager', function (c) {
+                return '<tr><td>' + esc(c.name) + '</td><td class="text-end">' + fmtDate(c.lastVisitDate) + '</td>' +
+                    '<td class="text-end">' + c.averageIntervalDays + 'd</td><td class="text-end text-red">+' + c.overdueDays + 'd</td></tr>';
+            }, '<tr><td colspan="4" class="text-center text-secondary py-3">No one flagged right now.</td></tr>');
+            tables.dormant = pagedTable('cs-dormant-tbody', 'cs-dormant-pager', function (c) {
+                return '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.phone || '—') + '</td>' +
+                    '<td class="text-end">' + c.visitCount + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(c.totalSpend) + '</td>' +
+                    '<td>' + fmtDate(c.lastVisitDate) + '</td></tr>';
+            }, '<tr><td colspan="5" class="text-center text-secondary py-3">No dormant customers.</td></tr>', 25);
+            tables.branch = pagedTable('cs-branch-tbody', 'cs-branch-pager', function (r) {
+                return '<tr><td>' + esc(r.branchName) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(r.revenue) + '</td></tr>';
+            }, '<tr><td colspan="2" class="text-center text-secondary py-3">No sales in this period.</td></tr>');
+            tables.service = pagedTable('cs-service-tbody', 'cs-service-pager', function (r) {
+                var growthClass = r.growthPercent > 0 ? 'text-green' : (r.growthPercent < 0 ? 'text-red' : 'text-secondary');
+                return '<tr><td>' + esc(r.serviceName) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(r.revenue) + '</td>' +
+                    '<td class="text-end ' + growthClass + '">' + BusinessIntelligence.formatPercent(r.growthPercent) + '</td></tr>';
+            }, '<tr><td colspan="3" class="text-center text-secondary py-3">No services rendered in this period.</td></tr>');
+            tables.staff = pagedTable('cs-staff-tbody', 'cs-staff-pager', function (r) {
+                return '<tr><td>' + esc(r.staffName) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(r.revenue) + '</td>' +
+                    '<td class="text-end">' + r.transactionCount + '</td></tr>';
+            }, '<tr><td colspan="3" class="text-center text-secondary py-3">No bookings in this period.</td></tr>');
+
+            var user = Auth.getUser();
+            isAdmin = !!(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
+
+            if (isAdmin) {
+                try {
+                    var branches = await Branches.getBranches();
+                    var sel = document.getElementById('cs-branch');
+                    sel.innerHTML = '<option value="">All Branches</option>' +
+                        branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+                    RBAC.applyBranchScope(sel);
+                    document.getElementById('cs-branch-wrap').classList.remove('d-none');
+                } catch (err) { /* branch picker just stays hidden */ }
+            }
+
+            // Business Intelligence's Customer Count card links here with
+            // these as query params -- pre-apply whichever are present
+            // before the first load.
+            (function applyIncomingFilters() {
+                var params = new URLSearchParams(window.location.search);
+                var branchId = params.get('branchId');
+                var dateFrom = params.get('dateFrom');
+                var dateTo = params.get('dateTo');
+                if (branchId) document.getElementById('cs-branch').value = RBAC.scopeBranchId(branchId);
+                if (dateFrom) document.getElementById('cs-date-from').value = dateFrom;
+                if (dateTo) document.getElementById('cs-date-to').value = dateTo;
+            })();
+
+            ['cs-branch', 'cs-date-from', 'cs-date-to'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', load);
+            });
+            document.getElementById('btn-cs-reset').addEventListener('click', resetFilters);
+
+            load();
+        }
+
+        function resetFilters() {
+            document.getElementById('cs-branch').value = RBAC.scopeBranchId('');
+            document.getElementById('cs-date-from').value = '';
+            document.getElementById('cs-date-to').value = '';
+            load();
+        }
+
+        async function load() {
+            var errEl = document.getElementById('cs-error');
+            errEl.classList.add('d-none');
+            var branchId = RBAC.scopeBranchId(document.getElementById('cs-branch').value) || undefined;
+            var dateFrom = document.getElementById('cs-date-from').value || undefined;
+            var dateTo = document.getElementById('cs-date-to').value || undefined;
+
+            try {
+                var results = await Promise.all([
+                    BusinessIntelligence.getCustomerInsights({ branchId: branchId }),
+                    BusinessIntelligence.getSalesInsights({ branchId: branchId, dateFrom: dateFrom, dateTo: dateTo }),
+                ]);
+                renderCustomerInsights(results[0]);
+                renderSalesInsights(results[1]);
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to load Customers & Sales.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        var _csLifecycleChart = null;
+        var _csBranchChart = null;
+        var _csServiceChart = null;
+        var _csStaffChart = null;
+
+        /** Shared small-donut / bar helpers, same ApexCharts house style as
+         * the Dashboard's charts (assets/js/api-utils/analytics.js) --
+         * duplicated per-file rather than factored into a shared util,
+         * matching this codebase's existing convention for this class of
+         * helper (see business-snapshot.service.ts's WAT-date-helper
+         * comment for the same rationale). */
+        function destroyChart(chart) { if (chart) chart.destroy(); return null; }
+
+        function renderDonut(containerId, labels, values, colors, valueFormatter) {
+            var el = document.getElementById(containerId);
+            if (!el || !window.ApexCharts) return null;
+            el.innerHTML = '';
+            if (values.every(function (v) { return !v; })) {
+                el.innerHTML = '<div class="text-secondary small text-center pt-4">No data yet</div>';
+                return null;
+            }
+            var chart = new ApexCharts(el, {
+                chart: { type: 'donut', fontFamily: 'inherit', height: 150, animations: { enabled: false } },
+                labels: labels, series: values, colors: colors,
+                dataLabels: { enabled: false },
+                legend: { show: true, position: 'right', fontSize: '11px' },
+                tooltip: { theme: 'dark', y: { formatter: valueFormatter } },
+                stroke: { width: 1 },
+            });
+            chart.render();
+            return chart;
+        }
+
+        function renderHBar(containerId, height, categories, values, valueFormatter, color) {
+            var el = document.getElementById(containerId);
+            if (!el || !window.ApexCharts) return null;
+            el.innerHTML = '';
+            if (!categories.length || values.every(function (v) { return !v; })) {
+                el.innerHTML = '<div class="text-secondary small text-center pt-4">No data for this period</div>';
+                return null;
+            }
+            var chart = new ApexCharts(el, {
+                chart: { type: 'bar', fontFamily: 'inherit', height: height, animations: { enabled: false }, toolbar: { show: false } },
+                plotOptions: { bar: { horizontal: true, borderRadius: 3, barHeight: '65%' } },
+                dataLabels: { enabled: false },
+                series: [{ name: 'Revenue', data: values }],
+                // A low tickAmount alone isn't reliable -- ApexCharts' "nice
+                // number" rounding can still land on 4-5 ticks depending on the
+                // data range, and each of these 3 charts shares a narrow ~1/3
+                // column. Dropping the currency symbol from the tick text (kept
+                // in the tooltip) and shrinking the font is what actually stops
+                // "₦100k₦200k₦300k" from running into itself, regardless of how
+                // many ticks ApexCharts decides to draw.
+                xaxis: {
+                    categories: categories,
+                    tickAmount: 3,
+                    labels: {
+                        formatter: function (v) { return (v / 1000).toFixed(0) + 'k'; },
+                        hideOverlappingLabels: true,
+                        style: { fontSize: '10px' },
+                    },
+                },
+                tooltip: { theme: 'dark', y: { formatter: valueFormatter } },
+                grid: { strokeDashArray: 4 },
+                colors: [color || 'var(--tblr-primary)'],
+                legend: { show: false },
+            });
+            chart.render();
+            return chart;
+        }
+
+        function renderCustomerInsights(d) {
+            var s = d.summary;
+            _csLifecycleChart = destroyChart(_csLifecycleChart);
+            _csLifecycleChart = renderDonut(
+                'cs-lifecycle-chart',
+                ['New', 'Active', 'At Risk', 'Dormant'],
+                [s.newCustomers, s.activeCustomers, s.atRiskCustomers, s.dormantCustomers],
+                ['var(--tblr-green)', 'var(--tblr-blue)', 'var(--tblr-yellow)', 'var(--tblr-red)'],
+                function (v) { return v + ' customer' + (v !== 1 ? 's' : ''); }
+            );
+            document.getElementById('cs-total').textContent = s.totalCustomers;
+            document.getElementById('cs-new').textContent = s.newCustomers;
+            document.getElementById('cs-active').textContent = s.activeCustomers;
+            document.getElementById('cs-atrisk').textContent = s.atRiskCustomers;
+            document.getElementById('cs-dormant').textContent = s.dormantCustomers;
+            document.getElementById('cs-avg-spend').textContent = BusinessIntelligence.formatMoney(s.averageSpend);
+            document.getElementById('cs-visit-freq').textContent = d.averageVisitFrequency + ' visits/customer avg.';
+
+            tables.top.set(d.topCustomers);
+            tables.likely.set(d.likelyToReturn);
+            tables.dormant.set(d.dormantCustomers);
+        }
+
+        function renderSalesInsights(d) {
+            _csBranchChart = destroyChart(_csBranchChart);
+            _csBranchChart = renderHBar(
+                'cs-branch-chart', 180,
+                d.revenueByBranch.map(function (r) { return r.branchName; }),
+                d.revenueByBranch.map(function (r) { return r.revenue; }),
+                function (v) { return BusinessIntelligence.formatMoney(v); },
+                'var(--tblr-primary)'
+            );
+
+            _csServiceChart = destroyChart(_csServiceChart);
+            var topServices = d.revenueByService.slice(0, 10);
+            _csServiceChart = renderHBar(
+                'cs-service-chart', 220,
+                topServices.map(function (r) { return r.serviceName; }),
+                topServices.map(function (r) { return r.revenue; }),
+                function (v) { return BusinessIntelligence.formatMoney(v); },
+                'var(--tblr-azure)'
+            );
+
+            _csStaffChart = destroyChart(_csStaffChart);
+            _csStaffChart = renderHBar(
+                'cs-staff-chart', 220,
+                d.revenueByStaff.map(function (r) { return r.staffName; }),
+                d.revenueByStaff.map(function (r) { return r.revenue; }),
+                function (v) { return BusinessIntelligence.formatMoney(v); },
+                'var(--tblr-teal)'
+            );
+
+            document.getElementById('cs-avg-txn').textContent = BusinessIntelligence.formatMoney(d.averageTransactionValue);
+            document.getElementById('cs-top-service').textContent = d.highestRevenueService ? d.highestRevenueService.serviceName : '—';
+            document.getElementById('cs-growing-service').textContent = d.fastestGrowingService ? d.fastestGrowingService.serviceName + ' (' + BusinessIntelligence.formatPercent(d.fastestGrowingService.growthPercent) + ')' : '—';
+            document.getElementById('cs-declining-service').textContent = d.fastestDecliningService ? d.fastestDecliningService.serviceName + ' (' + BusinessIntelligence.formatPercent(d.fastestDecliningService.growthPercent) + ')' : '—';
+
+            tables.branch.set(d.revenueByBranch);
+
+            tables.service.set(d.revenueByService);
+            tables.staff.set(d.revenueByStaff);
+        }
+
+        init();
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

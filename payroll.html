@@ -1,0 +1,1522 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin — Payroll</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Human Resources</div>
+                            <h2 class="page-title">Payroll</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-flex align-items-center gap-3">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="payday-switch"
+                                    style="width:3rem;height:1.5rem">
+                                <label class="form-check-label fw-bold" for="payday-switch" id="payday-label">Payday:
+                                    Loading…</label>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary" id="btn-payroll-settings">Tax
+                                &amp; Pension Settings</button>
+                            <button type="button" class="btn btn-primary" id="btn-new-period">+ New Payroll
+                                Period</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Dashboard stats -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Outstanding Wallet Balances</div>
+                                    <div class="h2 mb-0" id="stat-outstanding">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Pending Withdrawals</div>
+                                    <div class="h2 mb-0 text-amber" id="stat-pending">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Withdrawn</div>
+                                    <div class="h2 mb-0 text-green" id="stat-withdrawn">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Failed Withdrawals</div>
+                                    <div class="h2 mb-0 text-red" id="stat-failed">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Payroll periods -->
+                        <div class="col-lg-7">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="card-title">Payroll Periods</h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Period</th>
+                                                <th>Status</th>
+                                                <th class="text-center">Payslips</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="periods-tbody">
+                                            <tr>
+                                                <td colspan="4" class="text-center py-5">
+                                                    <div class="spinner-border text-primary"></div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="periods-pager"></div>
+                            </div>
+                        </div>
+
+                        <!-- Pending bank changes -->
+                        <div class="col-lg-5">
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="card-title">Staff Bank Account Lookup</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <select class="form-select form-select-sm" id="bank-lookup-branch-filter">
+                                                <option value="">All branches</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" class="form-control form-control-sm"
+                                                id="bank-lookup-search" placeholder="Search by name…">
+                                        </div>
+                                    </div>
+                                    <select class="form-select form-select-sm mb-2" id="bank-lookup-staff">
+                                        <option value="">Select a staff member…</option>
+                                    </select>
+                                    <div id="bank-lookup-result"></div>
+                                </div>
+                            </div>
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="card-title">Bank Account Changes Awaiting Approval</h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Staff</th>
+                                                <th>New Account</th>
+                                                <th class="w-1">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bank-changes-tbody">
+                                            <tr>
+                                                <td colspan="3" class="text-center text-secondary py-4">Loading…</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Withdrawal history -->
+                <div class="card mb-3">
+                    <div class="card-header d-block">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h3 class="card-title mb-0">Withdrawal / Transaction History</h3>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-export-withdrawals">Export CSV</button>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <select class="form-select form-select-sm" id="withdrawal-status-filter">
+                                    <option value="">All statuses</option>
+                                    <option value="COMPLETED">Completed</option>
+                                    <option value="PROCESSING">Processing</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="FAILED">Failed</option>
+                                    <option value="REJECTED">Rejected</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select form-select-sm" id="withdrawal-branch-filter">
+                                    <option value="">All branches</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select form-select-sm" id="withdrawal-staff-filter">
+                                    <option value="">All staff</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <input type="date" class="form-control form-control-sm" id="withdrawal-from-filter"
+                                    placeholder="From">
+                            </div>
+                            <div class="col-auto">
+                                <input type="date" class="form-control form-control-sm" id="withdrawal-to-filter"
+                                    placeholder="To">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Amount</th>
+                                    <th>Bank</th>
+                                    <th>Status</th>
+                                    <th>Requested</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawals-tbody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-primary"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <div class="text-secondary small" id="withdrawal-page-info"></div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-withdrawal-prev-page">Previous</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-withdrawal-next-page">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payroll audit log -->
+                <div class="card" id="audit-log-card">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">Payroll Audit Log</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th>When</th>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                    <th>Staff</th>
+                                    <th>Actor</th>
+                                    <th>Note</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-log-tbody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="spinner-border text-primary"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <div class="text-secondary small" id="audit-log-page-info"></div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-audit-prev-page">Previous</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                id="btn-audit-next-page">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- New Period Modal -->
+    <!-- Tax & Pension Settings Modal — Dev Feedback Round 8 -->
+    <div class="modal modal-blur fade" id="modal-payroll-settings" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tax &amp; Pension Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="ps-error"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Tax Rate (%)</label>
+                        <input type="number" min="0" max="100" step="0.1" class="form-control" id="ps-tax-rate">
+                        <div class="form-hint">A flat rate applied to taxable income (gross pay minus pension) —
+                            replaces the previous progressive PAYE-band calculation. Leave at 0 to deduct no tax.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pension Rate (%)</label>
+                        <input type="number" min="0" max="100" step="0.1" class="form-control" id="ps-pension-rate">
+                        <div class="form-hint">Applied to base salary + allowances (prorated for actual attendance).
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-payroll-settings">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-new-period" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Payroll Period</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="np-error"></div>
+                    <div class="mb-3"><label class="form-label">Label</label>
+                        <input type="text" class="form-control" id="np-label" placeholder="e.g. August 2026">
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label">Period Start</label>
+                            <input type="date" class="form-control" id="np-start">
+                        </div>
+                        <div class="col-6"><label class="form-label">Period End</label>
+                            <input type="date" class="form-control" id="np-end">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-period">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Detail Modal -->
+    <div class="modal modal-blur fade" id="modal-period-detail" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detail-title">Payroll Period</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="detail-actions" class="mb-3 d-flex gap-2"></div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th class="text-end">Base</th>
+                                    <th class="text-end">Commission Paid</th>
+                                    <th class="text-end">Bonus</th>
+                                    <th class="text-end">Deductions</th>
+                                    <th class="text-end">Tax</th>
+                                    <th class="text-end">Pension</th>
+                                    <th class="text-end">Net Pay</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="detail-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+                        <h4 class="mb-0">Bonuses &amp; Deductions</h4>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control form-control-sm" id="adj-list-search"
+                                placeholder="Search by name…">
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select form-select-sm" id="adj-list-branch-filter">
+                                <option value="">All branches</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select form-select-sm" id="adj-list-staff-filter">
+                                <option value="">All staff</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Reason</th>
+                                    <th>Effective Date</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="adjustments-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Adjustment Modal -->
+    <div class="modal modal-blur fade" id="modal-adjustment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Bonus / Deduction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="adj-error"></div>
+                    <div class="mb-2"><label class="form-label">Staff Member</label>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <select class="form-select form-select-sm" id="adj-staff-branch-filter">
+                                    <option value="">All branches</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <input type="text" class="form-control form-control-sm" id="adj-staff-search"
+                                    placeholder="Search by name…">
+                            </div>
+                        </div>
+                        <select class="form-select" id="adj-staff">
+                            <option value="">Select…</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Type</label>
+                        <select class="form-select" id="adj-type">
+                            <option value="BONUS">Bonus</option>
+                            <option value="DEDUCTION">Deduction</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Category</label>
+                        <select class="form-select" id="adj-category">
+                            <optgroup label="Bonuses">
+                                <option>Performance Bonus</option>
+                                <option>Sales Incentive</option>
+                                <option>Appreciation Bonus</option>
+                                <option>Special Reward</option>
+                            </optgroup>
+                            <optgroup label="Deductions">
+                                <option>Loan Repayment</option>
+                                <option>Damage Charges</option>
+                                <option>Cash Shortages</option>
+                                <option>Administrative Penalty</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Amount (₦)</label>
+                        <input type="number" min="0.01" step="0.01" class="form-control" id="adj-amount">
+                    </div>
+                    <div class="mb-2"><label class="form-label">Reason</label>
+                        <textarea class="form-control" id="adj-reason" rows="2"></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Effective Date <span class="text-secondary">(optional)</span></label>
+                        <input type="date" class="form-control" id="adj-effective-date">
+                        <div class="form-hint">The date this actually pertains to, if different from today.</div>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Notes <span
+                                class="text-secondary">(optional)</span></label>
+                        <textarea class="form-control" id="adj-notes" rows="2"
+                            placeholder="Any further detail beyond the reason above"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-adjustment">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Correct Adjustment Modal -->
+    <div class="modal modal-blur fade" id="modal-correct-adjustment" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Correct Amount</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="correct-adj-error"></div>
+                    <p class="text-secondary small mb-3" id="correct-adj-summary"></p>
+                    <div class="mb-2"><label class="form-label">Corrected Amount (₦)</label>
+                        <input type="number" min="0.01" step="0.01" class="form-control" id="correct-adj-amount">
+                    </div>
+                    <div class="mb-0"><label class="form-label">Reason for Correction</label>
+                        <textarea class="form-control" id="correct-adj-reason" rows="2"
+                            placeholder="Why is the original amount being corrected?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="btn-save-correct-adjustment">Save
+                        Correction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dev Feedback Round 8/9, item #5's post-release half: shared
+         modal for both the post-release "Correct" action and the
+         pre-release individual "Recalculate" action -- same manual
+         override mechanism serves both, only the title/required-ness of
+         the reason field differs, set at open time. -->
+    <div class="modal modal-blur fade" id="modal-payslip-correction" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pc-title">Correct Payslip</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="pc-error"></div>
+                    <p class="text-secondary small mb-3">Existing is what the payslip currently shows; Recalculated
+                        is what the system would newly calculate from current attendance, adjustments, and
+                        compensation data — compare the two before deciding what to override. Leave a field blank
+                        to accept the recalculated value; once saved, only the final (overridden or recalculated)
+                        value is kept — the existing figure is gone.</p>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-vcenter" id="pc-fields-table">
+                            <thead>
+                                <tr>
+                                    <th>Field</th>
+                                    <th class="text-end">Existing</th>
+                                    <th class="text-end">Recalculated</th>
+                                    <th style="width: 200px;">Override (₦)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pc-fields-tbody">
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-0"><label class="form-label" id="pc-reason-label">Reason for Correction</label>
+                        <textarea class="form-control" id="pc-reason" rows="2"
+                            placeholder="Why is this payslip being corrected?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="btn-save-payslip-correction">Save
+                        Correction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adjustment History Modal -->
+    <div class="modal modal-blur fade" id="modal-adjustment-history" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Correction History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                    <th>By</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adjustment-history-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/payroll.js"></script>
+    <script src="assets/js/simple-pager.js"></script>
+    <script src="assets/js/csv-export.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+    <script>
+        // Client-side paging for the payroll periods list (assets/js/simple-pager.js).
+        var _renderPeriodsPage = null;
+        var _periodsPager = SimplePager.attach('#periods-pager', { onChange: function () { if (_renderPeriodsPage) _renderPeriodsPage(); } });
+
+        var bootstrap = window.tabler.bootstrap;
+        var _payrollSettingsCache = null;
+        var currentPeriodId = null;
+        var currentPeriodStatus = null;
+        var currentPeriodPayslips = [];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            RBAC.applyPageGuardForCurrentPage();
+
+            document.getElementById('btn-new-period').addEventListener('click', function () {
+                document.getElementById('np-error').classList.add('d-none');
+                document.getElementById('np-label').value = '';
+                document.getElementById('np-start').value = '';
+                document.getElementById('np-end').value = '';
+                new bootstrap.Modal(document.getElementById('modal-new-period')).show();
+            });
+            document.getElementById('btn-save-period').addEventListener('click', saveNewPeriod);
+            document.getElementById('payday-switch').addEventListener('change', togglePayday);
+            document.getElementById('btn-save-adjustment').addEventListener('click', saveAdjustment);
+            document.getElementById('btn-save-correct-adjustment').addEventListener('click', saveCorrectAdjustment);
+            document.getElementById('btn-save-payslip-correction').addEventListener('click', savePayslipCorrection);
+            document.getElementById('withdrawal-status-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('withdrawal-staff-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('withdrawal-branch-filter').addEventListener('change', function () {
+                _withdrawalPage = 1;
+                document.getElementById('withdrawal-staff-filter').value = '';
+                loadWithdrawalStaffOptions(this.value);
+                loadWithdrawals();
+            });
+            document.getElementById('withdrawal-from-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('withdrawal-to-filter').addEventListener('change', function () { _withdrawalPage = 1; loadWithdrawals(); });
+            document.getElementById('btn-withdrawal-prev-page').addEventListener('click', function () {
+                if (_withdrawalPage > 1) { _withdrawalPage--; loadWithdrawals(); }
+            });
+            document.getElementById('btn-export-withdrawals').addEventListener('click', exportWithdrawals);
+            document.getElementById('btn-withdrawal-next-page').addEventListener('click', function () {
+                if (_withdrawalMeta && _withdrawalPage * _withdrawalMeta.limit < _withdrawalMeta.total) { _withdrawalPage++; loadWithdrawals(); }
+            });
+            document.getElementById('btn-audit-prev-page').addEventListener('click', function () {
+                if (_auditPage > 1) { _auditPage--; loadAuditLog(); }
+            });
+            document.getElementById('btn-audit-next-page').addEventListener('click', function () {
+                if (_auditMeta && _auditPage * _auditMeta.limit < _auditMeta.total) { _auditPage++; loadAuditLog(); }
+            });
+            document.getElementById('bank-lookup-staff').addEventListener('change', loadBankLookupResult);
+            document.getElementById('bank-lookup-branch-filter').addEventListener('change', refilterBankLookupStaffOptions);
+            document.getElementById('bank-lookup-search').addEventListener('input', refilterBankLookupStaffOptions);
+            document.getElementById('adj-staff-branch-filter').addEventListener('change', refilterAdjStaffOptions);
+            document.getElementById('adj-staff-search').addEventListener('input', refilterAdjStaffOptions);
+            document.getElementById('adj-list-search').addEventListener('input', renderAdjustmentsTable);
+            document.getElementById('adj-list-branch-filter').addEventListener('change', renderAdjustmentsTable);
+            document.getElementById('adj-list-staff-filter').addEventListener('change', renderAdjustmentsTable);
+
+            loadDashboard();
+            loadSettings();
+            loadPeriods();
+            loadBankChanges();
+            loadWithdrawalBranches();
+            loadWithdrawalStaffOptions();
+            loadWithdrawals();
+            loadAuditLog();
+            loadBankLookupStaffOptions();
+        });
+
+        var _withdrawalPage = 1;
+        var _withdrawalMeta = null;
+        var _auditPage = 1;
+        var _auditMeta = null;
+
+        async function loadWithdrawalBranches() {
+            try {
+                var branches = await Branches.getBranches();
+                var sel = document.getElementById('withdrawal-branch-filter');
+                sel.innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+                if (RBAC.applyBranchScope(sel)) {
+                    loadWithdrawalStaffOptions(RBAC.getManagedBranchIds()[0]);
+                    _withdrawalPage = 1;
+                    loadWithdrawals();
+                }
+            } catch (e) { /* non-fatal */ }
+        }
+
+        async function loadWithdrawalStaffOptions(branchId) {
+            var select = document.getElementById('withdrawal-staff-filter');
+            try {
+                var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
+                select.innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
+                    return '<option value="' + s.id + '">' + esc(s.name) + '</option>';
+                }).join('');
+            } catch (e) { /* non-fatal */ }
+        }
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        async function loadDashboard() {
+            try {
+                var stats = await Payroll.getDashboard();
+                document.getElementById('stat-outstanding').textContent = Payroll.formatMoney(stats.outstandingWalletBalance);
+                document.getElementById('stat-pending').textContent = Payroll.formatMoney(stats.pendingWithdrawals);
+                document.getElementById('stat-withdrawn').textContent = Payroll.formatMoney(stats.totalWithdrawn);
+                document.getElementById('stat-failed').textContent = stats.failedWithdrawals;
+            } catch (e) { /* non-fatal */ }
+        }
+
+        async function loadSettings() {
+            try {
+                var settings = await Payroll.getSettings();
+                document.getElementById('payday-switch').checked = !!settings.releaseActive;
+                document.getElementById('payday-label').textContent = 'Payday: ' + (settings.releaseActive ? 'ON' : 'OFF');
+                _payrollSettingsCache = settings;
+            } catch (e) { /* non-fatal */ }
+        }
+
+        document.getElementById('btn-payroll-settings').addEventListener('click', function () {
+            var errEl = document.getElementById('ps-error');
+            errEl.classList.add('d-none');
+            var settings = _payrollSettingsCache || {};
+            document.getElementById('ps-tax-rate').value = ((Number(settings.taxRate) || 0) * 100).toFixed(2).replace(/\.?0+$/, '') || '0';
+            document.getElementById('ps-pension-rate').value = ((Number(settings.pensionRate) || 0) * 100).toFixed(2).replace(/\.?0+$/, '') || '0';
+            new bootstrap.Modal(document.getElementById('modal-payroll-settings')).show();
+        });
+
+        document.getElementById('btn-save-payroll-settings').addEventListener('click', async function () {
+            var errEl = document.getElementById('ps-error');
+            errEl.classList.add('d-none');
+            var taxPercent = document.getElementById('ps-tax-rate').value;
+            var pensionPercent = document.getElementById('ps-pension-rate').value;
+            if (taxPercent === '' || isNaN(Number(taxPercent)) || pensionPercent === '' || isNaN(Number(pensionPercent))) {
+                errEl.textContent = 'Enter valid numbers for both rates.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            try {
+                await Payroll.setTaxRate(Number(taxPercent) / 100);
+                await Payroll.setPensionRate(Number(pensionPercent) / 100);
+                bootstrap.Modal.getInstance(document.getElementById('modal-payroll-settings')).hide();
+                loadSettings();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save settings.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        async function togglePayday() {
+            var checkbox = document.getElementById('payday-switch');
+            var active = checkbox.checked;
+            var confirmMsg = active
+                ? 'Turn Payday ON? Every staff member with a wallet balance will be able to withdraw immediately.'
+                : 'Turn Payday OFF? All withdrawals will be locked until switched back on.';
+            if (!confirm(confirmMsg)) { checkbox.checked = !active; return; }
+
+            try {
+                await Payroll.setReleaseActive(active);
+                document.getElementById('payday-label').textContent = 'Payday: ' + (active ? 'ON' : 'OFF');
+            } catch (e) {
+                alert(e.message || 'Failed to update Payday setting.');
+                checkbox.checked = !active;
+            }
+        }
+
+        async function loadPeriods() {
+            var tbody = document.getElementById('periods-tbody');
+            try {
+                var periods = await Payroll.listPeriods();
+                _periodsPager.reset();
+                (_renderPeriodsPage = function () {
+                    var pageRows = _periodsPager.slice(periods);
+                    tbody.innerHTML = periods.length
+                        ? pageRows.map(function (p) {
+                            var statusBadge = { DRAFT: 'bg-secondary-lt', AWAITING_RELEASE: 'bg-amber-lt', RELEASED: 'bg-green-lt' }[p.status] || 'bg-secondary-lt';
+                            var actions = '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewPeriod(\'' + p.id + '\')">View</button>';
+                            if (p.status === 'DRAFT') {
+                                actions += '<button class="btn btn-sm btn-primary" onclick="runGenerate(\'' + p.id + '\')">Generate</button>';
+                            } else if (p.status === 'AWAITING_RELEASE') {
+                                actions += '<button class="btn btn-sm btn-success me-1" onclick="runApprove(\'' + p.id + '\')">Approve</button>';
+                                if (RBAC.can('payroll:correct')) {
+                                    actions += '<button class="btn btn-sm btn-outline-warning" onclick="runRequestCorrection(\'' + p.id + '\')">Send for Correction</button>';
+                                }
+                            }
+                            return '<tr>' +
+                                '<td class="fw-semibold">' + esc(p.label) + '<div class="text-secondary small">' + Payroll.formatDate(p.periodStart) + ' \u2013 ' + Payroll.formatDate(p.periodEnd) + '</div></td>' +
+                                '<td><span class="badge ' + statusBadge + '">' + p.status.replace(/_/g, ' ') + '</span></td>' +
+                                '<td class="text-center">' + (p._count ? p._count.payslips : 0) + '</td>' +
+                                '<td class="text-nowrap">' + actions + '</td>' +
+                                '</tr>';
+                        }).join('')
+                        : '<tr><td colspan="4" class="text-center text-secondary py-5">No payroll periods yet.</td></tr>';
+                })();
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function saveNewPeriod() {
+            var errEl = document.getElementById('np-error');
+            errEl.classList.add('d-none');
+            var label = document.getElementById('np-label').value.trim();
+            var start = document.getElementById('np-start').value;
+            var end = document.getElementById('np-end').value;
+            if (!label || !start || !end) { errEl.textContent = 'All fields are required.'; errEl.classList.remove('d-none'); return; }
+
+            try {
+                await Payroll.createPeriod({ label: label, periodStart: start, periodEnd: end });
+                bootstrap.Modal.getInstance(document.getElementById('modal-new-period')).hide();
+                loadPeriods();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to create period.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        async function runGenerate(id) {
+            if (!confirm('Generate payroll for this period? This calculates every active staff member\'s payslip and credits their wallet (still locked until Payday is on).')) return;
+            try {
+                await Payroll.generatePayroll(id);
+                loadPeriods();
+                loadDashboard();
+            } catch (e) {
+                alert(e.message || 'Failed to generate payroll.');
+            }
+        }
+
+        async function runApprove(id) {
+            if (!confirm('Approve this payroll period? This is your formal sign-off that the run is correct.')) return;
+            try {
+                await Payroll.approvePeriod(id);
+                loadPeriods();
+            } catch (e) {
+                alert(e.message || 'Failed to approve period.');
+            }
+        }
+
+        async function runRequestCorrection(id) {
+            if (!confirm('Send this payroll period back for correction? It will reopen as Draft so it can be regenerated once fixed.')) return;
+            var note = prompt('What needs correcting? (optional, for the audit trail)') || '';
+            try {
+                await Payroll.requestCorrection(id, note);
+                loadPeriods();
+            } catch (e) {
+                alert(e.message || 'Failed to send period back for correction.');
+            }
+        }
+
+        // Dev Feedback Round 8/9, item #5's post-release half: replaces
+        // the bare prompt()-based correction with a proper modal showing
+        // current-vs-recalculated figures and per-field override inputs.
+        async function runCorrectPayslip(payslipId) {
+            var payslip = currentPeriodPayslips.filter(function (p) { return p.id === payslipId; })[0];
+            if (!payslip) return;
+            openPayslipCorrectionModal('correct', payslip.staff.name, { payslipId: payslipId });
+            try {
+                var preview = await Payroll.previewCorrectPayslip(payslipId);
+                renderPayslipCorrectionFields(preview.current, preview.recalculated);
+            } catch (e) {
+                document.getElementById('pc-fields-tbody').innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load preview.') + '</td></tr>';
+            }
+        }
+
+        // Dev Feedback Round 8/9: individual counterpart to
+        // runRequestCorrection -- opens the same correction modal, scoped
+        // to recalculating just this one staff member within the still-
+        // AWAITING_RELEASE period, without reopening the whole period.
+        async function runRecalculateStaff(periodId, staffId) {
+            var payslip = currentPeriodPayslips.filter(function (p) { return p.staff.id === staffId; })[0];
+            if (!payslip) return;
+            openPayslipCorrectionModal('recalculate', payslip.staff.name, { periodId: periodId, staffId: staffId });
+            try {
+                var preview = await Payroll.previewRecalculateStaffPayslip(periodId, staffId);
+                renderPayslipCorrectionFields(preview.current, preview.recalculated);
+            } catch (e) {
+                document.getElementById('pc-fields-tbody').innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load preview.') + '</td></tr>';
+            }
+        }
+
+        var PC_FIELDS = [
+            { key: 'baseSalary', label: 'Base Salary' },
+            { key: 'allowances', label: 'Allowances' },
+            { key: 'overtimeAmount', label: 'Overtime' },
+            { key: 'commissionPaid', label: 'Commission Paid' },
+            { key: 'bonusTotal', label: 'Bonus' },
+            { key: 'attendanceDeduction', label: 'Attendance / Absence Deduction' },
+            { key: 'latePenaltyDeduction', label: 'Late Penalty' },
+            { key: 'fineTotal', label: 'Fines' },
+            { key: 'loanRepayment', label: 'Loan Repayment' },
+            { key: 'taxDeduction', label: 'Tax' },
+            { key: 'pensionDeduction', label: 'Pension' },
+            { key: 'otherDeductionTotal', label: 'Other Deductions' },
+        ];
+        var _pcContext = null;
+
+        function openPayslipCorrectionModal(mode, staffName, context) {
+            _pcContext = { mode: mode, context: context };
+            document.getElementById('pc-title').textContent = (mode === 'correct' ? 'Correct' : 'Recalculate') + ' Payslip \u2014 ' + staffName;
+            document.getElementById('pc-reason-label').textContent = mode === 'correct'
+                ? 'Reason for Correction'
+                : 'Reason (optional, for the audit trail)';
+            document.getElementById('pc-reason').value = '';
+            document.getElementById('pc-error').classList.add('d-none');
+            document.getElementById('pc-fields-tbody').innerHTML = '<tr><td colspan="4" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById('modal-payslip-correction')).show();
+        }
+
+        // Dev Feedback Round 9: "Existing" is the current payslip row's
+        // own stored value; "Recalculated" is the preview endpoint's
+        // fresh computation -- shown side by side purely so the admin has
+        // something to compare before typing an override. Once saved,
+        // only the final (overridden-or-recalculated) figure survives on
+        // the payslip -- the existing value is not retained anywhere
+        // after this comparison.
+        function renderPayslipCorrectionFields(current, recalculated) {
+            document.getElementById('pc-fields-tbody').innerHTML = PC_FIELDS.map(function (f) {
+                var changed = Number(current[f.key]) !== Number(recalculated[f.key]);
+                return '<tr>' +
+                    '<td>' + f.label + '</td>' +
+                    '<td class="text-end text-secondary">' + Payroll.formatMoney(current[f.key]) + '</td>' +
+                    '<td class="text-end' + (changed ? ' fw-bold text-warning' : '') + '">' + Payroll.formatMoney(recalculated[f.key]) + '</td>' +
+                    '<td><input type="number" step="0.01" class="form-control form-control-sm pc-override-input" data-field="' + f.key + '" placeholder="\u2014"></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        async function savePayslipCorrection() {
+            if (!_pcContext) return;
+            var errEl = document.getElementById('pc-error');
+            errEl.classList.add('d-none');
+            var reason = document.getElementById('pc-reason').value.trim();
+            if (_pcContext.mode === 'correct' && !reason) {
+                errEl.textContent = 'A reason is required to correct a payslip.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var overrides = {};
+            document.querySelectorAll('.pc-override-input').forEach(function (input) {
+                if (input.value !== '') overrides[input.dataset.field] = Number(input.value);
+            });
+
+            var btn = document.getElementById('btn-save-payslip-correction');
+            btn.disabled = true;
+            try {
+                if (_pcContext.mode === 'correct') {
+                    await Payroll.correctPayslip(_pcContext.context.payslipId, reason, overrides);
+                    bootstrap.Modal.getInstance(document.getElementById('modal-payslip-correction')).hide();
+                    viewPeriod(currentPeriodId);
+                } else {
+                    await Payroll.recalculateStaffPayslip(_pcContext.context.periodId, _pcContext.context.staffId, reason, overrides);
+                    bootstrap.Modal.getInstance(document.getElementById('modal-payslip-correction')).hide();
+                    viewPeriod(_pcContext.context.periodId);
+                }
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save correction.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function viewPeriod(id) {
+            currentPeriodId = id;
+            var tbody = document.getElementById('detail-tbody');
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById('modal-period-detail')).show();
+
+            try {
+                var period = await Payroll.getPeriod(id);
+                document.getElementById('detail-title').textContent = period.label + ' \u2014 ' + period.status.replace(/_/g, ' ');
+
+                var actions = document.getElementById('detail-actions');
+                actions.innerHTML = period.status === 'DRAFT'
+                    ? '<button class="btn btn-sm btn-outline-primary" onclick="openAdjustmentModal()">+ Add Bonus / Deduction</button>'
+                    : '';
+
+                var payslips = period.payslips || [];
+                currentPeriodPayslips = payslips;
+                tbody.innerHTML = payslips.length
+                    ? payslips.map(function (p) {
+                        var deductions = Number(p.totalDeductions) - Number(p.taxDeduction) - Number(p.pensionDeduction);
+                        // Dev Feedback Round 9: this only ever distinguished
+                        // CORRECTED vs Published -- a still-DRAFT payslip
+                        // (the normal state throughout AWAITING_RELEASE,
+                        // before period approval actually publishes it)
+                        // fell through to "Published" incorrectly.
+                        var statusBadge = p.status === 'CORRECTED'
+                            ? '<span class="badge bg-amber-lt">Corrected</span>'
+                            : p.status === 'DRAFT'
+                                ? '<span class="badge bg-secondary-lt">Draft</span>'
+                                : '<span class="badge bg-green-lt">Published</span>';
+                        var rowActions = '';
+                        if (period.status === 'RELEASED' && RBAC.can('payroll:correct')) {
+                            rowActions = '<button class="btn btn-sm btn-outline-warning" onclick="runCorrectPayslip(\'' + p.id + '\')">Correct</button>';
+                        } else if (period.status === 'AWAITING_RELEASE' && RBAC.can('payroll:correct')) {
+                            // Dev Feedback Round 8/9: individual counterpart
+                            // to the period-wide "Send for Correction"
+                            // button -- fixes just this one row without
+                            // reopening the whole period for every staff
+                            // member.
+                            rowActions = '<button class="btn btn-sm btn-outline-warning" onclick="runRecalculateStaff(\'' + id + '\', \'' + p.staff.id + '\')">Recalculate</button>';
+                        }
+                        return '<tr>' +
+                            '<td>' + esc(p.staff.name) + '<div class="text-secondary small">' + esc(p.staff.staffCode || '') + '</div></td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.baseSalary) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.commissionEarned) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.bonusTotal) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(deductions) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.taxDeduction) + '</td>' +
+                            '<td class="text-end">' + Payroll.formatMoney(p.pensionDeduction) + '</td>' +
+                            '<td class="text-end fw-bold">' + Payroll.formatMoney(p.netPay) + '</td>' +
+                            '<td>' + statusBadge + '</td>' +
+                            '<td>' + rowActions + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="10" class="text-center text-secondary py-4">No payslips yet \u2014 generate this period first.</td></tr>';
+
+                loadAdjustments(id, period.status);
+                currentPeriodStatus = period.status;
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        var _currentAdjustments = [];
+        var _currentAdjustmentsCanCorrect = false;
+
+        async function loadAdjustments(periodId, periodStatus) {
+            var tbody = document.getElementById('adjustments-tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+            try {
+                _currentAdjustments = await Payroll.listAdjustments(periodId);
+                var canManage = RBAC.can('payroll:manage_adjustments');
+                _currentAdjustmentsCanCorrect = canManage && periodStatus !== 'DRAFT';
+
+                var branches = await ensureBranchOptions();
+                populateBranchSelect(document.getElementById('adj-list-branch-filter'), branches, 'All branches');
+                var staffInPeriod = [];
+                var seenStaffIds = {};
+                _currentAdjustments.forEach(function (a) {
+                    if (!seenStaffIds[a.staff.id]) { seenStaffIds[a.staff.id] = true; staffInPeriod.push(a.staff); }
+                });
+                staffInPeriod.sort(function (x, y) { return x.name.localeCompare(y.name); });
+                document.getElementById('adj-list-staff-filter').innerHTML = '<option value="">All staff</option>' +
+                    staffInPeriod.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+                document.getElementById('adj-list-search').value = '';
+
+                renderAdjustmentsTable();
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        /** Filters _currentAdjustments by the search/branch/staff controls and renders the result -- no network call, since the full period's list is already in memory. */
+        function renderAdjustmentsTable() {
+            var tbody = document.getElementById('adjustments-tbody');
+            var q = document.getElementById('adj-list-search').value.trim().toLowerCase();
+            var branchId = RBAC.scopeBranchId(document.getElementById('adj-list-branch-filter').value);
+            var staffId = document.getElementById('adj-list-staff-filter').value;
+
+            var list = _currentAdjustments.filter(function (a) {
+                if (branchId && a.staff.locationId !== branchId) return false;
+                if (staffId && a.staff.id !== staffId) return false;
+                if (q && a.staff.name.toLowerCase().indexOf(q) === -1) return false;
+                return true;
+            });
+
+            var canCorrect = _currentAdjustmentsCanCorrect;
+            tbody.innerHTML = list.length
+                ? list.map(function (a) {
+                    var typeBadge = a.type === 'BONUS' ? '<span class="badge bg-green-lt">Bonus</span>' : '<span class="badge bg-red-lt">Deduction</span>';
+                    var actions = '';
+                    if (canCorrect) actions += '<button class="btn btn-sm btn-outline-warning me-1" onclick="openCorrectAdjustmentModal(\'' + a.id + '\', \'' + esc(a.staff.name).replace(/'/g, "\\'") + '\', ' + Number(a.amount) + ')">Correct</button>';
+                    actions += '<button class="btn btn-sm btn-outline-secondary" onclick="viewAdjustmentHistory(\'' + a.id + '\')">History</button>';
+                    return '<tr>' +
+                        '<td>' + esc(a.staff.name) + '</td>' +
+                        '<td>' + typeBadge + '</td>' +
+                        '<td>' + esc(a.category) + '</td>' +
+                        '<td class="text-end">' + Payroll.formatMoney(a.amount) + '</td>' +
+                        '<td class="text-secondary small">' + esc(a.reason) + '</td>' +
+                        '<td class="text-secondary small">' + (a.effectiveDate ? new Date(a.effectiveDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '\u2014') + '</td>' +
+                        '<td class="text-nowrap">' + actions + '</td></tr>';
+                }).join('')
+                : '<tr><td colspan="7" class="text-center text-secondary py-3">' + (_currentAdjustments.length ? 'No bonuses or deductions match these filters.' : 'No bonuses or deductions recorded for this period.') + '</td></tr>';
+        }
+
+        var _pendingCorrectAdjustmentId = null;
+
+        function openCorrectAdjustmentModal(id, staffName, currentAmount) {
+            _pendingCorrectAdjustmentId = id;
+            document.getElementById('correct-adj-error').classList.add('d-none');
+            document.getElementById('correct-adj-summary').textContent = staffName + ' \u2014 current amount: ' + Payroll.formatMoney(currentAmount);
+            document.getElementById('correct-adj-amount').value = currentAmount;
+            document.getElementById('correct-adj-reason').value = '';
+            new bootstrap.Modal(document.getElementById('modal-correct-adjustment')).show();
+        }
+
+        async function saveCorrectAdjustment() {
+            var errEl = document.getElementById('correct-adj-error');
+            errEl.classList.add('d-none');
+            var amount = document.getElementById('correct-adj-amount').value;
+            var reason = document.getElementById('correct-adj-reason').value.trim();
+            if (!amount || !reason) { errEl.textContent = 'Both the corrected amount and a reason are required.'; errEl.classList.remove('d-none'); return; }
+
+            var btn = document.getElementById('btn-save-correct-adjustment');
+            btn.disabled = true;
+            try {
+                await Payroll.correctAdjustment(_pendingCorrectAdjustmentId, { amount: Number(amount), correctionReason: reason });
+                bootstrap.Modal.getInstance(document.getElementById('modal-correct-adjustment')).hide();
+                loadAdjustments(currentPeriodId, currentPeriodStatus);
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save correction.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function viewAdjustmentHistory(id) {
+            var tbody = document.getElementById('adjustment-history-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+            new bootstrap.Modal(document.getElementById('modal-adjustment-history')).show();
+            try {
+                var chain = await Payroll.getAdjustmentHistory(id);
+                tbody.innerHTML = chain.map(function (row, i) {
+                    var statusBadge = row.status === 'ACTIVE'
+                        ? '<span class="badge bg-green-lt">' + (i === 0 ? 'Original' : 'Current') + '</span>'
+                        : '<span class="badge bg-secondary-lt">Superseded</span>';
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + Payroll.formatMoney(row.amount) + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td class="text-secondary small">' + esc(row.correctionReason || row.reason) + '</td>' +
+                        '<td class="text-secondary small">' + (row.createdBy ? esc(row.createdBy.name) : '\u2014') + '</td>' +
+                        '<td class="text-secondary small">' + new Date(row.createdAt).toLocaleString() + '</td></tr>';
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        // Dev Feedback Round 9: shared cache for the branch-filter dropdowns
+        // added to Add Bonus/Deduction, Bonuses & Deductions, and Staff Bank
+        // Account Lookup -- avoids a separate network round-trip per section
+        // for what's the same list of branches every time.
+        var branchOptionsCache = null;
+
+        async function ensureBranchOptions() {
+            if (!branchOptionsCache) {
+                try {
+                    branchOptionsCache = RBAC.filterBranches(await Branches.getBranches());
+                } catch (e) { branchOptionsCache = []; }
+            }
+            return branchOptionsCache;
+        }
+
+        var staffOptionsCache = null;
+
+        async function ensureStaffOptions() {
+            if (!staffOptionsCache) {
+                try {
+                    var managedIds = RBAC.getManagedBranchIds();
+                    staffOptionsCache = (await Staff.getOptions()).filter(function (s) {
+                        return !RBAC.isManagerScoped() || managedIds.indexOf(s.locationId) !== -1;
+                    });
+                } catch (e) { staffOptionsCache = []; }
+            }
+            return staffOptionsCache;
+        }
+
+        /** Rebuilds a staff <select>'s options from the cached list, filtered by branchId (optional) and a case-insensitive name search (optional). Keeps whichever value was already selected if it's still in the filtered set. */
+        function renderStaffOptions(selectEl, staffList, placeholder, branchId, search) {
+            var q = (search || '').trim().toLowerCase();
+            var filtered = staffList.filter(function (s) {
+                if (branchId && s.locationId !== branchId) return false;
+                if (q && s.name.toLowerCase().indexOf(q) === -1) return false;
+                return true;
+            });
+            var previousValue = selectEl.value;
+            selectEl.innerHTML = '<option value="">' + placeholder + '</option>' +
+                filtered.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+            if (previousValue && filtered.some(function (s) { return s.id === previousValue; })) {
+                selectEl.value = previousValue;
+            }
+        }
+
+        /** Populates a branch <select> with the standard "All branches" placeholder + every branch. */
+        function populateBranchSelect(selectEl, branches, placeholder) {
+            selectEl.innerHTML = '<option value="">' + placeholder + '</option>' +
+                branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
+            RBAC.applyBranchScope(selectEl);
+        }
+
+        async function openAdjustmentModal() {
+            document.getElementById('adj-error').classList.add('d-none');
+            document.getElementById('adj-amount').value = '';
+            document.getElementById('adj-reason').value = '';
+            document.getElementById('adj-effective-date').value = '';
+            document.getElementById('adj-notes').value = '';
+
+            var staffList = await ensureStaffOptions();
+            var branches = await ensureBranchOptions();
+            populateBranchSelect(document.getElementById('adj-staff-branch-filter'), branches, 'All branches');
+            document.getElementById('adj-staff-search').value = '';
+            renderStaffOptions(document.getElementById('adj-staff'), staffList, 'Select…', '', '');
+            new bootstrap.Modal(document.getElementById('modal-adjustment')).show();
+        }
+
+        function refilterAdjStaffOptions() {
+            ensureStaffOptions().then(function (staffList) {
+                renderStaffOptions(
+                    document.getElementById('adj-staff'), staffList, 'Select…',
+                    document.getElementById('adj-staff-branch-filter').value,
+                    document.getElementById('adj-staff-search').value,
+                );
+            });
+        }
+
+        async function loadBankLookupStaffOptions() {
+            var staffList = await ensureStaffOptions();
+            var branches = await ensureBranchOptions();
+            populateBranchSelect(document.getElementById('bank-lookup-branch-filter'), branches, 'All branches');
+            renderStaffOptions(document.getElementById('bank-lookup-staff'), staffList, 'Select a staff member…', '', '');
+        }
+
+        function refilterBankLookupStaffOptions() {
+            ensureStaffOptions().then(function (staffList) {
+                renderStaffOptions(
+                    document.getElementById('bank-lookup-staff'), staffList, 'Select a staff member…',
+                    document.getElementById('bank-lookup-branch-filter').value,
+                    document.getElementById('bank-lookup-search').value,
+                );
+            });
+        }
+
+        async function loadBankLookupResult() {
+            var staffId = document.getElementById('bank-lookup-staff').value;
+            var resultEl = document.getElementById('bank-lookup-result');
+            if (!staffId) { resultEl.innerHTML = ''; return; }
+
+            resultEl.innerHTML = '<div class="text-secondary small">Loading…</div>';
+            try {
+                var account = await Payroll.getBankAccount(staffId);
+                if (!account) {
+                    resultEl.innerHTML = '<div class="text-secondary small">No bank account on file for this staff member.</div>';
+                    return;
+                }
+                var verifiedBadge = account.verified
+                    ? '<span class="badge bg-green-lt">Verified</span>'
+                    : '<span class="badge bg-secondary-lt">Not verified</span>';
+                var pendingNote = account.pendingRequestedAt
+                    ? '<div class="text-secondary small mt-2">Pending change to <strong>' + esc(account.pendingBankName || '') + ' \u2014 ' + esc(account.pendingAccountNumber || '') + '</strong>, awaiting approval below.</div>'
+                    : '';
+                resultEl.innerHTML =
+                    '<div class="mt-2"><strong>' + esc(account.bankName) + '</strong> ' + verifiedBadge + '<br>' +
+                    '<span class="text-secondary small">' + esc(account.accountNumber) + ' \u00b7 ' + esc(account.accountName) + '</span></div>' +
+                    pendingNote;
+            } catch (e) {
+                resultEl.innerHTML = '<div class="text-danger small">' + esc(e.message || 'Failed to load.') + '</div>';
+            }
+        }
+
+        async function saveAdjustment() {
+            var errEl = document.getElementById('adj-error');
+            errEl.classList.add('d-none');
+            var staffId = document.getElementById('adj-staff').value;
+            var amount = document.getElementById('adj-amount').value;
+            var reason = document.getElementById('adj-reason').value.trim();
+
+            if (!staffId || !amount || !reason) { errEl.textContent = 'All fields are required.'; errEl.classList.remove('d-none'); return; }
+
+            try {
+                await Payroll.createAdjustment(currentPeriodId, {
+                    staffId: staffId,
+                    type: document.getElementById('adj-type').value,
+                    category: document.getElementById('adj-category').value,
+                    amount: Number(amount),
+                    reason: reason,
+                    effectiveDate: document.getElementById('adj-effective-date').value || undefined,
+                    notes: document.getElementById('adj-notes').value.trim() || undefined,
+                });
+                bootstrap.Modal.getInstance(document.getElementById('modal-adjustment')).hide();
+                viewPeriod(currentPeriodId);
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to save adjustment.';
+                errEl.classList.remove('d-none');
+            }
+        }
+
+        async function loadBankChanges() {
+            var tbody = document.getElementById('bank-changes-tbody');
+            try {
+                var changes = await Payroll.listPendingBankChanges();
+                tbody.innerHTML = changes.length
+                    ? changes.map(function (c) {
+                        return '<tr>' +
+                            '<td>' + esc(c.staff.name) + '</td>' +
+                            '<td>' + esc(c.pendingBankName || '') + '<br><span class="text-secondary small">' + esc(c.pendingAccountNumber || '') + ' \u2014 ' + esc(c.pendingAccountName || '') + '</span></td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-success me-1" onclick="approveBankChange(\'' + c.staffId + '\')">Approve</button>' +
+                            '<button class="btn btn-sm btn-outline-danger" onclick="rejectBankChange(\'' + c.staffId + '\')">Reject</button>' +
+                            '</td></tr>';
+                    }).join('')
+                    : '<tr><td colspan="3" class="text-center text-secondary py-4">Nothing pending.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        async function approveBankChange(staffId) {
+            try { await Payroll.approveBankChange(staffId); loadBankChanges(); }
+            catch (e) { alert(e.message || 'Failed to approve.'); }
+        }
+
+        async function rejectBankChange(staffId) {
+            try { await Payroll.rejectBankChange(staffId); loadBankChanges(); }
+            catch (e) { alert(e.message || 'Failed to reject.'); }
+        }
+
+        async function exportWithdrawals() {
+            var btn = document.getElementById('btn-export-withdrawals');
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Exporting…';
+            try {
+                var result = await Payroll.listWithdrawals({
+                    status: document.getElementById('withdrawal-status-filter').value,
+                    staffId: document.getElementById('withdrawal-staff-filter').value,
+                    locationId: RBAC.scopeBranchId(document.getElementById('withdrawal-branch-filter').value),
+                    from: document.getElementById('withdrawal-from-filter').value,
+                    to: document.getElementById('withdrawal-to-filter').value,
+                    limit: 100000, // every matching withdrawal, not just the on-screen page
+                });
+                var list = result.data || [];
+                if (!list.length) {
+                    alert('No withdrawals to export for the current filters.');
+                    return;
+                }
+                CsvExport.download('withdrawal-history.csv', [
+                    { label: 'Staff', get: function (w) { return w.staff.name; } },
+                    { label: 'Branch', get: function (w) { return w.staff.location ? w.staff.location.name : ''; } },
+                    { label: 'Amount', get: function (w) { return w.amount; } },
+                    { label: 'Account Name', get: function (w) { return w.accountName || ''; } },
+                    { label: 'Account Number', get: function (w) { return w.accountNumber || ''; } },
+                    { label: 'Status', get: function (w) { return w.status; } },
+                    { label: 'Requested', get: function (w) { return Payroll.formatDate(w.createdAt); } },
+                ], list);
+            } catch (e) {
+                alert(e.message || 'Failed to export withdrawals.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        async function loadWithdrawals() {
+            var tbody = document.getElementById('withdrawals-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await Payroll.listWithdrawals({
+                    status: document.getElementById('withdrawal-status-filter').value,
+                    staffId: document.getElementById('withdrawal-staff-filter').value,
+                    locationId: RBAC.scopeBranchId(document.getElementById('withdrawal-branch-filter').value),
+                    from: document.getElementById('withdrawal-from-filter').value,
+                    to: document.getElementById('withdrawal-to-filter').value,
+                    page: _withdrawalPage,
+                });
+                var list = result.data || [];
+                _withdrawalMeta = result.meta || null;
+                var statusBadge = { COMPLETED: 'bg-green-lt', PROCESSING: 'bg-blue-lt', PENDING: 'bg-amber-lt', FAILED: 'bg-red-lt', REJECTED: 'bg-red-lt', CANCELLED: 'bg-secondary-lt' };
+                // Dev Feedback Round 9: PROCESSING covers both "normal,
+                // still in flight" and "stuck because the Paystack
+                // transfer webhook never arrived" -- there's no reliable
+                // way to distinguish those from data alone, so the button
+                // is offered on every PROCESSING row rather than trying
+                // to guess a staleness threshold; resyncing an already-
+                // fine in-flight transfer is a harmless no-op (it just
+                // confirms Paystack still shows it pending).
+                var canResync = RBAC.can('payroll:resync_withdrawal');
+                tbody.innerHTML = list.length
+                    ? list.map(function (w) {
+                        return '<tr>' +
+                            '<td>' + esc(w.staff.name) + (w.staff.location ? '<div class="text-secondary small">' + esc(w.staff.location.name) + '</div>' : '') + '</td>' +
+                            '<td>' + Payroll.formatMoney(w.amount) + '</td>' +
+                            '<td>' + esc(w.accountName || '') + '<br><span class="text-secondary small">' + esc(w.accountNumber) + '</span></td>' +
+                            '<td><span class="badge ' + (statusBadge[w.status] || 'bg-secondary-lt') + '">' + w.status + '</span></td>' +
+                            '<td class="text-secondary small">' + Payroll.formatDate(w.createdAt) + '</td>' +
+                            '<td>' + (canResync && w.status === 'PROCESSING'
+                                ? '<button type="button" class="btn btn-sm btn-outline-secondary btn-resync-withdrawal" data-id="' + w.id + '">Resync</button>'
+                                : '') + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No withdrawals found.</td></tr>';
+
+                if (_withdrawalMeta) {
+                    var start = _withdrawalMeta.total === 0 ? 0 : (_withdrawalMeta.page - 1) * _withdrawalMeta.limit + 1;
+                    var end = Math.min(_withdrawalMeta.page * _withdrawalMeta.limit, _withdrawalMeta.total);
+                    document.getElementById('withdrawal-page-info').textContent = _withdrawalMeta.total
+                        ? ('Showing ' + start + '\u2013' + end + ' of ' + _withdrawalMeta.total)
+                        : '';
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        document.getElementById('withdrawals-tbody').addEventListener('click', async function (e) {
+            var btn = e.target.closest('.btn-resync-withdrawal');
+            if (!btn) return;
+            btn.disabled = true;
+            var originalText = btn.textContent;
+            btn.textContent = 'Resyncing\u2026';
+            try {
+                var result = await Payroll.resyncWithdrawal(btn.dataset.id);
+                var status = result && result.data ? result.data.status : null;
+                if (status === 'COMPLETED') {
+                    alert('Withdrawal confirmed complete at Paystack.');
+                } else if (status === 'FAILED') {
+                    alert('Paystack shows this transfer failed \u2014 marked accordingly.');
+                } else {
+                    alert('Paystack still shows this transfer as pending \u2014 nothing to update yet.');
+                }
+                loadWithdrawals();
+            } catch (err) {
+                alert(err.message || 'Failed to resync withdrawal.');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        /** Dev Feedback Round 4, items #22-24 -- view for the new payroll audit trail. */
+        async function loadAuditLog() {
+            var tbody = document.getElementById('audit-log-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            try {
+                var result = await Payroll.getAuditLog({ page: _auditPage });
+                var list = result.data || [];
+                _auditMeta = result.meta || null;
+
+                tbody.innerHTML = list.length
+                    ? list.map(function (a) {
+                        return '<tr>' +
+                            '<td class="text-secondary small">' + Payroll.formatDate(a.createdAt) + '</td>' +
+                            '<td><span class="badge bg-blue-lt">' + esc(a.action.replace(/_/g, ' ')) + '</span></td>' +
+                            '<td class="text-secondary small">' + esc(a.entityType) + '</td>' +
+                            '<td>' + (a.staff ? esc(a.staff.name) : '<span class="text-secondary">\u2014</span>') + '</td>' +
+                            '<td>' + (a.actor ? esc(a.actor.name) : '<span class="text-secondary">System</span>') + '</td>' +
+                            '<td class="text-secondary small">' + esc(a.note || '') + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No audit entries yet.</td></tr>';
+
+                if (_auditMeta) {
+                    var start = _auditMeta.total === 0 ? 0 : (_auditMeta.page - 1) * _auditMeta.limit + 1;
+                    var end = Math.min(_auditMeta.page * _auditMeta.limit, _auditMeta.total);
+                    document.getElementById('audit-log-page-info').textContent = _auditMeta.total
+                        ? ('Showing ' + start + '\u2013' + end + ' of ' + _auditMeta.total)
+                        : '';
+                }
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>
