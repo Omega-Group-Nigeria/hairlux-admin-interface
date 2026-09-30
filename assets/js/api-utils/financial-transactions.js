@@ -10,7 +10,11 @@ const FinancialTransactions = (function () {
         return raw.data !== undefined ? raw.data : raw;
     }
 
+<<<<<<< HEAD
     async function getAll(filters, page, limit) {
+=======
+    async function getAll(filters, page) {
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         filters = filters || {};
         const params = new URLSearchParams();
         if (filters.direction) params.set('direction', filters.direction);
@@ -20,7 +24,10 @@ const FinancialTransactions = (function () {
         if (filters.to) params.set('to', filters.to);
         if (filters.paymentMethod) params.set('paymentMethod', filters.paymentMethod);
         if (page) params.set('page', page);
+<<<<<<< HEAD
         if (limit) params.set('limit', limit);
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         const qs = params.toString();
         return apiFetch('/admin/financial-transactions' + (qs ? '?' + qs : ''));
     }
@@ -31,10 +38,13 @@ const FinancialTransactions = (function () {
         if (filters.branchId) params.set('branchId', filters.branchId);
         if (filters.from) params.set('from', filters.from);
         if (filters.to) params.set('to', filters.to);
+<<<<<<< HEAD
         // Optional -- the summary cards then describe the same filtered view as the list.
         if (filters.direction) params.set('direction', filters.direction);
         if (filters.category) params.set('category', filters.category);
         if (filters.paymentMethod) params.set('paymentMethod', filters.paymentMethod);
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         const qs = params.toString();
         return apiFetch('/admin/financial-transactions/summary' + (qs ? '?' + qs : ''));
     }

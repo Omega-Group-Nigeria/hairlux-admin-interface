@@ -104,7 +104,10 @@
     <script src="./assets/js/api-utils/auth.js"></script>
     <script src="./assets/js/api-utils/business-intelligence.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
+<<<<<<< HEAD
     <script src="./assets/js/simple-pager.js"></script>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script>
         Auth.requireAuth();
         RBAC.loadFromStorage();
@@ -135,7 +138,12 @@
             return '<span class="badge bg-blue-lt">' + esc(kpi.cardPermission) + '</span>';
         }
 
+<<<<<<< HEAD
         function kpiRowHtml(k) {
+=======
+        function renderGroup(subModule, kpis) {
+            var rows = kpis.map(function (k) {
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 return '<tr>' +
                     '<td>' +
                     '<div class="fw-semibold">' + esc(k.label) + '</div>' +
@@ -149,11 +157,16 @@
                     '<td class="text-center">' + (k.targetable ? '<span class="badge bg-green-lt">Yes</span>' : '<span class="badge bg-secondary-lt">No</span>') + '</td>' +
                     '<td class="small">' + (k.scopeGranularity.length ? k.scopeGranularity.join(', ') : '—') + '</td>' +
                     '</tr>';
+<<<<<<< HEAD
         }
 
         /** Each sub-module's table is paged independently (SimplePager hides
          * itself while a group has 10 or fewer KPIs). */
         function renderGroup(subModule, kpis) {
+=======
+            }).join('');
+
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             return '<div class="card mb-4">' +
                 '<div class="card-header"><h3 class="card-title mb-0">' + esc(SUB_MODULE_LABELS[subModule] || subModule) + '</h3></div>' +
                 '<div class="table-responsive">' +
@@ -166,6 +179,7 @@
                 '<th class="text-center">Targetable</th>' +
                 '<th>Scope</th>' +
                 '</tr></thead>' +
+<<<<<<< HEAD
                 '<tbody id="kr-tbody-' + subModule + '"></tbody>' +
                 '</table>' +
                 '</div>' +
@@ -181,6 +195,14 @@
             paint();
         }
 
+=======
+                '<tbody>' + rows + '</tbody>' +
+                '</table>' +
+                '</div>' +
+                '</div>';
+        }
+
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         async function init() {
             var errEl = document.getElementById('kr-error');
             var loadingEl = document.getElementById('kr-loading');
@@ -193,12 +215,20 @@
                     (bySubModule[k.subModule] = bySubModule[k.subModule] || []).push(k);
                 });
 
+<<<<<<< HEAD
                 var groups = SUB_MODULE_ORDER
                     .filter(function (sm) { return bySubModule[sm] && bySubModule[sm].length; });
                 document.getElementById('kr-groups').innerHTML = groups
                     .map(function (sm) { return renderGroup(sm, bySubModule[sm]); })
                     .join('');
                 groups.forEach(function (sm) { attachGroupPager(sm, bySubModule[sm]); });
+=======
+                var html = SUB_MODULE_ORDER
+                    .filter(function (sm) { return bySubModule[sm] && bySubModule[sm].length; })
+                    .map(function (sm) { return renderGroup(sm, bySubModule[sm]); })
+                    .join('');
+                document.getElementById('kr-groups').innerHTML = html;
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 loadingEl.classList.add('d-none');
                 errEl.textContent = err.message || 'Failed to load the KPI registry.';

@@ -17,7 +17,7 @@ const Applications = (() => {
     if (search) params.set('search', search);
     if (preferredLocationId) params.set('preferredLocationId', preferredLocationId);
     if (jobId) params.set('jobId', jobId);
-    if (page)  params.set('page', page);
+    if (page) params.set('page', page);
     if (limit) params.set('limit', limit);
     const qs = params.toString() ? '?' + params.toString() : '';
     const res = await Auth.fetch(`/admin/applications${qs}`);
@@ -64,6 +64,54 @@ const Applications = (() => {
     });
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || 'Failed to schedule interview');
+    return raw.data || raw;
+  }
+
+  /**
+ * Record the interview outcome — PASS/FAIL/HOLD — tied to a real interviewer.
+ * @param {string} id
+ * @param {object} payload  { outcome, interviewerId, note? }
+ */
+  async function recordInterviewOutcome(id, payload) {
+    const res = await Auth.fetch(`/admin/applications/${id}/interview-outcome`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || 'Failed to record interview outcome');
+    return raw.data || raw;
+  }
+
+  /**
+   * Record Employment Approval — the gate before an offer letter can be generated.
+   * @param {string} id
+   * @param {object} payload  { notes? }
+   */
+  async function recordEmploymentApproval(id, payload) {
+    const res = await Auth.fetch(`/admin/applications/${id}/employment-approval`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || 'Failed to record employment approval');
+    return raw.data || raw;
+  }
+
+  /**
+   * Generate and send an offer letter. Requires employment approval to already exist.
+   * @param {string} id
+   * @param {object} payload  { baseSalary, allowances?, compensationNote?, effectiveDate, templateUsed? }
+   */
+  async function generateOfferLetter(id, payload) {
+    const res = await Auth.fetch(`/admin/applications/${id}/offer-letter`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || 'Failed to generate offer letter');
     return raw.data || raw;
   }
 
@@ -127,30 +175,54 @@ const Applications = (() => {
   const NEXT_STATUS = {
     SUBMITTED: 'UNDER_REVIEW',
     UNDER_REVIEW: 'SHORTLISTED',
-    INTERVIEW_COMPLETED: 'OFFER_EXTENDED',
+    // INTERVIEW_COMPLETED: 'OFFER_EXTENDED',
   };
 
   function statusBadge(status) {
     const label = STATUS_LABELS[status] || status;
-    const cls   = STATUS_COLORS[status] || 'bg-secondary-lt';
+    const cls = STATUS_COLORS[status] || 'bg-secondary-lt';
     return `<span class="badge ${cls}">${label}</span>`;
   }
 
   function formatDate(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' });
   }
 
   function formatDateTime(iso) {
     if (!iso) return '—';
     const d = new Date(iso);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
-      ', ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' });
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' }) +
+      ', ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
+  }
+  /**
+   * Recruitment report — filterable by date range, role, status, and branch.
+   * @param {object} opts  { dateFrom?, dateTo?, appliedRole?, status?, preferredLocationId? }
+   */
+  async function getReport({ dateFrom, dateTo, appliedRole, status, preferredLocationId } = {}) {
+    const params = new URLSearchParams();
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    if (appliedRole) params.set('appliedRole', appliedRole);
+    if (status) params.set('status', status);
+    if (preferredLocationId) params.set('preferredLocationId', preferredLocationId);
+    const qs = params.toString() ? '?' + params.toString() : '';
+    const res = await Auth.fetch(`/admin/applications/report${qs}`);
+    const raw = await res.json().catch(() => ({}));
+    return raw.data || raw;
+  }
+
+  /** Distinct appliedRole values across all applications — powers the report's Role filter dropdown. */
+  async function getDistinctRoles() {
+    const res = await Auth.fetch('/admin/applications/report/roles');
+    const raw = await res.json().catch(() => ({}));
+    return raw.data || raw;
   }
 
   return {
-    getAll, getOne, updateStatus, scheduleInterview, convertToStaff, getLocations,
+    getAll, getOne, updateStatus, scheduleInterview, convertToStaff, getLocations, getReport, getDistinctRoles,
+    recordInterviewOutcome, recordEmploymentApproval, generateOfferLetter,   // ← add
     STATUS_ORDER, STATUS_LABELS, STATUS_COLORS, NEXT_STATUS,
     statusBadge, formatDate, formatDateTime,
   };

@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Profile &amp; Settings</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -21,8 +30,13 @@
         @import url("https://rsms.me/inter/inter.css");
 
         /* Section switching */
-        .settings-section { display: none; }
-        .settings-section.active { display: block; }
+        .settings-section {
+            display: none;
+        }
+
+        .settings-section.active {
+            display: block;
+        }
 
         /* Sidebar nav */
         .settings-nav .nav-link {
@@ -30,15 +44,24 @@
             border-radius: var(--tblr-border-radius);
             padding: .5rem .75rem;
         }
-        .settings-nav .nav-link:hover { background: var(--tblr-bg-surface-secondary); }
+
+        .settings-nav .nav-link:hover {
+            background: var(--tblr-bg-surface-secondary);
+        }
+
         .settings-nav .nav-link.active {
             background: var(--tblr-bg-surface-secondary);
             color: var(--tblr-primary);
             font-weight: 500;
         }
-        .settings-nav .nav-link .icon { opacity: .6; }
-        .settings-nav .nav-link.active .icon { opacity: 1; }
 
+        .settings-nav .nav-link .icon {
+            opacity: .6;
+        }
+
+        .settings-nav .nav-link.active .icon {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -50,9 +73,8 @@
         <!-- ===== NAVBAR ===== -->
         <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
             <div class="container-xl">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
-                    aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -70,7 +92,8 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon icon-1">
-                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
                             </svg>
                         </a>
                         <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
@@ -79,7 +102,8 @@
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon icon-1">
                                 <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
                             </svg>
                         </a>
                     </div>
@@ -97,7 +121,8 @@
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
                             <div class="dropdown-header">
                                 <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
-                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
                             </div>
                             <div class="dropdown-divider"></div>
                             <a href="./settings.html#profile" class="dropdown-item">
@@ -113,7 +138,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon icon-1 me-2">
-                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path
+                                        d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
                                     <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
                                 </svg>
                                 Settings
@@ -123,7 +149,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon icon-1 me-2">
-                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path
+                                        d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
                                     <path d="M9 12h12l-3 -3" />
                                     <path d="M18 15l3 -3" />
                                 </svg>
@@ -196,8 +223,8 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                                 stroke-linecap="round" stroke-linejoin="round" class="icon">
-                                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
-                                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
+                                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
                                             </svg>
                                             My Profile
                                         </a>
@@ -206,21 +233,67 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                                 stroke-linecap="round" stroke-linejoin="round" class="icon">
-                                                <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"/>
-                                                <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/>
-                                                <path d="M8 11v-4a4 4 0 1 1 8 0v4"/>
+                                                <path
+                                                    d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" />
+                                                <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
+                                                <path d="M8 11v-4a4 4 0 1 1 8 0v4" />
                                             </svg>
                                             Security
                                         </a>
-                                        <a href="#admin-management" class="nav-link d-flex align-items-center gap-2 d-none"
+                                        <a href="#business-hours" class="nav-link d-flex align-items-center gap-2"
+                                            data-section="business-hours">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                                                <path d="M12 7v5l3 3" />
+                                            </svg>
+                                            Business Hours
+                                        </a>
+                                        <a href="#customer-classification"
+                                            class="nav-link d-flex align-items-center gap-2"
+                                            data-section="customer-classification">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                                <path d="M12 11a4 4 0 1 0 0 -8a4 4 0 0 0 0 8z" />
+                                            </svg>
+                                            Customer Classification
+                                        </a>
+                                        <a href="#home-service" class="nav-link d-flex align-items-center gap-2"
+                                            data-section="home-service">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path
+                                                    d="M9 20l-5.447 -2.724a1 1 0 0 1 -0.553 -0.894v-6.764a1 1 0 0 1 .553 -.894l6 -3a1 1 0 0 1 .894 0l6 3a1 1 0 0 1 .553 .894v6.764a1 1 0 0 1 -.553 .894l-5.447 2.724z" />
+                                                <path d="M12 9v4" />
+                                                <path d="M10 11h4" />
+                                            </svg>
+                                            Home Service
+                                        </a>
+                                        <a href="#cancellation-policy" class="nav-link d-flex align-items-center gap-2 d-none"
+                                            id="nav-cancellation-policy" data-section="cancellation-policy">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                                <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                                                <path d="M10 12l4 4m0 -4l-4 4" />
+                                            </svg>
+                                            Cancellation Policy
+                                        </a>
+                                        <a href="#admin-management"
+                                            class="nav-link d-flex align-items-center gap-2 d-none"
                                             id="nav-admin-management" data-section="admin-management">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                                 stroke-linecap="round" stroke-linejoin="round" class="icon">
-                                                <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/>
-                                                <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
-                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                                <path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/>
+                                                <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                                <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                                <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
                                             </svg>
                                             Admin Management
                                         </a>
@@ -298,13 +371,16 @@
                                                         <input type="password" class="form-control"
                                                             id="input-currentPassword" required />
                                                         <button type="button" class="btn btn-outline-secondary"
-                                                            onclick="togglePwd('input-currentPassword',this)" title="Show/hide">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" class="icon icon-1">
-                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                                                                <path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/>
+                                                            onclick="togglePwd('input-currentPassword',this)"
+                                                            title="Show/hide">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
+                                                                height="16" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="icon icon-1">
+                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                                                <path
+                                                                    d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6" />
                                                             </svg>
                                                         </button>
                                                     </div>
@@ -315,13 +391,16 @@
                                                         <input type="password" class="form-control"
                                                             id="input-newPassword" required minlength="8" />
                                                         <button type="button" class="btn btn-outline-secondary"
-                                                            onclick="togglePwd('input-newPassword',this)" title="Show/hide">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" class="icon icon-1">
-                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                                                                <path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/>
+                                                            onclick="togglePwd('input-newPassword',this)"
+                                                            title="Show/hide">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
+                                                                height="16" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="icon icon-1">
+                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                                                <path
+                                                                    d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6" />
                                                             </svg>
                                                         </button>
                                                     </div>
@@ -332,19 +411,23 @@
                                                         <input type="password" class="form-control"
                                                             id="input-confirmPassword" required minlength="8" />
                                                         <button type="button" class="btn btn-outline-secondary"
-                                                            onclick="togglePwd('input-confirmPassword',this)" title="Show/hide">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" class="icon icon-1">
-                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                                                                <path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/>
+                                                            onclick="togglePwd('input-confirmPassword',this)"
+                                                            title="Show/hide">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16"
+                                                                height="16" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round"
+                                                                class="icon icon-1">
+                                                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                                                <path
+                                                                    d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6" />
                                                             </svg>
                                                         </button>
                                                     </div>
                                                 </div>
                                                 <div class="col-12 pt-1">
-                                                    <button type="submit" class="btn btn-primary" id="btn-save-password">
+                                                    <button type="submit" class="btn btn-primary"
+                                                        id="btn-save-password">
                                                         <span class="spinner-border spinner-border-sm me-1 d-none"
                                                             id="spinner-password" role="status"></span>
                                                         Update Password
@@ -354,27 +437,361 @@
                                         </form>
                                     </div>
 
+                                    <!-- ═══ SECTION: BUSINESS HOURS ════════════ -->
+                                    <div class="settings-section" id="section-business-hours">
+                                        <h3 class="mb-1">Business Hours</h3>
+                                        <p class="text-secondary small mb-4">
+                                            One shared weekly schedule for the whole business — used for both booking
+                                            availability and staff Attendance late/overtime calculation. Not
+                                            configurable per branch.
+                                        </p>
+                                        <div id="biz-hours-table">
+                                            <div class="text-secondary small">Loading…</div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-primary" id="btn-save-business-hours">
+                                                <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                    id="spinner-business-hours" role="status"></span>
+                                                Save Business Hours
+                                            </button>
+                                            <span class="text-success small ms-2 d-none" id="biz-hours-saved">Saved
+                                                ✓</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- ═══ SECTION: CUSTOMER CLASSIFICATION ════════════ -->
+                                    <div class="settings-section" id="section-customer-classification">
+                                        <h3 class="mb-1">Customer Classification</h3>
+                                        <p class="text-secondary small mb-4">
+                                            Thresholds that drive the Lifecycle and Value badges shown on Customer
+                                            Contacts and Users — changing these reclassifies every customer
+                                            immediately, not just new ones going forward.
+                                        </p>
+
+                                        <div class="alert alert-danger d-none" id="cc-settings-error"></div>
+
+                                        <h4 class="mb-2">Value</h4>
+                                        <p class="text-secondary small mb-3">Based on a customer's total completed
+                                            spend.</p>
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Premium threshold (₦)</label>
+                                                <input type="number" min="1" class="form-control" id="cc-premium-spend">
+                                                <div class="form-hint">Total spend at or above this reaches Premium.
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">VIP threshold (₦)</label>
+                                                <input type="number" min="1" class="form-control" id="cc-vip-spend">
+                                                <div class="form-hint">Total spend at or above this reaches VIP
+                                                    (overrides Premium).</div>
+                                            </div>
+                                        </div>
+
+                                        <h4 class="mb-2">Lifecycle</h4>
+                                        <p class="text-secondary small mb-3">Based on account age, visit count, and days
+                                            since last visit.</p>
+                                        <div class="row g-3 mb-2">
+                                            <div class="col-md-6">
+                                                <label class="form-label">New — account age (days)</label>
+                                                <input type="number" min="1" class="form-control" id="cc-new-age">
+                                                <div class="form-hint">An account this age or younger, with fewer
+                                                    completed visits than the count below, is
+                                                    New.</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">New — completed visit count</label>
+                                                <input type="number" min="0" class="form-control" id="cc-new-visits">
+                                            </div>
+                                        </div>
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Active — days since last visit</label>
+                                                <input type="number" min="1" class="form-control" id="cc-active-days">
+                                                <div class="form-hint">Up to this many days since the last visit is
+                                                    Active.</div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">At Risk — days since last visit</label>
+                                                <input type="number" min="1" class="form-control" id="cc-at-risk-days">
+                                                <div class="form-hint">Beyond Active, up to this many days is At Risk.
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Dormant — days since last visit</label>
+                                                <input type="number" min="1" class="form-control" id="cc-dormant-days">
+                                                <div class="form-hint">Beyond At Risk, up to this many days is Dormant.
+                                                    Anything further is Inactive.</div>
+                                            </div>
+                                        </div>
+
+                                        <button type="button" class="btn btn-primary"
+                                            id="btn-save-customer-classification">
+                                            <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                id="spinner-customer-classification" role="status"></span>
+                                            Save Classification Settings
+                                        </button>
+                                        <span class="text-success small ms-2 d-none" id="cc-settings-saved">Saved
+                                            ✓</span>
+                                    </div>
+
+                                    <!-- ═══ SECTION: HOME SERVICE ═══════════════ -->
+                                    <div class="settings-section" id="section-home-service">
+
+                                        <!-- Header -->
+                                        <div
+                                            class="d-flex align-items-center justify-content-between gap-2 mb-4 pb-3 border-bottom">
+                                            <div>
+                                                <h3 class="mb-0">Home Service Areas</h3>
+                                                <p class="text-secondary small mt-1 mb-0">
+                                                    Control the states/cities where mobile (home service) bookings are
+                                                    available. Changes take effect immediately.
+                                                </p>
+                                            </div>
+                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                                    id="btn-add-serviceable-area">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon me-1">
+                                                        <path d="M12 5l0 14" />
+                                                        <path d="M5 12l14 0" />
+                                                    </svg>
+                                                    Add Area
+                                                </button>
+                                                <button type="button" class="btn btn-primary btn-sm"
+                                                    id="btn-save-serviceable-areas">
+                                                    <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                        id="spinner-serviceable-areas" role="status"></span>
+                                                    Save Areas
+                                                </button>
+                                                <span class="text-success small ms-1 d-none align-self-center"
+                                                    id="home-service-saved">Saved ✓</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Draft banner: unsaved changes -->
+                                        <div id="home-service-draft-banner" class="d-none mb-3">
+                                            <div
+                                                class="alert alert-warning mb-0 py-2 px-3 d-flex align-items-center justify-content-between gap-2">
+                                                <span class="d-flex align-items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon" style="flex-shrink:0">
+                                                        <path d="M7 3.337a1 1 0 0 1 1.586 -.92l.269 .18a2 2 0 0 0 1.29 .403h3.71a2 2 0 0 0 1.29 -.403l.27 -.18a1 1 0 0 1 1.585 .92v.9a7 7 0 0 1 -10 0v-.9" />
+                                                        <path d="M12 8a4 4 0 0 1 4 4v3.5" />
+                                                        <path d="M14.5 20h-5a3 3 0 0 0 -3 3v1h11v-1a3 3 0 0 0 -3 -3" />
+                                                        <path d="M5 22v-1" />
+                                                        <path d="M19 22v-1" />
+                                                        <path d="M18 16l2 2l4 -4" />
+                                                    </svg>
+                                                    <span><strong id="home-service-draft-count">0</strong> area(s) in
+                                                        draft &mdash; not saved yet. Click <strong>Save Areas</strong> to
+                                                        publish permanently.</span>
+                                                </span>
+                                                <button type="button" class="btn btn-sm btn-warning text-white"
+                                                    id="btn-save-areas-banner">
+                                                    <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                        id="spinner-serviceable-areas-banner" role="status"></span>
+                                                    Save Areas
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Section alert -->
+                                        <div id="home-service-alert" class="alert d-none mb-3" role="alert">
+                                            <span id="home-service-alert-icon"></span>
+                                            <span id="home-service-alert-msg" class="ms-2"></span>
+                                        </div>
+
+                                        <!-- Status summary -->
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3"
+                                            id="home-service-summary">
+                                            <span class="badge bg-secondary-lt px-3 py-2 fs-6">
+                                                <span id="stat-home-service-effective">—</span> active area(s)
+                                            </span>
+                                            <span class="badge bg-secondary-lt px-3 py-2 d-none" id="stat-home-service-total-wrap">
+                                                <span id="stat-home-service-count">—</span> total in list
+                                            </span>
+                                            <span class="badge bg-warning-lt px-3 py-2 d-none" id="home-service-disabled">
+                                                Home service disabled everywhere
+                                            </span>
+                                        </div>
+
+                                        <!-- Redundant areas notice -->
+                                        <div id="home-service-redundant-banner" class="d-none mb-3">
+                                            <div class="alert alert-info mb-0 py-2 px-3 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                                <span class="small">
+                                                    <strong id="home-service-redundant-count">0</strong> area(s) are redundant —
+                                                    already covered by a broader entry (e.g. <em>All Cities</em> for the same state).
+                                                    They have no effect until removed.
+                                                </span>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-cleanup-redundant-areas">
+                                                    Remove redundant
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Areas table -->
+                                        <div class="table-responsive">
+                                            <table class="table table-vcenter">
+                                                <thead>
+                                                    <tr>
+                                                        <th>State</th>
+                                                        <th>City</th>
+                                                        <th>Status</th>
+                                                        <th class="w-1"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="home-service-tbody">
+                                                    <tr>
+                                                        <td colspan="4" class="text-center text-secondary py-4">
+                                                            Loading…
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+                                    <!-- ═══ END SECTION: HOME SERVICE ════════ -->
+
+                                    <!-- ═══ SECTION: CANCELLATION POLICY ═══════════ -->
+                                    <div class="settings-section" id="section-cancellation-policy">
+                                        <div
+                                            class="d-flex align-items-center justify-content-between gap-2 mb-4 pb-3 border-bottom">
+                                            <div>
+                                                <h3 class="mb-0">Booking Cancellation Policy</h3>
+                                                <p class="text-secondary small mt-1 mb-0">
+                                                    Set refund rules for walk-in and home service cancellations.
+                                                </p>
+                                            </div>
+                                            <div class="d-flex gap-2 flex-shrink-0 align-items-center">
+                                                <button type="button" class="btn btn-primary btn-sm d-none"
+                                                    id="btn-save-cancellation-policy">
+                                                    <span class="spinner-border spinner-border-sm me-1 d-none"
+                                                        id="spinner-cancellation-policy" role="status"></span>
+                                                    Save Policy
+                                                </button>
+                                                <span class="text-success small d-none" id="cancellation-policy-saved">Saved ✓</span>
+                                            </div>
+                                        </div>
+
+                                        <div id="cancellation-policy-draft-banner" class="d-none mb-3">
+                                            <div class="alert alert-warning mb-0 py-2 px-3 small">
+                                                Unsaved changes — click <strong>Save Policy</strong> to publish.
+                                            </div>
+                                        </div>
+
+                                        <div id="cancellation-policy-alert" class="alert d-none mb-3" role="alert">
+                                            <span id="cancellation-policy-alert-msg"></span>
+                                        </div>
+
+                                        <ul class="nav nav-tabs mb-3" id="cancellation-policy-tabs">
+                                            <li class="nav-item">
+                                                <a href="#" class="nav-link active" data-cancel-tab="walkin">Walk-in / Branch</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="#" class="nav-link" data-cancel-tab="home">Home / Mobile Service</a>
+                                            </li>
+                                        </ul>
+
+                                        <div class="rounded px-3 py-2 mb-3 small bg-azure-lt">
+                                            <div class="fw-semibold mb-1">NB — column guide</div>
+                                            <ul class="text-secondary mb-0 ps-3">
+                                                <li><strong>Window (min)</strong> — how many minutes define this rule (before the appointment for walk-in, or after booking for home service).</li>
+                                                <li><strong>Refund %</strong> — how much of the payment is returned to the customer’s wallet when this rule applies.</li>
+                                                <li><strong>Forfeiture %</strong> — how much is not refunded; refund % and forfeiture % must always add up to 100.</li>
+                                                <li><strong>Customer</strong> — whether the customer is allowed to cancel the booking in this situation.</li>
+                                                <li><strong>Admin</strong> — whether an admin can cancel the booking in this situation.</li>
+                                            </ul>
+                                        </div>
+
+                                        <div id="cancellation-tab-walkin">
+                                            <div class="table-responsive">
+                                                <table class="table table-vcenter table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Rule</th>
+                                                            <th>Window (min)</th>
+                                                            <th>Refund %</th>
+                                                            <th>Forfeiture %</th>
+                                                            <th class="text-center">Customer</th>
+                                                            <th class="text-center">Admin</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="cancellation-policy-walkin-tbody">
+                                                        <tr>
+                                                            <td colspan="6" class="text-center text-secondary py-4">Loading…</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <div id="cancellation-tab-home" class="d-none">
+                                            <div class="table-responsive">
+                                                <table class="table table-vcenter table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Rule</th>
+                                                            <th>Window (min)</th>
+                                                            <th>Refund %</th>
+                                                            <th>Forfeiture %</th>
+                                                            <th class="text-center">Customer</th>
+                                                            <th class="text-center">Admin</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="cancellation-policy-home-tbody">
+                                                        <tr>
+                                                            <td colspan="6" class="text-center text-secondary py-4">Loading…</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- ═══ END SECTION: CANCELLATION POLICY ═══ -->
+
                                     <!-- ═══ SECTION: ADMIN MANAGEMENT ════════════ -->
                                     <div class="settings-section" id="section-admin-management">
 
                                         <!-- Header -->
-                                        <div class="d-flex align-items-center justify-content-between gap-2 mb-4 pb-3 border-bottom">
+                                        <div
+                                            class="d-flex align-items-center justify-content-between gap-2 mb-4 pb-3 border-bottom">
                                             <div>
                                                 <h3 class="mb-0">Admin Management</h3>
                                                 <p class="text-secondary small mt-1 mb-0">
-                                                    Manage admin accounts, assign roles, and customise per-role permissions. Super Admin only.
+                                                    Manage admin accounts, assign roles, and customise per-role
+                                                    permissions. Super Admin only.
                                                 </p>
                                             </div>
-                                            <button type="button" class="btn btn-primary btn-sm flex-shrink-0"
-                                                id="btn-open-create-admin">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                    class="icon me-1">
-                                                    <path d="M12 5l0 14"/><path d="M5 12l14 0"/>
-                                                </svg>
-                                                New Admin
-                                            </button>
+                                            <div class="d-flex gap-2 flex-shrink-0">
+                                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                                    id="btn-open-assign-role">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon me-1">
+                                                        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                                    </svg>
+                                                    Assign Role
+                                                </button>
+                                                <button type="button" class="btn btn-primary btn-sm"
+                                                    id="btn-open-create-admin">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon me-1">
+                                                        <path d="M12 5l0 14" />
+                                                        <path d="M5 12l14 0" />
+                                                    </svg>
+                                                    New Admin
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <!-- Section alert -->
@@ -392,10 +809,10 @@
                                                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                         class="icon">
-                                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/>
-                                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>
-                                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/>
+                                                        <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                                        <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                                        <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
                                                     </svg>
                                                     Admin Accounts
                                                 </a>
@@ -407,9 +824,27 @@
                                                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                         class="icon">
-                                                        <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/>
+                                                        <path
+                                                            d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" />
                                                     </svg>
                                                     Roles &amp; Permissions
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="#" class="nav-link d-flex align-items-center gap-2"
+                                                    data-admin-tab="audit-log">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
+                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                        class="icon">
+                                                        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                                                        <path
+                                                            d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+                                                        <path d="M9 9l1 0" />
+                                                        <path d="M9 13l6 0" />
+                                                        <path d="M9 17l6 0" />
+                                                    </svg>
+                                                    Audit Log
                                                 </a>
                                             </li>
                                         </ul>
@@ -421,14 +856,30 @@
                                             <div class="mb-3 position-relative">
                                                 <div class="input-group">
                                                     <span class="input-group-text">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-secondary"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round" class="icon text-secondary">
+                                                            <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                                                            <path d="M21 21l-6 -6" />
+                                                        </svg>
                                                     </span>
-                                                    <input type="text" class="form-control" id="admin-search-input" placeholder="Search admins by name, email or role…" autocomplete="off" />
-                                                    <button type="button" class="btn btn-outline-secondary d-none" id="admin-search-clear" title="Clear search">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+                                                    <input type="text" class="form-control" id="admin-search-input"
+                                                        placeholder="Search admins by name, email or role…"
+                                                        autocomplete="off" />
+                                                    <button type="button" class="btn btn-outline-secondary d-none"
+                                                        id="admin-search-clear" title="Clear search">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round"
+                                                            stroke-linejoin="round" class="icon">
+                                                            <path d="M18 6l-12 12" />
+                                                            <path d="M6 6l12 12" />
+                                                        </svg>
                                                     </button>
                                                 </div>
-                                                <div id="admin-search-results-info" class="form-hint mt-1 mb-0 d-none"></div>
+                                                <div id="admin-search-results-info" class="form-hint mt-1 mb-0 d-none">
+                                                </div>
                                             </div>
 
                                             <!-- Stats pills -->
@@ -447,8 +898,8 @@
                                                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                         class="icon">
-                                                        <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/>
-                                                        <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>
+                                                        <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                                        <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
                                                     </svg>
                                                     Refresh
                                                 </button>
@@ -484,15 +935,18 @@
 
                                             <!-- Role selector toolbar -->
                                             <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-                                                <span class="text-secondary small fw-medium">Editing permissions for:</span>
+                                                <span class="text-secondary small fw-medium">Editing permissions
+                                                    for:</span>
                                                 <!-- Role selector — populated by JS -->
                                                 <div class="d-flex flex-wrap gap-1" id="perm-role-selector"></div>
                                                 <div class="ms-auto d-flex gap-2">
-                                                    <button type="button"
-                                                        class="btn btn-sm btn-ghost-danger"
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        id="btn-view-role-users">View Users</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        id="btn-edit-role">Edit Role</button>
+                                                    <button type="button" class="btn btn-sm btn-ghost-danger"
                                                         id="btn-delete-role">Delete Role</button>
-                                                    <button type="button"
-                                                        class="btn btn-sm btn-primary"
+                                                    <button type="button" class="btn btn-sm btn-primary"
                                                         id="btn-save-perms">
                                                         <span class="spinner-border spinner-border-sm me-1 d-none"
                                                             id="spinner-save-perms"></span>
@@ -507,11 +961,26 @@
                                                     viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                     class="icon me-1">
-                                                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/>
-                                                    <path d="M12 8v4"/><path d="M12 16h.01"/>
+                                                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+                                                    <path d="M12 8v4" />
+                                                    <path d="M12 16h.01" />
                                                 </svg>
-                                                <strong>Super Admin</strong> always has every permission and cannot be modified.
-                                                Changes here are stored in this browser session.
+                                                <strong>Super Admin</strong> always has every permission and cannot be
+                                                modified.
+                                            </div>
+
+                                            <!-- Permission search -->
+                                            <div class="mb-3 position-relative">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="icon position-absolute"
+                                                    style="left:10px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.5">
+                                                    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                                                    <path d="M21 21l-6 -6" />
+                                                </svg>
+                                                <input type="text" class="form-control form-control-sm ps-5"
+                                                    id="perm-search" placeholder="Search permissions by name or key…">
                                             </div>
 
                                             <!-- Permission matrix (rendered by JS) -->
@@ -519,8 +988,11 @@
 
                                         </div><!-- /admin-tab-permissions -->
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                                         <!-- ─── TAB: AUDIT LOG ──────────────────── -->
                                         <div id="admin-tab-audit-log" class="admin-tab-pane d-none">
                                             <div class="d-flex align-items-center justify-content-between mb-3">
@@ -549,10 +1021,15 @@
                                                     </tbody>
                                                 </table>
                                             </div>
+<<<<<<< HEAD
                                             <div id="audit-log-pager"></div>
                                         </div><!-- /admin-tab-audit-log -->
 
 >>>>>>> Stashed changes
+=======
+                                        </div><!-- /admin-tab-audit-log -->
+
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                                     </div>
                                     <!-- ═══ END SECTION: ADMIN MANAGEMENT ════════ -->
 
@@ -581,18 +1058,88 @@
         </div>
     </div>
 
+    <!-- ===== MODAL: ADD SERVICEABLE AREA ===== -->
+    <div class="modal modal-blur fade" id="modal-add-serviceable-area" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon me-2">
+                            <path
+                                d="M9 20l-5.447 -2.724a1 1 0 0 1 -0.553 -0.894v-6.764a1 1 0 0 1 .553 -.894l6 -3a1 1 0 0 1 .894 0l6 3a1 1 0 0 1 .553 .894v6.764a1 1 0 0 1 -.553 .894l-5.447 2.724z" />
+                            <path d="M12 9v4" />
+                            <path d="M10 11h4" />
+                        </svg>
+                        Add Service Areas
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div id="modal-add-area-alert" class="alert d-none mx-3 mt-3 mb-0 py-2" role="alert">
+                    <span id="modal-add-area-alert-msg"></span>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label required">State</label>
+                            <select class="form-select" id="add-area-state">
+                                <option value="">Select a state…</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label required" id="add-area-city-label">City / Cities <span class="text-secondary fw-normal">(multi-select)</span></label>
+                            <div id="add-area-city-notice" class="alert alert-info py-2 px-3 small mb-2 d-none" role="status" aria-live="polite"></div>
+                            <select multiple class="form-select" id="add-area-city" disabled aria-describedby="add-area-city-hint add-area-city-notice">
+                                <option value="">Select a state first…</option>
+                            </select>
+                            <div class="form-hint" id="add-area-city-hint">
+                                Click cities to add them; each appears in the field with an <strong>×</strong> to remove it
+                                individually or clear all. Choose <strong>All Cities (*)</strong> to enable the whole state —
+                                specific cities in that state become unnecessary and will be replaced automatically.
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="rounded-2 border p-2" style="background:var(--tblr-bg-surface-secondary)">
+                                <div id="home-service-add-preview">
+                                    <div class="text-secondary small">No cities selected yet.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex align-items-center justify-content-between gap-2">
+                    <span class="text-secondary small" id="modal-add-area-note"></span>
+                    <div class="d-flex gap-2 ms-auto">
+                        <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="btn-confirm-add-area">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                                <path d="M12 5l0 14" />
+                                <path d="M5 12l14 0" />
+                            </svg>
+                            Add to Draft
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: ADD SERVICEABLE AREA ===== -->
+
     <!-- ===== MODAL: CREATE ADMIN ===== -->
     <div class="modal modal-blur fade" id="modal-create-admin" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" class="icon me-2">
-                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/>
-                            <path d="M16 19h6"/><path d="M19 16v6"/>
-                            <path d="M6 21v-2a4 4 0 0 1 4 -4h4"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon me-2">
+                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                            <path d="M16 19h6" />
+                            <path d="M19 16v6" />
+                            <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
                         </svg>
                         New Admin Account
                     </h5>
@@ -607,23 +1154,20 @@
                         <div class="row g-3">
                             <div class="col-12 col-sm-6">
                                 <label class="form-label required">First Name</label>
-                                <input type="text" class="form-control" id="ca-firstName"
-                                    placeholder="John" required />
+                                <input type="text" class="form-control" id="ca-firstName" placeholder="John" required />
                             </div>
                             <div class="col-12 col-sm-6">
                                 <label class="form-label required">Last Name</label>
-                                <input type="text" class="form-control" id="ca-lastName"
-                                    placeholder="Doe" required />
+                                <input type="text" class="form-control" id="ca-lastName" placeholder="Doe" required />
                             </div>
                             <div class="col-12 col-sm-6">
                                 <label class="form-label required">Email</label>
-                                <input type="email" class="form-control" id="ca-email"
-                                    placeholder="admin@hairlux.com" required />
+                                <input type="email" class="form-control" id="ca-email" placeholder="admin@hairlux.com"
+                                    required />
                             </div>
                             <div class="col-12 col-sm-6">
                                 <label class="form-label">Phone</label>
-                                <input type="tel" class="form-control" id="ca-phone"
-                                    placeholder="+2348012345678" />
+                                <input type="tel" class="form-control" id="ca-phone" placeholder="+2348012345678" />
                             </div>
                             <div class="col-12 col-sm-6">
                                 <label class="form-label required">Role</label>
@@ -635,16 +1179,16 @@
                             <div class="col-12 col-sm-6">
                                 <label class="form-label required">Password</label>
                                 <div class="input-group">
-                                    <input type="password" class="form-control" id="ca-password"
-                                        required minlength="8" placeholder="Min 8 characters" />
+                                    <input type="password" class="form-control" id="ca-password" required minlength="8"
+                                        placeholder="Min 8 characters" />
                                     <button type="button" class="btn btn-outline-secondary"
                                         onclick="togglePwd('ca-password',this)" title="Show/hide">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                            class="icon icon-1">
-                                            <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>
-                                            <path d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6"/>
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                                            <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                            <path
+                                                d="M21 12c-2.4 4-5.4 6-9 6c-3.6 0-6.6-2-9-6c2.4-4 5.4-6 9-6c3.6 0 6.6 2 9 6" />
                                         </svg>
                                     </button>
                                 </div>
@@ -666,28 +1210,44 @@
 
     <!-- ===== MODAL: CHANGE ROLE ===== -->
     <div class="modal modal-blur fade" id="modal-change-role" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Change Role</h5>
+                    <h5 class="modal-title">Manage Roles</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="role-change-user-id" />
                     <p class="mb-2 text-secondary small">
-                        Changing role for: <strong id="role-change-user-name">—</strong>
+                        Managing roles for: <strong id="role-change-user-name">—</strong>
                     </p>
-                    <label class="form-label required">New Role</label>
+                    <label class="form-label required">Primary Role</label>
                     <select class="form-select" id="role-change-select">
                         <!-- options populated by JS from custom roles -->
                     </select>
-                    <div class="form-hint mt-1">Super Admin role cannot be assigned here.</div>
+                    <div class="form-hint mt-1 mb-3">Super Admin role cannot be assigned here.</div>
+
+                    <hr>
+                    <label class="form-label">Secondary Roles</label>
+                    <div class="form-hint mb-2">Additional roles held alongside the primary role — effective permissions
+                        are
+                        the union of all of them.</div>
+                    <div id="secondary-roles-list" class="mb-2">
+                        <div class="text-secondary small">Loading…</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="secondary-role-select">
+                            <option value="">Add a secondary role…</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                            id="btn-add-secondary-role">Add</button>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" id="btn-confirm-role-change">
                         <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-role-change"></span>
-                        Apply
+                        Apply Primary Role
                     </button>
                 </div>
             </div>
@@ -695,16 +1255,87 @@
     </div>
     <!-- ===== END MODAL: CHANGE ROLE ===== -->
 
+    <!-- ===== MODAL: ASSIGN ROLE (staff search) ===== -->
+    <div class="modal modal-blur fade" id="modal-assign-role-staff" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Role to Staff</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="assign-role-staff-error" class="alert alert-danger d-none py-2"></div>
+                    <label class="form-label required">Staff Member</label>
+                    <select class="form-select mb-2" id="assign-role-staff-select">
+                        <option value="">Loading staff…</option>
+                    </select>
+                    <div id="assign-role-current-status" class="form-hint mb-3"></div>
+
+                    <label class="form-label required">Role</label>
+                    <select class="form-select mb-2" id="assign-role-role-select">
+                        <option value="">Loading roles…</option>
+                    </select>
+                    <div class="form-hint mb-3">Super Admin role cannot be assigned here.</div>
+
+                    <label class="form-label">How should this be applied?</label>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="assign-role-mode"
+                                id="assign-role-mode-primary" value="primary" checked>
+                            <label class="form-check-label" for="assign-role-mode-primary">
+                                Replace their current role <span class="text-secondary">(this role becomes their only
+                                    primary
+                                    role)</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="assign-role-mode"
+                                id="assign-role-mode-secondary" value="secondary">
+                            <label class="form-check-label" for="assign-role-mode-secondary">
+                                Add alongside their current role <span class="text-secondary">(effective permissions
+                                    become the union of
+                                    both)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="assign-role-overwrite-warning" class="alert alert-warning py-2 d-none"></div>
+
+                    <div class="form-check form-switch" id="assign-role-portal-login-wrap">
+                        <input class="form-check-input" type="checkbox" id="assign-role-grant-portal-login" checked>
+                        <label class="form-check-label" for="assign-role-grant-portal-login">Also grant admin dashboard
+                            login</label>
+                    </div>
+                    <div class="form-hint" id="assign-role-portal-login-hint">Leave unchecked to apply this role's
+                        permissions inside
+                        the staff portal
+                        only.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-assign-role-staff">
+                        <span class="spinner-border spinner-border-sm me-1 d-none"
+                            id="spinner-assign-role-staff"></span>
+                        Assign Role
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: ASSIGN ROLE ===== -->
+
     <!-- ===== MODAL: CREATE ROLE ===== -->
     <div class="modal modal-blur fade" id="modal-create-role" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" class="icon me-2">
-                            <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="icon me-2">
+                            <path
+                                d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3" />
                         </svg>
                         New Role
                     </h5>
@@ -717,8 +1348,7 @@
                     <form id="form-create-role" autocomplete="off">
                         <div class="mb-3">
                             <label class="form-label required">Role Name</label>
-                            <input type="text" class="form-control" id="cr-name"
-                                placeholder="e.g. MANAGER" required />
+                            <input type="text" class="form-control" id="cr-name" placeholder="e.g. MANAGER" required />
                         </div>
                         <div>
                             <label class="form-label">Description <span class="text-muted">(optional)</span></label>
@@ -738,6 +1368,70 @@
         </div>
     </div>
     <!-- ===== END MODAL: CREATE ROLE ===== -->
+
+    <!-- ===== MODAL: EDIT ROLE ===== -->
+    <div class="modal modal-blur fade" id="modal-edit-role" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div id="modal-edit-role-alert" class="alert d-none mx-3 mt-3 mb-0 py-2" role="alert">
+                    <span id="modal-edit-role-alert-msg"></span>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="er-role-id" />
+                    <form id="form-edit-role" autocomplete="off">
+                        <div class="mb-3">
+                            <label class="form-label required">Role Name</label>
+                            <input type="text" class="form-control" id="er-name" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description <span class="text-muted">(optional)</span></label>
+                            <textarea class="form-control" id="er-description" rows="2"></textarea>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="er-active">
+                            <label class="form-check-label" for="er-active">Active</label>
+                        </div>
+                        <div class="form-hint mt-1">Deactivating a role immediately removes its permissions from
+                            everyone
+                            who holds it, without unassigning them.</div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" form="form-edit-role" class="btn btn-primary" id="btn-submit-edit-role">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-edit-role"></span>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: EDIT ROLE ===== -->
+
+    <!-- ===== MODAL: VIEW ROLE USERS ===== -->
+    <div class="modal modal-blur fade" id="modal-view-role-users" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Users with role: <span id="vru-role-name">—</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="vru-content">
+                        <div class="text-secondary small">Loading…</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ===== END MODAL: VIEW ROLE USERS ===== -->
 
     <!-- ===== MODAL: TOGGLE ADMIN STATUS ===== -->
     <div class="modal modal-blur fade" id="modal-toggle-status" tabindex="-1" role="dialog" aria-hidden="true">
@@ -769,17 +1463,26 @@
     <!-- SCRIPTS -->
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/bookings.js"></script>
     <script src="assets/js/api-utils/users.js"></script>
     <script src="assets/js/api-utils/roles.js"></script>
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/salon-bookings.js"></script>
     <script src="assets/js/searchable-select.js"></script>
+<<<<<<< HEAD
     <script src="assets/js/simple-pager.js"></script>
 >>>>>>> Stashed changes
+=======
+    <script src="assets/js/multi-select.js"></script>
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/data/nigeria-cities.js"></script>
 
     <!-- Settings page modules (order matters) -->
     <script src="assets/js/settings/state.js"></script>
@@ -789,6 +1492,7 @@
     <script src="assets/js/settings/handlers.js"></script>
     <script src="assets/js/settings/index.js"></script>
 
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

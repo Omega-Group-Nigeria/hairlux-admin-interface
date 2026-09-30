@@ -53,6 +53,24 @@ const Staff = (() => {
         };
     }
 
+    /**
+     * Dev Feedback Round 7, item #10 -- minimal, ACTIVE + ON_LEAVE staff
+     * list for a dropdown. Prefer this over getAll() for any staff-picker
+     * UI: it's gated by the STAFF role (not ADMIN/SUPER_ADMIN like
+     * /admin/staff), so it works consistently regardless of that page's
+     * own access level, and it's pre-filtered to "still with the
+     * company" rather than every employment status.
+     */
+    async function getOptions(params = {}) {
+        const q = new URLSearchParams();
+        if (params.locationId) q.set("locationId", params.locationId);
+        if (params.includeAllStatuses) q.set("includeAllStatuses", "true");
+        const res = await Auth.fetch("/staff/options" + (q.toString() ? "?" + q.toString() : ""));
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || "Failed to load staff options");
+        return raw.data || [];
+    }
+
     async function getUpcomingBirthdays(params = {}) {
         const q = new URLSearchParams();
         if (params.daysAhead) q.set("daysAhead", params.daysAhead);
@@ -162,6 +180,34 @@ const Staff = (() => {
         });
     }
 
+    async function transferBranch(id, payload) {
+        return jsonFetch("/admin/staff/" + id + "/transfer-branch", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getCodeHistory(id) {
+        return jsonFetch("/admin/staff/" + id + "/code-history");
+    }
+
+    async function getRoleAssignment(id) {
+        return jsonFetch("/admin/staff/" + id + "/role-assignment");
+    }
+
+    async function assignRole(id, adminRoleId, grantPortalLogin, mode) {
+        return jsonFetch("/admin/staff/" + id + "/role-assignment", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adminRoleId: adminRoleId, grantPortalLogin: grantPortalLogin, mode: mode || 'primary' }),
+        });
+    }
+
+    async function removeRole(id) {
+        return jsonFetch("/admin/staff/" + id + "/role-assignment", { method: "DELETE" });
+    }
+
     async function archive(id, payload) {
         return jsonFetch("/admin/staff/" + id + "/archive", {
             method: "POST",
@@ -198,6 +244,116 @@ const Staff = (() => {
         });
     }
 
+    async function getOnboarding(id) {
+        return jsonFetch("/admin/staff/" + id + "/onboarding");
+    }
+
+    async function getWorkCalendar(id) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id);
+    }
+
+    async function setWorkCalendar(id, payload) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function applyWorkCalendarDefault(id, overwrite) {
+        return jsonFetch("/admin/attendance/work-calendar/" + id + "/apply-business-hours-default?overwrite=" + (overwrite ? "true" : "false"), {
+            method: "POST",
+        });
+    }
+
+    async function getFieldLocations(includeInactive) {
+        return jsonFetch("/admin/attendance/field-locations" + (includeInactive ? "?includeInactive=true" : ""));
+    }
+
+    async function createFieldLocation(payload) {
+        return jsonFetch("/admin/attendance/field-locations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function updateFieldLocation(id, payload) {
+        return jsonFetch("/admin/attendance/field-locations/" + id, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getOnboardingSummary() {
+        return jsonFetch("/admin/staff/onboarding-summary");
+    }
+
+    async function updateOnboardingItem(id, itemId, payload) {
+        return jsonFetch("/admin/staff/" + id + "/onboarding/" + itemId, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getDocumentStatus(id) {
+        return jsonFetch("/admin/staff/" + id + "/documents");
+    }
+
+    async function getDirectives(id) {
+        return jsonFetch("/admin/staff/" + id + "/directives");
+    }
+
+    async function setCompensation(id, payload) {
+        return jsonFetch("/admin/payroll/staff/" + id + "/compensation", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function getCompensationHistory(id) {
+        return jsonFetch("/admin/payroll/staff/" + id + "/compensation/history");
+    }
+
+    async function requestAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification/request", { method: "POST" });
+    }
+
+    async function cancelAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification/cancel", { method: "POST" });
+    }
+
+    async function getAddressVerification(id) {
+        return jsonFetch("/admin/staff/" + id + "/address-verification");
+    }
+
+    async function getPassportPhotoUrl(id) {
+        return jsonFetch("/admin/staff/" + id + "/passport-photo");
+    }
+
+    function idCardUrl(id) {
+        const base = (window.API_BASE || "").replace(/\/$/, "");
+        return base + "/admin/staff/" + id + "/id-card.pdf";
+    }
+
+    /** Downloads the ID card PDF using an authenticated fetch (browser can't attach a JWT to a plain <a href>). */
+    async function downloadIdCard(id, staffCode) {
+        const res = await Auth.fetch("/admin/staff/" + id + "/id-card.pdf");
+        if (!res.ok) throw new Error("Failed to generate ID card");
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "staff-id-" + (staffCode || id) + ".pdf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }
+
     const STATUS_COLORS = {
         ACTIVE: "success",
         ON_LEAVE: "warning",
@@ -209,6 +365,19 @@ const Staff = (() => {
     function statusBadge(status) {
         const value = String(status || "UNKNOWN").toUpperCase();
         const color = STATUS_COLORS[value] || "secondary";
+        return '<span class="badge bg-' + color + '-lt">' + value.replace(/_/g, " ") + "</span>";
+    }
+
+    const WORK_MODE_COLORS = {
+        ON_SITE: "blue",
+        HYBRID: "purple",
+        REMOTE: "teal",
+        FIELD_MOBILE: "orange",
+    };
+
+    function workModeBadge(workMode) {
+        const value = String(workMode || "ON_SITE").toUpperCase();
+        const color = WORK_MODE_COLORS[value] || "secondary";
         return '<span class="badge bg-' + color + '-lt">' + value.replace(/_/g, " ") + "</span>";
     }
 
@@ -227,6 +396,7 @@ const Staff = (() => {
 
     return {
         getAll,
+        getOptions,
         getUpcomingBirthdays,
         getOne,
         getLocations,
@@ -236,12 +406,30 @@ const Staff = (() => {
         create,
         update,
         updateStatus,
+        transferBranch,
+        getCodeHistory,
+        getRoleAssignment,
+        assignRole,
+        removeRole,
         archive,
         restore,
         addHistory,
         updateHistory,
         removeHistory,
+        getOnboarding,
+        getWorkCalendar, setWorkCalendar, applyWorkCalendarDefault,
+        getFieldLocations, createFieldLocation, updateFieldLocation,
+        getOnboardingSummary,
+        updateOnboardingItem,
+        getDocumentStatus,
+        getDirectives,
+        setCompensation, getCompensationHistory,
+        requestAddressVerification, getAddressVerification, cancelAddressVerification,
+        getPassportPhotoUrl,
+        idCardUrl,
+        downloadIdCard,
         statusBadge,
+        workModeBadge,
         formatDate,
         fullName,
     };

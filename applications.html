@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Applications</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -19,13 +28,44 @@
     <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
-        .app-row { cursor: pointer; }
-        .app-row:hover { background-color: var(--tblr-bg-surface-tertiary); }
-        #applications-table td { vertical-align: middle; }
-        .app-code { font-family: var(--tblr-font-monospace, monospace); font-size: .8rem; font-weight: 600; letter-spacing: .02em; }
-        .detail-lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .02em; color: var(--tblr-secondary); margin-bottom: 2px; }
-        .detail-val { font-size: .875rem; margin-bottom: 12px; }
-        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
+
+        .app-row {
+            cursor: pointer;
+        }
+
+        .app-row:hover {
+            background-color: var(--tblr-bg-surface-tertiary);
+        }
+
+        #applications-table td {
+            vertical-align: middle;
+        }
+
+        .app-code {
+            font-family: var(--tblr-font-monospace, monospace);
+            font-size: .8rem;
+            font-weight: 600;
+            letter-spacing: .02em;
+        }
+
+        .detail-lbl {
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .02em;
+            color: var(--tblr-secondary);
+            margin-bottom: 2px;
+        }
+
+        .detail-val {
+            font-size: .875rem;
+            margin-bottom: 12px;
+        }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
     </style>
 </head>
 
@@ -37,9 +77,8 @@
         <!-- ===== NAVBAR ===== -->
         <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
             <div class="container-xl">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false"
-                    aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -57,7 +96,8 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon icon-1">
-                                <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
                             </svg>
                         </a>
                         <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
@@ -66,7 +106,8 @@
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round" class="icon icon-1">
                                 <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
-                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
                             </svg>
                         </a>
                     </div>
@@ -84,14 +125,16 @@
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
                             <div class="dropdown-header">
                                 <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
-                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
                             </div>
                             <div class="dropdown-divider"></div>
                             <a href="./settings.html" class="dropdown-item">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon icon-1 me-2">
-                                    <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+                                    <path
+                                        d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
                                     <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
                                 </svg>
                                 Settings
@@ -101,7 +144,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                     stroke-linejoin="round" class="icon icon-1 me-2">
-                                    <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                    <path
+                                        d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
                                     <path d="M9 12h12l-3 -3" />
                                     <path d="M18 15l3 -3" />
                                 </svg>
@@ -133,6 +177,8 @@
                             <h2 class="page-title">Applications</h2>
                         </div>
                         <div class="col-auto ms-auto d-flex flex-wrap gap-2 align-items-center">
+                            <button type="button" class="btn btn-outline-secondary" id="btn-view-report">View
+                                Report</button>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -163,14 +209,22 @@
                             <!-- Status filter tabs -->
                             <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="status-tabs">
                                 <li class="nav-item"><a href="#" class="nav-link active" data-status="">All</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="SUBMITTED">Submitted</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="UNDER_REVIEW">Under Review</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="SHORTLISTED">Shortlisted</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="INTERVIEW_SCHEDULED">Interview Scheduled</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="INTERVIEW_COMPLETED">Interview Completed</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="OFFER_EXTENDED">Offer Extended</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="EMPLOYED">Employed</a></li>
-                                <li class="nav-item"><a href="#" class="nav-link" data-status="NOT_SELECTED">Not Selected</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="SUBMITTED">Submitted</a>
+                                </li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="UNDER_REVIEW">Under
+                                        Review</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link"
+                                        data-status="SHORTLISTED">Shortlisted</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link"
+                                        data-status="INTERVIEW_SCHEDULED">Interview Scheduled</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link"
+                                        data-status="INTERVIEW_COMPLETED">Interview Completed</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="OFFER_EXTENDED">Offer
+                                        Extended</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="EMPLOYED">Employed</a>
+                                </li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-status="NOT_SELECTED">Not
+                                        Selected</a></li>
                             </ul>
                         </div>
 
@@ -182,13 +236,21 @@
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                                class="icon"><circle cx="10" cy="10" r="7" /><path d="M21 21l-6 -6" /></svg>
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                                <circle cx="10" cy="10" r="7" />
+                                                <path d="M21 21l-6 -6" />
+                                            </svg>
                                         </span>
                                         <input type="text" id="filter-search" class="form-control"
                                             placeholder="Name, email, phone, or reference…">
                                     </div>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label text-secondary small mb-1">Branch</label>
+                                    <select id="filter-branch" class="form-select form-select-sm">
+                                        <option value="">All branches</option>
+                                    </select>
                                 </div>
                                 <div class="col-6 col-md-3 col-lg-2">
                                     <label class="form-label text-secondary small mb-1">Per page</label>
@@ -199,8 +261,8 @@
                                     </select>
                                 </div>
                                 <div class="col-6 col-md-auto">
-                                    <button type="button" class="btn btn-sm btn-secondary w-100"
-                                        id="btn-clear">Clear filters</button>
+                                    <button type="button" class="btn btn-sm btn-secondary w-100" id="btn-clear">Clear
+                                        filters</button>
                                 </div>
                             </div>
                         </div>
@@ -208,8 +270,7 @@
                         <!-- Table -->
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-vcenter table-hover card-table"
-                                    id="applications-table">
+                                <table class="table table-vcenter table-hover card-table" id="applications-table">
                                     <thead>
                                         <tr>
                                             <th class="w-1 text-secondary">#</th>
@@ -259,20 +320,78 @@
     </div>
 
     <!-- APPLICATION DETAIL OFFCANVAS -->
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-detail" data-bs-scroll="true" style="width:520px;max-width:100vw;">
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas-detail" data-bs-scroll="true"
+        style="width:520px;max-width:100vw;">
         <div class="offcanvas-header border-bottom">
             <h5 class="offcanvas-title">Application Details</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body" id="offcanvas-detail-body">
-            <div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
         </div>
         <div class="border-top p-3 d-flex gap-2 flex-wrap align-items-center" id="offcanvas-detail-actions"></div>
     </div>
 
     <!-- SCRIPTS -->
+    <div class="modal modal-blur fade" id="modal-report" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Recruitment Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1">Date From</label>
+                            <input type="date" class="form-control form-control-sm" id="report-filter-date-from">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small mb-1">Date To</label>
+                            <input type="date" class="form-control form-control-sm" id="report-filter-date-to">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Role</label>
+                            <select class="form-select form-select-sm" id="report-filter-role">
+                                <option value="">All roles</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Status</label>
+                            <select class="form-select form-select-sm" id="report-filter-status">
+                                <option value="">All statuses</option>
+                                <option value="SUBMITTED">Submitted</option>
+                                <option value="UNDER_REVIEW">Under Review</option>
+                                <option value="SHORTLISTED">Shortlisted</option>
+                                <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+                                <option value="INTERVIEW_COMPLETED">Interview Completed</option>
+                                <option value="OFFER_EXTENDED">Offer Extended</option>
+                                <option value="EMPLOYED">Employed</option>
+                                <option value="NOT_SELECTED">Not Selected</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label small mb-1">Branch</label>
+                            <select class="form-select form-select-sm" id="report-filter-branch">
+                                <option value="">All branches</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="report-modal-body">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/applications.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
@@ -285,9 +404,10 @@
 
         // ── Page state ──────────────────────────────────────────────────────────
         var qsStatus = new URLSearchParams(window.location.search).get('status') || '';
-        var state = { page: 1, limit: 20, status: qsStatus, search: '', totalPages: 1 };
+        var state = { page: 1, limit: 20, status: qsStatus, search: '', locationId: '', totalPages: 1 };
         var currentDetailId = null;
         var locationsCache = null;
+        var staffCache = null;
 
         document.addEventListener("DOMContentLoaded", function () {
             // ── RBAC: re-hydrate from server, apply guard + nav ────────────
@@ -301,11 +421,11 @@
             if (user) {
                 var initials = ((user.firstName || "")[0] + (user.lastName || "")[0]).toUpperCase() || "A";
                 var fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Admin";
-                var role     = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
-                document.getElementById("navbar-user-avatar").textContent  = initials;
-                document.getElementById("navbar-user-name").textContent    = fullName;
-                document.getElementById("navbar-user-role").textContent    = role;
-                document.getElementById("dropdown-user-name").textContent  = fullName;
+                var role = ((user.adminRole && user.adminRole.name) || user.role || "Administrator").replace(/_/g, " ");
+                document.getElementById("navbar-user-avatar").textContent = initials;
+                document.getElementById("navbar-user-name").textContent = fullName;
+                document.getElementById("navbar-user-role").textContent = role;
+                document.getElementById("dropdown-user-name").textContent = fullName;
                 document.getElementById("dropdown-user-email").textContent = user.email || "";
             }
             document.getElementById("logout-btn").addEventListener("click", function (e) {
@@ -319,6 +439,7 @@
                 if (match) match.classList.add("active");
                 else document.querySelector('#status-tabs .nav-link[data-status=""]').classList.add("active");
             }
+            loadBranchFilterOptions();
             loadApplications();
 
             // ── Status tabs ─────────────────────────────────────────────────
@@ -348,13 +469,29 @@
                 state.limit = parseInt(this.value, 10); state.page = 1; loadApplications();
             });
 
+            // ── Branch ──────────────────────────────────────────────────────
+            document.getElementById("filter-branch").addEventListener("change", function () {
+                state.locationId = this.value; state.page = 1; loadApplications();
+            });
+
+            // ── Recruitment report ──────────────────────────────────────────
+            document.getElementById("btn-view-report").addEventListener("click", function () {
+                new bootstrap.Modal(document.getElementById("modal-report")).show();
+                ensureReportFilterOptionsLoaded();
+                loadRecruitmentReport();
+            });
+            ["report-filter-date-from", "report-filter-date-to", "report-filter-role", "report-filter-status", "report-filter-branch"].forEach(function (id) {
+                document.getElementById(id).addEventListener("change", loadRecruitmentReport);
+            });
+
             // ── Clear filters ───────────────────────────────────────────────
             document.getElementById("btn-clear").addEventListener("click", function () {
                 document.getElementById("filter-search").value = "";
-                document.getElementById("filter-limit").value  = "20";
+                document.getElementById("filter-limit").value = "20";
+                document.getElementById("filter-branch").value = RBAC.scopeBranchId("");
                 document.querySelectorAll("#status-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 document.querySelector("#status-tabs .nav-link[data-status='']").classList.add("active");
-                state.page = 1; state.limit = 20; state.status = ""; state.search = "";
+                state.page = 1; state.limit = 20; state.status = ""; state.search = ""; state.locationId = RBAC.scopeBranchId("");
                 loadApplications();
             });
 
@@ -383,337 +520,641 @@
         });
 
         // ── Load & render list ──────────────────────────────────────────────────
-        async function loadApplications() {
-            var tbody = document.getElementById("applications-tbody");
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
-            document.getElementById("results-label").textContent = "Loading…";
+        async function loadBranchFilterOptions() {
             try {
-                var result = await Applications.getAll({
-                    page: state.page, limit: state.limit,
-                    status: state.status, search: state.search
-                });
-                var rows = result.data || (Array.isArray(result) ? result : []);
-                var meta = result.meta || {};
-                state.totalPages = meta.totalPages || 1;
-                var count = meta.total ?? rows.length;
-                document.getElementById("results-label").textContent = count + " application" + (count !== 1 ? "s" : "") + " found";
-                renderTable(rows);
-                renderPagination(meta);
+                var branches = await Staff.getLocations();
+                var sel = document.getElementById("filter-branch");
+                sel.innerHTML = '<option value="">All branches</option>' +
+                    branches.map(function (b) {
+                        return '<option value="' + b.id + '">' + b.name + '</option>';
+                    }).join("");
+
+                if (RBAC.applyBranchScope(sel)) {
+                    state.locationId = RBAC.getManagedBranchIds()[0];
+                    state.page = 1;
+                    loadApplications();
+                }
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.message || "Failed to load applications.") + '</td></tr>';
-                document.getElementById("results-label").textContent = "Error";
+                console.error("Failed to load branches for filter", err);
             }
+
+            var _reportOptionsLoaded = false;
         }
 
-        function renderTable(rows) {
-            var tbody = document.getElementById("applications-tbody");
-            if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No applications found.</td></tr>';
-                return;
+            async function ensureReportFilterOptionsLoaded() {
+                if (_reportOptionsLoaded) return;
+                _reportOptionsLoaded = true;
+                try {
+                    var branches = await ensureLocations();
+                    document.getElementById("report-filter-branch").innerHTML =
+                        '<option value="">All branches</option>' +
+                        branches.map(function (b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join("");
+
+                    RBAC.applyBranchScope(document.getElementById("report-filter-branch"));
+                } catch (err) {
+                    console.error("Failed to load branches for report filter", err);
+                }
+                try {
+                    var roles = await Applications.getDistinctRoles();
+                    document.getElementById("report-filter-role").innerHTML =
+                        '<option value="">All roles</option>' +
+                        roles.map(function (r) { return '<option value="' + r + '">' + r + '</option>'; }).join("");
+                } catch (err) {
+                    console.error("Failed to load roles for report filter", err);
+                }
             }
-            tbody.innerHTML = rows.map(function (a, i) {
-                var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "—";
-                var appCell = '<div class="fw-semibold">' + name + '</div>' +
-                    '<div class="app-code text-secondary">' + (a.applicationCode || "—") + '</div>' +
-                    (a.email ? '<div class="text-secondary small mt-1">' + a.email + '</div>' : '');
-                return '<tr class="app-row" data-id="' + a.id + '">' +
-                    '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
-                    '<td>' + appCell + '</td>' +
-                    '<td>' + (a.appliedRole || '—') + '</td>' +
-                    '<td class="text-secondary small">' + (a.preferredBranchText || '—') + '</td>' +
-                    '<td class="text-secondary small text-nowrap">' + Applications.formatDate(a.createdAt) + '</td>' +
-                    '<td>' + Applications.statusBadge(a.status) + '</td>' +
-                    '<td><button class="btn btn-sm btn-outline-secondary btn-view" data-id="' + a.id + '" title="View">' +
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
-                    '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>' +
-                    '<path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
-                    '</svg></button></td></tr>';
-            }).join("");
-        }
 
-        function renderPagination(meta) {
-            var total = meta.total || 0, page = meta.page || state.page;
-            var limit = meta.limit || state.limit, pages = meta.totalPages || 1;
-            var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
-            document.getElementById("pagination-info").textContent = total
-                ? "Showing " + from + "\u2013" + to + " of " + total : "No results";
-            var ul = document.getElementById("pagination-btns");
-            ul.innerHTML = '';
-            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">\u00ab</a></li>');
-            var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
-            for (var p = start; p <= end; p++) {
-                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+            async function loadRecruitmentReport() {
+                var body = document.getElementById("report-modal-body");
+                body.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
+                try {
+                    var r = await Applications.getReport({
+                        dateFrom: document.getElementById("report-filter-date-from").value || undefined,
+                        dateTo: document.getElementById("report-filter-date-to").value || undefined,
+                        appliedRole: document.getElementById("report-filter-role").value || undefined,
+                        status: document.getElementById("report-filter-status").value || undefined,
+                        preferredLocationId: RBAC.scopeBranchId(document.getElementById("report-filter-branch").value) || undefined,
+                    });
+
+                    var roleRows = (r.byRole || []).map(function (x) {
+                        return '<tr><td>' + x.role + '</td><td class="text-end">' + x.count + '</td></tr>';
+                    }).join("") || '<tr><td colspan="2" class="text-secondary text-center">No data</td></tr>';
+
+                    var statusRows = (r.byStatus || []).map(function (x) {
+                        return '<tr><td>' + Applications.statusBadge(x.status) + '</td><td class="text-end">' + x.count + '</td></tr>';
+                    }).join("") || '<tr><td colspan="2" class="text-secondary text-center">No data</td></tr>';
+
+                    body.innerHTML =
+                        '<div class="row row-cards mb-4">' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.totalApplications ?? 0) + '</div><div class="text-secondary small">Total applicants</div></div></div></div>' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.hiredCount ?? 0) + '</div><div class="text-secondary small">Hired</div></div></div></div>' +
+                        '<div class="col-4"><div class="card"><div class="card-body text-center"><div class="h1 mb-0">' + (r.averageTimeToHireDays != null ? r.averageTimeToHireDays + 'd' : '—') + '</div><div class="text-secondary small">Avg. time to hire</div></div></div></div>' +
+                        '</div>' +
+                        '<div class="row">' +
+                        '<div class="col-6">' +
+                        '<h4>By role</h4>' +
+                        '<table class="table table-sm"><tbody>' + roleRows + '</tbody></table>' +
+                        '</div>' +
+                        '<div class="col-6">' +
+                        '<h4>By status</h4>' +
+                        '<table class="table table-sm"><tbody>' + statusRows + '</tbody></table>' +
+                        '</div>' +
+                        '</div>';
+                } catch (err) {
+                    body.innerHTML = '<div class="alert alert-danger">' + (err.message || "Failed to load report.") + '</div>';
+                }
             }
-            ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">\u00bb</a></li>');
-        }
 
-        // ── Detail offcanvas ─────────────────────────────────────────────────────
-        async function openDetail(id) {
-            if (!id) return;
-            currentDetailId = id;
-            var body    = document.getElementById("offcanvas-detail-body");
-            var actions = document.getElementById("offcanvas-detail-actions");
-            body.innerHTML    = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
-            actions.innerHTML = '';
-            var oc = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("offcanvas-detail"));
-            oc.show();
-            try {
-                var a = await Applications.getOne(id);
-                renderDetailBody(a);
-                actions.innerHTML = buildDetailActions(a);
-            } catch (err) {
-                body.innerHTML = '<div class="alert alert-danger">' + (err.message || 'Failed to load application.') + '</div>';
+            async function loadApplications() {
+                var tbody = document.getElementById("applications-tbody");
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+                document.getElementById("results-label").textContent = "Loading…";
+                try {
+                    var result = await Applications.getAll({
+                        page: state.page, limit: state.limit,
+                        status: state.status, search: state.search,
+                        preferredLocationId: RBAC.scopeBranchId(state.locationId)
+                    });
+                    var rows = result.data || (Array.isArray(result) ? result : []);
+                    var meta = result.meta || {};
+                    state.totalPages = meta.totalPages || 1;
+                    var count = meta.total ?? rows.length;
+                    document.getElementById("results-label").textContent = count + " application" + (count !== 1 ? "s" : "") + " found";
+                    renderTable(rows);
+                    renderPagination(meta);
+                } catch (err) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + (err.message || "Failed to load applications.") + '</td></tr>';
+                    document.getElementById("results-label").textContent = "Error";
+                }
             }
-        }
 
-        function field(label, value) {
-            if (!value) return '';
-            return '<div class="detail-lbl">' + label + '</div><div class="detail-val">' + value + '</div>';
-        }
+            function renderTable(rows) {
+                var tbody = document.getElementById("applications-tbody");
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No applications found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = rows.map(function (a, i) {
+                    var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "—";
+                    var appCell = '<div class="fw-semibold">' + name + '</div>' +
+                        '<div class="app-code text-secondary">' + (a.applicationCode || "—") + '</div>' +
+                        (a.email ? '<div class="text-secondary small mt-1">' + a.email + '</div>' : '');
+                    return '<tr class="app-row" data-id="' + a.id + '">' +
+                        '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
+                        '<td>' + appCell + '</td>' +
+                        '<td>' + (a.appliedRole || '—') + '</td>' +
+                        '<td class="text-secondary small">' + (a.preferredBranchText || '—') + '</td>' +
+                        '<td class="text-secondary small text-nowrap">' + Applications.formatDate(a.createdAt) + '</td>' +
+                        '<td>' + Applications.statusBadge(a.status) + '</td>' +
+                        '<td><button class="btn btn-sm btn-outline-secondary btn-view" data-id="' + a.id + '" title="View">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">' +
+                        '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/>' +
+                        '<path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>' +
+                        '</svg></button></td></tr>';
+                }).join("");
+            }
 
-        function renderDetailBody(a) {
-            var name = [a.firstName, a.middleName, a.lastName].filter(Boolean).join(" ");
-            var body = document.getElementById("offcanvas-detail-body");
+            function renderPagination(meta) {
+                var total = meta.total || 0, page = meta.page || state.page;
+                var limit = meta.limit || state.limit, pages = meta.totalPages || 1;
+                var from = total ? (page - 1) * limit + 1 : 0, to = Math.min(page * limit, total);
+                document.getElementById("pagination-info").textContent = total
+                    ? "Showing " + from + "–" + to + " of " + total : "No results";
+                var ul = document.getElementById("pagination-btns");
+                ul.innerHTML = '';
+                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page <= 1 ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page - 1) + '">«</a></li>');
+                var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
+                for (var p = start; p <= end; p++) {
+                    ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (p === page ? 'active' : '') + '"><a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>');
+                }
+                ul.insertAdjacentHTML("beforeend", '<li class="page-item ' + (page >= pages ? 'disabled' : '') + '"><a class="page-link" href="#" data-page="' + (page + 1) + '">»</a></li>');
+            }
 
-            var interviewBlock = '';
-            if (a.interviewScheduledAt) {
-                interviewBlock =
-                    '<div class="mb-1"><div class="detail-lbl mb-2">Interview</div></div>' +
-                    field('Scheduled For', Applications.formatDateTime(a.interviewScheduledAt)) +
-                    field('Type', a.interviewMode === 'VIRTUAL' ? 'Virtual' : 'In-Person') +
-                    field('Location', a.interviewLocationName) +
-                    (a.interviewMeetingUrl ? field('Meeting Link', '<a href="' + a.interviewMeetingUrl + '" target="_blank" rel="noopener noreferrer">' + a.interviewMeetingUrl + '</a>') : '') +
-                    field('Interviewer', a.interviewerName) +
-                    field('Note', a.interviewNote) +
-                    '<hr>';
+            // ── Detail offcanvas ─────────────────────────────────────────────────────
+            async function openDetail(id) {
+                if (!id) return;
+                currentDetailId = id;
+                var body = document.getElementById("offcanvas-detail-body");
+                var actions = document.getElementById("offcanvas-detail-actions");
+                body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+                actions.innerHTML = '';
+                var oc = bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("offcanvas-detail"));
+                oc.show();
+                try {
+                    var a = await Applications.getOne(id);
+                    renderDetailBody(a);
+                    actions.innerHTML = buildDetailActions(a);
+                } catch (err) {
+                    body.innerHTML = '<div class="alert alert-danger">' + (err.message || 'Failed to load application.') + '</div>';
+                }
+            }
+
+            function field(label, value) {
+                if (!value) return '';
+                return '<div class="detail-lbl">' + label + '</div><div class="detail-val">' + value + '</div>';
+            }
+
+            function renderDetailBody(a) {
+                var name = [a.firstName, a.middleName, a.lastName].filter(Boolean).join(" ");
+                var body = document.getElementById("offcanvas-detail-body");
+
+                var interviewBlock = '';
+                if (a.interviewScheduledAt) {
+                    interviewBlock =
+                        '<div class="mb-1"><div class="detail-lbl mb-2">Interview</div></div>' +
+                        field('Scheduled For', Applications.formatDateTime(a.interviewScheduledAt)) +
+                        field('Type', a.interviewMode === 'VIRTUAL' ? 'Virtual' : 'In-Person') +
+                        field('Location', a.interviewLocationName) +
+                        (a.interviewMeetingUrl ? field('Meeting Link', '<a href="' + a.interviewMeetingUrl + '" target="_blank" rel="noopener noreferrer">' + a.interviewMeetingUrl + '</a>') : '') +
+                        field('Interviewer', a.interviewerName) +
+                        field('Note', a.interviewNote) +
+                        '<hr>';
                 }
 
-            var notSelectedBlock = '';
-            if (a.status === 'NOT_SELECTED' && a.notSelectedReason) {
-                notSelectedBlock = '<div class="alert alert-danger">' +
-                    '<div class="fw-semibold mb-1">Not Selected</div>' + a.notSelectedReason + '</div>';
-            }
+                var approvalBlock = '';
+                if (a.employmentApproval) {
+                    approvalBlock =
+                        '<div class="mb-1"><div class="detail-lbl mb-2">Employment Approval</div></div>' +
+                        field('Approved', Applications.formatDateTime(a.employmentApproval.approvedAt)) +
+                        (a.employmentApproval.notes ? field('Notes', a.employmentApproval.notes) : '') +
+                        '<hr>';
+                }
 
-            var employedBlock = '';
-            if (a.status === 'EMPLOYED') {
-                employedBlock = '<div class="alert alert-success">' +
-                    '<div class="fw-semibold mb-1">\u2713 Hired</div>' +
-                    (a.employedAt ? 'Converted to staff on ' + Applications.formatDate(a.employedAt) : '') +
-                    (a.staffId ? '<div class="text-secondary small mt-1 font-monospace">Staff ID: ' + a.staffId + '</div>' : '') +
-                    '</div>';
-            }
+                var offerBlock = '';
+                if (a.offerLetter) {
+                    var offerStatusColor = {
+                        SENT: 'bg-purple-lt', ACCEPTED: 'bg-success-lt', DECLINED: 'bg-danger-lt',
+                        EXPIRED: 'bg-secondary-lt', WITHDRAWN: 'bg-secondary-lt',
+                    }[a.offerLetter.status] || 'bg-secondary-lt';
+                    offerBlock =
+                        '<div class="mb-1"><div class="detail-lbl mb-2">Offer Letter <span class="badge ' + offerStatusColor + '">' + a.offerLetter.status + '</span></div></div>' +
+                        field('Base Salary', '₦' + Number(a.offerLetter.baseSalary).toLocaleString()) +
+                        (a.offerLetter.allowances ? field('Allowances', '₦' + Number(a.offerLetter.allowances).toLocaleString()) : '') +
+                        (a.offerLetter.compensationNote ? field('Note', a.offerLetter.compensationNote) : '') +
+                        field('Effective Date', Applications.formatDate(a.offerLetter.effectiveDate)) +
+                        (a.offerLetter.declineReason ? field('Decline Reason', a.offerLetter.declineReason) : '') +
+                        '<hr>';
+                }
 
-            var docsBlock = '';
-            var docLinks = [];
-            // Prefer signed/public download URL from file-upload API; fall back to legacy cvUrl
-            var cvHref = a.cvDownloadUrl || (a.cvUrl && a.cvUrl !== 'string' ? a.cvUrl : '');
-            if (cvHref) docLinks.push('<a href="' + cvHref + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">View CV</a>');
-            if (a.portfolioUrl && a.portfolioUrl !== 'string') docLinks.push('<a href="' + a.portfolioUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Portfolio</a>');
-            if (docLinks.length) docsBlock = '<div class="detail-lbl">Documents</div><div class="detail-val d-flex gap-2">' + docLinks.join('') + '</div>';
+                var notSelectedBlock = '';
+                if (a.status === 'NOT_SELECTED' && a.notSelectedReason) {
+                    notSelectedBlock = '<div class="alert alert-danger">' +
+                        '<div class="fw-semibold mb-1">Not Selected</div>' + a.notSelectedReason + '</div>';
+                }
 
-            body.innerHTML =
-                '<div class="d-flex align-items-start justify-content-between mb-3">' +
+                var employedBlock = '';
+                if (a.status === 'EMPLOYED') {
+                    employedBlock = '<div class="alert alert-success">' +
+                        '<div class="fw-semibold mb-1">✓ Hired</div>' +
+                        (a.employedAt ? 'Converted to staff on ' + Applications.formatDate(a.employedAt) : '') +
+                        (a.staffId ? '<div class="text-secondary small mt-1 font-monospace">Staff ID: ' + a.staffId + '</div>' : '') +
+                        '</div>';
+                }
+
+                var docsBlock = '';
+                var docLinks = [];
+                // Prefer signed/public download URL from file-upload API; fall back to legacy cvUrl
+                var cvHref = a.cvDownloadUrl || (a.cvUrl && a.cvUrl !== 'string' ? a.cvUrl : '');
+                if (cvHref) docLinks.push('<a href="' + cvHref + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">View CV</a>');
+                if (a.portfolioUrl && a.portfolioUrl !== 'string') docLinks.push('<a href="' + a.portfolioUrl + '" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">Portfolio</a>');
+                if (docLinks.length) docsBlock = '<div class="detail-lbl">Documents</div><div class="detail-val d-flex gap-2">' + docLinks.join('') + '</div>';
+
+                var ninPhotoBlock = a.ninPhotoDownloadUrl
+                    ? '<div class="text-center mb-3"><img src="' + a.ninPhotoDownloadUrl + '" alt="NIN photo" style="width:96px;height:96px;object-fit:cover;border-radius:50%;border:2px solid var(--tblr-border-color)"><div class="text-secondary small mt-1">Photo from NIN verification</div></div>'
+                    : '';
+
+                body.innerHTML =
+                    '<div class="d-flex align-items-start justify-content-between mb-3">' +
                     '<div><div class="h3 mb-0">' + name + '</div>' +
                     '<div class="app-code text-secondary">' + a.applicationCode + '</div></div>' +
                     Applications.statusBadge(a.status) +
-                '</div>' +
-                employedBlock + notSelectedBlock +
-                '<div class="row">' +
+                    '</div>' +
+                    ninPhotoBlock +
+                    employedBlock + notSelectedBlock +
+                    '<div class="row">' +
                     '<div class="col-6">' + field('Phone', a.phone) + '</div>' +
                     '<div class="col-6">' + field('Email', a.email) + '</div>' +
-                '</div>' +
-                field('Address', a.address) +
-                '<div class="row">' +
+                    '</div>' +
+                    field('Address', a.address) +
+                    '<div class="row">' +
                     '<div class="col-6">' + field('Date of Birth', a.dateOfBirth) + '</div>' +
                     '<div class="col-6">' + field('Gender', a.gender) + '</div>' +
-                '</div>' +
-                field('NIN', a.nin) +
-                '<hr>' +
-                '<div class="row">' +
+                    '</div>' +
+                    field('NIN', a.nin) +
+                    '<hr>' +
+                    '<div class="row">' +
                     '<div class="col-6">' + field('Applied Role', a.appliedRole) + '</div>' +
                     '<div class="col-6">' + field('Preferred Branch', a.preferredBranchText) + '</div>' +
-                '</div>' +
-                '<div class="row">' +
+                    '</div>' +
+                    '<div class="row">' +
                     '<div class="col-6">' + field('Experience', a.yearsOfExperience) + '</div>' +
                     '<div class="col-6">' + field('Previous Employer', a.previousEmployer) + '</div>' +
-                '</div>' +
-                field('Previous Employer Address', a.previousEmployerAddress) +
-                field('Cover Note', a.coverNote) +
-                docsBlock +
-                '<hr>' +
-                interviewBlock +
-                field('Applied', Applications.formatDateTime(a.createdAt)) +
-                '<div class="text-secondary small font-monospace">' + a.id + '</div>';
-        }
-
-        function buildDetailActions(a) {
-            var closeBtn = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="offcanvas">Close</button>';
-
-            if (a.status === 'EMPLOYED' || a.status === 'NOT_SELECTED') {
-                return closeBtn;
+                    '</div>' +
+                    field('Previous Employer Address', a.previousEmployerAddress) +
+                    field('Cover Note', a.coverNote) +
+                    docsBlock +
+                    '<hr>' +
+                    interviewBlock +
+                    approvalBlock +
+                    offerBlock +
+                    field('Applied', Applications.formatDateTime(a.createdAt)) +
+                    '<div class="text-secondary small font-monospace">' + a.id + '</div>';
             }
 
-            var html = closeBtn;
-            var next = Applications.NEXT_STATUS[a.status];
+            function buildDetailActions(a) {
+                var closeBtn = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="offcanvas">Close</button>';
 
-            if (next && RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-primary" onclick="handleStatusAction(\'' + next + '\')">Mark ' + Applications.STATUS_LABELS[next] + '</button>';
-            }
-            if (a.status === 'SHORTLISTED' && RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-primary" onclick="showScheduleInterviewForm()">Schedule Interview</button>';
-            }
-            if (a.status === 'INTERVIEW_SCHEDULED' && RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-primary" onclick="handleStatusAction(\'INTERVIEW_COMPLETED\')">Mark Completed</button>';
-                html += '<button class="btn btn-outline-secondary" onclick="showScheduleInterviewForm()">Reschedule</button>';
-            }
-            if (a.status === 'OFFER_EXTENDED' && RBAC.can('application:convert')) {
-                html += '<button class="btn btn-success" onclick="showConvertToStaffForm()">Convert to Staff</button>';
-            }
-            if (RBAC.can('application:manage_status')) {
-                html += '<button class="btn btn-outline-danger" onclick="handleNotSelected()">Not Selected</button>';
-            }
-            return html;
-        }
+                if (a.status === 'EMPLOYED' || a.status === 'NOT_SELECTED') {
+                    return closeBtn;
+                }
 
-        async function handleStatusAction(status) {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating…';
-            try {
-                await Applications.updateStatus(currentDetailId, { status: status });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
+                var html = closeBtn;
+                var next = Applications.NEXT_STATUS[a.status];
 
-        async function handleNotSelected() {
-            var reason = prompt('Reason for not selecting this applicant (required):');
-            if (reason === null) return;
-            if (!reason.trim()) { alert('A reason is required.'); return; }
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating…';
-            try {
-                await Applications.updateStatus(currentDetailId, { status: 'NOT_SELECTED', reason: reason.trim() });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-            }
-        }
-
-        async function ensureLocations() {
-            if (locationsCache) return locationsCache;
-            try {
-                var result = await Applications.getLocations();
-                locationsCache = result.data || (Array.isArray(result) ? result : []);
-            } catch (err) {
-                locationsCache = [];
-            }
-            return locationsCache;
-        }
-
-        async function showScheduleInterviewForm() {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-            var locations = await ensureLocations();
-            var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
-            actions.innerHTML =
-                '<div class="w-100">' +
-                '<div class="row g-2 mb-2">' +
-                '<div class="col-12"><label class="form-label small mb-1">Interview Type</label>' +
-                '<select class="form-select form-select-sm" id="si-mode" onchange="toggleInterviewModeFields()">' +
-                '<option value="IN_PERSON">In-Person</option><option value="VIRTUAL">Virtual</option>' +
-                '</select></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Date &amp; Time</label>' +
-                '<input type="datetime-local" class="form-control form-control-sm" id="si-datetime"></div>' +
-                '<div class="col-12" id="si-location-wrap"><label class="form-label small mb-1">Branch</label>' +
-                '<select class="form-select form-select-sm" id="si-location"><option value="">Select branch…</option>' + options + '</select></div>' +
-                '<div class="col-12" id="si-url-wrap" style="display:none"><label class="form-label small mb-1">Meeting Link</label>' +
-                '<input type="url" class="form-control form-control-sm" id="si-url" placeholder="https://meet.google.com/…"></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Interviewer Name</label>' +
-                '<input type="text" class="form-control form-control-sm" id="si-interviewer"></div>' +
-                '<div class="col-12"><label class="form-label small mb-1">Note (optional)</label>' +
-                '<textarea class="form-control form-control-sm" id="si-note" rows="2"></textarea></div>' +
-                '</div>' +
-                '<div class="d-flex gap-2">' +
-                '<button class="btn btn-sm btn-primary flex-fill" onclick="submitScheduleInterview()">Save</button>' +
-                '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
-                '</div>' +
-                '</div>';
+                if (next && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-primary" onclick="handleStatusAction(\'' + next + '\')">Mark ' + Applications.STATUS_LABELS[next] + '</button>';
+                }
+                if (a.status === 'SHORTLISTED' && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-primary" onclick="showScheduleInterviewForm()">Schedule Interview</button>';
+                }
+                if (a.status === 'INTERVIEW_SCHEDULED' && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-primary" onclick="showInterviewOutcomeForm()">Record Interview Outcome</button>';
+                    html += '<button class="btn btn-outline-secondary" onclick="showScheduleInterviewForm()">Reschedule</button>';
+                }
+                if (a.status === 'INTERVIEW_COMPLETED' && !a.employmentApproval && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-primary" onclick="showEmploymentApprovalForm()">Record Employment Approval</button>';
+                }
+                if (a.status === 'INTERVIEW_COMPLETED' && a.employmentApproval && !a.offerLetter && RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-success" onclick="showGenerateOfferForm()">Generate Offer Letter</button>';
+                }
+                if (a.offerLetter && a.offerLetter.status === 'ACCEPTED' && a.status !== 'EMPLOYED' && RBAC.can('application:convert')) {
+                    html += '<button class="btn btn-success" onclick="showConvertToStaffForm()">Convert to Staff</button>';
+                }
+                if (RBAC.can('application:manage_status')) {
+                    html += '<button class="btn btn-outline-danger" onclick="handleNotSelected()">Not Selected</button>';
+                }
+                return html;
             }
 
-        function toggleInterviewModeFields() {
-            var isVirtual = document.getElementById('si-mode').value === 'VIRTUAL';
-            document.getElementById('si-location-wrap').style.display = isVirtual ? 'none' : 'block';
-            document.getElementById('si-url-wrap').style.display = isVirtual ? 'block' : 'none';
-        }
+            async function handleStatusAction(status) {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating…';
+                try {
+                    await Applications.updateStatus(currentDetailId, { status: status });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
 
-async function submitScheduleInterview() {
-  var mode = document.getElementById('si-mode').value;
-  var dt   = document.getElementById('si-datetime').value;
-  var loc  = document.getElementById('si-location').value;
-  var url  = document.getElementById('si-url').value.trim();
-  var name = document.getElementById('si-interviewer').value.trim();
-  var note = document.getElementById('si-note').value.trim();
+            async function handleNotSelected() {
+                var reason = prompt('Reason for not selecting this applicant (required):');
+                if (reason === null) return;
+                if (!reason.trim()) { alert('A reason is required.'); return; }
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Updating…';
+                try {
+                    await Applications.updateStatus(currentDetailId, { status: 'NOT_SELECTED', reason: reason.trim() });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
 
-  if (!dt || !name) { alert('Date/time and interviewer name are required.'); return; }
-  if (mode === 'IN_PERSON' && !loc) { alert('Please select a branch.'); return; }
-  if (mode === 'VIRTUAL' && !url) { alert('Please enter a meeting link.'); return; }
+            async function ensureLocations() {
+                if (locationsCache) return locationsCache;
+                try {
+                    var result = await Applications.getLocations();
+                    locationsCache = result.data || (Array.isArray(result) ? result : []);
+                } catch (err) {
+                    locationsCache = [];
+                }
+                return locationsCache;
+            }
 
-  var actions = document.getElementById('offcanvas-detail-actions');
-  actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
-  try {
-    await Applications.scheduleInterview(currentDetailId, {
-      mode: mode,
-      scheduledAt: new Date(dt).toISOString(),
-      locationId: mode === 'IN_PERSON' ? loc : undefined,
-      meetingUrl: mode === 'VIRTUAL' ? url : undefined,
-      interviewerName: name,
-      note: note || undefined,
-    });
-    openDetail(currentDetailId);
-    loadApplications();
-  } catch (err) {
-    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-      '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
-  }
-}
+            async function showScheduleInterviewForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                var locations = RBAC.filterBranches(await ensureLocations());
+                var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="row g-2 mb-2">' +
+                    '<div class="col-12"><label class="form-label small mb-1">Interview Type</label>' +
+                    '<select class="form-select form-select-sm" id="si-mode" onchange="toggleInterviewModeFields()">' +
+                    '<option value="IN_PERSON">In-Person</option><option value="VIRTUAL">Virtual</option>' +
+                    '</select></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Date &amp; Time</label>' +
+                    '<input type="datetime-local" class="form-control form-control-sm" id="si-datetime"></div>' +
+                    '<div class="col-12" id="si-location-wrap"><label class="form-label small mb-1">Branch</label>' +
+                    '<select class="form-select form-select-sm" id="si-location"><option value="">Select branch…</option>' + options + '</select></div>' +
+                    '<div class="col-12" id="si-url-wrap" style="display:none"><label class="form-label small mb-1">Meeting Link</label>' +
+                    '<input type="url" class="form-control form-control-sm" id="si-url" placeholder="https://meet.google.com/…"></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Interviewer Name</label>' +
+                    '<input type="text" class="form-control form-control-sm" id="si-interviewer"></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Note (optional)</label>' +
+                    '<textarea class="form-control form-control-sm" id="si-note" rows="2"></textarea></div>' +
+                    '</div>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-primary flex-fill" onclick="submitScheduleInterview()">Save</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+            }
 
-        async function showConvertToStaffForm() {
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
-            var locations = await ensureLocations();
-            var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
-            actions.innerHTML =
-                '<div class="w-100">' +
+            function toggleInterviewModeFields() {
+                var isVirtual = document.getElementById('si-mode').value === 'VIRTUAL';
+                document.getElementById('si-location-wrap').style.display = isVirtual ? 'none' : 'block';
+                document.getElementById('si-url-wrap').style.display = isVirtual ? 'block' : 'none';
+            }
+
+            async function submitScheduleInterview() {
+                var mode = document.getElementById('si-mode').value;
+                var dt = document.getElementById('si-datetime').value;
+                var loc = document.getElementById('si-location').value;
+                var url = document.getElementById('si-url').value.trim();
+                var name = document.getElementById('si-interviewer').value.trim();
+                var note = document.getElementById('si-note').value.trim();
+
+                if (!dt || !name) { alert('Date/time and interviewer name are required.'); return; }
+                if (mode === 'IN_PERSON' && !loc) { alert('Please select a branch.'); return; }
+                if (mode === 'VIRTUAL' && !url) { alert('Please enter a meeting link.'); return; }
+
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
+                try {
+                    await Applications.scheduleInterview(currentDetailId, {
+                        mode: mode,
+                        scheduledAt: new Date(dt).toISOString(),
+                        locationId: mode === 'IN_PERSON' ? loc : undefined,
+                        meetingUrl: mode === 'VIRTUAL' ? url : undefined,
+                        interviewerName: name,
+                        note: note || undefined,
+                    });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            async function ensureStaff() {
+                if (staffCache) return staffCache;
+                try {
+                    staffCache = await Staff.getOptions();
+                } catch (err) {
+                    staffCache = [];
+                }
+                return staffCache;
+            }
+
+            async function showInterviewOutcomeForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                var staff = await ensureStaff();
+                var options = staff.map(function (s) {
+                    return '<option value="' + s.id + '">' + Staff.fullName(s) + '</option>';
+                }).join('');
+
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="row g-2 mb-2">' +
+                    '<div class="col-12">' +
+                    '<label class="form-label small mb-1">Outcome</label>' +
+                    '<select class="form-select form-select-sm" id="io-outcome">' +
+                    '<option value="PASS">Pass</option>' +
+                    '<option value="FAIL">Fail</option>' +
+                    '<option value="HOLD">Hold</option>' +
+                    '</select>' +
+                    '</div>' +
+                    '<div class="col-12">' +
+                    '<label class="form-label small mb-1">Interviewer</label>' +
+                    '<input type="text" class="form-control form-control-sm mb-1" id="io-interviewer-search" placeholder="Search staff by name…">' +
+                    '<select class="form-select form-select-sm" id="io-interviewer">' +
+                    '<option value="">Select interviewer…</option>' + options +
+                    '</select>' +
+                    '</div>' +
+                    '<div class="col-12">' +
+                    '<label class="form-label small mb-1">Note (optional)</label>' +
+                    '<textarea class="form-control form-control-sm" id="io-note" rows="2"></textarea>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-primary flex-fill" onclick="submitInterviewOutcome()">Save</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+
+                wireStaffSearchFilter('io-interviewer-search', 'io-interviewer');
+            }
+
+
+            function wireStaffSearchFilter(searchInputId, selectId) {
+                var input = document.getElementById(searchInputId);
+                var select = document.getElementById(selectId);
+                if (!input || !select) return;
+
+                // Save initial master options list once if not already saved
+                if (!select._masterOptions) {
+                    select._masterOptions = Array.from(select.options).map(function (opt) {
+                        return { value: opt.value, text: opt.textContent };
+                    });
+                }
+
+                input.addEventListener('input', function () {
+                    var q = this.value.trim().toLowerCase();
+
+                    // Filter options based on query
+                    var filtered = select._masterOptions.filter(function (opt) {
+                        if (!opt.value) return true; // keep placeholder
+                        return !q || opt.text.toLowerCase().indexOf(q) !== -1;
+                    });
+
+                    // Re-render select options
+                    select.innerHTML = filtered.map(function (opt) {
+                        return '<option value="' + opt.value + '">' + opt.text + '</option>';
+                    }).join('');
+                });
+            }
+
+            async function submitInterviewOutcome() {
+                var outcome = document.getElementById('io-outcome').value;
+                var interviewerId = document.getElementById('io-interviewer').value;
+                var note = document.getElementById('io-note').value.trim();
+
+                if (!interviewerId) { alert('Please select an interviewer.'); return; }
+
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
+                try {
+                    await Applications.recordInterviewOutcome(currentDetailId, {
+                        outcome: outcome,
+                        interviewerId: interviewerId,
+                        note: note || undefined,
+                    });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            function showEmploymentApprovalForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="alert alert-info small py-2">This unlocks Offer Letter generation for this candidate.</div>' +
+                    '<label class="form-label small mb-1">Notes (optional)</label>' +
+                    '<textarea class="form-control form-control-sm mb-2" id="ea-notes" rows="2"></textarea>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-primary flex-fill" onclick="submitEmploymentApproval()">Confirm Approval</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            async function submitEmploymentApproval() {
+                var notes = document.getElementById('ea-notes').value.trim();
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Saving…';
+                try {
+                    await Applications.recordEmploymentApproval(currentDetailId, { notes: notes || undefined });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            function showGenerateOfferForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML =
+                    '<div class="w-100">' +
+                    '<div class="row g-2 mb-2">' +
+                    '<div class="col-6"><label class="form-label small mb-1">Base Salary (₦)</label>' +
+                    '<input type="number" class="form-control form-control-sm" id="go-salary" min="0"></div>' +
+                    '<div class="col-6"><label class="form-label small mb-1">Allowances (₦, optional)</label>' +
+                    '<input type="number" class="form-control form-control-sm" id="go-allowances" min="0"></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Effective Date</label>' +
+                    '<input type="date" class="form-control form-control-sm" id="go-effective-date"></div>' +
+                    '<div class="col-12"><label class="form-label small mb-1">Compensation Note (optional)</label>' +
+                    '<textarea class="form-control form-control-sm" id="go-note" rows="2" placeholder="e.g. includes commission on completed bookings"></textarea></div>' +
+                    '</div>' +
+                    '<div class="d-flex gap-2">' +
+                    '<button class="btn btn-sm btn-success flex-fill" onclick="submitGenerateOffer()">Generate &amp; Send Offer</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            async function submitGenerateOffer() {
+                var salary = document.getElementById('go-salary').value;
+                var allowances = document.getElementById('go-allowances').value;
+                var effectiveDate = document.getElementById('go-effective-date').value;
+                var note = document.getElementById('go-note').value.trim();
+
+                if (!salary || !effectiveDate) { alert('Base salary and effective date are required.'); return; }
+
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Generating…';
+                try {
+                    await Applications.generateOfferLetter(currentDetailId, {
+                        baseSalary: Number(salary),
+                        allowances: allowances ? Number(allowances) : undefined,
+                        compensationNote: note || undefined,
+                        effectiveDate: effectiveDate,
+                    });
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
+
+            async function showConvertToStaffForm() {
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                var locations = RBAC.filterBranches(await ensureLocations());
+                var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
+                actions.innerHTML =
+                    '<div class="w-100">' +
                     '<div class="alert alert-warning small py-2">This creates a staff record and sends the new hire a password-setup email. This cannot be undone from here.</div>' +
                     '<label class="form-label small mb-1">Assign to Branch</label>' +
                     '<select class="form-select form-select-sm mb-2" id="cts-location"><option value="">Select branch…</option>' + options + '</select>' +
                     '<div class="d-flex gap-2">' +
-                        '<button class="btn btn-sm btn-success flex-fill" onclick="submitConvertToStaff()">Confirm — Convert to Staff</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
+                    '<button class="btn btn-sm btn-success flex-fill" onclick="submitConvertToStaff()">Confirm — Convert to Staff</button>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
                     '</div>' +
-                '</div>';
-        }
-
-        async function submitConvertToStaff() {
-            var loc = document.getElementById('cts-location').value;
-            if (!loc) { alert('Please select a branch.'); return; }
-            var actions = document.getElementById('offcanvas-detail-actions');
-            actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Converting…';
-            try {
-                await Applications.convertToStaff(currentDetailId, { locationId: loc });
-                openDetail(currentDetailId);
-                loadApplications();
-            } catch (err) {
-                actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
-                    '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                    '</div>';
             }
-        }
+
+            async function submitConvertToStaff() {
+                var loc = document.getElementById('cts-location').value;
+                if (!loc) { alert('Please select a branch.'); return; }
+                var actions = document.getElementById('offcanvas-detail-actions');
+                actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Converting…';
+                try {
+                    var result = await Applications.convertToStaff(currentDetailId, { locationId: loc });
+                    if (result && result.rehireWarning) {
+                        alert(result.rehireWarning);
+                    }
+                    openDetail(currentDetailId);
+                    loadApplications();
+                } catch (err) {
+                    actions.innerHTML = '<span class="text-danger small me-auto">' + (err.message || 'Failed.') + '</span>' +
+                        '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
+                }
+            }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>

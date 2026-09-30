@@ -15,6 +15,7 @@ const BranchFinance = (() => {
         return apiFetch('/branch-finance/daily-summary' + qs);
     }
 
+<<<<<<< HEAD
     /** Revenue-submission variance history: { items, total, page, limit, totals }. */
     async function getReconciliationHistory(params = {}) {
         const q = new URLSearchParams();
@@ -25,6 +26,8 @@ const BranchFinance = (() => {
         return apiFetch('/branch-finance/reconciliations' + qs);
     }
 
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     async function submitReconciliation(payload) {
         return apiFetch('/branch-finance/reconciliation', {
             method: 'POST',
@@ -52,7 +55,10 @@ const BranchFinance = (() => {
 
     return {
         getDailySummary,
+<<<<<<< HEAD
         getReconciliationHistory,
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         submitReconciliation,
         getSettings,
         updateSettings,

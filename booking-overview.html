@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin — Booking Overview</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Operations</div>
+                            <h2 class="page-title">Booking Overview</h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <a href="./salon-bookings.html" class="btn btn-outline-primary">Go to Salon Bookings</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+
+                    <!-- Summary cards -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Bookings</div>
+                                    <div class="h2 mb-0" id="ov-total">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Total Revenue</div>
+                                    <div class="h2 mb-0" id="ov-revenue">—</div>
+                                    <div class="text-secondary small">Completed bookings only</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Completed</div>
+                                    <div class="h2 mb-0 text-green" id="ov-completed">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Pending</div>
+                                    <div class="h2 mb-0 text-amber" id="ov-pending">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <div class="text-secondary small">Cancelled</div>
+                                    <div class="h2 mb-0 text-red" id="ov-cancelled">—</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-2">
+                                    <label class="form-label">Date From</label>
+                                    <input type="date" class="form-control" id="ov-date-from">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Date To</label>
+                                    <input type="date" class="form-control" id="ov-date-to">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Branch</label>
+                                    <select class="form-select" id="ov-branch">
+                                        <option value="">All branches</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Source</label>
+                                    <select class="form-select" id="ov-source">
+                                        <option value="all">All bookings</option>
+                                        <option value="booking">Customer-booked (Website/App)</option>
+                                        <option value="salon_booking">Staff-created (walk-in)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Search</label>
+                                    <input type="text" class="form-control" id="ov-search" placeholder="Name or phone…">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" id="ov-status">
+                                        <option value="">All statuses</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Service</label>
+                                    <select class="form-select" id="ov-service">
+                                        <option value="">All services</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Staff</label>
+                                    <select class="form-select" id="ov-staff">
+                                        <option value="">All staff</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary flex-fill"
+                                        id="btn-refresh-overview" title="Reload with current filters">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="icon me-1">
+                                            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                                            <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                                        </svg>
+                                        Refresh
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary"
+                                        id="btn-reset-filters">Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bookings table -->
+                    <div class="card">
+                        <div class="card-header d-block pb-0">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h3 class="card-title mb-0">Bookings</h3>
+                                <span class="text-secondary small" id="ov-results-label">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Customer</th>
+                                        <th>Branch</th>
+                                        <th>Stylist</th>
+                                        <th>Source</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Amount</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ov-tbody">
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="text-secondary small" id="ov-page-info"></div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary" id="ov-btn-prev-page">Previous</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="ov-btn-next-page">Next</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <!-- Page guard: same read permission that shows this page in the sidebar (NavConfig). -->
+    <script>document.addEventListener('DOMContentLoaded', function () { RBAC.applyPageGuardForCurrentPage(); });</script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/services.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/salon-bookings.js"></script>
+    <script src="assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        var isSuperAdmin = false;
+        var _currentPage = 1;
+        var _lastMeta = null;
+        var _searchDebounce = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var user = Auth.getUser();
+            isSuperAdmin = !!(user && user.role === 'SUPER_ADMIN');
+
+            document.getElementById('btn-refresh-overview').addEventListener('click', loadOverview);
+            document.getElementById('ov-date-from').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-date-to').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-branch').addEventListener('change', function () {
+                _currentPage = 1;
+                document.getElementById('ov-staff').value = '';
+                loadStaffFilter(this.value);
+                loadOverview();
+            });
+            document.getElementById('ov-source').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-status').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-service').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-staff').addEventListener('change', function () { _currentPage = 1; loadOverview(); });
+            document.getElementById('ov-search').addEventListener('input', function () {
+                clearTimeout(_searchDebounce);
+                _searchDebounce = setTimeout(function () { _currentPage = 1; loadOverview(); }, 300);
+            });
+            document.getElementById('ov-btn-prev-page').addEventListener('click', function () {
+                if (_currentPage > 1) { _currentPage--; loadOverview(); }
+            });
+            document.getElementById('ov-btn-next-page').addEventListener('click', function () {
+                if (_lastMeta && _currentPage * _lastMeta.limit < _lastMeta.total) { _currentPage++; loadOverview(); }
+            });
+            document.getElementById('btn-reset-filters').addEventListener('click', function () {
+                document.getElementById('ov-date-from').value = '';
+                document.getElementById('ov-date-to').value = '';
+                document.getElementById('ov-branch').value = RBAC.scopeBranchId('');
+                document.getElementById('ov-source').value = 'all';
+                document.getElementById('ov-search').value = '';
+                document.getElementById('ov-status').value = '';
+                document.getElementById('ov-service').value = '';
+                document.getElementById('ov-staff').value = '';
+                _currentPage = 1;
+                loadStaffFilter();
+                loadOverview();
+            });
+
+            loadBranchFilter();
+            loadServiceFilter();
+            loadStaffFilter();
+            loadOverview();
+        });
+
+        async function loadBranchFilter() {
+            try {
+                var result = await Branches.getBranches();
+                var branches = result.data || result || [];
+                var select = document.getElementById('ov-branch');
+                branches.forEach(function (b) {
+                    var opt = document.createElement('option');
+                    opt.value = b.id;
+                    opt.textContent = b.name;
+                    select.appendChild(opt);
+                });
+                RBAC.applyBranchScope(select);
+            } catch (e) { /* non-fatal — branch filter just stays at "All branches" */ }
+        }
+
+        async function loadServiceFilter() {
+            try {
+                var services = await Services.getAll();
+                var select = document.getElementById('ov-service');
+                services.forEach(function (s) {
+                    var opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                });
+            } catch (e) { /* non-fatal — service filter just stays at "All services" */ }
+        }
+
+        // Dev Feedback Round 5, item #5: same branch-scoped, no-reload
+        // staff re-fetch already applied elsewhere -- "All branches"
+        // (empty value) returns everyone. Resets the select back to just
+        // the static "All staff" option before repopulating, since this
+        // function builds options via appendChild (not innerHTML), and
+        // it's now called more than once per page load.
+        async function loadStaffFilter(branchId) {
+            try {
+                var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
+                var select = document.getElementById('ov-staff');
+                select.innerHTML = '<option value="">All staff</option>';
+                staffList.forEach(function (s) {
+                    var opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                });
+            } catch (e) { /* non-fatal — staff filter just stays at "All staff" */ }
+        }
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function statusBadgeClass(bucket) {
+            return { completed: 'bg-green-lt', pending: 'bg-amber-lt', cancelled: 'bg-red-lt' }[bucket] || 'bg-secondary-lt';
+        }
+
+        async function loadOverview() {
+            var tbody = document.getElementById('ov-tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            document.getElementById('ov-results-label').textContent = 'Loading…';
+
+            var params = {
+                dateFrom: document.getElementById('ov-date-from').value || undefined,
+                dateTo: document.getElementById('ov-date-to').value || undefined,
+                branchId: RBAC.scopeBranchId(document.getElementById('ov-branch').value) || undefined,
+                source: document.getElementById('ov-source').value || 'all',
+                search: document.getElementById('ov-search').value.trim() || undefined,
+                status: document.getElementById('ov-status').value || undefined,
+                serviceId: document.getElementById('ov-service').value || undefined,
+                staffId: document.getElementById('ov-staff').value || undefined,
+                page: _currentPage,
+            };
+
+            try {
+                var result = await SalonBookings.getOverview(params);
+                var summary = result.summary;
+                var bookings = result.bookings || [];
+                _lastMeta = result.meta || null;
+
+                document.getElementById('ov-total').textContent = summary.totalBookings;
+                document.getElementById('ov-revenue').textContent = SalonBookings.formatMoney(summary.totalRevenue);
+                document.getElementById('ov-completed').textContent = summary.completed;
+                document.getElementById('ov-pending').textContent = summary.pending;
+                document.getElementById('ov-cancelled').textContent = summary.cancelled;
+                document.getElementById('ov-results-label').textContent = bookings.length + ' booking' + (bookings.length === 1 ? '' : 's') + ' on this page';
+
+                if (_lastMeta) {
+                    var start = _lastMeta.total === 0 ? 0 : (_lastMeta.page - 1) * _lastMeta.limit + 1;
+                    var end = Math.min(_lastMeta.page * _lastMeta.limit, _lastMeta.total);
+                    document.getElementById('ov-page-info').textContent = _lastMeta.total
+                        ? ('Showing ' + start + '\u2013' + end + ' of ' + _lastMeta.total)
+                        : '';
+                }
+
+                tbody.innerHTML = bookings.length
+                    ? bookings.map(function (b) {
+                        var sourceLabel = b.source === 'booking' ? 'Customer-booked' : 'Staff-created';
+                        var deleteBtn = (isSuperAdmin && b.source === 'salon_booking')
+                            ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteBooking(\'' + b.id + '\', \'' + b.bucket + '\')">Delete</button>'
+                            : '';
+                        return '<tr>' +
+                            '<td>' + SalonBookings.formatDate(b.bookingDate) + '</td>' +
+                            '<td>' + esc(b.customerName || '\u2014') + '</td>' +
+                            '<td>' + esc(b.branchName || '\u2014') + '</td>' +
+                            '<td>' + esc(b.staffName || '\u2014') + '</td>' +
+                            '<td><span class="text-secondary small">' + sourceLabel + '</span></td>' +
+                            '<td><span class="badge ' + statusBadgeClass(b.bucket) + '">' + esc(b.status.replace(/_/g, ' ')) + '</span></td>' +
+                            '<td class="text-end">' + SalonBookings.formatMoney(b.totalAmount) + '</td>' +
+                            '<td>' + deleteBtn + '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="8" class="text-center text-secondary py-5">No bookings match these filters.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                document.getElementById('ov-results-label').textContent = '';
+            }
+        }
+
+        async function deleteBooking(id, bucket) {
+            var warning = bucket === 'completed'
+                ? 'This booking is COMPLETED — stock and commission have already been recorded and will NOT be automatically reversed. Delete anyway?'
+                : 'Permanently delete this booking? This cannot be undone.';
+            if (!confirm(warning)) return;
+
+            try {
+                await SalonBookings.deleteBooking(id);
+                loadOverview();
+            } catch (e) {
+                alert(e.message || 'Failed to delete booking.');
+            }
+        }
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

@@ -170,7 +170,10 @@
                                 </tbody>
                             </table>
                         </div>
+<<<<<<< HEAD
                         <div id="list-pager"></div>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     </div>
                 </div>
             </div>
@@ -275,6 +278,7 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/expense-requests.js"></script>
+<<<<<<< HEAD
     <script src="assets/js/simple-pager.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
@@ -282,6 +286,10 @@
         var _renderPage = null;
         var _pager = SimplePager.attach('#list-pager', { onChange: function () { if (_renderPage) _renderPage(); } });
 
+=======
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         var bootstrap = window.tabler.bootstrap;
         var _allBranches = [];
         var _lastLoadedRequests = [];
@@ -376,6 +384,7 @@
                 _lastLoadedRequests = list;
                 var canApprove = RBAC.can('expense_requests:approve');
                 var canReverse = RBAC.can('expense_requests:reverse');
+<<<<<<< HEAD
                 _pager.reset();
                 (_renderPage = function () {
                     var pageRows = _pager.slice(list);
@@ -405,6 +414,33 @@
                         }).join('')
                         : '<tr><td colspan="7" class="text-center text-secondary py-5">No expense requests found.</td></tr>';
                 })();
+=======
+                tbody.innerHTML = list.length
+                    ? list.map(function (r) {
+                        var canEdit = r.status === 'DRAFT';
+                        var canSubmit = r.status === 'DRAFT';
+                        var canAct = canApprove && (r.status === 'PENDING' || r.status === 'UNDER_REVIEW');
+                        var canDelete = r.status === 'DRAFT' || r.status === 'REJECTED' || r.status === 'CANCELLED';
+                        var canReverseThis = canReverse && r.status === 'APPROVED';
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + formatRequestNumber(r.requestNumber) + '</td>' +
+                            '<td>' + esc(r.branch ? r.branch.name : 'Company-wide') + '</td>' +
+                            '<td>' + esc(CATEGORY_LABEL[r.category] || r.category) + '</td>' +
+                            '<td class="text-truncate" style="max-width:220px">' + esc(r.description) + '</td>' +
+                            '<td>' + formatMoney(r.amount) + '</td>' +
+                            '<td><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></td>' +
+                            '<td class="text-nowrap">' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewOne(\'' + r.id + '\')">View</button>' +
+                            (canEdit ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + r.id + '\')">Edit</button>' : '') +
+                            (canSubmit ? '<button class="btn btn-sm btn-outline-primary me-1" onclick="submitRequest(\'' + r.id + '\')">Submit</button>' : '') +
+                            (canAct ? '<button class="btn btn-sm btn-outline-success me-1" onclick="approveRequest(\'' + r.id + '\')">Approve</button><button class="btn btn-sm btn-outline-danger me-1" onclick="rejectRequest(\'' + r.id + '\')">Reject</button>' : '') +
+                            (canReverseThis ? '<button class="btn btn-sm btn-outline-danger me-1" onclick="reverseRequest(\'' + r.id + '\')" title="Undo this posting -- money has already moved">Reverse</button>' : '') +
+                            (canDelete ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteRequest(\'' + r.id + '\')">Delete</button>' : '') +
+                            '</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="7" class="text-center text-secondary py-5">No expense requests found.</td></tr>';
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }

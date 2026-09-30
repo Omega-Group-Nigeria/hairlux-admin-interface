@@ -245,7 +245,10 @@
                                         </tbody>
                                     </table>
                                 </div>
+<<<<<<< HEAD
                                 <div id="cohorts-pager"></div>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                             </div>
                         </div>
                     </div>
@@ -346,7 +349,10 @@
                                             </tbody>
                                         </table>
                                     </div>
+<<<<<<< HEAD
                                     <div id="registrations-pager"></div>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                                 </div>
                             </div>
                         </div>
@@ -547,7 +553,10 @@
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/academy-training.js"></script>
+<<<<<<< HEAD
     <script src="assets/js/simple-pager.js"></script>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
@@ -769,12 +778,15 @@
     </div>
 
     <script>
+<<<<<<< HEAD
         // Client-side paging for the cohort list and a cohort's registrations
         // (assets/js/simple-pager.js).
         var cohortsPager = SimplePager.attach('#cohorts-pager', { onChange: function () { renderCohorts(); } });
         var renderRegistrationsPage = null;
         var registrationsPager = SimplePager.attach('#registrations-pager', { onChange: function () { if (renderRegistrationsPage) renderRegistrationsPage(); } });
 
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         var bootstrap = window.tabler.bootstrap;
 
         Auth.requireAuth();
@@ -1160,7 +1172,10 @@
                     status: document.getElementById("cohorts-filter-status").value,
                 };
                 cohortsData = await AcademyTraining.getCohorts(filters) || [];
+<<<<<<< HEAD
                 cohortsPager.reset();
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 renderCohorts();
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + err.message + '</td></tr>';
@@ -1169,11 +1184,18 @@
 
         function renderCohorts() {
             var tbody = document.getElementById("cohorts-tbody");
+<<<<<<< HEAD
             var pageRows = cohortsPager.slice(cohortsData);
             if (!cohortsData.length) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No cohorts match.</td></tr>';
             } else {
                 tbody.innerHTML = pageRows.map(function (c) {
+=======
+            if (!cohortsData.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No cohorts match.</td></tr>';
+            } else {
+                tbody.innerHTML = cohortsData.map(function (c) {
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     var counts = c._count || {};
                     return '<tr class="cohort-row" data-id="' + c.id + '">' +
                         '<td class="fw-semibold">' + c.name + '</td>' +
@@ -1264,6 +1286,7 @@
             tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
             try {
                 currentCohortRegistrations = await AcademyTraining.getCohortRegistrations(currentCohort.id) || [];
+<<<<<<< HEAD
                 registrationsPager.reset();
                 (renderRegistrationsPage = function () {
                     var pageRows = registrationsPager.slice(currentCohortRegistrations);
@@ -1285,6 +1308,25 @@
                         }).join("");
                     }
                 })();
+=======
+                if (!currentCohortRegistrations.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No registrations yet.</td></tr>';
+                } else {
+                    tbody.innerHTML = currentCohortRegistrations.map(function (r) {
+                        var a = r.applicant || {};
+                        var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "—";
+                        var order = r.order ? AcademyTraining.formatMoney(r.order.amount) + " (" + r.order.status + ")" : "—";
+                        return '<tr>' +
+                            '<td>' + name + '<div class="text-secondary small">' + (a.email || "") + '</div></td>' +
+                            '<td><code class="text-primary">' + r.registrationCode + '</code></td>' +
+                            '<td>' + AcademyTraining.registrationStatusBadge(r.status) + '</td>' +
+                            '<td class="text-secondary small">' + order + '</td>' +
+                            '<td>' + AcademyTraining.identityStatusBadge(r.identityVerification ? r.identityVerification.status : null) + '</td>' +
+                            '<td class="text-secondary small">' + AcademyTraining.formatDate(r.createdAt) + '</td>' +
+                            '</tr>';
+                    }).join("");
+                }
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + err.message + '</td></tr>';
             }

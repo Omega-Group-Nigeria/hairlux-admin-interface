@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Branches</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -18,14 +27,49 @@
     <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
-        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
-        table td { vertical-align: middle; }
-        .matrix-scroll { max-height: calc(100vh - 320px); overflow-y: auto; }
-        .matrix-scroll thead th { position: sticky; top: 0; z-index: 1; background: var(--tblr-bg-surface); box-shadow: 0 1px 0 var(--tblr-border-color); }
-        .matrix-row-unavailable { opacity: .65; }
-        .matrix-price-input { max-width: 110px; }
-        #offcanvas-services .offcanvas-body { padding-bottom: 0; display: flex; flex-direction: column; }
-        .matrix-footer { border-top: 1px solid var(--tblr-border-color); padding: .75rem 1rem; background: var(--tblr-bg-surface); }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        table td {
+            vertical-align: middle;
+        }
+
+        .matrix-scroll {
+            max-height: calc(100vh - 320px);
+            overflow-y: auto;
+        }
+
+        .matrix-scroll thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: var(--tblr-bg-surface);
+            box-shadow: 0 1px 0 var(--tblr-border-color);
+        }
+
+        .matrix-row-unavailable {
+            opacity: .65;
+        }
+
+        .matrix-price-input {
+            max-width: 110px;
+        }
+
+        #offcanvas-services .offcanvas-body {
+            padding-bottom: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .matrix-footer {
+            border-top: 1px solid var(--tblr-border-color);
+            padding: .75rem 1rem;
+            background: var(--tblr-bg-surface);
+        }
     </style>
 </head>
 
@@ -36,7 +80,8 @@
 
         <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
             <div class="container-xl">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <a href="./index.html" class="navbar-brand navbar-brand-autodark">
@@ -44,8 +89,18 @@
                 </a>
                 <div class="navbar-nav flex-row order-md-last">
                     <div class="nav-item me-2">
-                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg></a>
-                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1" /></svg></a>
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"><svg
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1">
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg></a>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"><svg
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1" />
+                            </svg></a>
                     </div>
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
@@ -58,7 +113,8 @@
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
                             <div class="dropdown-header">
                                 <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
-                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
                             </div>
                             <div class="dropdown-divider"></div>
                             <a href="./settings.html" class="dropdown-item">Settings</a>
@@ -97,9 +153,30 @@
                     <div id="page-alert" class="alert d-none mb-3" role="alert"></div>
 
                     <div class="row row-deck row-cards mb-4">
-                        <div class="col-sm-6 col-xl-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Total Branches</div><div class="h1 mb-0" id="stat-total">—</div></div></div></div>
-                        <div class="col-sm-6 col-xl-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Open</div><div class="h1 mb-0" id="stat-open">—</div></div></div></div>
-                        <div class="col-sm-6 col-xl-4"><div class="card"><div class="card-body"><div class="subheader mb-2">Closed</div><div class="h1 mb-0" id="stat-closed">—</div></div></div></div>
+                        <div class="col-sm-6 col-xl-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader mb-2">Total Branches</div>
+                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader mb-2">Open</div>
+                                    <div class="h1 mb-0" id="stat-open">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader mb-2">Closed</div>
+                                    <div class="h1 mb-0" id="stat-closed">—</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card">
@@ -113,7 +190,8 @@
                             <div class="row g-2 align-items-end">
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-secondary small mb-1">Search</label>
-                                    <input type="text" id="filter-search" class="form-control form-control-sm" placeholder="Branch name…">
+                                    <input type="text" id="filter-search" class="form-control form-control-sm"
+                                        placeholder="Branch name…">
                                 </div>
                                 <div class="col-6 col-md-auto">
                                     <label class="form-check mt-4">
@@ -122,17 +200,60 @@
                                     </label>
                                 </div>
                                 <div class="col-6 col-md-auto">
-                                    <button type="button" class="btn btn-sm btn-secondary" id="btn-clear-filters">Clear</button>
+                                    <button type="button" class="btn btn-sm btn-secondary"
+                                        id="btn-clear-filters">Clear</button>
                                 </div>
                             </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-vcenter table-hover card-table">
-                                <thead><tr><th>Name</th><th>Address</th><th>Status</th><th>Created</th><th class="w-1">Actions</th></tr></thead>
-                                <tbody id="branches-tbody"><tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Address</th>
+                                        <th>Manager</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="branches-tbody">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="spinner-border text-primary"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branch manager modal -->
+    <div class="modal modal-blur fade" id="modal-branch-manager" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Appoint Branch Manager</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary small mb-3">Max one manager per branch. The staff member must already be
+                        assigned to this branch.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Staff member</label>
+                        <select class="form-select" id="manager-staff-select">
+                            <option value="">Loading staff…</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-danger d-none" id="manager-modal-error"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-set-manager">Appoint</button>
                 </div>
             </div>
         </div>
@@ -149,13 +270,43 @@
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="modal-branch-error"></div>
                     <div class="mb-3">
-                        <label class="form-label" for="branch-name">Branch name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="branch-name" maxlength="100" placeholder="e.g. Lekki Branch">
+                        <label class="form-label" for="branch-name">Branch name <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="branch-name" maxlength="100"
+                            placeholder="e.g. Lekki Branch">
                     </div>
                     <div class="mb-0">
-                        <label class="form-label" for="branch-address">Address <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="branch-address" rows="3" maxlength="500" placeholder="e.g. 15 Admiralty Way, Lekki Phase 1, Lagos"></textarea>
+                        <label class="form-label" for="branch-address">Address <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="branch-address" rows="3" maxlength="500"
+                            placeholder="e.g. 15 Admiralty Way, Lekki Phase 1, Lagos"></textarea>
                         <div class="form-hint">Required. Max 500 characters.</div>
+                    </div>
+                    <div class="row g-2 mt-1">
+                        <div class="col-6">
+                            <label class="form-label" for="branch-gps-lat">GPS Latitude <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" step="any" class="form-control" id="branch-gps-lat"
+                                placeholder="e.g. 6.4531">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="branch-gps-lng">GPS Longitude <span
+                                    class="text-danger">*</span></label> <input type="number" step="any"
+                                class="form-control" id="branch-gps-lng" placeholder="e.g. 3.4692">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="branch-radius">Clock-in Radius (meters)</label>
+                            <input type="number" class="form-control" id="branch-radius" min="10" placeholder="100">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="branch-grace">Late Grace Period (minutes)</label>
+                            <input type="number" class="form-control" id="branch-grace" min="0" placeholder="10">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-hint">Required before staff at this branch can clock in via the app. Radius
+                                and grace period
+                                default to 100m / 10min if left blank.</div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -170,8 +321,13 @@
     <div class="modal modal-blur fade" id="modal-confirm" tabindex="-1">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title" id="confirm-title">Confirm</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body"><p id="confirm-msg" class="mb-0 text-secondary"></p></div>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirm-title">Confirm</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirm-msg" class="mb-0 text-secondary"></p>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="btn-confirm-action">Confirm</button>
@@ -195,11 +351,14 @@
                 <div class="row g-2 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label text-secondary small mb-1">Search services</label>
-                        <input type="text" class="form-control form-control-sm" id="matrix-search" placeholder="Service name…">
+                        <input type="text" class="form-control form-control-sm" id="matrix-search"
+                            placeholder="Service name…">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-secondary small mb-1">Category</label>
-                        <select class="form-select form-select-sm" id="matrix-category"><option value="">All categories</option></select>
+                        <select class="form-select form-select-sm" id="matrix-category">
+                            <option value="">All categories</option>
+                        </select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-secondary small mb-1">Availability</label>
@@ -210,13 +369,16 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btn-matrix-clear">Clear</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                            id="btn-matrix-clear">Clear</button>
                     </div>
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-3" id="matrix-bulk-actions">
                     <button type="button" class="btn btn-sm btn-outline-success btn-matrix-enable">Enable all</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary btn-matrix-disable">Disable all</button>
-                    <button type="button" class="btn btn-sm btn-outline-warning btn-matrix-clear-prices">Clear overrides (shown)</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-matrix-disable">Disable
+                        all</button>
+                    <button type="button" class="btn btn-sm btn-outline-warning btn-matrix-clear-prices">Clear overrides
+                        (shown)</button>
                 </div>
             </div>
             <div class="matrix-scroll flex-grow-1">
@@ -231,14 +393,22 @@
                             <th>Effective</th>
                         </tr>
                     </thead>
-                    <tbody id="matrix-tbody"><tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm"></div></td></tr></tbody>
+                    <tbody id="matrix-tbody">
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="spinner-border text-primary spinner-border-sm"></div>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
             <div class="matrix-footer d-flex align-items-center justify-content-between gap-2 mt-3">
                 <span class="text-secondary small" id="matrix-dirty-label">No unsaved changes</span>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-matrix-discard" disabled>Discard</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btn-matrix-save" disabled>Save Changes</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-matrix-discard"
+                        disabled>Discard</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-matrix-save" disabled>Save
+                        Changes</button>
                 </div>
             </div>
         </div>
@@ -248,6 +418,7 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/services.js"></script>
     <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -310,15 +481,24 @@
 
         var BRANCH_MANAGE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></svg>';
 
-        function branchActionsHtml(branch, canManage) {
+        function branchActionsHtml(branch, perms) {
             var isOpen = branch.isActive !== false;
             var id = branch.id;
             var name = escAttr(branch.name);
             var items = '<a href="#" class="dropdown-item btn-branch-services" data-id="' + id + '" data-name="' + name + '">Branch services</a>';
-            if (canManage) {
+            if (perms.canUpdate) {
                 items += '<div class="dropdown-divider"></div>';
                 items += '<a href="#" class="dropdown-item btn-branch-edit" data-id="' + id + '">Edit branch</a>';
                 items += '<a href="#" class="dropdown-item btn-branch-toggle" data-id="' + id + '" data-name="' + name + '" data-active="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close branch" : "Reopen branch") + '</a>';
+            }
+            if (perms.canManageManager) {
+                items += '<div class="dropdown-divider"></div>';
+                items += '<a href="#" class="dropdown-item btn-branch-set-manager" data-id="' + id + '" data-name="' + name + '">' + (branch.manager ? "Change manager" : "Appoint manager") + '</a>';
+                if (branch.manager) {
+                    items += '<a href="#" class="dropdown-item btn-branch-remove-manager" data-id="' + id + '" data-name="' + name + '">Remove manager</a>';
+                }
+            }
+            if (perms.canDelete) {
                 items += '<div class="dropdown-divider"></div>';
                 items += '<a href="#" class="dropdown-item text-danger btn-branch-delete" data-id="' + id + '" data-name="' + name + '">Delete</a>';
             }
@@ -337,12 +517,66 @@
             });
         }
 
+        var _managerModalBranchId = null;
+
+        async function openManagerModal(branchId) {
+            _managerModalBranchId = branchId;
+            document.getElementById("manager-modal-error").classList.add("d-none");
+            var select = document.getElementById("manager-staff-select");
+            select.innerHTML = '<option value="">Loading staff…</option>';
+            var modal = new bootstrap.Modal(document.getElementById("modal-branch-manager"));
+            modal.show();
+            try {
+                var staffList = await Staff.getOptions({ locationId: branchId });
+                if (!staffList.length) {
+                    select.innerHTML = '<option value="">No staff assigned to this branch</option>';
+                    return;
+                }
+                select.innerHTML = staffList.map(function (s) {
+                    return '<option value="' + escAttr(s.id) + '">' + esc(s.name) + (s.staffCode ? ' (' + esc(s.staffCode) + ')' : '') + '</option>';
+                }).join("");
+            } catch (e) {
+                select.innerHTML = '<option value="">Failed to load staff</option>';
+                document.getElementById("manager-modal-error").textContent = e.message || "Failed to load staff for this branch.";
+                document.getElementById("manager-modal-error").classList.remove("d-none");
+            }
+        }
+
+        async function submitSetManager() {
+            var staffId = document.getElementById("manager-staff-select").value;
+            var errEl = document.getElementById("manager-modal-error");
+            errEl.classList.add("d-none");
+            if (!staffId) {
+                errEl.textContent = "Please select a staff member.";
+                errEl.classList.remove("d-none");
+                return;
+            }
+            try {
+                await Branches.setManager(_managerModalBranchId, staffId);
+                bootstrap.Modal.getInstance(document.getElementById("modal-branch-manager")).hide();
+                flashPageAlert("success", "Branch manager appointed successfully.");
+                loadBranches();
+            } catch (e) {
+                errEl.textContent = e.message || "Failed to appoint manager.";
+                errEl.classList.remove("d-none");
+            }
+        }
+
+        function confirmRemoveManager(branchId, branchName) {
+            _pendingOp = { type: "remove-manager", id: branchId };
+            document.getElementById("confirm-title").textContent = "Remove Manager";
+            document.getElementById("confirm-msg").textContent = 'Remove the manager appointment for "' + branchName + '"? The branch will revert to unmanaged until a new manager is appointed.';
+            new bootstrap.Modal(document.getElementById("modal-confirm")).show();
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
                 RBAC.applyNavVisibility();
-                if (RBAC.can(Branches.PERMISSIONS.MANAGE)) {
+                if (RBAC.can(Branches.PERMISSIONS.CREATE)) {
                     document.getElementById("btn-add-branch").classList.remove("d-none");
+                }
+                if (RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES)) {
                     document.getElementById("matrix-bulk-actions").classList.remove("d-none");
                 } else {
                     document.getElementById("matrix-bulk-actions").classList.add("d-none");
@@ -350,10 +584,11 @@
                     document.getElementById("btn-matrix-discard").classList.add("d-none");
                 }
             });
-document.getElementById("btn-refresh").addEventListener("click", function () { loadBranches({ notifySuccess: true }); });
+            document.getElementById("btn-refresh").addEventListener("click", function () { loadBranches({ notifySuccess: true }); });
             document.getElementById("btn-add-branch").addEventListener("click", function () { openBranchModal(null); });
             document.getElementById("btn-save-branch").addEventListener("click", saveBranch);
             document.getElementById("btn-confirm-action").addEventListener("click", executeConfirmedOp);
+            document.getElementById("btn-confirm-set-manager").addEventListener("click", submitSetManager);
 
             var searchTimer;
             document.getElementById("filter-search").addEventListener("input", function () {
@@ -377,13 +612,18 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
                 var editBtn = e.target.closest(".btn-branch-edit");
                 var toggleBtn = e.target.closest(".btn-branch-toggle");
                 var deleteBtn = e.target.closest(".btn-branch-delete");
-                if (!(servicesBtn || editBtn || toggleBtn || deleteBtn)) return;
+                var setManagerBtn = e.target.closest(".btn-branch-set-manager");
+                var removeManagerBtn = e.target.closest(".btn-branch-remove-manager");
+                if (!(servicesBtn || editBtn || toggleBtn || deleteBtn || setManagerBtn || removeManagerBtn)) return;
                 e.preventDefault();
                 if (servicesBtn) openServicesOffcanvas(servicesBtn.dataset.id, servicesBtn.dataset.name);
                 if (editBtn) openBranchModal(editBtn.dataset.id);
                 if (toggleBtn) confirmToggleBranch(toggleBtn.dataset.id, toggleBtn.dataset.name, toggleBtn.dataset.active === "true");
                 if (deleteBtn) confirmDeleteBranch(deleteBtn.dataset.id, deleteBtn.dataset.name);
+                if (setManagerBtn) openManagerModal(setManagerBtn.dataset.id);
+                if (removeManagerBtn) confirmRemoveManager(removeManagerBtn.dataset.id, removeManagerBtn.dataset.name);
             });
+
 
             var matrixSearchTimer;
             document.getElementById("matrix-search").addEventListener("input", function () {
@@ -410,7 +650,7 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
             });
 
             document.getElementById("matrix-bulk-actions").addEventListener("click", function (e) {
-                if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+                if (!RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES)) return;
                 if (e.target.closest(".btn-matrix-enable")) bulkMatrixAvailability(true);
                 if (e.target.closest(".btn-matrix-disable")) bulkMatrixAvailability(false);
                 if (e.target.closest(".btn-matrix-clear-prices")) bulkMatrixClearOverrides();
@@ -442,10 +682,10 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             document.getElementById("results-label").textContent = "Loading…";
             try {
-                _branches = await Branches.getBranches({
+                _branches = RBAC.filterBranches(await Branches.getBranches({
                     search: listState.search || undefined,
                     includeInactive: listState.includeInactive,
-                });
+                }));
                 var open = _branches.filter(function (b) { return b.isActive !== false; }).length;
                 document.getElementById("stat-total").textContent = _branches.length;
                 document.getElementById("stat-open").textContent = open;
@@ -455,20 +695,30 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
                     flashPageAlert("success", "Branches refreshed.");
                 }
                 if (!_branches.length) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-5">No branches found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No branches found.</td></tr>';
                     return;
                 }
-                var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+                var perms = {
+                    canUpdate: RBAC.can(Branches.PERMISSIONS.UPDATE),
+                    canManageManager: RBAC.can(Branches.PERMISSIONS.MANAGE_MANAGER),
+                    canDelete: RBAC.can(Branches.PERMISSIONS.DELETE),
+                };
                 tbody.innerHTML = _branches.map(function (b) {
-                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, canManage) + '</td></tr>';
+                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + formatManagerCell(b.manager) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, perms) + '</td></tr>';
                 }).join("");
                 initBranchRowDropdowns();
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
                 document.getElementById("results-label").textContent = "Error";
                 flashPageAlert("danger", e.message || "Failed to load branches.");
             }
         }
+
+        function formatManagerCell(manager) {
+            if (!manager) return '<span class="text-secondary small">Unassigned</span>';
+            return '<span class="small">' + esc(manager.name) + '</span>';
+        }
+
 
         function formatBranchAddressCell(address) {
             var text = String(address || "").trim();
@@ -481,6 +731,10 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
             return {
                 name: document.getElementById("branch-name").value.trim(),
                 address: document.getElementById("branch-address").value.trim(),
+                gpsLat: document.getElementById("branch-gps-lat").value,
+                gpsLng: document.getElementById("branch-gps-lng").value,
+                approvedRadiusMeters: document.getElementById("branch-radius").value,
+                lateGracePeriodMinutes: document.getElementById("branch-grace").value,
             };
         }
 
@@ -489,20 +743,41 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
             if (values.name.length > 100) return "Branch name must be 100 characters or fewer.";
             if (!values.address) return "Please enter a branch address.";
             if (values.address.length > 500) return "Address must be 500 characters or fewer.";
+            if (!_editBranchId) {
+                if (values.gpsLat === "" || values.gpsLat == null) return "GPS latitude is required.";
+                if (values.gpsLng === "" || values.gpsLng == null) return "GPS longitude is required.";
+                var lat = Number(values.gpsLat);
+                var lng = Number(values.gpsLng);
+                if (isNaN(lat) || lat < -90 || lat > 90) return "GPS latitude must be a number between -90 and 90.";
+                if (isNaN(lng) || lng < -180 || lng > 180) return "GPS longitude must be a number between -180 and 180.";
+            }
             return null;
         }
-
         async function openBranchModal(id) {
-            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            // Handles both Create (id null) and Edit (id set) -- check
+            // whichever permission actually applies. The buttons that
+            // trigger each path are already gated correctly (Add Branch
+            // by CREATE, the row's Edit item by UPDATE); this is a
+            // defensive second check in case the function is ever called
+            // from somewhere else ungated.
+            if (!RBAC.can(id ? Branches.PERMISSIONS.UPDATE : Branches.PERMISSIONS.CREATE)) return;
             _editBranchId = id || null;
             var errEl = document.getElementById("modal-branch-error");
             var nameEl = document.getElementById("branch-name");
             var addressEl = document.getElementById("branch-address");
+            var latEl = document.getElementById("branch-gps-lat");
+            var lngEl = document.getElementById("branch-gps-lng");
+            var radiusEl = document.getElementById("branch-radius");
+            var graceEl = document.getElementById("branch-grace");
             errEl.classList.add("d-none");
             document.getElementById("modal-branch-title").textContent = id ? "Edit Branch" : "Add Branch";
             document.getElementById("btn-save-branch").textContent = id ? "Save Changes" : "Create Branch";
             nameEl.value = "";
             addressEl.value = "";
+            latEl.value = "";
+            lngEl.value = "";
+            radiusEl.value = "";
+            graceEl.value = "";
 
             if (id) {
                 var branch = _branches.find(function (b) { return b.id === id; });
@@ -516,6 +791,10 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
                 }
                 nameEl.value = branch.name || "";
                 addressEl.value = branch.address || "";
+                latEl.value = branch.gpsLat != null ? branch.gpsLat : "";
+                lngEl.value = branch.gpsLng != null ? branch.gpsLng : "";
+                radiusEl.value = branch.approvedRadiusMeters != null ? branch.approvedRadiusMeters : "";
+                graceEl.value = branch.lateGracePeriodMinutes != null ? branch.lateGracePeriodMinutes : "";
             }
 
             new bootstrap.Modal(document.getElementById("modal-branch")).show();
@@ -536,7 +815,14 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
             try {
-                var payload = { name: values.name, address: values.address };
+                var payload = {
+                    name: values.name,
+                    address: values.address,
+                    gpsLat: values.gpsLat,
+                    gpsLng: values.gpsLng,
+                    approvedRadiusMeters: values.approvedRadiusMeters,
+                    lateGracePeriodMinutes: values.lateGracePeriodMinutes,
+                };
                 if (_editBranchId) await Branches.updateBranch(_editBranchId, payload);
                 else await Branches.createBranch(payload);
                 bootstrap.Modal.getInstance(document.getElementById("modal-branch")).hide();
@@ -586,6 +872,10 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
                     await Branches.deleteBranch(_pendingOp.id);
                     flashPageAlert("success", "Branch deleted successfully.");
                     loadBranches();
+                } else if (_pendingOp.type === "remove-manager") {
+                    await Branches.removeManager(_pendingOp.id);
+                    flashPageAlert("success", "Branch manager removed.");
+                    loadBranches();
                 }
                 bootstrap.Modal.getInstance(document.getElementById("modal-confirm")).hide();
             } catch (e) {
@@ -632,7 +922,7 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
 
         function updateMatrixDirtyState() {
             var dirty = matrixHasChanges();
-            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES);
             document.getElementById("matrix-dirty-label").textContent = dirty ? "Unsaved changes" : "No unsaved changes";
             document.getElementById("matrix-dirty-label").className = dirty ? "small text-warning" : "text-secondary small";
             if (canManage) {
@@ -651,13 +941,13 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
         }
 
         function onMatrixAvailabilityChange(serviceId, checked) {
-            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES)) return;
             _matrixEdits[serviceId] = Object.assign({}, _matrixEdits[serviceId] || {}, { isAvailable: checked });
             renderMatrix();
         }
 
         function onMatrixPriceChange(serviceId, value) {
-            if (!RBAC.can(Branches.PERMISSIONS.MANAGE)) return;
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES)) return;
             var row = _matrixRows.find(function (r) { return r.serviceId === serviceId; });
             if (!row) return;
             var trimmed = String(value).trim();
@@ -742,7 +1032,7 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
         function renderMatrix() {
             var tbody = document.getElementById("matrix-tbody");
             var rows = getFilteredMatrixRows();
-            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE);
+            var canManage = RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES);
             if (!rows.length) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No services match your filters.</td></tr>';
                 updateMatrixDirtyState();
@@ -811,7 +1101,7 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
         }
 
         async function saveMatrix() {
-            if (!RBAC.can(Branches.PERMISSIONS.MANAGE) || !_matrixBranchId) return;
+            if (!RBAC.can(Branches.PERMISSIONS.MANAGE_SERVICES) || !_matrixBranchId) return;
             var services = buildPatchPayload();
             if (!services.length) {
                 flashMatrixAlert("warning", "No changes to save.");
@@ -836,5 +1126,7 @@ document.getElementById("btn-refresh").addEventListener("click", function () { l
             }
         }
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
+
 </html>

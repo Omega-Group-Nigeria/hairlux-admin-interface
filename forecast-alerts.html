@@ -207,7 +207,10 @@
                                 </tbody>
                             </table>
                         </div>
+<<<<<<< HEAD
                         <div id="fa-alerts-pager"></div>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     </div>
 
                 </div>
@@ -224,8 +227,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+<<<<<<< HEAD
                     <p id="fa-evidence-title" class="fw-bold mb-1"></p>
                     <p id="fa-evidence-message" class="mb-0" style="white-space: pre-wrap;"></p>
+=======
+                    <p id="fa-evidence-message" class="mb-2"></p>
+                    <pre id="fa-evidence-json" class="bg-secondary-lt p-2 rounded small" style="white-space: pre-wrap; max-height: 400px; overflow:auto;"></pre>
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 </div>
             </div>
         </div>
@@ -237,7 +245,10 @@
     <script src="./assets/js/api-utils/branches.js"></script>
     <script src="./assets/js/api-utils/business-intelligence.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
+<<<<<<< HEAD
     <script src="./assets/js/simple-pager.js"></script>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script>
         var bootstrap = window.tabler.bootstrap;
         Auth.requireAuth();
@@ -246,8 +257,11 @@
 
         var isAdmin = false;
         var latestAlerts = [];
+<<<<<<< HEAD
         var branchNameById = {};
         var alertsPager = null;
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
 
         function esc(s) {
             var d = document.createElement('div');
@@ -274,7 +288,11 @@
         }
 
         function typeLabel(type) {
+<<<<<<< HEAD
             return String(type || '').replace(/_/g, ' ').replace(/\w\S*/g, function (t) {
+=======
+            return String(type || '').replace(/_/g, ' ').replace(/\\w\\S*/g, function (t) {
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 return t.charAt(0).toUpperCase() + t.substr(1).toLowerCase();
             });
         }
@@ -293,7 +311,10 @@
             if (isAdmin) {
                 try {
                     var branches = await Branches.getBranches();
+<<<<<<< HEAD
                     branches.forEach(function (b) { branchNameById[b.id] = b.name; });
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     var sel = document.getElementById('fa-branch');
                     sel.innerHTML = '<option value="">All Branches (Forecast: Company-wide)</option>' +
                         branches.map(function (b) { return '<option value="' + b.id + '">' + esc(b.name) + '</option>'; }).join('');
@@ -303,8 +324,11 @@
                 } catch (err) { /* branch picker just stays hidden */ }
             }
 
+<<<<<<< HEAD
             alertsPager = SimplePager.attach('#fa-alerts-pager', { perPage: 25, onChange: paintAlertRows });
 
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             ['fa-branch', 'fa-status', 'fa-severity'].forEach(function (id) {
                 document.getElementById(id).addEventListener('change', load);
             });
@@ -474,6 +498,7 @@
             _faAlertSeverityChart = destroyChart(_faAlertSeverityChart);
             _faAlertTypeChart = destroyChart(_faAlertTypeChart);
             renderAlertCharts(alerts);
+<<<<<<< HEAD
             if (alertsPager) alertsPager.reset();
             paintAlertRows();
         }
@@ -489,14 +514,22 @@
             var alerts = latestAlerts;
             var tbody = document.getElementById('fa-alerts-tbody');
             var pageRows = alertsPager ? alertsPager.slice(alerts) : alerts;
+=======
+            var tbody = document.getElementById('fa-alerts-tbody');
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             if (!alerts.length) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-3">No alerts match these filters.</td></tr>';
                 return;
             }
+<<<<<<< HEAD
             var offset = alertsPager ? (alertsPager.page - 1) * alertsPager.perPage : 0;
             tbody.innerHTML = pageRows.map(function (a, i) {
                 var idx = offset + i;
                 var scope = scopeLabel(a);
+=======
+            tbody.innerHTML = alerts.map(function (a, idx) {
+                var scope = a.entityType === 'COMPANY' ? 'Company-wide' : (a.entityId || 'Branch');
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 var actions = '<button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="showEvidence(' + idx + ')">Evidence</button>';
                 if (a.status === 'OPEN') {
                     actions += '<button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="doAcknowledge(\'' + a.id + '\')">Acknowledge</button>';
@@ -520,7 +553,11 @@
             var a = latestAlerts[idx];
             if (!a) return;
             document.getElementById('fa-evidence-message').textContent = a.message || '';
+<<<<<<< HEAD
             document.getElementById('fa-evidence-title').textContent = (a.title || '') + ' — ' + scopeLabel(a);
+=======
+            document.getElementById('fa-evidence-json').textContent = JSON.stringify(a.evidence, null, 2);
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             new bootstrap.Modal(document.getElementById('fa-evidence-modal')).show();
         }
 

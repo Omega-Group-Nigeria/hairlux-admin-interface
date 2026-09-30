@@ -617,7 +617,10 @@
                         <option value="CARD">Card</option>
                         <option value="WALLET">Wallet</option>
                     </select>
+<<<<<<< HEAD
                     <div class="form-hint" id="complete-wallet-hint">Wallet deducts the full booking amount from the customer's Hairlux app wallet. Only available when the booking is linked to a customer with an app account.</div>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Back</button>
@@ -912,6 +915,7 @@
             _pendingCompleteId = id;
             document.getElementById('complete-payment-method').value = '';
             document.getElementById('complete-payment-error').classList.add('d-none');
+<<<<<<< HEAD
             // WALLET debits the linked customer's app wallet -- disable it up
             // front when we already know there's no linked app account (the
             // API enforces this too). customer === undefined means unknown.
@@ -921,6 +925,8 @@
             walletOpt.disabled = noAccount;
             walletOpt.textContent = noAccount ? 'Wallet (no linked app account)' : 'Wallet';
             document.getElementById('btn-confirm-complete').disabled = false;
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             new bootstrap.Modal(document.getElementById('modal-complete-payment')).show();
         }
 
@@ -932,9 +938,12 @@
                 errEl.classList.remove('d-none');
                 return;
             }
+<<<<<<< HEAD
             var btn = document.getElementById('btn-confirm-complete');
             btn.disabled = true;
             errEl.classList.add('d-none');
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             try {
                 await SalonBookings.complete(_pendingCompleteId, method);
                 bootstrap.Modal.getInstance(document.getElementById('modal-complete-payment')).hide();
@@ -942,8 +951,11 @@
             } catch (e) {
                 errEl.textContent = e.message || 'Failed to complete booking.';
                 errEl.classList.remove('d-none');
+<<<<<<< HEAD
             } finally {
                 btn.disabled = false;
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             }
         }
 
@@ -953,7 +965,11 @@
             document.getElementById('reason-modal-title').textContent = titles[type] || 'Mark No-Show';
             document.getElementById('reason-text').value = '';
             document.getElementById('reason-text').placeholder = type === 'reverse'
+<<<<<<< HEAD
                 ? 'Required. Undoes posted revenue, restocks deducted items, rejects the commission, and refunds any wallet payment to the customer. Shown on the booking and the reversing ledger entry.'
+=======
+                ? 'Required. Undoes posted revenue, restocks deducted items, and rejects the commission. Shown on the booking and the reversing ledger entry.'
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 : '';
             document.getElementById('reason-error').classList.add('d-none');
             new bootstrap.Modal(document.getElementById('modal-reason')).show();

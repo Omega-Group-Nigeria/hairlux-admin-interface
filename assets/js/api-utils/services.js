@@ -30,8 +30,8 @@ const Services = (() => {
 
     // ── Auth-aware JSON fetch ─────────────────────────────────────────────────────
     async function apiFetch(path, options = {}) {
-        const res  = await Auth.fetch(path, options);
-        const raw  = await res.json().catch(() => ({}));
+        const res = await Auth.fetch(path, options);
+        const raw = await res.json().catch(() => ({}));
         if (!res || !res.ok) throw new Error(raw.message || `Request failed (${res ? res.status : "no response"})`);
         return raw.data !== undefined ? raw.data : raw;
     }
@@ -122,10 +122,11 @@ const Services = (() => {
     async function getAll(params = {}) {
         const q = new URLSearchParams();
         if (params.categoryId) q.set("categoryId", params.categoryId);
-        if (params.search)     q.set("search",     params.search);
-        if (params.status)     q.set("status",     params.status);
+        if (params.search) q.set("search", params.search);
+        if (params.status) q.set("status", params.status);
         if (params.bookingType) q.set("bookingType", params.bookingType);
-        const qs   = q.toString();
+        if (params.branchId) q.set("branchId", params.branchId);
+        const qs = q.toString();
         const data = await apiFetch("/services" + (qs ? "?" + qs : ""));
         return Array.isArray(data) ? data : (data.services || []);
     }
@@ -178,6 +179,30 @@ const Services = (() => {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
+    // PRODUCT CONSUMPTION ("RECIPE")
+    // Procurement/Inventory/Finance Integration, Phase 6.
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * GET /admin/services/:id/recipe
+     * Returns array of { id, productId, quantity, product: { id, name, sku, category } }
+     */
+    async function getRecipe(id) {
+        return apiFetch(`/admin/services/${id}/recipe`);
+    }
+
+    /**
+     * PUT /admin/services/:id/recipe   { lines: [{ productId, quantity }] }
+     * Full replace -- send every line that should remain.
+     */
+    async function setRecipe(id, lines) {
+        return apiFetch(`/admin/services/${id}/recipe`, {
+            method: "PUT",
+            body: JSON.stringify({ lines }),
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
     // DISPLAY HELPERS
     // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -201,7 +226,7 @@ const Services = (() => {
         const h = Math.floor(m / 60);
         const r = m % 60;
         if (h > 0 && r > 0) return h + "h " + r + "m";
-        if (h > 0)           return h + "h";
+        if (h > 0) return h + "h";
         return r + "m";
     }
 
@@ -228,6 +253,8 @@ const Services = (() => {
         update,
         updateStatus,
         remove,
+        getRecipe,
+        setRecipe,
         // Helpers
         statusBadge,
         formatMoney,

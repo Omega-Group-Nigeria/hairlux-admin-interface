@@ -191,8 +191,13 @@
 
                     <div class="card">
                         <div class="card-header d-block">
+<<<<<<< HEAD
                             <h3 class="card-title mb-0">Products by Revenue</h3>
                             <div class="text-secondary small mt-1">Highest revenue first — Export CSV includes every
+=======
+                            <h3 class="card-title mb-0">Top Products by Revenue</h3>
+                            <div class="text-secondary small mt-1">Showing the top 10 — Export CSV includes every
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                                 product in this range.</div>
                         </div>
                         <div class="table-responsive">
@@ -216,7 +221,10 @@
                                 </tbody>
                             </table>
                         </div>
+<<<<<<< HEAD
                         <div id="products-pager"></div>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     </div>
                 </div>
             </div>
@@ -230,11 +238,15 @@
     <script src="assets/js/api-utils/reports.js"></script>
     <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/searchable-select.js"></script>
+<<<<<<< HEAD
     <script src="assets/js/simple-pager.js"></script>
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var _lastReport = null;
+<<<<<<< HEAD
         var _productsPager = null;
 
         function productRowHtml(p) {
@@ -256,6 +268,8 @@
                 ? pageRows.map(productRowHtml).join('')
                 : '<tr><td colspan="6" class="text-center text-secondary py-5">No product sales in this range yet.</td></tr>';
         }
+=======
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
 
         document.addEventListener('DOMContentLoaded', async function () {
             RBAC.applyPageGuard('reports:read_profitability');
@@ -346,12 +360,30 @@
                             '</tr>';
                     }).join('');
 
+<<<<<<< HEAD
                 if (_productsPager) _productsPager.reset();
                 paintProducts();
             } catch (e) {
                 document.getElementById('source-tbody').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
                 document.getElementById('products-tbody').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
                 if (_productsPager) _productsPager.slice([]);
+=======
+                document.getElementById('products-tbody').innerHTML = report.products.length
+                    ? report.products.slice(0, 10).map(function (p) {
+                        return '<tr>' +
+                            '<td class="fw-semibold">' + esc(p.productName) + '</td>' +
+                            '<td class="text-end">' + p.quantitySold + '</td>' +
+                            '<td class="text-end">' + formatMoney(p.revenue) + '</td>' +
+                            '<td class="text-end">' + formatMoney(p.cogs) + '</td>' +
+                            '<td class="text-end">' + formatMoney(p.grossProfit) + '</td>' +
+                            '<td class="text-end">' + p.grossMarginPercent.toFixed(1) + '%</td>' +
+                            '</tr>';
+                    }).join('')
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No product sales in this range yet.</td></tr>';
+            } catch (e) {
+                document.getElementById('source-tbody').innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                document.getElementById('products-tbody').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+>>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             }
         }
 

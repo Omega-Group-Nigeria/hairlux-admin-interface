@@ -4,6 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Hairlux Admin — Staff</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
@@ -18,11 +27,33 @@
     <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
     <style>
         @import url("https://rsms.me/inter/inter.css");
-        .spinner-inline { width: 1rem; height: 1rem; border-width: .15em; }
-        .staff-code { font-family: var(--tblr-font-monospace, monospace); font-size: .78rem; color: var(--tblr-secondary); }
-        .history-item { border: 1px solid var(--tblr-border-color); border-radius: 8px; padding: .65rem .75rem; }
-        #staff-table td { vertical-align: middle; }
-        .birthday-list { max-height: 280px; overflow-y: auto; }
+
+        .spinner-inline {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        .staff-code {
+            font-family: var(--tblr-font-monospace, monospace);
+            font-size: .78rem;
+            color: var(--tblr-secondary);
+        }
+
+        .history-item {
+            border: 1px solid var(--tblr-border-color);
+            border-radius: 8px;
+            padding: .65rem .75rem;
+        }
+
+        #staff-table td {
+            vertical-align: middle;
+        }
+
+        .birthday-list {
+            max-height: 280px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 
@@ -33,7 +64,8 @@
 
         <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
             <div class="container-xl">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu"
+                    aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -43,16 +75,30 @@
 
                 <div class="navbar-nav flex-row order-md-last">
                     <div class="nav-item me-2">
-                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
+                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path
+                                    d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+                            </svg>
                         </a>
-                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>
+                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="icon icon-1">
+                                <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path
+                                    d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" />
+                            </svg>
                         </a>
                     </div>
 
                     <div class="nav-item dropdown">
-                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown" aria-label="Open user menu">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown"
+                            aria-label="Open user menu">
                             <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
                             <div class="d-none d-xl-block ps-2">
                                 <div id="navbar-user-name">Admin</div>
@@ -62,7 +108,8 @@
                         <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
                             <div class="dropdown-header">
                                 <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
-                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
                             </div>
                             <div class="dropdown-divider"></div>
                             <a href="./settings.html" class="dropdown-item">Settings</a>
@@ -100,10 +147,38 @@
             <div class="page-body">
                 <div class="container-xl">
                     <div class="row row-deck row-cards mb-3">
-                        <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader">Total Staff</div><div class="h1 mb-0" id="stat-total">-</div></div></div></div>
-                        <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader">Active</div><div class="h1 mb-0" id="stat-active">-</div></div></div></div>
-                        <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader">Exited</div><div class="h1 mb-0" id="stat-exited">-</div></div></div></div>
-                        <div class="col-sm-6 col-xl-3"><div class="card"><div class="card-body"><div class="subheader">Archived</div><div class="h1 mb-0" id="stat-archived">-</div></div></div></div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader">Total Staff</div>
+                                    <div class="h1 mb-0" id="stat-total">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader">Active</div>
+                                    <div class="h1 mb-0" id="stat-active">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader">Exited</div>
+                                    <div class="h1 mb-0" id="stat-exited">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="subheader">Archived</div>
+                                    <div class="h1 mb-0" id="stat-archived">-</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row row-cards">
@@ -113,7 +188,8 @@
                                     <div class="row g-2 align-items-end">
                                         <div class="col-md-3">
                                             <label class="form-label small mb-1">Search</label>
-                                            <input id="filter-search" class="form-control form-control-sm" placeholder="name, email, code, role...">
+                                            <input id="filter-search" class="form-control form-control-sm"
+                                                placeholder="name, email, code, role...">
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label small mb-1">Status</label>
@@ -134,7 +210,8 @@
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label small mb-1">Role</label>
-                                            <input id="filter-role" class="form-control form-control-sm" placeholder="Senior Stylist">
+                                            <input id="filter-role" class="form-control form-control-sm"
+                                                placeholder="Senior Stylist">
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label small mb-1">Include Archived</label>
@@ -162,7 +239,11 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="staff-tbody">
-                                                <tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-5">
+                                                        <div class="spinner-border text-primary" role="status"></div>
+                                                    </td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -181,13 +262,17 @@
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h3 class="card-title mb-0">Upcoming Birthdays</h3>
-                                    <button class="btn btn-sm btn-outline-secondary" id="btn-load-birthdays">Load</button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                        id="btn-load-birthdays">Load</button>
                                 </div>
                                 <div class="card-body">
                                     <div class="row g-2 mb-2">
                                         <div class="col-6">
-                                            <input id="birthdays-days" type="text" class="form-control form-control-sm" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="30" placeholder="e.g. 30">
-                                            <div class="form-hint" style="font-size: 10px;">Days to look ahead (1-365).</div>
+                                            <input id="birthdays-days" type="text" class="form-control form-control-sm"
+                                                inputmode="numeric" pattern="[0-9]*" maxlength="3" value="30"
+                                                placeholder="e.g. 30">
+                                            <div class="form-hint" style="font-size: 10px;">Days to look ahead (1-365).
+                                            </div>
                                         </div>
                                         <div class="col-6">
                                             <select id="birthdays-include-former" class="form-select form-select-sm">
@@ -196,7 +281,8 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div id="birthdays-list" class="birthday-list text-secondary small">No data loaded.</div>
+                                    <div id="birthdays-list" class="birthday-list text-secondary small">No data loaded.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -205,7 +291,11 @@
             </div>
 
             <footer class="footer footer-transparent d-print-none">
-                <div class="container-xl"><div class="row text-center"><div class="col-12 text-secondary">&copy; 2026 Hairlux Admin Panel</div></div></div>
+                <div class="container-xl">
+                    <div class="row text-center">
+                        <div class="col-12 text-secondary">&copy; 2026 Hairlux Admin Panel</div>
+                    </div>
+                </div>
             </footer>
         </div>
     </div>
@@ -216,7 +306,9 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body" id="offcanvas-staff-body">
-            <div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
         </div>
         <div class="offcanvas-footer border-top p-3 d-flex flex-wrap gap-2" id="offcanvas-staff-actions"></div>
     </div>
@@ -241,9 +333,73 @@
         </div>
     </div>
 
+    <div class="modal modal-blur fade" id="modal-work-calendar" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Work Calendar — <span id="wc-staff-name">—</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="modal-wc-error"></div>
+                    <div class="alert alert-warning py-2 px-3 small d-none" id="modal-wc-hybrid-warning">This staff member is set to <strong>Hybrid</strong> but no day below is set to Remote or Field/Mobile yet -- every day currently resolves to On-site.</div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="text-secondary small">Each day can be a full working day, a half day with its own
+                            hours,
+                            or an off day.</div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-wc-apply-default">Apply
+                            Company Default</button>
+                    </div>
+                    <div id="wc-days-body"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-submit-work-calendar">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner-work-calendar"></span>
+                        Save Calendar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="modal-field-locations" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Field Locations</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="modal-fl-error"></div>
+                    <div class="text-secondary small mb-3">The approved GPS points a Field/Mobile staff member can clock in/out from -- e.g. a regular client site or service zone.</div>
+                    <div id="fl-list-body" class="mb-3"></div>
+                    <hr>
+                    <div class="fw-semibold mb-2">Add Field Location</div>
+                    <div class="row g-2">
+                        <div class="col-md-4"><input class="form-control form-control-sm" id="fl-name" placeholder="Name (e.g. Ikeja Client Zone)"></div>
+                        <div class="col-md-3"><input class="form-control form-control-sm" id="fl-lat" placeholder="Latitude" type="number" step="any"></div>
+                        <div class="col-md-3"><input class="form-control form-control-sm" id="fl-lng" placeholder="Longitude" type="number" step="any"></div>
+                        <div class="col-md-2"><input class="form-control form-control-sm" id="fl-radius" placeholder="Radius (m)" type="number" value="100"></div>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-fl-use-current">Use My Current Location</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="btn-fl-add">Add Location</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/roles.js"></script>
+    <script src="assets/js/api-utils/commission-plans.js"></script>
+    <script src="assets/js/searchable-select.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
@@ -257,7 +413,7 @@
         ];
         Auth.requireAuth();
         RBAC.loadFromStorage();
-        RBAC.applyPageGuard(STAFF_PERMISSIONS);
+        RBAC.applyPageGuard('staff:read');
 
         var state = {
             page: 1,
@@ -269,6 +425,7 @@
             includeArchived: false,
             totalPages: 1,
             locationOptions: [],
+            staffOptions: [],
         };
 
         var _currentStaffId = null;
@@ -276,9 +433,9 @@
 
         document.addEventListener("DOMContentLoaded", function () {
             RBAC.fetchMe().then(function () {
-                RBAC.applyPageGuard(STAFF_PERMISSIONS);
+                RBAC.applyPageGuard('staff:read');
                 RBAC.applyNavVisibility();
-            }).catch(function () {});
+            }).catch(function () { });
             document.getElementById("btn-refresh").addEventListener("click", function () {
                 loadStaff();
                 loadBirthdays();
@@ -308,13 +465,13 @@
             document.getElementById("btn-clear").addEventListener("click", function () {
                 document.getElementById("filter-search").value = "";
                 document.getElementById("filter-status").value = "";
-                document.getElementById("filter-location-id").value = "";
+                document.getElementById("filter-location-id").value = RBAC.scopeBranchId("");
                 document.getElementById("filter-role").value = "";
                 document.getElementById("filter-include-archived").value = "false";
                 state.page = 1;
                 state.search = "";
                 state.employmentStatus = "";
-                state.locationId = "";
+                state.locationId = RBAC.scopeBranchId("");
                 state.currentRole = "";
                 state.includeArchived = false;
                 loadStaff();
@@ -385,23 +542,55 @@
             document.getElementById("offcanvas-staff-actions").addEventListener("click", function (e) {
                 var editBtn = e.target.closest(".btn-oc-edit");
                 var statusBtn = e.target.closest(".btn-oc-status");
+                var transferBtn = e.target.closest(".btn-oc-transfer");
+                var assignRoleBtn = e.target.closest(".btn-oc-assign-role");
+                var removeRoleBtn = e.target.closest(".btn-oc-remove-role");
                 var archiveBtn = e.target.closest(".btn-oc-archive");
                 var restoreBtn = e.target.closest(".btn-oc-restore");
                 var addHistoryBtn = e.target.closest(".btn-oc-add-history");
+                var idCardBtn = e.target.closest(".btn-oc-idcard");
                 if (editBtn) return handleEditStaff(editBtn.dataset.id);
                 if (statusBtn) return handleStatusStaff(statusBtn.dataset.id);
+                if (transferBtn) return handleTransferBranch(transferBtn.dataset.id);
+                if (assignRoleBtn) return handleAssignRole(assignRoleBtn.dataset.id);
+                if (removeRoleBtn) return handleRemoveRole(removeRoleBtn.dataset.id);
                 if (archiveBtn) return handleArchiveStaff(archiveBtn.dataset.id);
                 if (restoreBtn) return handleRestoreStaff(restoreBtn.dataset.id);
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
+                if (idCardBtn) return handleDownloadIdCard(idCardBtn.dataset.id, idCardBtn.dataset.staffCode);
             });
 
             document.getElementById("offcanvas-staff-body").addEventListener("click", function (e) {
                 var addHistoryBtn = e.target.closest(".btn-oc-add-history");
                 var editHist = e.target.closest(".btn-edit-history");
                 var delHist = e.target.closest(".btn-delete-history");
+                var onboardingToggle = e.target.closest(".btn-onboarding-toggle");
+                var onboardingApprove = e.target.closest(".btn-onboarding-approve");
+                var onboardingReject = e.target.closest(".btn-onboarding-reject");
+                var editWorkCalendar = e.target.closest(".btn-edit-work-calendar");
+                var setPayrollMethodBtn = e.target.closest(".btn-oc-set-payroll-method");
+                var requestAddressVerificationBtn = e.target.closest(".btn-oc-request-address-verification");
+                if (setPayrollMethodBtn) return handleSetPayrollMethod(setPayrollMethodBtn.dataset.id);
+                if (requestAddressVerificationBtn) return handleRequestAddressVerification(requestAddressVerificationBtn.dataset.id);
+                var cancelAddressVerificationBtn = e.target.closest(".btn-oc-cancel-address-verification");
+                if (cancelAddressVerificationBtn) return handleCancelAddressVerification(cancelAddressVerificationBtn.dataset.id);
                 if (addHistoryBtn) return handleAddHistory(addHistoryBtn.dataset.id);
                 if (editHist) return handleEditHistory(editHist.dataset.staffId, editHist.dataset.historyId);
                 if (delHist) return handleDeleteHistory(delHist.dataset.staffId, delHist.dataset.historyId);
+                if (editWorkCalendar) return openWorkCalendarModal(editWorkCalendar.dataset.id, editWorkCalendar.dataset.name, editWorkCalendar.dataset.workMode);
+                if (onboardingToggle) {
+                    return handleToggleOnboardingItem(
+                        onboardingToggle.dataset.staffId,
+                        onboardingToggle.dataset.itemId,
+                        onboardingToggle.dataset.next === "true"
+                    );
+                }
+                if (onboardingApprove) {
+                    return handleApproveOnboardingItem(onboardingApprove.dataset.staffId, onboardingApprove.dataset.itemId);
+                }
+                if (onboardingReject) {
+                    return handleRejectOnboardingItem(onboardingReject.dataset.staffId, onboardingReject.dataset.itemId);
+                }
             });
 
             ensureLocationsLoaded();
@@ -421,6 +610,15 @@
             return loc.name || loc.locationName || loc.businessLocation || "-";
         }
 
+        function compensationTypeLabel(t) {
+            return ({
+                SALARY: "Salary",
+                SALARY_TO_COMMISSION: "Salary \u2192 Commission",
+                SALARY_PLUS_COMMISSION: "Salary + Commission",
+                COMMISSION: "Commission Only",
+            })[t] || "Salary";
+        }
+
         function locationId(loc) {
             return loc.id || loc.locationId || loc._id || "";
         }
@@ -435,6 +633,161 @@
         async function ensureLocationsLoaded() {
             if (state.locationOptions.length) return;
             await loadManagedLocations({ includeInactive: true, syncFilters: true });
+        }
+
+        var _fieldLocationsCache = [];
+
+        async function ensureFieldLocationsLoaded() {
+            try {
+                _fieldLocationsCache = await Staff.getFieldLocations(true);
+            } catch (err) {
+                console.error("Failed to load field locations", err);
+                _fieldLocationsCache = [];
+            }
+        }
+
+        function populateFieldLocationDropdown() {
+            var sel = document.getElementById('sf-field-location');
+            var wrap = document.getElementById('sf-field-location-wrap');
+            if (!sel) return;
+            var preselected = wrap ? wrap.dataset.selected : '';
+            var current = sel.value || preselected || '';
+            var active = _fieldLocationsCache.filter(function (l) { return l.isActive; });
+            sel.innerHTML = '<option value="">Select field location...</option>' +
+                active.map(function (l) {
+                    return '<option value="' + esc(l.id) + '"' + (String(l.id) === String(current) ? ' selected' : '') + '>' + esc(l.name) + '</option>';
+                }).join('');
+        }
+
+        async function openFieldLocationsModal() {
+            document.getElementById('modal-fl-error').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('modal-field-locations')).show();
+            await refreshFieldLocationsList();
+        }
+
+        async function refreshFieldLocationsList() {
+            var body = document.getElementById('fl-list-body');
+            body.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+            try {
+                await ensureFieldLocationsLoaded();
+                var locations = _fieldLocationsCache;
+                if (!locations.length) {
+                    body.innerHTML = '<div class="text-secondary small">No field locations yet -- add one below.</div>';
+                } else {
+                    body.innerHTML = locations.map(function (l) {
+                        return '<div class="d-flex align-items-center justify-content-between border rounded p-2 mb-1 small">' +
+                            '<div><span class="fw-semibold">' + esc(l.name) + '</span>' + (l.isActive ? '' : ' <span class="badge bg-secondary-lt">Inactive</span>') +
+                            '<div class="text-secondary">' + Number(l.gpsLat).toFixed(5) + ', ' + Number(l.gpsLng).toFixed(5) + ' &middot; ' + (l.approvedRadiusMeters || 100) + 'm radius</div></div>' +
+                            '<button type="button" class="btn btn-xs btn-outline-' + (l.isActive ? 'warning' : 'success') + ' btn-fl-toggle" data-id="' + esc(l.id) + '" data-active="' + (l.isActive ? '1' : '0') + '">' + (l.isActive ? 'Deactivate' : 'Activate') + '</button>' +
+                            '</div>';
+                    }).join('');
+                }
+                populateFieldLocationDropdown();
+            } catch (err) {
+                body.innerHTML = '<div class="alert alert-danger py-2 px-3 small">Failed to load field locations.</div>';
+            }
+        }
+
+        document.getElementById('btn-fl-use-current').addEventListener('click', function () {
+            var errEl = document.getElementById('modal-fl-error');
+            errEl.classList.add('d-none');
+            if (!navigator.geolocation) {
+                errEl.textContent = 'Geolocation is not available in this browser.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Locating...';
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                document.getElementById('fl-lat').value = pos.coords.latitude.toFixed(7);
+                document.getElementById('fl-lng').value = pos.coords.longitude.toFixed(7);
+                btn.disabled = false;
+                btn.textContent = 'Use My Current Location';
+            }, function (err) {
+                errEl.textContent = 'Could not get current location: ' + (err.message || 'permission denied');
+                errEl.classList.remove('d-none');
+                btn.disabled = false;
+                btn.textContent = 'Use My Current Location';
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        });
+
+        document.getElementById('btn-fl-add').addEventListener('click', async function () {
+            var errEl = document.getElementById('modal-fl-error');
+            errEl.classList.add('d-none');
+            var name = document.getElementById('fl-name').value.trim();
+            var lat = document.getElementById('fl-lat').value;
+            var lng = document.getElementById('fl-lng').value;
+            var radius = document.getElementById('fl-radius').value;
+            if (!name || lat === '' || lng === '') {
+                errEl.textContent = 'Name, latitude, and longitude are required.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            try {
+                await Staff.createFieldLocation({
+                    name: name,
+                    gpsLat: Number(lat),
+                    gpsLng: Number(lng),
+                    approvedRadiusMeters: radius ? Number(radius) : undefined,
+                });
+                document.getElementById('fl-name').value = '';
+                document.getElementById('fl-lat').value = '';
+                document.getElementById('fl-lng').value = '';
+                document.getElementById('fl-radius').value = '100';
+                await refreshFieldLocationsList();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to add field location.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('fl-list-body').addEventListener('click', async function (e) {
+            var toggleBtn = e.target.closest('.btn-fl-toggle');
+            if (!toggleBtn) return;
+            var id = toggleBtn.dataset.id;
+            var currentlyActive = toggleBtn.dataset.active === '1';
+            toggleBtn.disabled = true;
+            try {
+                await Staff.updateFieldLocation(id, { isActive: !currentlyActive });
+                await refreshFieldLocationsList();
+            } catch (err) {
+                alert(err.message || 'Failed to update field location.');
+                toggleBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('staff-action-form').addEventListener('click', function (e) {
+            var link = e.target.closest('#link-manage-field-locations');
+            if (!link) return;
+            e.preventDefault();
+            openFieldLocationsModal();
+        });
+
+        async function ensureStaffOptionsLoaded() {
+            if (state.staffOptions.length) return;
+            try {
+                var staffList = await Staff.getOptions();
+                state.staffOptions = staffList.map(function (s) {
+                    return { value: String(s.id), label: Staff.fullName(s) + (s.staffCode ? ' (' + s.staffCode + ')' : '') };
+                });
+            } catch (err) {
+                console.error("Failed to load staff options for manager dropdown", err);
+            }
+        }
+
+        /** Excludes the staff member themselves -- they can't report to themselves (also enforced server-side). */
+        function resolveManagerOptions(excludeStaffId, selectedId) {
+            var selected = String(selectedId || "");
+            var options = state.staffOptions.filter(function (x) { return x.value !== String(excludeStaffId); });
+            if (selected && !options.some(function (x) { return x.value === selected; })) {
+                options.push({ value: selected, label: "Current manager" });
+            }
+            return options;
         }
 
         async function loadManagedLocations(options) {
@@ -464,6 +817,7 @@
                     var selected = current === x.value ? ' selected' : '';
                     return '<option value="' + esc(x.value) + '"' + selected + '>' + esc(x.label) + '</option>';
                 }).join("");
+            if (RBAC.applyBranchScope(select)) state.locationId = select.value;
         }
 
         function buildOptionSelect(col, label, id, value, options, placeholder, required) {
@@ -477,13 +831,14 @@
                 }).join('') +
                 '</select>' +
                 (required ? '<div class="form-hint">Required</div>' : '') +
-            '</div>';
+                '</div>';
         }
 
         async function loadStaff() {
             var tbody = document.getElementById("staff-tbody");
             tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
             try {
+                state.locationId = RBAC.scopeBranchId(state.locationId);
                 var result = await Staff.getAll(state);
                 var rows = result.data || [];
                 var meta = result.meta || {};
@@ -531,9 +886,9 @@
                     '<td>' + Staff.statusBadge(s.employmentStatus) + '</td>' +
                     '<td class="small text-secondary">' + contact + '</td>' +
                     '<td><div class="btn-list flex-nowrap">' +
-                        '<button class="btn btn-sm btn-ghost-secondary btn-view-staff" data-id="' + esc(s.id) + '">View</button>' +
-                        '<button class="btn btn-sm btn-ghost-primary btn-edit-staff" data-id="' + esc(s.id) + '">Edit</button>' +
-                        '<button class="btn btn-sm btn-ghost-warning btn-status-staff" data-id="' + esc(s.id) + '">Status</button>' +
+                    '<button class="btn btn-sm btn-ghost-secondary btn-view-staff" data-id="' + esc(s.id) + '">View</button>' +
+                    '<button class="btn btn-sm btn-ghost-primary btn-edit-staff" data-id="' + esc(s.id) + '">Edit</button>' +
+                    '<button class="btn btn-sm btn-ghost-warning btn-status-staff" data-id="' + esc(s.id) + '">Status</button>' +
                     '</div></td>' +
                     '</tr>';
             }).join("");
@@ -547,6 +902,10 @@
                 var daysAhead = Math.max(1, Math.min(365, daysAheadRaw || 30));
                 var includeFormer = document.getElementById("birthdays-include-former").value === "true";
                 var rows = await Staff.getUpcomingBirthdays({ daysAhead: daysAhead, includeFormer: includeFormer });
+                if (RBAC.isManagerScoped()) {
+                    var managedIds = RBAC.getManagedBranchIds();
+                    rows = rows.filter(function (x) { return x.location && managedIds.indexOf(x.location.id) !== -1; });
+                }
                 if (!rows.length) {
                     list.innerHTML = '<div class="text-secondary small">No upcoming birthdays in this window.</div>';
                     return;
@@ -558,12 +917,461 @@
                     return '<div class="mb-2 pb-2 border-bottom">' +
                         '<div class="fw-semibold small">' + esc(name) + '</div>' +
                         '<div class="text-secondary small">' + esc(dob) + (role ? ' · ' + esc(role) : '') + '</div>' +
-                    '</div>';
+                        '</div>';
                 }).join('');
             } catch (err) {
                 list.innerHTML = '<div class="text-danger small">' + esc(err.message || "Failed to load birthdays") + '</div>';
             }
         }
+
+        const ONBOARDING_ITEM_LABELS = {
+            GUARANTOR_VERIFICATION: 'Guarantor Verification',
+            EMERGENCY_CONTACT: 'Emergency Contact',
+            REFERENCE_CHECK: 'Reference Check',
+            ADDRESS_VERIFICATION: 'Address Verification',
+            PHYSICAL_ADDRESS_VERIFICATION: 'Physical Address Verification',
+            PASSPORT_PHOTO: 'Passport Photo',
+            POLICY_ACKNOWLEDGMENT: 'Policy Acknowledgment',
+        };
+
+        var ONBOARDING_SUBMISSION_FIELDS = {
+            GUARANTOR_VERIFICATION: [
+                ['Name', 'guarantorName'], ['Occupation', 'guarantorOccupation'],
+                ['Phone', 'guarantorPhone'], ['Address', 'guarantorAddress'],
+            ],
+            EMERGENCY_CONTACT: [
+                ['Name', 'emergencyContactName'], ['Phone', 'emergencyContactPhone'],
+                ['Relationship', 'emergencyContactRelation'],
+            ],
+            ADDRESS_VERIFICATION: [['Address', 'address']],
+            REFERENCE_CHECK: [
+                ['Name', 'referenceName'], ['Phone', 'referencePhone'],
+                ['Relationship', 'referenceRelationship'],
+            ],
+        };
+
+        function renderOnboardingSection(staffId, onboarding, staffRecord, passportPhotoUrl) {
+            if (!onboarding) {
+                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load onboarding checklist.</div>';
+            }
+            // PHYSICAL_ADDRESS_VERIFICATION deliberately excluded here --
+            // it's a separate, selective (admin-requested-only) track with
+            // its own dedicated section below (renderAddressVerificationStatus),
+            // never the generic Approve/Reject flow this checklist uses.
+            // Approving it generically here would bypass QoreID entirely --
+            // marking it verified with no actual physical check having
+            // happened.
+            var items = (onboarding.items || []).filter(function (i) { return i.type !== 'PHYSICAL_ADDRESS_VERIFICATION'; });
+            var doneCount = items.filter(function (i) { return i.isComplete; }).length;
+            var pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+
+            var rows = items.map(function (item) {
+                var label = ONBOARDING_ITEM_LABELS[item.type] || item.type;
+
+                // Built once, used by both the "approved" and "pending review" rows below —
+                // what was submitted doesn't change once it's approved, so there's no reason
+                // an admin should lose the ability to see it again after approving.
+                var submittedHtml;
+                if (item.type === 'PASSPORT_PHOTO') {
+                    submittedHtml = passportPhotoUrl
+                        ? '<a href="' + esc(passportPhotoUrl) + '" target="_blank" rel="noopener">View uploaded photo</a>'
+                        : '<span class="text-secondary">Photo submitted, but the view link failed to load.</span>';
+                } else {
+                    var fields = ONBOARDING_SUBMISSION_FIELDS[item.type] || [];
+                    submittedHtml = fields.map(function (pair) {
+                        return '<div><span class="text-secondary">' + esc(pair[0]) + ':</span> ' + esc((staffRecord && staffRecord[pair[1]]) || '-') + '</div>';
+                    }).join('');
+                }
+
+                if (item.isComplete) {
+                    return '<div class="py-2 border-bottom">' +
+                        '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                        '<div><span class="text-success me-2">\u2713</span>' + esc(label) +
+                        '<div class="text-secondary small ms-4">Approved ' + esc(Staff.formatDate(item.completedAt)) + '</div></div>' +
+                        '<button class="btn btn-xs btn-outline-secondary btn-onboarding-toggle" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '" data-next="false">Reopen</button>' +
+                        '</div>' +
+                        '<div class="small ms-4">' + submittedHtml + '</div>' +
+                        '</div>';
+                }
+
+                if (item.reviewStatus === 'SUBMITTED') {
+                    return '<div class="py-2 border-bottom">' +
+                        '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                        '<div><span class="text-warning me-2">\u23F3</span>' + esc(label) + ' <span class="badge bg-warning-lt">Pending review</span></div>' +
+                        '</div>' +
+                        '<div class="small ms-4 mb-2">' + submittedHtml + '</div>' +
+                        '<div class="ms-4 d-flex gap-1">' +
+                        '<button class="btn btn-xs btn-success btn-onboarding-approve" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '">Approve</button>' +
+                        '<button class="btn btn-xs btn-outline-danger btn-onboarding-reject" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '">Reject</button>' +
+                        '</div></div>';
+                }
+
+                return '<div class="d-flex align-items-center justify-content-between py-1">' +
+                    '<div><span class="text-danger me-2">\u2717</span>' + esc(label) +
+                    '<div class="text-secondary small ms-4">Not yet submitted</div></div>' +
+                    '<button class="btn btn-xs btn-outline-success btn-onboarding-toggle" data-staff-id="' + esc(staffId) + '" data-item-id="' + esc(item.id) + '" data-next="true">Mark Complete</button>' +
+                    '</div>';
+            }).join('');
+
+            return '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                '<span class="small fw-semibold">' + pct + '% complete</span>' +
+                '<span class="small text-secondary">' + doneCount + ' of ' + items.length + '</span></div>' +
+                '<div class="progress mb-2" style="height:6px"><div class="progress-bar bg-success" style="width:' + pct + '%"></div></div>' +
+                rows;
+        }
+
+        function renderDocumentsSection(documents) {
+            if (!documents) {
+                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load document status.</div>';
+            }
+            var docs = documents.documents || [];
+            if (!docs.length) {
+                return '<div class="text-secondary small">No company documents have been created yet. Add them under Staff &rarr; Company Documents.</div>';
+            }
+            return docs.map(function (d) {
+                var badge = d.acknowledged
+                    ? '<span class="badge bg-success-lt">Acknowledged ' + esc(Staff.formatDate(d.acknowledgedAt)) + '</span>'
+                    : '<span class="badge bg-warning-lt">Not yet acknowledged</span>';
+                return '<div class="d-flex align-items-center justify-content-between py-1">' +
+                    '<div class="small">' + esc(d.title) + '</div>' + badge + '</div>';
+            }).join('');
+        }
+
+        var DAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        var DAY_TYPE_BADGE = { WORKING: 'bg-success-lt', HALF_DAY: 'bg-warning-lt', OFF: 'bg-secondary-lt' };
+
+        function workModeAttentionBadge(s, calendar) {
+            if (s.workMode === 'HYBRID') {
+                var hasOverride = calendar && calendar.days && calendar.days.some(function (d) { return d.workMode === 'REMOTE' || d.workMode === 'FIELD_MOBILE'; });
+                if (!hasOverride) {
+                    return ' <span class="badge bg-warning-lt" title="No day set to Remote or Field/Mobile yet -- every day currently resolves to On-site">Not yet scheduled</span>';
+                }
+            } else if (s.workMode === 'FIELD_MOBILE' && !s.fieldLocationId) {
+                return ' <span class="badge bg-warning-lt" title="No field location assigned -- clock-in/out will be rejected">No location assigned</span>';
+            }
+            var unresolvedFieldDay = calendar && calendar.days && calendar.days.some(function (d) {
+                return d.workMode === 'FIELD_MOBILE' && !d.fieldLocationId && !s.fieldLocationId;
+            });
+            if (unresolvedFieldDay) {
+                return ' <span class="badge bg-warning-lt" title="A day is set to Field/Mobile with no location override and no staff default -- clock-in/out will be rejected on that day">Missing field location</span>';
+            }
+            return '';
+        }
+
+        function renderWorkCalendarSummary(calendar) {
+            if (!calendar || !calendar.days) {
+                return '<div class="alert alert-warning py-2 px-3 small mb-0">Could not load work calendar.</div>';
+            }
+            var anyConfigured = calendar.days.some(function (d) { return d.configured; });
+            var rows = calendar.days.map(function (d) {
+                var badgeClass = DAY_TYPE_BADGE[d.dayType] || 'bg-secondary-lt';
+                var times = d.dayType !== 'OFF' ? (esc(d.resumeTime) + ' – ' + esc(d.closingTime)) : '';
+                var altNote = d.alternatesBiweekly ? ' <span class="text-secondary">(alternate)</span>' : '';
+                var workModeNote = d.workMode ? ' ' + Staff.workModeBadge(d.workMode) : '';
+                var fieldLocNote = (d.workMode === 'FIELD_MOBILE' && d.fieldLocation) ? ' <span class="text-secondary">(' + esc(d.fieldLocation.name) + ')</span>' : '';
+                return '<div class="d-flex align-items-center justify-content-between small py-1">' +
+                    '<span>' + DAY_SHORT_NAMES[d.dayOfWeek] + '</span>' +
+                    '<span><span class="badge ' + badgeClass + '">' + esc(d.dayType.replace('_', ' ')) + '</span>' + altNote + workModeNote + fieldLocNote + ' <span class="text-secondary ms-1">' + times + '</span></span>' +
+                    '</div>';
+            }).join('');
+            var note = anyConfigured
+                ? ''
+                : '<div class="text-secondary small mt-1">Nothing configured yet — showing the company default schedule.</div>';
+            return rows + note;
+        }
+
+        var _wcStaffId = null;
+        var _wcWorkMode = null;
+
+        // Mirrors the backend's exact epoch/algorithm (staff-work-calendar.service.ts)
+        // so "Week A"/"Week B" in this preview always agrees with what actually
+        // gets applied server-side.
+        var WC_BIWEEKLY_EPOCH_MS = new Date('2024-01-01T00:00:00+01:00').getTime();
+
+        function wcWeekParityForDateStr(dateStr) {
+            var weeksSinceEpoch = Math.floor((new Date(dateStr + 'T00:00:00+01:00').getTime() - WC_BIWEEKLY_EPOCH_MS) / (7 * 24 * 60 * 60 * 1000));
+            return ((weeksSinceEpoch % 2) + 2) % 2;
+        }
+
+        function wcNextOccurrenceDates(dayOfWeek, count) {
+            var results = [];
+            var d = new Date();
+            d.setHours(12, 0, 0, 0); // avoid DST/midnight edge issues in this browser-local preview
+            var diff = (dayOfWeek - d.getDay() + 7) % 7;
+            d.setDate(d.getDate() + diff);
+            for (var i = 0; i < count; i++) {
+                results.push(new Date(d));
+                d.setDate(d.getDate() + 7);
+            }
+            return results;
+        }
+
+        function wcFormatPreviewDate(d) {
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        }
+
+        function renderAltPreview(row) {
+            var dayOfWeek = Number(row.dataset.day);
+            var mainType = row.querySelector('.wc-day-type').value;
+            var parity = Number(row.querySelector('.wc-alt-parity').value);
+            var altType = row.querySelector('.wc-alt-type').value;
+            var dates = wcNextOccurrenceDates(dayOfWeek, 4);
+
+            var items = dates.map(function (d) {
+                var dateStr = d.toISOString().slice(0, 10);
+                var thisParity = wcWeekParityForDateStr(dateStr);
+                var effectiveType = (thisParity === parity) ? mainType : altType;
+                var badgeClass = DAY_TYPE_BADGE[effectiveType] || 'bg-secondary-lt';
+                return '<span class="badge ' + badgeClass + ' me-1">' + wcFormatPreviewDate(d) + ': ' + esc(effectiveType.replace('_', ' ')) + '</span>';
+            }).join('');
+
+            var previewEl = row.querySelector('.wc-alt-preview');
+            if (previewEl) previewEl.innerHTML = '<div class="text-secondary small mt-1">Next 4: ' + items + '</div>';
+        }
+
+        function renderWorkCalendarRow(d) {
+            var isOff = d.dayType === 'OFF';
+            var alt = !!d.alternatesBiweekly;
+            return '<div class="border rounded p-2 mb-2 wc-day-row" data-day="' + d.dayOfWeek + '">' +
+                '<div class="row g-2 align-items-center">' +
+                '<div class="col-2"><span class="fw-semibold small">' + DAY_SHORT_NAMES[d.dayOfWeek] + '</span></div>' +
+                '<div class="col-3">' +
+                '<select class="form-select form-select-sm wc-day-type">' +
+                '<option value="WORKING"' + (d.dayType === 'WORKING' ? ' selected' : '') + '>Working</option>' +
+                '<option value="HALF_DAY"' + (d.dayType === 'HALF_DAY' ? ' selected' : '') + '>Half Day</option>' +
+                '<option value="OFF"' + (isOff ? ' selected' : '') + '>Off</option>' +
+                '</select></div>' +
+                '<div class="col-3 wc-times" style="' + (isOff ? 'display:none' : '') + '">' +
+                '<input type="time" class="form-control form-control-sm wc-resume" value="' + esc(d.resumeTime || '') + '">' +
+                '</div>' +
+                '<div class="col-3 wc-times" style="' + (isOff ? 'display:none' : '') + '">' +
+                '<input type="time" class="form-control form-control-sm wc-closing" value="' + esc(d.closingTime || '') + '">' +
+                '</div>' +
+                '<div class="col-1 text-center">' +
+                '<input type="checkbox" class="form-check-input wc-alt-check" title="Alternates every other week"' + (alt ? ' checked' : '') + '>' +
+                '</div>' +
+                '</div>' +
+                '<div class="row g-2 align-items-center mt-1">' +
+                '<div class="col-2"></div>' +
+                '<div class="col-10">' +
+                '<select class="form-select form-select-sm wc-work-mode" title="Work mode for this specific day">' +
+                '<option value=""' + (!d.workMode ? ' selected' : '') + '>Work mode: inherit from staff profile</option>' +
+                '<option value="ON_SITE"' + (d.workMode === 'ON_SITE' ? ' selected' : '') + '>Work mode: On-site</option>' +
+                '<option value="REMOTE"' + (d.workMode === 'REMOTE' ? ' selected' : '') + '>Work mode: Remote</option>' +
+                '<option value="FIELD_MOBILE"' + (d.workMode === 'FIELD_MOBILE' ? ' selected' : '') + '>Work mode: Field / Mobile</option>' +
+                '</select>' +
+                '</div>' +
+                '</div>' +
+                '<div class="row g-2 align-items-center mt-1 wc-field-location-row" style="' + (d.workMode === 'FIELD_MOBILE' ? '' : 'display:none') + '">' +
+                '<div class="col-2"></div>' +
+                '<div class="col-10">' +
+                '<select class="form-select form-select-sm wc-field-location" title="Field location for this specific day -- leave blank to use the staff member' + "&#39;" + 's default field location" data-selected="' + esc(d.fieldLocationId || '') + '">' +
+                '<option value="">Field location: use staff default</option>' +
+                '</select>' +
+                '</div>' +
+                '</div>' +
+                '<div class="row g-2 align-items-center mt-1 wc-alt-fields" style="' + (alt ? '' : 'display:none') + '">' +
+                '<div class="col-2"></div>' +
+                '<div class="col-4"><select class="form-select form-select-sm wc-alt-parity">' +
+                '<option value="0"' + (d.activeWeekParity === 0 ? ' selected' : '') + '>Applies on Week A</option>' +
+                '<option value="1"' + (d.activeWeekParity === 1 ? ' selected' : '') + '>Applies on Week B</option>' +
+                '</select></div>' +
+                '<div class="col-6"><select class="form-select form-select-sm wc-alt-type">' +
+                '<option value="OFF"' + (d.alternateDayType === 'OFF' ? ' selected' : '') + '>Otherwise: Off</option>' +
+                '<option value="WORKING"' + (d.alternateDayType === 'WORKING' ? ' selected' : '') + '>Otherwise: Working</option>' +
+                '<option value="HALF_DAY"' + (d.alternateDayType === 'HALF_DAY' ? ' selected' : '') + '>Otherwise: Half Day</option>' +
+                '</select></div>' +
+                '</div>' +
+                '<div class="row mt-1 wc-alt-preview-row" style="' + (alt ? '' : 'display:none') + '">' +
+                '<div class="col-12 wc-alt-preview"></div>' +
+                '</div>' +
+                '</div>';
+        }
+
+        function bindWorkCalendarRowEvents() {
+            document.querySelectorAll('#wc-days-body .wc-day-row').forEach(function (row) {
+                var typeSelect = row.querySelector('.wc-day-type');
+                var timeFields = row.querySelectorAll('.wc-times');
+                var altCheck = row.querySelector('.wc-alt-check');
+                var altFields = row.querySelector('.wc-alt-fields');
+                var altPreviewRow = row.querySelector('.wc-alt-preview-row');
+                var altParitySelect = row.querySelector('.wc-alt-parity');
+                var altTypeSelect = row.querySelector('.wc-alt-type');
+
+                function refreshPreview() {
+                    if (altCheck.checked) renderAltPreview(row);
+                }
+
+                typeSelect.addEventListener('change', function () {
+                    var off = typeSelect.value === 'OFF';
+                    timeFields.forEach(function (el) { el.style.display = off ? 'none' : ''; });
+                    refreshPreview();
+                });
+                altCheck.addEventListener('change', function () {
+                    var show = altCheck.checked;
+                    altFields.style.display = show ? '' : 'none';
+                    altPreviewRow.style.display = show ? '' : 'none';
+                    refreshPreview();
+                });
+                altParitySelect.addEventListener('change', refreshPreview);
+                altTypeSelect.addEventListener('change', refreshPreview);
+
+                var workModeSelect = row.querySelector('.wc-work-mode');
+                var fieldLocationRow = row.querySelector('.wc-field-location-row');
+                if (workModeSelect) {
+                    workModeSelect.addEventListener('change', function () {
+                        if (fieldLocationRow) fieldLocationRow.style.display = workModeSelect.value === 'FIELD_MOBILE' ? '' : 'none';
+                        syncHybridWarningBanner();
+                    });
+                }
+
+                refreshPreview(); // show it immediately for rows that already have alternation configured
+            });
+            syncHybridWarningBanner();
+        }
+
+        function populateWorkCalendarFieldLocationSelects() {
+            var active = _fieldLocationsCache.filter(function (l) { return l.isActive; });
+            document.querySelectorAll('#wc-days-body .wc-field-location').forEach(function (sel) {
+                var current = sel.value || sel.dataset.selected || '';
+                sel.innerHTML = '<option value="">Field location: use staff default</option>' +
+                    active.map(function (l) {
+                        return '<option value="' + esc(l.id) + '"' + (String(l.id) === String(current) ? ' selected' : '') + '>Field location: ' + esc(l.name) + '</option>';
+                    }).join('');
+            });
+        }
+
+        function syncHybridWarningBanner() {
+            var banner = document.getElementById('modal-wc-hybrid-warning');
+            if (!banner) return;
+            var hasOverride = false;
+            document.querySelectorAll('#wc-days-body .wc-work-mode').forEach(function (sel) {
+                if (sel.value === 'REMOTE' || sel.value === 'FIELD_MOBILE') hasOverride = true;
+            });
+            banner.classList.toggle('d-none', !(_wcWorkMode === 'HYBRID' && !hasOverride));
+        }
+
+        async function openWorkCalendarModal(staffId, staffName, workMode) {
+            _wcStaffId = staffId;
+            _wcWorkMode = workMode || 'ON_SITE';
+            document.getElementById('wc-staff-name').textContent = staffName || '—';
+            document.getElementById('modal-wc-error').classList.add('d-none');
+            document.getElementById('modal-wc-hybrid-warning').classList.add('d-none');
+            document.getElementById('wc-days-body').innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+            new bootstrap.Modal(document.getElementById('modal-work-calendar')).show();
+
+            try {
+                var calendar = await Staff.getWorkCalendar(staffId);
+                document.getElementById('wc-days-body').innerHTML = calendar.days.map(renderWorkCalendarRow).join('');
+                bindWorkCalendarRowEvents();
+                syncHybridWarningBanner();
+                await ensureFieldLocationsLoaded();
+                populateWorkCalendarFieldLocationSelects();
+            } catch (err) {
+                document.getElementById('wc-days-body').innerHTML = '<div class="alert alert-danger py-2 px-3 small">Failed to load calendar.</div>';
+            }
+        }
+
+        function readWorkCalendarForm() {
+            var days = [];
+            document.querySelectorAll('#wc-days-body .wc-day-row').forEach(function (row) {
+                var dayOfWeek = Number(row.dataset.day);
+                var dayType = row.querySelector('.wc-day-type').value;
+                var alt = row.querySelector('.wc-alt-check').checked;
+                var workModeValue = row.querySelector('.wc-work-mode').value;
+                var fieldLocationSelect = row.querySelector('.wc-field-location');
+                var fieldLocationValue = fieldLocationSelect ? fieldLocationSelect.value : '';
+                var day = { dayOfWeek: dayOfWeek, dayType: dayType };
+                if (workModeValue) day.workMode = workModeValue;
+                if (fieldLocationValue) day.fieldLocationId = fieldLocationValue;
+                if (dayType !== 'OFF') {
+                    day.resumeTime = row.querySelector('.wc-resume').value;
+                    day.closingTime = row.querySelector('.wc-closing').value;
+                }
+                if (alt) {
+                    day.alternatesBiweekly = true;
+                    day.activeWeekParity = Number(row.querySelector('.wc-alt-parity').value);
+                    day.alternateDayType = row.querySelector('.wc-alt-type').value;
+                }
+                days.push(day);
+            });
+            return days;
+        }
+
+        document.getElementById('btn-submit-work-calendar').addEventListener('click', async function () {
+            var errEl = document.getElementById('modal-wc-error');
+            errEl.classList.add('d-none');
+            var days = readWorkCalendarForm();
+
+            for (var i = 0; i < days.length; i++) {
+                if (days[i].dayType !== 'OFF' && (!days[i].resumeTime || !days[i].closingTime)) {
+                    errEl.textContent = DAY_SHORT_NAMES[days[i].dayOfWeek] + ': resume and closing time are required unless the day is Off.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+            }
+
+            var btn = this;
+            var spinner = document.getElementById('spinner-work-calendar');
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+
+            try {
+                await Staff.setWorkCalendar(_wcStaffId, { days: days });
+                bootstrap.Modal.getInstance(document.getElementById('modal-work-calendar')).hide();
+                if (_currentStaffId === _wcStaffId) openStaffDetail(_currentStaffId);
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to save calendar.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        document.getElementById('btn-wc-apply-default').addEventListener('click', async function () {
+            if (!_wcStaffId) return;
+            var errEl = document.getElementById('modal-wc-error');
+            errEl.classList.add('d-none');
+            try {
+                var calendar = await Staff.applyWorkCalendarDefault(_wcStaffId, false);
+                document.getElementById('wc-days-body').innerHTML = calendar.days.map(renderWorkCalendarRow).join('');
+                bindWorkCalendarRowEvents();
+                syncHybridWarningBanner();
+            } catch (err) {
+                errEl.textContent = err.message || 'Failed to apply default.';
+                errEl.classList.remove('d-none');
+            }
+        });
+
+        var ADDRESS_VERIFICATION_BADGE = {
+            REQUESTED: 'bg-secondary-lt', SUBMITTED: 'bg-warning-lt',
+            VERIFIED: 'bg-success-lt', REJECTED: 'bg-danger-lt', FAILED: 'bg-danger-lt',
+            CANCELLED: 'bg-secondary-lt',
+        };
+        var ADDRESS_VERIFICATION_LABEL = {
+            REQUESTED: 'Awaiting staff submission', SUBMITTED: 'In progress (24-48h)',
+            VERIFIED: 'Verified', REJECTED: 'Rejected', FAILED: 'Failed',
+            CANCELLED: 'Cancelled',
+        };
+
+        function renderAddressVerificationStatus(av) {
+            if (!av) {
+                return '<div class="text-secondary small">Not yet requested.</div>';
+            }
+            var badgeClass = ADDRESS_VERIFICATION_BADGE[av.status] || 'bg-secondary-lt';
+            var label = ADDRESS_VERIFICATION_LABEL[av.status] || av.status;
+            var html = '<div class="small mb-1"><span class="badge ' + badgeClass + '">' + esc(label) + '</span></div>';
+            if (av.status === 'SUBMITTED' && av.street) {
+                html += '<div class="text-secondary small">' + esc([av.street, av.city, av.stateName].filter(Boolean).join(', ')) + '</div>';
+                html += '<div class="text-secondary small">Submitted ' + esc(Staff.formatDate(av.submittedAt)) + '</div>';
+            }
+            if ((av.status === 'VERIFIED' || av.status === 'REJECTED') && av.reportUrl) {
+                html += '<div class="small mt-1"><a href="' + esc(av.reportUrl) + '" target="_blank" rel="noopener">View QoreID report</a></div>';
+            }
+            return html;
+        }
+
 
         async function openStaffDetail(id) {
             _currentStaffId = id;
@@ -575,6 +1383,15 @@
 
             try {
                 var s = await Staff.getOne(id);
+
+                var onboardingResult = await Staff.getOnboarding(id).catch(function () { return null; });
+                var documentsResult = await Staff.getDocumentStatus(id).catch(function () { return null; });
+                var passportPhotoResult = await Staff.getPassportPhotoUrl(id).catch(function () { return null; });
+                var passportPhotoUrl = passportPhotoResult && passportPhotoResult.viewUrl;
+                var roleAssignment = await Staff.getRoleAssignment(id).catch(function () { return { adminRoleId: null, adminRoleName: null, hasAdminPortalLogin: false, linkedToUserAccount: false }; });
+                var workCalendarResult = await Staff.getWorkCalendar(id).catch(function () { return null; });
+                var compensationHistory = await Staff.getCompensationHistory(id).catch(function () { return []; });
+                var addressVerification = await Staff.getAddressVerification(id).catch(function () { return null; });
                 var history = s.histories || s.employmentHistory || s.history || [];
                 var employmentStartDate = s.employmentStartDate || s.startDate || null;
                 if (!employmentStartDate && history.length) {
@@ -585,48 +1402,119 @@
                 }
                 body.innerHTML =
                     '<div class="mb-3">' +
-                        '<div class="h3 mb-1">' + esc(Staff.fullName(s)) + '</div>' +
-                        '<div class="text-secondary">' + esc(s.staffCode || s.code || '-') + '</div>' +
+                    '<div class="h3 mb-1">' + esc(Staff.fullName(s)) + '</div>' +
+                    '<div class="text-secondary">' + esc(s.staffCode || s.code || '-') + '</div>' +
                     '</div>' +
                     '<dl class="row small mb-3">' +
-                        '<dt class="col-5 text-secondary">Status</dt><dd class="col-7">' + Staff.statusBadge(s.employmentStatus) + '</dd>' +
-                        '<dt class="col-5 text-secondary">Role</dt><dd class="col-7">' + esc(s.currentRole || '-') + '</dd>' +
-                        '<dt class="col-5 text-secondary">Location</dt><dd class="col-7">' + esc(s.businessLocation || (s.location && locationLabel(s.location)) || '-') + '</dd>' +
-                        '<dt class="col-5 text-secondary">Email</dt><dd class="col-7">' + esc(s.email || '-') + '</dd>' +
-                        '<dt class="col-5 text-secondary">Phone</dt><dd class="col-7">' + esc(s.phone || '-') + '</dd>' +
-                        '<dt class="col-5 text-secondary">Date of Birth</dt><dd class="col-7">' + esc(Staff.formatDate(s.dateOfBirth || s.birthDate || s.dob)) + '</dd>' +
-                        '<dt class="col-5 text-secondary">Employment Start</dt><dd class="col-7">' + esc(Staff.formatDate(employmentStartDate || '-')) + '</dd>' +
-                        '<dt class="col-5 text-secondary">Created</dt><dd class="col-7">' + esc(Staff.formatDate(s.createdAt)) + '</dd>' +
+                    '<dt class="col-5 text-secondary">Status</dt><dd class="col-7">' + Staff.statusBadge(s.employmentStatus) + '</dd>' +
+                    '<dt class="col-5 text-secondary">Work Mode</dt><dd class="col-7">' + Staff.workModeBadge(s.workMode) + workModeAttentionBadge(s, workCalendarResult) + '</dd>' +
+                    '<dt class="col-5 text-secondary">Role</dt><dd class="col-7">' + esc(s.currentRole || '-') + '</dd>' +
+                    '<dt class="col-5 text-secondary">Location</dt><dd class="col-7">' + esc(s.businessLocation || (s.location && locationLabel(s.location)) || '-') + '</dd>' +
+                    '<dt class="col-5 text-secondary">Email</dt><dd class="col-7">' + esc(s.email || '-') + '</dd>' +
+                    '<dt class="col-5 text-secondary">Phone</dt><dd class="col-7">' + esc(s.phone || '-') + '</dd>' +
+                    '<dt class="col-5 text-secondary">Date of Birth</dt><dd class="col-7">' + esc(Staff.formatDate(s.dateOfBirth || s.birthDate || s.dob)) + '</dd>' +
+                    '<dt class="col-5 text-secondary">Employment Start</dt><dd class="col-7">' + esc(Staff.formatDate(employmentStartDate || '-')) + '</dd>' +
+                    '<dt class="col-5 text-secondary">Commission Rate</dt><dd class="col-7">' + (s.commissionRate != null ? esc((Number(s.commissionRate) * 100).toFixed(1)) + '%' : '<span class="text-secondary">Not set</span>') + '</dd>' +
+                    '<dt class="col-5 text-secondary">Assigned Role</dt><dd class="col-7">' + (roleAssignment.adminRoleId ? '<span class="badge bg-success-lt">' + esc(roleAssignment.adminRoleName || 'Assigned') + '</span>' + (roleAssignment.hasAdminPortalLogin ? ' <span class="badge bg-azure-lt">+ Admin Portal Login</span>' : ' <span class="text-secondary small">(staff portal only)</span>') : '<span class="badge bg-secondary-lt">No role assigned</span>') + '</dd>' + '<dt class="col-5 text-secondary">Created</dt><dd class="col-7">' + esc(Staff.formatDate(s.createdAt)) + '</dd>' +
                     '</dl>' +
+                    '<div class="mb-3">' +
+                    '<div class="fw-semibold mb-1">Onboarding Checklist</div>' +
+                    renderOnboardingSection(id, onboardingResult, s, passportPhotoUrl) +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="fw-semibold mb-1">Company Documents</div>' +
+                    renderDocumentsSection(documentsResult) +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Work Calendar</div>' +
+                    '<button class="btn btn-xs btn-outline-primary btn-edit-work-calendar" data-id="' + esc(s.id) + '" data-name="' + esc(Staff.fullName(s)) + '" data-work-mode="' + esc(s.workMode || 'ON_SITE') + '">Edit</button>' +
+                    '</div>' +
+                    '<div id="work-calendar-summary">' + renderWorkCalendarSummary(workCalendarResult) + '</div>' +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Payroll Method</div>' +
+                    '<button class="btn btn-xs btn-outline-primary btn-oc-set-payroll-method" data-id="' + esc(s.id) + '">Set</button>' +
+                    '</div>' +
+                    '<div class="small mb-2">' +
+                    'Type: <strong>' + esc(compensationTypeLabel(s.compensationType)) + '</strong>' +
+                    (s.commissionPlan ? ' &middot; Plan: <strong>' + esc(s.commissionPlan.name) + '</strong> (' + esc(CommissionPlans.formatRate(s.commissionPlan.commissionRate)) + ')'
+                        : (s.commissionRate != null ? ' &middot; Flat Rate: <strong>' + esc((Number(s.commissionRate) * 100).toFixed(1)) + '%</strong>' : '')) +
+                    '</div>' +
+                    '<div class="small mb-2">' +
+                    (s.currentBaseSalary != null
+                        ? 'Base: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentBaseSalary) : ('\u20a6' + Number(s.currentBaseSalary).toLocaleString())) + '</strong>' +
+                        (s.currentAllowances != null ? ' &middot; Allowances: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentAllowances) : ('\u20a6' + Number(s.currentAllowances).toLocaleString())) + '</strong>' : '')
+                        : '<span class="text-secondary">No salary set.</span>') +
+                    '</div>' +
+                    (compensationHistory.length
+                        ? '<div class="d-flex flex-column gap-1">' +
+                        compensationHistory.map(function (c) {
+                            var changedByName = c.changedBy ? c.changedBy.name : 'System';
+                            return '<div class="history-item">' +
+                                '<div class="fw-semibold small">' + esc(Staff.formatMoney ? Staff.formatMoney(c.baseSalary) : ('\u20a6' + Number(c.baseSalary).toLocaleString())) +
+                                (c.allowances != null ? ' + ' + esc(Staff.formatMoney ? Staff.formatMoney(c.allowances) : ('\u20a6' + Number(c.allowances).toLocaleString())) + ' allowances' : '') + '</div>' +
+                                '<div class="text-secondary small">Effective ' + esc(Staff.formatDate(c.effectiveDate)) + ' &middot; Set by ' + esc(changedByName) + '</div>' +
+                                (c.note ? '<div class="text-secondary small">' + esc(c.note) + '</div>' : '') +
+                                '</div>';
+                        }).join('') +
+                        '</div>'
+                        : '<div class="text-secondary small">No compensation history yet.</div>') +
+                    '</div>' +
+                    '<div class="mb-3">' +
+                    '<div class="d-flex align-items-center justify-content-between mb-1">' +
+                    '<div class="fw-semibold">Address Verification</div>' +
+                    '<div class="d-flex gap-1">' +
+                    (!addressVerification || addressVerification.status === 'FAILED' || addressVerification.status === 'REJECTED' || addressVerification.status === 'CANCELLED'
+                        ? '<button class="btn btn-xs btn-outline-primary btn-oc-request-address-verification" data-id="' + esc(s.id) + '">' + (addressVerification ? 'Re-request' : 'Request') + '</button>'
+                        : '') +
+                    (addressVerification && (addressVerification.status === 'REQUESTED' || addressVerification.status === 'SUBMITTED')
+                        ? '<button class="btn btn-xs btn-outline-danger btn-oc-cancel-address-verification" data-id="' + esc(s.id) + '">Cancel</button>'
+                        : '') +
+                    '</div>' +
+                    '</div>' +
+                    (renderAddressVerificationStatus(addressVerification)) +
+                    '</div>' +
                     '<div class="d-flex align-items-center justify-content-between mb-2">' +
-                        '<div class="fw-semibold">Employment History</div>' +
-                        '<button class="btn btn-sm btn-outline-primary btn-oc-add-history" data-id="' + esc(s.id) + '">Add</button>' +
+                    '<div class="fw-semibold">Employment History</div>' +
+                    '<button class="btn btn-sm btn-outline-primary btn-oc-add-history" data-id="' + esc(s.id) + '">Add</button>' +
                     '</div>' +
                     '<div class="d-flex flex-column gap-2">' +
-                        (history.length ? history.map(function (h) {
-                            var hid = historyValueId(h);
-                            var hRole = h.roleTitle || h.currentRole || h.role || '-';
-                            var hLocation = (h.location && locationLabel(h.location)) || h.businessLocation || h.locationName || h.location || '-';
-                            var hEmploymentType = h.employmentType || '-';
-                            var hReason = h.reasonForChange || '-';
-                            var hNotes = h.notes || '-';
-                            return '<div class="history-item">' +
-                                '<div class="fw-semibold small">' + esc(hRole) + ' · ' + esc(hLocation) + '</div>' +
-                                '<div class="text-secondary small">' + esc(Staff.formatDate(h.startDate)) + ' → ' + esc(Staff.formatDate(h.endDate || '-')) + '</div>' +
-                                '<div class="text-secondary small">Type: ' + esc(hEmploymentType) + '</div>' +
-                                '<div class="text-secondary small">Reason for change: ' + esc(hReason) + '</div>' +
-                                '<div class="text-secondary small">Notes: ' + esc(hNotes) + '</div>' +
-                                '<div class="mt-2 d-flex gap-1">' +
-                                    '<button class="btn btn-xs btn-outline-primary btn-edit-history" data-staff-id="' + esc(s.id) + '" data-history-id="' + esc(hid) + '">Edit</button>' +
-                                    '<button class="btn btn-xs btn-outline-danger btn-delete-history" data-staff-id="' + esc(s.id) + '" data-history-id="' + esc(hid) + '">Delete</button>' +
-                                '</div>' +
+                    (history.length ? history.map(function (h) {
+                        var hid = historyValueId(h);
+                        var hRole = h.roleTitle || h.currentRole || h.role || '-';
+                        var hLocation = (h.location && locationLabel(h.location)) || h.businessLocation || h.locationName || h.location || '-';
+                        var hEmploymentType = h.employmentType || '-';
+                        var hReason = h.reasonForChange || '-';
+                        var hNotes = h.notes || '-';
+                        return '<div class="history-item">' +
+                            '<div class="fw-semibold small">' + esc(hRole) + ' · ' + esc(hLocation) + '</div>' +
+                            '<div class="text-secondary small">' + esc(Staff.formatDate(h.startDate)) + ' → ' + esc(Staff.formatDate(h.endDate || '-')) + '</div>' +
+                            '<div class="text-secondary small">Type: ' + esc(hEmploymentType) + '</div>' +
+                            '<div class="text-secondary small">Reason for change: ' + esc(hReason) + '</div>' +
+                            '<div class="text-secondary small">Notes: ' + esc(hNotes) + '</div>' +
+                            '<div class="mt-2 d-flex gap-1">' +
+                            '<button class="btn btn-xs btn-outline-primary btn-edit-history" data-staff-id="' + esc(s.id) + '" data-history-id="' + esc(hid) + '">Edit</button>' +
+                            '<button class="btn btn-xs btn-outline-danger btn-delete-history" data-staff-id="' + esc(s.id) + '" data-history-id="' + esc(hid) + '">Delete</button>' +
+                            '</div>' +
                             '</div>';
-                        }).join('') : '<div class="text-secondary small">No employment history yet.</div>') +
+                    }).join('') : '<div class="text-secondary small">No employment history yet.</div>') +
                     '</div>';
+
+                var adminAccessBtnHtml = roleAssignment.linkedToUserAccount
+                    ? (roleAssignment.adminRoleId
+                        ? '<button class="btn btn-outline-dark btn-oc-assign-role" data-id="' + esc(s.id) + '">Change Role</button>' +
+                        '<button class="btn btn-outline-danger btn-oc-remove-role" data-id="' + esc(s.id) + '">Remove Role</button>'
+                        : '<button class="btn btn-outline-dark btn-oc-assign-role" data-id="' + esc(s.id) + '">Assign Role</button>')
+                    : '';
 
                 actions.innerHTML =
                     '<button class="btn btn-outline-primary btn-oc-edit" data-id="' + esc(s.id) + '">Edit</button>' +
+                    '<button class="btn btn-outline-secondary btn-oc-idcard" data-id="' + esc(s.id) + '" data-staff-code="' + esc(s.staffCode || '') + '">Download ID Card</button>' +
                     '<button class="btn btn-outline-warning btn-oc-status" data-id="' + esc(s.id) + '">Update Status</button>' +
+                    '<button class="btn btn-outline-primary btn-oc-transfer" data-id="' + esc(s.id) + '">Transfer Branch</button>' +
+                    adminAccessBtnHtml +
                     '<button class="btn btn-outline-danger btn-oc-archive" data-id="' + esc(s.id) + '">Archive</button>' +
                     '<button class="btn btn-outline-success btn-oc-restore" data-id="' + esc(s.id) + '">Restore</button>';
             } catch (err) {
@@ -638,14 +1526,14 @@
             return '<div class="' + col + '">' +
                 '<label class="form-label" for="' + id + '">' + label + '</label>' +
                 '<input class="form-control" id="' + id + '" type="' + (type || 'text') + '" value="' + esc(value || '') + '" placeholder="' + esc(placeholder || '') + '">' +
-            '</div>';
+                '</div>';
         }
 
         function buildPhoneInput(col, label, id, value, placeholder) {
             return '<div class="' + col + '">' +
                 '<label class="form-label" for="' + id + '">' + label + '</label>' +
                 '<input class="form-control" id="' + id + '" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="11" value="' + esc(value || '') + '" placeholder="' + esc(placeholder || '') + '">' +
-            '</div>';
+                '</div>';
         }
 
         function buildSelect(col, label, id, value, options) {
@@ -657,7 +1545,44 @@
                     return '<option value="' + esc(opt) + '"' + selected + '>' + esc(opt.replace(/_/g, ' ')) + '</option>';
                 }).join('') +
                 '</select>' +
-            '</div>';
+                '</div>';
+        }
+
+        // Only relevant when Work Mode is Field/Mobile -- wireFieldLocationToggle()
+        // shows/hides this row as that selection changes. Options are filled in by
+        // populateFieldLocationDropdown() once the saved field locations are loaded.
+        function buildFieldLocationRow(selectedFieldLocationId) {
+            return '<div class="col-md-6 d-none" id="sf-field-location-wrap" data-selected="' + esc(selectedFieldLocationId || '') + '">' +
+                '<label class="form-label" for="sf-field-location">Field Location</label>' +
+                '<select class="form-select" id="sf-field-location"><option value="">Select field location...</option></select>' +
+                '<div class="form-hint">Required for GPS clock-in verification when Work Mode is Field/Mobile. <a href="#" id="link-manage-field-locations">Manage field locations</a></div>' +
+                '</div>';
+        }
+
+        function wireFieldLocationToggle(workModeSelectId, wrapId) {
+            var modeEl = document.getElementById(workModeSelectId);
+            var wrapEl = document.getElementById(wrapId);
+            if (!modeEl || !wrapEl) return;
+
+            function sync() {
+                wrapEl.classList.toggle("d-none", modeEl.value !== "FIELD_MOBILE");
+            }
+
+            sync();
+            modeEl.addEventListener("change", sync);
+        }
+
+        function wireWorkModeHint(workModeSelectId, hintId) {
+            var modeEl = document.getElementById(workModeSelectId);
+            var hintEl = document.getElementById(hintId);
+            if (!modeEl || !hintEl) return;
+
+            function sync() {
+                hintEl.classList.toggle("d-none", modeEl.value !== "HYBRID");
+            }
+
+            sync();
+            modeEl.addEventListener("change", sync);
         }
 
         function normalizePhoneInput(value) {
@@ -720,6 +1645,7 @@
             var form = document.getElementById("staff-action-form");
             var d = action.data || {};
             var statusOpts = ["ACTIVE", "ON_LEAVE", "SUSPENDED", "EXITED", "ARCHIVED"];
+            var workModeOpts = ["ON_SITE", "HYBRID", "REMOTE", "FIELD_MOBILE"];
             var selectedLocationId = String(locationValueId(d.locationId || d.location));
             var locationOptions = resolveLocationOptions(action.type, selectedLocationId);
 
@@ -732,30 +1658,54 @@
                     buildInput('col-md-4', 'Current Role', 'sf-current-role', d.currentRole || '') +
                     buildOptionSelect('col-md-4', 'Location', 'sf-location-id', selectedLocationId, locationOptions, 'Select location', true) +
                     buildSelect('col-md-4', 'Employment Status', 'sf-employment-status', d.employmentStatus || 'ACTIVE', statusOpts) +
+                    buildSelect('col-md-4', 'Work Mode', 'sf-work-mode', d.workMode || 'ON_SITE', workModeOpts) +
+                    buildFieldLocationRow(d.fieldLocationId) +
+                    '<div class="col-12 d-none" id="sf-work-mode-hint"><div class="alert alert-warning py-2 px-3 small mb-0">Hybrid requires each day\'s mode to be set individually in <strong>Work Calendar</strong> after saving -- any day left unset behaves as On-site.</div></div>' +
                     buildSelect('col-md-6', 'Employment Type', 'sf-employment-type', d.employmentType || 'FULL_TIME', ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN']) +
                     buildInput('col-md-6', 'Employment Start Date', 'sf-employment-start-date', d.employmentStartDate || '', 'date') +
                     '<div class="col-12"><label class="form-label" for="sf-employment-notes">Employment Notes</label><textarea class="form-control" id="sf-employment-notes" rows="2" placeholder="Optional notes">' + esc(d.employmentNotes || '') + '</textarea></div>';
                 attachPhoneInputGuard('sf-phone');
+                ensureFieldLocationsLoaded().then(function () { populateFieldLocationDropdown(); });
+                wireFieldLocationToggle('sf-work-mode', 'sf-field-location-wrap');
+                wireWorkModeHint('sf-work-mode', 'sf-work-mode-hint');
                 return;
             }
 
             if (action.type === "update") {
+                var managerOptions = resolveManagerOptions(action.staffId, d.reportingToId);
+                var permissionRoleOpts = (d.roleOptions || []).map(function (r) { return { value: r.id, label: r.name }; });
                 form.innerHTML =
                     buildInput('col-md-6', 'Full Name', 'sf-name', d.name || '') +
                     buildInput('col-md-6', 'Email', 'sf-email', d.email || '', 'email') +
                     buildPhoneInput('col-md-6', 'Phone', 'sf-phone', normalizePhoneInput(d.phone || ''), '+2348012345678') +
                     buildInput('col-md-6', 'Date of Birth', 'sf-dob', d.dateOfBirth || '', 'date') +
-                    buildInput('col-md-4', 'Current Role', 'sf-current-role', d.currentRole || '') +
-                    buildOptionSelect('col-md-4', 'Location', 'sf-location-id', selectedLocationId, locationOptions, 'Select location', true) +
+                    buildInput('col-md-4', 'Job Title', 'sf-current-role', d.currentRole || '') +
+                    buildOptionSelect('col-md-4', 'Current Role', 'sf-permission-role-id', String(d.currentAdminRoleId || ''), permissionRoleOpts, 'No role assigned', false) +
+                    '<div class="col-md-4"><label class="form-label">Branch</label>' +
+                    '<input type="text" class="form-control" value="' + esc(d.locationName || '\u2014') + '" disabled>' +
+                    '<div class="form-hint">Use "Transfer Branch" to move this staff member \u2014 it issues a new Staff ID and keeps history intact.</div>' +
+                    '</div>' +
                     buildSelect('col-md-4', 'Employment Status', 'sf-employment-status', d.employmentStatus || 'ACTIVE', statusOpts) +
+                    buildSelect('col-md-4', 'Work Mode', 'sf-work-mode', d.workMode || 'ON_SITE', workModeOpts) +
+                    buildFieldLocationRow(d.fieldLocationId) +
+                    '<div class="col-12 d-none" id="sf-work-mode-hint"><div class="alert alert-warning py-2 px-3 small mb-0">Hybrid requires each day\'s mode to be set individually in <strong>Work Calendar</strong> after saving -- any day left unset behaves as On-site.</div></div>' +
+                    buildOptionSelect('col-md-6', 'Reports To', 'sf-reporting-to-id', String(d.reportingToId || ''), managerOptions, 'No manager assigned', false) +
+                    '<div class="col-md-6"><label class="form-label" for="sf-grace-override">Personal Late Grace Period (minutes)</label>' +
+                    '<input type="number" min="0" step="1" class="form-control" id="sf-grace-override" value="' + esc(d.lateGracePeriodOverride != null ? d.lateGracePeriodOverride : '') + '" placeholder="Leave blank to use branch default">' +
+                    '<div class="form-hint">Overrides the branch\'s grace period for this staff member specifically. Leave blank to use the branch default.</div>' +
+                    '</div>' +
                     '<div class="col-12" id="sf-exit-fields-wrap">' +
-                        '<div class="row g-3">' +
-                            buildInput('col-md-6', 'Reason For Exit', 'sf-reason-for-exit', d.reasonForExit || '') +
-                            buildInput('col-md-6', 'Exit Date', 'sf-exit-date', d.exitDate || '', 'date') +
-                        '</div>' +
+                    '<div class="row g-3">' +
+                    buildInput('col-md-6', 'Reason For Exit', 'sf-reason-for-exit', d.reasonForExit || '') +
+                    buildInput('col-md-6', 'Exit Date', 'sf-exit-date', d.exitDate || '', 'date') +
+                    '</div>' +
                     '</div>';
                 attachPhoneInputGuard('sf-phone');
                 wireExitFieldsToggle('sf-employment-status', 'sf-exit-fields-wrap');
+                ensureFieldLocationsLoaded().then(function () { populateFieldLocationDropdown(); });
+                wireFieldLocationToggle('sf-work-mode', 'sf-field-location-wrap');
+                wireWorkModeHint('sf-work-mode', 'sf-work-mode-hint');
+                SearchableSelect.attach('sf-permission-role-id');
                 return;
             }
 
@@ -763,12 +1713,80 @@
                 form.innerHTML =
                     buildSelect('col-md-6', 'Status', 'sf-status', d.status || 'ACTIVE', statusOpts) +
                     '<div class="col-12 d-none" id="sf-exit-fields-wrap">' +
-                        '<div class="row g-3">' +
-                            buildInput('col-md-6', 'Exit Date', 'sf-exit-date', d.exitDate || '', 'date') +
-                            '<div class="col-md-6"><label class="form-label" for="sf-reason-for-exit">Reason For Exit</label><textarea class="form-control" id="sf-reason-for-exit" rows="1" placeholder="Optional reason">' + esc(d.reasonForExit || '') + '</textarea></div>' +
-                        '</div>' +
+                    '<div class="row g-3">' +
+                    buildInput('col-md-6', 'Exit Date', 'sf-exit-date', d.exitDate || '', 'date') +
+                    '<div class="col-md-6"><label class="form-label" for="sf-reason-for-exit">Reason For Exit</label><textarea class="form-control" id="sf-reason-for-exit" rows="1" placeholder="Optional reason">' + esc(d.reasonForExit || '') + '</textarea></div>' +
+                    '</div>' +
                     '</div>';
                 wireExitFieldsToggle('sf-status', 'sf-exit-fields-wrap');
+                return;
+            }
+
+            if (action.type === "transfer") {
+                form.innerHTML =
+                    '<div class="col-12"><div class="alert alert-info mb-0">Current branch: <strong>' + esc(d.currentBranchName || '—') + '</strong> &middot; Current Staff ID: <strong>' + esc(d.currentStaffCode || '—') + '</strong></div></div>' +
+                    buildOptionSelect('col-12', 'New Branch', 'sf-transfer-location-id', '', locationOptions.filter(function (o) { return o.value !== d.currentLocationId; }), 'Select new branch', true) +
+                    buildInput('col-md-6', 'Effective Date', 'sf-transfer-effective-date', new Date().toISOString().slice(0, 10), 'date') +
+                    '<div class="col-md-6"></div>' +
+                    '<div class="col-12"><label class="form-label" for="sf-transfer-reason">Reason</label><textarea class="form-control" id="sf-transfer-reason" rows="2" placeholder="Why is this staff member transferring branches?"></textarea></div>' +
+                    '<div class="col-12"><div class="alert alert-warning mb-0 small">A new branch-coded Staff ID will be issued automatically. The current ID (<strong>' + esc(d.currentStaffCode || '') + '</strong>) will be retired and can never be reassigned to anyone else.</div></div>';
+                SearchableSelect.attach('sf-transfer-location-id');
+                return;
+            }
+
+            if (action.type === "payroll-method") {
+                var compTypeOpts = [
+                    { value: "SALARY", label: "Salary" },
+                    { value: "SALARY_TO_COMMISSION", label: "Salary \u2192 Commission (switches after the configured cutoff)" },
+                    { value: "SALARY_PLUS_COMMISSION", label: "Salary + Commission" },
+                    { value: "COMMISSION", label: "Commission Only" },
+                ];
+                var planOpts = (d.planOptions || []).map(function (p) { return { value: p.id, label: p.name + ' (' + CommissionPlans.formatRate(p.commissionRate) + ')' }; });
+                form.innerHTML =
+                    buildOptionSelect('col-12', 'Compensation Type', 'sf-comp-type', d.compensationType || 'SALARY', compTypeOpts, 'Select a compensation type', true) +
+                    '<div id="sf-salary-fields-wrap" class="row g-3">' +
+                    (d.currentBaseSalary != null
+                        ? '<div class="col-12"><div class="alert alert-info mb-0">Current: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(d.currentBaseSalary) : ('\u20a6' + Number(d.currentBaseSalary).toLocaleString())) + '</strong>' +
+                        (d.currentAllowances != null ? ' + <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(d.currentAllowances) : ('\u20a6' + Number(d.currentAllowances).toLocaleString())) + '</strong> allowances' : '') + '</div></div>'
+                        : '<div class="col-12"><div class="alert alert-info mb-0">No compensation set yet for this staff member.</div></div>') +
+                    buildInput('col-md-6', 'Base Salary (\u20a6)', 'sf-comp-base-salary', d.currentBaseSalary != null ? d.currentBaseSalary : '', 'number') +
+                    buildInput('col-md-6', 'Allowances (\u20a6)', 'sf-comp-allowances', d.currentAllowances != null ? d.currentAllowances : '', 'number') +
+                    buildInput('col-md-6', 'Effective Date', 'sf-comp-effective-date', new Date().toISOString().slice(0, 10), 'date') +
+                    '<div class="col-md-6"></div>' +
+                    '<div class="col-12"><label class="form-label" for="sf-comp-note">Note</label><textarea class="form-control" id="sf-comp-note" rows="2" placeholder="e.g. Annual review — 10% increase"></textarea></div>' +
+                    '<div class="col-12"><div class="form-hint">This is the ongoing figure Payroll reads from — distinct from the original offer letter, which is a one-time pre-hire snapshot. Every change is recorded in this staff member\'s compensation history.</div></div>' +
+                    '</div>' +
+                    '<div id="sf-commission-fields-wrap" class="row g-3">' +
+                    buildOptionSelect('col-12', 'Commission Plan', 'sf-comp-plan-id', String(d.commissionPlanId || ''), planOpts, 'No plan assigned', false) +
+                    '<div class="col-12"><div class="form-hint">Every commission-earning staff member is set up through a Commission Plan \u2014 create one under Payroll if one doesn\'t exist yet for their rate.</div></div>' +
+                    '</div>';
+                SearchableSelect.attach('sf-comp-plan-id');
+
+                var syncPayrollMethodFields = function () {
+                    var type = document.getElementById('sf-comp-type').value;
+                    var showSalary = type === 'SALARY' || type === 'SALARY_TO_COMMISSION' || type === 'SALARY_PLUS_COMMISSION';
+                    var showCommission = type === 'SALARY_TO_COMMISSION' || type === 'SALARY_PLUS_COMMISSION' || type === 'COMMISSION';
+                    document.getElementById('sf-salary-fields-wrap').style.display = showSalary ? '' : 'none';
+                    document.getElementById('sf-commission-fields-wrap').style.display = showCommission ? '' : 'none';
+                };
+                document.getElementById('sf-comp-type').addEventListener('change', syncPayrollMethodFields);
+                syncPayrollMethodFields();
+                return;
+            }
+
+            if (action.type === "assign-role") {
+                var roleOpts = (d.roleOptions || []).map(function (r) { return { value: r.id, label: r.name }; });
+                form.innerHTML =
+                    '<div class="col-12"><div class="alert alert-info mb-0">The permission set applies wherever anything checks permissions — admin portal (if login is granted below) and staff portal alike.</div></div>' +
+                    buildOptionSelect('col-12', 'Permission Set', 'sf-assign-role-id', String(d.currentAdminRoleId || ''), roleOpts, 'Select a role…', true) +
+                    '<div class="col-12">' +
+                    '<div class="form-check form-switch">' +
+                    '<input class="form-check-input" type="checkbox" id="sf-grant-portal-login"' + (d.currentGrantPortalLogin ? ' checked' : '') + '>' +
+                    '<label class="form-check-label" for="sf-grant-portal-login">Also grant admin dashboard login</label>' +
+                    '</div>' +
+                    '<div class="form-hint">Leave unchecked to apply this role\'s permissions inside the staff portal only, with no admin dashboard access.</div>' +
+                    '</div>';
+                SearchableSelect.attach('sf-assign-role-id');
                 return;
             }
 
@@ -820,6 +1838,8 @@
                     currentRole: trimOrUndef(document.getElementById("sf-current-role").value),
                     locationId: trimOrUndef(document.getElementById("sf-location-id").value),
                     employmentStatus: document.getElementById("sf-employment-status").value,
+                    workMode: document.getElementById("sf-work-mode").value,
+                    fieldLocationId: document.getElementById("sf-field-location").value || null,
                     employmentType: document.getElementById("sf-employment-type").value,
                     employmentStartDate: trimOrUndef(document.getElementById("sf-employment-start-date").value),
                     employmentNotes: trimOrUndef(document.getElementById("sf-employment-notes").value),
@@ -831,14 +1851,21 @@
                 var updatePayload = {
                     name: trimOrUndef(document.getElementById("sf-name").value),
                     currentRole: trimOrUndef(document.getElementById("sf-current-role").value),
-                    locationId: trimOrUndef(document.getElementById("sf-location-id").value),
                     email: trimOrUndef(document.getElementById("sf-email").value),
                     phone: trimOrUndef(normalizePhoneInput(document.getElementById("sf-phone").value)),
                     dateOfBirth: trimOrUndef(document.getElementById("sf-dob").value),
                     employmentStatus: document.getElementById("sf-employment-status").value,
+                    workMode: document.getElementById("sf-work-mode").value,
+                    fieldLocationId: document.getElementById("sf-field-location").value || null,
                     reasonForExit: trimOrUndef(document.getElementById("sf-reason-for-exit").value),
                     exitDate: trimOrUndef(document.getElementById("sf-exit-date").value),
+                    reportingToId: document.getElementById("sf-reporting-to-id").value || null,
+                    lateGracePeriodOverride: (function () {
+                        var v = document.getElementById("sf-grace-override").value.trim();
+                        return v === "" ? null : Number(v);
+                    })(),
                 };
+
                 if (String(updatePayload.employmentStatus || "").toUpperCase() !== "EXITED") {
                     delete updatePayload.reasonForExit;
                     delete updatePayload.exitDate;
@@ -859,6 +1886,45 @@
                 Object.keys(statusPayload).forEach(function (k) { if (statusPayload[k] === undefined) delete statusPayload[k]; });
                 return statusPayload;
             }
+            if (actionType === "transfer") {
+                var transferPayload = {
+                    newLocationId: document.getElementById("sf-transfer-location-id").value,
+                    effectiveDate: trimOrUndef(document.getElementById("sf-transfer-effective-date").value),
+                    reason: trimOrUndef(document.getElementById("sf-transfer-reason").value),
+                };
+                Object.keys(transferPayload).forEach(function (k) { if (transferPayload[k] === undefined) delete transferPayload[k]; });
+                return transferPayload;
+            }
+
+            if (actionType === "payroll-method") {
+                var compType = document.getElementById("sf-comp-type").value;
+                var payrollPayload = { compensationType: compType };
+
+                var showSalary = compType === 'SALARY' || compType === 'SALARY_TO_COMMISSION' || compType === 'SALARY_PLUS_COMMISSION';
+                if (showSalary) {
+                    var baseSalaryInput = document.getElementById("sf-comp-base-salary").value;
+                    var allowancesInput = document.getElementById("sf-comp-allowances").value;
+                    payrollPayload.baseSalary = baseSalaryInput === "" ? undefined : Number(baseSalaryInput);
+                    payrollPayload.allowances = allowancesInput === "" ? undefined : Number(allowancesInput);
+                    payrollPayload.effectiveDate = trimOrUndef(document.getElementById("sf-comp-effective-date").value);
+                    payrollPayload.note = trimOrUndef(document.getElementById("sf-comp-note").value);
+                }
+
+                var showCommission = compType === 'SALARY_TO_COMMISSION' || compType === 'SALARY_PLUS_COMMISSION' || compType === 'COMMISSION';
+                if (showCommission) {
+                    payrollPayload.commissionPlanId = document.getElementById("sf-comp-plan-id").value || null;
+                }
+
+                return payrollPayload;
+            }
+
+            if (actionType === "assign-role") {
+                return {
+                    adminRoleId: document.getElementById("sf-assign-role-id").value,
+                    grantPortalLogin: document.getElementById("sf-grant-portal-login").checked,
+                };
+            }
+
             if (actionType === "archive") {
                 var archivePayload = {
                     archivedAt: trimOrUndef(document.getElementById("sf-archived-at").value),
@@ -903,10 +1969,48 @@
                     errorEl.classList.remove("d-none");
                     return;
                 }
+                if (payload.workMode === "FIELD_MOBILE" && !payload.fieldLocationId) {
+                    errorEl.textContent = "Please assign a Field Location -- required for GPS clock-in verification when Work Mode is Field/Mobile.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
             }
+
             if (_staffFormAction.type === "add-history" || _staffFormAction.type === "edit-history") {
                 if (!payload.roleTitle || !payload.locationId || !payload.startDate) {
                     errorEl.textContent = "Role title, location, and start date are required for employment history.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
+            }
+            if (_staffFormAction.type === "transfer") {
+                if (!payload.newLocationId) {
+                    errorEl.textContent = "Please select the new branch.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
+                if (!confirm("This will issue a new Staff ID and permanently retire the current one. Continue?")) {
+                    return;
+                }
+            }
+            if (_staffFormAction.type === "payroll-method") {
+                var pmShowSalary = payload.compensationType === 'SALARY' || payload.compensationType === 'SALARY_TO_COMMISSION' || payload.compensationType === 'SALARY_PLUS_COMMISSION';
+                if (pmShowSalary) {
+                    if (payload.baseSalary == null || isNaN(payload.baseSalary) || payload.baseSalary < 0) {
+                        errorEl.textContent = "Please enter a valid base salary.";
+                        errorEl.classList.remove("d-none");
+                        return;
+                    }
+                    if (!payload.effectiveDate) {
+                        errorEl.textContent = "Please select an effective date.";
+                        errorEl.classList.remove("d-none");
+                        return;
+                    }
+                }
+            }
+            if (_staffFormAction.type === "assign-role") {
+                if (!payload.adminRoleId) {
+                    errorEl.textContent = "Please select a permission set.";
                     errorEl.classList.remove("d-none");
                     return;
                 }
@@ -916,8 +2020,33 @@
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Submitting...';
             try {
                 if (_staffFormAction.type === "create") await Staff.create(payload);
-                else if (_staffFormAction.type === "update") await Staff.update(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "update") {
+                    await Staff.update(_staffFormAction.staffId, payload);
+                    var selectedPermissionRoleId = document.getElementById("sf-permission-role-id").value;
+                    if (selectedPermissionRoleId) {
+                        var preserveGrantPortalLogin = !!(_staffFormAction.data && _staffFormAction.data.currentGrantPortalLogin);
+                        await Staff.assignRole(_staffFormAction.staffId, selectedPermissionRoleId, preserveGrantPortalLogin);
+                    }
+                }
                 else if (_staffFormAction.type === "status") await Staff.updateStatus(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "transfer") await Staff.transferBranch(_staffFormAction.staffId, payload);
+                else if (_staffFormAction.type === "payroll-method") {
+                    await CommissionPlans.assignCompensation(_staffFormAction.staffId, {
+                        compensationType: payload.compensationType,
+                        commissionPlanId: payload.commissionPlanId !== undefined ? payload.commissionPlanId : null,
+                    });
+                    if (payload.baseSalary !== undefined) {
+                        var compPayload = {
+                            baseSalary: payload.baseSalary,
+                            allowances: payload.allowances,
+                            effectiveDate: payload.effectiveDate,
+                            note: payload.note,
+                        };
+                        Object.keys(compPayload).forEach(function (k) { if (compPayload[k] === undefined) delete compPayload[k]; });
+                        await Staff.setCompensation(_staffFormAction.staffId, compPayload);
+                    }
+                }
+                else if (_staffFormAction.type === "assign-role") await Staff.assignRole(_staffFormAction.staffId, payload.adminRoleId, payload.grantPortalLogin);
                 else if (_staffFormAction.type === "archive") await Staff.archive(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "add-history") await Staff.addHistory(_staffFormAction.staffId, payload);
                 else if (_staffFormAction.type === "edit-history") await Staff.updateHistory(_staffFormAction.staffId, _staffFormAction.historyId, payload);
@@ -938,7 +2067,11 @@
         async function handleEditStaff(id) {
             try {
                 await ensureLocationsLoaded();
+                await ensureStaffOptionsLoaded();
                 var s = await Staff.getOne(id);
+                var allRoles = await Roles.fetchRoles().catch(function () { return []; });
+                var assignableRoles = (allRoles || []).filter(function (r) { return String(r.name || '').toLowerCase().indexOf('super admin') === -1; });
+                var currentAssignment = await Staff.getRoleAssignment(id).catch(function () { return {}; });
                 openStaffFormModal({
                     type: "update",
                     staffId: id,
@@ -951,9 +2084,17 @@
                         dateOfBirth: (s.dateOfBirth || "").slice(0, 10),
                         currentRole: s.currentRole || "",
                         locationId: String(s.locationId || locationValueId(s.location) || ""),
-                        employmentStatus: s.employmentStatus || "ACTIVE",
+                        locationName: (s.location && s.location.name) || "", employmentStatus: s.employmentStatus || "ACTIVE",
+                        workMode: s.workMode || "ON_SITE",
+                        fieldLocationId: s.fieldLocationId || "",
                         reasonForExit: s.reasonForExit || "",
                         exitDate: (s.exitDate || "").slice(0, 10),
+                        reportingToId: String(s.reportingToId || (s.reportingTo && s.reportingTo.id) || ""),
+                        commissionRate: s.commissionRate,
+                        lateGracePeriodOverride: s.lateGracePeriodOverride,
+                        roleOptions: assignableRoles,
+                        currentAdminRoleId: currentAssignment.adminRoleId || "",
+                        currentGrantPortalLogin: !!currentAssignment.hasAdminPortalLogin,
                     }
                 });
             } catch (err) {
@@ -973,6 +2114,99 @@
                     exitDate: ""
                 }
             });
+        }
+
+        async function handleTransferBranch(id) {
+            try {
+                await ensureLocationsLoaded();
+                var s = await Staff.getOne(id);
+                openStaffFormModal({
+                    type: "transfer",
+                    staffId: id,
+                    title: "Transfer Branch",
+                    help: "Move this staff member to a different branch. A new Staff ID will be issued automatically.",
+                    data: {
+                        currentBranchName: (s.location && s.location.name) || "",
+                        currentLocationId: String(s.locationId || locationValueId(s.location) || ""),
+                        currentStaffCode: s.staffCode || "",
+                    }
+                });
+            } catch (err) {
+                alert(err.message || "Failed to load staff for transfer");
+            }
+        }
+
+        async function handleSetPayrollMethod(id) {
+            try {
+                var s = await Staff.getOne(id);
+                var plans = await CommissionPlans.getAll(true).catch(function () { return []; });
+                openStaffFormModal({
+                    type: "payroll-method",
+                    staffId: id,
+                    title: "Payroll Method — " + Staff.fullName(s),
+                    help: "Sets which payroll calculation path applies, and the relevant salary or commission figures for it.",
+                    data: {
+                        compensationType: s.compensationType || "SALARY",
+                        currentBaseSalary: s.currentBaseSalary,
+                        currentAllowances: s.currentAllowances,
+                        commissionPlanId: s.commissionPlanId || "",
+                        commissionRate: s.commissionRate,
+                        planOptions: plans,
+                    }
+                });
+            } catch (err) {
+                alert(err.message || "Failed to load staff for payroll method update");
+            }
+        }
+
+        async function handleRequestAddressVerification(id) {
+            if (!confirm("Request Physical Address Verification for this staff member? They'll see this pending request on their Staff Portal and need to submit their address details there. QoreID's field agents then verify it physically, typically within 24-48 hours.")) return;
+            try {
+                await Staff.requestAddressVerification(id);
+                if (_currentStaffId === id) await openStaffDetail(id);
+            } catch (err) {
+                alert(err.message || "Failed to request address verification");
+            }
+        }
+
+        async function handleCancelAddressVerification(id) {
+            if (!confirm("Cancel this Physical Address Verification request? This only stops us from tracking it -- if a QoreID field visit is already underway, it is not actually called off.")) return;
+            try {
+                await Staff.cancelAddressVerification(id);
+                if (_currentStaffId === id) await openStaffDetail(id);
+            } catch (err) {
+                alert(err.message || "Failed to cancel address verification");
+            }
+        }
+
+        async function handleAssignRole(id) {
+            try {
+                var roles = await Roles.fetchRoles();
+                var current = await Staff.getRoleAssignment(id).catch(function () { return {}; });
+                openStaffFormModal({
+                    type: "assign-role",
+                    staffId: id,
+                    title: current.adminRoleId ? "Change Role" : "Assign Role",
+                    help: "Choose which permission set this staff member should have.",
+                    data: {
+                        roleOptions: roles || [],
+                        currentAdminRoleId: current.adminRoleId || "",
+                        currentGrantPortalLogin: !!current.hasAdminPortalLogin,
+                    }
+                });
+            } catch (err) {
+                alert(err.message || "Failed to load roles.");
+            }
+        }
+
+        async function handleRemoveRole(id) {
+            if (!confirm("Remove this staff member's role assignment? They will lose their assigned permissions and any admin dashboard login. Their staff-portal access is otherwise unaffected.")) return;
+            try {
+                await Staff.removeRole(id);
+                await openStaffDetail(id);
+            } catch (err) {
+                alert(err.message || "Failed to remove role.");
+            }
         }
 
         function handleArchiveStaff(id) {
@@ -996,6 +2230,45 @@
                 await loadStaff();
             } catch (err) {
                 alert(err.message || "Restore failed");
+            }
+        }
+
+        async function handleDownloadIdCard(id, staffCode) {
+            try {
+                await Staff.downloadIdCard(id, staffCode);
+            } catch (err) {
+                alert(err.message || "Could not generate ID card");
+            }
+        }
+
+        async function handleToggleOnboardingItem(staffId, itemId, next) {
+            try {
+                await Staff.updateOnboardingItem(staffId, itemId, { isComplete: next });
+                if (_currentStaffId) await openStaffDetail(_currentStaffId);
+            } catch (err) {
+                alert(err.message || "Could not update onboarding item");
+            }
+        }
+
+        async function handleApproveOnboardingItem(staffId, itemId) {
+            if (!confirm("Approve this submission? This marks the item complete.")) return;
+            try {
+                await Staff.updateOnboardingItem(staffId, itemId, { isComplete: true });
+                if (_currentStaffId) await openStaffDetail(_currentStaffId);
+            } catch (err) {
+                alert(err.message || "Could not approve onboarding item");
+            }
+        }
+
+        async function handleRejectOnboardingItem(staffId, itemId) {
+            var note = prompt("Why is this being rejected? This note is visible to the staff member.");
+            if (note === null) return; // cancelled
+            if (!note.trim()) { alert("A reason is required so the staff member knows what to fix."); return; }
+            try {
+                await Staff.updateOnboardingItem(staffId, itemId, { isComplete: false, notes: note.trim() });
+                if (_currentStaffId) await openStaffDetail(_currentStaffId);
+            } catch (err) {
+                alert(err.message || "Could not reject onboarding item");
             }
         }
 
@@ -1056,6 +2329,7 @@
         }
 
     </script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 
 </html>
