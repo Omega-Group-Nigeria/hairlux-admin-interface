@@ -148,10 +148,7 @@
                                 </tbody>
                             </table>
                         </div>
-<<<<<<< HEAD
                         <div id="list-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     </div>
                 </div>
             </div>
@@ -260,21 +257,15 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
     <script src="assets/js/api-utils/inventory-products.js"></script>
-<<<<<<< HEAD
     <script src="assets/js/simple-pager.js"></script>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
-<<<<<<< HEAD
         // Client-side paging for the main list (assets/js/simple-pager.js).
         var _renderPage = null;
         var _pager = SimplePager.attach('#list-pager', { onChange: function () { if (_renderPage) _renderPage(); } });
 
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         var bootstrap = window.tabler.bootstrap;
         var editingId = null;
         var _allVendors = [];
@@ -406,7 +397,6 @@
                 var noVendor = vendorFilterVal === '__NONE__';
                 var list = await InventoryProducts.getAll(search, category, activeOnly, vendorId, noVendor);
                 _lastLoadedProducts = list;
-<<<<<<< HEAD
                 _pager.reset();
                 (_renderPage = function () {
                     var pageRows = _pager.slice(list);
@@ -434,31 +424,6 @@
                         }).join('')
                         : '<tr><td colspan="6" class="text-center text-secondary py-5">No products found.</td></tr>';
                 })();
-=======
-                tbody.innerHTML = list.length
-                    ? list.map(function (p) {
-                        var statusBadge = p.isActive
-                            ? '<span class="badge bg-green-lt">Active</span>'
-                            : '<span class="badge bg-secondary-lt">Inactive</span>';
-                        var vendorBadges = (p.suppliers || []).map(function (s) {
-                            return '<span class="badge bg-secondary-lt me-1">' + esc(s.vendor ? s.vendor.name : '') + '</span>';
-                        }).join('') || '<span class="text-secondary small">None</span>';
-                        var subtext = [p.sku, p.brand].filter(Boolean).join(' · ');
-                        return '<tr>' +
-                            '<td><div class="fw-semibold">' + esc(p.name) + '</div>' +
-                            (subtext ? '<div class="text-secondary small">' + esc(subtext) + '</div>' : '') + '</td>' +
-                            '<td>' + esc(formatCategories(p.category)) + '</td>' +
-                            '<td>' + formatMoney(p.costPrice) + ' / ' + formatMoney(p.sellingPrice) + '</td>' +
-                            '<td>' + vendorBadges + '</td>' +
-                            '<td>' + statusBadge + '</td>' +
-                            '<td class="text-nowrap">' +
-                            '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + p.id + '\')">Edit</button>' +
-                            '<button class="btn btn-sm btn-outline-danger" onclick="remove(\'' + p.id + '\')">Delete</button>' +
-                            '</td>' +
-                            '</tr>';
-                    }).join('')
-                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No products found.</td></tr>';
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
@@ -565,4 +530,4 @@
 <script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>

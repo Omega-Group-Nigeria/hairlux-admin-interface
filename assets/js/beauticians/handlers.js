@@ -1365,8 +1365,8 @@ async function loadPayouts() {
     try {
         var params = {};
         if (State.payouts.status) params.status = State.payouts.status;
-<<<<<<< HEAD
-        var rows = await Api.listPayouts(params);
+        var allRows = await Api.listPayouts(params);
+        var rows = allRows.filter(payoutRowMatchesSearch);
         payoutsPager.reset();
         (renderPayoutsPage = function () {
             var pageRows = payoutsPager.slice(rows);
@@ -1400,39 +1400,6 @@ async function loadPayouts() {
                     '</tr>';
             }).join('');
         })();
-=======
-        var allRows = await Api.listPayouts(params);
-        var rows = allRows.filter(payoutRowMatchesSearch);
-        if (!rows.length) {
-            var emptyMsg = State.payouts.status
-                ? 'No ' + State.payouts.status.toLowerCase().replace(/_/g, ' ') + ' payout requests.'
-                : 'No payout requests found.';
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">' + emptyMsg + '</td></tr>';
-            document.getElementById('payouts-count-label').textContent = payoutsCountLabel(0);
-            return;
-        }
-        document.getElementById('payouts-count-label').textContent = payoutsCountLabel(rows.length);
-        tbody.innerHTML = rows.map(function (p, i) {
-            var b = p.beautician || {};
-            var name = [b.firstName, b.lastName].filter(Boolean).join(' ') || '—';
-            var dob = Beauticians.formatDateOfBirth(b);
-            var beauticianMeta = [b.email || '', dob !== '—' ? 'Born ' + dob : ''].filter(Boolean).join('<br>');
-            var status = (p.status || '').toUpperCase();
-            var actionCell = status === 'PENDING' && RBAC.can('beauticians:process_payouts')
-                ? '<button class="btn btn-success btn-sm btn-process-payout" data-id="' + p.id + '" data-amount="' + p.amount + '">Process</button>'
-                : '<span class="text-secondary small">—</span>';
-            return '<tr class="payout-row">' +
-                '<td class="text-secondary small">' + (i + 1) + '</td>' +
-                '<td><div class="fw-semibold">' + name + '</div><div class="text-secondary small">' + (beauticianMeta || '—') + '</div></td>' +
-                '<td class="fw-semibold text-success">' + Beauticians.formatMoney(p.amount) + '</td>' +
-                '<td>' + Beauticians.payoutStatusBadge(p.status) + '</td>' +
-                '<td>' + (p.bankName || p.bankCode || '—') + '</td>' +
-                '<td class="font-monospace small">' + (p.accountNumber || '—') + '<br><span class="text-secondary">' + (p.accountName || '') + '</span></td>' +
-                '<td class="text-secondary small">' + Beauticians.formatDateTime(p.createdAt) + '</td>' +
-                '<td>' + actionCell + '</td>' +
-                '</tr>';
-        }).join('');
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     } catch (err) {
         tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + (err.message || 'Failed to load.') + '</td></tr>';
         document.getElementById('payouts-count-label').textContent = 'Error';

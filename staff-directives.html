@@ -215,10 +215,7 @@
                                 </tbody>
                             </table>
                         </div>
-<<<<<<< HEAD
                         <div id="list-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     </div>
                 </div>
             </div>
@@ -323,21 +320,15 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-comms.js"></script>
-<<<<<<< HEAD
     <script src="./assets/js/simple-pager.js"></script>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script src="./assets/js/tabler.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script src="./assets/js/rich-text-editor.js"></script>
     <script>
-<<<<<<< HEAD
         // Client-side paging for long lists (assets/js/simple-pager.js).
         var _renderPage = null;
         var _pager = SimplePager.attach('#list-pager', { onChange: function () { if (_renderPage) _renderPage(); } });
 
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         var bootstrap = window.tabler.bootstrap;
 
         Auth.requireAuth();
@@ -491,7 +482,6 @@
                 var directives = await StaffComms.getAllDirectives(_currentFilters);
                 _directivesCache = directives;
                 var tbody = document.getElementById("directives-tbody");
-<<<<<<< HEAD
                 _pager.reset();
                 (_renderPage = function () {
                     var pageRows = _pager.slice(directives);
@@ -521,33 +511,6 @@
                         }).join("");
                     }
                 })();
-=======
-                if (!directives.length) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">No tasks found.</td></tr>';
-                } else {
-                    tbody.innerHTML = directives.map(function (d) {
-                        var assignedTo = d.targetStaff ? d.targetStaff.name + " (" + (d.targetStaff.staffCode || "") + ")" : "-";
-                        var dueCell = d.dueDate
-                            ? '<span class="' + (isOverdue(d) ? "text-danger fw-semibold" : "") + '">' + StaffComms.formatDate(d.dueDate) + (isOverdue(d) ? " (overdue)" : "") + '</span>'
-                            : '<span class="text-secondary">—</span>';
-                        var evidenceCell = d.evidenceUrl
-                            ? '<button type="button" class="btn btn-ghost-primary btn-sm directive-view-evidence" data-id="' + d.id + '">View</button>'
-                            : '<span class="text-secondary small">—</span>';
-                        return '<tr>' +
-                            '<td class="fw-semibold">' + esc(d.title) + '</td>' +
-                            '<td>' + esc(assignedTo) + '</td>' +
-                            '<td>' + dueCell + '</td>' +
-                            '<td>' + StaffComms.directiveStatusBadge(d.status) + '</td>' +
-                            '<td>' + evidenceCell + '</td>' +
-                            '<td>' + esc(StaffComms.createdByName(d)) + '</td>' +
-                            '<td class="text-secondary small">' + timeAgo(d.createdAt) + '</td>' +
-                            '<td class="text-nowrap">' +
-                            (RBAC.can(StaffComms.PERMISSIONS.TASKS_UPDATE) ? '<button type="button" class="btn btn-ghost-secondary btn-sm directive-edit" data-id="' + d.id + '">Edit</button> ' : '') +
-                            (RBAC.can(StaffComms.PERMISSIONS.TASKS_DELETE) ? '<button type="button" class="btn btn-ghost-danger btn-sm directive-delete" data-id="' + d.id + '">Delete</button>' : '') +
-                            '</td></tr>';
-                    }).join("");
-                }
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 document.getElementById("results-label").textContent = directives.length + " total";
 
                 document.getElementById("stat-pending").textContent = directives.filter(function (d) { return d.status === "PENDING"; }).length;

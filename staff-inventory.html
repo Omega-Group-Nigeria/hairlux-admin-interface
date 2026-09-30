@@ -177,10 +177,7 @@
                                 </tbody>
                             </table>
                         </div>
-<<<<<<< HEAD
                         <div id="dashboard-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     </div>
 
                     <div class="card">
@@ -209,10 +206,7 @@
                                 </tbody>
                             </table>
                         </div>
-<<<<<<< HEAD
                         <div id="entries-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     </div>
                 </div>
             </div>
@@ -223,7 +217,6 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-operations.js"></script>
-<<<<<<< HEAD
     <script src="./assets/js/simple-pager.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
@@ -233,10 +226,6 @@
         var _renderEntriesPage = null;
         var _entriesPager = SimplePager.attach('#entries-pager', { onChange: function () { if (_renderEntriesPage) _renderEntriesPage(); } });
 
-=======
-    <script src="./assets/js/tabler.min.js"></script>
-    <script>
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         Auth.requireAuth();
         RBAC.loadFromStorage();
         RBAC.applyPageGuardForCurrentPage();
@@ -304,7 +293,6 @@
                 document.getElementById("stat-out").textContent = outOfStock.length;
 
                 var tbody = document.getElementById("dashboard-tbody");
-<<<<<<< HEAD
                 totals.sort(function (a, b) { return a.productName.localeCompare(b.productName); });
                 _dashboardPager.reset();
                 (_renderDashboardPage = function () {
@@ -325,25 +313,6 @@
                             }).join("");
                     }
                 })();
-=======
-                if (!totals.length) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">No inventory logged yet.</td></tr>';
-                } else {
-                    tbody.innerHTML = totals
-                        .sort(function (a, b) { return a.productName.localeCompare(b.productName); })
-                        .map(function (t) {
-                            var statusBadge = t.total <= 0
-                                ? '<span class="badge bg-danger-lt">Out of Stock</span>'
-                                : t.total <= StaffOps.LOW_STOCK_THRESHOLD
-                                    ? '<span class="badge bg-warning-lt">Low</span>'
-                                    : '<span class="badge bg-success-lt">Good</span>';
-                            return '<tr><td class="fw-semibold">' + esc(t.productName) + '</td>' +
-                                '<td>' + esc(t.locationName) + '</td>' +
-                                '<td>' + t.total + ' units</td>' +
-                                '<td>' + statusBadge + '</td></tr>';
-                        }).join("");
-                }
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 document.getElementById("results-label").textContent = totals.length + " product(s) tracked";
                 if (options.notifySuccess) flashPageAlert("success", "Refreshed.");
             } catch (e) {
@@ -357,7 +326,6 @@
             try {
                 var entries = await StaffOps.getInventoryEntries({ locationId: RBAC.scopeBranchId(_locationId) || undefined });
                 var tbody = document.getElementById("entries-tbody");
-<<<<<<< HEAD
                 _entriesPager.reset();
                 (_renderEntriesPage = function () {
                     var pageRows = _entriesPager.slice(entries);
@@ -378,24 +346,6 @@
                         }).join("");
                     }
                 })();
-=======
-                if (!entries.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">No entries logged yet.</td></tr>';
-                } else {
-                    tbody.innerHTML = entries.map(function (e) {
-                        var typeBadge = e.type === "RECEIVED"
-                            ? '<span class="badge bg-success-lt">Received</span>'
-                            : '<span class="badge bg-secondary-lt">Sold</span>';
-                        return '<tr><td class="fw-semibold">' + esc(e.productName) + '</td>' +
-                            '<td>' + esc(e.location ? e.location.name : "-") + '</td>' +
-                            '<td>' + typeBadge + '</td>' +
-                            '<td>' + e.quantity + '</td>' +
-                            '<td>' + esc(e.staff ? e.staff.name : "-") + '</td>' +
-                            '<td class="text-secondary small">' + esc(e.note || "-") + '</td>' +
-                            '<td class="text-secondary small">' + timeAgo(e.createdAt) + '</td></tr>';
-                    }).join("");
-                }
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (e) {
                 document.getElementById("entries-tbody").innerHTML =
                     '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || "Failed to load entries.") + '</td></tr>';

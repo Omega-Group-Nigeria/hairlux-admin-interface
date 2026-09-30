@@ -190,10 +190,7 @@
                                     </tbody>
                                 </table>
                             </div>
-<<<<<<< HEAD
                             <div id="items-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                         </div>
                     </div>
 
@@ -233,10 +230,7 @@
                                     </tbody>
                                 </table>
                             </div>
-<<<<<<< HEAD
                             <div id="alerts-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                         </div>
                     </div>
 
@@ -276,10 +270,7 @@
                                     </tbody>
                                 </table>
                             </div>
-<<<<<<< HEAD
                             <div id="expiry-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                         </div>
                     </div>
 
@@ -311,10 +302,7 @@
                                     </tbody>
                                 </table>
                             </div>
-<<<<<<< HEAD
                             <div id="transfers-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                         </div>
                     </div>
 
@@ -343,10 +331,7 @@
                                     </tbody>
                                 </table>
                             </div>
-<<<<<<< HEAD
                             <div id="adjustments-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                         </div>
                     </div>
 
@@ -768,10 +753,7 @@
     <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="assets/js/api-utils/inventory.js"></script>
-<<<<<<< HEAD
     <script src="assets/js/simple-pager.js"></script>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/suppliers.js"></script>
     <script src="assets/js/api-utils/inventory-products.js"></script>
@@ -780,7 +762,6 @@
     <script src="assets/js/tabler.min.js"></script>
 
     <script>
-<<<<<<< HEAD
         // Paging (assets/js/simple-pager.js): the items list pages on the
         // server; the alert / transfer / adjustment tabs page client-side.
         var _itemsPager = SimplePager.attach('#items-pager', { onChange: function () { loadItems(); } });
@@ -790,8 +771,6 @@
         var _transfersPager = SimplePager.attach('#transfers-pager', { onChange: function () { if (_renderTransfersPage) _renderTransfersPage(); } });
         var _adjustmentsPager = SimplePager.attach('#adjustments-pager', { onChange: function () { if (_renderAdjustmentsPage) _renderAdjustmentsPage(); } });
 
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         var bootstrap = window.tabler.bootstrap;
         Auth.requireAuth();
         RBAC.loadFromStorage();
@@ -825,11 +804,7 @@
             document.getElementById("filter-category").value = "";
             document.getElementById("filter-stock-status").value = stockStatus || "";
             switchToTab("items");
-<<<<<<< HEAD
             reloadItemsFromFirstPage();
-=======
-            loadItems();
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -865,7 +840,6 @@
                 switchToTab(tab.dataset.tab);
             });
 
-<<<<<<< HEAD
             document.getElementById("filter-branch").addEventListener("change", reloadItemsFromFirstPage);
             document.getElementById("filter-category").addEventListener("change", reloadItemsFromFirstPage);
             document.getElementById("filter-stock-status").addEventListener("change", reloadItemsFromFirstPage);
@@ -873,15 +847,6 @@
             document.getElementById("filter-search").addEventListener("input", function () {
                 clearTimeout(_searchDebounce);
                 _searchDebounce = setTimeout(reloadItemsFromFirstPage, 300);
-=======
-            document.getElementById("filter-branch").addEventListener("change", loadItems);
-            document.getElementById("filter-category").addEventListener("change", loadItems);
-            document.getElementById("filter-stock-status").addEventListener("change", loadItems);
-            var _searchDebounce;
-            document.getElementById("filter-search").addEventListener("input", function () {
-                clearTimeout(_searchDebounce);
-                _searchDebounce = setTimeout(loadItems, 300);
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             });
             document.getElementById("btn-refresh").addEventListener("click", function () { loadItems(); loadSummaryStats(); refreshBadgeCounts(); });
             document.getElementById("btn-export-items").addEventListener("click", exportItems);
@@ -989,11 +954,7 @@
                 var opts = branches.map(function (b) { return '<option value="' + b.id + '">' + escapeHtml(b.name) + '</option>'; }).join('');
                 document.getElementById("filter-branch").innerHTML = '<option value="">All branches</option>' + opts;
                 renderNewItemBranchList(RBAC.filterBranches(branches));
-<<<<<<< HEAD
                 if (RBAC.applyBranchScope(document.getElementById("filter-branch"))) reloadItemsFromFirstPage();
-=======
-                if (RBAC.applyBranchScope(document.getElementById("filter-branch"))) loadItems();
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 console.error("Failed to load branches", err);
             }
@@ -1164,15 +1125,12 @@
             }
         }
 
-<<<<<<< HEAD
         /** A filter changed -- go back to page 1 of the (server-paged) items list. */
         function reloadItemsFromFirstPage() {
             _itemsPager.reset();
             loadItems();
         }
 
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         async function loadItems() {
             var tbody = document.getElementById("items-tbody");
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
@@ -1182,17 +1140,11 @@
                     branchId: RBAC.scopeBranchId(document.getElementById("filter-branch").value),
                     category: document.getElementById("filter-category").value,
                     stockStatus: document.getElementById("filter-stock-status").value || undefined,
-<<<<<<< HEAD
                     page: _itemsPager.page,
                     limit: _itemsPager.perPage,
                 });
                 var items = result.data || [];
                 _itemsPager.setTotal(result.meta ? result.meta.total : items.length);
-=======
-                    limit: 100,
-                });
-                var items = result.data || [];
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
 
                 if (!items.length) {
                     tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No items found.</td></tr>';
@@ -1539,7 +1491,6 @@
             try {
                 var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getAlerts(id, resolved); });
                 var alerts = result.data || result || [];
-<<<<<<< HEAD
                 _alertsPager.reset();
                 (_renderAlertsPage = function () {
                     var pageRows = _alertsPager.slice(alerts);
@@ -1562,26 +1513,6 @@
                             '</tr>';
                     }).join('');
                 })();
-=======
-                if (!alerts.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' alerts.</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = alerts.map(function (a) {
-                    var stageColor = Inventory.ALERT_STAGE_COLORS[a.currentStage] || 'bg-secondary-lt';
-                    var action = resolved ? '' : '<button class="btn btn-sm btn-success btn-resolve-alert" data-id="' + a.id + '">Resolve</button>';
-                    var checkbox = resolved ? '' : '<input type="checkbox" class="form-check-input chk-low-stock-alert" data-id="' + a.id + '">';
-                    return '<tr>' +
-                        '<td>' + checkbox + '</td>' +
-                        '<td class="fw-semibold">' + escapeHtml(a.item ? a.item.name : '—') + '</td>' +
-                        '<td>' + escapeHtml(a.item && a.item.branch ? a.item.branch.name : '—') + '</td>' +
-                        '<td>' + (a.item ? totalStock(a.item) : '—') + '</td>' +
-                        '<td class="text-secondary small">' + new Date(a.triggeredAt).toLocaleString() + '</td>' +
-                        '<td><span class="badge ' + stageColor + '">' + a.currentStage + '</span></td>' +
-                        '<td>' + action + '</td>' +
-                        '</tr>';
-                }).join('');
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
             }
@@ -1609,7 +1540,6 @@
             try {
                 var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getExpiryAlerts(id, resolved); });
                 var alerts = result.data || result || [];
-<<<<<<< HEAD
                 _expiryPager.reset();
                 (_renderExpiryPage = function () {
                     var pageRows = _expiryPager.slice(alerts);
@@ -1632,26 +1562,6 @@
                             '</tr>';
                     }).join('');
                 })();
-=======
-                if (!alerts.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No ' + (resolved ? 'resolved' : 'open') + ' expiry alerts.</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = alerts.map(function (a) {
-                    var severityColor = a.severity === 'EXPIRED' ? 'bg-danger-lt' : 'bg-warning-lt';
-                    var action = resolved ? '' : '<button class="btn btn-sm btn-success btn-resolve-expiry-alert" data-id="' + a.id + '">Resolve</button>';
-                    var checkbox = resolved ? '' : '<input type="checkbox" class="form-check-input chk-expiry-alert" data-id="' + a.id + '">';
-                    return '<tr>' +
-                        '<td>' + checkbox + '</td>' +
-                        '<td class="fw-semibold">' + escapeHtml(a.item ? a.item.name : '—') + '</td>' +
-                        '<td>' + escapeHtml(a.item && a.item.branch ? a.item.branch.name : '—') + '</td>' +
-                        '<td>' + (a.item && a.item.expiryDate ? new Date(a.item.expiryDate).toLocaleDateString() : '—') + '</td>' +
-                        '<td class="text-secondary small">' + new Date(a.triggeredAt).toLocaleString() + '</td>' +
-                        '<td><span class="badge ' + severityColor + '">' + (a.severity === 'EXPIRED' ? 'Expired' : 'Expiring Soon') + '</span></td>' +
-                        '<td>' + action + '</td>' +
-                        '</tr>';
-                }).join('');
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
             }
@@ -1774,7 +1684,6 @@
             try {
                 var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getTransfers(id); });
                 var transfers = result.data || result || [];
-<<<<<<< HEAD
                 _transfersPager.reset();
                 (_renderTransfersPage = function () {
                     var pageRows = _transfersPager.slice(transfers);
@@ -1799,28 +1708,6 @@
                             '</tr>';
                     }).join('');
                 })();
-=======
-                if (!transfers.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-5">No transfer requests.</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = transfers.map(function (t) {
-                    var statusColor = Inventory.TRANSFER_STATUS_COLORS[t.status] || 'bg-secondary-lt';
-                    var actions = t.status === 'PENDING'
-                        ? '<button class="btn btn-sm btn-success me-1 btn-approve-transfer" data-id="' + t.id + '">Approve</button>' +
-                        '<button class="btn btn-sm btn-outline-danger me-1 btn-reject-transfer" data-id="' + t.id + '">Reject</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary btn-reassign-transfer" data-id="' + t.id + '">Reassign</button>'
-                        : (t.rejectionReason ? '<span class="text-secondary small">' + escapeHtml(t.rejectionReason) + '</span>' : '');
-                    return '<tr>' +
-                        '<td class="fw-semibold">' + escapeHtml(t.fromItem ? t.fromItem.name : '—') + '</td>' +
-                        '<td>' + escapeHtml(t.fromItem && t.fromItem.branch ? t.fromItem.branch.name : '—') + '</td>' +
-                        '<td>' + escapeHtml(t.toBranch ? t.toBranch.name : '—') + '</td>' +
-                        '<td>' + t.quantity + '</td>' +
-                        '<td><span class="badge ' + statusColor + '">' + t.status + '</span></td>' +
-                        '<td>' + actions + '</td>' +
-                        '</tr>';
-                }).join('');
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
             }
@@ -1944,7 +1831,6 @@
             try {
                 var result = await RBAC.fetchAcrossScope(undefined, function (id) { return Inventory.getAdjustmentRequests(id); });
                 var requests = result.data || result || [];
-<<<<<<< HEAD
                 _adjustmentsPager.reset();
                 (_renderAdjustmentsPage = function () {
                     var pageRows = _adjustmentsPager.slice(requests);
@@ -1972,31 +1858,6 @@
                             '</tr>';
                     }).join('');
                 })();
-=======
-                if (!requests.length) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-5">No adjustment requests.</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = requests.map(function (r) {
-                    var statusColor = Inventory.TRANSFER_STATUS_COLORS[r.status] || 'bg-secondary-lt';
-                    var delta = r.quantityDelta > 0 ? '+' + r.quantityDelta : String(r.quantityDelta);
-                    var deltaColor = r.quantityDelta > 0 ? 'text-success' : 'text-danger';
-                    var actions = r.status === 'PENDING'
-                        ? '<button class="btn btn-sm btn-success me-1 btn-approve-adjustment" data-id="' + r.id + '">Approve</button>' +
-                        '<button class="btn btn-sm btn-outline-danger me-1 btn-reject-adjustment" data-id="' + r.id + '">Reject</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary btn-reassign-adjustment" data-id="' + r.id + '">Reassign</button>'
-                        : '';
-                    return '<tr>' +
-                        '<td class="fw-semibold">' + escapeHtml(r.item ? r.item.name : '—') + '</td>' +
-                        '<td>' + escapeHtml(r.item && r.item.branch ? r.item.branch.name : '—') + '</td>' +
-                        '<td>' + escapeHtml(r.requestedBy ? r.requestedBy.name : '—') + '</td>' +
-                        '<td class="' + deltaColor + '" style="font-weight:600">' + delta + '</td>' +
-                        '<td class="text-secondary small">' + escapeHtml(r.reason || '—') + '</td>' +
-                        '<td><span class="badge ' + statusColor + '">' + r.status + '</span></td>' +
-                        '<td>' + actions + '</td>' +
-                        '</tr>';
-                }).join('');
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
             }
@@ -2112,4 +1973,4 @@
 <script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>

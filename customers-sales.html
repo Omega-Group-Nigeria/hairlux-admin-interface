@@ -161,10 +161,7 @@
                                         <tbody id="cs-top-tbody"><tr><td colspan="5" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
                                     </table>
                                 </div>
-<<<<<<< HEAD
                                 <div id="cs-top-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                             </div>
                         </div>
                         <div class="col-12 col-lg-6">
@@ -177,10 +174,7 @@
                                         <tbody id="cs-likely-tbody"><tr><td colspan="4" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
                                     </table>
                                 </div>
-<<<<<<< HEAD
                                 <div id="cs-likely-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                             </div>
                         </div>
                     </div>
@@ -195,10 +189,7 @@
                                         <tbody id="cs-dormant-tbody"><tr><td colspan="5" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
                                     </table>
                                 </div>
-<<<<<<< HEAD
                                 <div id="cs-dormant-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                             </div>
                         </div>
                     </div>
@@ -236,10 +227,7 @@
                                         <tbody id="cs-branch-tbody"><tr><td colspan="2" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
                                     </table>
                                 </div>
-<<<<<<< HEAD
                                 <div id="cs-branch-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                             </div>
                         </div>
                         <div class="col-12 col-lg-4">
@@ -255,10 +243,7 @@
                                         <tbody id="cs-service-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
                                     </table>
                                 </div>
-<<<<<<< HEAD
                                 <div id="cs-service-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                             </div>
                         </div>
                         <div class="col-12 col-lg-4">
@@ -271,10 +256,7 @@
                                         <tbody id="cs-staff-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
                                     </table>
                                 </div>
-<<<<<<< HEAD
                                 <div id="cs-staff-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                             </div>
                         </div>
                     </div>
@@ -290,10 +272,7 @@
     <script src="./assets/js/api-utils/branches.js"></script>
     <script src="./assets/js/api-utils/business-intelligence.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
-<<<<<<< HEAD
     <script src="./assets/js/simple-pager.js"></script>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script>
         Auth.requireAuth();
         RBAC.loadFromStorage();
@@ -312,7 +291,6 @@
             return new Date(d).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
-<<<<<<< HEAD
         /** Client-side paging for one of this page's long tables: keeps the
          * latest rows and re-renders only the current page on pager clicks. */
         function pagedTable(tbodyId, pagerId, rowHtml, emptyHtml, perPage) {
@@ -356,9 +334,6 @@
                     '<td class="text-end">' + r.transactionCount + '</td></tr>';
             }, '<tr><td colspan="3" class="text-center text-secondary py-3">No bookings in this period.</td></tr>');
 
-=======
-        async function init() {
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             var user = Auth.getUser();
             isAdmin = !!(user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'));
 
@@ -510,31 +485,9 @@
             document.getElementById('cs-avg-spend').textContent = BusinessIntelligence.formatMoney(s.averageSpend);
             document.getElementById('cs-visit-freq').textContent = d.averageVisitFrequency + ' visits/customer avg.';
 
-<<<<<<< HEAD
             tables.top.set(d.topCustomers);
             tables.likely.set(d.likelyToReturn);
             tables.dormant.set(d.dormantCustomers);
-=======
-            var topTbody = document.getElementById('cs-top-tbody');
-            topTbody.innerHTML = d.topCustomers.length ? d.topCustomers.map(function (c) {
-                return '<tr><td>' + esc(c.name) + '</td><td><span class="badge bg-secondary-lt">' + esc(c.lifecycle) + '</span></td>' +
-                    '<td class="text-end">' + c.visitCount + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(c.totalSpend) + '</td>' +
-                    '<td>' + fmtDate(c.lastVisitDate) + '</td></tr>';
-            }).join('') : '<tr><td colspan="5" class="text-center text-secondary py-3">No customers yet.</td></tr>';
-
-            var likelyTbody = document.getElementById('cs-likely-tbody');
-            likelyTbody.innerHTML = d.likelyToReturn.length ? d.likelyToReturn.map(function (c) {
-                return '<tr><td>' + esc(c.name) + '</td><td class="text-end">' + fmtDate(c.lastVisitDate) + '</td>' +
-                    '<td class="text-end">' + c.averageIntervalDays + 'd</td><td class="text-end text-red">+' + c.overdueDays + 'd</td></tr>';
-            }).join('') : '<tr><td colspan="4" class="text-center text-secondary py-3">No one flagged right now.</td></tr>';
-
-            var dormantTbody = document.getElementById('cs-dormant-tbody');
-            dormantTbody.innerHTML = d.dormantCustomers.length ? d.dormantCustomers.map(function (c) {
-                return '<tr><td>' + esc(c.name) + '</td><td>' + esc(c.phone || '—') + '</td>' +
-                    '<td class="text-end">' + c.visitCount + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(c.totalSpend) + '</td>' +
-                    '<td>' + fmtDate(c.lastVisitDate) + '</td></tr>';
-            }).join('') : '<tr><td colspan="5" class="text-center text-secondary py-3">No dormant customers.</td></tr>';
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         }
 
         function renderSalesInsights(d) {
@@ -571,30 +524,10 @@
             document.getElementById('cs-growing-service').textContent = d.fastestGrowingService ? d.fastestGrowingService.serviceName + ' (' + BusinessIntelligence.formatPercent(d.fastestGrowingService.growthPercent) + ')' : '—';
             document.getElementById('cs-declining-service').textContent = d.fastestDecliningService ? d.fastestDecliningService.serviceName + ' (' + BusinessIntelligence.formatPercent(d.fastestDecliningService.growthPercent) + ')' : '—';
 
-<<<<<<< HEAD
             tables.branch.set(d.revenueByBranch);
 
             tables.service.set(d.revenueByService);
             tables.staff.set(d.revenueByStaff);
-=======
-            var branchTbody = document.getElementById('cs-branch-tbody');
-            branchTbody.innerHTML = d.revenueByBranch.length ? d.revenueByBranch.map(function (r) {
-                return '<tr><td>' + esc(r.branchName) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(r.revenue) + '</td></tr>';
-            }).join('') : '<tr><td colspan="2" class="text-center text-secondary py-3">No sales in this period.</td></tr>';
-
-            var serviceTbody = document.getElementById('cs-service-tbody');
-            serviceTbody.innerHTML = d.revenueByService.length ? d.revenueByService.map(function (r) {
-                var growthClass = r.growthPercent > 0 ? 'text-green' : (r.growthPercent < 0 ? 'text-red' : 'text-secondary');
-                return '<tr><td>' + esc(r.serviceName) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(r.revenue) + '</td>' +
-                    '<td class="text-end ' + growthClass + '">' + BusinessIntelligence.formatPercent(r.growthPercent) + '</td></tr>';
-            }).join('') : '<tr><td colspan="3" class="text-center text-secondary py-3">No services rendered in this period.</td></tr>';
-
-            var staffTbody = document.getElementById('cs-staff-tbody');
-            staffTbody.innerHTML = d.revenueByStaff.length ? d.revenueByStaff.map(function (r) {
-                return '<tr><td>' + esc(r.staffName) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(r.revenue) + '</td>' +
-                    '<td class="text-end">' + r.transactionCount + '</td></tr>';
-            }).join('') : '<tr><td colspan="3" class="text-center text-secondary py-3">No bookings in this period.</td></tr>';
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         }
 
         init();

@@ -393,10 +393,7 @@
                             </tbody>
                         </table>
                     </div>
-<<<<<<< HEAD
                     <div id="bi-targets-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 </div>
             </div>
         </div>
@@ -450,10 +447,7 @@
     <script src="./assets/js/api-utils/services.js"></script>
     <script src="./assets/js/api-utils/business-intelligence.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
-<<<<<<< HEAD
     <script src="./assets/js/simple-pager.js"></script>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <!-- Page guard: same read permission that shows this page in the sidebar (NavConfig). -->
     <script>document.addEventListener('DOMContentLoaded', function () { RBAC.applyPageGuardForCurrentPage(); });</script>
     <script>
@@ -465,7 +459,6 @@
         var isMultiBranch = false;
         var _branchNameById = {};
 
-<<<<<<< HEAD
         /** Renders a table into `container` with a SimplePager under it --
          * only the current page's rows are in the DOM. rowHtml(row, index)
          * gets the row's index in the FULL array (for click handlers). */
@@ -482,8 +475,6 @@
             paint();
         }
 
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         function esc(s) {
             var d = document.createElement('div');
             d.textContent = (s === null || s === undefined) ? '' : String(s);
@@ -635,17 +626,10 @@
             var body = document.getElementById('bi-filtered-body');
             var txns = result.transactions || [];
             if (!txns.length) { body.innerHTML = '<div class="text-secondary small text-center py-4">No matching transactions in this period.</div>'; return; }
-<<<<<<< HEAD
             var showingNote = txns.length >= 2000 ? '<div class="text-secondary small mb-2">Showing the most recent 2,000 matching transactions.</div>' : '';
             renderPagedTable(body, showingNote,
                 '<thead><tr><th>Reference</th><th>Branch</th><th>Staff</th><th>Customer</th><th>Service</th><th>Date</th><th class="text-end">Amount</th><th>Status</th></tr></thead>',
                 txns, function (t) {
-=======
-            var showingNote = txns.length >= 500 ? '<div class="text-secondary small mb-2">Showing the most recent 500 matching transactions.</div>' : '';
-            body.innerHTML = showingNote + '<div class="table-responsive"><table class="table table-vcenter card-table table-sm">' +
-                '<thead><tr><th>Reference</th><th>Branch</th><th>Staff</th><th>Customer</th><th>Service</th><th>Date</th><th class="text-end">Amount</th><th>Status</th></tr></thead><tbody>' +
-                txns.map(function (t) {
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     return '<tr>' +
                         '<td>' + esc(t.reference) + '</td>' +
                         '<td>' + esc(t.branchName) + '</td>' +
@@ -657,11 +641,7 @@
                         '<td>' + esc(t.status) + '</td>' +
                         (t.note ? '</tr><tr><td colspan="8" class="text-secondary small pt-0">' + esc(t.note) + '</td>' : '') +
                         '</tr>';
-<<<<<<< HEAD
                 });
-=======
-                }).join('') + '</tbody></table></div>';
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         }
 
         function clearGlobalFilters() {
@@ -822,26 +802,16 @@
             document.getElementById('bi-drilldown-hint').textContent = rows.length ? 'Click a row to drill in further.' : 'Nothing recorded at this level.';
             if (!rows.length) { body.innerHTML = '<div class="text-secondary small text-center py-4">No revenue in this bucket.</div>'; return; }
             window._biDrilldownResult = result;
-<<<<<<< HEAD
             renderPagedTable(body, '',
                 '<thead><tr><th>' + esc(levelColumnLabel(result.level)) + '</th><th class="text-end">Revenue</th><th class="text-end">Transactions</th><th></th></tr></thead>',
                 rows, function (r, idx) {
-=======
-            body.innerHTML = '<div class="table-responsive"><table class="table table-vcenter card-table table-sm">' +
-                '<thead><tr><th>' + esc(levelColumnLabel(result.level)) + '</th><th class="text-end">Revenue</th><th class="text-end">Transactions</th><th></th></tr></thead><tbody>' +
-                rows.map(function (r, idx) {
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     return '<tr style="cursor:pointer" onclick="drillInto(window._biDrilldownResult, window._biDrilldownResult.rows[' + idx + '])">' +
                         '<td>' + esc(r.label) + '</td>' +
                         '<td class="text-end">' + BusinessIntelligence.formatMoney(r.revenue) + '</td>' +
                         '<td class="text-end">' + r.transactionCount + '</td>' +
                         '<td class="text-end text-secondary">›</td>' +
                         '</tr>';
-<<<<<<< HEAD
                 });
-=======
-                }).join('') + '</tbody></table></div>';
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         }
 
         function levelColumnLabel(level) {
@@ -865,15 +835,9 @@
             var txns = result.transactions || [];
             document.getElementById('bi-drilldown-hint').textContent = 'Individual transactions -- end of the drill-down.';
             if (!txns.length) { body.innerHTML = '<div class="text-secondary small text-center py-4">No transactions in this bucket.</div>'; return; }
-<<<<<<< HEAD
             renderPagedTable(body, '',
                 '<thead><tr><th>Reference</th><th>Type</th><th>Date</th><th class="text-end">Amount</th><th>Status</th></tr></thead>',
                 txns, function (t) {
-=======
-            body.innerHTML = '<div class="table-responsive"><table class="table table-vcenter card-table table-sm">' +
-                '<thead><tr><th>Reference</th><th>Type</th><th>Date</th><th class="text-end">Amount</th><th>Status</th></tr></thead><tbody>' +
-                txns.map(function (t) {
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     return '<tr>' +
                         '<td>' + esc(t.reference) + '</td>' +
                         '<td>' + esc(sourceLabel(t.source)) + '</td>' +
@@ -882,11 +846,7 @@
                         '<td>' + esc(t.status) + '</td>' +
                         (t.note ? '</tr><tr><td colspan="5" class="text-secondary small pt-0">' + esc(t.note) + '</td>' : '') +
                         '</tr>';
-<<<<<<< HEAD
                 });
-=======
-                }).join('') + '</tbody></table></div>';
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         }
 
         function fmtDateTime(iso) {
@@ -1196,7 +1156,6 @@
             document.getElementById('bi-target-branch-wrap').classList.toggle('d-none', this.value !== 'BRANCH');
         });
 
-<<<<<<< HEAD
         var _biTargets = [];
         var _biTargetsPager = null;
 
@@ -1218,9 +1177,6 @@
         async function refreshTargetsList() {
             if (!_biTargetsPager) _biTargetsPager = SimplePager.attach('#bi-targets-pager', { perPage: 10, onChange: paintTargets });
             _biTargetsPager.slice([]);
-=======
-        async function refreshTargetsList() {
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             var tbody = document.getElementById('bi-targets-tbody');
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
             try {
@@ -1229,23 +1185,9 @@
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-secondary py-3">No targets configured yet.</td></tr>';
                     return;
                 }
-<<<<<<< HEAD
                 _biTargets = targets;
                 _biTargetsPager.reset();
                 paintTargets();
-=======
-                tbody.innerHTML = targets.map(function (t) {
-                    var scope = t.entityType === 'COMPANY' ? 'Company-wide' : (_branchNameById[t.entityId] || t.entityId);
-                    var period = new Date(t.periodStart).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-                    return '<tr>' +
-                        '<td>' + esc(t.metric.replace(/_/g, ' ')) + '</td>' +
-                        '<td>' + esc(scope) + '</td>' +
-                        '<td>' + esc(period) + '</td>' +
-                        '<td>' + BusinessIntelligence.formatMoney(t.targetValue) + '</td>' +
-                        '<td>' + (t.goodThreshold || 100) + '% / ' + (t.attentionThreshold || 80) + '%</td>' +
-                        '</tr>';
-                }).join('');
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Failed to load targets.</td></tr>';
             }

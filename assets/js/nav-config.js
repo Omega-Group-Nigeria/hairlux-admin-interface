@@ -143,11 +143,6 @@ var NavConfig = window.NavConfig || (() => {
             // it stays visible to holders of any services management permission.
             permission: readAny("services:create", "services:update", "services:toggle_status", "services:delete", "services:manage_categories", "services:manage_recipe"),
         },
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         group({
             id: "beauticians",
             label: "Beauticians",
@@ -192,22 +187,13 @@ var NavConfig = window.NavConfig || (() => {
             label: "Finance",
             icon: "finance",
             children: [
-<<<<<<< HEAD
                 // financial-dashboard.html was merged into this page (it now just redirects here).
                 { label: "Financial Dashboard", href: "financial-transactions.html", permission: read("financial_transactions:read") },
-=======
-                { label: "Financial Dashboard", href: "financial-dashboard.html", permission: read("financial_transactions:read") },
-                { label: "Financial Transactions", href: "financial-transactions.html", permission: read("financial_transactions:read") },
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                 { label: "Profitability Report", href: "profitability-report.html", permission: read("reports:read_profitability") },
                 { label: "Expense Requests", href: "expense-requests.html", permission: read("expense_requests:read") },
                 { label: "Branch Finance", href: "branch-finance.html", permission: read("branch_finance:read") },
             ],
         }),
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         {
             id: "branches",
             label: "Branches",
@@ -347,29 +333,15 @@ var NavConfig = window.NavConfig || (() => {
             "bookings.html",
             "payments.html",
             "users.html",
-<<<<<<< HEAD
-            "services.html",
-<<<<<<< Updated upstream
-=======
-            "beauticians.html",
-            "shop.html",
-            "inventory-products.html",
-            "financial-transactions.html",
->>>>>>> Stashed changes
-            "branches.html",
-            "shop.html",
-            "referrals.html",
-=======
             "customer-contacts.html",
             "rewards.html",
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             "discounts.html",
             "referrals.html",
             "services.html",
             "beauticians.html",
             "shop.html",
             "inventory-products.html",
-            "financial-dashboard.html",
+            "financial-transactions.html",
             "branches.html",
             "academy-commerce.html",
             "academy-training.html",

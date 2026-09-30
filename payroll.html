@@ -154,10 +154,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-<<<<<<< HEAD
                                 <div id="periods-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                             </div>
                         </div>
 
@@ -643,7 +640,6 @@
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/payroll.js"></script>
-<<<<<<< HEAD
     <script src="assets/js/simple-pager.js"></script>
     <script src="assets/js/csv-export.js"></script>
     <script src="assets/js/tabler.min.js"></script>
@@ -652,11 +648,6 @@
         var _renderPeriodsPage = null;
         var _periodsPager = SimplePager.attach('#periods-pager', { onChange: function () { if (_renderPeriodsPage) _renderPeriodsPage(); } });
 
-=======
-    <script src="assets/js/csv-export.js"></script>
-    <script src="assets/js/tabler.min.js"></script>
-    <script>
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         var bootstrap = window.tabler.bootstrap;
         var _payrollSettingsCache = null;
         var currentPeriodId = null;
@@ -831,7 +822,6 @@
             var tbody = document.getElementById('periods-tbody');
             try {
                 var periods = await Payroll.listPeriods();
-<<<<<<< HEAD
                 _periodsPager.reset();
                 (_renderPeriodsPage = function () {
                     var pageRows = _periodsPager.slice(periods);
@@ -856,28 +846,6 @@
                         }).join('')
                         : '<tr><td colspan="4" class="text-center text-secondary py-5">No payroll periods yet.</td></tr>';
                 })();
-=======
-                tbody.innerHTML = periods.length
-                    ? periods.map(function (p) {
-                        var statusBadge = { DRAFT: 'bg-secondary-lt', AWAITING_RELEASE: 'bg-amber-lt', RELEASED: 'bg-green-lt' }[p.status] || 'bg-secondary-lt';
-                        var actions = '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewPeriod(\'' + p.id + '\')">View</button>';
-                        if (p.status === 'DRAFT') {
-                            actions += '<button class="btn btn-sm btn-primary" onclick="runGenerate(\'' + p.id + '\')">Generate</button>';
-                        } else if (p.status === 'AWAITING_RELEASE') {
-                            actions += '<button class="btn btn-sm btn-success me-1" onclick="runApprove(\'' + p.id + '\')">Approve</button>';
-                            if (RBAC.can('payroll:correct')) {
-                                actions += '<button class="btn btn-sm btn-outline-warning" onclick="runRequestCorrection(\'' + p.id + '\')">Send for Correction</button>';
-                            }
-                        }
-                        return '<tr>' +
-                            '<td class="fw-semibold">' + esc(p.label) + '<div class="text-secondary small">' + Payroll.formatDate(p.periodStart) + ' \u2013 ' + Payroll.formatDate(p.periodEnd) + '</div></td>' +
-                            '<td><span class="badge ' + statusBadge + '">' + p.status.replace(/_/g, ' ') + '</span></td>' +
-                            '<td class="text-center">' + (p._count ? p._count.payslips : 0) + '</td>' +
-                            '<td class="text-nowrap">' + actions + '</td>' +
-                            '</tr>';
-                    }).join('')
-                    : '<tr><td colspan="4" class="text-center text-secondary py-5">No payroll periods yet.</td></tr>';
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
@@ -1551,4 +1519,4 @@
 <script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>

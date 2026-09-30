@@ -293,10 +293,7 @@
                                 </tbody>
                             </table>
                         </div>
-<<<<<<< HEAD
                         <div id="summary-pager"></div>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
                     </div>
                 </div>
             </div>
@@ -421,10 +418,7 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-operations.js"></script>
-<<<<<<< HEAD
     <script src="./assets/js/simple-pager.js"></script>
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
     <script src="./assets/js/csv-export.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
@@ -893,13 +887,10 @@
 
         var _lastSummaryRows = [];
 
-<<<<<<< HEAD
         // Client-side paging for the per-staff summary (assets/js/simple-pager.js).
         var _renderSummaryPage = null;
         var _summaryPager = SimplePager.attach('#summary-pager', { onChange: function () { if (_renderSummaryPage) _renderSummaryPage(); } });
 
-=======
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
         async function loadAttendanceSummary() {
             var tbody = document.getElementById("summary-tbody");
             var from = document.getElementById("summary-from").value;
@@ -916,7 +907,6 @@
             try {
                 var rows = await StaffOps.getAllStaffSummary(from, to, branchId || undefined);
                 _lastSummaryRows = rows;
-<<<<<<< HEAD
                 _summaryPager.reset();
                 (_renderSummaryPage = function () {
                     var pageRows = _summaryPager.slice(rows);
@@ -939,26 +929,6 @@
                             '</tr>';
                     }).join('');
                 })();
-=======
-                if (!rows.length) {
-                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-secondary py-4">No active staff found for this branch.</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = rows.map(function (r) {
-                    return '<tr>' +
-                        '<td class="fw-semibold">' + esc(r.staffName) + '</td>' +
-                        '<td>' + r.expectedWorkingDays + '</td>' +
-                        '<td>' + r.daysWorked + '</td>' +
-                        '<td>' + r.halfDaysWorked + '</td>' +
-                        '<td>' + r.approvedExtraWorkDays + ' / ' + r.pendingExtraWorkDays + '</td>' +
-                        '<td>' + r.approvedLeaveDays + '</td>' +
-                        '<td>' + r.publicHolidaysWorked + '</td>' +
-                        '<td' + (r.lateArrivals > 0 ? ' class="text-warning"' : '') + '>' + r.lateArrivals + '</td>' +
-                        '<td>' + r.earlyDepartures + '</td>' +
-                        '<td' + (r.absentDays > 0 ? ' class="text-danger"' : '') + '>' + r.absentDays + '</td>' +
-                        '</tr>';
-                }).join('');
->>>>>>> b092cd00441fc2072db14f6dce0222aedb6df866
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">' + esc(err.message || "Failed to load summary.") + '</td></tr>';
             }
@@ -989,4 +959,4 @@
 <script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>
