@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin — Commission Approvals</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Payroll</div>
+                            <h2 class="page-title">Commission Approvals
+                                <span class="badge bg-warning text-dark ms-2 d-none" id="pending-badge"></span>
+                            </h2>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <a href="commission-plans.html" class="btn btn-outline-secondary">Commission Plans</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="alert alert-info small">
+                        Bookings completed under a Commission Plan that <strong>requires approval</strong> record their commission as
+                        <strong>Pending</strong>. Payroll only pays <strong>Approved</strong> commission.
+                        <strong>Awaiting Release</strong> period: approving recalculates the staff member's payslip and adjusts their locked wallet credit automatically.
+                        <strong>Draft, never generated</strong>: generate the period after approving.
+                        <strong>Draft that already credited wallets</strong> (sent back for correction) or <strong>Released</strong>: locked here &mdash;
+                        generate the Draft period first (or, for Released, use a Bonus payroll adjustment).
+                    </div>
+
+                    <div id="action-notice"></div>
+
+                    <div class="card">
+                        <div class="card-header d-block">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="f-status">Status</label>
+                                    <select class="form-select" id="f-status">
+                                        <option value="PENDING" selected>Pending</option>
+                                        <option value="APPROVED">Approved</option>
+                                        <option value="REJECTED">Rejected</option>
+                                        <option value="ALL">All</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="f-from">From</label>
+                                    <input type="date" class="form-control" id="f-from">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="f-to">To</label>
+                                    <input type="date" class="form-control" id="f-to">
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="f-branch">Branch</label>
+                                    <select class="form-select" id="f-branch"><option value="">All branches</option></select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="f-staff">Staff</label>
+                                    <select class="form-select" id="f-staff"><option value="">All staff</option></select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="f-plan">Plan</label>
+                                    <select class="form-select" id="f-plan"><option value="">All plans</option></select>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                                <span class="text-secondary small" id="totals-label">Loading…</span>
+                                <div class="ms-auto d-flex gap-2" id="bulk-actions">
+                                    <span class="text-secondary small align-self-center" id="selected-label"></span>
+                                    <button type="button" class="btn btn-success btn-sm" id="btn-bulk-approve" disabled>Approve selected</button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" id="btn-bulk-reject" disabled>Reject selected</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th class="w-1"><input class="form-check-input m-0" type="checkbox" id="chk-all" aria-label="Select all"></th>
+                                        <th>Booking</th>
+                                        <th>Staff</th>
+                                        <th>Plan</th>
+                                        <th class="text-end">Services</th>
+                                        <th class="text-end">Rate</th>
+                                        <th class="text-end">Commission</th>
+                                        <th>Status</th>
+                                        <th class="w-1">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody">
+                                    <tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="pager"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject modal -->
+    <div class="modal modal-blur fade" id="modal-reject" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reject-title">Reject commission</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="reject-error"></div>
+                    <p class="small text-secondary" id="reject-summary"></p>
+                    <label class="form-label" for="reject-reason">Reason <span class="text-secondary">(optional, recorded in the audit log)</span></label>
+                    <textarea class="form-control" id="reject-reason" rows="3" maxlength="500"
+                        placeholder="e.g. Service not performed by this stylist"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-reject">Reject</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/api-utils/payroll.js"></script>
+    <script src="assets/js/api-utils/commission-plans.js"></script>
+    <script src="assets/js/simple-pager.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script>
+        var bootstrap = window.tabler.bootstrap;
+        Auth.requireAuth();
+        RBAC.loadFromStorage();
+        RBAC.applyPageGuardForCurrentPage();
+
+        var _rows = [];
+        var _selected = {};       // id -> true (current page only)
+        var _pendingRejectIds = null;
+        var _canDecide = false;
+        var _pager = null;
+
+        function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+        function money(v) { return Payroll.formatMoney(v); }
+
+        var STATUS_BADGES = {
+            PENDING: '<span class="badge bg-warning-lt text-warning">Pending</span>',
+            APPROVED: '<span class="badge bg-success-lt text-success">Approved</span>',
+            REJECTED: '<span class="badge bg-danger-lt text-danger">Rejected</span>',
+            MORE_INFO_REQUESTED: '<span class="badge bg-secondary-lt text-secondary">More info requested</span>',
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            _canDecide = RBAC.can('payroll:approve_commission');
+            document.getElementById('bulk-actions').classList.toggle('d-none', !_canDecide);
+            _pager = SimplePager.attach('#pager', { onChange: load });
+
+            ['f-status', 'f-from', 'f-to', 'f-branch', 'f-staff', 'f-plan'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', function () { _pager.reset(); load(); });
+            });
+            document.getElementById('chk-all').addEventListener('change', function (e) {
+                _rows.forEach(function (r) { if (isSelectable(r)) { if (e.target.checked) _selected[r.id] = true; else delete _selected[r.id]; } });
+                renderRows();
+            });
+            document.getElementById('tbody').addEventListener('change', function (e) {
+                var chk = e.target.closest('.row-chk');
+                if (!chk) return;
+                if (chk.checked) _selected[chk.dataset.id] = true; else delete _selected[chk.dataset.id];
+                syncSelection();
+            });
+            document.getElementById('tbody').addEventListener('click', function (e) {
+                var a = e.target.closest('.btn-approve-one');
+                var r = e.target.closest('.btn-reject-one');
+                if (a) approve([a.dataset.id], a);
+                if (r) openReject([r.dataset.id]);
+            });
+            document.getElementById('btn-bulk-approve').addEventListener('click', function () { approve(Object.keys(_selected), this); });
+            document.getElementById('btn-bulk-reject').addEventListener('click', function () { openReject(Object.keys(_selected)); });
+            document.getElementById('btn-confirm-reject').addEventListener('click', confirmReject);
+            document.getElementById('action-notice').addEventListener('click', function (e) {
+                var gen = e.target.closest('.btn-regenerate-period');
+                if (gen) regeneratePeriod(gen.dataset.id, gen.dataset.label, gen);
+            });
+
+            loadFilters();
+            load();
+        });
+
+        function isSelectable(r) { return _canDecide && r.status === 'PENDING' && !r.locked; }
+
+        async function loadFilters() {
+            try {
+                var result = await Branches.getBranches();
+                var branches = result.data || result || [];
+                var sel = document.getElementById('f-branch');
+                sel.innerHTML = '<option value="">All branches</option>' + branches.map(function (b) { return '<option value="' + esc(b.id) + '">' + esc(b.name) + '</option>'; }).join('');
+                RBAC.applyBranchScope(sel);
+            } catch (e) { /* optional filter */ }
+            try {
+                var list = await Staff.getOptions({ includeAllStatuses: true });
+                var managedIds = RBAC.getManagedBranchIds();
+                if (RBAC.isManagerScoped()) list = list.filter(function (s) { return !s.locationId || managedIds.indexOf(s.locationId) !== -1; });
+                document.getElementById('f-staff').innerHTML = '<option value="">All staff</option>' + list.map(function (s) {
+                    return '<option value="' + esc(s.id) + '">' + esc(Staff.fullName(s) + (s.staffCode ? ' (' + s.staffCode + ')' : '')) + '</option>';
+                }).join('');
+            } catch (e) { /* optional filter */ }
+            try {
+                var plans = await CommissionPlans.getAll();
+                document.getElementById('f-plan').innerHTML = '<option value="">All plans</option>' + plans.map(function (p) {
+                    return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' (' + CommissionPlans.formatRate(p.commissionRate) + ')' + (p.requiresApproval ? '' : ' — no approval') + '</option>';
+                }).join('');
+            } catch (e) { /* optional filter */ }
+        }
+
+        function currentFilters() {
+            return {
+                status: document.getElementById('f-status').value,
+                from: document.getElementById('f-from').value,
+                to: document.getElementById('f-to').value,
+                branchId: RBAC.scopeBranchId(document.getElementById('f-branch').value),
+                staffId: document.getElementById('f-staff').value,
+                planId: document.getElementById('f-plan').value,
+                page: _pager.page,
+                limit: _pager.perPage,
+            };
+        }
+
+        async function load() {
+            var tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            _selected = {};
+            syncSelection();
+            try {
+                var res = await CommissionPlans.listCommissions(currentFilters());
+                _rows = res.data || [];
+                _pager.setTotal(res.meta ? res.meta.total : _rows.length);
+                var statusLabel = document.getElementById('f-status').selectedOptions[0].textContent.toLowerCase();
+                document.getElementById('totals-label').innerHTML = '<strong>' + res.totals.count + '</strong> ' + esc(statusLabel) + ' commission' + (res.totals.count !== 1 ? 's' : '') +
+                    ' &middot; total <strong>' + money(res.totals.amount) + '</strong>';
+                if (document.getElementById('f-status').value === 'PENDING') updatePendingBadge(res.totals.count);
+                else refreshPendingCount();
+                renderRows();
+            } catch (err) {
+                _rows = [];
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(err.message || 'Failed to load.') + '</td></tr>';
+                document.getElementById('totals-label').textContent = '';
+            }
+        }
+
+        function updatePendingBadge(n) {
+            var el = document.getElementById('pending-badge');
+            el.textContent = n + ' pending';
+            el.classList.toggle('d-none', !(n > 0));
+            if (window.Layout && Layout.updateCommissionApprovalBadge) Layout.updateCommissionApprovalBadge(n);
+        }
+
+        async function refreshPendingCount() {
+            try {
+                var res = await CommissionPlans.listCommissions({ status: 'PENDING', page: 1, limit: 1 });
+                updatePendingBadge(res.totals.count);
+            } catch (e) { /* badge is best-effort */ }
+        }
+
+        function renderRows() {
+            var tbody = document.getElementById('tbody');
+            if (!_rows.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-secondary py-5">No commissions match these filters.</td></tr>';
+                syncSelection();
+                return;
+            }
+            tbody.innerHTML = _rows.map(function (r) {
+                var selectable = isSelectable(r);
+                var actions = '';
+                if (selectable) {
+                    actions = '<button class="btn btn-sm btn-success btn-approve-one me-1" data-id="' + esc(r.id) + '">Approve</button>' +
+                        '<button class="btn btn-sm btn-outline-danger btn-reject-one" data-id="' + esc(r.id) + '">Reject</button>';
+                } else if (r.status === 'PENDING' && r.locked) {
+                    actions = '<span class="badge bg-secondary-lt text-secondary" title="' + esc(r.lockReason || '') + '">Locked</span>' +
+                        '<div class="text-secondary small" style="max-width:16rem;white-space:normal">' + esc(r.period && r.period.state === 'RELEASED' ? 'Released \u2014 use a payroll adjustment' : 'Generate ' + (r.period ? r.period.label : 'the period') + ' first') + '</div>';
+                }
+                var decided = r.approvedAt
+                    ? '<div class="text-secondary small">' + (r.approvedBy ? esc(r.approvedBy.name) + ' · ' : '') + Payroll.formatDate(r.approvedAt) + '</div>'
+                    : '';
+                return '<tr>' +
+                    '<td>' + (selectable ? '<input class="form-check-input m-0 row-chk" type="checkbox" data-id="' + esc(r.id) + '"' + (_selected[r.id] ? ' checked' : '') + '>' : '') + '</td>' +
+                    '<td><div class="fw-semibold">' + esc(r.booking.bookingCode) + '</div>' +
+                        '<div class="text-secondary small">' + Payroll.formatDate(r.booking.completedAt || r.calculatedAt) + ' · ' + esc(r.booking.customerName) + '</div>' +
+                        (r.period ? '<div class="text-secondary small">Payroll: ' + esc(r.period.label) + '</div>' : '') + '</td>' +
+                    '<td><div>' + esc(r.staff.name) + '</div><div class="text-secondary small">' + esc(r.staff.staffCode || '') + (r.staff.branch ? ' · ' + esc(r.staff.branch.name) : '') + '</div></td>' +
+                    '<td>' + (r.plan ? esc(r.plan.name) + '<div class="text-secondary small">' + CommissionPlans.formatRate(r.plan.commissionRate) + '</div>' : '<span class="text-secondary">—</span>') + '</td>' +
+                    '<td class="text-end">' + money(r.booking.servicesTotal) +
+                        (r.booking.eligibleServicesTotal !== r.booking.servicesTotal ? '<div class="text-secondary small">eligible ' + money(r.booking.eligibleServicesTotal) + '</div>' : '') + '</td>' +
+                    '<td class="text-end">' + CommissionPlans.formatRate(r.rateApplied) + '</td>' +
+                    '<td class="text-end fw-semibold">' + money(r.amount) + '</td>' +
+                    '<td>' + (STATUS_BADGES[r.status] || esc(r.status)) + decided + '</td>' +
+                    '<td class="text-nowrap">' + actions + '</td>' +
+                    '</tr>';
+            }).join('');
+            syncSelection();
+        }
+
+        function syncSelection() {
+            var selectable = _rows.filter(isSelectable);
+            var ids = Object.keys(_selected);
+            var amount = _rows.filter(function (r) { return _selected[r.id]; }).reduce(function (s, r) { return s + Number(r.amount); }, 0);
+            document.getElementById('selected-label').textContent = ids.length ? ids.length + ' selected (' + money(amount) + ')' : '';
+            document.getElementById('btn-bulk-approve').disabled = !ids.length;
+            document.getElementById('btn-bulk-reject').disabled = !ids.length;
+            var all = document.getElementById('chk-all');
+            all.disabled = !selectable.length;
+            all.checked = selectable.length > 0 && ids.length === selectable.length;
+            all.indeterminate = ids.length > 0 && ids.length < selectable.length;
+        }
+
+        async function approve(ids, btn) {
+            if (!ids.length) return;
+            var amount = _rows.filter(function (r) { return ids.indexOf(r.id) !== -1; }).reduce(function (s, r) { return s + Number(r.amount); }, 0);
+            if (!confirm('Approve ' + ids.length + ' commission' + (ids.length !== 1 ? 's' : '') + ' totalling ' + money(amount) + '?\n\nAwaiting Release payslips for these staff will be recalculated and their (locked) wallet credits adjusted automatically. For a Draft period, generate it afterwards.')) return;
+            if (btn) btn.disabled = true;
+            try {
+                var res = ids.length === 1
+                    ? await CommissionPlans.decideCommission('approve', ids[0])
+                    : await CommissionPlans.decideCommissions('approve', ids);
+                showNotice(res);
+                await load();
+            } catch (err) {
+                showNotice(null, err.message || 'Approval failed.');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function openReject(ids) {
+            if (!ids.length) return;
+            _pendingRejectIds = ids;
+            var amount = _rows.filter(function (r) { return ids.indexOf(r.id) !== -1; }).reduce(function (s, r) { return s + Number(r.amount); }, 0);
+            document.getElementById('reject-title').textContent = 'Reject ' + ids.length + ' commission' + (ids.length !== 1 ? 's' : '');
+            document.getElementById('reject-summary').textContent = 'Rejected commissions (' + money(amount) + ') will not be paid. This cannot be undone from this page.';
+            document.getElementById('reject-reason').value = '';
+            document.getElementById('reject-error').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('modal-reject')).show();
+        }
+
+        async function confirmReject() {
+            var btn = document.getElementById('btn-confirm-reject');
+            var errEl = document.getElementById('reject-error');
+            var reason = document.getElementById('reject-reason').value.trim();
+            btn.disabled = true;
+            try {
+                var ids = _pendingRejectIds || [];
+                var res = ids.length === 1
+                    ? await CommissionPlans.decideCommission('reject', ids[0], reason)
+                    : await CommissionPlans.decideCommissions('reject', ids, reason);
+                bootstrap.Modal.getInstance(document.getElementById('modal-reject')).hide();
+                showNotice(res);
+                await load();
+            } catch (err) {
+                errEl.textContent = err.message || 'Rejection failed.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function showNotice(res, errorMessage) {
+            var el = document.getElementById('action-notice');
+            if (errorMessage) {
+                el.innerHTML = '<div class="alert alert-danger alert-dismissible">' + esc(errorMessage) + '<a class="btn-close" data-bs-dismiss="alert"></a></div>';
+                return;
+            }
+            var verb = res.decision === 'APPROVED' ? 'approved' : 'rejected';
+            var html = '<div class="alert ' + (res.updatedCount ? 'alert-success' : 'alert-warning') + ' alert-dismissible">' +
+                '<div><strong>' + res.updatedCount + '</strong> commission' + (res.updatedCount !== 1 ? 's' : '') + ' ' + verb + ' (' + money(res.updatedAmount) + ').</div>';
+            if (res.skipped && res.skipped.length) {
+                html += '<div class="mt-2 small"><strong>' + res.skipped.length + ' skipped:</strong><ul class="mb-0">' +
+                    res.skipped.slice(0, 20).map(function (s) { return '<li>' + esc(s.bookingCode || s.id) + ' — ' + esc(s.reason) + '</li>'; }).join('') +
+                    (res.skipped.length > 20 ? '<li>…and ' + (res.skipped.length - 20) + ' more</li>' : '') + '</ul></div>';
+            }
+            html += CommissionPlans.renderPayslipResults(res);
+            if (res.decision === 'REJECTED' && res.updatedCount) {
+                html += '<div class="mt-2 small text-secondary">Rejected commissions were never counted by payroll, so no payslip changes were needed.</div>';
+            }
+            if (res.draftPeriodsToRegenerate && res.draftPeriodsToRegenerate.length) {
+                var canGenerate = RBAC.can('payroll:generate');
+                html += '<div class="mt-2 small">Generate the Draft payroll period' + (res.draftPeriodsToRegenerate.length !== 1 ? 's' : '') + ' (not generated yet) so payslips include this: ' +
+                    res.draftPeriodsToRegenerate.map(function (p) {
+                        return esc(p.label) + (canGenerate ? ' <button type="button" class="btn btn-sm btn-outline-primary ms-1 btn-regenerate-period" data-id="' + esc(p.id) + '" data-label="' + esc(p.label) + '">Generate payroll</button>' : '');
+                    }).join(' &middot; ') +
+                    (canGenerate ? '' : ' — ask someone with payroll generation access to generate it on the <a href="payroll.html">Payroll</a> page.') + '</div>';
+            }
+            html += '<a class="btn-close" data-bs-dismiss="alert"></a></div>';
+            el.innerHTML = html;
+        }
+
+        async function regeneratePeriod(id, label, btn) {
+            if (!confirm('Generate payroll for ' + label + '? This calculates every active staff member\'s payslip for this Draft period (including approved commission), credits their wallet (locked until Payday is on) and moves it to Awaiting Release.')) return;
+            btn.disabled = true;
+            try {
+                await Payroll.generatePayroll(id);
+                btn.outerHTML = '<span class="badge bg-success-lt text-success ms-1">Generated</span>';
+            } catch (err) {
+                alert(err.message || 'Failed to regenerate payroll.');
+                btn.disabled = false;
+            }
+        }
+    </script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

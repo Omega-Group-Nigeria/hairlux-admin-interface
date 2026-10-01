@@ -204,7 +204,7 @@
                             <label class="form-label" for="login-password">
                                 Password
                                 <span class="form-label-description">
-                                    <a href="./forgot-password.html">Forgot password</a>
+                                    <a href="./forgot-password.html?portal=admin" id="forgot-password-link">Forgot password</a>
                                 </span>
                             </label>
                             <div class="input-group input-group-flat">
@@ -294,6 +294,20 @@
         if (document.body) {
             themeObserver.observe(document.body, { attributes: true, attributeFilter: ['data-bs-theme'] });
         }
+
+        // Forgot password resets the account for the selected tab (staff or admin).
+        (function () {
+            var link = document.getElementById('forgot-password-link');
+            function syncForgotLink() {
+                var staff = document.getElementById('login-type-staff').checked;
+                if (link) link.href = './forgot-password.html?portal=' + (staff ? 'staff' : 'admin');
+            }
+            ['login-type-staff', 'login-type-admin'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('change', syncForgotLink);
+            });
+            syncForgotLink();
+        })();
 
         document.getElementById('toggle-password').addEventListener('click', function (e) {
             e.preventDefault();

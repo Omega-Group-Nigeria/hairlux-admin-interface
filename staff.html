@@ -1442,6 +1442,9 @@
                     (s.commissionPlan ? ' &middot; Plan: <strong>' + esc(s.commissionPlan.name) + '</strong> (' + esc(CommissionPlans.formatRate(s.commissionPlan.commissionRate)) + ')'
                         : (s.commissionRate != null ? ' &middot; Flat Rate: <strong>' + esc((Number(s.commissionRate) * 100).toFixed(1)) + '%</strong>' : '')) +
                     '</div>' +
+                    ((s.compensationType === 'COMMISSION' || s.compensationType === 'SALARY_TO_COMMISSION' || s.compensationType === 'SALARY_PLUS_COMMISSION') && !s.commissionPlan
+                        ? '<div class="alert alert-danger py-2 px-3 small mb-2"><strong>No Commission Plan assigned.</strong> Bookings this staff member completes are recorded at 0% commission. Click <em>Set</em> to assign a plan, then use <a href="commission-plans.html">Commission Plans \u2192 Recalculate commissions</a> to fix past bookings.</div>'
+                        : '') +
                     '<div class="small mb-2">' +
                     (s.currentBaseSalary != null
                         ? 'Base: <strong>' + esc(Staff.formatMoney ? Staff.formatMoney(s.currentBaseSalary) : ('\u20a6' + Number(s.currentBaseSalary).toLocaleString())) + '</strong>' +
@@ -1757,8 +1760,9 @@
                     '<div class="col-12"><div class="form-hint">This is the ongoing figure Payroll reads from — distinct from the original offer letter, which is a one-time pre-hire snapshot. Every change is recorded in this staff member\'s compensation history.</div></div>' +
                     '</div>' +
                     '<div id="sf-commission-fields-wrap" class="row g-3">' +
-                    buildOptionSelect('col-12', 'Commission Plan', 'sf-comp-plan-id', String(d.commissionPlanId || ''), planOpts, 'No plan assigned', false) +
-                    '<div class="col-12"><div class="form-hint">Every commission-earning staff member is set up through a Commission Plan \u2014 create one under Payroll if one doesn\'t exist yet for their rate.</div></div>' +
+                    buildOptionSelect('col-12', 'Commission Plan', 'sf-comp-plan-id', String(d.commissionPlanId || ''), planOpts, 'Select a commission plan', true) +
+                    (planOpts.length ? '' : '<div class="col-12"><div class="alert alert-warning mb-0 small">No active Commission Plans exist yet. Create one under <a href="commission-plans.html">Payroll \u2192 Commission Plans</a> before choosing a commission compensation type.</div></div>') +
+                    '<div class="col-12"><div class="form-hint">Required for any commission-earning type \u2014 without an active plan, every booking this staff member completes records 0% commission. Create one under Payroll if one doesn\'t exist yet for their rate.</div></div>' +
                     '</div>';
                 SearchableSelect.attach('sf-comp-plan-id');
 
@@ -1911,9 +1915,8 @@
                 }
 
                 var showCommission = compType === 'SALARY_TO_COMMISSION' || compType === 'SALARY_PLUS_COMMISSION' || compType === 'COMMISSION';
-                if (showCommission) {
-                    payrollPayload.commissionPlanId = document.getElementById("sf-comp-plan-id").value || null;
-                }
+                // Salary-only staff never keep a plan (cleared server-side by sending null).
+                payrollPayload.commissionPlanId = showCommission ? (document.getElementById("sf-comp-plan-id").value || null) : null;
 
                 return payrollPayload;
             }
@@ -1994,6 +1997,12 @@
                 }
             }
             if (_staffFormAction.type === "payroll-method") {
+                var pmNeedsPlan = payload.compensationType === 'COMMISSION' || payload.compensationType === 'SALARY_TO_COMMISSION' || payload.compensationType === 'SALARY_PLUS_COMMISSION';
+                if (pmNeedsPlan && !payload.commissionPlanId) {
+                    errorEl.textContent = "Please select a Commission Plan \u2014 it is required for " + compensationTypeLabel(payload.compensationType) + ". Without one, every booking this staff member completes records 0% commission.";
+                    errorEl.classList.remove("d-none");
+                    return;
+                }
                 var pmShowSalary = payload.compensationType === 'SALARY' || payload.compensationType === 'SALARY_TO_COMMISSION' || payload.compensationType === 'SALARY_PLUS_COMMISSION';
                 if (pmShowSalary) {
                     if (payload.baseSalary == null || isNaN(payload.baseSalary) || payload.baseSalary < 0) {
