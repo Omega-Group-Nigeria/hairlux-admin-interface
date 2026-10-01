@@ -704,7 +704,7 @@
                     canDelete: RBAC.can(Branches.PERMISSIONS.DELETE),
                 };
                 tbody.innerHTML = _branches.map(function (b) {
-                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + formatManagerCell(b.manager) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, perms) + '</td></tr>';
+                    return '<tr><td class="fw-semibold">' + esc(b.name) + '</td><td>' + formatBranchAddressCell(b.address) + '</td><td>' + formatManagerCell(b.manager, b.managingAdminUsers) + '</td><td>' + Branches.statusBadge(b.isActive) + '</td><td class="text-secondary">' + Branches.formatDate(b.createdAt) + '</td><td>' + branchActionsHtml(b, perms) + '</td></tr>';
                 }).join("");
                 initBranchRowDropdowns();
             } catch (e) {
@@ -714,9 +714,19 @@
             }
         }
 
-        function formatManagerCell(manager) {
-            if (!manager) return '<span class="text-secondary small">Unassigned</span>';
-            return '<span class="small">' + esc(manager.name) + '</span>';
+        // Staff manager (StaffLocation.managerId) plus any admin-dashboard-only
+        // accounts (e.g. HAIRMATE, no staff record) assigned to this branch
+        // from Settings > Admin Management > Managed branch.
+        function formatManagerCell(manager, adminAccounts) {
+            var admins = Array.isArray(adminAccounts) ? adminAccounts : [];
+            var adminHtml = admins.map(function (u) {
+                var name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || 'Admin account';
+                var role = u.adminRole && u.adminRole.name ? ' · ' + u.adminRole.name : '';
+                return '<div class="small text-secondary" title="' + esc(u.email || '') + '">' +
+                    '<span class="badge bg-azure-lt me-1">Admin</span>' + esc(name) + esc(role) + '</div>';
+            }).join('');
+            if (!manager) return (admins.length ? '' : '<span class="text-secondary small">Unassigned</span>') + adminHtml;
+            return '<span class="small">' + esc(manager.name) + '</span>' + adminHtml;
         }
 
 

@@ -46,6 +46,8 @@
         createAdmin: function (data) { return Roles.createAdmin(data); },
         updateRole: function (userId, adminRoleId) { return Roles.updateRole(userId, adminRoleId); },
         updateStatus: function (userId, status) { return Roles.updateStatus(userId, status); },
+        setManagedBranch: function (userId, branchId) { return Roles.setManagedBranch(userId, branchId); },
+        getBranches: function () { return Branches.getBranches(); },
 
         fetchRoles: function () { return Roles.fetchRoles(); },
         createRole: function (name, description) { return Roles.createRole(name, description); },

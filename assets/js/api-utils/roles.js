@@ -262,6 +262,22 @@ const Roles = (() => {
     }
 
     /**
+     * PUT /admin/users/{userId}/managed-branch  { branchId: string|null }
+     * Branch Scope for admin-dashboard-only accounts (role ADMIN, no Staff
+     * record, e.g. HAIRMATE): the ONE branch they're limited to. null clears.
+     */
+    async function setManagedBranch(userId, branchId) {
+        const res = await Auth.fetch('/admin/users/' + userId + '/managed-branch', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ branchId: branchId || null }),
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || 'Failed to update managed branch');
+        return raw.data || raw;
+    }
+
+    /**
      * GET /admin/roles/users/{userId}
      * Returns { primary, additional[] } — the user's primary role plus every secondary role.
      */
@@ -348,6 +364,7 @@ const Roles = (() => {
         createAdmin,
         updateStatus,
         updateRole,
+        setManagedBranch,
         // Secondary roles & audit log
         getUserRoles,
         addUserRole,

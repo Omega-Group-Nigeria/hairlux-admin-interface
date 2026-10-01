@@ -168,7 +168,7 @@
         var tbody = document.getElementById('admin-users-tbody');
         if (!tbody) return;
         if (!users.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">No admin users found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">No admin users found.</td></tr>';
             return;
         }
         var currentUserId = Auth.getUser() ? Auth.getUser().id : null;
@@ -197,6 +197,7 @@
                 '<td class="fw-medium">' + name + '</td>' +
                 '<td class="text-secondary small">' + email + '</td>' +
                 '<td>' + roleBadge + '</td>' +
+                '<td>' + renderManagedBranchCell(u, isSuperAdmin, isSelf) + '</td>' +
                 '<td>' + statusBadge + '</td>' +
                 '<td class="text-secondary">' + joined + '</td>' +
                 '<td><div class="dropdown">' +
@@ -215,6 +216,13 @@
                 popperConfig: { strategy: 'fixed' }
             });
         });
+
+        // Managed branch selector (admin-only accounts) -- saves on change.
+        tbody.onchange = function (e) {
+            var sel = e.target.closest('select[data-managed-branch]');
+            if (!sel) return;
+            saveManagedBranch(sel);
+        };
 
         // Event delegation for action links
         tbody.onclick = function (e) {
@@ -248,6 +256,62 @@
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-toggle-status')).show();
             }
         };
+    }
+
+    /**
+     * "Managed branch" cell. Only role-ADMIN accounts WITHOUT a staff record
+     * (e.g. HAIRMATE) get a selector -- staff branch managers are assigned on
+     * the Branches page, and SUPER_ADMIN always sees every branch.
+     */
+    function renderManagedBranchCell(u, isSuperAdmin, isSelf) {
+        if (isSuperAdmin) return '<span class="text-secondary small">All branches</span>';
+        if (u.hasStaffRecord) {
+            return '<span class="text-secondary small" title="Staff branch managers are assigned on the Branches page">Via staff record</span>';
+        }
+        // Only callers who can actually save (branches:manage_manager, not branch-scoped) get the selector.
+        var canAssign = typeof RBAC !== 'undefined' && RBAC.can && RBAC.can('branches:manage_manager') && !(RBAC.isManagerScoped && RBAC.isManagerScoped());
+        if (!canAssign) {
+            return u.managedBranch ? _esc(u.managedBranch.name || '') : '<span class="text-secondary small">—</span>';
+        }
+        var current = u.managedBranchId || '';
+        var branches = (State.branchesCache || []).slice();
+        // Keep the current value selectable even if that branch is now inactive / not listed.
+        if (current && !branches.some(function (b) { return b.id === current; })) {
+            branches.push({ id: current, name: (u.managedBranch && u.managedBranch.name) || 'Current branch' });
+        }
+        var opts = '<option value="">— None (all branches) —</option>' + branches.map(function (b) {
+            return '<option value="' + _esc(b.id) + '"' + (b.id === current ? ' selected' : '') + '>' + _esc(b.name || b.id) + '</option>';
+        }).join('');
+        return '<select class="form-select form-select-sm" style="min-width:11rem" data-managed-branch="1"' +
+            ' data-uid="' + _esc(u.id) + '" data-prev="' + _esc(current) + '"' +
+            (isSelf ? ' disabled title="You cannot change your own managed branch"' : '') +
+            ' aria-label="Managed branch">' + opts + '</select>';
+    }
+
+    async function saveManagedBranch(sel) {
+        var uid = sel.dataset.uid;
+        var prev = sel.dataset.prev || '';
+        var next = sel.value || '';
+        if (next === prev) return;
+        sel.disabled = true;
+        try {
+            var data = await Api.setManagedBranch(uid, next || null);
+            sel.dataset.prev = next;
+            var user = State.adminUsers.find(function (x) { return x.id === uid; });
+            if (user) {
+                user.managedBranchId = data && data.managedBranchId !== undefined ? data.managedBranchId : (next || null);
+                user.managedBranch = data && data.managedBranch !== undefined ? data.managedBranch : null;
+            }
+            var label = next ? (sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : 'the branch') : null;
+            showAdminAlert('success', label
+                ? 'Managed branch set to ' + label + ' — this account now only sees that branch.'
+                : 'Managed branch cleared — this account now sees every branch.');
+        } catch (err) {
+            sel.value = prev;
+            showAdminAlert('danger', err.message || 'Failed to update managed branch.');
+        } finally {
+            sel.disabled = false;
+        }
     }
 
     function filterAdminUsers(query) {
