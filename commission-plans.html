@@ -73,7 +73,9 @@
                             <div class="page-pretitle">Payroll</div>
                             <h2 class="page-title">Commission Plans</h2>
                         </div>
-                        <div class="col-auto ms-auto">
+                        <div class="col-auto ms-auto d-flex gap-2">
+                            <a href="commission-approvals.html" class="btn btn-outline-secondary">Commission Approvals
+                                <span class="badge bg-warning text-dark ms-2 nav-pending-commissions-badge" hidden></span></a>
                             <button type="button" class="btn btn-primary d-none" id="btn-new">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -90,6 +92,58 @@
 
             <div class="page-body">
                 <div class="container-xl">
+                    <!-- Staff on a commission compensation type with no active plan (records 0% commission) -->
+                    <div class="card mb-3 border-danger d-none" id="missing-plan-card">
+                        <div class="card-header">
+                            <h3 class="card-title text-danger mb-0">
+                                <span class="badge bg-danger text-white me-2" id="missing-plan-count">0</span>
+                                Commission staff without an active plan
+                            </h3>
+                        </div>
+                        <div class="card-body pb-2">
+                            <p class="text-secondary small mb-2">These staff are paid on commission, but every booking they complete is being recorded at <strong>0%</strong> because they have no active Commission Plan. Assign a plan from their staff profile (Payroll Method &rarr; Set), then recalculate their past bookings below.</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table table-sm">
+                                <thead>
+                                    <tr><th>Staff</th><th>Branch</th><th>Compensation Type</th><th>Plan</th></tr>
+                                </thead>
+                                <tbody id="missing-plan-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Recalculate 0%-recorded commissions -->
+                    <div class="card mb-3 d-none" id="recalc-card">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">Recalculate commissions</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-secondary small mb-3">Finds bookings in the date range whose commission was recorded at <strong>0%</strong> (no active plan at the time) and recalculates them with the staff member's <strong>current</strong> Commission Plan (rate and eligible services, including services added after completion). <br>How each payroll period is handled: <strong>Awaiting Release</strong> (generated, not yet approved) &mdash; records are corrected and each affected staff member's payslip and locked wallet credit are recalculated automatically on Apply. <strong>Draft, never generated</strong> &mdash; records are corrected; generate the period afterwards as usual. <strong>Draft that already credited wallets</strong> (sent back for correction) &mdash; not changed; click Generate for that period first, then run this again. <strong>Released</strong> &mdash; never changed; listed with the shortfall so you can add a Bonus adjustment.</p>
+                            <div class="alert alert-danger d-none" id="recalc-error"></div>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label" for="recalc-from">From</label>
+                                    <input type="date" class="form-control" id="recalc-from">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label" for="recalc-to">To</label>
+                                    <input type="date" class="form-control" id="recalc-to">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="recalc-staff">Staff <span class="text-secondary">(optional)</span></label>
+                                    <select class="form-select" id="recalc-staff">
+                                        <option value="">All staff</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-primary w-100" id="btn-recalc-preview">Preview</button>
+                                </div>
+                            </div>
+                            <div id="recalc-result" class="mt-3"></div>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header d-block pb-0">
                             <div class="d-flex align-items-center justify-content-between mb-3">
@@ -209,6 +263,8 @@
 
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/staff.js"></script>
+    <script src="assets/js/api-utils/payroll.js"></script>
     <script src="assets/js/api-utils/commission-plans.js"></script>
     <script src="assets/js/api-utils/services.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
@@ -241,7 +297,199 @@
             });
 
             load();
+            initCommissionHealth();
         });
+
+        // -- 0% commission visibility + recalculation ------------------------
+
+        var _lastRecalcPreview = null;
+
+        function money(v) { return Payroll.formatMoney(v); }
+        function compTypeLabel(t) {
+            return ({ SALARY: 'Salary', SALARY_TO_COMMISSION: 'Salary \u2192 Commission', SALARY_PLUS_COMMISSION: 'Salary + Commission', COMMISSION: 'Commission Only' })[t] || t;
+        }
+
+        function initCommissionHealth() {
+            loadMissingPlans();
+            if (!RBAC.can('payroll:correct')) return;
+            document.getElementById('recalc-card').classList.remove('d-none');
+            var now = new Date();
+            var firstPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            var lastPrev = new Date(now.getFullYear(), now.getMonth(), 0);
+            function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+            document.getElementById('recalc-from').value = ymd(firstPrev);
+            document.getElementById('recalc-to').value = ymd(lastPrev);
+            document.getElementById('btn-recalc-preview').addEventListener('click', function () { runRecalc(true); });
+            document.getElementById('recalc-result').addEventListener('click', function (e) {
+                if (e.target.closest('#btn-recalc-apply')) { runRecalc(false); return; }
+                var gen = e.target.closest('.btn-regenerate-period');
+                if (gen) regeneratePeriod(gen.dataset.id, gen.dataset.label, gen);
+            });
+            ['recalc-from', 'recalc-to', 'recalc-staff'].forEach(function (id) {
+                document.getElementById(id).addEventListener('change', function () { _lastRecalcPreview = null; document.getElementById('recalc-result').innerHTML = ''; });
+            });
+            Staff.getOptions({ includeAllStatuses: true }).then(function (list) {
+                var managedIds = RBAC.getManagedBranchIds();
+                if (RBAC.isManagerScoped()) list = list.filter(function (s) { return !s.locationId || managedIds.indexOf(s.locationId) !== -1; });
+                document.getElementById('recalc-staff').innerHTML = '<option value="">All staff</option>' + list.map(function (s) {
+                    return '<option value="' + esc(s.id) + '">' + esc(Staff.fullName(s) + (s.staffCode ? ' (' + s.staffCode + ')' : '')) + '</option>';
+                }).join('');
+            }).catch(function () { /* staff filter is optional */ });
+        }
+
+        async function loadMissingPlans() {
+            var card = document.getElementById('missing-plan-card');
+            try {
+                var rows = await CommissionPlans.getStaffMissingPlan();
+                if (!rows || !rows.length) { card.classList.add('d-none'); return; }
+                document.getElementById('missing-plan-count').textContent = rows.length;
+                document.getElementById('missing-plan-tbody').innerHTML = rows.map(function (s) {
+                    return '<tr>' +
+                        '<td class="fw-semibold">' + esc(s.name) + ' <span class="text-secondary small">' + esc(s.staffCode || '') + '</span></td>' +
+                        '<td class="text-secondary small">' + esc(s.location ? s.location.name : '\u2014') + '</td>' +
+                        '<td>' + esc(compTypeLabel(s.compensationType)) + '</td>' +
+                        '<td>' + (s.commissionPlan
+                            ? '<span class="badge bg-warning-lt text-warning">' + esc(s.commissionPlan.name) + ' (inactive)</span>'
+                            : '<span class="badge bg-danger-lt text-danger">No plan</span>') + '</td>' +
+                        '</tr>';
+                }).join('');
+                card.classList.remove('d-none');
+            } catch (err) {
+                card.classList.add('d-none');
+            }
+        }
+
+        async function runRecalc(dryRun) {
+            var errEl = document.getElementById('recalc-error');
+            var resultEl = document.getElementById('recalc-result');
+            errEl.classList.add('d-none');
+            var from = document.getElementById('recalc-from').value;
+            var to = document.getElementById('recalc-to').value;
+            var staffId = document.getElementById('recalc-staff').value || undefined;
+            if (!from || !to) { errEl.textContent = 'Select both a From and a To date.'; errEl.classList.remove('d-none'); return; }
+            if (to < from) { errEl.textContent = '"To" must be on or after "From".'; errEl.classList.remove('d-none'); return; }
+
+            if (!dryRun) {
+                if (!_lastRecalcPreview || !_lastRecalcPreview.totals.recordsToUpdate) { errEl.textContent = 'Run a preview first.'; errEl.classList.remove('d-none'); return; }
+                var t = _lastRecalcPreview.totals;
+                if (!confirm('Update ' + t.recordsToUpdate + ' commission record(s) from ' + money(t.oldTotal) + ' to ' + money(t.newTotal) + ' (+' + money(t.difference) + ')?\n\nPayslips in Awaiting Release periods will be recalculated and their (locked) wallet credits adjusted automatically. Released periods are NOT changed.')) return;
+            }
+
+            var btn = dryRun ? document.getElementById('btn-recalc-preview') : document.getElementById('btn-recalc-apply');
+            if (btn) btn.disabled = true;
+            if (dryRun) resultEl.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
+            try {
+                var payload = { from: from, to: to, dryRun: dryRun };
+                if (staffId) payload.staffId = staffId;
+                var data = await CommissionPlans.recalculateCommissions(payload);
+                _lastRecalcPreview = dryRun ? data : null;
+                resultEl.innerHTML = renderRecalcResult(data);
+                if (!dryRun) { load(); loadMissingPlans(); }
+            } catch (err) {
+                errEl.textContent = err.message || 'Recalculation failed.';
+                errEl.classList.remove('d-none');
+                if (dryRun) resultEl.innerHTML = '';
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function renderRecalcResult(d) {
+            var t = d.totals;
+            var html = '';
+            if (d.dryRun) {
+                html += '<div class="alert alert-info small mb-3">Preview only \u2014 nothing has been changed yet. ' +
+                    t.recordsToUpdate + ' record(s) can be corrected: ' + money(t.oldTotal) + ' \u2192 <strong>' + money(t.newTotal) + '</strong> (difference <strong>' + money(t.difference) + '</strong>).</div>';
+            } else {
+                html += '<div class="alert alert-success small mb-3"><strong>' + t.recordsUpdated + '</strong> commission record(s) updated (' + money(t.oldTotal) + ' \u2192 ' + money(t.newTotal) + ').' +
+                    ((d.payslipsRecalculated || []).length ? ' ' + d.payslipsRecalculated.length + ' Awaiting Release payslip(s) recalculated below.' : '') + '</div>';
+                html += CommissionPlans.renderPayslipResults(d);
+            }
+
+            if (d.dryRun && d.awaitingReleasePayslips && d.awaitingReleasePayslips.length) {
+                html += '<div class="alert alert-info small mb-2"><strong>Awaiting Release payroll:</strong> on Apply, these staff members\' payslips and (locked) wallet credits will be recalculated automatically \u2014 no manual adjustment needed. Net pay changes are shown after Apply (tax, pension and, for commission-only staff, attendance proration apply).</div>' +
+                    '<div class="table-responsive mb-3"><table class="table table-sm table-vcenter"><thead><tr><th>Staff</th><th>Period</th><th class="text-center">Records</th><th class="text-end">Commission difference</th></tr></thead><tbody>' +
+                    d.awaitingReleasePayslips.map(function (a) {
+                        return '<tr><td>' + esc(a.staffName) + (a.pendingApprovalCount ? '<div class="text-secondary small">' + a.pendingApprovalCount + ' need approval first (Commission Approvals) \u2014 recalculated when approved</div>' : '') + '</td>' +
+                            '<td>' + esc(a.periodLabel) + '</td><td class="text-center">' + a.recordCount + '</td>' +
+                            '<td class="text-end fw-semibold text-success">' + money(a.commissionDifference) + '</td></tr>';
+                    }).join('') +
+                    '</tbody></table></div>';
+            }
+
+            if (d.staff && d.staff.length) {
+                html += '<div class="table-responsive mb-3"><table class="table table-sm table-vcenter"><thead><tr>' +
+                    '<th>Staff</th><th>Plan</th><th class="text-center">Records</th><th class="text-end">Old total</th><th class="text-end">New total</th><th class="text-end">Difference</th><th class="text-end">Released shortfall</th>' +
+                    '</tr></thead><tbody>' +
+                    d.staff.map(function (s) {
+                        return '<tr><td class="fw-semibold">' + esc(s.staffName) + ' <span class="text-secondary small">' + esc(s.staffCode || '') + '</span><div class="text-secondary small">' + esc(compTypeLabel(s.compensationType)) + '</div></td>' +
+                            '<td>' + esc(s.planName) + ' (' + CommissionPlans.formatRate(s.rate) + ')</td>' +
+                            '<td class="text-center">' + s.count + '</td>' +
+                            '<td class="text-end">' + money(s.oldTotal) + '</td>' +
+                            '<td class="text-end">' + money(s.newTotal) + '</td>' +
+                            '<td class="text-end fw-semibold text-success">' + money(s.difference) + '</td>' +
+                            '<td class="text-end">' + (s.lockedCount ? '<span class="text-warning">' + money(s.lockedShortfall) + ' (' + s.lockedCount + ')</span>' : '\u2014') + '</td></tr>';
+                    }).join('') +
+                    '</tbody></table></div>';
+            } else {
+                html += '<div class="text-secondary small mb-3">No 0% commission records in this range can be recalculated.</div>';
+            }
+
+            if (d.needsManualAdjustment && d.needsManualAdjustment.length) {
+                html += '<div class="alert alert-warning small mb-2"><strong>Needs manual adjustment:</strong> these bookings fall in a payroll period that is already Released (paid), so they were not changed. Add a <em>Bonus</em> payroll adjustment for the shortfall (e.g. in the next Draft period) from the <a href="payroll.html">Payroll</a> page.</div>' +
+                    '<div class="table-responsive mb-3"><table class="table table-sm table-vcenter"><thead><tr><th>Booking</th><th>Staff</th><th>Date</th><th>Period</th><th class="text-end">Recorded</th><th class="text-end">Should be</th><th class="text-end">Shortfall</th></tr></thead><tbody>' +
+                    d.needsManualAdjustment.map(function (r) {
+                        return '<tr><td>' + esc(r.bookingCode) + '</td><td>' + esc(r.staffName) + '</td><td>' + Payroll.formatDate(r.calculatedAt) + '</td>' +
+                            '<td>' + esc(r.period ? r.period.label + ' (' + r.period.status.replace(/_/g, ' ') + ')' : '\u2014') + '</td>' +
+                            '<td class="text-end">' + money(r.currentAmount) + '</td><td class="text-end">' + money(r.correctAmount) + '</td><td class="text-end fw-semibold text-warning">' + money(r.shortfall) + '</td></tr>';
+                    }).join('') +
+                    '</tbody></table></div>';
+            }
+
+            if (d.blockedDraftCredited && d.blockedDraftCredited.length) {
+                var blockedPeriods = {};
+                d.blockedDraftCredited.forEach(function (r) { if (r.period) blockedPeriods[r.period.id] = r.period.label; });
+                var canGen = RBAC.can('payroll:generate');
+                html += '<div class="alert alert-warning small mb-2"><strong>' + d.blockedDraftCredited.length + ' record(s) not changed:</strong> their Draft payroll period already credited staff wallets and was sent back for correction. Regenerating it would not adjust those wallets, so: generate the period first (it returns to Awaiting Release), then preview and apply again \u2014 payslips and wallets are then corrected automatically. ' +
+                    Object.keys(blockedPeriods).map(function (id) {
+                        return '<strong>' + esc(blockedPeriods[id]) + '</strong>' + (canGen ? ' <button type="button" class="btn btn-sm btn-outline-primary ms-1 btn-regenerate-period" data-id="' + esc(id) + '" data-label="' + esc(blockedPeriods[id]) + '">Generate payroll</button>' : '');
+                    }).join(' &middot; ') + '</div>';
+            }
+
+            if (d.skippedNoActivePlan && d.skippedNoActivePlan.length) {
+                html += '<div class="alert alert-danger small mb-2">Skipped \u2014 still no active Commission Plan (assign one first, then preview again): ' +
+                    d.skippedNoActivePlan.map(function (s) { return '<strong>' + esc(s.staffName) + '</strong> (' + s.count + ')'; }).join(', ') + '</div>';
+            }
+
+            if (d.approvalNote) html += '<div class="alert alert-secondary small mb-2">' + esc(d.approvalNote) + ' <a href="commission-approvals.html">Open Commission Approvals \u2192</a></div>';
+
+            if (d.draftPeriodsToRegenerate && d.draftPeriodsToRegenerate.length) {
+                var canGenerate = RBAC.can('payroll:generate');
+                html += '<div class="small mb-2"><strong>Draft payroll period(s) not generated yet:</strong> ' +
+                    d.draftPeriodsToRegenerate.map(function (p) {
+                        return esc(p.label) + (!d.dryRun && canGenerate ? ' <button type="button" class="btn btn-xs btn-sm btn-outline-primary ms-1 btn-regenerate-period" data-id="' + esc(p.id) + '" data-label="' + esc(p.label) + '">Regenerate payroll</button>' : '');
+                    }).join(' &middot; ') +
+                    (d.dryRun ? ' \u2014 generate it after applying (as usual).' : (canGenerate ? '' : ' \u2014 ask someone with payroll generation access to generate it on the <a href="payroll.html">Payroll</a> page.')) + '</div>';
+            }
+
+            if (d.dryRun && t.recordsToUpdate > 0) {
+                html += '<div class="d-flex justify-content-end"><button type="button" class="btn btn-primary" id="btn-recalc-apply">Apply ' + t.recordsToUpdate + ' correction(s)</button></div>';
+            }
+            return html;
+        }
+
+        async function regeneratePeriod(id, label, btn) {
+            if (!confirm('Generate payroll for ' + label + '? This calculates every active staff member\'s payslip for this Draft period and moves it to Awaiting Release. Wallets already credited for this period are not re-credited.')) return;
+            btn.disabled = true;
+            try {
+                await Payroll.generatePayroll(id);
+                btn.outerHTML = '<span class="badge bg-success-lt text-success ms-1">Generated</span>';
+                _lastRecalcPreview = null;
+            } catch (err) {
+                alert(err.message || 'Failed to regenerate payroll.');
+                btn.disabled = false;
+            }
+        }
 
         async function load() {
             var tbody = document.getElementById('tbody');

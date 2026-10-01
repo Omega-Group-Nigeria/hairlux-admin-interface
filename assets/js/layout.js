@@ -56,6 +56,12 @@ var Layout = window.Layout || (() => {
     }
 
     function renderNavBadge(item) {
+        if (item.badge === "pendingCommissions") {
+            // Filled by refreshCommissionApprovalBadge(); class-based because
+            // it appears on both the Payroll group and its child link.
+            return '<span class="badge bg-warning text-dark ms-auto nav-pending-commissions-badge" hidden ' +
+                'aria-label="Commissions awaiting approval"></span>';
+        }
         if (item.badge !== "confirmedOrders") return "";
         return (
             '<span class="badge nav-shop-order-badge bg-warning text-dark" ' +
@@ -99,6 +105,30 @@ var Layout = window.Layout || (() => {
         return 0;
     }
 
+    function updateCommissionApprovalBadge(count) {
+        const n = Number(count) || 0;
+        document.querySelectorAll(".nav-pending-commissions-badge").forEach(function (el) {
+            el.hidden = n <= 0;
+            el.textContent = n <= 0 ? "" : (n > 99 ? "99+" : String(n));
+        });
+    }
+
+    async function refreshCommissionApprovalBadge() {
+        if (typeof RBAC === "undefined" || !RBAC.can || !RBAC.can("payroll:read_commission_plans") || !RBAC.can("payroll:approve_commission")) {
+            updateCommissionApprovalBadge(0);
+            return;
+        }
+        try {
+            const res = await Auth.fetch("/admin/payroll/commissions?status=PENDING&page=1&limit=1");
+            if (!res || !res.ok) { updateCommissionApprovalBadge(0); return; }
+            const raw = await res.json().catch(function () { return {}; });
+            const data = raw.data !== undefined ? raw.data : raw;
+            updateCommissionApprovalBadge(data && data.totals ? data.totals.count : 0);
+        } catch (_) {
+            updateCommissionApprovalBadge(0);
+        }
+    }
+
     async function refreshShopOrderBadge() {
         if (!canViewShopOrders()) {
             updateShopConfirmedBadge(0);
@@ -126,7 +156,8 @@ var Layout = window.Layout || (() => {
             if (item.children && item.children.length) {
                 const childrenHtml = item.children.map(function (child) {
                     const childActive = isChildActive(child.href) ? " active" : "";
-                    return '<a class="nav-subnav-link' + childActive + '" href="' + resolveHref(child.href) + '" data-nav-key="' + child.href + '">' + child.label + "</a>";
+                    const childBadge = child.badge ? renderNavBadge(child) : "";
+                    return '<a class="nav-subnav-link' + childActive + (childBadge ? " d-flex align-items-center" : "") + '" href="' + resolveHref(child.href) + '" data-nav-key="' + child.href + '">' + child.label + childBadge + "</a>";
                 }).join("");
                 const openClass = active ? " is-open" : "";
                 return (
@@ -312,6 +343,7 @@ var Layout = window.Layout || (() => {
         syncNavAccess();
         initHeader();
         refreshShopOrderBadge();
+        refreshCommissionApprovalBadge();
     });
 
     return {
@@ -325,6 +357,8 @@ var Layout = window.Layout || (() => {
         syncNavAccess,
         refreshShopOrderBadge,
         updateShopConfirmedBadge,
+        refreshCommissionApprovalBadge,
+        updateCommissionApprovalBadge,
     };
 })();
 window.Layout = Layout;

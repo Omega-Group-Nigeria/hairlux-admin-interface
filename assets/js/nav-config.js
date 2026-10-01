@@ -233,9 +233,11 @@ var NavConfig = window.NavConfig || (() => {
             id: "payroll",
             label: "Payroll",
             icon: "users",
+            badge: "pendingCommissions",
             children: [
                 { label: "Payroll", href: "payroll.html", permission: read("payroll:read") },
                 { label: "Commission Plans", href: "commission-plans.html", permission: read("payroll:read_commission_plans") },
+                { label: "Commission Approvals", href: "commission-approvals.html", permission: read("payroll:read_commission_plans"), badge: "pendingCommissions" },
             ],
         }),
         group({
