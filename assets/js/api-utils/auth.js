@@ -135,7 +135,8 @@ const Auth = (() => {
     const res = await fetch(`${getBase()}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      // portal lets the API refuse admin-dashboard-only accounts on the staff tab.
+      body: JSON.stringify({ email, password, portal: loginType === "staff" ? "staff" : "admin" }),
     });
 
     const raw = await res.json().catch(() => ({}));
