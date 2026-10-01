@@ -274,16 +274,24 @@
     async function loadAdminUsers() {
         var tbody = document.getElementById('admin-users-tbody');
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading…</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Loading…</td></tr>';
         try {
             // Refresh roles cache so stats and selects are up to date
             if (!State.rolesCache.length) await populateRoleSelects();
-            State.adminUsers = await Api.getAdminUsers();
+            var results = await Promise.all([
+                Api.getAdminUsers(),
+                // Branch list for the "Managed branch" selector -- non-fatal.
+                State.branchesCache.length
+                    ? Promise.resolve(State.branchesCache)
+                    : Api.getBranches().catch(function () { return []; }),
+            ]);
+            State.adminUsers = results[0];
+            State.branchesCache = Array.isArray(results[1]) ? results[1] : [];
             updateAdminStats(State.adminUsers);
             renderAdminTable(State.adminUsers);
             clearAdminSearch();
         } catch (err) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + _esc(err.message) + '</td></tr>';
         }
     }
 
@@ -319,10 +327,35 @@
 
     // ── Permission matrix ─────────────────────────────────────────────────
 
+    // ── Admin-dashboard-only (HAIRMATE) accounts ─────────────────────────
+    // Customer Classification and Home Service are company-wide settings
+    // these accounts must not see (the API also rejects them with 403).
+    var ADMIN_ONLY_HIDDEN_SECTIONS = ['customer-classification', 'home-service'];
+
+    function isHiddenSection(section) {
+        return RBAC.isAdminOnlyAccount() && ADMIN_ONLY_HIDDEN_SECTIONS.indexOf(section) !== -1;
+    }
+
+    function applyAdminOnlyRestrictions() {
+        var restricted = RBAC.isAdminOnlyAccount();
+        ADMIN_ONLY_HIDDEN_SECTIONS.forEach(function (s) {
+            var link = document.querySelector('.settings-nav .nav-link[data-section="' + s + '"]');
+            if (link) link.classList.toggle('d-none', restricted);
+            var sec = document.getElementById('section-' + s);
+            if (sec) sec.classList.toggle('d-none', restricted);
+        });
+        if (restricted && isHiddenSection((location.hash || '').replace('#', ''))) {
+            switchSection('profile');
+        }
+        return restricted;
+    }
+
     // ── DOMContentLoaded ─────────────────────────────────────────────────
     async function init() {
+        applyAdminOnlyRestrictions();
         RBAC.fetchMe().then(function () {
             RBAC.applyNavVisibility();
+            applyAdminOnlyRestrictions();
             // Refresh State.isSuperAdmin after server re-hydration and re-apply section visibility
             State.isSuperAdmin = RBAC.isSuperAdmin();
             var navLink = document.getElementById('nav-admin-management');
@@ -334,7 +367,7 @@
         loadProfile();
         await populateRoleSelects();
         loadBusinessHours();
-        loadHomeService();
+        if (!isHiddenSection('home-service')) loadHomeService();
         wireCancellationPolicyInputs();
 
         // Settings sidebar nav
@@ -342,6 +375,7 @@
             link.addEventListener('click', function (e) {
                 e.preventDefault();
                 var section = this.dataset.section;
+                if (isHiddenSection(section)) return;
                 switchSection(section);
                 if (section === 'admin-management') {
                     populateRoleSelects().then(function () { renderPermRoleSelector(); });
@@ -1302,13 +1336,14 @@
         }
 
         routeOnLoad();
+        applyAdminOnlyRestrictions();
 
         // Auto-load when landing directly on home-service / admin-management
         var hash = (location.hash || '').replace('#', '');
-        if (hash === 'home-service') {
+        if (hash === 'home-service' && !isHiddenSection(hash)) {
             loadHomeService();
         }
-        if (hash === 'customer-classification') {
+        if (hash === 'customer-classification' && !isHiddenSection(hash)) {
             loadCustomerClassificationSettings();
         }
         if (hash === 'cancellation-policy') {

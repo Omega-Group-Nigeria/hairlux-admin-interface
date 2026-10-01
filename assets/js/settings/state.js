@@ -18,6 +18,9 @@
         /** Admin users list for Admin Management tab */
         adminUsers: [],
 
+        /** Active branches for the "Managed branch" selector (admin-only accounts) */
+        branchesCache: [],
+
         /** Roles list cache for selects / permissions UI */
         rolesCache: [],
 

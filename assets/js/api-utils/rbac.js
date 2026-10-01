@@ -31,6 +31,11 @@ const RBAC = (() => {
     // now oversee multiple branches (the old one-branch-per-manager DB
     // constraint was dropped). [{ id, name }, ...], possibly empty.
     let _managedBranches = [];
+    // Admin-dashboard-only account (HAIRMATE role or an admin-only email),
+    // computed server-side as `adminOnlyAccount` on /auth/me + login. These
+    // accounts have no Staff record; their branch (if any) is assigned on
+    // the User itself and arrives in managedBranches like a staff manager's.
+    let _adminOnlyAccount = false;
 
     // ── Hydration ─────────────────────────────────────────────────────────────
 
@@ -54,6 +59,8 @@ const RBAC = (() => {
             _permissions = [];
         }
         _managedBranches = Array.isArray(userData.managedBranches) ? userData.managedBranches : [];
+        _adminOnlyAccount = userData.adminOnlyAccount === true ||
+            (userData.adminOnlyAccount === undefined && !!(userData.adminRole && /^\s*hairmate\s*$/i.test(userData.adminRole.name || '')));
         try { localStorage.setItem('hairlux_user', JSON.stringify(userData)); } catch (_) { }
     }
 
@@ -116,8 +123,13 @@ const RBAC = (() => {
     /** Convenience for the common case of just needing the ids to filter/restrict by. */
     function getManagedBranchIds() { return _managedBranches.map(function (b) { return b.id; }); }
 
+    /** True for an admin-dashboard-only (HAIRMATE / admin-only email) account. Never SUPER_ADMIN. */
+    function isAdminOnlyAccount() { return _role !== 'SUPER_ADMIN' && _adminOnlyAccount; }
+
     /**
-     * True for any admin whose linked Staff record manages at least one branch.
+     * True for any admin who manages at least one branch -- via their linked
+     * Staff record (StaffLocation.managerId) or, for an admin-dashboard-only
+     * account with no Staff record, the branch assigned on their user.
      * SUPER_ADMIN is never branch-scoped -- the group owner always sees every
      * branch, even if their own Staff record also happens to manage one.
      */
@@ -429,6 +441,7 @@ const RBAC = (() => {
         getManagedBranches,
         getManagedBranchIds,
         isManagerScoped,
+        isAdminOnlyAccount,
         applyBranchScope,
         applyBranchScopeMultiSelect,
         scopeBranchId,
