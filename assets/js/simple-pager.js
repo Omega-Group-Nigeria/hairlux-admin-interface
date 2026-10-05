@@ -1,5 +1,5 @@
 /**
- * SimplePager — a small "Per page / Previous / Next" control for long lists.
+ * SimplePager: a small "Per page / Previous / Next" control for long lists.
  *
  * Client-side (you already hold the whole array):
  *   var pager = SimplePager.attach("#my-table-pager", { onChange: render });

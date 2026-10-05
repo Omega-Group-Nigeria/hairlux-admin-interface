@@ -1,5 +1,5 @@
 /**
- * shop/api.js — wrappers around Shop.* for the shop admin page
+ * shop/api.js: wrappers around Shop.* for the shop admin page
  */
 (function (global) {
     'use strict';

@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="../assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Verify Booking</title>
+    <title>Hairlux Admin | Verify Booking</title>
     <link rel="icon" href="../favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
@@ -255,7 +255,7 @@
                         <div class="list-group-item text-center text-secondary py-5">Loading beauticians…</div>
                     </div>
                     <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
-                        <p class="m-0 text-secondary small" id="force-assign-pagination-info">—</p>
+                        <p class="m-0 text-secondary small" id="force-assign-pagination-info">-</p>
                         <ul class="pagination pagination-sm m-0 ms-auto" id="force-assign-pagination-btns"></ul>
                     </div>
                     <input type="hidden" id="force-assign-beautician" value="">
@@ -378,7 +378,7 @@
             var customer = b.user || {};
             var custName = customer.firstName
                 ? customer.firstName + " " + customer.lastName
-                : (customer.name || b.guestName || "—");
+                : (customer.name || b.guestName || "-");
             var services = b.services || (b.service ? [b.service] : []);
             var address  = Bookings.normalizeAddress(b.address || {});
             var addrStr  = Bookings.formatAddress(address, "");
@@ -400,7 +400,7 @@
                 ? '<span class="badge bg-azure-lt text-azure">Mobile Service</span>'
                 : (bookingType === "WALK_IN"
                     ? '<span class="badge bg-teal-lt text-teal">Walk-in</span>'
-                    : '<span class="badge bg-secondary-lt">' + (bookingType || "—") + '</span>');
+                    : '<span class="badge bg-secondary-lt">' + (bookingType || "-") + '</span>');
 
             // Services table rows
             var svcRows = services.length
@@ -409,7 +409,7 @@
                     var m = s.duration ? s.duration % 60 : 0;
                     var dur = s.duration
                         ? (h > 0 ? h + 'h' : '') + (m > 0 ? m + 'min' : '')
-                        : "—";
+                        : "-";
                     return '<tr>' +
                         '<td>' + (s.name || s.serviceName || "Service") + '</td>' +
                         '<td class="text-secondary">' + dur + '</td>' +
@@ -425,7 +425,7 @@
                 '<div class="card" id="result-card">' +
                 '<div class="card-header">' +
                 '<div class="d-flex align-items-center gap-3 flex-wrap">' +
-                '<div class="res-code-display">' + (b.reservationCode || "—") + validityBadge + '</div>' +
+                '<div class="res-code-display">' + (b.reservationCode || "-") + validityBadge + '</div>' +
                 '<div class="ms-auto">' + Bookings.statusBadge(b.status || "PENDING") + '</div>' +
                 '</div>' +
                 '</div>' +
@@ -511,7 +511,7 @@
                 // Booking ID + timestamps
                 '<div class="detail-section">' +
                 '<div class="row g-2 text-secondary small">' +
-                '<div class="col-md-6"><span class="fw-semibold">Booking ID:</span> <span class="font-monospace">' + (b.id || "—") + '</span></div>' +
+                '<div class="col-md-6"><span class="fw-semibold">Booking ID:</span> <span class="font-monospace">' + (b.id || "-") + '</span></div>' +
                 (b.createdAt ? '<div class="col-md-6"><span class="fw-semibold">Created:</span> ' + new Date(b.createdAt).toLocaleString() + '</div>' : '') +
                 (b.updatedAt ? '<div class="col-md-6"><span class="fw-semibold">Last updated:</span> ' + new Date(b.updatedAt).toLocaleString() + '</div>' : '') +
                 '</div>' +
@@ -538,7 +538,7 @@
 
             if (bookingType === "WALK_IN") {
                 if (b.status === "CANCELLED") {
-                    return '<span class="text-secondary small">Booking cancelled — no check-in required.</span>';
+                    return '<span class="text-secondary small">Booking cancelled: no check-in required.</span>';
                 }
                 // WALK_IN → Mark as Used via PATCH /admin/bookings/reservation/{code}/use
                 if (isUsed) {
@@ -643,7 +643,7 @@
         // ── Retry Matching (HOME_SERVICE) ───────────────────────────────────────
         async function retryMatching(bookingId) {
             if (!bookingId) return;
-            var tierInput = prompt("Restart matching — start at tier (1, 2, or 3):", "1");
+            var tierInput = prompt("Restart matching: start at tier (1, 2, or 3):", "1");
             if (tierInput == null) return;
             var tier = parseInt(tierInput, 10);
             if (tier < 1 || tier > 3) {

@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Payments</title>
+    <title>Hairlux Admin | Payments</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
@@ -183,7 +183,7 @@
             <div class="page-body">
                 <div class="container-xl">
 
-                    <!-- STATS CARDS — GET /admin/wallets/stats -->
+                    <!-- STATS CARDS: GET /admin/wallets/stats -->
                     <div class="row row-deck row-cards mb-4">
                         <div class="col-sm-6 col-xl-3">
                             <div class="card">
@@ -192,7 +192,7 @@
                                         <div class="subheader flex-fill">Total Deposits</div>
                                         <span class="badge bg-success-lt text-wrap text-end" id="stat-period-label">All time</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total-deposits">—</div>
+                                    <div class="h1 mb-0" id="stat-total-deposits">-</div>
                                 </div>
                             </div>
                         </div>
@@ -203,7 +203,7 @@
                                         <div class="subheader flex-fill">Total Wallet Balance</div>
                                         <span class="badge bg-primary-lt text-wrap text-end" id="stat-period-label-2">All wallets</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total-balance">—</div>
+                                    <div class="h1 mb-0" id="stat-total-balance">-</div>
                                 </div>
                             </div>
                         </div>
@@ -214,7 +214,7 @@
                                         <div class="subheader flex-fill">Total Debits</div>
                                         <span class="badge bg-warning-lt text-wrap text-end" id="stat-period-label-3">Payment for services</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total-debits">—</div>
+                                    <div class="h1 mb-0" id="stat-total-debits">-</div>
                                 </div>
                             </div>
                         </div>
@@ -225,7 +225,7 @@
                                         <div class="subheader flex-fill">Failed Transactions</div>
                                         <span class="badge bg-danger-lt text-wrap text-end" id="stat-period-label-4">Errors</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-failed-tx">—</div>
+                                    <div class="h1 mb-0" id="stat-failed-tx">-</div>
                                 </div>
                             </div>
                         </div>
@@ -309,7 +309,7 @@
                             </div>
                             <!-- Wallets pagination -->
                             <div class="card-footer d-flex align-items-center">
-                                <p class="m-0 text-secondary small" id="wallets-pagination-info">—</p>
+                                <p class="m-0 text-secondary small" id="wallets-pagination-info">-</p>
                                 <ul class="pagination m-0 ms-auto" id="wallets-pagination-btns"></ul>
                             </div>
                         </div>
@@ -392,7 +392,7 @@
                             </div>
                             <!-- Transactions pagination -->
                             <div class="card-footer d-flex align-items-center">
-                                <p class="m-0 text-secondary small" id="tx-pagination-info">—</p>
+                                <p class="m-0 text-secondary small" id="tx-pagination-info">-</p>
                                 <ul class="pagination m-0 ms-auto" id="tx-pagination-btns"></ul>
                             </div>
                         </div>
@@ -649,7 +649,7 @@
             } catch (e) { console.warn("Wallet stats:", e); }
         }
 
-        // ── Load wallets table (GET /admin/users — includes walletBalance + transactionCount) ──
+        // ── Load wallets table (GET /admin/users: includes walletBalance + transactionCount) ──
         async function loadWallets() {
             var tbody = document.getElementById("wallets-tbody");
             tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>';
@@ -684,11 +684,11 @@
                 return;
             }
             tbody.innerHTML = rows.map(function (u, i) {
-                var name  = [u.firstName, u.lastName].filter(Boolean).join(" ") || "—";
-                var email = u.email || "—";
-                var bal   = u.walletBalance !== undefined ? Wallets.formatMoney(u.walletBalance) : '<span class="text-secondary">—</span>';
-                var txCnt = u.transactionCount !== undefined ? u.transactionCount : "—";
-                var last  = u.updatedAt ? Wallets.formatDateTime(u.updatedAt) : "—";
+                var name  = [u.firstName, u.lastName].filter(Boolean).join(" ") || "-";
+                var email = u.email || "-";
+                var bal   = u.walletBalance !== undefined ? Wallets.formatMoney(u.walletBalance) : '<span class="text-secondary">-</span>';
+                var txCnt = u.transactionCount !== undefined ? u.transactionCount : "-";
+                var last  = u.updatedAt ? Wallets.formatDateTime(u.updatedAt) : "-";
                 return '<tr class="wallet-row" data-user-id="' + u.id + '">' +
                     '<td class="text-secondary small">' + ((walletsState.page - 1) * walletsState.limit + i + 1) + '</td>' +
                     '<td><div class="fw-semibold">' + name + '</div></td>' +
@@ -743,11 +743,11 @@
             tbody.innerHTML = rows.map(function (t, i) {
                 _txMap[t.id] = t;
                 var user = (t.wallet && t.wallet.user) || t.user || {};
-                var name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "—";
+                var name = [user.firstName, user.lastName].filter(Boolean).join(" ") || "-";
                 var email = user.email ? '<div class="text-secondary small">' + user.email + '</div>' : "";
                 var ref = t.reference
                     ? '<span class="font-monospace small text-secondary" title="' + t.reference + '">' + t.reference.slice(0, 22) + (t.reference.length > 22 ? "…" : "") + '</span>'
-                    : '—';
+                    : '-';
                 return '<tr>' +
                     '<td class="text-secondary small">' + ((txState.page - 1) * txState.limit + i + 1) + '</td>' +
                     '<td>' + ref + '</td>' +
@@ -769,8 +769,8 @@
             var t = _txMap[id];
             if (!t) return;
             var user       = (t.wallet && t.wallet.user) || t.user || {};
-            var userName   = [user.firstName, user.lastName].filter(Boolean).join(" ") || "—";
-            var walletId   = (t.wallet && t.wallet.id) || "—";
+            var userName   = [user.firstName, user.lastName].filter(Boolean).join(" ") || "-";
+            var walletId   = (t.wallet && t.wallet.id) || "-";
 
             document.getElementById("offcanvas-tx-body").innerHTML =
                 // Amount + badges
@@ -799,7 +799,7 @@
                 '<dt class="col-5 text-secondary fw-normal">Payment Method</dt>' +
                 '<dd class="col-7 mb-2">' + Wallets.paymentMethodBadge(t.paymentMethod) + '</dd>' +
                 '<dt class="col-5 text-secondary fw-normal">Reference</dt>' +
-                '<dd class="col-7 mb-0 font-monospace text-break">' + (t.reference || "—") + '</dd>' +
+                '<dd class="col-7 mb-0 font-monospace text-break">' + (t.reference || "-") + '</dd>' +
                 '<dt class="col-5 text-secondary fw-normal">Wallet ID</dt>' +
                 '<dd class="col-7 mb-0 font-monospace text-break">' + walletId + '</dd>' +
                 '<dt class="col-5 text-secondary fw-normal">Transaction ID</dt>' +
@@ -874,7 +874,7 @@
                             '<td>' + Wallets.paymentMethodBadge(t.paymentMethod) + '</td>' +
                             '<td class="text-secondary small">' + Wallets.formatDateTime(t.createdAt) + '</td>' +
                             '<td class="text-secondary small font-monospace">' +
-                            (t.reference ? t.reference.slice(0, 14) + "…" : "—") + '</td>' +
+                            (t.reference ? t.reference.slice(0, 14) + "…" : "-") + '</td>' +
                             '</tr>';
                     }).join("")
                     : '<tr><td colspan="6" class="text-center text-secondary py-3">No transactions yet.</td></tr>';
@@ -894,7 +894,7 @@
                     '<div class="h2 text-success mb-2">' + Wallets.formatMoney(walletBalance) + '</div>' +
                     '<div class="row g-2 text-center">' +
                     '<div class="col-6"><div class="text-secondary small">Total Bookings</div>' +
-                    '<div class="fw-semibold">' + (stats.totalBookings ?? '—') + '</div></div>' +
+                    '<div class="fw-semibold">' + (stats.totalBookings ?? '-') + '</div></div>' +
                     '<div class="col-6"><div class="text-secondary small">Recent Transactions</div>' +
                     '<div class="fw-semibold">' + txRows.length + '</div></div>' +
                     '</div>' +

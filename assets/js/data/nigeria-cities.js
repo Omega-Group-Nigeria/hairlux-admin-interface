@@ -1,5 +1,5 @@
 /**
- * assets/js/data/nigeria-cities.js — bundled static reference data.
+ * assets/js/data/nigeria-cities.js: bundled static reference data.
  * Nigeria: 36 states + Federal Capital Territory -> their cities/LGAs (774 total).
  * Source: open-admin-data/nigeria-administrative-divisions (CC-BY-4.0).
  * Exposed globally as window.NG_CITIES for the Settings > Home Service area picker.

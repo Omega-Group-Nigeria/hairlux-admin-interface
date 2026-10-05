@@ -1,5 +1,5 @@
 /**
- * academy-courses.js — Hairlux Admin
+ * academy-courses.js: Hairlux Admin
  * All /admin/academy/* calls -- Frontend Build Roadmap Phase 4 (Academy
  * Digital Courses): Courses, Pricing, Modules, Lessons (with reorder),
  * Assessments (question builder), and Review moderation.
@@ -175,13 +175,13 @@ const AcademyCourses = (() => {
     return (currency === "USD" ? "$" : "₦") + Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 });
   }
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });
   }
   function formatDateTime(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleString("en-NG", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -195,11 +195,11 @@ const AcademyCourses = (() => {
       COMING_SOON: "bg-info-lt text-info",
       ARCHIVED: "bg-secondary-lt text-secondary",
     };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—").replace(/_/g, " ") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-").replace(/_/g, " ") + "</span>";
   }
   function contentStatusBadge(status) {
     const map = { DRAFT: "bg-secondary-lt text-secondary", PUBLISHED: "bg-success-lt text-success" };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-") + "</span>";
   }
   function reviewStatusBadge(status) {
     const map = {
@@ -208,11 +208,11 @@ const AcademyCourses = (() => {
       HIDDEN: "bg-secondary-lt text-secondary",
       DELETED: "bg-danger-lt text-danger",
     };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-") + "</span>";
   }
   function levelLabel(level) {
     const map = { BEGINNER: "Beginner", INTERMEDIATE: "Intermediate", ADVANCED: "Advanced", ALL: "All Levels" };
-    return map[level] || level || "—";
+    return map[level] || level || "-";
   }
   function starRating(n) {
     if (n == null) return '<span class="text-secondary">No ratings yet</span>';

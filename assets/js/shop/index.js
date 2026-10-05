@@ -1,5 +1,5 @@
 /**
- * shop/index.js — bootstraps the Shop admin page modules
+ * shop/index.js: bootstraps the Shop admin page modules
  *
  * Load order (required):
  *   state.js → utils.js → api.js → ui.js → handlers.js → index.js
@@ -9,7 +9,7 @@
 
     var SP = global.ShopPage;
     if (!SP || !SP.Handlers || !SP.Handlers.init) {
-        console.error('[ShopPage] modules failed to load — check script tags / order');
+        console.error('[ShopPage] modules failed to load: check script tags / order');
         return;
     }
 

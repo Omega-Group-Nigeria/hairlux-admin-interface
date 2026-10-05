@@ -1,5 +1,5 @@
 /**
- * discounts.js — Hairlux Admin
+ * discounts.js: Hairlux Admin
  * All /admin/discounts/* API calls.
  *
  * Requires:
@@ -152,7 +152,7 @@ const Discounts = (() => {
   }
 
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });

@@ -1,5 +1,5 @@
 /**
- * auth.js — Hairlux Admin
+ * auth.js: Hairlux Admin
  * Authentication helper: login, logout, token refresh, auth guard, authed fetch.
  *
  * Requires:
@@ -128,7 +128,7 @@ const Auth = (() => {
    * @param {string} email
    * @param {string} password
    * @param {'admin'|'staff'} [loginType='admin']
-   *   Which login tab was used — determines which role(s) are acceptable
+   *   Which login tab was used: determines which role(s) are acceptable
    *   for this session and produces a tab-specific error otherwise.
    */
   async function login(email, password, loginType = "admin") {
@@ -156,7 +156,7 @@ const Auth = (() => {
     // `roles` is the union of the account's legacy single role plus every
     // UserRoleAssignment row (e.g. a customer who was later hired shows up
     // as ["USER", "STAFF"]). Falls back to the single `role` field for
-    // backward compatibility if the backend hasn't shipped `roles` yet —
+    // backward compatibility if the backend hasn't shipped `roles` yet
     // that fallback only ever satisfies the "admin" tab correctly; a
     // dual-role account won't be recognized as staff until the backend
     // actually returns the array.
@@ -231,7 +231,7 @@ const Auth = (() => {
    *   • On 401, attempts one token refresh then retries once.
    *   • On second 401 (refresh also failed) → logout.
    *
-   * @param {string} path  — API path, e.g. "/admin/bookings"
+   * @param {string} path: API path, e.g. "/admin/bookings"
    * @param {RequestInit} [options]
    * @returns {Promise<Response>}
    *

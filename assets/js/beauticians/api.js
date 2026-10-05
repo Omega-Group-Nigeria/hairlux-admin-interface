@@ -1,5 +1,5 @@
 /**
- * beauticians/api.js — thin wrappers around Beauticians.* and Services.* for the page
+ * beauticians/api.js: thin wrappers around Beauticians.* and Services.* for the page
  */
 (function (global) {
     'use strict';

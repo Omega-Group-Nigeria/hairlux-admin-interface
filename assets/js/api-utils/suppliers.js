@@ -1,5 +1,5 @@
 /**
- * Suppliers & Vendors API helper — /admin/suppliers
+ * Suppliers & Vendors API helper: /admin/suppliers
  * Requires: auth.js (Auth.fetch)
  */
 const Suppliers = (function () {

@@ -1,5 +1,5 @@
 /**
- * Salon Bookings API helper (admin) — /admin/salon-bookings
+ * Salon Bookings API helper (admin): /admin/salon-bookings
  * Requires: auth.js (Auth.fetch)
  */
 const SalonBookings = (function () {
@@ -16,12 +16,12 @@ const SalonBookings = (function () {
     }
 
     function formatMoney(amount) {
-        if (amount == null) return '—';
+        if (amount == null) return '-';
         return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function formatDate(value) {
-        if (!value) return '—';
+        if (!value) return '-';
         return new Date(value).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 

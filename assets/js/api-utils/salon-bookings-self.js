@@ -1,5 +1,5 @@
 /**
- * Salon Bookings API helper (staff self-service) — /staff/me/salon-bookings
+ * Salon Bookings API helper (staff self-service): /staff/me/salon-bookings
  * Requires: auth.js (Auth.fetch)
  */
 const SalonBookingsSelf = (function () {

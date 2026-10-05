@@ -1,5 +1,5 @@
 /**
- * applications.js — Hairlux Admin
+ * applications.js: Hairlux Admin
  * All /admin/applications/* API calls.
  *
  * Requires: auth.js (Auth.fetch)
@@ -36,7 +36,7 @@ const Applications = (() => {
   }
 
   /**
-   * Transition status. Not for EMPLOYED — use convertToStaff() for that.
+   * Transition status. Not for EMPLOYED: use convertToStaff() for that.
    * @param {string} id
    * @param {object} payload  { status, reason? }
    */
@@ -68,7 +68,7 @@ const Applications = (() => {
   }
 
   /**
- * Record the interview outcome — PASS/FAIL/HOLD — tied to a real interviewer.
+ * Record the interview outcome, PASS/FAIL/HOLD, tied to a real interviewer.
  * @param {string} id
  * @param {object} payload  { outcome, interviewerId, note? }
  */
@@ -84,7 +84,7 @@ const Applications = (() => {
   }
 
   /**
-   * Record Employment Approval — the gate before an offer letter can be generated.
+   * Record Employment Approval: the gate before an offer letter can be generated.
    * @param {string} id
    * @param {object} payload  { notes? }
    */
@@ -116,7 +116,7 @@ const Applications = (() => {
   }
 
   /**
-   * Mark an applicant as employed — creates the staff record via the staff
+   * Mark an applicant as employed: creates the staff record via the staff
    * resource and links it back to this application.
    * @param {string} id
    * @param {object} payload  { locationId }
@@ -133,7 +133,7 @@ const Applications = (() => {
   }
 
   /**
-   * Active staff locations — used to populate the branch selects on the
+   * Active staff locations: used to populate the branch selects on the
    * Schedule Interview and Convert to Staff forms.
    */
   async function getLocations() {
@@ -185,19 +185,19 @@ const Applications = (() => {
   }
 
   function formatDate(iso) {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const d = new Date(iso);
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' });
   }
 
   function formatDateTime(iso) {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const d = new Date(iso);
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Africa/Lagos' }) +
       ', ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
   }
   /**
-   * Recruitment report — filterable by date range, role, status, and branch.
+   * Recruitment report: filterable by date range, role, status, and branch.
    * @param {object} opts  { dateFrom?, dateTo?, appliedRole?, status?, preferredLocationId? }
    */
   async function getReport({ dateFrom, dateTo, appliedRole, status, preferredLocationId } = {}) {
@@ -213,7 +213,7 @@ const Applications = (() => {
     return raw.data || raw;
   }
 
-  /** Distinct appliedRole values across all applications — powers the report's Role filter dropdown. */
+  /** Distinct appliedRole values across all applications: powers the report's Role filter dropdown. */
   async function getDistinctRoles() {
     const res = await Auth.fetch('/admin/applications/report/roles');
     const raw = await res.json().catch(() => ({}));

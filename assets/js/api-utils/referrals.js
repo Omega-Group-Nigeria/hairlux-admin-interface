@@ -1,5 +1,5 @@
 /**
- * referrals.js — Hairlux Admin
+ * referrals.js: Hairlux Admin
  * All /admin/referrals/* API calls.
  *
  * Requires:
@@ -152,14 +152,14 @@ const Referrals = (() => {
   }
 
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });
   }
 
   function formatDateTime(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" })
@@ -173,7 +173,7 @@ const Referrals = (() => {
   };
 
   function rewardBadge(status) {
-    if (!status) return '<span class="badge bg-secondary-lt">—</span>';
+    if (!status) return '<span class="badge bg-secondary-lt">-</span>';
     const color = REWARD_STATUS_COLORS[status] || "secondary";
     return `<span class="badge bg-${color}-lt">${status}</span>`;
   }

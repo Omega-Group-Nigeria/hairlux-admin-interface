@@ -86,7 +86,7 @@ const Roles = (() => {
 
     /**
      * PATCH /admin/roles/{id}
-     * Edits the role itself — name/description/isActive. NOT to be confused
+     * Edits the role itself: name/description/isActive. NOT to be confused
      * with updateRole() below, which assigns a role TO a user.
      */
     async function editRole(roleId, changes) {
@@ -153,10 +153,10 @@ const Roles = (() => {
 
     /**
      * Get display label from a role name/key string (as stored on user records).
-     * Works purely on string — no async needed.
+     * Works purely on string: no async needed.
      */
     function getRoleLabel(nameOrKey) {
-        if (!nameOrKey) return '—';
+        if (!nameOrKey) return '-';
         if (nameOrKey === 'SUPER_ADMIN') return 'Super Admin';
         // Format ALL_CAPS → Title Case for readability
         return nameOrKey.replace(/_/g, ' ').replace(/\w\S*/g, function (w) {
@@ -165,7 +165,7 @@ const Roles = (() => {
     }
 
     /**
-     * Get Tabler colour for a role — looks up the internal cache by name or id.
+     * Get Tabler colour for a role: looks up the internal cache by name or id.
      * Falls back to 'secondary'.
      */
     function getRoleColor(nameOrIdOrKey) {
@@ -189,9 +189,9 @@ const Roles = (() => {
 
     // ── Admin user API calls ──────────────────────────────────────────────────
 
-    /** GET /admin/users — returns all non-customer accounts. */
+    /** GET /admin/users: returns all non-customer accounts. */
     /**
-     * GET /admin/users — fetches all admin staff (role=ADMIN) and super admins
+     * GET /admin/users: fetches all admin staff (role=ADMIN) and super admins
      * (role=SUPER_ADMIN) in parallel, then merges them.
      *
      * Response shape per call: { data: User[], meta: { total, page, limit, totalPages } }
@@ -220,7 +220,7 @@ const Roles = (() => {
 
     /**
      * POST /admin/users
-     * Accepts `adminRoleId` (UUID) — preferred — or `role` (name string).
+     * Accepts `adminRoleId` (UUID), preferred, or `role` (name string).
      * At least one must be provided.
      */
     async function createAdmin(data) {
@@ -279,7 +279,7 @@ const Roles = (() => {
 
     /**
      * GET /admin/roles/users/{userId}
-     * Returns { primary, additional[] } — the user's primary role plus every secondary role.
+     * Returns { primary, additional[] }: the user's primary role plus every secondary role.
      */
     async function getUserRoles(userId) {
         const res = await Auth.fetch('/admin/roles/users/' + userId);
@@ -303,7 +303,7 @@ const Roles = (() => {
 
     /**
      * DELETE /admin/roles/users/{userId}/{adminRoleId}
-     * Removes a secondary role — does not affect the user's primary role.
+     * Removes a secondary role: does not affect the user's primary role.
      */
     async function removeUserRole(userId, adminRoleId) {
         const res = await Auth.fetch('/admin/roles/users/' + userId + '/' + adminRoleId, {

@@ -1,5 +1,5 @@
 /**
- * Payroll API helper (admin) — /admin/payroll
+ * Payroll API helper (admin): /admin/payroll
  * Requires: auth.js (Auth.fetch)
  */
 const Payroll = (function () {
@@ -189,12 +189,12 @@ const Payroll = (function () {
     }
 
     function formatMoney(amount) {
-        if (amount == null) return '\u2014';
+        if (amount == null) return '-';
         return '\u20a6' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function formatDate(value) {
-        if (!value) return '\u2014';
+        if (!value) return '-';
         return new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 

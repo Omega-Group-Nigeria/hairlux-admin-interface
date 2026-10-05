@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Services</title>
+    <title>Hairlux Admin | Services</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
@@ -455,7 +455,7 @@
                                         <div class="subheader flex-fill">Total Services</div>
                                         <span class="badge bg-primary-lt">All</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                    <div class="h1 mb-0" id="stat-total">-</div>
                                 </div>
                             </div>
                         </div>
@@ -466,7 +466,7 @@
                                         <div class="subheader flex-fill">Active Services</div>
                                         <span class="badge bg-success-lt">Live</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-active">—</div>
+                                    <div class="h1 mb-0" id="stat-active">-</div>
                                 </div>
                             </div>
                         </div>
@@ -477,7 +477,7 @@
                                         <div class="subheader flex-fill">Inactive Services</div>
                                         <span class="badge bg-secondary-lt">Hidden</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-inactive">—</div>
+                                    <div class="h1 mb-0" id="stat-inactive">-</div>
                                 </div>
                             </div>
                         </div>
@@ -488,7 +488,7 @@
                                         <div class="subheader flex-fill">Categories</div>
                                         <span class="badge bg-info-lt">Groups</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-categories">—</div>
+                                    <div class="h1 mb-0" id="stat-categories">-</div>
                                 </div>
                             </div>
                         </div>
@@ -569,7 +569,7 @@
                             <div id="services-pager"></div>
                         </div>
 
-                        <div class="card-footer text-secondary small" id="pagination-info">—</div>
+                        <div class="card-footer text-secondary small" id="pagination-info">-</div>
                     </div>
 
                 </div>
@@ -653,7 +653,7 @@
                                     <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" />
                                 </svg>
                                 <strong>Drop image here</strong> or click to upload<br>
-                                <small class="text-secondary">JPG, PNG, WebP — max 5 MB</small>
+                                <small class="text-secondary">JPG, PNG, WebP: max 5 MB</small>
                             </div>
                         </div>
                     </div>
@@ -785,7 +785,7 @@
                                             class="text-danger">*</span></label>
                                     <div id="dz-category-image">
                                         <div class="dz-message"><strong>Drop image here</strong> or click to
-                                            upload<br><small class="text-secondary">JPG, PNG, WebP — max 10 MB</small>
+                                            upload<br><small class="text-secondary">JPG, PNG, WebP: max 10 MB</small>
                                         </div>
                                     </div>
                                 </div>
@@ -1116,7 +1116,7 @@
             var imgDefault = '<span class="avatar avatar-sm bg-secondary-lt text-secondary" style="width:48px;height:48px;border-radius:6px;font-size:10px">IMG</span>';
 
             tbody.innerHTML = pageRows.map(function (s) {
-                var catName = (s.category && s.category.name) || "—";
+                var catName = (s.category && s.category.name) || "-";
                 var isActive = s.status === "ACTIVE";
                 var thumb = s.imageUrl
                     ? '<img src="' + esc(s.imageUrl) + '" class="service-thumb" alt="" loading="lazy">'
@@ -1157,7 +1157,7 @@
             new bootstrap.Offcanvas(document.getElementById("offcanvas-service-detail")).show();
             try {
                 var s = await Services.getOne(id);
-                var catName = (s.category && s.category.name) || "—";
+                var catName = (s.category && s.category.name) || "-";
                 var isActive = s.status === "ACTIVE";
                 var editIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/></svg>';
                 body.innerHTML =
@@ -1253,7 +1253,7 @@
             document.getElementById("img-optional-hint").style.display = isEdit ? "inline" : "none";
             document.getElementById("modal-service-error").classList.add("d-none");
 
-            // Re-init Dropzone — clear files first so destroy() has nothing to cancel,
+            // Re-init Dropzone: clear files first so destroy() has nothing to cancel,
             // which prevents the "Upload canceled." error event from firing.
             if (_serviceDz) {
                 _serviceDz.files = [];
@@ -1489,7 +1489,7 @@
 
         async function openRecipeModal(serviceId, serviceName) {
             _recipeServiceId = serviceId;
-            document.getElementById("recipe-modal-title").textContent = "Product Consumption \u2014 " + serviceName;
+            document.getElementById("recipe-modal-title").textContent = "Product Consumption: " + serviceName;
             document.getElementById("recipe-error").classList.add("d-none");
             var linesEl = document.getElementById("recipe-lines");
             linesEl.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>';
@@ -1516,7 +1516,7 @@
                         addRecipeLine(line.productId, line.quantity);
                     });
                 } else {
-                    linesEl.innerHTML = '<div class="text-secondary small py-2" id="recipe-empty-hint">No products configured yet \u2014 this service consumes nothing automatically.</div>';
+                    linesEl.innerHTML = '<div class="text-secondary small py-2" id="recipe-empty-hint">No products configured yet: this service consumes nothing automatically.</div>';
                 }
             } catch (e) {
                 linesEl.innerHTML = '<div class="text-danger text-center py-3">' + esc(e.message || "Failed to load.") + '</div>';
@@ -1551,7 +1551,7 @@
             if (!removeBtn) return;
             removeBtn.closest(".recipe-line").remove();
             if (!document.querySelectorAll(".recipe-line").length) {
-                document.getElementById("recipe-lines").innerHTML = '<div class="text-secondary small py-2" id="recipe-empty-hint">No products configured yet \u2014 this service consumes nothing automatically.</div>';
+                document.getElementById("recipe-lines").innerHTML = '<div class="text-secondary small py-2" id="recipe-empty-hint">No products configured yet: this service consumes nothing automatically.</div>';
             }
         });
 
@@ -1648,7 +1648,7 @@
                     return '<tr class="cat-row" data-id="' + c.id + '">' +
                         '<td style="width:48px;padding-right:0">' + categoryThumbHtml(c) + '</td>' +
                         '<td class="fw-semibold">' + esc(c.name) + '</td>' +
-                        '<td class="text-secondary small text-truncate" style="max-width:220px" title="' + escAttr(c.description || "") + '">' + esc(c.description || '—') + '</td>' +
+                        '<td class="text-secondary small text-truncate" style="max-width:220px" title="' + escAttr(c.description || "") + '">' + esc(c.description || '-') + '</td>' +
                         '<td class="text-center">' + (c.serviceCount || 0) + '</td>' +
                         '<td>' +
                         '<div class="d-flex gap-1">' +

@@ -1,5 +1,5 @@
 /**
- * beauticians/utils.js — pure helpers (escape, format, commission math, alerts)
+ * beauticians/utils.js: pure helpers (escape, format, commission math, alerts)
  */
 (function (global) {
     'use strict';
@@ -197,7 +197,7 @@ function isPdfUrl(url) {
  */
 function renderPortfolioUrl(url) {
     if (url == null || String(url).trim() === '') {
-        return '<span class="text-secondary">—</span>';
+        return '<span class="text-secondary">-</span>';
     }
     var raw = String(url).trim();
     var safeHref = null;
@@ -233,9 +233,9 @@ function commissionPercentToRate(percent) {
 }
 
 function formatScoringWeight(value) {
-    if (value == null || value === '') return '—';
+    if (value == null || value === '') return '-';
     var num = typeof value === 'number' ? value : parseFloat(value);
-    if (Number.isNaN(num)) return '—';
+    if (Number.isNaN(num)) return '-';
     return String(num);
 }
 
@@ -312,11 +312,11 @@ function payoutsCountLabel(count) {
 
 function formatEarningsCell(serviceAmount, rate) {
     if (serviceAmount == null) {
-        return '<span class="text-secondary">—</span>';
+        return '<span class="text-secondary">-</span>';
     }
     var amountHtml = '<div class="fw-semibold text-nowrap">' + escHtml(Services.formatMoney(serviceAmount)) + '</div>';
     if (rate == null || rate === '' || Number.isNaN(Number(rate))) {
-        return amountHtml + '<div class="text-secondary small">Earns —</div>';
+        return amountHtml + '<div class="text-secondary small">Earns</div>';
     }
     var earn = Math.round(serviceAmount * Number(rate) * 100) / 100;
     return amountHtml +

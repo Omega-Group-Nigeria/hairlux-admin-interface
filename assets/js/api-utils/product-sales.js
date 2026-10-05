@@ -1,5 +1,5 @@
 /**
- * Product Sales API helper (staff self-service) — /staff/me/product-sales
+ * Product Sales API helper (staff self-service): /staff/me/product-sales
  * Requires: auth.js (Auth.fetch)
  */
 const ProductSalesSelf = (function () {

@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Attendance</title>
+    <title>Hairlux Admin | Attendance</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -124,7 +124,7 @@
                                     <span class="badge bg-yellow-lt ms-1 d-none" id="ewd-count-badge">0</span>
                                 </h3>
                                 <span class="text-secondary small">Clock-ins on a day the staff member's calendar marks
-                                    OFF — only approved
+                                    OFF: only approved
                                     days count toward payroll</span>
                             </div>
                         </div>
@@ -319,7 +319,7 @@
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select class="form-select" id="correction-status">
-                            <option value="">— no change —</option>
+                            <option value="">no change</option>
                             <option value="PRESENT">Present</option>
                             <option value="LATE">Late</option>
                             <option value="ABSENT">Absent</option>
@@ -345,7 +345,7 @@
                         <label class="form-label">Reason <span class="text-danger"
                                 id="correction-reason-required-mark">*</span></label>
                         <textarea class="form-control" id="correction-reason" rows="2"
-                            placeholder="Additional detail — required when category is Other"></textarea>
+                            placeholder="Additional detail: required when category is Other"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -367,7 +367,7 @@
                     <div class="mb-3">
                         <label class="form-label">Reason <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="ewd-reject-note" rows="2"
-                            placeholder="Required — why is this being rejected?"></textarea>
+                            placeholder="Required: why is this being rejected?"></textarea>
                     </div>
                     <div id="ewd-reject-error" class="text-danger small" style="display:none"></div>
                 </div>
@@ -388,7 +388,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info small">
-                        Grace-period minutes are set per branch (and can be overridden per staff member) — see
+                        Grace-period minutes are set per branch (and can be overridden per staff member): see
                         Branches to adjust those. This only covers what's charged per minute once someone is late
                         <em>beyond</em> the grace period.
                     </div>
@@ -400,7 +400,7 @@
                         <label class="form-label">Amount per minute late (₦)</label>
                         <input type="number" min="0" step="0.01" class="form-control" id="lp-amount"
                             placeholder="e.g. 100">
-                        <div class="form-hint">Deducted from salary — captured on each late check-in, ready for payroll
+                        <div class="form-hint">Deducted from salary: captured on each late check-in, ready for payroll
                             to
                             apply.</div>
                     </div>
@@ -500,7 +500,7 @@
                     tbody.innerHTML = records.map(function (r) {
                         var hours = r.checkOutAt
                             ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
-                            : "—";
+                            : "-";
 
                         var statusBadgeClass = {
                             PRESENT: "bg-success-lt",
@@ -534,7 +534,7 @@
                             '<td>' + esc(r.location ? r.location.name : "-") + '</td>' +
                             '<td>' + StaffOps.formatDate(r.date) + '</td>' +
                             '<td>' + StaffOps.formatTime(r.checkInAt) + '</td>' +
-                            '<td>' + (r.checkOutAt ? StaffOps.formatTime(r.checkOutAt) : "—") + '</td>' +
+                            '<td>' + (r.checkOutAt ? StaffOps.formatTime(r.checkOutAt) : "-") + '</td>' +
                             '<td>' + hours + '</td>' +
                             '<td><span class="badge ' + statusBadgeClass + '">' + esc(statusLabel) + '</span>' +
                             (statusDetail ? '<div class="text-secondary small mt-1">' + esc(statusDetail) + '</div>' : '') +
@@ -565,7 +565,7 @@
 
         /**
          * Fetches every record matching the current filters (not just the
-         * loaded page — a large limit rather than the default page size)
+         * loaded page: a large limit rather than the default page size)
          * and generates a CSV client-side. No backend export endpoint
          * needed since the data is already filterable server-side; this
          * just widens the same query.
@@ -737,7 +737,7 @@
 
             tbody.innerHTML = records.map(function (r) {
                 return '<tr>' +
-                    '<td>' + esc(r.staff ? r.staff.name : "—") + '</td>' +
+                    '<td>' + esc(r.staff ? r.staff.name : "-") + '</td>' +
                     '<td>' + StaffOps.formatDate(r.date) + '</td>' +
                     '<td>' + StaffOps.formatTime(r.checkInAt) + '</td>' +
                     '<td>' + (r.checkOutAt ? StaffOps.formatTime(r.checkOutAt) : '<span class="text-secondary">Still clocked in</span>') + '</td>' +
@@ -858,7 +858,7 @@
                 if (listState.page < (_attendanceTotalPages || 1)) { listState.page++; loadAttendance(); }
             });
 
-            // ── Monthly summary — default to the current month ───────────────
+            // ── Monthly summary: default to the current month ───────────────
             var now = new Date();
             var firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             document.getElementById("summary-from").value = firstOfMonth.toISOString().slice(0, 10);

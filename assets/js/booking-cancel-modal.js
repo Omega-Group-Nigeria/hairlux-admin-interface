@@ -1,5 +1,5 @@
 /**
- * booking-cancel-modal.js — shared admin cancel booking modal
+ * booking-cancel-modal.js: shared admin cancel booking modal
  * Requires: Bookings, tabler.bootstrap
  */
 const BookingCancelModal = (() => {
@@ -20,7 +20,7 @@ const BookingCancelModal = (() => {
     '<div class="mb-3">' +
     '<label class="form-label" for="cancel-booking-reason">Reason</label>' +
     '<textarea class="form-control" id="cancel-booking-reason" rows="3" placeholder="Customer requested cancellation"></textarea>' +
-    '<div class="form-hint">Optional — stored as the cancel reason.</div>' +
+    '<div class="form-hint">Optional: stored as the cancel reason.</div>' +
     "</div>" +
     '<div class="form-check">' +
     '<input class="form-check-input" type="checkbox" id="cancel-booking-noshow">' +

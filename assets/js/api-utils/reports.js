@@ -1,5 +1,5 @@
 /**
- * Reports API helper — /admin/reports
+ * Reports API helper: /admin/reports
  * Procurement/Inventory/Finance Integration, Phase 8.
  * Requires: auth.js (Auth.fetch)
  */

@@ -1,5 +1,5 @@
 /**
- * Expense Requests API helper — /admin/expense-requests
+ * Expense Requests API helper: /admin/expense-requests
  * Requires: auth.js (Auth.fetch)
  */
 const ExpenseRequests = (function () {

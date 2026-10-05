@@ -1,5 +1,5 @@
 /**
- * Commission Plans API helper — /admin/payroll/commission-plans
+ * Commission Plans API helper: /admin/payroll/commission-plans
  * Payroll Engine v2, Phase 4.
  * Requires: auth.js (Auth.fetch)
  */
@@ -101,7 +101,7 @@ const CommissionPlans = (function () {
     }
 
     function _esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
-    function _money(v) { return v == null ? '\u2014' : '\u20a6' + Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function _money(v) { return v == null ? '-' : '\u20a6' + Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
     /**
      * HTML for the payslipsRecalculated / payslipRecalcErrors part of a
@@ -114,7 +114,7 @@ const CommissionPlans = (function () {
         if (!ok.length && !errors.length) return '';
         var html = '';
         if (ok.length) {
-            html += '<div class="small fw-semibold mt-2 mb-1">Payslips recalculated automatically (Awaiting Release \u2014 wallet credits reconciled, still locked until Payday):</div>' +
+            html += '<div class="small fw-semibold mt-2 mb-1">Payslips recalculated automatically (Awaiting Release: wallet credits reconciled, still locked until Payday):</div>' +
                 '<div class="table-responsive mb-2"><table class="table table-sm table-vcenter mb-0"><thead><tr>' +
                 '<th>Staff</th><th>Period</th><th class="text-end">Commission</th><th class="text-end">Old net pay</th><th class="text-end">New net pay</th><th class="text-end">Difference</th><th class="text-end">Wallet</th>' +
                 '</tr></thead><tbody>' +
@@ -125,12 +125,12 @@ const CommissionPlans = (function () {
                         '<td class="text-end">' + _money(r.oldNetPay) + '</td>' +
                         '<td class="text-end">' + _money(r.newNetPay) + '</td>' +
                         '<td class="text-end fw-semibold ' + (r.netPayDifference >= 0 ? 'text-success' : 'text-danger') + '">' + _money(r.netPayDifference) + '</td>' +
-                        '<td class="text-end">' + (r.walletAdjusted ? _money(r.walletDelta) : '\u2014') + '</td></tr>';
+                        '<td class="text-end">' + (r.walletAdjusted ? _money(r.walletDelta) : '-') + '</td></tr>';
                 }).join('') +
                 '</tbody></table></div>';
         }
         if (errors.length) {
-            html += '<div class="alert alert-danger small mb-2"><strong>Payslip recalculation failed for ' + errors.length + ' staff member(s)</strong> \u2014 their commission records were updated, but recalculate their payslip manually on the <a href="payroll.html">Payroll</a> page (period \u2192 staff \u2192 Recalculate):<ul class="mb-0">' +
+            html += '<div class="alert alert-danger small mb-2"><strong>Payslip recalculation failed for ' + errors.length + ' staff member(s)</strong>: their commission records were updated, but recalculate their payslip manually on the <a href="payroll.html">Payroll</a> page (period \u2192 staff \u2192 Recalculate):<ul class="mb-0">' +
                 errors.map(function (e) { return '<li>' + _esc(e.staffName || e.staffId) + ' (' + _esc(e.periodLabel) + '): ' + _esc(e.error) + '</li>'; }).join('') +
                 '</ul></div>';
         }
@@ -138,7 +138,7 @@ const CommissionPlans = (function () {
     }
 
     function formatRate(rate) {
-        return rate == null ? '\u2014' : (Number(rate) * 100).toFixed(1) + '%';
+        return rate == null ? '-' : (Number(rate) * 100).toFixed(1) + '%';
     }
 
     return { getAll, getOne, create, update, remove, assignCompensation, getStaffMissingPlan, recalculateCommissions, listCommissions, decideCommissions, decideCommission, renderPayslipResults, formatRate };

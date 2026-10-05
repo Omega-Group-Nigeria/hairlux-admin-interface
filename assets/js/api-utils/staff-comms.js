@@ -1,5 +1,5 @@
 /**
- * Staff Comms API helper (admin) — /admin/announcements, /admin/directives
+ * Staff Comms API helper (admin): /admin/announcements, /admin/directives
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const StaffComms = (() => {

@@ -1,5 +1,5 @@
 /**
- * Audit Trail API helper (admin) — /admin/audit-trail
+ * Audit Trail API helper (admin): /admin/audit-trail
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const AuditTrail = (() => {

@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Commission Plans</title>
+    <title>Hairlux Admin | Commission Plans</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -119,7 +119,7 @@
                             <h3 class="card-title mb-0">Recalculate commissions</h3>
                         </div>
                         <div class="card-body">
-                            <p class="text-secondary small mb-3">Finds bookings in the date range whose commission was recorded at <strong>0%</strong> (no active plan at the time) and recalculates them with the staff member's <strong>current</strong> Commission Plan (rate and eligible services, including services added after completion). <br>How each payroll period is handled: <strong>Awaiting Release</strong> (generated, not yet approved) &mdash; records are corrected and each affected staff member's payslip and locked wallet credit are recalculated automatically on Apply. <strong>Draft, never generated</strong> &mdash; records are corrected; generate the period afterwards as usual. <strong>Draft that already credited wallets</strong> (sent back for correction) &mdash; not changed; click Generate for that period first, then run this again. <strong>Released</strong> &mdash; never changed; listed with the shortfall so you can add a Bonus adjustment.</p>
+                            <p class="text-secondary small mb-3">Finds bookings in the date range whose commission was recorded at <strong>0%</strong> (no active plan at the time) and recalculates them with the staff member's <strong>current</strong> Commission Plan (rate and eligible services, including services added after completion). <br>How each payroll period is handled: <strong>Awaiting Release</strong> (generated, not yet approved): records are corrected and each affected staff member's payslip and locked wallet credit are recalculated automatically on Apply. <strong>Draft, never generated</strong>: records are corrected; generate the period afterwards as usual. <strong>Draft that already credited wallets</strong> (sent back for correction): not changed; click Generate for that period first, then run this again. <strong>Released</strong>: never changed; listed with the shortfall so you can add a Bonus adjustment.</p>
                             <div class="alert alert-danger d-none" id="recalc-error"></div>
                             <div class="row g-3 align-items-end">
                                 <div class="col-md-3">
@@ -213,14 +213,14 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Branch <span class="text-secondary">(optional — leave blank for
+                            <label class="form-label">Branch <span class="text-secondary">(optional: leave blank for
                                     any branch)</span></label>
                             <select class="form-select" id="f-branch">
                                 <option value="">Any branch</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Role <span class="text-secondary">(optional — leave blank for any
+                            <label class="form-label">Role <span class="text-secondary">(optional: leave blank for any
                                     role)</span></label>
                             <input type="text" class="form-control" id="f-role" placeholder="e.g. Senior Stylist">
                         </div>
@@ -346,7 +346,7 @@
                 document.getElementById('missing-plan-tbody').innerHTML = rows.map(function (s) {
                     return '<tr>' +
                         '<td class="fw-semibold">' + esc(s.name) + ' <span class="text-secondary small">' + esc(s.staffCode || '') + '</span></td>' +
-                        '<td class="text-secondary small">' + esc(s.location ? s.location.name : '\u2014') + '</td>' +
+                        '<td class="text-secondary small">' + esc(s.location ? s.location.name : '-') + '</td>' +
                         '<td>' + esc(compTypeLabel(s.compensationType)) + '</td>' +
                         '<td>' + (s.commissionPlan
                             ? '<span class="badge bg-warning-lt text-warning">' + esc(s.commissionPlan.name) + ' (inactive)</span>'
@@ -398,7 +398,7 @@
             var t = d.totals;
             var html = '';
             if (d.dryRun) {
-                html += '<div class="alert alert-info small mb-3">Preview only \u2014 nothing has been changed yet. ' +
+                html += '<div class="alert alert-info small mb-3">Preview only: nothing has been changed yet. ' +
                     t.recordsToUpdate + ' record(s) can be corrected: ' + money(t.oldTotal) + ' \u2192 <strong>' + money(t.newTotal) + '</strong> (difference <strong>' + money(t.difference) + '</strong>).</div>';
             } else {
                 html += '<div class="alert alert-success small mb-3"><strong>' + t.recordsUpdated + '</strong> commission record(s) updated (' + money(t.oldTotal) + ' \u2192 ' + money(t.newTotal) + ').' +
@@ -407,10 +407,10 @@
             }
 
             if (d.dryRun && d.awaitingReleasePayslips && d.awaitingReleasePayslips.length) {
-                html += '<div class="alert alert-info small mb-2"><strong>Awaiting Release payroll:</strong> on Apply, these staff members\' payslips and (locked) wallet credits will be recalculated automatically \u2014 no manual adjustment needed. Net pay changes are shown after Apply (tax, pension and, for commission-only staff, attendance proration apply).</div>' +
+                html += '<div class="alert alert-info small mb-2"><strong>Awaiting Release payroll:</strong> on Apply, these staff members\' payslips and (locked) wallet credits will be recalculated automatically: no manual adjustment needed. Net pay changes are shown after Apply (tax, pension and, for commission-only staff, attendance proration apply).</div>' +
                     '<div class="table-responsive mb-3"><table class="table table-sm table-vcenter"><thead><tr><th>Staff</th><th>Period</th><th class="text-center">Records</th><th class="text-end">Commission difference</th></tr></thead><tbody>' +
                     d.awaitingReleasePayslips.map(function (a) {
-                        return '<tr><td>' + esc(a.staffName) + (a.pendingApprovalCount ? '<div class="text-secondary small">' + a.pendingApprovalCount + ' need approval first (Commission Approvals) \u2014 recalculated when approved</div>' : '') + '</td>' +
+                        return '<tr><td>' + esc(a.staffName) + (a.pendingApprovalCount ? '<div class="text-secondary small">' + a.pendingApprovalCount + ' need approval first (Commission Approvals): recalculated when approved</div>' : '') + '</td>' +
                             '<td>' + esc(a.periodLabel) + '</td><td class="text-center">' + a.recordCount + '</td>' +
                             '<td class="text-end fw-semibold text-success">' + money(a.commissionDifference) + '</td></tr>';
                     }).join('') +
@@ -428,7 +428,7 @@
                             '<td class="text-end">' + money(s.oldTotal) + '</td>' +
                             '<td class="text-end">' + money(s.newTotal) + '</td>' +
                             '<td class="text-end fw-semibold text-success">' + money(s.difference) + '</td>' +
-                            '<td class="text-end">' + (s.lockedCount ? '<span class="text-warning">' + money(s.lockedShortfall) + ' (' + s.lockedCount + ')</span>' : '\u2014') + '</td></tr>';
+                            '<td class="text-end">' + (s.lockedCount ? '<span class="text-warning">' + money(s.lockedShortfall) + ' (' + s.lockedCount + ')</span>' : '-') + '</td></tr>';
                     }).join('') +
                     '</tbody></table></div>';
             } else {
@@ -440,7 +440,7 @@
                     '<div class="table-responsive mb-3"><table class="table table-sm table-vcenter"><thead><tr><th>Booking</th><th>Staff</th><th>Date</th><th>Period</th><th class="text-end">Recorded</th><th class="text-end">Should be</th><th class="text-end">Shortfall</th></tr></thead><tbody>' +
                     d.needsManualAdjustment.map(function (r) {
                         return '<tr><td>' + esc(r.bookingCode) + '</td><td>' + esc(r.staffName) + '</td><td>' + Payroll.formatDate(r.calculatedAt) + '</td>' +
-                            '<td>' + esc(r.period ? r.period.label + ' (' + r.period.status.replace(/_/g, ' ') + ')' : '\u2014') + '</td>' +
+                            '<td>' + esc(r.period ? r.period.label + ' (' + r.period.status.replace(/_/g, ' ') + ')' : '-') + '</td>' +
                             '<td class="text-end">' + money(r.currentAmount) + '</td><td class="text-end">' + money(r.correctAmount) + '</td><td class="text-end fw-semibold text-warning">' + money(r.shortfall) + '</td></tr>';
                     }).join('') +
                     '</tbody></table></div>';
@@ -450,14 +450,14 @@
                 var blockedPeriods = {};
                 d.blockedDraftCredited.forEach(function (r) { if (r.period) blockedPeriods[r.period.id] = r.period.label; });
                 var canGen = RBAC.can('payroll:generate');
-                html += '<div class="alert alert-warning small mb-2"><strong>' + d.blockedDraftCredited.length + ' record(s) not changed:</strong> their Draft payroll period already credited staff wallets and was sent back for correction. Regenerating it would not adjust those wallets, so: generate the period first (it returns to Awaiting Release), then preview and apply again \u2014 payslips and wallets are then corrected automatically. ' +
+                html += '<div class="alert alert-warning small mb-2"><strong>' + d.blockedDraftCredited.length + ' record(s) not changed:</strong> their Draft payroll period already credited staff wallets and was sent back for correction. Regenerating it would not adjust those wallets, so: generate the period first (it returns to Awaiting Release), then preview and apply again: payslips and wallets are then corrected automatically. ' +
                     Object.keys(blockedPeriods).map(function (id) {
                         return '<strong>' + esc(blockedPeriods[id]) + '</strong>' + (canGen ? ' <button type="button" class="btn btn-sm btn-outline-primary ms-1 btn-regenerate-period" data-id="' + esc(id) + '" data-label="' + esc(blockedPeriods[id]) + '">Generate payroll</button>' : '');
                     }).join(' &middot; ') + '</div>';
             }
 
             if (d.skippedNoActivePlan && d.skippedNoActivePlan.length) {
-                html += '<div class="alert alert-danger small mb-2">Skipped \u2014 still no active Commission Plan (assign one first, then preview again): ' +
+                html += '<div class="alert alert-danger small mb-2">Skipped: still no active Commission Plan (assign one first, then preview again): ' +
                     d.skippedNoActivePlan.map(function (s) { return '<strong>' + esc(s.staffName) + '</strong> (' + s.count + ')'; }).join(', ') + '</div>';
             }
 
@@ -469,7 +469,7 @@
                     d.draftPeriodsToRegenerate.map(function (p) {
                         return esc(p.label) + (!d.dryRun && canGenerate ? ' <button type="button" class="btn btn-xs btn-sm btn-outline-primary ms-1 btn-regenerate-period" data-id="' + esc(p.id) + '" data-label="' + esc(p.label) + '">Regenerate payroll</button>' : '');
                     }).join(' &middot; ') +
-                    (d.dryRun ? ' \u2014 generate it after applying (as usual).' : (canGenerate ? '' : ' \u2014 ask someone with payroll generation access to generate it on the <a href="payroll.html">Payroll</a> page.')) + '</div>';
+                    (d.dryRun ? ': generate it after applying (as usual).' : (canGenerate ? '' : ': ask someone with payroll generation access to generate it on the <a href="payroll.html">Payroll</a> page.')) + '</div>';
             }
 
             if (d.dryRun && t.recordsToUpdate > 0) {

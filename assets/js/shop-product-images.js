@@ -1,5 +1,5 @@
 /**
- * shop-product-images.js — Hairlux Admin
+ * shop-product-images.js: Hairlux Admin
  * Multi-image upload/management for shop products (1–5 images).
  * Requires Dropzone and shop.js (optional helpers).
  */

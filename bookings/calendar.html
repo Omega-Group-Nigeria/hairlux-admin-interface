@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="../assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Booking Calendar</title>
+    <title>Hairlux Admin | Booking Calendar</title>
     <link rel="icon" href="../favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
@@ -197,7 +197,7 @@
 
                     <!-- Month title + Summary bar -->
                     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-                        <h3 class="mb-0 fw-bold" id="cal-month-title">—</h3>
+                        <h3 class="mb-0 fw-bold" id="cal-month-title">-</h3>
                         <div id="cal-summary" class="d-flex gap-2 flex-wrap"></div>
                     </div>
 
@@ -256,7 +256,7 @@
                                 <div class="list-group-item text-center text-secondary py-5">Loading beauticians…</div>
                             </div>
                             <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
-                                <p class="m-0 text-secondary small" id="force-assign-pagination-info">—</p>
+                                <p class="m-0 text-secondary small" id="force-assign-pagination-info">-</p>
                                 <ul class="pagination pagination-sm m-0 ms-auto" id="force-assign-pagination-btns"></ul>
                             </div>
                             <input type="hidden" id="force-assign-beautician" value="">
@@ -480,7 +480,7 @@
                 var b        = await Bookings.getOne(id);
                 var customer = b.user || b.customer || {};
                 var custName = customer.firstName
-                    ? customer.firstName + " " + customer.lastName : (customer.name || b.guestName || "\u2014");
+                    ? customer.firstName + " " + customer.lastName : (customer.name || b.guestName || "-");
                 var services = b.services || (b.service ? [b.service] : []);
                 var address  = Bookings.normalizeAddress(b.address || {});
                 var addrStr  = Bookings.formatAddress(address, "");
@@ -490,7 +490,7 @@
                     ? '<span class="badge bg-azure-lt">Mobile Service</span>'
                     : (bookingType === "WALK_IN"
                         ? '<span class="badge bg-teal-lt">Walk-in</span>'
-                        : (bookingType || "\u2014"));
+                        : (bookingType || "-"));
 
                 var svcRows = services.length
                     ? services.map(function (s) {
@@ -500,9 +500,9 @@
                             (s.duration ? '<small class="ms-2">' + s.duration + 'min</small>' : '') + '</span>' +
                             '</div>';
                     }).join('')
-                    : '<div class="text-secondary">\u2014</div>';
+                    : '<div class="text-secondary">-</div>';
 
-                var resCode  = b.reservationCode || "\u2014";
+                var resCode  = b.reservationCode || "-";
                 var resBadge = b.reservationUsed
                     ? '<span class="badge badge-used ms-2">Used</span>'
                     : '<span class="badge badge-valid ms-2">Valid</span>';
@@ -573,11 +573,11 @@
                             '<span>' + escHtml(name) + (s.quantity > 1 ? ' <small class="text-secondary">\u00d7' + s.quantity + '</small>' : '') + '</span>' +
                             '<span class="text-secondary">' + SalonBookings.formatMoney(s.price) + '</span></div>';
                     }).join("")
-                    : '<div class="text-secondary">\u2014</div>';
+                    : '<div class="text-secondary">-</div>';
                 body.innerHTML =
                     '<div class="row g-3">' +
                     '<div class="col-md-6"><div class="detail-label">Customer</div>' +
-                    '<div class="fw-semibold">' + escHtml(b.customerName || "\u2014") + '</div>' +
+                    '<div class="fw-semibold">' + escHtml(b.customerName || "-") + '</div>' +
                     (b.customerPhone ? '<div class="text-secondary small">' + escHtml(b.customerPhone) + '</div>' : '') + '</div>' +
                     '<div class="col-md-6"><div class="detail-label">Booking Type</div>' +
                     '<div><span class="badge bg-purple-lt">Salon Booking</span> <span class="font-monospace small">' + escHtml(b.bookingCode || "") + '</span></div></div>' +
@@ -587,8 +587,8 @@
                     '<div class="fw-semibold">' + SalonBookings.formatMoney(b.totalAmount) + '</div>' +
                     (b.paymentMethod ? '<div class="text-secondary small">' + escHtml(b.paymentMethod.replace(/_/g, " ")) + '</div>' : '') + '</div>' +
                     '<div class="col-md-6"><div class="detail-label">Status</div>' + SalonBookings.statusBadge(b.status) + '</div>' +
-                    '<div class="col-md-6"><div class="detail-label">Stylist</div><div>' + escHtml(b.assignedStaff ? b.assignedStaff.name : "\u2014") + '</div></div>' +
-                    '<div class="col-md-6"><div class="detail-label">Branch</div><div>' + escHtml(b.branch ? b.branch.name : "\u2014") + '</div></div>' +
+                    '<div class="col-md-6"><div class="detail-label">Stylist</div><div>' + escHtml(b.assignedStaff ? b.assignedStaff.name : "-") + '</div></div>' +
+                    '<div class="col-md-6"><div class="detail-label">Branch</div><div>' + escHtml(b.branch ? b.branch.name : "-") + '</div></div>' +
                     (b.reservationCode ? '<div class="col-md-6"><div class="detail-label">Reservation Code</div><div class="font-monospace fw-semibold">' + escHtml(b.reservationCode) + '</div></div>' : '') +
                     '<div class="col-12"><div class="detail-label mb-1">Services</div><div class="border rounded p-2">' + svcRows + '</div></div>' +
                     (b.notes ? '<div class="col-12"><div class="detail-label">Notes</div><div class="text-secondary small">' + escHtml(b.notes) + '</div></div>' : '') +
@@ -692,7 +692,7 @@
                         '<button class="btn btn-link link-secondary" data-bs-dismiss="offcanvas">Close</button>';
                 }
             } else if (action === "retry-matching") {
-                var tierInput = prompt("Restart matching — start at tier (1, 2, or 3):", "1");
+                var tierInput = prompt("Restart matching: start at tier (1, 2, or 3):", "1");
                 if (tierInput == null) { openDetail(id); return; }
                 var tier = parseInt(tierInput, 10);
                 if (tier < 1 || tier > 3) {

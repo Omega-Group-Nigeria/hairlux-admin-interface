@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Expense Requests</title>
+    <title>Hairlux Admin | Expense Requests</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -189,7 +189,7 @@
                     <div class="alert alert-danger d-none" id="form-error"></div>
                     <div class="alert alert-warning">
                         Paying a vendor or supplier for goods/services? Use <strong>Purchase Requests</strong> instead
-                        &mdash; it tracks that vendor's outstanding balance and keeps this amount from being counted
+: it tracks that vendor's outstanding balance and keeps this amount from being counted
                         as both a Purchase liability and an Expense.
                     </div>
                     <div class="row g-3 mb-3">
@@ -240,7 +240,7 @@
                         <input class="form-check-input" type="checkbox" id="f-vendor-ack">
                         <label class="form-check-label" for="f-vendor-ack">
                             I confirm this is <strong>not</strong> a payment to a vendor/supplier for goods or services
-                            &mdash; those must go through Purchase Requests.
+: those must go through Purchase Requests.
                         </label>
                     </div>
                 </div>
@@ -352,7 +352,7 @@
         }
 
         function formatMoney(v) {
-            if (v == null) return '—';
+            if (v == null) return '-';
             return '₦' + Number(v).toLocaleString();
         }
 
@@ -498,7 +498,7 @@
             try {
                 await ExpenseRequests.approve(id, comment);
                 load();
-            } catch (e) { alert(e.message || 'Failed to approve — you may not be the current approver for this request.'); }
+            } catch (e) { alert(e.message || 'Failed to approve: you may not be the current approver for this request.'); }
         }
 
         async function rejectRequest(id) {
@@ -507,7 +507,7 @@
             try {
                 await ExpenseRequests.reject(id, reason);
                 load();
-            } catch (e) { alert(e.message || 'Failed to reject — you may not be the current approver for this request.'); }
+            } catch (e) { alert(e.message || 'Failed to reject: you may not be the current approver for this request.'); }
         }
 
         async function deleteRequest(id) {
@@ -538,7 +538,7 @@
 
                 var actionsHtml = (r.approvalRequest && r.approvalRequest.actions || []).map(function (a) {
                     return '<div class="approval-step"><span class="badge ' + (STATUS_BADGE[a.action] || 'bg-secondary-lt') + '">' + esc(a.action) + '</span>' +
-                        '<div><div>' + esc(a.comment || '—') + '</div><div class="text-secondary small">' + new Date(a.actedAt).toLocaleString() + '</div></div></div>';
+                        '<div><div>' + esc(a.comment || '-') + '</div><div class="text-secondary small">' + new Date(a.actedAt).toLocaleString() + '</div></div></div>';
                 }).join('') || '<div class="text-secondary small">No approval activity yet.</div>';
 
                 var ledgerLink = r.financialTransaction
@@ -552,7 +552,7 @@
                     '<div class="col-12"><div class="text-secondary small">Description</div><div>' + esc(r.description) + '</div></div>' +
                     '<div class="col-6"><div class="text-secondary small">Status</div><div><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></div></div>' +
                     '<div class="col-6"><div class="text-secondary small">Amount</div><div>' + formatMoney(r.amount) + '</div></div>' +
-                    '<div class="col-6"><div class="text-secondary small">Payment Method</div><div>' + esc(r.paymentMethod || '—') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Payment Method</div><div>' + esc(r.paymentMethod || '-') + '</div></div>' +
                     (r.attachmentUrl ? '<div class="col-6"><div class="text-secondary small">Attachment</div><div><a href="' + esc(r.attachmentUrl) + '" target="_blank" rel="noopener">View</a></div></div>' : '') +
                     '</div>' +
                     ledgerLink +

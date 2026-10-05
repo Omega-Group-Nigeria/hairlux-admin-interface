@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Tasks &amp; Directives</title>
+    <title>Hairlux Admin | Tasks &amp; Directives</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -126,7 +126,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Pending</div>
-                                    <div class="h1 mb-0" id="stat-pending">—</div>
+                                    <div class="h1 mb-0" id="stat-pending">-</div>
                                 </div>
                             </div>
                         </div>
@@ -134,7 +134,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Acknowledged</div>
-                                    <div class="h1 mb-0" id="stat-acknowledged">—</div>
+                                    <div class="h1 mb-0" id="stat-acknowledged">-</div>
                                 </div>
                             </div>
                         </div>
@@ -142,7 +142,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Completed</div>
-                                    <div class="h1 mb-0" id="stat-completed">—</div>
+                                    <div class="h1 mb-0" id="stat-completed">-</div>
                                 </div>
                             </div>
                         </div>
@@ -250,7 +250,7 @@
                 <div id="directive-preview-step" class="d-none">
                     <div class="modal-body">
                         <div class="alert alert-danger d-none mb-3" id="directive-preview-error"></div>
-                        <p class="text-secondary small mb-3">Review before sending — each task below becomes its own
+                        <p class="text-secondary small mb-3">Review before sending: each task below becomes its own
                             tracked
                             row per recipient.</p>
                         <div id="directive-preview-list"></div>
@@ -275,7 +275,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="modal-edit-directive-error"></div>
-                    <div class="form-hint mb-3">Editing this only changes this one person's task — not the wider batch
+                    <div class="form-hint mb-3">Editing this only changes this one person's task: not the wider batch
                         it
                         may have been sent as part of.</div>
                     <div class="mb-3">
@@ -411,7 +411,7 @@
                 '<div class="mb-0 d-none task-branch-wrap">' +
                 '<label class="form-label">Branch <span class="text-danger">*</span></label>' +
                 '<select class="form-select task-branch"><option value="">Loading branches…</option></select>' +
-                '<div class="form-hint">Creates one independent task per staff member there — each tracks their own status separately.</div>' +
+                '<div class="form-hint">Creates one independent task per staff member there: each tracks their own status separately.</div>' +
                 '</div>';
             container.appendChild(row);
             RichTextEditor.attach(row.querySelector('.task-body'));
@@ -492,10 +492,10 @@
                             var assignedTo = d.targetStaff ? d.targetStaff.name + " (" + (d.targetStaff.staffCode || "") + ")" : "-";
                             var dueCell = d.dueDate
                                 ? '<span class="' + (isOverdue(d) ? "text-danger fw-semibold" : "") + '">' + StaffComms.formatDate(d.dueDate) + (isOverdue(d) ? " (overdue)" : "") + '</span>'
-                                : '<span class="text-secondary">—</span>';
+                                : '<span class="text-secondary">-</span>';
                             var evidenceCell = d.evidenceUrl
                                 ? '<button type="button" class="btn btn-ghost-primary btn-sm directive-view-evidence" data-id="' + d.id + '">View</button>'
-                                : '<span class="text-secondary small">—</span>';
+                                : '<span class="text-secondary small">-</span>';
                             return '<tr>' +
                                 '<td class="fw-semibold">' + esc(d.title) + '</td>' +
                                 '<td>' + esc(assignedTo) + '</td>' +
@@ -546,7 +546,7 @@
             try {
                 var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
                 document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffOptionsHtml(staffList);
-            } catch (e) { /* non-fatal — staff filter just stays at "All staff" */ }
+            } catch (e) { /* non-fatal: staff filter just stays at "All staff" */ }
         }
 
         function applyFiltersFromInputs() {
@@ -737,7 +737,7 @@
                     : await StaffComms.bulkCreateDirectives(payload);
                 bootstrap.Modal.getInstance(document.getElementById("modal-directive")).hide();
                 if (result && result.failedCount) {
-                    flashPageAlert("warning", result.succeededCount + " task(s) sent, " + result.failedCount + " failed — check the list and resend those.");
+                    flashPageAlert("warning", result.succeededCount + " task(s) sent, " + result.failedCount + " failed: check the list and resend those.");
                 } else {
                     flashPageAlert("success", "Task(s) sent successfully.");
                 }

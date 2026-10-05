@@ -1,5 +1,5 @@
 /**
- * force-assign-modal.js — Hairlux Admin
+ * force-assign-modal.js: Hairlux Admin
  * Shared Force Assign Beautician picker (search + paginated list).
  *
  * Requires: auth.js, beauticians.js, bookings.js, tabler (bootstrap)
@@ -158,9 +158,9 @@ var ForceAssignModal = (function () {
     }
 
     function formatRating(value) {
-        if (value == null || value === '') return '\u2014';
+        if (value == null || value === '') return '-';
         var num = typeof value === 'string' ? parseFloat(value) : value;
-        if (Number.isNaN(num)) return '\u2014';
+        if (Number.isNaN(num)) return '-';
         return num.toFixed(1);
     }
 
@@ -215,7 +215,7 @@ var ForceAssignModal = (function () {
 
     function extractBookingCoords(booking) {
         if (!booking || typeof booking !== 'object') return null;
-        // Service / job location — temp coords first when both set, then address / location
+        // Service / job location: temp coords first when both set, then address / location
         var tempLat = toNumber(booking.tempLatitude ?? booking.tempLat);
         var tempLng = toNumber(booking.tempLongitude ?? booking.tempLng);
         if (tempLat != null && tempLng != null) {
@@ -326,7 +326,7 @@ var ForceAssignModal = (function () {
             var user = b.user || {};
             var dob = Beauticians.formatDateOfBirth(b);
             var subParts = [user.email, user.phone];
-            if (dob !== '\u2014' && dob !== '—') subParts.push('Born ' + dob);
+            if (dob !== '-' && dob !== '-') subParts.push('Born ' + dob);
             var sub = subParts.filter(Boolean).join(' \u00b7 ');
             var rating = formatRating(b.ratingAverage);
             var isSelected = uid && uid === selectedUserId;
@@ -399,13 +399,13 @@ var ForceAssignModal = (function () {
 
     function selectBeautician(userId, name) {
         var errEl = el('force-assign-error');
-        // No-op if already assigned to this beautician — show message and do not select
+        // No-op if already assigned to this beautician: show message and do not select
         if (currentAssignedUserId && userId && userId === currentAssignedUserId) {
             if (errEl) {
                 errEl.textContent = 'Already assigned to this beautician';
                 errEl.classList.remove('d-none');
             }
-            // keep previous selection (or clear if no previous) — treat as no-op
+            // keep previous selection (or clear if no previous): treat as no-op
             return;
         }
         selectedUserId = userId;

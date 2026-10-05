@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Commission Approvals</title>
+    <title>Hairlux Admin | Commission Approvals</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -89,7 +89,7 @@
                         <strong>Pending</strong>. Payroll only pays <strong>Approved</strong> commission.
                         <strong>Awaiting Release</strong> period: approving recalculates the staff member's payslip and adjusts their locked wallet credit automatically.
                         <strong>Draft, never generated</strong>: generate the period after approving.
-                        <strong>Draft that already credited wallets</strong> (sent back for correction) or <strong>Released</strong>: locked here &mdash;
+                        <strong>Draft that already credited wallets</strong> (sent back for correction) or <strong>Released</strong>: locked here
                         generate the Draft period first (or, for Released, use a Bonus payroll adjustment).
                     </div>
 
@@ -274,7 +274,7 @@
             try {
                 var plans = await CommissionPlans.getAll();
                 document.getElementById('f-plan').innerHTML = '<option value="">All plans</option>' + plans.map(function (p) {
-                    return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' (' + CommissionPlans.formatRate(p.commissionRate) + ')' + (p.requiresApproval ? '' : ' — no approval') + '</option>';
+                    return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' (' + CommissionPlans.formatRate(p.commissionRate) + ')' + (p.requiresApproval ? '' : ': no approval') + '</option>';
                 }).join('');
             } catch (e) { /* optional filter */ }
         }
@@ -343,7 +343,7 @@
                         '<button class="btn btn-sm btn-outline-danger btn-reject-one" data-id="' + esc(r.id) + '">Reject</button>';
                 } else if (r.status === 'PENDING' && r.locked) {
                     actions = '<span class="badge bg-secondary-lt text-secondary" title="' + esc(r.lockReason || '') + '">Locked</span>' +
-                        '<div class="text-secondary small" style="max-width:16rem;white-space:normal">' + esc(r.period && r.period.state === 'RELEASED' ? 'Released \u2014 use a payroll adjustment' : 'Generate ' + (r.period ? r.period.label : 'the period') + ' first') + '</div>';
+                        '<div class="text-secondary small" style="max-width:16rem;white-space:normal">' + esc(r.period && r.period.state === 'RELEASED' ? 'Released: use a payroll adjustment' : 'Generate ' + (r.period ? r.period.label : 'the period') + ' first') + '</div>';
                 }
                 var decided = r.approvedAt
                     ? '<div class="text-secondary small">' + (r.approvedBy ? esc(r.approvedBy.name) + ' · ' : '') + Payroll.formatDate(r.approvedAt) + '</div>'
@@ -354,7 +354,7 @@
                         '<div class="text-secondary small">' + Payroll.formatDate(r.booking.completedAt || r.calculatedAt) + ' · ' + esc(r.booking.customerName) + '</div>' +
                         (r.period ? '<div class="text-secondary small">Payroll: ' + esc(r.period.label) + '</div>' : '') + '</td>' +
                     '<td><div>' + esc(r.staff.name) + '</div><div class="text-secondary small">' + esc(r.staff.staffCode || '') + (r.staff.branch ? ' · ' + esc(r.staff.branch.name) : '') + '</div></td>' +
-                    '<td>' + (r.plan ? esc(r.plan.name) + '<div class="text-secondary small">' + CommissionPlans.formatRate(r.plan.commissionRate) + '</div>' : '<span class="text-secondary">—</span>') + '</td>' +
+                    '<td>' + (r.plan ? esc(r.plan.name) + '<div class="text-secondary small">' + CommissionPlans.formatRate(r.plan.commissionRate) + '</div>' : '<span class="text-secondary">-</span>') + '</td>' +
                     '<td class="text-end">' + money(r.booking.servicesTotal) +
                         (r.booking.eligibleServicesTotal !== r.booking.servicesTotal ? '<div class="text-secondary small">eligible ' + money(r.booking.eligibleServicesTotal) + '</div>' : '') + '</td>' +
                     '<td class="text-end">' + CommissionPlans.formatRate(r.rateApplied) + '</td>' +
@@ -440,7 +440,7 @@
                 '<div><strong>' + res.updatedCount + '</strong> commission' + (res.updatedCount !== 1 ? 's' : '') + ' ' + verb + ' (' + money(res.updatedAmount) + ').</div>';
             if (res.skipped && res.skipped.length) {
                 html += '<div class="mt-2 small"><strong>' + res.skipped.length + ' skipped:</strong><ul class="mb-0">' +
-                    res.skipped.slice(0, 20).map(function (s) { return '<li>' + esc(s.bookingCode || s.id) + ' — ' + esc(s.reason) + '</li>'; }).join('') +
+                    res.skipped.slice(0, 20).map(function (s) { return '<li>' + esc(s.bookingCode || s.id) + ': ' + esc(s.reason) + '</li>'; }).join('') +
                     (res.skipped.length > 20 ? '<li>…and ' + (res.skipped.length - 20) + ' more</li>' : '') + '</ul></div>';
             }
             html += CommissionPlans.renderPayslipResults(res);
@@ -453,7 +453,7 @@
                     res.draftPeriodsToRegenerate.map(function (p) {
                         return esc(p.label) + (canGenerate ? ' <button type="button" class="btn btn-sm btn-outline-primary ms-1 btn-regenerate-period" data-id="' + esc(p.id) + '" data-label="' + esc(p.label) + '">Generate payroll</button>' : '');
                     }).join(' &middot; ') +
-                    (canGenerate ? '' : ' — ask someone with payroll generation access to generate it on the <a href="payroll.html">Payroll</a> page.') + '</div>';
+                    (canGenerate ? '' : ': ask someone with payroll generation access to generate it on the <a href="payroll.html">Payroll</a> page.') + '</div>';
             }
             html += '<a class="btn-close" data-bs-dismiss="alert"></a></div>';
             el.innerHTML = html;

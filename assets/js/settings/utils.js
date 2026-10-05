@@ -1,5 +1,5 @@
 /**
- * settings/utils.js — alerts, escape, fuzzy search helpers
+ * settings/utils.js: alerts, escape, fuzzy search helpers
  */
 (function (global) {
     'use strict';

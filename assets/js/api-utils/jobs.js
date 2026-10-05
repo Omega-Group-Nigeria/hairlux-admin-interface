@@ -1,5 +1,5 @@
 /**
- * jobs.js — Hairlux Admin
+ * jobs.js: Hairlux Admin
  * All /admin/jobs/* API calls.
  *
  * Requires: auth.js (Auth.fetch)
@@ -8,7 +8,7 @@
 const Jobs = (() => {
 
   /**
-   * List all job postings (admin — includes drafts).
+   * List all job postings (admin: includes drafts).
    * @param {object} opts  { type?, page?, limit? }
    */
   async function getAll({ type = '', page = 1, limit = 20 } = {}) {
@@ -114,7 +114,7 @@ const Jobs = (() => {
   }
 
   function formatDate(iso) {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const d = new Date(iso);
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }

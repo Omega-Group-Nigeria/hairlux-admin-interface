@@ -1,5 +1,5 @@
 /**
- * settings/handlers.js — profile/password saves, admin management, event binding
+ * settings/handlers.js: profile/password saves, admin management, event binding
  */
 (function (global) {
     'use strict';
@@ -251,7 +251,7 @@
             var roles = await Api.fetchRoles();
             State.rolesCache = roles;
             if (!roles.length) {
-                var placeholder = '<option value="" disabled selected>No roles yet — create one first</option>';
+                var placeholder = '<option value="" disabled selected>No roles yet: create one first</option>';
                 if (caEl) caEl.innerHTML = placeholder;
                 if (rrEl) rrEl.innerHTML = placeholder;
                 return;
@@ -780,8 +780,8 @@
 
                 tbody.innerHTML = entries.length
                     ? entries.map(function (e) {
-                        var actorName = e.actor ? (e.actor.firstName + ' ' + e.actor.lastName) : '\u2014';
-                        var targetName = e.targetUser ? (e.targetUser.firstName + ' ' + e.targetUser.lastName) : '\u2014';
+                        var actorName = e.actor ? (e.actor.firstName + ' ' + e.actor.lastName) : '-';
+                        var targetName = e.targetUser ? (e.targetUser.firstName + ' ' + e.targetUser.lastName) : '-';
                         var when = new Date(e.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' });
                         var details = '';
                         if (e.action === 'PERMISSIONS_CHANGED') {
@@ -792,7 +792,7 @@
                             var changes = [];
                             if (e.before.name !== e.after.name) changes.push('name: "' + e.before.name + '" \u2192 "' + e.after.name + '"');
                             if (e.before.isActive !== e.after.isActive) changes.push('active: ' + e.before.isActive + ' \u2192 ' + e.after.isActive);
-                            details = changes.join(', ') || '\u2014';
+                            details = changes.join(', ') || '-';
                         } else if (e.action === 'USER_ROLE_ASSIGNED' && e.after) {
                             details = 'Assigned "' + (e.after.name || '') + '"' + (e.before ? ' (was "' + e.before.name + '")' : '');
                         }
@@ -892,13 +892,13 @@
             });
         }
 
-        // View Users button — everyone holding this role, primary or secondary
+        // View Users button: everyone holding this role, primary or secondary
         var btnViewRoleUsers = document.getElementById('btn-view-role-users');
         if (btnViewRoleUsers) {
             btnViewRoleUsers.addEventListener('click', async function () {
                 if (!State.permRole) return;
                 var role = State.rolesCache.find(function (r) { return r.id === State.permRole; });
-                document.getElementById('vru-role-name').textContent = role ? role.name : '—';
+                document.getElementById('vru-role-name').textContent = role ? role.name : '-';
                 var contentEl = document.getElementById('vru-content');
                 contentEl.innerHTML = '<div class="text-secondary small">Loading…</div>';
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-view-role-users')).show();
@@ -1039,7 +1039,7 @@
                         ? '<option value="">Select a role…</option>' + roles.map(function (r) {
                             return '<option value="' + _esc(r.id) + '">' + _esc(r.name) + '</option>';
                         }).join('')
-                        : '<option value="" disabled selected>No roles yet — create one first</option>';
+                        : '<option value="" disabled selected>No roles yet: create one first</option>';
                     SearchableSelect.refresh('assign-role-role-select');
                 } catch (err) {
                     roleSelect.innerHTML = '<option value="">Failed to load roles</option>';
@@ -1071,7 +1071,7 @@
             var warnEl = document.getElementById('assign-role-overwrite-warning');
             if (!warnEl) return;
             if (mode && mode.value === 'primary' && _assignRoleCurrentAssignment && _assignRoleCurrentAssignment.adminRoleName) {
-                warnEl.textContent = 'This will REPLACE their current primary role ("' + _assignRoleCurrentAssignment.adminRoleName + '") — that role\'s permissions will no longer apply once this is saved.';
+                warnEl.textContent = 'This will REPLACE their current primary role ("' + _assignRoleCurrentAssignment.adminRoleName + '"): that role\'s permissions will no longer apply once this is saved.';
                 warnEl.classList.remove('d-none');
             } else {
                 warnEl.classList.add('d-none');
@@ -1128,7 +1128,7 @@
                 }
 
                 if (mode === 'primary' && _assignRoleCurrentAssignment && _assignRoleCurrentAssignment.adminRoleName) {
-                    if (!confirm('This replaces their current role ("' + _assignRoleCurrentAssignment.adminRoleName + '") — continue?')) return;
+                    if (!confirm('This replaces their current role ("' + _assignRoleCurrentAssignment.adminRoleName + '"): continue?')) return;
                 }
 
                 var spinner = document.getElementById('spinner-assign-role-staff');
@@ -1236,7 +1236,7 @@
             });
         }
 
-        // Edit role button — opens the modal pre-filled with the currently selected role
+        // Edit role button: opens the modal pre-filled with the currently selected role
         var btnEditRole = document.getElementById('btn-edit-role');
         if (btnEditRole) {
             btnEditRole.addEventListener('click', function () {

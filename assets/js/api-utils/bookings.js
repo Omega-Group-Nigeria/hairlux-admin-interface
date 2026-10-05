@@ -1,5 +1,5 @@
 /**
- * bookings.js — Hairlux Admin
+ * bookings.js: Hairlux Admin
  * All /admin/bookings/* API calls.
  *
  * Requires:
@@ -58,7 +58,7 @@ const Bookings = (() => {
     return null;
   }
 
-  function formatBranchLabel(branch, fallback = "—") {
+  function formatBranchLabel(branch, fallback = "-") {
     const normalized = normalizeBranch(branch);
     return normalized && normalized.name ? normalized.name : fallback;
   }
@@ -70,7 +70,7 @@ const Bookings = (() => {
 
   function formatBranchTableCell(booking, esc = (value) => String(value || "")) {
     const branch = resolveBranch(booking);
-    if (!branch || !branch.name) return '<span class="text-secondary">—</span>';
+    if (!branch || !branch.name) return '<span class="text-secondary">-</span>';
     let html = `<div class="small fw-semibold">${esc(branch.name)}</div>`;
     if (branch.address) {
       const display = branch.address.length > 48
@@ -86,7 +86,7 @@ const Bookings = (() => {
     const branch = resolveBranch(booking);
     if (!branch || (!branch.name && !branch.address)) return "";
 
-    const name = esc(branch.name || "—");
+    const name = esc(branch.name || "-");
     const address = branch.address ? esc(branch.address) : "";
     const label = esc(opts.label || "Branch");
     const labelClass = opts.labelClass || "detail-field-label";
@@ -179,7 +179,7 @@ const Bookings = (() => {
     return hasArrayValues ? normalized : payload;
   }
 
-  function formatAddress(address, fallback = "—") {
+  function formatAddress(address, fallback = "-") {
     const normalized = normalizeAddress(address);
     return normalized.fullAddress
       || [normalized.streetAddress, normalized.city, normalized.state, normalized.country].filter(Boolean).join(", ")
@@ -234,7 +234,7 @@ const Bookings = (() => {
   /**
    * Create a manual booking on behalf of a user (walk-in / phone booking).
    * @param {object} payload  AdminCreateBookingDto
-   *   idempotencyKey is optional but recommended — auto-generated if omitted.
+   *   idempotencyKey is optional but recommended: auto-generated if omitted.
    */
   async function createManualBooking(payload) {
     const body = {
@@ -431,10 +431,10 @@ const Bookings = (() => {
         '<div class="col-sm-6"><div class="detail-field-label">Policy scenario</div>' +
         '<div class="detail-field-value fw-semibold">' + esc(scenario) + "</div></div>",
         '<div class="col-sm-6"><div class="detail-field-label">Refund</div>' +
-        '<div class="detail-field-value">' + esc(cancellation.refundPercent ?? "—") + "% · " +
+        '<div class="detail-field-value">' + esc(cancellation.refundPercent ?? "-") + "% · " +
         esc(formatMoney(cancellation.refundAmount ?? 0)) + "</div></div>",
         '<div class="col-sm-6"><div class="detail-field-label">Forfeiture</div>' +
-        '<div class="detail-field-value">' + esc(cancellation.forfeiturePercent ?? "—") + "% · " +
+        '<div class="detail-field-value">' + esc(cancellation.forfeiturePercent ?? "-") + "% · " +
         esc(formatMoney(cancellation.forfeitureAmount ?? 0)) + "</div></div>"
       );
     }
@@ -451,7 +451,7 @@ const Bookings = (() => {
   /**
    * Re-trigger beautician matching for a home-service booking awaiting assignment.
    * @param {string} id
-   * @param {number} [startAtTier]  1–3 — optional wider-radius restart
+   * @param {number} [startAtTier]  1–3: optional wider-radius restart
    */
   async function retryMatching(id, startAtTier) {
     const qs = startAtTier != null && startAtTier !== ""
@@ -666,14 +666,14 @@ const Bookings = (() => {
   }
 
   function dispatchStatusBadge(status) {
-    if (!status) return '<span class="text-secondary small">—</span>';
+    if (!status) return '<span class="text-secondary small">-</span>';
     const color = DISPATCH_STATUS_COLORS[status] || "secondary";
     const label = String(status).replace(/_/g, " ");
     return `<span class="badge bg-${color}-lt">${label}</span>`;
   }
 
   function formatIsoDateTime(iso) {
-    if (!iso) return "—";
+    if (!iso) return "-";
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return String(iso);
     return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" })
@@ -805,7 +805,7 @@ const Bookings = (() => {
       '<div class="col-sm-6"><div class="' + labelClass + '">Dispatch status</div>' +
       '<div class="detail-field-value">' + dispatchStatusBadge(trace.dispatchStatus) + "</div></div>" +
       '<div class="col-sm-6"><div class="' + labelClass + '">Matching tier</div>' +
-      '<div class="detail-field-value">' + esc(trace.matchingAttempt ?? "—") + "</div></div>" +
+      '<div class="detail-field-value">' + esc(trace.matchingAttempt ?? "-") + "</div></div>" +
       '<div class="col-sm-6"><div class="' + labelClass + '">Started</div>' +
       '<div class="detail-field-value">' + esc(formatIsoDateTime(trace.matchingStartedAt)) + "</div></div>" +
       '<div class="col-sm-6"><div class="' + labelClass + '">Exhausted</div>' +
@@ -832,9 +832,9 @@ const Bookings = (() => {
           const bName = [b.firstName, b.lastName].filter(Boolean).join(" ") || shortId(o.beauticianUserId);
           return "<tr>" +
             "<td>" + esc(bName) + "</td>" +
-            '<td><span class="badge bg-secondary-lt">' + esc((o.status || "—").replace(/_/g, " ")) + "</span></td>" +
-            "<td>" + esc(o.tier ?? "—") + "</td>" +
-            "<td>" + (o.distanceKmAtOffer != null ? esc(o.distanceKmAtOffer + " km") : "—") + "</td>" +
+            '<td><span class="badge bg-secondary-lt">' + esc((o.status || "-").replace(/_/g, " ")) + "</span></td>" +
+            "<td>" + esc(o.tier ?? "-") + "</td>" +
+            "<td>" + (o.distanceKmAtOffer != null ? esc(o.distanceKmAtOffer + " km") : "-") + "</td>" +
             '<td class="text-secondary small">' + esc(formatIsoDateTime(o.offeredAt)) + "</td>" +
             "</tr>";
         }).join("") +
@@ -861,7 +861,7 @@ const Bookings = (() => {
   }
 
   function formatDateTime(dateStr, timeStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     const date = d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });
     return timeStr ? `${date} · ${timeStr}` : date;

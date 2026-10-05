@@ -1,7 +1,7 @@
 /**
  * multi-select.js
  * Turns a native <select multiple> into a type-to-filter multi-select with
- * removable chips, without changing how the page reads its value — the
+ * removable chips, without changing how the page reads its value: the
  * underlying <select> stays the source of truth (selectedOptions update,
  * a real 'change' event fires), so existing code like
  * `document.getElementById('x').selectedOptions` keeps working.
@@ -135,7 +135,7 @@ const MultiSelect = (function () {
 
         // If a previous attach() wrapped an element that's since been
         // destroyed (e.g. a form rebuilt via innerHTML replacement), the
-        // registry entry is stale — clean it up and attach fresh instead of
+        // registry entry is stale: clean it up and attach fresh instead of
         // silently no-oping against a detached node.
         const existing = registry[selectId];
         if (existing && !existing.select.isConnected) {
@@ -145,7 +145,7 @@ const MultiSelect = (function () {
         }
 
         // Hide the native select visually but keep it in the DOM/tab order
-        // as the real form control — screen readers and existing code both
+        // as the real form control: screen readers and existing code both
         // still see a normal <select multiple>.
         select.style.position = 'absolute';
         select.style.opacity = '0';

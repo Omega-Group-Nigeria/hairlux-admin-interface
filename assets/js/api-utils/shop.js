@@ -1,5 +1,5 @@
 /**
- * shop.js — Hairlux Admin
+ * shop.js: Hairlux Admin
  * API helper for shop catalog, delivery regions, and order management.
  *
  * Requires:
@@ -7,10 +7,10 @@
  *   - auth.js   (Auth.fetch, Auth.getToken, Auth.isTokenExpired, Auth.refreshAccessToken, Auth.logout)
  *
  * Permissions (see documents/shop-admin-permissions.md):
- *   shop:manage_products   — list/view/create/update/delete products
- *   shop:manage_categories — manage product categories
- *   shop:manage_delivery   — manage delivery regions & fees
- *   shop:update_status     — view orders, advance fulfilment, or cancel
+ *   shop:manage_products: list/view/create/update/delete products
+ *   shop:manage_categories: manage product categories
+ *   shop:manage_delivery: manage delivery regions & fees
+ *   shop:update_status: view orders, advance fulfilment, or cancel
  *
  * Admin endpoints:
  *   GET    /admin/shop/categories
@@ -207,7 +207,7 @@ const Shop = (() => {
     }
 
     /**
-     * Bulk-create delivery regions — one region per state, all sharing the
+     * Bulk-create delivery regions: one region per state, all sharing the
      * same delivery fee / active flag.
      *   POST /admin/shop/delivery-regions  { states: [...], deliveryFee, isActive }
      * Response data is the array of created regions.
@@ -276,7 +276,7 @@ const Shop = (() => {
             CANCELLED:  "bg-danger-lt text-danger",
         };
         const cls = map[status] || "bg-secondary-lt text-secondary";
-        const label = (status || "—").replace(/_/g, " ");
+        const label = (status || "-").replace(/_/g, " ");
         return '<span class="badge ' + cls + '">' + label + '</span>';
     }
 
@@ -299,7 +299,7 @@ const Shop = (() => {
     }
 
     function formatDate(iso) {
-        if (!iso) return "—";
+        if (!iso) return "-";
         try {
             return new Date(iso).toLocaleDateString("en-GB", {
                 day: "numeric", month: "short", year: "numeric",
@@ -308,7 +308,7 @@ const Shop = (() => {
     }
 
     function formatDateTime(iso) {
-        if (!iso) return "—";
+        if (!iso) return "-";
         try {
             return new Date(iso).toLocaleString("en-GB", {
                 day: "numeric", month: "short", year: "numeric",
@@ -330,10 +330,10 @@ const Shop = (() => {
 
     /** Human-readable order reference for display (orderCode preferred). */
     function orderRef(order) {
-        if (!order) return "—";
+        if (!order) return "-";
         if (order.orderCode) return order.orderCode;
         const id = order.id || "";
-        return id ? id.slice(0, 8) + "…" : "—";
+        return id ? id.slice(0, 8) + "…" : "-";
     }
 
     return {

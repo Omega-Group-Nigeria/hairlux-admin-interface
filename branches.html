@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Branches</title>
+    <title>Hairlux Admin | Branches</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -157,7 +157,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Total Branches</div>
-                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                    <div class="h1 mb-0" id="stat-total">-</div>
                                 </div>
                             </div>
                         </div>
@@ -165,7 +165,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Open</div>
-                                    <div class="h1 mb-0" id="stat-open">—</div>
+                                    <div class="h1 mb-0" id="stat-open">-</div>
                                 </div>
                             </div>
                         </div>
@@ -173,7 +173,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Closed</div>
-                                    <div class="h1 mb-0" id="stat-closed">—</div>
+                                    <div class="h1 mb-0" id="stat-closed">-</div>
                                 </div>
                             </div>
                         </div>
@@ -341,7 +341,7 @@
         <div class="offcanvas-header border-bottom">
             <div>
                 <h5 class="offcanvas-title mb-0" id="matrix-title">Branch Services</h5>
-                <div class="text-secondary small" id="matrix-subtitle">—</div>
+                <div class="text-secondary small" id="matrix-subtitle">-</div>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
@@ -732,7 +732,7 @@
 
         function formatBranchAddressCell(address) {
             var text = String(address || "").trim();
-            if (!text) return '<span class="text-secondary">—</span>';
+            if (!text) return '<span class="text-secondary">-</span>';
             var display = text.length > 72 ? text.slice(0, 69) + "…" : text;
             return '<span class="small text-secondary" title="' + escAttr(text) + '">' + esc(display) + '</span>';
         }
@@ -1050,7 +1050,7 @@
             }
             tbody.innerHTML = rows.map(function (row) {
                 var state = getMatrixRowState(row);
-                var catName = _categoryMap[row.categoryId] || "—";
+                var catName = _categoryMap[row.categoryId] || "-";
                 var overrideVal = getOverrideInputValue(row);
                 var placeholder = row.catalogWalkInPrice != null ? row.catalogWalkInPrice : "";
                 var effective = state.walkInPrice != null ? state.walkInPrice : row.catalogWalkInPrice;
@@ -1060,7 +1060,7 @@
                     : (state.isAvailable ? '<span class="badge bg-success-lt text-success">Yes</span>' : '<span class="badge bg-secondary-lt text-secondary">No</span>');
                 var priceHtml = canManage
                     ? '<input type="number" class="form-control form-control-sm matrix-price matrix-price-input" data-id="' + row.serviceId + '" value="' + escAttr(overrideVal === "" ? "" : String(overrideVal)) + '" placeholder="' + escAttr(placeholder !== "" ? String(placeholder) : "Catalog") + '" min="0" step="100"' + (state.isAvailable ? "" : ' disabled') + '>'
-                    : '<span class="text-secondary small">' + (overrideVal !== "" && overrideVal != null ? Branches.formatMoney(overrideVal) : "—") + '</span>';
+                    : '<span class="text-secondary small">' + (overrideVal !== "" && overrideVal != null ? Branches.formatMoney(overrideVal) : "-") + '</span>';
                 return '<tr class="' + rowCls + '">' +
                     '<td>' + switchHtml + '</td>' +
                     '<td><div class="fw-semibold">' + esc(row.name) + '</div></td>' +
@@ -1096,7 +1096,7 @@
             document.getElementById("matrix-search").value = "";
             document.getElementById("matrix-category").value = "";
             document.getElementById("matrix-availability").value = "";
-            document.getElementById("matrix-title").textContent = branchName + " — Services";
+            document.getElementById("matrix-title").textContent = branchName + ": Services";
             document.getElementById("matrix-tbody").innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary spinner-border-sm"></div></td></tr>';
             new bootstrap.Offcanvas(document.getElementById("offcanvas-services")).show();
             await loadCategoryMap();

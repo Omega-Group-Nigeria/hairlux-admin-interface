@@ -1,5 +1,5 @@
 /**
- * adverts/handlers.js — event wiring and page logic for Advert Banners
+ * adverts/handlers.js: event wiring and page logic for Advert Banners
  */
 (function (global) {
     'use strict';

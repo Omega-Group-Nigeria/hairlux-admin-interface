@@ -1,5 +1,5 @@
 /**
- * adverts/state.js — central page state for Advert Banners admin
+ * adverts/state.js: central page state for Advert Banners admin
  */
 (function (global) {
     'use strict';

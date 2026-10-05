@@ -17,7 +17,7 @@ const CsvExport = (function () {
     function escapeCell(value) {
         var s = value == null ? '' : String(value);
         // Quote and escape whenever the value could otherwise be
-        // misread — a comma, a quote, or a newline inside the cell.
+        // misread: a comma, a quote, or a newline inside the cell.
         if (/[",\n\r]/.test(s)) {
             s = '"' + s.replace(/"/g, '""') + '"';
         }
@@ -39,7 +39,7 @@ const CsvExport = (function () {
     /**
      * Builds the CSV client-side and triggers a browser download. If no
      * rows are given (e.g. a failed or empty fetch), does nothing rather
-     * than download an empty/misleading file — the caller should already
+     * than download an empty/misleading file: the caller should already
      * have shown its own "nothing to export" message.
      */
     function download(filename, columns, rows) {

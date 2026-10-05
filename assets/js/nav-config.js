@@ -1,5 +1,5 @@
 /**
- * nav-config.js — Hairlux Admin
+ * nav-config.js: Hairlux Admin
  * Single source of truth for sidebar navigation structure and page permissions.
  */
 var NavConfig = window.NavConfig || (() => {

@@ -1,5 +1,5 @@
 /**
- * settings/ui.js — section navigation, forms, tables, permission matrix
+ * settings/ui.js: section navigation, forms, tables, permission matrix
  */
 (function (global) {
     'use strict';
@@ -173,13 +173,13 @@
         }
         var currentUserId = Auth.getUser() ? Auth.getUser().id : null;
         tbody.innerHTML = users.map(function (u) {
-            var name = _esc([u.firstName, u.lastName].filter(Boolean).join(' ') || '—');
-            var email = _esc(u.email || '—');
+            var name = _esc([u.firstName, u.lastName].filter(Boolean).join(' ') || '-');
+            var email = _esc(u.email || '-');
             var roleBadge = Roles.roleBadge(u.role);
             var status = u.status || (u.isActive ? 'ACTIVE' : 'INACTIVE');
             var isActive = (status === 'ACTIVE');
             var statusBadge = '<span class="badge bg-' + (isActive ? 'success' : 'secondary') + '-lt">' + (isActive ? 'Active' : 'Inactive') + '</span>';
-            var joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+            var joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
             var isSuperAdmin = (u.role === 'SUPER_ADMIN');
             var isSelf = (u.id === currentUserId);
             var dropItems = '';
@@ -271,7 +271,7 @@
         // Only callers who can actually save (branches:manage_manager, not branch-scoped) get the selector.
         var canAssign = typeof RBAC !== 'undefined' && RBAC.can && RBAC.can('branches:manage_manager') && !(RBAC.isManagerScoped && RBAC.isManagerScoped());
         if (!canAssign) {
-            return u.managedBranch ? _esc(u.managedBranch.name || '') : '<span class="text-secondary small">—</span>';
+            return u.managedBranch ? _esc(u.managedBranch.name || '') : '<span class="text-secondary small">-</span>';
         }
         var current = u.managedBranchId || '';
         var branches = (State.branchesCache || []).slice();
@@ -279,7 +279,7 @@
         if (current && !branches.some(function (b) { return b.id === current; })) {
             branches.push({ id: current, name: (u.managedBranch && u.managedBranch.name) || 'Current branch' });
         }
-        var opts = '<option value="">— None (all branches) —</option>' + branches.map(function (b) {
+        var opts = '<option value="">None (all branches)</option>' + branches.map(function (b) {
             return '<option value="' + _esc(b.id) + '"' + (b.id === current ? ' selected' : '') + '>' + _esc(b.name || b.id) + '</option>';
         }).join('');
         return '<select class="form-select form-select-sm" style="min-width:11rem" data-managed-branch="1"' +
@@ -304,8 +304,8 @@
             }
             var label = next ? (sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : 'the branch') : null;
             showAdminAlert('success', label
-                ? 'Managed branch set to ' + label + ' — this account now only sees that branch.'
-                : 'Managed branch cleared — this account now sees every branch.');
+                ? 'Managed branch set to ' + label + ': this account now only sees that branch.'
+                : 'Managed branch cleared: this account now sees every branch.');
         } catch (err) {
             sel.value = prev;
             showAdminAlert('danger', err.message || 'Failed to update managed branch.');
@@ -543,7 +543,7 @@
             ? Array.from(cityEl.selectedOptions).map(function (o) { return o.value; }).filter(function (v) { return v !== ''; })
             : [];
         if (!state || !cities.length) {
-            wrap.innerHTML = '<div class="text-secondary small">No cities selected yet — they will show here as they are added.</div>';
+            wrap.innerHTML = '<div class="text-secondary small">No cities selected yet: they will show here as they are added.</div>';
             return;
         }
 
@@ -576,12 +576,12 @@
 
         var summary = '';
         if (hasWildcard && cities.some(function (c) { return c !== '*'; })) {
-            summary = '<div class="text-secondary small mb-2">Specific cities were chosen — All Cities was dropped for this selection.</div>';
+            summary = '<div class="text-secondary small mb-2">Specific cities were chosen: All Cities was dropped for this selection.</div>';
         } else if (addable.length === 0) {
             summary = '<div class="text-secondary small mb-2">All selected entries are already covered by existing areas.</div>';
         } else if (addable.length < cities.length) {
             summary = '<div class="text-secondary small mb-2">' + (cities.length - addable.length) +
-                ' selection(s) skipped — already covered. ' + addable.length + ' will be added.</div>';
+                ' selection(s) skipped: already covered. ' + addable.length + ' will be added.</div>';
         } else if (cities.indexOf('*') !== -1) {
             summary = '<div class="text-warning small mb-2">All Cities will replace any specific cities already listed for ' + _esc(state) + '.</div>';
         }
@@ -654,14 +654,14 @@
             notice.innerHTML =
                 '<div class="d-flex flex-wrap align-items-start justify-content-between gap-2">' +
                 '<div><strong>All Cities is already active for ' + _esc(state) + '.</strong> ' +
-                'Every city in this state is already covered — you do not need to pick individual cities.</div>' +
+                'Every city in this state is already covered: you do not need to pick individual cities.</div>' +
                 '<button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" id="btn-override-all-cities">' +
                 'Choose specific cities instead</button></div>';
             notice.classList.remove('d-none');
             MultiSelect.setLocked('add-area-city', true, {
                 message: 'All Cities is already active for ' + state + '. Individual cities are not needed.',
                 actionLabel: 'Choose specific cities instead',
-                placeholder: 'All Cities already active — click to see options',
+                placeholder: 'All Cities already active: click to see options',
                 onAction: function () {
                     removeWildcardForState(state);
                     populateAddAreaCity(state);
@@ -677,7 +677,7 @@
             notice.className = 'alert alert-primary py-2 px-3 small mb-2';
             notice.innerHTML =
                 '<strong>All Cities selected.</strong> This will cover every city in ' + _esc(state) + '. ' +
-                'To limit coverage, pick one or more specific cities below — that will replace All Cities for this add.';
+                'To limit coverage, pick one or more specific cities below: that will replace All Cities for this add.';
             notice.classList.remove('d-none');
             MultiSelect.setLocked('add-area-city', false);
             return;
@@ -782,7 +782,7 @@
             '<td>' +
             (needsWindow
                 ? '<input type="number" class="form-control form-control-sm policy-window" min="1" max="10080" value="' + _esc(windowVal) + '"' + disabled + ' style="max-width:6rem">'
-                : '<span class="text-secondary small">—</span>') +
+                : '<span class="text-secondary small">-</span>') +
             '</td>' +
             '<td><input type="number" class="form-control form-control-sm policy-refund" min="0" max="100" value="' + _esc(refund) + '"' + disabled + ' style="max-width:5rem"></td>' +
             '<td><input type="number" class="form-control form-control-sm policy-forfeiture" min="0" max="100" value="' + _esc(forfeiture) + '"' + disabled + ' style="max-width:5rem"></td>' +

@@ -1,5 +1,5 @@
 /**
- * shop/ui.js — section navigation and table/detail rendering
+ * shop/ui.js: section navigation and table/detail rendering
  */
 (function (global) {
     'use strict';
@@ -78,12 +78,12 @@ function renderProductsTable(rows) {
     }
     var imgDefault = '<span class="avatar avatar-sm bg-secondary-lt text-secondary" style="width:48px;height:48px;border-radius:6px;font-size:10px">IMG</span>';
     tbody.innerHTML = rows.map(function (p) {
-        var catName = (p.category && p.category.name) || "—";
+        var catName = (p.category && p.category.name) || "-";
         var imageUrl = Shop.getProductImageUrl(p);
         var thumb = imageUrl
             ? '<img src="' + esc(imageUrl) + '" class="product-thumb" alt="" loading="lazy">'
             : imgDefault;
-        var actions = "—";
+        var actions = "-";
         if (RBAC.can(Shop.PERMISSIONS.MANAGE_PRODUCTS)) {
             var toggleLabel = p.status === "ACTIVE" ? "Deactivate" : "Activate";
             actions =

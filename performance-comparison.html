@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Performance &amp; Comparison</title>
+    <title>Hairlux Admin | Performance &amp; Comparison</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -157,7 +157,7 @@
                                         id="btn-pc-reset">Reset</button>
                                 </div>
                             </div>
-                            <div class="text-secondary small mt-2" id="pc-period-note">—</div>
+                            <div class="text-secondary small mt-2" id="pc-period-note">-</div>
                         </div>
                     </div>
 
@@ -441,13 +441,13 @@
                 var entityLabel = { COMPANY: 'Company-wide', BRANCH: 'branch', STAFF: 'staff member', STYLIST: 'stylist', SERVICE: 'service' }[entityType] || entityType;
                 var label = entityType === 'COMPANY' ? 'Company-wide'
                     : (entityId ? 'One ' + entityLabel + ' vs its own prior period' : 'Every ' + entityLabel + ', side by side');
-                document.getElementById('pc-period-note').textContent = label + ' — ' + comparisonMode.replace(/_/g, ' ').toLowerCase();
+                document.getElementById('pc-period-note').textContent = label + ': ' + comparisonMode.replace(/_/g, ' ').toLowerCase();
                 if (!rows.length) {
                     infoEl.textContent = 'No branches in scope for this view.';
                     infoEl.classList.remove('d-none');
                 }
             } catch (err) {
-                document.getElementById('pc-tbody').innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-3">—</td></tr>';
+                document.getElementById('pc-tbody').innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-3">-</td></tr>';
                 errEl.textContent = err.message || 'Failed to load comparison.';
                 errEl.classList.remove('d-none');
             }
@@ -482,8 +482,8 @@
                     '<td class="text-end ' + varianceClass + '">' + (r.varianceAbs >= 0 ? '+' : '') + formatMetric(metric, r.varianceAbs) + '</td>' +
                     '<td class="text-end ' + varianceClass + '">' + BusinessIntelligence.formatPercent(r.variancePercent) + '</td>' +
                     '<td class="text-end">' + (r.target === null ? '<span class="text-secondary">No target</span>' : formatMetric(metric, r.target)) + '</td>' +
-                    '<td class="text-end">' + (r.achievementPercent === null ? '—' : r.achievementPercent.toFixed(1) + '%') + '</td>' +
-                    '<td>' + (r.status ? '<span class="' + statusBadgeClass(r.status) + '">' + r.status + '</span>' : '—') + '</td>' +
+                    '<td class="text-end">' + (r.achievementPercent === null ? '-' : r.achievementPercent.toFixed(1) + '%') + '</td>' +
+                    '<td>' + (r.status ? '<span class="' + statusBadgeClass(r.status) + '">' + r.status + '</span>' : '-') + '</td>' +
                     '</tr>';
             }).join('');
         }

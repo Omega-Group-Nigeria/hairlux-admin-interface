@@ -1,7 +1,7 @@
 /**
  * searchable-select.js
  * Turns a native <select> into a type-to-filter combobox, without changing
- * how the rest of the page reads its value — the underlying <select> stays
+ * how the rest of the page reads its value: the underlying <select> stays
  * the source of truth (its .value updates, and a real 'change' event fires),
  * so any existing code doing `document.getElementById('x').value` or
  * `.addEventListener('change', ...)` keeps working untouched.
@@ -70,7 +70,7 @@ const SearchableSelect = (function () {
 
         // If a previous attach() wrapped an element that's since been
         // destroyed (e.g. a form rebuilt via innerHTML replacement), the
-        // registry entry is stale — clean it up and attach fresh instead of
+        // registry entry is stale: clean it up and attach fresh instead of
         // silently no-oping against a detached node.
         const existing = registry[selectId];
         if (existing && !existing.select.isConnected) {
@@ -80,7 +80,7 @@ const SearchableSelect = (function () {
         }
 
         // Hide the native select visually but keep it in the DOM/tab order
-        // as the real form control — screen readers and existing code both
+        // as the real form control: screen readers and existing code both
         // still see a normal <select>.
         select.style.position = 'absolute';
         select.style.opacity = '0';

@@ -1,5 +1,5 @@
 /**
- * analytics.js — Hairlux Admin
+ * analytics.js: Hairlux Admin
  * Helper module for all /admin/analytics/* API calls.
  * Import this file on any page that needs analytics data.
  *
@@ -117,7 +117,7 @@ const Analytics = (() => {
 
   // ─── Currency formatter ──────────────────────────────────────────────────────
   function formatCurrency(amount) {
-    if (amount == null) return "—";
+    if (amount == null) return "-";
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: "NGN",
@@ -136,10 +136,10 @@ const Analytics = (() => {
       if (el) el.textContent = val;
     };
 
-    set("stat-today-bookings", data.today?.bookings ?? "—");
+    set("stat-today-bookings", data.today?.bookings ?? "-");
     set("stat-today-revenue",  formatCurrency(data.today?.revenue));
-    set("stat-total-users",    data.overall?.totalUsers ?? "—");
-    set("stat-pending-bookings", data.overall?.pendingBookings ?? "—");
+    set("stat-total-users",    data.overall?.totalUsers ?? "-");
+    set("stat-pending-bookings", data.overall?.pendingBookings ?? "-");
   }
 
   // ─── Revenue Trend chart ─────────────────────────────────────────────────────
@@ -216,7 +216,7 @@ const Analytics = (() => {
   // ─── Recent Bookings table ──────────────────────────────────────────────────
   /**
    * Render the last N bookings into #recent-bookings-tbody.
-   * @param {object[]} bookings — array from getRecentBookings()
+   * @param {object[]} bookings: array from getRecentBookings()
    */
   function renderRecentBookings(bookings) {
     const tbody = document.getElementById("recent-bookings-tbody");
@@ -233,13 +233,13 @@ const Analytics = (() => {
       const customer  = b.user || b.customer || {};
       const custName  = customer.firstName
         ? customer.firstName + ' ' + customer.lastName
-        : (b.guestName || customer.name || '\u2014');
+        : (b.guestName || customer.name || '-');
       const custSub   = customer.email
         ? '<div class="text-secondary small mt-1">' + customer.email + '</div>'
         : (b.guestPhone ? '<div class="text-secondary small mt-1">' + b.guestPhone + '</div>' : '');
 
       // Reservation code cell
-      const resCode  = b.reservationCode || '\u2014';
+      const resCode  = b.reservationCode || '-';
       const resBadge = b.reservationUsed
         ? '<span class="badge bg-secondary-lt ms-1" style="font-size:.65rem">used</span>'
         : '';
@@ -259,7 +259,7 @@ const Analytics = (() => {
               '<span class="svc-meta">' + price + (dur ? ' &middot; ' + dur : '') + '</span>' +
               '</li>';
           }).join('') + '</ul>'
-        : '<span class="text-secondary">\u2014</span>';
+        : '<span class="text-secondary">-</span>';
 
       // Booking type badge
       const bookingType = b.bookingType || '';
@@ -267,11 +267,11 @@ const Analytics = (() => {
         ? '<span class="badge bg-azure-lt">Home</span>'
         : bookingType === 'WALK_IN'
           ? '<span class="badge bg-teal-lt">Walk-in</span>'
-          : '<span class="text-secondary small">\u2014</span>';
+          : '<span class="text-secondary small">-</span>';
 
       const dateTime = hasBk && Bookings.formatDateTime
         ? Bookings.formatDateTime(b.bookingDate || b.date, b.bookingTime || b.time)
-        : ((b.bookingDate || b.date || '') + (b.bookingTime || b.time ? ' ' + (b.bookingTime || b.time) : '')) || '\u2014';
+        : ((b.bookingDate || b.date || '') + (b.bookingTime || b.time ? ' ' + (b.bookingTime || b.time) : '')) || '-';
 
       const amount = hasBk
         ? Bookings.formatMoney(b.totalAmount != null ? b.totalAmount : (b.amount != null ? b.amount : (b.price != null ? b.price : 0)))

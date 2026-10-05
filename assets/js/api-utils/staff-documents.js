@@ -1,5 +1,5 @@
 /**
- * Company Documents API helper (admin) — /admin/company-documents
+ * Company Documents API helper (admin): /admin/company-documents
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const StaffDocuments = (() => {

@@ -1,5 +1,5 @@
 /**
- * Wallets API helper — /admin/wallets/*
+ * Wallets API helper: /admin/wallets/*
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const Wallets = (() => {
@@ -84,23 +84,23 @@ const Wallets = (() => {
 
     function statusBadge(status) {
         const color = TX_STATUS_COLORS[status] || "secondary";
-        return '<span class="badge bg-' + color + '-lt">' + (status || "—") + '</span>';
+        return '<span class="badge bg-' + color + '-lt">' + (status || "-") + '</span>';
     }
 
     function paymentMethodBadge(paymentMethod) {
         const method = normalizePaymentMethod(paymentMethod);
-        if (!method) return '<span class="text-secondary">—</span>';
+        if (!method) return '<span class="text-secondary">-</span>';
         const color = PAYMENT_METHOD_COLORS[method] || "secondary";
         return '<span class="badge bg-' + color + '-lt">' + method.replace(/_/g, " ") + '</span>';
     }
 
     function formatMoney(n) {
-        if (n === null || n === undefined || isNaN(Number(n))) return "—";
+        if (n === null || n === undefined || isNaN(Number(n))) return "-";
         return "₦" + Number(n).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function formatDateTime(dateStr) {
-        if (!dateStr) return "—";
+        if (!dateStr) return "-";
         const d = new Date(dateStr);
         if (isNaN(d)) return String(dateStr);
         return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })

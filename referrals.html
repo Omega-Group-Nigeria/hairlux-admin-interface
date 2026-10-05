@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Referrals</title>
+    <title>Hairlux Admin | Referrals</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
@@ -176,7 +176,7 @@
             <div class="page-body">
                 <div class="container-xl">
 
-                    <!-- STATS CARDS — GET /admin/referrals/stats -->
+                    <!-- STATS CARDS: GET /admin/referrals/stats -->
                     <div class="row row-deck row-cards mb-4">
                         <div class="col-sm-6 col-xl-3">
                             <div class="card">
@@ -185,7 +185,7 @@
                                         <div class="subheader flex-fill">Total Referrals</div>
                                         <span class="badge bg-primary-lt">All time</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                    <div class="h1 mb-0" id="stat-total">-</div>
                                 </div>
                             </div>
                         </div>
@@ -196,7 +196,7 @@
                                         <div class="subheader flex-fill">Rewarded</div>
                                         <span class="badge bg-success-lt">Completed</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-rewarded">—</div>
+                                    <div class="h1 mb-0" id="stat-rewarded">-</div>
                                 </div>
                             </div>
                         </div>
@@ -207,7 +207,7 @@
                                         <div class="subheader flex-fill">Rewards Paid</div>
                                         <span class="badge bg-warning-lt">Total</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-rewards">—</div>
+                                    <div class="h1 mb-0" id="stat-rewards">-</div>
                                 </div>
                             </div>
                         </div>
@@ -218,7 +218,7 @@
                                         <div class="subheader flex-fill">Pending</div>
                                         <span class="badge bg-secondary-lt">Awaiting</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-pending">—</div>
+                                    <div class="h1 mb-0" id="stat-pending">-</div>
                                 </div>
                             </div>
                         </div>
@@ -302,7 +302,7 @@
 
                         <!-- Pagination -->
                         <div class="card-footer d-flex align-items-center">
-                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <p class="m-0 text-secondary small" id="pagination-info">-</p>
                             <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
                         </div>
                     </div>
@@ -501,10 +501,10 @@
         async function loadStats() {
             try {
                 var data = await Referrals.getStats();
-                document.getElementById("stat-total").textContent    = data.total    ?? "\u2014";
-                document.getElementById("stat-rewarded").textContent = data.rewarded ?? "\u2014";
+                document.getElementById("stat-total").textContent    = data.total    ?? "-";
+                document.getElementById("stat-rewarded").textContent = data.rewarded ?? "-";
                 document.getElementById("stat-rewards").textContent  = Referrals.formatMoney(data.totalRewarded ?? 0);
-                document.getElementById("stat-pending").textContent  = data.pending  ?? "\u2014";
+                document.getElementById("stat-pending").textContent  = data.pending  ?? "-";
             } catch (e) { console.warn("Stats:", e); }
         }
 
@@ -543,18 +543,18 @@
             tbody.innerHTML = rows.map(function (r, i) {
                 var referrer      = r.referrer || {};
                 var referrerName  = referrer.firstName
-                    ? referrer.firstName + " " + referrer.lastName : "\u2014";
+                    ? referrer.firstName + " " + referrer.lastName : "-";
                 var referrerEmail = referrer.email
                     ? '<div class="text-secondary small">' + referrer.email + '</div>' : "";
-                var code     = r.code || "\u2014";
+                var code     = r.code || "-";
                 var referred = r.referred || {};
                 var referredName  = referred.firstName
-                    ? referred.firstName + " " + referred.lastName : "\u2014";
+                    ? referred.firstName + " " + referred.lastName : "-";
                 var referredEmail = referred.email
                     ? '<div class="text-secondary small">' + referred.email + '</div>' : "";
-                var referredHtml  = referredName !== "\u2014"
+                var referredHtml  = referredName !== "-"
                     ? '<div class="fw-semibold">' + referredName + '</div>' + referredEmail
-                    : '<span class="text-secondary">\u2014</span>';
+                    : '<span class="text-secondary">-</span>';
                 var date   = Referrals.formatDate(r.createdAt);
                 var reward = Referrals.formatMoney(r.rewardAmount ?? 0);
                 var status = r.status || "PENDING";
@@ -613,7 +613,7 @@
 
                 var html = '<div class="row g-3 mb-4">';
                 html += '<div class="col-12 d-flex align-items-center gap-3">';
-                html += '<div><h4 class="mb-0">Referral Code: <code class="text-primary">' + (rc.code || "\u2014") + '</code></h4>';
+                html += '<div><h4 class="mb-0">Referral Code: <code class="text-primary">' + (rc.code || "-") + '</code></h4>';
                 html += '<div class="text-secondary small">User ID: ' + userId + '</div></div>';
                 html += '</div>';
                 html += '<div class="col-sm-4"><div class="card card-sm"><div class="card-body text-center">' +
@@ -636,7 +636,7 @@
                     html += '<thead><tr><th>Referred User</th><th>Date</th><th>Status</th><th>Reward</th></tr></thead><tbody>';
                     referrals.forEach(function (ref) {
                         var ru     = ref.referred || {};
-                        var ruName = ru.firstName ? ru.firstName + " " + ru.lastName : (ru.email || "\u2014");
+                        var ruName = ru.firstName ? ru.firstName + " " + ru.lastName : (ru.email || "-");
                         var date   = Referrals.formatDate(ref.createdAt);
                         var reward = Referrals.formatMoney(ref.rewardAmount ?? 0);
                         html += '<tr>' +
@@ -654,7 +654,7 @@
                 // Referred-by section (who referred this user, optional)
                 if (referredBy) {
                     var rb     = referredBy.referrer || {};
-                    var rbName = rb.firstName ? rb.firstName + " " + rb.lastName : "\u2014";
+                    var rbName = rb.firstName ? rb.firstName + " " + rb.lastName : "-";
                     html += '<hr class="my-3">';
                     html += '<h6 class="mb-2">Referred By</h6>';
                     html += '<div class="d-flex align-items-center gap-2 flex-wrap">';
@@ -663,7 +663,7 @@
                     html += '<span class="ms-auto">' + Referrals.rewardBadge(referredBy.status || "PENDING") + '</span>';
                     html += '<span class="fw-semibold ms-2">' + Referrals.formatMoney(referredBy.rewardAmount ?? 0) + '</span>';
                     html += '</div>';
-                    html += '<div class="text-secondary small mt-1">Code used: <code>' + (referredBy.code || "\u2014") +
+                    html += '<div class="text-secondary small mt-1">Code used: <code>' + (referredBy.code || "-") +
                         '</code> &bull; ' + Referrals.formatDate(referredBy.createdAt) + '</div>';
                 }
 
@@ -720,7 +720,7 @@
                 '<div class="col-md-6">' +
                 '<label class="form-label">Minimum Deposit Amount (&#x20A6;)</label>' +
                 '<input type="number" name="minDepositAmount" class="form-control" min="0" step="0.01" value="' + minDepositAmount + '" placeholder="e.g. 1000">' +
-                '<div class="text-secondary small">The referrer is paid only when the referred customer makes a single successful wallet deposit of at least this amount (0 = any deposit). Until then the referral stays Pending &mdash; nothing is paid at signup.</div></div>' +
+                '<div class="text-secondary small">The referrer is paid only when the referred customer makes a single successful wallet deposit of at least this amount (0 = any deposit). Until then the referral stays Pending: nothing is paid at signup.</div></div>' +
                 '</div>';
         }
 

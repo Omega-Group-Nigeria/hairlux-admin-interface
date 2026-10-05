@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Product Sales</title>
+    <title>Hairlux Admin | Product Sales</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -95,7 +95,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Sales Shown</div>
-                                    <div class="h3 mb-0" id="stat-count">—</div>
+                                    <div class="h3 mb-0" id="stat-count">-</div>
                                 </div>
                             </div>
                         </div>
@@ -103,7 +103,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Completed Revenue</div>
-                                    <div class="h3 mb-0 text-green" id="stat-revenue">—</div>
+                                    <div class="h3 mb-0 text-green" id="stat-revenue">-</div>
                                 </div>
                             </div>
                         </div>
@@ -111,7 +111,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Voided</div>
-                                    <div class="h3 mb-0 text-red" id="stat-voided">—</div>
+                                    <div class="h3 mb-0 text-red" id="stat-voided">-</div>
                                 </div>
                             </div>
                         </div>
@@ -268,11 +268,11 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-secondary">This reverses the sale's ledger entry and restocks every item sold. The
-                        sale record itself is kept for audit — it is marked Voided, never deleted.</p>
+                        sale record itself is kept for audit: it is marked Voided, never deleted.</p>
                     <div class="alert alert-danger d-none" id="void-error"></div>
                     <label class="form-label">Reason <span class="text-secondary">(required, min. 5 characters)</span></label>
                     <textarea class="form-control" id="void-reason" rows="2"
-                        placeholder="e.g. Wrong item rung up — customer actually bought a different product"></textarea>
+                        placeholder="e.g. Wrong item rung up: customer actually bought a different product"></textarea>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -399,18 +399,18 @@
                 var itemsSummary = (s.items || []).map(function (i) {
                     return (i.item ? esc(i.item.name) : 'Item') + ' ×' + i.quantity;
                 }).join(', ');
-                var soldBy = s.soldBy ? esc(s.soldBy.name) : '—';
+                var soldBy = s.soldBy ? esc(s.soldBy.name) : '-';
                 var customer = s.customerName || s.customerPhone
                     ? esc(s.customerName || '') + (s.customerPhone ? ' (' + esc(s.customerPhone) + ')' : '')
                     : '<span class="text-secondary">Walk-in</span>';
                 var canVoid = s.status === 'COMPLETED';
                 return '<tr>' +
                     '<td class="text-secondary small">' + new Date(s.createdAt).toLocaleString('en-NG') + '</td>' +
-                    '<td>' + esc(s.branch ? s.branch.name : '—') + '</td>' +
+                    '<td>' + esc(s.branch ? s.branch.name : '-') + '</td>' +
                     '<td>' + soldBy + '</td>' +
                     '<td>' + customer + '</td>' +
                     '<td class="text-truncate" style="max-width:220px" title="' + esc(itemsSummary) + '">' + esc(itemsSummary) + '</td>' +
-                    '<td>' + esc((s.paymentMethod || '—').replace('_', ' ')) + '</td>' +
+                    '<td>' + esc((s.paymentMethod || '-').replace('_', ' ')) + '</td>' +
                     '<td class="text-end fw-semibold">' + ProductSales.formatMoney(s.totalAmount) + '</td>' +
                     '<td>' + ProductSales.statusBadge(s.status) + '</td>' +
                     '<td class="text-nowrap">' +
@@ -428,7 +428,7 @@
             try {
                 var s = await ProductSales.getOne(id);
                 var itemsRows = (s.items || []).map(function (i) {
-                    return '<tr><td>' + esc(i.item ? i.item.name : '—') + '</td><td>' + i.quantity + '</td>' +
+                    return '<tr><td>' + esc(i.item ? i.item.name : '-') + '</td><td>' + i.quantity + '</td>' +
                         '<td>' + ProductSales.formatMoney(i.unitPrice) + '</td>' +
                         '<td>' + ProductSales.formatMoney(Number(i.unitPrice) * i.quantity) + '</td></tr>';
                 }).join('');
@@ -440,10 +440,10 @@
                     : '';
                 document.getElementById('view-body').innerHTML =
                     '<div class="row g-2 mb-3">' +
-                    '<div class="col-6"><div class="text-secondary small">Branch</div><div>' + esc(s.branch ? s.branch.name : '—') + '</div></div>' +
-                    '<div class="col-6"><div class="text-secondary small">Sold By</div><div>' + esc(s.soldBy ? s.soldBy.name : '—') + '</div></div>' +
-                    '<div class="col-6"><div class="text-secondary small">Customer</div><div>' + esc(s.customerName || 'Walk-in') + (s.customerPhone ? ' — ' + esc(s.customerPhone) : '') + '</div></div>' +
-                    '<div class="col-6"><div class="text-secondary small">Payment Method</div><div>' + esc((s.paymentMethod || '—').replace('_', ' ')) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Branch</div><div>' + esc(s.branch ? s.branch.name : '-') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Sold By</div><div>' + esc(s.soldBy ? s.soldBy.name : '-') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Customer</div><div>' + esc(s.customerName || 'Walk-in') + (s.customerPhone ? ': ' + esc(s.customerPhone) : '') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Payment Method</div><div>' + esc((s.paymentMethod || '-').replace('_', ' ')) + '</div></div>' +
                     '<div class="col-6"><div class="text-secondary small">Status</div><div>' + ProductSales.statusBadge(s.status) + '</div></div>' +
                     '<div class="col-6"><div class="text-secondary small">Date</div><div>' + new Date(s.createdAt).toLocaleString('en-NG') + '</div></div>' +
                     '</div>' +

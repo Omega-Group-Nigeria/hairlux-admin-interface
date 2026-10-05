@@ -1,5 +1,5 @@
 /**
- * adverts/ui.js — list rendering and modal state helpers
+ * adverts/ui.js: list rendering and modal state helpers
  */
 (function (global) {
     'use strict';

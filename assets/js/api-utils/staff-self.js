@@ -1,5 +1,5 @@
 /**
- * Staff Self-Service API helper — /staff/me/*
+ * Staff Self-Service API helper: /staff/me/*
  * Depends on auth.js (Auth.fetch) being loaded first.
  * Used by staff-portal.html.
  */
@@ -108,7 +108,7 @@ const StaffSelf = (() => {
                 const coords = await attempt({ enableHighAccuracy: true, timeout: 8000 });
                 resolve(coords);
             } catch (firstErr) {
-                // High-accuracy failed or timed out (common indoors) — retry with a coarser,
+                // High-accuracy failed or timed out (common indoors): retry with a coarser,
                 // faster reading rather than failing the clock-in outright.
                 try {
                     const coords = await attempt({ enableHighAccuracy: false, timeout: 8000 });

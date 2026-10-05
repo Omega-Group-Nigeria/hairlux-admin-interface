@@ -1,5 +1,5 @@
 /**
- * Inventory Products (master catalogue) API helper — /admin/inventory-products
+ * Inventory Products (master catalogue) API helper: /admin/inventory-products
  * Requires: auth.js (Auth.fetch)
  */
 const InventoryProducts = (function () {

@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Approval Chains</title>
+    <title>Hairlux Admin | Approval Chains</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -201,7 +201,7 @@
                         ? stages.map(function (s, i) {
                             return '<span class="badge bg-secondary-lt me-1">' + (i + 1) + '. ' + esc(s.approverRole ? s.approverRole.name : '') + '</span>';
                         }).join('')
-                        : '<span class="text-secondary small">Default — single approver (branch manager)</span>';
+                        : '<span class="text-secondary small">Default: single approver (branch manager)</span>';
                     return '<div class="card mb-2">' +
                         '<div class="card-body d-flex align-items-center justify-content-between">' +
                         '<div><div class="fw-semibold mb-1">' + esc(rt.label) + '</div><div>' + chainSummary + '</div></div>' +
@@ -216,7 +216,7 @@
         function renderRoleOptions() {
             var select = document.getElementById('f-add-role');
             if (!_allRoles.length) {
-                select.innerHTML = '<option value="">No roles found — create one under Roles & Permissions first</option>';
+                select.innerHTML = '<option value="">No roles found: create one under Roles & Permissions first</option>';
                 return;
             }
             select.innerHTML = _allRoles.map(function (r) {
@@ -236,7 +236,7 @@
                         '<button class="btn btn-icon btn-sm btn-ghost-danger" title="Remove" onclick="removeStage(' + i + ')">\u2715</button>' +
                         '</div>';
                 }).join('')
-                : '<div class="text-secondary small mb-2">No stages configured yet — this request type uses the default single-approver behavior.</div>';
+                : '<div class="text-secondary small mb-2">No stages configured yet: this request type uses the default single-approver behavior.</div>';
         }
 
         function addStage() {
@@ -264,7 +264,7 @@
             _editingType = requestType;
             document.getElementById('form-error').classList.add('d-none');
             var label = REQUEST_TYPES.filter(function (rt) { return rt.value === requestType; })[0];
-            document.getElementById('modal-form-title').textContent = 'Configure Chain — ' + (label ? label.label : requestType);
+            document.getElementById('modal-form-title').textContent = 'Configure Chain: ' + (label ? label.label : requestType);
 
             renderRoleOptions();
             try {
