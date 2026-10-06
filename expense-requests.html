@@ -128,13 +128,14 @@
                                         <option value="APPROVED">Approved</option>
                                         <option value="REJECTED">Rejected</option>
                                         <option value="CANCELLED">Cancelled</option>
+                                        <option value="REVERSED">Reversed</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="row g-2 mb-3">
                                 <div class="col-md-4">
                                     <input type="text" class="form-control" id="f-search-filter"
-                                        placeholder="Search Request # e.g. EXP-2026-000123">
+                                        placeholder="Search request #, description, or who requested it">
                                 </div>
                                 <div class="col-md-3">
                                     <input type="date" class="form-control" id="f-from-filter" placeholder="From">
@@ -153,6 +154,7 @@
                                 <thead>
                                     <tr>
                                         <th>Request #</th>
+                                        <th>Requested by</th>
                                         <th>Branch</th>
                                         <th>Category</th>
                                         <th>Description</th>
@@ -164,7 +166,7 @@
                                 </thead>
                                 <tbody id="tbody">
                                     <tr>
-                                        <td colspan="8" class="text-center py-5">
+                                        <td colspan="9" class="text-center py-5">
                                             <div class="spinner-border text-primary"></div>
                                         </td>
                                     </tr>
@@ -254,6 +256,35 @@
         </div>
     </div>
 
+    <!-- Override amount modal -->
+    <div class="modal modal-blur fade" id="modal-override" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Change Amount Before Approval</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="override-error"></div>
+                    <div class="mb-3 text-secondary small" id="override-summary"></div>
+                    <div class="mb-3">
+                        <label class="form-label">New amount (₦)</label>
+                        <input type="number" min="0.01" step="0.01" class="form-control" id="override-amount">
+                        <div class="form-hint">This is the amount that will be approved, posted to the ledger and paid out. The requested amount stays on record.</div>
+                    </div>
+                    <div class="mb-1">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control" id="override-reason" rows="2" placeholder="Why is the amount being changed?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-override-save">Save Amount</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal modal-blur fade" id="modal-view" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -291,7 +322,7 @@
 
         var STATUS_BADGE = {
             DRAFT: 'bg-secondary-lt', PENDING: 'bg-yellow-lt', UNDER_REVIEW: 'bg-azure-lt',
-            APPROVED: 'bg-green-lt', REJECTED: 'bg-red-lt', CANCELLED: 'bg-secondary-lt',
+            APPROVED: 'bg-green-lt', REJECTED: 'bg-red-lt', CANCELLED: 'bg-secondary-lt', REVERSED: 'bg-orange-lt',
         };
 
         var PAYOUT_BADGE = { PROCESSING: 'bg-azure-lt', COMPLETED: 'bg-green-lt', FAILED: 'bg-red-lt' };
@@ -332,6 +363,7 @@
 
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
             document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('btn-override-save').addEventListener('click', saveOverride);
             document.getElementById('f-branch-filter').addEventListener('change', load);
             document.getElementById('f-category-filter').addEventListener('change', load);
             document.getElementById('f-status-filter').addEventListener('change', load);
@@ -377,14 +409,49 @@
             return '₦' + Number(v).toLocaleString();
         }
 
-        function formatRequestNumber(n) {
-            return 'EXP-' + new Date().getFullYear() + '-' + String(n).padStart(6, '0');
+        // Year comes from when the request was made, not today's date.
+        function formatRequestNumber(n, createdAt) {
+            var year = createdAt ? new Date(createdAt).getFullYear() : new Date().getFullYear();
+            return 'EXP-' + year + '-' + String(n).padStart(6, '0');
+        }
+
+        function formatDateTime(v) {
+            return v ? new Date(v).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+        }
+
+        function userName(u) {
+            if (!u) return '';
+            return [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '';
+        }
+
+        // Who made the request: the login account, or the staff record for older requests.
+        function requesterName(r) {
+            return userName(r.requestedByUser) || (r.requestedBy && r.requestedBy.name) || '';
+        }
+
+        function requesterCell(r) {
+            var name = requesterName(r);
+            var email = r.requestedByUser && r.requestedByUser.email;
+            return '<div>' + (name ? esc(name) : '<span class="text-secondary">Not recorded</span>') + '</div>' +
+                (email && email !== name ? '<div class="text-secondary small">' + esc(email) + '</div>' : '') +
+                '<div class="text-secondary small">' + esc(formatDateTime(r.createdAt)) + '</div>';
+        }
+
+        function isOverridden(r) {
+            return !!r.amountOverriddenAt && r.requestedAmount != null && Number(r.requestedAmount) !== Number(r.amount);
+        }
+
+        function amountCell(r) {
+            if (!isOverridden(r)) return formatMoney(r.amount);
+            return '<div class="fw-semibold">' + formatMoney(r.amount) + '</div>' +
+                '<div class="text-secondary small" title="Amount changed by ' + esc(userName(r.amountOverriddenBy) || 'an approver') + ': ' + esc(r.amountOverrideReason || '') + '">' +
+                'Requested <s>' + formatMoney(r.requestedAmount) + '</s></div>';
         }
 
         // ── List ─────────────────────────────────────────────────────────
         async function load() {
             var tbody = document.getElementById('tbody');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var list = await ExpenseRequests.getAll({
                     branchId: RBAC.scopeBranchId(document.getElementById('f-branch-filter').value),
@@ -397,6 +464,7 @@
                 _lastLoadedRequests = list;
                 var canApprove = RBAC.can('expense_requests:approve');
                 var canReverse = RBAC.can('expense_requests:reverse');
+                var canOverride = RBAC.can('expense_requests:override_amount');
                 _pager.reset();
                 (_renderPage = function () {
                     var pageRows = _pager.slice(list);
@@ -409,18 +477,21 @@
                             var canReverseThis = canReverse && r.status === 'APPROVED' && r.payoutStatus !== 'PROCESSING';
                             var canRetryPayout = canApprove && r.status === 'APPROVED' && isPayoutRequest(r) && (r.payoutStatus === 'FAILED' || !r.payoutStatus);
                             var canCheckPayout = canApprove && r.payoutStatus === 'PROCESSING';
+                            var canOverrideThis = canOverride && (r.status === 'PENDING' || r.status === 'UNDER_REVIEW');
                             return '<tr>' +
-                                '<td class="fw-semibold">' + formatRequestNumber(r.requestNumber) + '</td>' +
+                                '<td class="fw-semibold">' + formatRequestNumber(r.requestNumber, r.createdAt) + '</td>' +
+                                '<td>' + requesterCell(r) + '</td>' +
                                 '<td>' + esc(r.branch ? r.branch.name : 'Company-wide') + '</td>' +
                                 '<td>' + esc(CATEGORY_LABEL[r.category] || r.category) + '</td>' +
                                 '<td class="text-truncate" style="max-width:220px">' + esc(r.description) + '</td>' +
-                                '<td>' + formatMoney(r.amount) + '</td>' +
+                                '<td class="text-nowrap">' + amountCell(r) + '</td>' +
                                 '<td><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></td>' +
                                 '<td>' + payoutCell(r) + '</td>' +
                                 '<td class="text-nowrap">' +
                                 '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewOne(\'' + r.id + '\')">View</button>' +
                                 (canEdit ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + r.id + '\')">Edit</button>' : '') +
                                 (canSubmit ? '<button class="btn btn-sm btn-outline-primary me-1" onclick="submitRequest(\'' + r.id + '\')">Submit</button>' : '') +
+                                (canOverrideThis ? '<button class="btn btn-sm btn-outline-warning me-1" onclick="openOverride(\'' + r.id + '\')">Change amount</button>' : '') +
                                 (canAct ? '<button class="btn btn-sm btn-outline-success me-1" onclick="approveRequest(\'' + r.id + '\')">Approve</button><button class="btn btn-sm btn-outline-danger me-1" onclick="rejectRequest(\'' + r.id + '\')">Reject</button>' : '') +
                                 (canRetryPayout ? '<button class="btn btn-sm btn-outline-primary me-1" onclick="retryPayout(\'' + r.id + '\')">' + (r.payoutStatus === 'FAILED' ? 'Retry payout' : 'Send payout') + '</button>' : '') +
                                 (canCheckPayout ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="resyncPayout(\'' + r.id + '\')">Check status</button>' : '') +
@@ -429,10 +500,10 @@
                                 '</td>' +
                                 '</tr>';
                         }).join('')
-                        : '<tr><td colspan="8" class="text-center text-secondary py-5">No expense requests found.</td></tr>';
+                        : '<tr><td colspan="9" class="text-center text-secondary py-5">No expense requests found.</td></tr>';
                 })();
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
         }
 
@@ -504,6 +575,45 @@
                 load();
             } catch (e) {
                 errEl.textContent = e.message || 'Failed to save.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ── Override amount ──────────────────────────────────────────────
+        var overridingId = null;
+
+        function openOverride(id) {
+            var r = _lastLoadedRequests.find(function (x) { return x.id === id; });
+            if (!r) return;
+            overridingId = id;
+            document.getElementById('override-error').classList.add('d-none');
+            document.getElementById('override-summary').innerHTML =
+                esc(formatRequestNumber(r.requestNumber, r.createdAt)) + ' by ' + esc(requesterName(r) || 'unknown') +
+                '<br>Requested: <strong>' + formatMoney(r.requestedAmount != null ? r.requestedAmount : r.amount) + '</strong>' +
+                (isOverridden(r) ? ' · Current: <strong>' + formatMoney(r.amount) + '</strong>' : '');
+            document.getElementById('override-amount').value = Number(r.amount);
+            document.getElementById('override-reason').value = '';
+            new bootstrap.Modal(document.getElementById('modal-override')).show();
+        }
+
+        async function saveOverride() {
+            var errEl = document.getElementById('override-error');
+            errEl.classList.add('d-none');
+            var amount = Number(document.getElementById('override-amount').value);
+            var reason = document.getElementById('override-reason').value.trim();
+            if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount.'; errEl.classList.remove('d-none'); return; }
+            if (reason.length < 5) { errEl.textContent = 'Give a reason of at least 5 characters.'; errEl.classList.remove('d-none'); return; }
+
+            var btn = document.getElementById('btn-override-save');
+            btn.disabled = true;
+            try {
+                await ExpenseRequests.overrideAmount(overridingId, amount, reason);
+                bootstrap.Modal.getInstance(document.getElementById('modal-override')).hide();
+                load();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to change the amount.';
                 errEl.classList.remove('d-none');
             } finally {
                 btn.disabled = false;
@@ -582,7 +692,7 @@
             new bootstrap.Modal(document.getElementById('modal-view')).show();
             try {
                 var r = await ExpenseRequests.getOne(id);
-                document.getElementById('view-title').textContent = formatRequestNumber(r.requestNumber);
+                document.getElementById('view-title').textContent = formatRequestNumber(r.requestNumber, r.createdAt);
 
                 var actionsHtml = (r.approvalRequest && r.approvalRequest.actions || []).map(function (a) {
                     return '<div class="approval-step"><span class="badge ' + (STATUS_BADGE[a.action] || 'bg-secondary-lt') + '">' + esc(a.action) + '</span>' +
@@ -613,7 +723,14 @@
                     '<div class="col-6"><div class="text-secondary small">Category</div><div>' + esc(CATEGORY_LABEL[r.category] || r.category) + '</div></div>' +
                     '<div class="col-12"><div class="text-secondary small">Description</div><div>' + esc(r.description) + '</div></div>' +
                     '<div class="col-6"><div class="text-secondary small">Status</div><div><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></div></div>' +
-                    '<div class="col-6"><div class="text-secondary small">Amount</div><div>' + formatMoney(r.amount) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Requested by</div><div>' + (requesterName(r) ? esc(requesterName(r)) : '<span class="text-secondary">Not recorded</span>') + '</div>' +
+                    (r.requestedByUser && r.requestedByUser.email ? '<div class="text-secondary small">' + esc(r.requestedByUser.email) + '</div>' : '') + '</div>' +
+                    '<div class="col-6"><div class="text-secondary small">Requested on</div><div>' + esc(formatDateTime(r.createdAt)) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">' + (isOverridden(r) ? 'Approved amount' : 'Amount') + '</div><div class="fw-semibold">' + formatMoney(r.amount) + '</div></div>' +
+                    (isOverridden(r) ? '<div class="col-6"><div class="text-secondary small">Requested amount</div><div><s>' + formatMoney(r.requestedAmount) + '</s></div></div>' : '') +
+                    (isOverridden(r) ? '<div class="col-12"><div class="alert alert-warning mb-0"><div>Amount changed from ' + formatMoney(r.requestedAmount) + ' to ' + formatMoney(r.amount) +
+                        ' by ' + esc(userName(r.amountOverriddenBy) || 'an approver') + ' on ' + esc(formatDateTime(r.amountOverriddenAt)) +
+                        (r.amountOverrideReason ? '<br><span class="small">Reason: ' + esc(r.amountOverrideReason) + '</span>' : '') + '</div></div></div>' : '') +
                     '<div class="col-6"><div class="text-secondary small">Payment Method</div><div>' + esc(r.paymentMethod || '-') + '</div></div>' +
                     (r.attachmentUrl ? '<div class="col-6"><div class="text-secondary small">Attachment</div><div><a href="' + esc(r.attachmentUrl) + '" target="_blank" rel="noopener">View</a></div></div>' : '') +
                     '</div>' +

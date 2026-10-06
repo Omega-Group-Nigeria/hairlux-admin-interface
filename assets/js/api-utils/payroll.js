@@ -164,6 +164,25 @@ const Payroll = (function () {
         });
     }
 
+    /** Staff wallets with balance, pending withdrawals and individual lock state. */
+    async function listWallets(filters = {}) {
+        const q = new URLSearchParams();
+        ['locationId', 'search', 'lockedOnly'].forEach((k) => {
+            if (filters[k] !== undefined && filters[k] !== null && filters[k] !== '' && filters[k] !== false) q.set(k, filters[k]);
+        });
+        const qs = q.toString() ? `?${q.toString()}` : '';
+        return apiFetch(`/admin/payroll/wallets${qs}`);
+    }
+
+    /** Individual lock, on top of the Payday switch. reason is required when locking. */
+    async function setWithdrawalLock(staffId, locked, reason) {
+        return apiFetch(`/admin/payroll/staff/${staffId}/withdrawal-lock`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ locked, reason: reason || undefined }),
+        });
+    }
+
     /** Dev Feedback Round 4, items #22-24 -- was single-param (status only); now takes the full filter set the backend supports. */
     async function listWithdrawals(filters = {}) {
         const q = new URLSearchParams();
@@ -206,6 +225,7 @@ const Payroll = (function () {
         previewCorrectPayslip, previewRecalculateStaffPayslip,
         createAdjustment, listAdjustments, removeAdjustment, correctAdjustment, getAdjustmentHistory,
         getSettings, setReleaseActive, setPensionRate, setTaxRate,
+        listWallets, setWithdrawalLock,
         listWithdrawals, getAuditLog, resyncWithdrawal,
         formatMoney, formatDate,
     };

@@ -3247,7 +3247,11 @@ async function prLoadWallet() {
 
     var statusEl = document.getElementById('pr-payday-status');
     var hintEl = document.getElementById('pr-withdraw-hint');
-    if (wallet.releaseActive) {
+    if (wallet.withdrawalLocked) {
+      // Individually held by management, whatever the Payday switch says.
+      statusEl.textContent = 'Withdrawals on hold';
+      hintEl.textContent = 'Your salary withdrawals have been put on hold. Please contact management.';
+    } else if (wallet.releaseActive) {
       statusEl.textContent = 'Payday is ON: withdrawals available';
       hintEl.textContent = '';
     } else {

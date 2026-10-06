@@ -19,6 +19,7 @@ const ExpenseRequests = (function () {
         if (filters.search) params.set('search', filters.search);
         if (filters.from) params.set('from', filters.from);
         if (filters.to) params.set('to', filters.to);
+        if (filters.requestedByUserId) params.set('requestedByUserId', filters.requestedByUserId);
         const qs = params.toString();
         return apiFetch('/admin/expense-requests' + (qs ? '?' + qs : ''));
     }
@@ -67,6 +68,15 @@ const ExpenseRequests = (function () {
         });
     }
 
+    /** Change the amount of a Pending / Under Review request before final approval. */
+    async function overrideAmount(id, amount, reason) {
+        return apiFetch(`/admin/expense-requests/${id}/amount`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount, reason }),
+        });
+    }
+
     async function reverse(id, reason) {
         return apiFetch(`/admin/expense-requests/${id}/reverse`, {
             method: 'POST',
@@ -85,5 +95,5 @@ const ExpenseRequests = (function () {
         return apiFetch(`/admin/expense-requests/${id}/payout/resync`, { method: 'POST' });
     }
 
-    return { getAll, getOne, create, update, submit, remove, approve, reject, reverse, retryPayout, resyncPayout };
+    return { getAll, getOne, create, update, submit, remove, approve, reject, overrideAmount, reverse, retryPayout, resyncPayout };
 })();
