@@ -92,6 +92,7 @@ const RBAC = (() => {
             }
             const userData = raw.data || raw;
             hydrate(userData);
+            try { document.dispatchEvent(new CustomEvent('rbac:updated')); } catch (_) { }
             return userData;
         } catch (err) {
             console.warn('[RBAC] fetchMe error:', err.message);
@@ -108,6 +109,9 @@ const RBAC = (() => {
      */
     function can(permission) {
         if (_role === 'SUPER_ADMIN') return true;
+        // HAIRMATE / admin-only accounts never create bookings on the admin
+        // dashboard, even if their role holds bookings:create (the API refuses too).
+        if (permission === 'bookings:create' && _adminOnlyAccount) return false;
         return _permissions.includes(permission);
     }
 

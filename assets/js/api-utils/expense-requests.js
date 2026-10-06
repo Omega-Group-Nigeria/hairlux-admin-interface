@@ -75,5 +75,15 @@ const ExpenseRequests = (function () {
         });
     }
 
-    return { getAll, getOne, create, update, submit, remove, approve, reject, reverse };
+    /** Retry a FAILED branch payout (or start one that never ran). */
+    async function retryPayout(id) {
+        return apiFetch(`/admin/expense-requests/${id}/payout/retry`, { method: 'POST' });
+    }
+
+    /** Ask Paystack for the latest status of a payout still in progress. */
+    async function resyncPayout(id) {
+        return apiFetch(`/admin/expense-requests/${id}/payout/resync`, { method: 'POST' });
+    }
+
+    return { getAll, getOne, create, update, submit, remove, approve, reject, reverse, retryPayout, resyncPayout };
 })();

@@ -938,6 +938,9 @@
                     var b1 = document.getElementById('btn-add-tier'); if (b1) b1.style.display = 'none';
                     var b2 = document.getElementById('btn-save-reward-settings'); if (b2) b2.style.display = 'none';
                     var b3 = document.getElementById('btn-save-birthday-settings'); if (b3) b3.style.display = 'none';
+                    // Read-only roles can view the settings but not edit the fields.
+                    document.querySelectorAll('#form-reward-settings input, #form-reward-settings select, #form-reward-settings textarea, #form-birthday-settings input, #form-birthday-settings select, #form-birthday-settings textarea')
+                        .forEach(function (el) { el.disabled = true; });
                 }
                 if (!RBAC.can('rewards:apply')) {
                     var b4 = document.getElementById('btn-lookup-transfer'); if (b4) b4.style.display = 'none';
@@ -1485,15 +1488,18 @@
 
         async function loadSettingsTab(forceReload) {
             try {
-                if (!branchesCache || forceReload) branchesCache = await Branches.getBranches();
-                if (!servicesCache || forceReload) servicesCache = await Services.getAll();
-                if (!productsCache || forceReload) productsCache = await InventoryProducts.getAll();
+                // One rewards:read call instead of the Branches / Services /
+                // Inventory endpoints, which need those modules' permissions.
+                var options = await Rewards.getSettingsOptions();
+                var optBranches = options.branches || [];
+                var optServices = options.services || [];
+                var optProducts = options.products || [];
 
-                populateOptions("rs-eligible-branches", branchesCache, function (b) { return b.name; });
-                populateOptions("rs-eligible-services", servicesCache, function (s) { return s.name; });
-                populateOptions("rs-eligible-products", productsCache, function (p) { return p.name; });
-                populateOptions("bs-eligible-branches", branchesCache, function (b) { return b.name; });
-                populateOptions("bs-eligible-services", servicesCache, function (s) { return s.name; });
+                populateOptions("rs-eligible-branches", optBranches, function (b) { return b.name; });
+                populateOptions("rs-eligible-services", optServices, function (s) { return s.name; });
+                populateOptions("rs-eligible-products", optProducts, function (p) { return p.name; });
+                populateOptions("bs-eligible-branches", optBranches, function (b) { return b.name; });
+                populateOptions("bs-eligible-services", optServices, function (s) { return s.name; });
 
                 var settings = await Rewards.getSettings();
                 document.getElementById("rs-cashback-percentage").value = Number(settings.cashbackPercentage);

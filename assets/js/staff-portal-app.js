@@ -2592,13 +2592,20 @@ function showVerifyReservationForm() {
   document.getElementById('profile-modal-box').innerHTML =
     '<div class="oc-modal-error" id="sbv-error" style="display:none"></div>' +
     '<h3>Verify Reservation</h3>' +
-    '<div class="oc-modal-sub">Enter the code the customer presents on arrival.</div>' +
-    '<div class="oc-field"><label>Reservation Code</label><input type="text" id="sbv-code" style="text-transform:uppercase" placeholder="HLS-XXXXXX"></div>' +
+    '<div class="oc-modal-sub">Scan the customer\'s booking barcode, or type the code they present on arrival.</div>' +
+    '<div class="oc-field"><label>Reservation Code</label><input type="text" id="sbv-code" style="text-transform:uppercase" placeholder="Scan barcode or type HLX-XXXX / HLS-XXXXXX" autocomplete="off"></div>' +
     '<div class="oc-modal-actions">' +
     '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
     '<button class="btn btn-gold btn-sm" id="sbv-lookup-btn" onclick="sbLookupReservationCode()">Look Up</button>' +
     '</div>';
   document.getElementById('profile-modal-overlay').style.display = 'flex';
+  // Barcode scanners type the code and press Enter, so Enter looks it up.
+  var codeInput = document.getElementById('sbv-code');
+  if (codeInput) {
+    codeInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); sbLookupReservationCode(); }
+    });
+  }
   setTimeout(function () { var el = document.getElementById('sbv-code'); if (el) el.focus(); }, 100);
 }
 

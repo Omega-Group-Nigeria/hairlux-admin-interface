@@ -48,6 +48,11 @@ const Rewards = (() => {
   function getSettings() {
     return apiFetch("/admin/rewards/settings");
   }
+  // Branches, services and products (id + name) for the Settings pickers,
+  // under rewards:read, so the tab needs no other module's permissions.
+  function getSettingsOptions() {
+    return apiFetch("/admin/rewards/settings/options");
+  }
   function updateSettings(payload) {
     return apiFetch("/admin/rewards/settings", { method: "PUT", body: JSON.stringify(payload) });
   }
@@ -129,7 +134,7 @@ const Rewards = (() => {
 
   return {
     getTiers, createTier, updateTier, deleteTier,
-    getSettings, updateSettings, getBirthdaySettings, updateBirthdaySettings,
+    getSettings, getSettingsOptions, updateSettings, getBirthdaySettings, updateBirthdaySettings,
     getReports,
     adjust,
     getCustomerProfile, getCustomerTransactions, transferCashback, redeemPoints,

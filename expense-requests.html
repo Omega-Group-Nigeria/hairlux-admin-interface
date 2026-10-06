@@ -158,12 +158,13 @@
                                         <th>Description</th>
                                         <th>Amount</th>
                                         <th>Status</th>
+                                        <th>Payout</th>
                                         <th class="w-1">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody">
                                     <tr>
-                                        <td colspan="7" class="text-center py-5">
+                                        <td colspan="8" class="text-center py-5">
                                             <div class="spinner-border text-primary"></div>
                                         </td>
                                     </tr>
@@ -229,6 +230,7 @@
                                 <option value="CARD">Card</option>
                                 <option value="WALLET">Wallet</option>
                             </select>
+                            <div class="form-hint">For a branch expense, Bank Transfer or Not specified means the amount is sent to the branch's approved bank account once the request is approved.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Attachment URL <span class="text-secondary">(optional)</span></label>
@@ -291,6 +293,25 @@
             DRAFT: 'bg-secondary-lt', PENDING: 'bg-yellow-lt', UNDER_REVIEW: 'bg-azure-lt',
             APPROVED: 'bg-green-lt', REJECTED: 'bg-red-lt', CANCELLED: 'bg-secondary-lt',
         };
+
+        var PAYOUT_BADGE = { PROCESSING: 'bg-azure-lt', COMPLETED: 'bg-green-lt', FAILED: 'bg-red-lt' };
+        var PAYOUT_LABEL = { PROCESSING: 'Sending', COMPLETED: 'Paid', FAILED: 'Failed' };
+
+        // A branch expense paid by bank transfer (or no method chosen) is sent to the branch account.
+        function isPayoutRequest(r) {
+            return !!r.branchId && (!r.paymentMethod || r.paymentMethod === 'BANK_TRANSFER');
+        }
+
+        function payoutCell(r) {
+            if (!isPayoutRequest(r)) return '<span class="text-secondary small">-</span>';
+            if (!r.payoutStatus) {
+                return r.status === 'APPROVED'
+                    ? '<span class="badge bg-yellow-lt">Not sent</span>'
+                    : '<span class="text-secondary small">On approval</span>';
+            }
+            var title = r.payoutStatus === 'FAILED' && r.payoutFailureReason ? ' title="' + esc(r.payoutFailureReason) + '"' : '';
+            return '<span class="badge ' + (PAYOUT_BADGE[r.payoutStatus] || 'bg-secondary-lt') + '"' + title + '>' + esc(PAYOUT_LABEL[r.payoutStatus] || r.payoutStatus) + '</span>';
+        }
 
         var CATEGORY_LABEL = {
             OPERATIONAL_EXPENSE: 'Operational Expense', LOGISTICS: 'Logistics',
@@ -363,7 +384,7 @@
         // ── List ─────────────────────────────────────────────────────────
         async function load() {
             var tbody = document.getElementById('tbody');
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             try {
                 var list = await ExpenseRequests.getAll({
                     branchId: RBAC.scopeBranchId(document.getElementById('f-branch-filter').value),
@@ -385,7 +406,9 @@
                             var canSubmit = r.status === 'DRAFT';
                             var canAct = canApprove && (r.status === 'PENDING' || r.status === 'UNDER_REVIEW');
                             var canDelete = r.status === 'DRAFT' || r.status === 'REJECTED' || r.status === 'CANCELLED';
-                            var canReverseThis = canReverse && r.status === 'APPROVED';
+                            var canReverseThis = canReverse && r.status === 'APPROVED' && r.payoutStatus !== 'PROCESSING';
+                            var canRetryPayout = canApprove && r.status === 'APPROVED' && isPayoutRequest(r) && (r.payoutStatus === 'FAILED' || !r.payoutStatus);
+                            var canCheckPayout = canApprove && r.payoutStatus === 'PROCESSING';
                             return '<tr>' +
                                 '<td class="fw-semibold">' + formatRequestNumber(r.requestNumber) + '</td>' +
                                 '<td>' + esc(r.branch ? r.branch.name : 'Company-wide') + '</td>' +
@@ -393,20 +416,23 @@
                                 '<td class="text-truncate" style="max-width:220px">' + esc(r.description) + '</td>' +
                                 '<td>' + formatMoney(r.amount) + '</td>' +
                                 '<td><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></td>' +
+                                '<td>' + payoutCell(r) + '</td>' +
                                 '<td class="text-nowrap">' +
                                 '<button class="btn btn-sm btn-outline-secondary me-1" onclick="viewOne(\'' + r.id + '\')">View</button>' +
                                 (canEdit ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="openForm(\'' + r.id + '\')">Edit</button>' : '') +
                                 (canSubmit ? '<button class="btn btn-sm btn-outline-primary me-1" onclick="submitRequest(\'' + r.id + '\')">Submit</button>' : '') +
                                 (canAct ? '<button class="btn btn-sm btn-outline-success me-1" onclick="approveRequest(\'' + r.id + '\')">Approve</button><button class="btn btn-sm btn-outline-danger me-1" onclick="rejectRequest(\'' + r.id + '\')">Reject</button>' : '') +
+                                (canRetryPayout ? '<button class="btn btn-sm btn-outline-primary me-1" onclick="retryPayout(\'' + r.id + '\')">' + (r.payoutStatus === 'FAILED' ? 'Retry payout' : 'Send payout') + '</button>' : '') +
+                                (canCheckPayout ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="resyncPayout(\'' + r.id + '\')">Check status</button>' : '') +
                                 (canReverseThis ? '<button class="btn btn-sm btn-outline-danger me-1" onclick="reverseRequest(\'' + r.id + '\')" title="Undo this posting -- money has already moved">Reverse</button>' : '') +
                                 (canDelete ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteRequest(\'' + r.id + '\')">Delete</button>' : '') +
                                 '</td>' +
                                 '</tr>';
                         }).join('')
-                        : '<tr><td colspan="7" class="text-center text-secondary py-5">No expense requests found.</td></tr>';
+                        : '<tr><td colspan="8" class="text-center text-secondary py-5">No expense requests found.</td></tr>';
                 })();
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
         }
 
@@ -496,9 +522,31 @@
         async function approveRequest(id) {
             var comment = prompt('Optional comment for this approval:') || undefined;
             try {
-                await ExpenseRequests.approve(id, comment);
+                var result = await ExpenseRequests.approve(id, comment);
+                if (result && result.payoutStatus === 'FAILED') {
+                    alert('Approved, but the payout to the branch account did not go through:\n\n' + (result.payoutFailureReason || 'Unknown error') + '\n\nFix the cause, then use "Retry payout".');
+                } else if (result && result.payoutStatus === 'PROCESSING') {
+                    alert('Approved. The transfer to the branch account has started and will show as Paid once Paystack confirms it.');
+                }
                 load();
             } catch (e) { alert(e.message || 'Failed to approve: you may not be the current approver for this request.'); }
+        }
+
+        async function retryPayout(id) {
+            if (!confirm('Send this approved amount to the branch\'s approved bank account now?')) return;
+            try {
+                var result = await ExpenseRequests.retryPayout(id);
+                if (result && result.payoutStatus === 'FAILED') alert('Payout failed:\n\n' + (result.payoutFailureReason || 'Unknown error'));
+                load();
+            } catch (e) { alert(e.message || 'Failed to start the payout.'); }
+        }
+
+        async function resyncPayout(id) {
+            try {
+                var result = await ExpenseRequests.resyncPayout(id);
+                if (result && result.payoutStatus === 'PROCESSING') alert('Paystack still shows this transfer as in progress. Check again later.');
+                load();
+            } catch (e) { alert(e.message || 'Failed to check the payout status.'); }
         }
 
         async function rejectRequest(id) {
@@ -545,6 +593,20 @@
                     ? '<div class="alert alert-success mt-3">Posted to the ledger as ' + esc(r.financialTransaction.reference) + '</div>'
                     : '';
 
+                var payoutHtml = '';
+                if (isPayoutRequest(r)) {
+                    payoutHtml = '<hr><div class="fw-semibold mb-2">Payout to branch account</div>' +
+                        '<div class="row g-2">' +
+                        '<div class="col-6"><div class="text-secondary small">Payout status</div><div>' + payoutCell(r) + '</div></div>' +
+                        (r.payoutAccountNumber
+                            ? '<div class="col-6"><div class="text-secondary small">Paid to</div><div>' + esc(r.payoutAccountName) + '<br><span class="text-secondary small">' + esc(r.payoutBankName) + ' · ' + esc(r.payoutAccountNumber) + '</span></div></div>'
+                            : '<div class="col-6"><div class="text-secondary small">Paid to</div><div class="text-secondary small">The branch\'s approved bank account, when approved</div></div>') +
+                        (r.paidOutAt ? '<div class="col-6"><div class="text-secondary small">Paid on</div><div>' + new Date(r.paidOutAt).toLocaleString() + '</div></div>' : '') +
+                        (r.paystackTransferReference ? '<div class="col-6"><div class="text-secondary small">Transfer reference</div><div class="small">' + esc(r.paystackTransferReference) + '</div></div>' : '') +
+                        (r.payoutStatus === 'FAILED' && r.payoutFailureReason ? '<div class="col-12"><div class="alert alert-danger mb-0 mt-2">' + esc(r.payoutFailureReason) + '</div></div>' : '') +
+                        '</div>';
+                }
+
                 document.getElementById('view-body').innerHTML =
                     '<div class="row g-2 mb-3">' +
                     '<div class="col-6"><div class="text-secondary small">Branch</div><div>' + esc(r.branch ? r.branch.name : 'Company-wide') + '</div></div>' +
@@ -556,6 +618,7 @@
                     (r.attachmentUrl ? '<div class="col-6"><div class="text-secondary small">Attachment</div><div><a href="' + esc(r.attachmentUrl) + '" target="_blank" rel="noopener">View</a></div></div>' : '') +
                     '</div>' +
                     ledgerLink +
+                    payoutHtml +
                     '<hr><div class="fw-semibold mb-2">Approval History</div>' + actionsHtml;
             } catch (e) {
                 document.getElementById('view-body').innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
