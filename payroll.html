@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Payroll</title>
+    <title>Hairlux Admin | Payroll</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -98,7 +98,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Outstanding Wallet Balances</div>
-                                    <div class="h2 mb-0" id="stat-outstanding">—</div>
+                                    <div class="h2 mb-0" id="stat-outstanding">-</div>
                                 </div>
                             </div>
                         </div>
@@ -106,7 +106,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Pending Withdrawals</div>
-                                    <div class="h2 mb-0 text-amber" id="stat-pending">—</div>
+                                    <div class="h2 mb-0 text-amber" id="stat-pending">-</div>
                                 </div>
                             </div>
                         </div>
@@ -114,7 +114,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Total Withdrawn</div>
-                                    <div class="h2 mb-0 text-green" id="stat-withdrawn">—</div>
+                                    <div class="h2 mb-0 text-green" id="stat-withdrawn">-</div>
                                 </div>
                             </div>
                         </div>
@@ -122,7 +122,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Failed Withdrawals</div>
-                                    <div class="h2 mb-0 text-red" id="stat-failed">—</div>
+                                    <div class="h2 mb-0 text-red" id="stat-failed">-</div>
                                 </div>
                             </div>
                         </div>
@@ -202,6 +202,76 @@
                                         </tbody>
                                     </table>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Individual withdrawal locks (on top of the Payday switch) -->
+                <div class="card mb-3">
+                    <div class="card-header d-block">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div>
+                                <h3 class="card-title mb-0">Staff Withdrawal Locks</h3>
+                                <div class="text-secondary small mt-1">A locked staff member cannot withdraw even when Payday is ON. Their balance is not changed.</div>
+                            </div>
+                            <span class="badge bg-red-lt" id="wl-locked-count"></span>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <select class="form-select form-select-sm" id="wl-branch-filter">
+                                    <option value="">All branches</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" class="form-control form-control-sm" id="wl-search" placeholder="Search staff name or code">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-center">
+                                <label class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" id="wl-locked-only">
+                                    <span class="form-check-label">Locked only</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Branch</th>
+                                    <th>Wallet Balance</th>
+                                    <th>Pending</th>
+                                    <th>Withdrawals</th>
+                                    <th class="w-1"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="wl-tbody">
+                                <tr><td colspan="6" class="text-center text-secondary py-4">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="wl-pager"></div>
+                </div>
+
+                <!-- Lock withdrawals modal -->
+                <div class="modal modal-blur fade" id="modal-withdrawal-lock" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Lock Withdrawals</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-danger d-none" id="wl-error"></div>
+                                <p class="mb-3" id="wl-modal-summary"></p>
+                                <label class="form-label">Reason</label>
+                                <textarea class="form-control" id="wl-reason" rows="2" placeholder="Why are this staff member's withdrawals being held?"></textarea>
+                                <div class="form-hint">Seen by payroll admins and kept in the payroll audit log. The staff member only sees that their withdrawals are on hold.</div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button class="btn btn-danger" id="btn-wl-confirm">Lock Withdrawals</button>
                             </div>
                         </div>
                     </div>
@@ -321,7 +391,7 @@
     </div>
 
     <!-- New Period Modal -->
-    <!-- Tax & Pension Settings Modal — Dev Feedback Round 8 -->
+    <!-- Tax & Pension Settings Modal: Dev Feedback Round 8 -->
     <div class="modal modal-blur fade" id="modal-payroll-settings" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -334,7 +404,7 @@
                     <div class="mb-3">
                         <label class="form-label">Tax Rate (%)</label>
                         <input type="number" min="0" max="100" step="0.1" class="form-control" id="ps-tax-rate">
-                        <div class="form-hint">A flat rate applied to taxable income (gross pay minus pension) —
+                        <div class="form-hint">A flat rate applied to taxable income (gross pay minus pension)
                             replaces the previous progressive PAYE-band calculation. Leave at 0 to deduct no tax.
                         </div>
                     </div>
@@ -568,9 +638,9 @@
                     <div class="alert alert-danger d-none" id="pc-error"></div>
                     <p class="text-secondary small mb-3">Existing is what the payslip currently shows; Recalculated
                         is what the system would newly calculate from current attendance, adjustments, and
-                        compensation data — compare the two before deciding what to override. Leave a field blank
+                        compensation data: compare the two before deciding what to override. Leave a field blank
                         to accept the recalculated value; once saved, only the final (overridden or recalculated)
-                        value is kept — the existing figure is gone.</p>
+                        value is kept: the existing figure is gone.</p>
                     <div class="table-responsive mb-3">
                         <table class="table table-sm table-vcenter" id="pc-fields-table">
                             <thead>
@@ -710,7 +780,122 @@
             loadWithdrawals();
             loadAuditLog();
             loadBankLookupStaffOptions();
+
+            // Individual withdrawal locks
+            document.getElementById('wl-branch-filter').addEventListener('change', loadWalletLocks);
+            document.getElementById('wl-locked-only').addEventListener('change', loadWalletLocks);
+            var wlTimer;
+            document.getElementById('wl-search').addEventListener('input', function () {
+                clearTimeout(wlTimer);
+                wlTimer = setTimeout(loadWalletLocks, 350);
+            });
+            document.getElementById('btn-wl-confirm').addEventListener('click', confirmLockWithdrawals);
+            loadWalletLockBranches();
+            loadWalletLocks();
         });
+
+        // ── Individual withdrawal locks ──────────────────────────────────
+        var _renderWalletLocksPage = null;
+        var _wlPager = SimplePager.attach('#wl-pager', { onChange: function () { if (_renderWalletLocksPage) _renderWalletLocksPage(); } });
+        var _wlRows = [];
+        var _wlLockingStaffId = null;
+
+        async function loadWalletLockBranches() {
+            try {
+                var branches = await Branches.getBranches();
+                var sel = document.getElementById('wl-branch-filter');
+                sel.innerHTML = '<option value="">All branches</option>' + branches.map(function (b) {
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+                if (RBAC.applyBranchScope(sel)) loadWalletLocks();
+            } catch (e) { /* non-fatal */ }
+        }
+
+        function lockedByLabel(u) {
+            if (!u) return '';
+            return [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email || '';
+        }
+
+        async function loadWalletLocks() {
+            var tbody = document.getElementById('wl-tbody');
+            var canLock = RBAC.can('payroll:lock_staff_withdrawal');
+            try {
+                var rows = await Payroll.listWallets({
+                    locationId: RBAC.scopeBranchId(document.getElementById('wl-branch-filter').value) || undefined,
+                    search: document.getElementById('wl-search').value.trim(),
+                    lockedOnly: document.getElementById('wl-locked-only').checked ? 'true' : '',
+                });
+                _wlRows = rows;
+                var lockedCount = rows.filter(function (r) { return r.withdrawalLocked; }).length;
+                document.getElementById('wl-locked-count').textContent = lockedCount ? lockedCount + ' locked' : '';
+                _wlPager.reset();
+                (_renderWalletLocksPage = function () {
+                    var pageRows = _wlPager.slice(rows);
+                    tbody.innerHTML = rows.length ? pageRows.map(function (r) {
+                        var status = r.withdrawalLocked
+                            ? '<span class="badge bg-red-lt">Locked</span>' +
+                              '<div class="text-secondary small mt-1">' + esc(r.withdrawalLockReason || '') + '</div>' +
+                              '<div class="text-secondary small">' + esc(lockedByLabel(r.withdrawalLockedBy)) + (r.withdrawalLockedAt ? ' · ' + Payroll.formatDate(r.withdrawalLockedAt) : '') + '</div>'
+                            : '<span class="badge bg-green-lt">Open</span>';
+                        var action = !canLock ? '' : (r.withdrawalLocked
+                            ? '<button class="btn btn-sm btn-outline-success" onclick="unlockWithdrawals(\'' + r.staffId + '\')">Unlock</button>'
+                            : '<button class="btn btn-sm btn-outline-danger" onclick="openLockWithdrawals(\'' + r.staffId + '\')">Lock</button>');
+                        return '<tr>' +
+                            '<td><div>' + esc(r.name) + '</div><div class="text-secondary small">' + esc(r.staffCode || '') + '</div></td>' +
+                            '<td>' + esc(r.branch ? r.branch.name : '-') + '</td>' +
+                            '<td>' + Payroll.formatMoney(r.balance) + '</td>' +
+                            '<td>' + (r.pendingWithdrawals ? Payroll.formatMoney(r.pendingWithdrawals) : '<span class="text-secondary">-</span>') + '</td>' +
+                            '<td style="max-width:260px">' + status + '</td>' +
+                            '<td class="text-nowrap">' + action + '</td>' +
+                            '</tr>';
+                    }).join('') : '<tr><td colspan="6" class="text-center text-secondary py-4">No staff found.</td></tr>';
+                })();
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
+            }
+        }
+
+        function openLockWithdrawals(staffId) {
+            var r = _wlRows.find(function (x) { return x.staffId === staffId; });
+            if (!r) return;
+            _wlLockingStaffId = staffId;
+            document.getElementById('wl-error').classList.add('d-none');
+            document.getElementById('wl-reason').value = '';
+            document.getElementById('wl-modal-summary').innerHTML = 'Hold salary withdrawals for <strong>' + esc(r.name) + '</strong>' +
+                ' (wallet ' + Payroll.formatMoney(r.balance) + ')? They stay locked even when Payday is ON, until you unlock them.' +
+                (r.pendingWithdrawals ? '<br><span class="text-secondary small">A withdrawal already in progress (' + Payroll.formatMoney(r.pendingWithdrawals) + ') is not stopped by this.</span>' : '');
+            new bootstrap.Modal(document.getElementById('modal-withdrawal-lock')).show();
+        }
+
+        async function confirmLockWithdrawals() {
+            var errEl = document.getElementById('wl-error');
+            errEl.classList.add('d-none');
+            var reason = document.getElementById('wl-reason').value.trim();
+            if (reason.length < 5) { errEl.textContent = 'Give a reason of at least 5 characters.'; errEl.classList.remove('d-none'); return; }
+            var btn = document.getElementById('btn-wl-confirm');
+            btn.disabled = true;
+            try {
+                await Payroll.setWithdrawalLock(_wlLockingStaffId, true, reason);
+                bootstrap.Modal.getInstance(document.getElementById('modal-withdrawal-lock')).hide();
+                loadWalletLocks();
+                loadAuditLog();
+            } catch (e) {
+                errEl.textContent = e.message || 'Failed to lock withdrawals.';
+                errEl.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function unlockWithdrawals(staffId) {
+            var r = _wlRows.find(function (x) { return x.staffId === staffId; });
+            if (!confirm('Unlock withdrawals for ' + (r ? r.name : 'this staff member') + '? They can withdraw whenever Payday is ON.')) return;
+            try {
+                await Payroll.setWithdrawalLock(staffId, false);
+                loadWalletLocks();
+                loadAuditLog();
+            } catch (e) { alert(e.message || 'Failed to unlock withdrawals.'); }
+        }
 
         var _withdrawalPage = 1;
         var _withdrawalMeta = null;
@@ -805,7 +990,7 @@
             var checkbox = document.getElementById('payday-switch');
             var active = checkbox.checked;
             var confirmMsg = active
-                ? 'Turn Payday ON? Every staff member with a wallet balance will be able to withdraw immediately.'
+                ? 'Turn Payday ON? Every staff member with a wallet balance will be able to withdraw immediately, except anyone individually locked under Staff Withdrawal Locks.'
                 : 'Turn Payday OFF? All withdrawals will be locked until switched back on.';
             if (!confirm(confirmMsg)) { checkbox.checked = !active; return; }
 
@@ -950,7 +1135,7 @@
 
         function openPayslipCorrectionModal(mode, staffName, context) {
             _pcContext = { mode: mode, context: context };
-            document.getElementById('pc-title').textContent = (mode === 'correct' ? 'Correct' : 'Recalculate') + ' Payslip \u2014 ' + staffName;
+            document.getElementById('pc-title').textContent = (mode === 'correct' ? 'Correct' : 'Recalculate') + ' Payslip: ' + staffName;
             document.getElementById('pc-reason-label').textContent = mode === 'correct'
                 ? 'Reason for Correction'
                 : 'Reason (optional, for the audit trail)';
@@ -974,7 +1159,7 @@
                     '<td>' + f.label + '</td>' +
                     '<td class="text-end text-secondary">' + Payroll.formatMoney(current[f.key]) + '</td>' +
                     '<td class="text-end' + (changed ? ' fw-bold text-warning' : '') + '">' + Payroll.formatMoney(recalculated[f.key]) + '</td>' +
-                    '<td><input type="number" step="0.01" class="form-control form-control-sm pc-override-input" data-field="' + f.key + '" placeholder="\u2014"></td>' +
+                    '<td><input type="number" step="0.01" class="form-control form-control-sm pc-override-input" data-field="' + f.key + '" placeholder="-"></td>' +
                     '</tr>';
             }).join('');
         }
@@ -1022,7 +1207,7 @@
 
             try {
                 var period = await Payroll.getPeriod(id);
-                document.getElementById('detail-title').textContent = period.label + ' \u2014 ' + period.status.replace(/_/g, ' ');
+                document.getElementById('detail-title').textContent = period.label + ': ' + period.status.replace(/_/g, ' ');
 
                 var actions = document.getElementById('detail-actions');
                 actions.innerHTML = period.status === 'DRAFT'
@@ -1068,7 +1253,7 @@
                             '<td>' + rowActions + '</td>' +
                             '</tr>';
                     }).join('')
-                    : '<tr><td colspan="10" class="text-center text-secondary py-4">No payslips yet \u2014 generate this period first.</td></tr>';
+                    : '<tr><td colspan="10" class="text-center text-secondary py-4">No payslips yet: generate this period first.</td></tr>';
 
                 loadAdjustments(id, period.status);
                 currentPeriodStatus = period.status;
@@ -1133,7 +1318,7 @@
                         '<td>' + esc(a.category) + '</td>' +
                         '<td class="text-end">' + Payroll.formatMoney(a.amount) + '</td>' +
                         '<td class="text-secondary small">' + esc(a.reason) + '</td>' +
-                        '<td class="text-secondary small">' + (a.effectiveDate ? new Date(a.effectiveDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '\u2014') + '</td>' +
+                        '<td class="text-secondary small">' + (a.effectiveDate ? new Date(a.effectiveDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-') + '</td>' +
                         '<td class="text-nowrap">' + actions + '</td></tr>';
                 }).join('')
                 : '<tr><td colspan="7" class="text-center text-secondary py-3">' + (_currentAdjustments.length ? 'No bonuses or deductions match these filters.' : 'No bonuses or deductions recorded for this period.') + '</td></tr>';
@@ -1144,7 +1329,7 @@
         function openCorrectAdjustmentModal(id, staffName, currentAmount) {
             _pendingCorrectAdjustmentId = id;
             document.getElementById('correct-adj-error').classList.add('d-none');
-            document.getElementById('correct-adj-summary').textContent = staffName + ' \u2014 current amount: ' + Payroll.formatMoney(currentAmount);
+            document.getElementById('correct-adj-summary').textContent = staffName + ': current amount: ' + Payroll.formatMoney(currentAmount);
             document.getElementById('correct-adj-amount').value = currentAmount;
             document.getElementById('correct-adj-reason').value = '';
             new bootstrap.Modal(document.getElementById('modal-correct-adjustment')).show();
@@ -1185,7 +1370,7 @@
                         '<td class="fw-semibold">' + Payroll.formatMoney(row.amount) + '</td>' +
                         '<td>' + statusBadge + '</td>' +
                         '<td class="text-secondary small">' + esc(row.correctionReason || row.reason) + '</td>' +
-                        '<td class="text-secondary small">' + (row.createdBy ? esc(row.createdBy.name) : '\u2014') + '</td>' +
+                        '<td class="text-secondary small">' + (row.createdBy ? esc(row.createdBy.name) : '-') + '</td>' +
                         '<td class="text-secondary small">' + new Date(row.createdAt).toLocaleString() + '</td></tr>';
                 }).join('');
             } catch (e) {
@@ -1303,7 +1488,7 @@
                     ? '<span class="badge bg-green-lt">Verified</span>'
                     : '<span class="badge bg-secondary-lt">Not verified</span>';
                 var pendingNote = account.pendingRequestedAt
-                    ? '<div class="text-secondary small mt-2">Pending change to <strong>' + esc(account.pendingBankName || '') + ' \u2014 ' + esc(account.pendingAccountNumber || '') + '</strong>, awaiting approval below.</div>'
+                    ? '<div class="text-secondary small mt-2">Pending change to <strong>' + esc(account.pendingBankName || '') + ': ' + esc(account.pendingAccountNumber || '') + '</strong>, awaiting approval below.</div>'
                     : '';
                 resultEl.innerHTML =
                     '<div class="mt-2"><strong>' + esc(account.bankName) + '</strong> ' + verifiedBadge + '<br>' +
@@ -1349,7 +1534,7 @@
                     ? changes.map(function (c) {
                         return '<tr>' +
                             '<td>' + esc(c.staff.name) + '</td>' +
-                            '<td>' + esc(c.pendingBankName || '') + '<br><span class="text-secondary small">' + esc(c.pendingAccountNumber || '') + ' \u2014 ' + esc(c.pendingAccountName || '') + '</span></td>' +
+                            '<td>' + esc(c.pendingBankName || '') + '<br><span class="text-secondary small">' + esc(c.pendingAccountNumber || '') + ': ' + esc(c.pendingAccountName || '') + '</span></td>' +
                             '<td class="text-nowrap">' +
                             '<button class="btn btn-sm btn-success me-1" onclick="approveBankChange(\'' + c.staffId + '\')">Approve</button>' +
                             '<button class="btn btn-sm btn-outline-danger" onclick="rejectBankChange(\'' + c.staffId + '\')">Reject</button>' +
@@ -1470,9 +1655,9 @@
                 if (status === 'COMPLETED') {
                     alert('Withdrawal confirmed complete at Paystack.');
                 } else if (status === 'FAILED') {
-                    alert('Paystack shows this transfer failed \u2014 marked accordingly.');
+                    alert('Paystack shows this transfer failed: marked accordingly.');
                 } else {
-                    alert('Paystack still shows this transfer as pending \u2014 nothing to update yet.');
+                    alert('Paystack still shows this transfer as pending: nothing to update yet.');
                 }
                 loadWithdrawals();
             } catch (err) {
@@ -1497,7 +1682,7 @@
                             '<td class="text-secondary small">' + Payroll.formatDate(a.createdAt) + '</td>' +
                             '<td><span class="badge bg-blue-lt">' + esc(a.action.replace(/_/g, ' ')) + '</span></td>' +
                             '<td class="text-secondary small">' + esc(a.entityType) + '</td>' +
-                            '<td>' + (a.staff ? esc(a.staff.name) : '<span class="text-secondary">\u2014</span>') + '</td>' +
+                            '<td>' + (a.staff ? esc(a.staff.name) : '<span class="text-secondary">-</span>') + '</td>' +
                             '<td>' + (a.actor ? esc(a.actor.name) : '<span class="text-secondary">System</span>') + '</td>' +
                             '<td class="text-secondary small">' + esc(a.note || '') + '</td>' +
                             '</tr>';

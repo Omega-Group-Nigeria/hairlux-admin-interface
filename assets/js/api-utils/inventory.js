@@ -1,5 +1,5 @@
 /**
- * Inventory API helper (admin) — /admin/inventory-items
+ * Inventory API helper (admin): /admin/inventory-items
  * Requires: auth.js (Auth.fetch)
  */
 const Inventory = (function () {
@@ -86,7 +86,7 @@ const Inventory = (function () {
     }
 
     function formatMoney(amount) {
-        if (amount == null) return '—';
+        if (amount == null) return '-';
         return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 

@@ -1,5 +1,5 @@
 /**
- * Product Sales API helper (Admin/Super Admin) — /admin/product-sales
+ * Product Sales API helper (Admin/Super Admin): /admin/product-sales
  * Data Accuracy & Audit, Phase 1/2 (2026-09-16): backs the Product Sales
  * admin page (list, view, record, and void a standalone product sale).
  * Requires: auth.js (Auth.fetch)
@@ -15,7 +15,7 @@ const ProductSales = (function () {
     }
 
     function formatMoney(amount) {
-        if (amount == null) return '—';
+        if (amount == null) return '-';
         return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 

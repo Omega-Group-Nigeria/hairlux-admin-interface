@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Leave Requests</title>
+    <title>Hairlux Admin | Leave Requests</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -120,8 +120,8 @@
                                         <option value="SICK_LEAVE">Sick Leave</option>
                                         <option value="CASUAL_LEAVE">Casual Leave</option>
                                         <option value="DAY_OFF">Day Off</option>
-                                        <option value="PERMISSION_LATE_ARRIVAL">Permission — Late Arrival</option>
-                                        <option value="PERMISSION_EARLY_DEPARTURE">Permission — Early Departure</option>
+                                        <option value="PERMISSION_LATE_ARRIVAL">Permission: Late Arrival</option>
+                                        <option value="PERMISSION_EARLY_DEPARTURE">Permission: Early Departure</option>
                                         <option value="OVERTIME_REQUEST">Overtime Request</option>
                                     </select>
                                 </div>
@@ -189,7 +189,7 @@
                         </div>
 
                         <div class="card-footer d-flex align-items-center">
-                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <p class="m-0 text-secondary small" id="pagination-info">-</p>
                             <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
                         </div>
                     </div>
@@ -385,7 +385,7 @@
                     state.page = 1;
                     loadRequests();
                 }
-            } catch (err) { /* non-fatal — filter just stays at "All branches" */ }
+            } catch (err) { /* non-fatal: filter just stays at "All branches" */ }
 
             await loadFilterStaffOptions();
         }
@@ -406,7 +406,7 @@
                 document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.staffCode ? ' (' + escapeHtml(s.staffCode) + ')' : '') + '</option>';
                 }).join('');
-            } catch (err) { /* non-fatal — filter just stays at "All staff" */ }
+            } catch (err) { /* non-fatal: filter just stays at "All staff" */ }
         }
 
         /**
@@ -499,7 +499,7 @@
             }
             var permissionTypes = ['PERMISSION_LATE_ARRIVAL', 'PERMISSION_EARLY_DEPARTURE'];
             tbody.innerHTML = rows.map(function (r) {
-                var staffName = r.staff ? r.staff.name : '—';
+                var staffName = r.staff ? r.staff.name : '-';
                 var staffCode = r.staff ? r.staff.staffCode : '';
                 var dates = LeaveRequests.formatDate(r.startDate) + (r.startDate !== r.endDate ? ' – ' + LeaveRequests.formatDate(r.endDate) : '');
                 if (permissionTypes.indexOf(r.type) !== -1 && r.startTime) {

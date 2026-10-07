@@ -1,5 +1,5 @@
 /**
- * branches.js — Hairlux Admin
+ * branches.js: Hairlux Admin
  * API helper for branch locations and per-branch service configuration.
  *
  * Requires:
@@ -7,12 +7,12 @@
  *   - auth.js   (Auth.fetch, Auth.getToken, Auth.isTokenExpired, Auth.refreshAccessToken, Auth.logout)
  *
  * Permissions (see documents/branch-api.md):
- *   branches:read             — list/view branches and service matrix
- *   branches:create           — create a new branch
- *   branches:update           — edit branch details
- *   branches:manage_manager   — assign or remove a branch's manager
- *   branches:delete           — delete a branch
- *   branches:manage_services  — manage which services a branch offers, and their walk-in pricing
+ *   branches:read: list/view branches and service matrix
+ *   branches:create: create a new branch
+ *   branches:update: edit branch details
+ *   branches:manage_manager: assign or remove a branch's manager
+ *   branches:delete: delete a branch
+ *   branches:manage_services: manage which services a branch offers, and their walk-in pricing
  *
  * Dev Feedback Round 4, item #43: the previous single branches:manage
  * permission was split into the 5 above (delete always separate from
@@ -177,7 +177,7 @@ const Branches = (() => {
     }
 
     function formatMoney(amount) {
-        if (amount == null || amount === "") return "—";
+        if (amount == null || amount === "") return "-";
         return "₦" + Number(amount).toLocaleString("en-NG", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -185,7 +185,7 @@ const Branches = (() => {
     }
 
     function formatDate(iso) {
-        if (!iso) return "—";
+        if (!iso) return "-";
         try {
             return new Date(iso).toLocaleDateString("en-GB", {
                 day: "numeric", month: "short", year: "numeric",

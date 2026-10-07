@@ -1,5 +1,5 @@
 /**
- * LMS (Staff Training) API helper — /admin/lms/courses
+ * LMS (Staff Training) API helper: /admin/lms/courses
  * Requires: auth.js (Auth.fetch, Auth.getToken)
  */
 const Lms = (function () {

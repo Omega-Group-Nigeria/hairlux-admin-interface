@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Financial Dashboard & Transactions</title>
+    <title>Hairlux Admin | Financial Dashboard & Transactions</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -73,7 +73,7 @@
                             <div class="page-pretitle">Finance</div>
                             <h2 class="page-title">Financial Dashboard &amp; Transactions</h2>
                             <div class="text-secondary small mt-1">Every figure here reads directly from the Financial
-                                Transaction ledger — nothing is recalculated or estimated per module. The cards,
+                                Transaction ledger: nothing is recalculated or estimated per module. The cards,
                                 category breakdown and list below all follow the same filters.</div>
                         </div>
                         <div class="col-auto ms-auto">
@@ -103,7 +103,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Total Inflow</div>
-                                    <div class="h3 mb-0 text-green" id="sum-inflow">—</div>
+                                    <div class="h3 mb-0 text-green" id="sum-inflow">-</div>
                                 </div>
                             </div>
                         </div>
@@ -111,7 +111,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Total Outflow</div>
-                                    <div class="h3 mb-0 text-red" id="sum-outflow">—</div>
+                                    <div class="h3 mb-0 text-red" id="sum-outflow">-</div>
                                 </div>
                             </div>
                         </div>
@@ -119,7 +119,7 @@
                             <div class="card card-sm">
                                 <div class="card-body">
                                     <div class="text-secondary small">Net Cash Flow</div>
-                                    <div class="h3 mb-0" id="sum-net">—</div>
+                                    <div class="h3 mb-0" id="sum-net">-</div>
                                 </div>
                             </div>
                         </div>
@@ -351,7 +351,7 @@
         }
 
         function formatMoney(v) {
-            if (v == null) return '—';
+            if (v == null) return '-';
             return '₦' + Number(v).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
@@ -424,7 +424,7 @@
             if (r.reversedBy) {
                 return '<span class="badge bg-red-lt" title="Reversed by ' + esc(r.reversedBy.reference) + '">Reversed</span>';
             }
-            return '<span class="text-secondary">—</span>';
+            return '<span class="text-secondary">-</span>';
         }
 
         function renderTable(rows) {
@@ -436,13 +436,13 @@
             tbody.innerHTML = rows.map(function (r) {
                 var amountClass = r.direction === 'INFLOW' ? 'text-green' : 'text-red';
                 var sign = Number(r.amount) < 0 ? '' : (r.direction === 'INFLOW' ? '+' : '-');
-                var recordedBy = r.recordedBy ? [r.recordedBy.firstName, r.recordedBy.lastName].filter(Boolean).join(' ') : '—';
+                var recordedBy = r.recordedBy ? [r.recordedBy.firstName, r.recordedBy.lastName].filter(Boolean).join(' ') : '-';
                 return '<tr>' +
                     '<td class="text-secondary small">' + new Date(r.createdAt).toLocaleString('en-NG') + '</td>' +
                     '<td class="fw-semibold">' + esc(r.reference) + '</td>' +
                     '<td><span class="badge ' + (r.direction === 'INFLOW' ? 'bg-green-lt' : 'bg-red-lt') + '">' + r.direction + '</span></td>' +
                     '<td>' + esc(CATEGORY_LABEL[r.category] || r.category) + '</td>' +
-                    '<td class="text-truncate" style="max-width:220px" title="' + esc(r.description) + '">' + esc(r.description || '—') + '</td>' +
+                    '<td class="text-truncate" style="max-width:220px" title="' + esc(r.description) + '">' + esc(r.description || '-') + '</td>' +
                     '<td>' + esc(r.branch ? r.branch.name : 'Company-wide') + '</td>' +
                     '<td class="text-secondary small">' + esc(recordedBy) + '</td>' +
                     '<td class="text-end fw-semibold ' + amountClass + '">' + sign + formatMoney(Math.abs(Number(r.amount))) + '</td>' +

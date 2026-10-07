@@ -1,5 +1,5 @@
 /**
- * Payroll API helper (staff self-service) — /staff/me/payroll
+ * Payroll API helper (staff self-service): /staff/me/payroll
  * Requires: auth.js (Auth.fetch)
  */
 const PayrollSelf = (function () {

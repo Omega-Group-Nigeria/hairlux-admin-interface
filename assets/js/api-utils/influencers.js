@@ -33,7 +33,7 @@ const Influencers = (() => {
   }
 
   // ── PATCH /admin/influencers/:id ──────────────────────────────────────────
-  // Only accepts: { notes, isActive }  — name/phone/email live on the user record
+  // Only accepts: { notes, isActive }: name/phone/email live on the user record
   async function update(id, payload) {
     const res = await Auth.fetch(`${BASE()}/${id}`, {
       method: "PATCH",
@@ -96,9 +96,9 @@ const Influencers = (() => {
   }
 
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
-    if (isNaN(d)) return "—";
+    if (isNaN(d)) return "-";
     return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   }
 
@@ -111,7 +111,7 @@ const Influencers = (() => {
   // Convenience: extract display name from influencer record (new shape)
   function displayName(inf) {
     const u = inf.user || {};
-    return [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "—";
+    return [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "-";
   }
 
   return {

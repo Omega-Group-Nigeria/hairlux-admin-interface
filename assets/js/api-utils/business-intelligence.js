@@ -147,7 +147,7 @@ const BusinessIntelligence = (() => {
     }
 
     function formatPercent(value) {
-        if (value === null || value === undefined) return '—';
+        if (value === null || value === undefined) return '-';
         var n = Number(value);
         var sign = n > 0 ? '+' : '';
         return sign + n.toFixed(1) + '%';

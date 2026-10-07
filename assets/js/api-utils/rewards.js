@@ -1,5 +1,5 @@
 /**
- * rewards.js — Hairlux Admin
+ * rewards.js: Hairlux Admin
  * All /admin/rewards/* API calls -- Frontend Build Roadmap Phase 3
  * (Rewards & Loyalty Core): Tiers, Settings, Birthday Settings, Reports
  * (Dashboard), manual Adjustments, and staff-applied
@@ -47,6 +47,11 @@ const Rewards = (() => {
 
   function getSettings() {
     return apiFetch("/admin/rewards/settings");
+  }
+  // Branches, services and products (id + name) for the Settings pickers,
+  // under rewards:read, so the tab needs no other module's permissions.
+  function getSettingsOptions() {
+    return apiFetch("/admin/rewards/settings/options");
   }
   function updateSettings(payload) {
     return apiFetch("/admin/rewards/settings", { method: "PUT", body: JSON.stringify(payload) });
@@ -98,13 +103,13 @@ const Rewards = (() => {
     return Number(n || 0).toLocaleString("en-NG");
   }
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });
   }
   function formatDateTime(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleString("en-NG", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -120,16 +125,16 @@ const Rewards = (() => {
       EXPIRED: "bg-secondary-lt text-secondary",
       REVERSED: "bg-danger-lt text-danger",
     };
-    return '<span class="badge ' + (map[type] || "bg-secondary-lt") + '">' + (type || "—") + "</span>";
+    return '<span class="badge ' + (map[type] || "bg-secondary-lt") + '">' + (type || "-") + "</span>";
   }
   function rewardTypeBadge(type) {
     const map = { CASHBACK: "bg-green-lt text-green", POINTS: "bg-azure-lt text-azure" };
-    return '<span class="badge ' + (map[type] || "bg-secondary-lt") + '">' + (type || "—") + "</span>";
+    return '<span class="badge ' + (map[type] || "bg-secondary-lt") + '">' + (type || "-") + "</span>";
   }
 
   return {
     getTiers, createTier, updateTier, deleteTier,
-    getSettings, updateSettings, getBirthdaySettings, updateBirthdaySettings,
+    getSettings, getSettingsOptions, updateSettings, getBirthdaySettings, updateBirthdaySettings,
     getReports,
     adjust,
     getCustomerProfile, getCustomerTransactions, transferCashback, redeemPoints,

@@ -1,5 +1,5 @@
 /**
- * Lifecycle Campaign Templates API helper — /admin/lifecycle-campaigns/templates
+ * Lifecycle Campaign Templates API helper: /admin/lifecycle-campaigns/templates
  * Requires: auth.js (Auth.fetch)
  */
 const LifecycleCampaigns = (function () {

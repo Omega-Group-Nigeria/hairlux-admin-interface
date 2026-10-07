@@ -1,5 +1,5 @@
 /**
- * Suppliers & Vendors API helper (staff self-service, read-only) — /staff/me/suppliers
+ * Suppliers & Vendors API helper (staff self-service, read-only): /staff/me/suppliers
  * Requires: auth.js (Auth.fetch)
  */
 const SuppliersSelf = (function () {

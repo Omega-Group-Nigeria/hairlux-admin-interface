@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Purchases</title>
+    <title>Hairlux Admin | Purchases</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -371,7 +371,7 @@
                 // Dev Feedback Round 9: Branch Filter automation -- locks
                 // this list to a branch-manager admin's own branch(es).
                 RBAC.applyBranchScope(branchSel);
-            } catch (e) { /* non-fatal — filter just stays at "All branches" */ }
+            } catch (e) { /* non-fatal: filter just stays at "All branches" */ }
 
             try {
                 _allVendors = await Suppliers.getAll();
@@ -390,7 +390,7 @@
         }
 
         function formatMoney(v) {
-            if (v == null) return '—';
+            if (v == null) return '-';
             return '\u20a6' + Number(v).toLocaleString();
         }
 
@@ -435,8 +435,8 @@
                         ? pageRows.map(function (p) {
                             return '<tr>' +
                                 '<td class="fw-semibold">' + formatPoNumber(p.purchaseNumber) + '</td>' +
-                                '<td>' + esc(p.branch ? p.branch.name : '\u2014') + '</td>' +
-                                '<td>' + esc(p.vendor ? p.vendor.name : '\u2014') + '</td>' +
+                                '<td>' + esc(p.branch ? p.branch.name : '-') + '</td>' +
+                                '<td>' + esc(p.vendor ? p.vendor.name : '-') + '</td>' +
                                 '<td>' + formatMoney(p.grandTotal) + '</td>' +
                                 '<td>' + formatMoney(p.amountPaid) + '</td>' +
                                 '<td><span class="badge ' + (PAYMENT_BADGE[p.paymentStatus] || 'bg-secondary-lt') + '">' + esc(p.paymentStatus.replace('_', ' ')) + '</span></td>' +
@@ -470,7 +470,7 @@
 
                 var paymentsHtml = (p.payments || []).length
                     ? p.payments.map(function (pay) {
-                        return '<tr><td>' + new Date(pay.paymentDate).toLocaleDateString() + '</td><td>' + formatMoney(pay.amount) + '</td><td>' + esc(pay.paymentMethod) + '</td><td>' + esc(pay.paymentReference || '\u2014') + '</td></tr>';
+                        return '<tr><td>' + new Date(pay.paymentDate).toLocaleDateString() + '</td><td>' + formatMoney(pay.amount) + '</td><td>' + esc(pay.paymentMethod) + '</td><td>' + esc(pay.paymentReference || '-') + '</td></tr>';
                     }).join('')
                     : '<tr><td colspan="4" class="text-secondary text-center">No payments recorded yet.</td></tr>';
 
@@ -484,7 +484,7 @@
                         var lineSummary = r.lines.map(function (l) {
                             return l.acceptedAt
                                 ? (l.acceptedQty + ' accepted (of ' + l.deliveredQty + ' delivered)')
-                                : (l.deliveredQty + ' delivered \u2014 awaiting acceptance');
+                                : (l.deliveredQty + ' delivered: awaiting acceptance');
                         }).join(', ');
                         return '<tr><td>' + new Date(r.receivedDate).toLocaleDateString() + '</td><td>' + esc(lineSummary) + '</td></tr>';
                     }).join('')

@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Suppliers &amp; Vendors</title>
+    <title>Hairlux Admin | Suppliers &amp; Vendors</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -379,7 +379,7 @@
             document.getElementById('page-title-text').textContent = typeLabel + 's';
             document.getElementById('list-title-text').textContent = typeLabel + 's';
             document.getElementById('btn-new-label').textContent = 'New ' + typeLabel;
-            document.title = 'Hairlux Admin — ' + typeLabel + 's';
+            document.title = 'Hairlux Admin | ' + typeLabel + 's';
             document.getElementById('f-vendor-category-label').textContent = typeLabel + ' Category (optional)';
             document.getElementById('f-preferred-label').textContent = 'Preferred ' + typeLabel.toLowerCase();
 
@@ -521,9 +521,9 @@
                     var preferredBadge = s.isPreferred ? ' <span class="badge bg-yellow-lt">Preferred</span>' : '';
                     return '<tr>' +
                         '<td class="fw-semibold">' + esc(s.name) + preferredBadge + '</td>' +
-                        '<td>' + esc(s.contactPerson || '\u2014') + '</td>' +
-                        '<td>' + esc(s.phone || '\u2014') + '</td>' +
-                        '<td>' + esc(s.email || '\u2014') + '</td>' +
+                        '<td>' + esc(s.contactPerson || '-') + '</td>' +
+                        '<td>' + esc(s.phone || '-') + '</td>' +
+                        '<td>' + esc(s.email || '-') + '</td>' +
                         '<td class="text-center"><a href="#" onclick="viewItems(\'' + s.id + '\');return false;">' + (s._count ? s._count.inventoryItems : 0) + '</a></td>' +
                         '<td>' + statusBadge + '</td>' +
                         '<td class="text-nowrap">' +
@@ -662,7 +662,7 @@
                         // reading the removed field, silently showing
                         // "undefined" for every row.
                         var stockSummary = 'Store: ' + i.storeStock + ' \u00b7 Sales: ' + i.salesStock + ' \u00b7 Usage: ' + i.usageStock;
-                        return '<tr><td>' + esc(i.name) + '</td><td>' + esc(i.branch ? i.branch.name : '\u2014') + '</td><td>' + esc(i.category) + '</td><td class="text-end">' + esc(stockSummary) + '</td></tr>';
+                        return '<tr><td>' + esc(i.name) + '</td><td>' + esc(i.branch ? i.branch.name : '-') + '</td><td>' + esc(i.category) + '</td><td class="text-end">' + esc(stockSummary) + '</td></tr>';
                     }).join('') + '</tbody></table>'
                     : '<div class="text-secondary text-center py-4">No items linked to this ' + typeLabel.toLowerCase() + ' yet.</div>';
             } catch (e) {
@@ -674,7 +674,7 @@
 
         async function viewLedger(id, name) {
             ledgerVendorId = id;
-            document.getElementById('ledger-modal-title').textContent = 'Ledger \u2014 ' + name;
+            document.getElementById('ledger-modal-title').textContent = 'Ledger: ' + name;
             var body = document.getElementById('ledger-body');
             body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
             var addBtn = document.getElementById('btn-add-adjustment');
@@ -748,7 +748,7 @@
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modal-adjustment')).hide();
                 // Refresh the ledger modal underneath with the new adjustment reflected.
-                var name = document.getElementById('ledger-modal-title').textContent.replace(/^Ledger \u2014 /, '');
+                var name = document.getElementById('ledger-modal-title').textContent.replace(/^Ledger: /, '');
                 viewLedger(ledgerVendorId, name);
             } catch (e) {
                 errEl.textContent = e.message || 'Failed to save adjustment.';

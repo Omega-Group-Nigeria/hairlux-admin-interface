@@ -1,5 +1,5 @@
 /**
- * settings/api.js — wrappers around Auth / Roles for the settings page
+ * settings/api.js: wrappers around Auth / Roles for the settings page
  */
 (function (global) {
     'use strict';

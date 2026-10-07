@@ -1,5 +1,5 @@
 /**
- * shop/state.js — central page state for Shop admin
+ * shop/state.js: central page state for Shop admin
  */
 (function (global) {
     'use strict';

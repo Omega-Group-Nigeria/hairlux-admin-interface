@@ -1,5 +1,5 @@
 /**
- * rbac.js — Hairlux Admin
+ * rbac.js: Hairlux Admin
  * Role-Based Access Control helper.
  *
  * Depends on auth.js being loaded first (uses Auth.fetch).
@@ -7,12 +7,12 @@
  *
  * Usage in every protected page:
  *
- *   // 1. Outside DOMContentLoaded — sync guard from localStorage
+ *   // 1. Outside DOMContentLoaded: sync guard from localStorage
  *   RBAC.loadFromStorage();
  *   RBAC.applyPageGuard('bookings:read'); // or array / null
  *   RBAC.applyPageGuardForCurrentPage();  // reads rule from NavConfig for this page
  *
- *   // 2. Inside DOMContentLoaded — re-hydrate from server then refresh nav
+ *   // 2. Inside DOMContentLoaded: re-hydrate from server then refresh nav
  *   RBAC.fetchMe().then(function() { RBAC.applyNavVisibility(); });
  *
  * Nav visibility is applied synchronously from localStorage whenever the sidebar
@@ -92,6 +92,7 @@ const RBAC = (() => {
             }
             const userData = raw.data || raw;
             hydrate(userData);
+            try { document.dispatchEvent(new CustomEvent('rbac:updated')); } catch (_) { }
             return userData;
         } catch (err) {
             console.warn('[RBAC] fetchMe error:', err.message);
@@ -108,6 +109,9 @@ const RBAC = (() => {
      */
     function can(permission) {
         if (_role === 'SUPER_ADMIN') return true;
+        // HAIRMATE / admin-only accounts never create bookings on the admin
+        // dashboard, even if their role holds bookings:create (the API refuses too).
+        if (permission === 'bookings:create' && _adminOnlyAccount) return false;
         return _permissions.includes(permission);
     }
 
@@ -228,7 +232,7 @@ const RBAC = (() => {
 
     // ── Nav visibility ────────────────────────────────────────────────────────
 
-    /** Page permission rules — sourced from NavConfig (nav-config.js). */
+    /** Page permission rules: sourced from NavConfig (nav-config.js). */
     function _getNavMap() {
         if (typeof NavConfig !== 'undefined' && NavConfig.buildPagePermissionMap) {
             return NavConfig.buildPagePermissionMap();
@@ -397,7 +401,7 @@ const RBAC = (() => {
      */
     function applyPageGuard(permission, superOnly) {
         // If role hasn't been loaded yet (localStorage was empty / first visit),
-        // skip the sync check entirely — fetchMe().then() will call us again.
+        // skip the sync check entirely: fetchMe().then() will call us again.
         if (_role === null) return true;
 
         var allowed;
@@ -419,7 +423,7 @@ const RBAC = (() => {
             if (isSubDir) {
                 redirect = '../index.html';
             } else if (currentFile === 'index.html' || currentFile === '') {
-                // Never redirect index.html to itself — use settings as safe fallback.
+                // Never redirect index.html to itself: use settings as safe fallback.
                 redirect = './settings.html';
             } else {
                 redirect = './index.html';
@@ -463,7 +467,7 @@ const RBAC = (() => {
     // very first request a page makes -- even on a page with no sidebar.
     loadFromStorage();
 
-    // Sidebar may render before or after rbac.js — keep trying until it exists.
+    // Sidebar may render before or after rbac.js: keep trying until it exists.
     function _bootstrapNav() {
         if (document.getElementById('app-sidebar')) {
             syncNavFromCache();

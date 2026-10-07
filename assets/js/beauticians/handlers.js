@@ -1,5 +1,5 @@
 /**
- * beauticians/handlers.js — page actions, loaders, and event binding
+ * beauticians/handlers.js: page actions, loaders, and event binding
  */
 (function (global) {
     'use strict';
@@ -443,8 +443,8 @@ async function submitProfileReject() {
         var rejectModal = getBootstrap().Modal.getInstance(document.getElementById('modal-profile-reject'));
         if (rejectModal) rejectModal.hide();
         var msg = scope === 'VIDEO_ONLY'
-            ? 'Video rejected — beautician must re-upload intro video'
-            : 'Profile rejected — beautician may fix profile and resubmit';
+            ? 'Video rejected: beautician must re-upload intro video'
+            : 'Profile rejected: beautician may fix profile and resubmit';
         showAlert(msg, 'warning');
         openDetail(id);
         loadList();
@@ -571,13 +571,13 @@ async function loadPerformance() {
     var periodDays = document.getElementById('perf-period-days').value;
     try {
         var data = await Api.getPerformance({ periodDays: periodDays });
-        document.getElementById('perf-active').textContent = data.activeBeauticians ?? '—';
-        document.getElementById('perf-online').textContent = data.onlineBeauticians ?? '—';
-        document.getElementById('perf-jobs').textContent = data.completedJobs ?? '—';
-        document.getElementById('perf-fill-rate').textContent = (data.fillRatePercent != null ? data.fillRatePercent.toFixed(1) : '—') + '%';
-        document.getElementById('perf-avg-rating').textContent = data.avgRating != null ? data.avgRating.toFixed(1) : '—';
-        document.getElementById('perf-kyc-rate').textContent = (data.kycPassRatePercent != null ? data.kycPassRatePercent.toFixed(1) : '—') + '%';
-        document.getElementById('perf-profile-rate').textContent = (data.profileApprovalRatePercent != null ? data.profileApprovalRatePercent.toFixed(1) : '—') + '%';
+        document.getElementById('perf-active').textContent = data.activeBeauticians ?? '-';
+        document.getElementById('perf-online').textContent = data.onlineBeauticians ?? '-';
+        document.getElementById('perf-jobs').textContent = data.completedJobs ?? '-';
+        document.getElementById('perf-fill-rate').textContent = (data.fillRatePercent != null ? data.fillRatePercent.toFixed(1) : '-') + '%';
+        document.getElementById('perf-avg-rating').textContent = data.avgRating != null ? data.avgRating.toFixed(1) : '-';
+        document.getElementById('perf-kyc-rate').textContent = (data.kycPassRatePercent != null ? data.kycPassRatePercent.toFixed(1) : '-') + '%';
+        document.getElementById('perf-profile-rate').textContent = (data.profileApprovalRatePercent != null ? data.profileApprovalRatePercent.toFixed(1) : '-') + '%';
     } catch (err) {
         console.warn('Performance load:', err);
     }
@@ -605,7 +605,7 @@ async function loadBeauticianOptions() {
         State.svcBeauticianRows = result.data || [];
         State.beauticianOptionsLoaded = true;
         if (!State.svcBeauticianRows.length) {
-            setSvcBeauticianLabel('— No approved beauticians —', true);
+            setSvcBeauticianLabel('No approved beauticians', true);
         } else {
             setSvcBeauticianSelection(getSvcBeauticianId());
         }
@@ -613,7 +613,7 @@ async function loadBeauticianOptions() {
     } catch (err) {
         State.svcBeauticianRows = [];
         State.beauticianOptionsLoaded = true;
-        setSvcBeauticianLabel('— Failed to load beauticians —', true);
+        setSvcBeauticianLabel('Failed to load beauticians', true);
         renderSvcBeauticianPicker('');
         showAlert(err.message || 'Failed to load beautician list', 'danger');
     } finally {
@@ -701,7 +701,7 @@ async function loadServicesForBeautician() {
 }
 
 /**
- * Service name lookup for the assignment list — hides non-matching rows
+ * Service name lookup for the assignment list: hides non-matching rows
  * instead of re-rendering, so existing checkbox selections survive.
  */
 function applySvcCatalogFilter() {
@@ -950,7 +950,7 @@ async function saveDefaultBeauticianShare() {
 
     setSaveButtonState(btn, true, 'Save Default Share');
     try {
-        // Partial update — only commissionRate via home-service settings API
+        // Partial update: only commissionRate via home-service settings API
         await Api.updateHomeServiceSettings({ commissionRate: rate });
         State.scr.platformDefaultRate = rate;
         document.getElementById('scr-default-rate').value = commissionRateToPercent(rate);
@@ -1065,13 +1065,13 @@ async function loadScrServiceOptions() {
     try {
         await ensureScrCatalogLoaded();
         if (!getScrAvailableServices().length) {
-            setScrServiceLabel('— No services available —', true);
+            setScrServiceLabel('No services available', true);
         } else {
             setScrServiceSelection(getScrServiceId());
         }
         renderScrServicePicker(searchInput.value);
     } catch (err) {
-        setScrServiceLabel('— Failed to load services —', true);
+        setScrServiceLabel('Failed to load services', true);
         renderScrServicePicker('');
         var errEl = document.getElementById('scr-modal-error');
         if (errEl) {
@@ -1168,7 +1168,7 @@ async function removeServiceCommissionOverride(serviceId, serviceName) {
     }
     try {
         await Api.deleteServiceCommissionRate(serviceId);
-        showScrAlert('success', 'Override removed — service uses platform default');
+        showScrAlert('success', 'Override removed: service uses platform default');
         await loadServiceCommissionOverrides();
     } catch (err) {
         showScrAlert('error', err.message || 'Failed to remove override');
@@ -1286,7 +1286,7 @@ async function removeBeauticianCommissionRate(beauticianUserId, beauticianName) 
     }
     try {
         await Api.deleteBeauticianCommissionRate(beauticianUserId);
-        showToast('Override removed — beautician uses platform default', 'success');
+        showToast('Override removed: beautician uses platform default', 'success');
         await loadBeauticianRates();
     } catch (err) {
         showToast(err.message || 'Failed to remove override', 'danger');
@@ -1306,9 +1306,9 @@ async function loadDailyPayoutPool() {
     } catch (err) {
         document.getElementById('daily-pool-error').textContent = err.message || 'Failed to load daily payout pool';
         document.getElementById('daily-pool-error').classList.remove('d-none');
-        document.getElementById('daily-pool-used').textContent = '—';
-        document.getElementById('daily-pool-remaining').textContent = '—';
-        document.getElementById('daily-pool-limit').textContent = '—';
+        document.getElementById('daily-pool-used').textContent = '-';
+        document.getElementById('daily-pool-remaining').textContent = '-';
+        document.getElementById('daily-pool-limit').textContent = '-';
         document.getElementById('daily-pool-status-badge').innerHTML =
             '<span class="badge bg-danger-lt">Error</span>';
     }
@@ -1381,20 +1381,20 @@ async function loadPayouts() {
             document.getElementById('payouts-count-label').textContent = payoutsCountLabel(rows.length);
             tbody.innerHTML = pageRows.map(function (p, i) {
                 var b = p.beautician || {};
-                var name = [b.firstName, b.lastName].filter(Boolean).join(' ') || '—';
+                var name = [b.firstName, b.lastName].filter(Boolean).join(' ') || '-';
                 var dob = Beauticians.formatDateOfBirth(b);
-                var beauticianMeta = [b.email || '', dob !== '—' ? 'Born ' + dob : ''].filter(Boolean).join('<br>');
+                var beauticianMeta = [b.email || '', dob !== '-' ? 'Born ' + dob : ''].filter(Boolean).join('<br>');
                 var status = (p.status || '').toUpperCase();
                 var actionCell = status === 'PENDING' && RBAC.can('beauticians:process_payouts')
                     ? '<button class="btn btn-success btn-sm btn-process-payout" data-id="' + p.id + '" data-amount="' + p.amount + '">Process</button>'
-                    : '<span class="text-secondary small">—</span>';
+                    : '<span class="text-secondary small">-</span>';
                 return '<tr class="payout-row">' +
                     '<td class="text-secondary small">' + ((payoutsPager.page - 1) * payoutsPager.perPage + i + 1) + '</td>' +
-                    '<td><div class="fw-semibold">' + name + '</div><div class="text-secondary small">' + (beauticianMeta || '—') + '</div></td>' +
+                    '<td><div class="fw-semibold">' + name + '</div><div class="text-secondary small">' + (beauticianMeta || '-') + '</div></td>' +
                     '<td class="fw-semibold text-success">' + Beauticians.formatMoney(p.amount) + '</td>' +
                     '<td>' + Beauticians.payoutStatusBadge(p.status) + '</td>' +
-                    '<td>' + (p.bankName || p.bankCode || '—') + '</td>' +
-                    '<td class="font-monospace small">' + (p.accountNumber || '—') + '<br><span class="text-secondary">' + (p.accountName || '') + '</span></td>' +
+                    '<td>' + (p.bankName || p.bankCode || '-') + '</td>' +
+                    '<td class="font-monospace small">' + (p.accountNumber || '-') + '<br><span class="text-secondary">' + (p.accountName || '') + '</span></td>' +
                     '<td class="text-secondary small">' + Beauticians.formatDateTime(p.createdAt) + '</td>' +
                     '<td>' + actionCell + '</td>' +
                     '</tr>';
@@ -1933,7 +1933,7 @@ function init() {
         init: init
     };
 
-    // Detail action buttons use inline onclick="…" — expose handlers on window
+    // Detail action buttons use inline onclick="…": expose handlers on window
     global.handleKycApprove = handleKycApprove;
     global.handleKycReject = handleKycReject;
     global.handleProfileApprove = handleProfileApprove;

@@ -1,5 +1,5 @@
 /**
- * adverts/api.js — API wrappers for advert banner endpoints
+ * adverts/api.js: API wrappers for advert banner endpoints
  *
  * Requires:
  *   - config.js (window.API_BASE)

@@ -1,5 +1,5 @@
 /**
- * academy-commerce.js — Hairlux Admin
+ * academy-commerce.js: Hairlux Admin
  * All /admin/academy-commerce/* API calls -- Frontend Build Roadmap Phase 1
  * (Shared Commerce Core): Orders, Refunds, Certificates.
  *
@@ -104,21 +104,21 @@ const AcademyCommerce = (() => {
   }
 
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });
   }
 
   function formatDateTime(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleString("en-NG", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   }
 
   function programLabel(programType) {
-    return programType === "TRAINING" ? "Training" : programType === "COURSE" ? "Digital Course" : (programType || "—");
+    return programType === "TRAINING" ? "Training" : programType === "COURSE" ? "Digital Course" : (programType || "-");
   }
 
   function orderStatusBadge(status) {
@@ -128,7 +128,7 @@ const AcademyCommerce = (() => {
       EXPIRED: "bg-secondary-lt text-secondary",
       CANCELLED: "bg-danger-lt text-danger",
     };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-") + "</span>";
   }
 
   function refundStatusBadge(status) {
@@ -140,7 +140,7 @@ const AcademyCommerce = (() => {
       REFUNDED: "bg-success-lt text-success",
       REJECTED: "bg-danger-lt text-danger",
     };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-") + "</span>";
   }
 
   function certificateStatusBadge(status) {
@@ -150,7 +150,7 @@ const AcademyCommerce = (() => {
       ISSUED: "bg-success-lt text-success",
       REVOKED: "bg-danger-lt text-danger",
     };
-    const label = status === "NOT_ELIGIBLE" ? "Not Eligible" : (status || "—");
+    const label = status === "NOT_ELIGIBLE" ? "Not Eligible" : (status || "-");
     return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + label + "</span>";
   }
 

@@ -1,5 +1,5 @@
 /**
- * Site Stats API helper — /admin/site-stats
+ * Site Stats API helper: /admin/site-stats
  * Requires: auth.js (Auth.fetch)
  */
 const SiteStats = (function () {

@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Bookings</title>
+    <title>Hairlux Admin | Bookings</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
@@ -691,7 +691,7 @@
             <div class="page-body">
                 <div class="container-xl">
 
-                    <!-- STATS CARDS — GET /admin/bookings/stats -->
+                    <!-- STATS CARDS: GET /admin/bookings/stats -->
                     <div class="row row-deck row-cards mb-4">
                         <div class="col-sm-6 col-xl-3">
                             <div class="card">
@@ -700,7 +700,7 @@
                                         <div class="subheader flex-fill">Total Bookings</div>
                                         <span class="badge bg-primary-lt" id="stat-period-label">All time</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total">—</div>
+                                    <div class="h1 mb-0" id="stat-total">-</div>
                                 </div>
                             </div>
                         </div>
@@ -711,7 +711,7 @@
                                         <div class="subheader flex-fill">Total Revenue</div>
                                         <span class="badge bg-success-lt" id="stat-period-label-2">All time</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-revenue">—</div>
+                                    <div class="h1 mb-0" id="stat-revenue">-</div>
                                 </div>
                             </div>
                         </div>
@@ -722,9 +722,9 @@
                                         <div class="subheader flex-fill">Pending</div>
                                         <span class="badge bg-warning-lt">Needs action</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-pending">—</div>
+                                    <div class="h1 mb-0" id="stat-pending">-</div>
                                     <div class="text-secondary small mt-1">Match exhausted: <span
-                                            id="stat-match-exhausted" class="fw-semibold">—</span></div>
+                                            id="stat-match-exhausted" class="fw-semibold">-</span></div>
                                 </div>
                             </div>
                         </div>
@@ -735,8 +735,8 @@
                                         <div class="subheader flex-fill">Completed</div>
                                         <span class="badge bg-success-lt" id="stat-period-label-3">All time</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-completed">—</div>
-                                    <div class="text-secondary small mt-1">Avg: <span id="stat-avg">—</span></div>
+                                    <div class="h1 mb-0" id="stat-completed">-</div>
+                                    <div class="text-secondary small mt-1">Avg: <span id="stat-avg">-</span></div>
                                 </div>
                             </div>
                         </div>
@@ -838,7 +838,7 @@
 
                         <!-- Pagination -->
                         <div class="card-footer d-flex align-items-center">
-                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <p class="m-0 text-secondary small" id="pagination-info">-</p>
                             <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
                         </div>
                     </div>
@@ -987,9 +987,9 @@
                     <p class="text-secondary small mb-3">Restart beautician matching from the selected radius tier.</p>
                     <label class="form-label">Start at tier</label>
                     <select id="retry-tier-select" class="form-select">
-                        <option value="1">Tier 1 — nearest radius</option>
-                        <option value="2">Tier 2 — wider radius</option>
-                        <option value="3">Tier 3 — widest radius</option>
+                        <option value="1">Tier 1: nearest radius</option>
+                        <option value="2">Tier 2: wider radius</option>
+                        <option value="3">Tier 3: widest radius</option>
                     </select>
                     <div id="retry-matching-error" class="alert alert-danger d-none mt-3 mb-0 small"></div>
                 </div>
@@ -1036,7 +1036,7 @@
                         <div class="list-group-item text-center text-secondary py-5">Loading beauticians…</div>
                     </div>
                     <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
-                        <p class="m-0 text-secondary small" id="force-assign-pagination-info">—</p>
+                        <p class="m-0 text-secondary small" id="force-assign-pagination-info">-</p>
                         <ul class="pagination pagination-sm m-0 ms-auto" id="force-assign-pagination-btns"></ul>
                     </div>
                     <input type="hidden" id="force-assign-beautician" value="">
@@ -1308,15 +1308,15 @@
                 var rangeBtn = document.getElementById("stat-range-label");
                 if (rangeBtn) rangeBtn.textContent = (start || end) ? ("Stats: " + _fmtStatDate(start) + " – " + _fmtStatDate(end)) : "Stats: All time";
                 var data = await Bookings.getStats(start || undefined, end || undefined);
-                document.getElementById("stat-total").textContent = (data.overview && data.overview.totalBookings != null) ? data.overview.totalBookings : (data.total ?? data.totalBookings ?? "\u2014");
+                document.getElementById("stat-total").textContent = (data.overview && data.overview.totalBookings != null) ? data.overview.totalBookings : (data.total ?? data.totalBookings ?? "-");
                 document.getElementById("stat-revenue").textContent = Bookings.formatMoney((data.overview && data.overview.totalRevenue != null) ? data.overview.totalRevenue : (data.revenue ?? data.totalRevenue ?? 0));
-                document.getElementById("stat-pending").textContent = (data.byStatus && data.byStatus.pending != null) ? data.byStatus.pending : (data.pending ?? "\u2014");
+                document.getElementById("stat-pending").textContent = (data.byStatus && data.byStatus.pending != null) ? data.byStatus.pending : (data.pending ?? "-");
                 document.getElementById("stat-match-exhausted").textContent = (data.dispatch && data.dispatch.matchExhaustedCount != null)
                     ? data.dispatch.matchExhaustedCount
-                    : "\u2014";
-                document.getElementById("stat-completed").textContent = (data.byStatus && data.byStatus.completed != null) ? data.byStatus.completed : (data.completed ?? "\u2014");
+                    : "-";
+                document.getElementById("stat-completed").textContent = (data.byStatus && data.byStatus.completed != null) ? data.byStatus.completed : (data.completed ?? "-");
                 var avg = data.overview && data.overview.averageBookingValue != null ? data.overview.averageBookingValue : null;
-                document.getElementById("stat-avg").textContent = avg != null ? Bookings.formatMoney(avg) : "\u2014";
+                document.getElementById("stat-avg").textContent = avg != null ? Bookings.formatMoney(avg) : "-";
             } catch (e) { console.warn("Stats:", e); }
         }
 
@@ -1355,13 +1355,13 @@
                 var customer = b.user || b.customer || {};
                 var custName = customer.firstName
                     ? customer.firstName + " " + customer.lastName
-                    : (b.guestName || customer.name || "\u2014");
+                    : (b.guestName || customer.name || "-");
                 var custSub = customer.email
                     ? '<div class="text-secondary small mt-1">' + customer.email + '</div>'
                     : (b.guestPhone ? '<div class="text-secondary small mt-1">' + b.guestPhone + '</div>' : "");
 
                 // Reservation code cell
-                var resCode = b.reservationCode || "\u2014";
+                var resCode = b.reservationCode || "-";
                 var resUsed = b.reservationUsed;
                 var resBadge = resUsed
                     ? '<span class="badge bg-secondary-lt ms-1" style="font-size:.65rem">used</span>'
@@ -1387,7 +1387,7 @@
                             (dur ? ' &middot; ' + dur : "") +
                             '</span></li>';
                     }).join("") + '</ul>'
-                    : '<span class="text-secondary">\u2014</span>';
+                    : '<span class="text-secondary">-</span>';
 
                 // Booking type badge
                 var bookingType = b.bookingType || "";
@@ -1395,7 +1395,7 @@
                     ? '<span class="badge bg-azure-lt">Home</span>'
                     : bookingType === "WALK_IN"
                         ? '<span class="badge bg-teal-lt">Walk-in</span>'
-                        : '<span class="text-secondary small">\u2014</span>';
+                        : '<span class="text-secondary small">-</span>';
                 var branchCell = Bookings.formatBranchTableCell(b);
 
                 var dateTime = Bookings.formatDateTime(b.bookingDate || b.date, b.bookingTime || b.time);
@@ -1452,7 +1452,7 @@
                 '<div class="detail-field-value">' + valueHtml + "</div></div>";
         }
 
-        /** Full-width metric row — avoids horizontal overflow in narrow cards */
+        /** Full-width metric row: avoids horizontal overflow in narrow cards */
         function detailMetric(label, valueHtml, valueClass) {
             return '<div class="detail-metric">' +
                 '<div class="detail-metric-label">' + escHtml(label) + "</div>" +
@@ -1493,7 +1493,7 @@
         function bookingTypeBadge(bookingType) {
             if (bookingType === "HOME_SERVICE") return '<span class="badge bg-azure-lt">Mobile Service</span>';
             if (bookingType === "WALK_IN") return '<span class="badge bg-teal-lt">Walk-in</span>';
-            if (!bookingType) return '<span class="text-secondary">\u2014</span>';
+            if (!bookingType) return '<span class="text-secondary">-</span>';
             return '<span class="badge bg-secondary-lt">' + escHtml(String(bookingType).replace(/_/g, " ")) + "</span>";
         }
 
@@ -1502,16 +1502,16 @@
             var customer = b.user || b.customer || {};
             var custName = customer.firstName
                 ? (customer.firstName + " " + (customer.lastName || "")).trim()
-                : (customer.name || "\u2014");
+                : (customer.name || "-");
             var services = b.services || (b.service ? [b.service] : []);
             var address = Bookings.normalizeAddress(b.address || {});
-            var location = Bookings.formatAddress(address, b.location || "\u2014");
+            var location = Bookings.formatAddress(address, b.location || "-");
             var mapsUrl = Bookings.getGoogleMapsPlaceUrl(address);
             var bookingType = b.bookingType || "";
             var when = Bookings.formatDateTime(b.bookingDate || b.date, b.bookingTime || b.time);
             var amount = Bookings.formatMoney(b.totalAmount ?? b.amount ?? 0);
             var payMethod = b.paymentMethod ? String(b.paymentMethod).replace(/_/g, " ") : "";
-            var resCode = b.reservationCode || "\u2014";
+            var resCode = b.reservationCode || "-";
             var resBadge = b.reservationUsed
                 ? '<span class="badge badge-used">Used</span>'
                 : '<span class="badge badge-valid">Valid</span>';
@@ -1557,14 +1557,14 @@
             var customerBody =
                 '<div class="row g-3">' +
                 detailField("Name", '<span class="fw-semibold">' + escHtml(custName) + "</span>", "col-12") +
-                detailField("Email", escHtml(customer.email || "\u2014"), "col-12") +
-                detailField("Phone", escHtml(customer.phone || "\u2014"), "col-12") +
+                detailField("Email", escHtml(customer.email || "-"), "col-12") +
+                detailField("Phone", escHtml(customer.phone || "-"), "col-12") +
                 "</div>";
 
             var paymentBody =
                 '<div class="row g-3">' +
                 detailField("Total", '<span class="fw-semibold text-success">' + escHtml(amount) + "</span>", "col-12") +
-                detailField("Method", escHtml(payMethod || "\u2014"), "col-12") +
+                detailField("Method", escHtml(payMethod || "-"), "col-12") +
                 (b.paymentStatus
                     ? detailField("Payment status", escHtml(String(b.paymentStatus).replace(/_/g, " ")), "col-12")
                     : "") +
@@ -1620,7 +1620,7 @@
             if (beauticianName || b.beauticianUserId || (beautician && beautician.id)) {
                 assigneeBody =
                     '<div class="row g-3">' +
-                    detailField("Beautician", '<span class="fw-semibold">' + escHtml(beauticianName || "\u2014") + "</span>", "col-12") +
+                    detailField("Beautician", '<span class="fw-semibold">' + escHtml(beauticianName || "-") + "</span>", "col-12") +
                     (beauticianUser && beauticianUser.email
                         ? detailField("Email", escHtml(beauticianUser.email), "col-12")
                         : "") +
@@ -1922,7 +1922,7 @@
                 RBAC.applyBranchScope(sel);
                 _exceptionBranchesLoaded = true;
             } catch (err) {
-                // Leave just the "Company-wide" option if this fails — not fatal to the form.
+                // Leave just the "Company-wide" option if this fails: not fatal to the form.
             }
         }
 

@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Purchase Requests</title>
+    <title>Hairlux Admin | Purchase Requests</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -353,7 +353,7 @@
         }
 
         function formatMoney(v) {
-            if (v == null) return '—';
+            if (v == null) return '-';
             return '\u20a6' + Number(v).toLocaleString();
         }
 
@@ -472,8 +472,8 @@
                             var canDelete = r.status === 'DRAFT' || r.status === 'REJECTED' || r.status === 'CANCELLED';
                             return '<tr>' +
                                 '<td class="fw-semibold">' + formatRequestNumber(r.requestNumber) + '</td>' +
-                                '<td>' + esc(r.branch ? r.branch.name : '\u2014') + '</td>' +
-                                '<td>' + esc(r.vendor ? r.vendor.name : '\u2014') + '</td>' +
+                                '<td>' + esc(r.branch ? r.branch.name : '-') + '</td>' +
+                                '<td>' + esc(r.vendor ? r.vendor.name : '-') + '</td>' +
                                 '<td class="text-truncate" style="max-width:220px">' + esc(r.reason) + '</td>' +
                                 '<td>' + formatMoney(r.grandTotal) + '</td>' +
                                 '<td><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></td>' +
@@ -578,7 +578,7 @@
             try {
                 await PurchaseRequests.approve(id, comment);
                 load();
-            } catch (e) { alert(e.message || 'Failed to approve — you may not be the current approver for this request.'); }
+            } catch (e) { alert(e.message || 'Failed to approve: you may not be the current approver for this request.'); }
         }
 
         async function rejectRequest(id) {
@@ -587,7 +587,7 @@
             try {
                 await PurchaseRequests.reject(id, reason);
                 load();
-            } catch (e) { alert(e.message || 'Failed to reject — you may not be the current approver for this request.'); }
+            } catch (e) { alert(e.message || 'Failed to reject: you may not be the current approver for this request.'); }
         }
 
         async function deleteRequest(id) {
@@ -612,7 +612,7 @@
 
                 var actionsHtml = (r.approvalRequest && r.approvalRequest.actions || []).map(function (a) {
                     return '<div class="approval-step"><span class="badge ' + (STATUS_BADGE[a.action] || 'bg-secondary-lt') + '">' + esc(a.action) + '</span>' +
-                        '<div><div>' + esc(a.comment || '\u2014') + '</div><div class="text-secondary small">' + new Date(a.actedAt).toLocaleString() + '</div></div></div>';
+                        '<div><div>' + esc(a.comment || '-') + '</div><div class="text-secondary small">' + new Date(a.actedAt).toLocaleString() + '</div></div></div>';
                 }).join('') || '<div class="text-secondary small">No approval activity yet.</div>';
 
                 var purchaseLink = r.purchase

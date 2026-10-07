@@ -1,11 +1,11 @@
-/* Hairlux Admin & Staff Portal — service worker.
+/* Hairlux Admin & Staff Portal: service worker.
  *
  * Strategy
  *  - Pages (navigations): network first, so customers always get the latest
  *    site; falls back to the last cached copy, then to offline.html.
  *  - Our own CSS/JS: network first (with a short timeout), so a deploy never
  *    pairs new HTML with stale scripts; cached copy used offline / on slow networks.
- *  - Images, fonts and CDN libraries: stale-while-revalidate — instant loads,
+ *  - Images, fonts and CDN libraries: stale-while-revalidate: instant loads,
  *    refreshed in the background.
  *  - The Hairlux API and anything else cross-origin (documents, payslips,
  *    signed file links): NEVER intercepted or cached. Business data always

@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Referral Campaigns</title>
+    <title>Hairlux Admin | Referral Campaigns</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
@@ -179,7 +179,7 @@
 
                     <div id="campaign-page-alert" class="alert d-none mb-3" role="alert"></div>
 
-                    <!-- STATS CARDS — Campaign code summary -->
+                    <!-- STATS CARDS: Campaign code summary -->
                     <div class="row row-deck row-cards mb-4">
                         <div class="col-sm-6 col-xl-3">
                             <div class="card">
@@ -188,7 +188,7 @@
                                         <div class="subheader flex-fill">Total Campaigns</div>
                                         <span class="badge bg-primary-lt">Filtered</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total-campaigns">—</div>
+                                    <div class="h1 mb-0" id="stat-total-campaigns">-</div>
                                 </div>
                             </div>
                         </div>
@@ -199,7 +199,7 @@
                                         <div class="subheader flex-fill">Active on Page</div>
                                         <span class="badge bg-success-lt">Enabled</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-active-campaigns">—</div>
+                                    <div class="h1 mb-0" id="stat-active-campaigns">-</div>
                                 </div>
                             </div>
                         </div>
@@ -210,7 +210,7 @@
                                         <div class="subheader flex-fill">Inactive on Page</div>
                                         <span class="badge bg-secondary-lt">Disabled</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-inactive-campaigns">—</div>
+                                    <div class="h1 mb-0" id="stat-inactive-campaigns">-</div>
                                 </div>
                             </div>
                         </div>
@@ -221,7 +221,7 @@
                                         <div class="subheader flex-fill">Uses on Page</div>
                                         <span class="badge bg-warning-lt">Current rows</span>
                                     </div>
-                                    <div class="h1 mb-0" id="stat-total-uses">—</div>
+                                    <div class="h1 mb-0" id="stat-total-uses">-</div>
                                 </div>
                             </div>
                         </div>
@@ -305,7 +305,7 @@
 
                         <!-- Pagination -->
                         <div class="card-footer d-flex align-items-center">
-                            <p class="m-0 text-secondary small" id="pagination-info">—</p>
+                            <p class="m-0 text-secondary small" id="pagination-info">-</p>
                             <ul class="pagination m-0 ms-auto" id="pagination-btns"></ul>
                         </div>
                     </div>
@@ -682,8 +682,8 @@
 
             tbody.innerHTML = rows.map(function (c, i) {
                 var usage = Number(c.usedCount || 0) + " / " + (c.maxUses != null ? Number(c.maxUses) : "∞");
-                var code = escHtml(c.code || "—");
-                var name = escHtml(c.name || "—");
+                var code = escHtml(c.code || "-");
+                var name = escHtml(c.name || "-");
                 var desc = c.description ? '<div class="text-secondary small">' + escHtml(c.description) + '</div>' : "";
                 var bonus = Referrals.formatMoney(c.signupBonusAmount || 0);
                 var validity = buildValidityLabel(c);
@@ -774,16 +774,16 @@
                 var usage = Number(c.usedCount || 0) + " / " + (c.maxUses != null ? Number(c.maxUses) : "∞");
                 var html = '' +
                     '<div class="row g-3">' +
-                    '<div class="col-md-6"><div class="text-secondary small">Code</div><div class="fw-semibold campaign-code">' + escHtml(c.code || "—") + '</div></div>' +
+                    '<div class="col-md-6"><div class="text-secondary small">Code</div><div class="fw-semibold campaign-code">' + escHtml(c.code || "-") + '</div></div>' +
                     '<div class="col-md-6"><div class="text-secondary small">Status</div><div>' + Referrals.activeBadge(!!c.isActive) + '</div></div>' +
-                    '<div class="col-md-8"><div class="text-secondary small">Campaign Name</div><div class="fw-semibold">' + escHtml(c.name || "—") + '</div></div>' +
+                    '<div class="col-md-8"><div class="text-secondary small">Campaign Name</div><div class="fw-semibold">' + escHtml(c.name || "-") + '</div></div>' +
                     '<div class="col-md-4"><div class="text-secondary small">Signup Bonus</div><div class="fw-semibold">' + Referrals.formatMoney(c.signupBonusAmount || 0) + '</div></div>' +
-                    '<div class="col-12"><div class="text-secondary small">Description</div><div>' + escHtml(c.description || "—") + '</div></div>' +
+                    '<div class="col-12"><div class="text-secondary small">Description</div><div>' + escHtml(c.description || "-") + '</div></div>' +
                     '<div class="col-md-6"><div class="text-secondary small">Starts At</div><div>' + escHtml(Referrals.formatDateTime(c.startsAt)) + '</div></div>' +
                     '<div class="col-md-6"><div class="text-secondary small">Expires At</div><div>' + escHtml(Referrals.formatDateTime(c.expiresAt)) + '</div></div>' +
                     '<div class="col-md-6"><div class="text-secondary small">Usage</div><div>' + escHtml(usage) + '</div></div>' +
                     '<div class="col-md-6"><div class="text-secondary small">Last Updated</div><div>' + escHtml(Referrals.formatDateTime(c.updatedAt || c.createdAt)) + '</div></div>' +
-                    '<div class="col-12"><div class="text-secondary small">ID</div><div class="font-monospace text-break">' + escHtml(c.id || "—") + '</div></div>' +
+                    '<div class="col-12"><div class="text-secondary small">ID</div><div class="font-monospace text-break">' + escHtml(c.id || "-") + '</div></div>' +
                     '</div>';
                 body.innerHTML = html;
             } catch (err) {

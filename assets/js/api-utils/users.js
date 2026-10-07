@@ -1,5 +1,5 @@
 /**
- * Users API helper — /admin/users/*
+ * Users API helper: /admin/users/*
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const Users = (() => {
@@ -111,7 +111,7 @@ const Users = (() => {
         const raw = await res.json();
         if (!res.ok) throw new Error(raw.message || "Failed to load customers");
         // Controller wraps the service's {data, meta} inside an outer
-        // {success, message, data} envelope — one more level than getAll's
+        // {success, message, data} envelope: one more level than getAll's
         // endpoint, so unwrap raw.data.data / raw.data.meta here.
         return { data: (raw.data && raw.data.data) || [], meta: (raw.data && raw.data.meta) || {} };
     }
@@ -213,30 +213,30 @@ const Users = (() => {
         }
         const s     = String(status || "").toUpperCase();
         const color = STATUS_COLORS[s] || "secondary";
-        return '<span class="badge bg-' + color + '-lt">' + (status || "—") + '</span>';
+        return '<span class="badge bg-' + color + '-lt">' + (status || "-") + '</span>';
     }
 
     function roleBadge(role) {
         const r     = String(role || "").toUpperCase();
         const color = ROLE_COLORS[r] || "secondary";
         const label = r.replace(/_/g, " ");
-        return '<span class="badge bg-' + color + '-lt">' + (label || "—") + '</span>';
+        return '<span class="badge bg-' + color + '-lt">' + (label || "-") + '</span>';
     }
 
     function formatMoney(n) {
-        if (n === null || n === undefined || isNaN(Number(n))) return "—";
+        if (n === null || n === undefined || isNaN(Number(n))) return "-";
         return "₦" + Number(n).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function formatDate(dateStr) {
-        if (!dateStr) return "—";
+        if (!dateStr) return "-";
         const d = new Date(dateStr);
         if (isNaN(d)) return String(dateStr);
         return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     }
 
     function formatDateTime(dateStr) {
-        if (!dateStr) return "—";
+        if (!dateStr) return "-";
         const d = new Date(dateStr);
         if (isNaN(d)) return String(dateStr);
         return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })

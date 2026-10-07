@@ -1,5 +1,5 @@
 /**
- * academy-resources.js — Hairlux Admin
+ * academy-resources.js: Hairlux Admin
  * Academy Free Resources & Leads: /admin/academy/free-resources/*
  *
  * Requires:
@@ -103,7 +103,7 @@ const AcademyResources = (() => {
     return m ? m[1].toUpperCase() : "FILE";
   }
   function formatDate(d, withTime) {
-    if (!d) return "—";
+    if (!d) return "-";
     const dt = new Date(d);
     const opts = { day: "numeric", month: "short", year: "numeric" };
     if (withTime) Object.assign(opts, { hour: "2-digit", minute: "2-digit" });

@@ -1,5 +1,5 @@
 /**
- * adverts/utils.js — alerts, escaping, table loading helpers
+ * adverts/utils.js: alerts, escaping, table loading helpers
  */
 (function (global) {
     'use strict';

@@ -1,5 +1,5 @@
 /**
- * academy-training.js — Hairlux Admin
+ * academy-training.js: Hairlux Admin
  * All /admin/academy/* API calls -- Frontend Build Roadmap Phase 2
  * (Academy In-Branch Training): Trainings, Curriculum Modules, Cohorts,
  * Waitlist, Settings, Sessions, Attendance, Assessment Results,
@@ -155,13 +155,13 @@ const AcademyTraining = (() => {
     return "₦" + Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 2 });
   }
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });
   }
   function formatDateTime(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "-";
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleString("en-NG", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -181,7 +181,7 @@ const AcademyTraining = (() => {
       COMING_SOON: "bg-info-lt text-info",
       ARCHIVED: "bg-secondary-lt text-secondary",
     };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—").replace("_", " ") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-").replace("_", " ") + "</span>";
   }
   function cohortStatusBadge(status) {
     const map = {
@@ -192,7 +192,7 @@ const AcademyTraining = (() => {
       CANCELLED: "bg-danger-lt text-danger",
       BELOW_MINIMUM: "bg-danger-lt text-danger",
     };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—").replace("_", " ") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-").replace("_", " ") + "</span>";
   }
   function registrationStatusBadge(status) {
     const map = {
@@ -204,7 +204,7 @@ const AcademyTraining = (() => {
       TRANSFERRED: "bg-secondary-lt text-secondary",
       EXPIRED: "bg-secondary-lt text-secondary",
     };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—").replace("_", " ") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-").replace("_", " ") + "</span>";
   }
   function waitlistStatusBadge(status) {
     const map = {
@@ -213,16 +213,16 @@ const AcademyTraining = (() => {
       ACCEPTED: "bg-success-lt text-success",
       EXPIRED: "bg-secondary-lt text-secondary",
     };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-") + "</span>";
   }
   function identityStatusBadge(status) {
-    if (!status) return '<span class="text-secondary small">—</span>';
+    if (!status) return '<span class="text-secondary small">-</span>';
     const map = { PENDING: "bg-warning-lt text-warning", VERIFIED: "bg-success-lt text-success", FAILED: "bg-danger-lt text-danger" };
     return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + status + "</span>";
   }
   function attendanceStatusBadge(status) {
     const map = { PRESENT: "bg-success-lt text-success", ABSENT: "bg-danger-lt text-danger", LATE: "bg-warning-lt text-warning", EXCUSED: "bg-info-lt text-info" };
-    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "—") + "</span>";
+    return '<span class="badge ' + (map[status] || "bg-secondary-lt") + '">' + (status || "-") + "</span>";
   }
 
   return {

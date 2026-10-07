@@ -1,5 +1,5 @@
 /**
- * staff-portal-app.js — wires staff-portal.html screens to real data.
+ * staff-portal-app.js: wires staff-portal.html screens to real data.
  * Depends on auth.js and api-utils/staff-self.js being loaded first.
  */
 
@@ -92,7 +92,7 @@ function sbWireSearchAndPagination() {
   nextBtn.addEventListener('click', function () { if (sbPage < sbTotalPages) { sbPage++; loadSalonBookings(); } });
 }
 
-/** Today's Stylist Performance — branch-scoped, today only, never historical. */
+/** Today's Stylist Performance: branch-scoped, today only, never historical. */
 async function loadTodayStylistPerformance() {
   var container = document.getElementById('sb-performance-container');
   if (!container) return;
@@ -125,9 +125,9 @@ async function loadTodayStylistPerformance() {
  */
 function renderOnboardingStatusStrip() {
   const codeEl = document.getElementById('onb-staff-code');
-  if (codeEl) codeEl.textContent = currentStaff.staffCode || '—';
+  if (codeEl) codeEl.textContent = currentStaff.staffCode || '-';
   const branchEl = document.getElementById('onb-branch');
-  if (branchEl) branchEl.textContent = currentStaff.location ? currentStaff.location.name : '—';
+  if (branchEl) branchEl.textContent = currentStaff.location ? currentStaff.location.name : '-';
 
   const setStep = (id, done) => {
     const el = document.getElementById(id);
@@ -196,7 +196,7 @@ function renderStaffChip() {
 }
 
 /**
- * Shows/hides sidebar sections per staff eligibility — Manager
+ * Shows/hides sidebar sections per staff eligibility: Manager
  * (managedBranches non-empty, or the staff-portal:approvals permission),
  * Authorized Access (staff-portal:inventory / staff-portal:bookings
  * permissions from their assigned role), Commission (commissionRate or
@@ -257,7 +257,7 @@ function renderDashboard() {
       const remaining = currentOnboarding.items.filter(isOnboardingItemPending);
       const titleEl = alertBanner.querySelector('div[style*="font-weight:700"]');
       const descEl = alertBanner.querySelector('div[style*="font-size:12px"]');
-      if (titleEl) titleEl.textContent = 'Onboarding Incomplete \u2014 ' + remaining.length + ' step' + (remaining.length === 1 ? '' : 's') + ' remaining';
+      if (titleEl) titleEl.textContent = 'Onboarding Incomplete: ' + remaining.length + ' step' + (remaining.length === 1 ? '' : 's') + ' remaining';
       if (descEl) {
         const labels = remaining.map((i) => ONBOARDING_ITEM_LABELS[i.type] || i.type).join(', ');
         descEl.textContent = 'Please complete: ' + labels + '.';
@@ -280,7 +280,7 @@ function renderDashboard() {
     // Note: with only check-in records (no scheduled-shift calendar to compare
     // against), "attendance rate" can only mean "days with a check-in this
     // month" -- there's no concept of an absence to divide against yet.
-    setText(statCards[0].querySelector('.stat-val'), thisMonth.length ? thisMonth.length + ' day' + (thisMonth.length === 1 ? '' : 's') : '\u2014');
+    setText(statCards[0].querySelector('.stat-val'), thisMonth.length ? thisMonth.length + ' day' + (thisMonth.length === 1 ? '' : 's') : '-');
     setText(statCards[0].querySelector('.stat-lbl'), 'Days Present (Month)');
     const delta = statCards[0].querySelector('.stat-delta');
     if (delta) delta.textContent = thisMonth.length ? '\u2713 Logged' : 'No records yet';
@@ -323,8 +323,8 @@ function renderDashboard() {
         ? '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:8px;margin-bottom:10px" src="' + topAnnouncement.videoUrl + '"></video>'
         : '';
       previewHtml +=
-        '<div class="banner"><div class="tag">\uD83D\uDCE2 Management \u2014 ' +
-        (topAnnouncement.target === 'ALL' ? 'All Staff' : topAnnouncement.target === 'BRANCH' ? 'Your Branch' : 'You') +
+        '<div class="banner"><div class="tag">\uD83D\uDCE2 Management: ' +
+        (topAnnouncement.target === 'ALL' ? 'All Staff' : topAnnouncement.target === 'BRANCH' ? 'Your Branch' : topAnnouncement.target === 'ROLE' ? 'Your Role' : 'You') +
         '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3>' + topVideoHtml + '<div class="ann-body">' + topAnnouncement.body + '</div>' +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(topAnnouncement.createdAt) + '</div></div>';
     }
@@ -420,7 +420,7 @@ function renderDashboard() {
           const label = ONBOARDING_ITEM_LABELS[item.type] || item.type;
           const icon = item.isComplete ? '\u2713' : '\u23F3';
           const color = item.isComplete ? 'var(--green)' : 'var(--amber)';
-          const text = item.isComplete ? label : label + ' \u2014 Pending';
+          const text = item.isComplete ? label : label + ': Pending';
           return '<div class="flex gap2 mb2"><span style="color:' + color + ';font-size:13px">' + icon + '</span><span style="font-size:12px">' + escapeHtml(text) + '</span></div>';
         })
         .join('');
@@ -455,7 +455,7 @@ function handleTopBarCta() {
     // Nothing actually needs "saving" here -- signing a document or any
     // other onboarding action already persists immediately. Rather than
     // invent a fake save action, this just confirms that to the user.
-    alert('Everything here saves automatically as soon as you complete each step \u2014 there\'s nothing left to save.');
+    alert('Everything here saves automatically as soon as you complete each step: there\'s nothing left to save.');
     return;
   }
   if (screenId === 'inventory') {
@@ -590,10 +590,31 @@ async function loadTraining() {
   }
 }
 
+// Full screen viewing for training resources. Requested straight from the
+// click, before any await, because browsers only allow it then; where it
+// isn't allowed the viewer still fills the whole window.
+function enterViewerFullscreen(el) {
+  try {
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req && !document.fullscreenElement) {
+      const p = req.call(el);
+      if (p && p.catch) p.catch(() => {});
+    }
+  } catch (e) { /* not supported */ }
+}
+
+function exitViewerFullscreen() {
+  try {
+    if (document.fullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } catch (e) { /* ignore */ }
+}
+
 async function openTrainingViewer(id) {
   const box = document.getElementById('training-viewer-box');
+  const overlay = document.getElementById('training-viewer-overlay');
   box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted)">Loading…</div>';
-  document.getElementById('training-viewer-overlay').style.display = 'flex';
+  overlay.style.display = 'flex';
+  enterViewerFullscreen(overlay);
 
   try {
     // Fresh, short-lived URLs fetched every time this is opened -- never
@@ -611,17 +632,17 @@ async function openTrainingViewer(id) {
       // right-click save. None of this is unbypassable -- it's the same
       // "inconvenient, not impossible" mitigation level already agreed on
       // for this feature.
-      mainContentHtml = '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:var(--r2);margin-bottom:12px" src="' + course.videoUrl + '"></video>';
+      mainContentHtml = '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;max-height:78vh;background:#000;border-radius:var(--r2);margin-bottom:12px" src="' + course.videoUrl + '"></video>';
       if (course.pdfUrl) {
         attachmentsHtml =
           '<div style="font-size:13px;font-weight:600;color:var(--muted);margin:16px 0 8px">Attachments</div>' +
-          '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2)"></iframe>';
+          '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:85vh;border:1px solid var(--line);border-radius:var(--r2)"></iframe>';
       }
     } else if (course.pdfUrl) {
       // #toolbar=0&navpanes=0 hides the browser's built-in PDF viewer
       // toolbar (including its own download button) in Chrome/Firefox --
       // not honored by every browser, same caveat as above.
-      mainContentHtml = '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px"></iframe>';
+      mainContentHtml = '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:calc(100vh - 120px);min-height:400px;border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px"></iframe>';
     }
 
     box.innerHTML =
@@ -639,6 +660,7 @@ async function openTrainingViewer(id) {
 }
 
 function closeTrainingViewer() {
+  exitViewerFullscreen();
   document.getElementById('training-viewer-overlay').style.display = 'none';
   // Clear content on close rather than just hiding -- the video element
   // would otherwise keep its src (and the short-lived presigned URL
@@ -719,12 +741,11 @@ function openAddressVerificationModal() {
     '<div class="oc-field"><label>LGA (Local Government Area)</label><input type="text" id="av-lga" value="' + escapeHtml((av && av.lgaName) || '') + '"></div>' +
     '<div class="oc-field"><label>State</label><input type="text" id="av-state" value="' + escapeHtml((av && av.stateName) || '') + '"></div>' +
     '<div class="oc-field"><label>Landmark <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
-    // Everything below maps to QoreID's addressExtraData -- all optional in
-    // the API and hidden here. Markup kept (not deleted) so it can be
-    // switched back on by removing display:none from this wrapper.
-    '<div id="av-extra-fields" style="display:none">' +
+    // Everything below maps to QoreID's addressExtraData, which Physical
+    // Address Verification Pro requires. Shown and sent with every submission.
+    '<div id="av-extra-fields">' +
     '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
-    '<div class="oc-field"><label>Description</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
+    '<div class="oc-field"><label>Description of the property</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
 
     '<div class="oc-field">' +
     '<label>Location</label>' +
@@ -798,9 +819,24 @@ async function submitAddressVerificationForm() {
   formData.append('lgaName', lga);
   formData.append('stateName', state);
   const landmark = val('av-landmark'); if (landmark) formData.append('landmark', landmark);
-  // addressExtraData fields (house number, description, location, building
-  // details, photos) are hidden and optional -- not sent. Sending the hidden
-  // dropdowns' default values would report details nobody actually chose.
+
+  // QoreID addressExtraData (required by Physical Address Verification Pro).
+  const description = val('av-general-description');
+  if (!description) { showOnboardingModalError('Describe the property so the field agent can find it (e.g. gate colour, nearby landmark).'); return; }
+  formData.append('generalDescription', description);
+  formData.append('buildingDescription', val('av-building-description'));
+  formData.append('buildingStatus', val('av-building-status'));
+  formData.append('buildingType', val('av-building-type'));
+  formData.append('hasGateAndFence', document.getElementById('av-has-gate-and-fence').checked ? 'true' : 'false');
+  const houseNumber = val('av-house-number'); if (houseNumber) formData.append('houseNumber', houseNumber);
+  const colour = val('av-building-colour'); if (colour) formData.append('buildingColour', colour);
+  const lat = val('av-latitude'), lng = val('av-longitude');
+  if ((lat && !lng) || (!lat && lng)) { showOnboardingModalError('Enter both latitude and longitude, or leave both empty.'); return; }
+  if (lat && lng) { formData.append('latitude', lat); formData.append('longitude', lng); }
+  ['av-photo1', 'av-photo2', 'av-photo3'].forEach((id, i) => {
+    const file = document.getElementById(id).files[0];
+    if (file) formData.append('photo' + (i + 1), file);
+  });
 
   const btn = document.getElementById('oc-modal-submit-btn');
   btn.disabled = true;
@@ -843,7 +879,7 @@ function renderProfileScreen() {
   }
   setText(nameEl, s.name);
   renderAvatarInto(avEl, s);
-  setText(roleEl, (s.currentRole || '') + (s.location ? ' — ' + s.location.name + ' Branch' : ''));
+  setText(roleEl, (s.currentRole || '') + (s.location ? ': ' + s.location.name + ' Branch' : ''));
   setText(idEl, [s.staffCode, s.email].filter(Boolean).join(' \u00B7 '));
 
   const statusBadge = screen.querySelector('.prof-hero > div:last-child .badge');
@@ -877,7 +913,7 @@ function renderProfileScreen() {
     }
     if (items[4]) {
       items[4].textContent = s.reportingTo
-        ? s.reportingTo.name + (s.reportingTo.currentRole ? ' \u2014 ' + s.reportingTo.currentRole : '')
+        ? s.reportingTo.name + (s.reportingTo.currentRole ? ': ' + s.reportingTo.currentRole : '')
         : 'Not assigned';
     }
   }
@@ -903,7 +939,7 @@ function renderProfileScreen() {
     if (items[2]) items[2].textContent = s.emergencyContactPhone || 'Not on file';
   }
 
-  // prof-stats row — only Days Active and Verified have real data behind
+  // prof-stats row: only Days Active and Verified have real data behind
   // them. Attendance-rate and Client Rating have no backing metric yet
   // (same gap as the Dashboard's Client Rating stat) -- show "No data"
   // honestly rather than a fabricated number.
@@ -914,7 +950,7 @@ function renderProfileScreen() {
       const days = Math.max(0, Math.floor((Date.now() - new Date(activeHistory.startDate).getTime()) / 86400000));
       daysActiveEl.textContent = String(days);
     } else {
-      daysActiveEl.textContent = '—';
+      daysActiveEl.textContent = '-';
     }
   }
   const attendanceStatEl = document.getElementById('prof-attendance');
@@ -923,13 +959,13 @@ function renderProfileScreen() {
   if (ratingEl) ratingEl.textContent = 'No data';
   const verifiedEl = document.getElementById('prof-verified');
   if (verifiedEl) {
-    verifiedEl.textContent = (currentOnboarding && currentOnboarding.onboardingComplete) ? '✓' : '—';
+    verifiedEl.textContent = (currentOnboarding && currentOnboarding.onboardingComplete) ? '✓' : '-';
   }
   const employedDateEl = document.getElementById('prof-employed-date');
   if (employedDateEl) {
     employedDateEl.textContent = activeHistory && activeHistory.startDate
       ? 'Employed ' + StaffSelf.formatDate(activeHistory.startDate)
-      : '—';
+      : '-';
   }
 
   wireIdCardButton();
@@ -1238,7 +1274,7 @@ function renderAddressVerificationRow(label) {
       '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--amber2, rgba(184,121,10,.10));border-radius:var(--r2)">' +
       '<span style="color:var(--amber);font-size:18px">\u23F3</span>' +
       '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
-      '<div style="font-size:11px;color:var(--muted)">Submitted ' + StaffSelf.formatDate(av.submittedAt) + ' \u2014 verification in progress (24-48h)</div></div></div>'
+      '<div style="font-size:11px;color:var(--muted)">Submitted ' + StaffSelf.formatDate(av.submittedAt) + ': verification in progress (24-48h)</div></div></div>'
     );
   }
   if (av.status === 'REJECTED' || av.status === 'FAILED') {
@@ -1246,7 +1282,7 @@ function renderAddressVerificationRow(label) {
       '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--red2);border-radius:var(--r2)">' +
       '<span style="color:var(--red);font-size:18px">\u2717</span>' +
       '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
-      '<div style="font-size:11px;color:var(--red)">' + (av.status === 'REJECTED' ? 'Could not be verified' : 'Verification failed') + ' \u2014 contact your admin</div></div>' +
+      '<div style="font-size:11px;color:var(--red)">' + (av.status === 'REJECTED' ? 'Could not be verified' : 'Verification failed') + ': contact your admin</div></div>' +
       '<button class="btn btn-gold btn-sm" onclick="openOnboardingSubmitModal(\'PHYSICAL_ADDRESS_VERIFICATION\')">Resubmit</button></div>'
     );
   }
@@ -1301,7 +1337,7 @@ function renderVerificationChecklist() {
           '<div class="flex aic gap3 mb3" style="padding:10px;background:var(--amber2, rgba(184,121,10,.10));border-radius:var(--r2)">' +
           '<span style="color:var(--amber);font-size:18px">\u23F3</span>' +
           '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escapeHtml(label) + '</div>' +
-          '<div style="font-size:11px;color:var(--muted)">Submitted ' + StaffSelf.formatDate(item.submittedAt) + ' \u2014 awaiting review</div></div>' +
+          '<div style="font-size:11px;color:var(--muted)">Submitted ' + StaffSelf.formatDate(item.submittedAt) + ': awaiting review</div></div>' +
           '<button class="btn btn-ghost btn-sm" onclick="openOnboardingSubmitModal(\'' + item.type + '\')">Edit</button></div>'
         );
       }
@@ -1439,7 +1475,7 @@ async function loadAnnouncements() {
 
   screen.innerHTML = announcements
     .map((a) => {
-      const targetLabel = a.target === 'ALL' ? 'All Staff' : a.target === 'BRANCH' ? 'Your Branch' : 'Just You';
+      const targetLabel = a.target === 'ALL' ? 'All Staff' : a.target === 'BRANCH' ? 'Your Branch' : a.target === 'ROLE' ? 'Your Role' : 'Just You';
       const fromName = a.createdBy ? [a.createdBy.firstName, a.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
       // a.body is server-sanitized HTML, not plain text (see note above) --
       // rendered directly, no escaping, no extra wrapping <p>.
@@ -1546,7 +1582,7 @@ async function handleDirectiveStatus(directiveId, status) {
 
 /**
  * "Mark Done" now opens this instead of firing the status update directly
- * — evidence is optional, so Skip goes straight to the same
+ *: evidence is optional, so Skip goes straight to the same
  * handleDirectiveStatus path as before; attaching a file uploads it first,
  * then marks the task Completed right after.
  */
@@ -1569,7 +1605,7 @@ async function submitMarkComplete(directiveId, skipEvidence) {
   var file = !skipEvidence && fileInput.files && fileInput.files[0];
 
   if (!skipEvidence && !file) {
-    // Neither button explicitly says "no file chosen" is an error — Skip
+    // Neither button explicitly says "no file chosen" is an error: Skip
     // exists for that. Attach & Mark Done with nothing selected just
     // behaves like Skip rather than blocking the user.
     skipEvidence = true;
@@ -1641,7 +1677,7 @@ function renderClkDateAndWeek() {
       if (record && record.status === 'LATE') { dot.className = 'dot late'; dot.textContent = 'L'; }
       else if (record && record.status === 'ABSENT') { dot.className = 'dot absent'; dot.textContent = '\u2715'; }
       else if (record) { dot.className = 'dot ok'; dot.textContent = '\u2713'; }
-      else { dot.className = 'dot today'; dot.textContent = '\u2014'; }
+      else { dot.className = 'dot today'; dot.textContent = '-'; }
     } else if (d.getTime() > today.getTime()) {
       dot.className = 'dot off';
       dot.textContent = '\u2013';
@@ -1654,7 +1690,7 @@ function renderClkDateAndWeek() {
         dot.className = 'dot ok'; dot.textContent = '\u2713';
       }
     }
-    // Past day with no record at all: left as neutral 'off' — could be a
+    // Past day with no record at all: left as neutral 'off': could be a
     // non-working day or genuinely unrecorded; no way to tell them apart
     // from here, and showing "absent" would risk being wrong.
   }
@@ -1678,8 +1714,8 @@ async function loadAttendance() {
 
   const checkInEl = document.querySelectorAll('#attendance .info-item .val')[0];
   const checkOutEl = document.querySelectorAll('#attendance .info-item .val')[1];
-  if (checkInEl) checkInEl.textContent = today ? StaffSelf.formatTime(today.checkInAt) : '\u2014 Not checked in';
-  if (checkOutEl) checkOutEl.textContent = today && today.checkOutAt ? StaffSelf.formatTime(today.checkOutAt) : '\u2014 Pending';
+  if (checkInEl) checkInEl.textContent = today ? StaffSelf.formatTime(today.checkInAt) : 'Not checked in';
+  if (checkOutEl) checkOutEl.textContent = today && today.checkOutAt ? StaffSelf.formatTime(today.checkOutAt) : 'Pending';
 
   const tbody = document.querySelector('#attendance table tbody');
   if (tbody) {
@@ -1703,16 +1739,16 @@ async function loadAttendance() {
           if (r.latePenaltyAmount) lateDetail += ' · ' + sbFormatMoney(r.latePenaltyAmount) + ' penalty';
         } else if (r.status === 'ABSENT' && r.absentFeeAmount) {
           // absentFeeAmount is frozen the moment ABSENT is recorded (same
-          // convention as latePenaltyAmount at check-in) — visible here the
+          // convention as latePenaltyAmount at check-in): visible here the
           // very next time this screen loads, no need to wait for payroll.
           lateDetail = sbFormatMoney(r.absentFeeAmount) + ' absent fee';
         }
         const hours = r.checkOutAt
           ? (((new Date(r.checkOutAt) - new Date(r.checkInAt)) / 3600000).toFixed(1))
-          : '\u2014';
+          : '-';
         return (
           '<tr><td>' + StaffSelf.formatDate(r.date, { day: '2-digit', month: 'short' }) + '</td><td>' + day + '</td>' +
-          '<td>' + StaffSelf.formatTime(r.checkInAt) + '</td><td>' + (r.checkOutAt ? StaffSelf.formatTime(r.checkOutAt) : '\u2014') + '</td>' +
+          '<td>' + StaffSelf.formatTime(r.checkInAt) + '</td><td>' + (r.checkOutAt ? StaffSelf.formatTime(r.checkOutAt) : '-') + '</td>' +
           '<td>' + hours + '</td><td>' + status + (lateDetail ? '<div class="text-secondary small mt-1">' + escapeHtml(lateDetail) + '</div>' : '') + '</td></tr>'
         );
       })
@@ -1733,7 +1769,7 @@ function renderCheckinButton(todayRecord) {
   } else if (checkedInToday) {
     btn.classList.add('active');
     btn.textContent = '\u2713';
-    st.textContent = 'Checked in at ' + StaffSelf.formatTime(todayRecord.checkInAt) + ' \u2014 tap to check out';
+    st.textContent = 'Checked in at ' + StaffSelf.formatTime(todayRecord.checkInAt) + ': tap to check out';
     st.style.color = 'var(--green)';
   } else {
     btn.classList.remove('active');
@@ -1786,8 +1822,8 @@ const LEAVE_TYPE_LABELS = {
   SICK_LEAVE: 'Sick Leave',
   CASUAL_LEAVE: 'Casual Leave',
   DAY_OFF: 'Day Off',
-  PERMISSION_LATE_ARRIVAL: 'Permission — Late Arrival',
-  PERMISSION_EARLY_DEPARTURE: 'Permission — Early Departure',
+  PERMISSION_LATE_ARRIVAL: 'Permission: Late Arrival',
+  PERMISSION_EARLY_DEPARTURE: 'Permission: Early Departure',
   OVERTIME_REQUEST: 'Overtime Request',
 };
 
@@ -1935,14 +1971,14 @@ function updateApprovalsBadge() {
 function approvalSummary(item) {
   if (item.requestType === 'LEAVE_REQUEST' && item.leaveRequest) {
     var lr = item.leaveRequest;
-    return (LEAVE_TYPE_LABELS[lr.type] || lr.type) + ' — ' +
+    return (LEAVE_TYPE_LABELS[lr.type] || lr.type) + ': ' +
       StaffSelf.formatDate(lr.startDate) + (lr.startDate !== lr.endDate ? ' – ' + StaffSelf.formatDate(lr.endDate) : '') +
       '<div class="text-secondary small">' + escapeHtml(lr.reason) + '</div>';
   }
   if (item.requestType === 'INVENTORY_ADJUSTMENT' && item.stockAdjustmentRequest) {
     var ar = item.stockAdjustmentRequest;
     var delta = ar.quantityDelta > 0 ? '+' + ar.quantityDelta : String(ar.quantityDelta);
-    return (ar.item ? escapeHtml(ar.item.name) : 'Item') + ' — ' + delta +
+    return (ar.item ? escapeHtml(ar.item.name) : 'Item') + ': ' + delta +
       '<div class="text-secondary small">' + escapeHtml(ar.reason) + '</div>';
   }
   if (item.requestType === 'STOCK_TRANSFER' && item.stockTransfer) {
@@ -1953,7 +1989,7 @@ function approvalSummary(item) {
     return fromName + ' × ' + tr.quantity +
       '<div class="text-secondary small">' + fromBranch + ' → ' + toBranch + '</div>';
   }
-  return '<span class="text-secondary">—</span>';
+  return '<span class="text-secondary">-</span>';
 }
 
 function approvalDomainId(item) {
@@ -1975,8 +2011,8 @@ function renderApprovals() {
     '<th>Type</th><th>Submitted By</th><th>Details</th><th>Branch</th><th></th>' +
     '</tr></thead><tbody>' +
     currentApprovals.map(function (item, idx) {
-      var submitter = item.submittedBy ? escapeHtml(item.submittedBy.name) : '—';
-      var branch = item.branch ? escapeHtml(item.branch.name) : '—';
+      var submitter = item.submittedBy ? escapeHtml(item.submittedBy.name) : '-';
+      var branch = item.branch ? escapeHtml(item.branch.name) : '-';
       return '<tr>' +
         '<td><span class="bdg">' + (APPROVAL_TYPE_LABELS[item.requestType] || item.requestType) + '</span></td>' +
         '<td>' + submitter + '</td>' +
@@ -1996,7 +2032,7 @@ async function handleApprovalAction(idx, action) {
   var item = currentApprovals[idx];
   if (!item) return;
   var domainId = approvalDomainId(item);
-  if (!domainId) { alert('Could not resolve the underlying request — try refreshing.'); return; }
+  if (!domainId) { alert('Could not resolve the underlying request: try refreshing.'); return; }
 
   var fns = {
     LEAVE_REQUEST: { approve: StaffSelf.approveLeaveRequest, reject: StaffSelf.rejectLeaveRequest, reassign: StaffSelf.reassignLeaveRequest },
@@ -2015,7 +2051,7 @@ async function handleApprovalAction(idx, action) {
       if (!reason) return;
       await handlerSet.reject(domainId, reason);
     } else if (action === 'reassign') {
-      var toApproverId = prompt('Reassign to — enter the staffId of who should handle this next (find it in Admin → Staff):');
+      var toApproverId = prompt('Reassign to: enter the staffId of who should handle this next (find it in Admin → Staff):');
       if (!toApproverId) return;
       var reassignReason = prompt('Reason for reassigning this request:');
       if (!reassignReason) return;
@@ -2043,7 +2079,7 @@ var sbEditingBookingId = null;
 var sbAddServiceBookingId = null;
 
 function sbFormatMoney(amount) {
-  if (amount == null) return '—';
+  if (amount == null) return '-';
   return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
@@ -2074,12 +2110,12 @@ async function loadSalonBookings() {
       bookings.map(function (b, idx) {
         var services = (b.services || []).map(function (s) { return escapeHtml(s.service ? s.service.name : ''); }).join(', ');
         return '<tr>' +
-          '<td style="font-family:monospace;font-size:12px">' + escapeHtml(b.bookingCode || '—') + '</td>' +
+          '<td style="font-family:monospace;font-size:12px">' + escapeHtml(b.bookingCode || '-') + '</td>' +
           '<td>' + StaffSelf.formatDate(b.bookingDate) + ' · ' + escapeHtml(b.bookingTime) +
           (b.continuesNextDay ? ' <span class="badge bg-orange-lt" title="Estimated to run past closing time -- continues the next day">Continues next day</span>' : '') + '</td>' +
           '<td>' + escapeHtml(b.customerName) + '</td>' +
-          '<td>' + escapeHtml(b.assignedStaff ? b.assignedStaff.name : '—') + '</td>' +
-          '<td class="text-secondary small">' + (services || '—') + '</td>' +
+          '<td>' + escapeHtml(b.assignedStaff ? b.assignedStaff.name : '-') + '</td>' +
+          '<td class="text-secondary small">' + (services || '-') + '</td>' +
           '<td>' + sbFormatMoney(b.totalAmount) + '</td>' +
           '<td><span class="bdg">' + (SB_STATUS_LABELS[b.status] || b.status) + '</span></td>' +
           '<td class="text-nowrap">' + sbActionsHtml(b) + '</td>' +
@@ -2101,12 +2137,12 @@ async function loadSalonBookings() {
  * Fixed action set per status, matching the current spec exactly:
  * Scheduled = View/Edit/Start/Cancel/Print, In Progress = View/Edit/Complete/Print,
  * Completed = View/Edit/Print. No-Show isn't part of this spec's action list for
- * any status anymore — dropped here to match, though the backend endpoint
- * stays untouched. Cancel is Scheduled-only now — the previous version let
+ * any status anymore: dropped here to match, though the backend endpoint
+ * stays untouched. Cancel is Scheduled-only now: the previous version let
  * an In Progress booking be cancelled too, which the backend's
  * assertCancellable() no longer permits; this was a real bug, not a style choice.
  * "View" has no dedicated screen here (this list already shows the full
- * row), so it isn't a separate button — Edit doubles as the detail view
+ * row), so it isn't a separate button: Edit doubles as the detail view
  * for a Completed booking (opens Add Service, which shows all the same info).
  */
 function sbActionsHtml(b) {
@@ -2181,7 +2217,7 @@ async function sbCancel(id) {
     await SalonBookingsSelf.cancel(id, reason);
     await loadSalonBookings();
   } catch (err) {
-    // Backend enforces the real rule (assertCancellable — Scheduled only);
+    // Backend enforces the real rule (assertCancellable: Scheduled only);
     // this just surfaces whatever message it sends back, e.g. when
     // something calls sbCancel for an In Progress booking some other way.
     alert(err.message);
@@ -2221,7 +2257,7 @@ async function showBookingForm() {
 
   formContainer.innerHTML =
     '<div class="row g-2 mb-2">' +
-    '<div class="col-12"><label class="form-label small mb-1">Look Up Existing Customer <span style="font-weight:400">(optional — search by name or phone)</span></label>' +
+    '<div class="col-12"><label class="form-label small mb-1">Look Up Existing Customer <span style="font-weight:400">(optional: search by name or phone)</span></label>' +
     '<div style="position:relative"><input type="text" class="input" id="sb-customer-search" placeholder="Type a name or phone number…" autocomplete="off">' +
     '<div class="ss-list" id="sb-customer-search-results" style="display:none"></div></div></div>' +
     '</div>' +
@@ -2255,7 +2291,7 @@ async function showBookingForm() {
     '<button type="button" class="btn btn-ghost btn-sm" onclick="sbApplyCoupon()">Apply</button></div>' +
     '<div class="small mt-1" id="sb-coupon-result" style="display:none;"></div></div>' +
     '<div class="text-end small mb-1" id="sb-subtotal-line" style="display:none;color:var(--muted);"></div>' +
-    '<div class="text-end fw-bold small mb-2" id="sb-estimated-total">Estimated total: —</div>' +
+    '<div class="text-end fw-bold small mb-2" id="sb-estimated-total">Estimated total: -</div>' +
     '<div class="flex gap2">' +
     '<button class="btn btn-gold btn-sm" onclick="submitBookingForm()">Create Booking</button>' +
     '<button class="btn btn-ghost btn-sm" onclick="cancelBookingForm()">Cancel</button>' +
@@ -2313,7 +2349,7 @@ async function sbRunCustomerSearch(q, resultsEl) {
   try {
     var matches = await SalonBookingsSelf.searchCustomers(q);
     if (!matches.length) {
-      resultsEl.innerHTML = '<div class="ss-empty">No matching customers \u2014 just fill in their name and phone below.</div>';
+      resultsEl.innerHTML = '<div class="ss-empty">No matching customers: just fill in their name and phone below.</div>';
     } else {
       resultsEl.innerHTML = matches.map(function (m) {
         return '<div class="ss-item" data-name="' + escapeHtml(m.name || '') + '" data-phone="' + escapeHtml(m.phone || '') + '">' +
@@ -2379,7 +2415,7 @@ function sbWirePhoneMatchCheck() {
   });
 }
 
-/** Routes to the right modal — full Edit for Scheduled/In Progress, the narrower Add Service flow for Completed. */
+/** Routes to the right modal: full Edit for Scheduled/In Progress, the narrower Add Service flow for Completed. */
 async function sbOpenEditOrAddService(id) {
   var b = (sbBookingsCache || []).find(function (x) { return x.id === id; }) || await SalonBookingsSelf.getOne(id);
   if (b.status === 'COMPLETED') {
@@ -2397,7 +2433,7 @@ function sbEditLine(container, serviceId, quantity) {
   row.style.marginBottom = '6px';
   var options = '<option value="">Select service…</option>' + (sbServicesCache || []).map(function (s) {
     var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
-    return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(price) + '</option>';
+    return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ': ' + sbFormatMoney(price) + '</option>';
   }).join('');
   row.innerHTML =
     '<select class="input sb-eb-service-select">' + options + '</select>' +
@@ -2431,7 +2467,7 @@ async function sbOpenEditModal(b) {
 
   document.getElementById('profile-modal-box').innerHTML =
     '<div class="oc-modal-error" id="sbeb-error" style="display:none"></div>' +
-    '<h3>Edit Booking — ' + escapeHtml(b.bookingCode || '') + '</h3>' +
+    '<h3>Edit Booking: ' + escapeHtml(b.bookingCode || '') + '</h3>' +
     '<div class="oc-field"><label>Customer Name</label><input type="text" id="sbeb-customer-name" value="' + escapeHtml(b.customerName || '') + '"></div>' +
     '<div class="oc-field"><label>Customer Phone</label><input type="text" id="sbeb-customer-phone" value="' + escapeHtml(b.customerPhone || '') + '"></div>' +
     '<div class="oc-field"><label>Assigned Stylist</label><select id="sbeb-staff">' + staffOptions + '</select></div>' +
@@ -2513,13 +2549,13 @@ async function sbOpenAddServiceModal(b) {
 
   var options = '<option value="">Select service…</option>' + (sbServicesCache || []).map(function (s) {
     var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
-    return '<option value="' + s.id + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(price) + '</option>';
+    return '<option value="' + s.id + '">' + escapeHtml(s.name) + ': ' + sbFormatMoney(price) + '</option>';
   }).join('');
 
   document.getElementById('profile-modal-box').innerHTML =
     '<div class="oc-modal-error" id="sbas-error" style="display:none"></div>' +
-    '<h3>Add Service — ' + escapeHtml(b.bookingCode || '') + '</h3>' +
-    '<div class="oc-modal-sub">This booking is Completed — its existing services can\'t be changed. This only adds a new one.</div>' +
+    '<h3>Add Service: ' + escapeHtml(b.bookingCode || '') + '</h3>' +
+    '<div class="oc-modal-sub">This booking is Completed: its existing services can\'t be changed. This only adds a new one.</div>' +
     '<div class="oc-field"><label>Service</label><select id="sbas-service">' + options + '</select></div>' +
     '<div class="oc-field"><label>Quantity</label><input type="number" min="1" value="1" id="sbas-qty"></div>' +
     '<div class="oc-modal-actions">' +
@@ -2556,10 +2592,10 @@ async function sbSubmitAddService() {
 async function sbPrintBooking(id) {
   try {
     var b = (sbBookingsCache || []).find(function (x) { return x.id === id; }) || await SalonBookingsSelf.getOne(id);
-    document.getElementById('sb-pr-booking-code').textContent = b.bookingCode || '—';
+    document.getElementById('sb-pr-booking-code').textContent = b.bookingCode || '-';
     document.getElementById('sb-pr-datetime').textContent = StaffSelf.formatDate(b.bookingDate) + ' · ' + (b.bookingTime || '');
-    document.getElementById('sb-pr-customer').textContent = (b.customerName || '—') + (b.customerPhone ? ' (' + b.customerPhone + ')' : '');
-    document.getElementById('sb-pr-stylist').textContent = b.assignedStaff ? b.assignedStaff.name : '—';
+    document.getElementById('sb-pr-customer').textContent = (b.customerName || '-') + (b.customerPhone ? ' (' + b.customerPhone + ')' : '');
+    document.getElementById('sb-pr-stylist').textContent = b.assignedStaff ? b.assignedStaff.name : '-';
     document.getElementById('sb-pr-branch').textContent = currentStaff.location ? currentStaff.location.name : '';
     // Same convention as the Admin receipt: createdBy is only set when a
     // staff member entered the booking directly, so a customer's own
@@ -2573,7 +2609,7 @@ async function sbPrintBooking(id) {
         var qty = s.quantity && s.quantity > 1 ? ' x' + s.quantity : '';
         return '<div class="pr-service-line"><span>' + name + qty + '</span></div>';
       }).join('')
-      : '<div class="pr-service-line"><span>—</span></div>';
+      : '<div class="pr-service-line"><span>-</span></div>';
     document.getElementById('sb-pr-amount').textContent = sbFormatMoney(b.totalAmount);
     document.getElementById('sb-pr-status').textContent = String(b.status || '').replace(/_/g, ' ');
     window.print();
@@ -2592,13 +2628,20 @@ function showVerifyReservationForm() {
   document.getElementById('profile-modal-box').innerHTML =
     '<div class="oc-modal-error" id="sbv-error" style="display:none"></div>' +
     '<h3>Verify Reservation</h3>' +
-    '<div class="oc-modal-sub">Enter the code the customer presents on arrival.</div>' +
-    '<div class="oc-field"><label>Reservation Code</label><input type="text" id="sbv-code" style="text-transform:uppercase" placeholder="HLS-XXXXXX"></div>' +
+    '<div class="oc-modal-sub">Scan the customer\'s booking barcode, or type the code they present on arrival.</div>' +
+    '<div class="oc-field"><label>Reservation Code</label><input type="text" id="sbv-code" style="text-transform:uppercase" placeholder="Scan barcode or type HLX-XXXX / HLS-XXXXXX" autocomplete="off"></div>' +
     '<div class="oc-modal-actions">' +
     '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
     '<button class="btn btn-gold btn-sm" id="sbv-lookup-btn" onclick="sbLookupReservationCode()">Look Up</button>' +
     '</div>';
   document.getElementById('profile-modal-overlay').style.display = 'flex';
+  // Barcode scanners type the code and press Enter, so Enter looks it up.
+  var codeInput = document.getElementById('sbv-code');
+  if (codeInput) {
+    codeInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); sbLookupReservationCode(); }
+    });
+  }
   setTimeout(function () { var el = document.getElementById('sbv-code'); if (el) el.focus(); }, 100);
 }
 
@@ -2718,7 +2761,7 @@ async function sbLookupReservationCode() {
     if (booking.reservationUsed) {
       document.getElementById('profile-modal-box').innerHTML =
         '<h3>Verify Reservation</h3>' +
-        '<div class="oc-modal-sub">' + escapeHtml(customerName || '') + ' \u00B7 ' + (services || '\u2014') + '</div>' +
+        '<div class="oc-modal-sub">' + escapeHtml(customerName || '') + ' \u00B7 ' + (services || '-') + '</div>' +
         '<div style="color:var(--red);font-weight:700;margin:12px 0">This reservation has already been used.</div>' +
         '<div class="oc-modal-actions"><button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Close</button></div>';
       return;
@@ -2737,7 +2780,7 @@ async function sbLookupReservationCode() {
       '<h3>Verify Reservation</h3>' +
       '<div class="oc-modal-sub"><strong>' + escapeHtml(customerName || '') + '</strong>' + (customerPhone ? ' (' + escapeHtml(customerPhone) + ')' : '') + '<br>' +
       StaffSelf.formatDate(booking.bookingDate) + ' \u00B7 ' + escapeHtml(booking.bookingTime) + '<br>' +
-      (services || '\u2014') + ' \u2014 ' + sbFormatMoney(booking.totalAmount) + '</div>' +
+      (services || '-') + ': ' + sbFormatMoney(booking.totalAmount) + '</div>' +
       '<div class="oc-field"><label>Assign Stylist</label><select id="sbv-staff">' + staffOptions + '</select></div>' +
       '<div class="oc-modal-actions">' +
       '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
@@ -2776,7 +2819,7 @@ function sbAddServiceLine() {
   row.style.marginBottom = '6px';
   var options = '<option value="">Select service…</option>' + sbServicesCache.map(function (s) {
     var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
-    return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ' — ' + sbFormatMoney(price) + '</option>';
+    return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ': ' + sbFormatMoney(price) + '</option>';
   }).join('');
   row.innerHTML =
     '<select class="input sb-service-select">' + options + '</select>' +
@@ -2822,7 +2865,7 @@ async function sbAddItemLine() {
   row.style.gap = '8px';
   row.style.marginBottom = '6px';
   var options = '<option value="">Select product…</option>' + window._sbInventoryItems.map(function (i) {
-    var label = i.category === 'FOR_SALE' ? (' — ' + sbFormatMoney(i.price) + ' (' + (i.salesStock || 0) + ' in stock)') : ' — not for sale';
+    var label = i.category === 'FOR_SALE' ? (': ' + sbFormatMoney(i.price) + ' (' + (i.salesStock || 0) + ' in stock)') : ': not for sale';
     return '<option value="' + i.id + '" data-price="' + (i.price || 0) + '" data-stock="' + (i.salesStock || 0) + '" data-sellable="' + (i.category === 'FOR_SALE' ? '1' : '0') + '">' + escapeHtml(i.name) + label + '</option>';
   }).join('');
   row.innerHTML =
@@ -2896,7 +2939,7 @@ async function sbApplyCoupon() {
     var sbPhoneEl = document.getElementById('sb-customer-phone');
     var preview = await SalonBookingsSelf.previewDiscount(code, sbCurrentSubtotal(), sbPhoneEl ? sbPhoneEl.value.trim() : undefined);
     _sbAppliedCoupon = { id: preview.id, code: preview.code, percentage: Number(preview.percentage) };
-    resultEl.textContent = '\u2713 "' + preview.name + '" applied \u2014 ' + preview.percentage + '% off.';
+    resultEl.textContent = '\u2713 "' + preview.name + '" applied: ' + preview.percentage + '% off.';
     resultEl.style.color = 'var(--green)';
     sbUpdateTotal();
   } catch (err) {
@@ -3038,7 +3081,7 @@ async function promptReceiveGoods(itemId, itemName) {
   if (qtyStr === null) return;
   var qty = parseInt(qtyStr, 10);
   if (!qty || qty < 1) { alert('Please enter a valid quantity.'); return; }
-  var note = prompt('Note (optional — supplier, batch no., etc.):') || undefined;
+  var note = prompt('Note (optional: supplier, batch no., etc.):') || undefined;
 
   try {
     await InventorySelf.receiveGoods(itemId, { quantity: qty, note: note });
@@ -3049,7 +3092,7 @@ async function promptReceiveGoods(itemId, itemName) {
 }
 
 async function promptRequestAdjustment(itemId, itemName) {
-  var deltaStr = prompt('Adjustment for "' + itemName + '" — use a negative number to reduce stock (e.g. -3), positive to add:');
+  var deltaStr = prompt('Adjustment for "' + itemName + '": use a negative number to reduce stock (e.g. -3), positive to add:');
   if (deltaStr === null) return;
   var delta = parseInt(deltaStr, 10);
   if (!delta) { alert('Please enter a non-zero whole number.'); return; }
@@ -3058,7 +3101,7 @@ async function promptRequestAdjustment(itemId, itemName) {
 
   try {
     await InventorySelf.requestAdjustment(itemId, { quantityDelta: delta, reason: reason });
-    alert('Adjustment request submitted — it now needs approval before stock changes.');
+    alert('Adjustment request submitted: it now needs approval before stock changes.');
   } catch (err) {
     alert(err.message || 'Failed to submit adjustment request.');
   }
@@ -3077,7 +3120,7 @@ async function ensureInventoryBranches() {
 
 function toggleTransferDirection() {
   // Direction only affects the submit-time payload shape (which item is
-  // "from" vs "to") — the form fields themselves stay the same either way.
+  // "from" vs "to"): the form fields themselves stay the same either way.
 }
 
 async function submitTransferRequest() {
@@ -3096,11 +3139,11 @@ async function submitTransferRequest() {
     // Sending FROM my branch's item TO the other branch.
     payload = { fromItemId: itemId, toBranchId: otherBranchId, quantity: qty };
   } else {
-    // Requesting stock — the selected item must belong to the OTHER branch,
+    // Requesting stock: the selected item must belong to the OTHER branch,
     // and my own branch is the destination. Since the item dropdown is
     // currently populated from MY branch's items only, "request" mode isn't
-    // fully wired yet — flagged rather than silently sent incorrectly.
-    alert('Requesting stock FROM another branch requires browsing that branch\'s items first — this direction isn\'t wired yet. Use "Send" for now, or ask an admin to initiate a pull on your behalf.');
+    // fully wired yet: flagged rather than silently sent incorrectly.
+    alert('Requesting stock FROM another branch requires browsing that branch\'s items first: this direction isn\'t wired yet. Use "Send" for now, or ask an admin to initiate a pull on your behalf.');
     return;
   }
 
@@ -3184,12 +3227,12 @@ async function prLoadFines() {
 
     var rows = (fines.records || []).map(function (r) {
       var detail = r.status === 'ABSENT'
-        ? 'Absent \u2014 reduces payable days, not a separate fee'
+        ? 'Absent: reduces payable days, not a separate fee'
         : (r.lateMinutes ? r.lateMinutes + ' min late' : 'Late penalty');
       var amountHtml = r.status === 'ABSENT' ? '' : '<div class="fw-semibold">' + sbFormatMoney(r.latePenaltyAmount) + '</div>';
       return '<div class="d-flex justify-content-between border-bottom py-2">' +
         '<div><span class="badge ' + (r.status === 'ABSENT' ? 'b-red' : 'b-amber') + ' me-2">' + r.status + '</span>' +
-        '<span class="text-secondary small">' + StaffSelf.formatDate(r.date, { day: '2-digit', month: 'short' }) + ' \u2014 ' + detail + '</span></div>' +
+        '<span class="text-secondary small">' + StaffSelf.formatDate(r.date, { day: '2-digit', month: 'short' }) + ': ' + detail + '</span></div>' +
         amountHtml + '</div>';
     }).join('');
 
@@ -3223,7 +3266,7 @@ async function prLoadAdjustments() {
       var dateStr = StaffSelf.formatDate(a.effectiveDate || a.createdAt, { day: '2-digit', month: 'short', year: 'numeric' });
       return '<div class="d-flex justify-content-between border-bottom py-2">' +
         '<div><span class="badge ' + (isBonus ? 'b-green' : 'b-red') + ' me-2">' + escapeHtml(a.category) + '</span>' +
-        '<span class="text-secondary small">' + dateStr + (a.reason ? ' \u2014 ' + escapeHtml(a.reason) : '') + '</span></div>' +
+        '<span class="text-secondary small">' + dateStr + (a.reason ? ': ' + escapeHtml(a.reason) : '') + '</span></div>' +
         '<div class="fw-semibold" style="color:' + (isBonus ? 'var(--green)' : 'var(--red)') + '">' + (isBonus ? '+' : '-') + sbFormatMoney(a.amount) + '</div></div>';
     }).join('');
   } catch (err) {
@@ -3240,15 +3283,19 @@ async function prLoadWallet() {
 
     var statusEl = document.getElementById('pr-payday-status');
     var hintEl = document.getElementById('pr-withdraw-hint');
-    if (wallet.releaseActive) {
-      statusEl.textContent = 'Payday is ON \u2014 withdrawals available';
+    if (wallet.withdrawalLocked) {
+      // Individually held by management, whatever the Payday switch says.
+      statusEl.textContent = 'Withdrawals on hold';
+      hintEl.textContent = 'Your salary withdrawals have been put on hold. Please contact management.';
+    } else if (wallet.releaseActive) {
+      statusEl.textContent = 'Payday is ON: withdrawals available';
       hintEl.textContent = '';
     } else {
-      statusEl.textContent = 'Payday is OFF \u2014 withdrawals locked';
+      statusEl.textContent = 'Payday is OFF: withdrawals locked';
       hintEl.textContent = 'Withdrawals open once management switches Payday on.';
     }
   } catch (err) {
-    document.getElementById('pr-wallet-balance').textContent = '\u2014';
+    document.getElementById('pr-wallet-balance').textContent = '-';
   }
 }
 
@@ -3269,7 +3316,7 @@ async function prLoadCompensation() {
       return;
     }
     if (comp.currentBaseSalary == null) {
-      container.innerHTML = '<div class="text-secondary small">No compensation on file yet — check with an admin.</div>';
+      container.innerHTML = '<div class="text-secondary small">No compensation on file yet: check with an admin.</div>';
       return;
     }
     container.innerHTML =
@@ -3277,7 +3324,7 @@ async function prLoadCompensation() {
       '<div class="stat green"><div class="stat-lbl">Base Salary</div><div class="stat-val">' + sbFormatMoney(comp.currentBaseSalary) + '</div><div class="stat-delta neu">Monthly</div></div>' +
       (comp.currentAllowances
         ? '<div class="stat gold"><div class="stat-lbl">Allowances</div><div class="stat-val">' + sbFormatMoney(comp.currentAllowances) + '</div><div class="stat-delta neu">Monthly</div></div>'
-        : '<div class="stat"><div class="stat-lbl">Allowances</div><div class="stat-val">\u2014</div></div>') +
+        : '<div class="stat"><div class="stat-lbl">Allowances</div><div class="stat-val">-</div></div>') +
       '</div>';
   } catch (err) {
     container.innerHTML = '<div class="text-danger small">' + escapeHtml(err.message || 'Failed to load.') + '</div>';
@@ -3295,7 +3342,7 @@ async function prLoadBankAccount() {
     }
 
     var pendingNote = account.pendingRequestedAt
-      ? '<div class="text-secondary small mt3">A change to <strong>' + escapeHtml(account.pendingBankName || '') + ' \u2014 ' + escapeHtml(account.pendingAccountNumber || '') + '</strong> is awaiting admin approval.</div>'
+      ? '<div class="text-secondary small mt3">A change to <strong>' + escapeHtml(account.pendingBankName || '') + ': ' + escapeHtml(account.pendingAccountNumber || '') + '</strong> is awaiting admin approval.</div>'
       : '';
 
     container.innerHTML =
@@ -3312,7 +3359,7 @@ async function prLoadBankAccount() {
 
 function prBankAccountForm() {
   return '<div id="pr-bank-form-wrap">' +
-    '<div class="text-secondary small mb-2">No bank account on file yet — add one to enable withdrawals.</div>' +
+    '<div class="text-secondary small mb-2">No bank account on file yet: add one to enable withdrawals.</div>' +
     '<div id="pr-bank-error" class="text-danger small mb-2" style="display:none"></div>' +
     '<div class="oc-field"><label>Bank</label><select id="pr-bank-select"><option value="">Loading banks\u2026</option></select></div>' +
     '<div class="oc-field"><label>Account Number</label><input type="text" id="pr-bank-account-number" maxlength="10" placeholder="0123456789"></div>' +
@@ -3389,7 +3436,7 @@ async function prTriggerResolve() {
       if (errEl) errEl.style.display = 'none';
     } else {
       resolvedEl.style.color = 'var(--red, #e5484d)';
-      resolvedEl.textContent = '\u26a0 ' + resolved.accountName + ' \u2014 this doesn\'t match your name on file. Salary can only be paid into an account in your own name.';
+      resolvedEl.textContent = '\u26a0 ' + resolved.accountName + ': this doesn\'t match your name on file. Salary can only be paid into an account in your own name.';
       _prResolvedOk = false;
       if (saveBtn) saveBtn.disabled = true;
     }
@@ -3428,11 +3475,11 @@ async function prLoadPayslips() {
     var payslips = await PayrollSelf.getPayslips();
     tbody.innerHTML = payslips.length
       ? payslips.map(function (p) {
-        var period = p.payrollPeriod ? p.payrollPeriod.label : '\u2014';
+        var period = p.payrollPeriod ? p.payrollPeriod.label : '-';
         var statusBadge = p.status === 'CORRECTED'
           ? '<span class="badge b-amber">Corrected</span>'
           : '<span class="badge b-green">Published</span>';
-        return '<tr><td>' + escapeHtml(period) + '</td><td>' + escapeHtml(p.payslipReference || '\u2014') + '</td><td>' + statusBadge + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td>' +
+        return '<tr><td>' + escapeHtml(period) + '</td><td>' + escapeHtml(p.payslipReference || '-') + '</td><td>' + statusBadge + '</td><td>' + sbFormatMoney(p.grossPay) + '</td><td>' + sbFormatMoney(p.totalDeductions) + '</td><td style="font-weight:700">' + sbFormatMoney(p.netPay) + '</td>' +
           '<td><button class="btn btn-ghost btn-sm pr-view-payslip" data-id="' + p.id + '">View</button> <button class="btn btn-ghost btn-sm pr-download-payslip" data-id="' + p.id + '">Download</button></td></tr>';
       }).join('')
       : '<tr><td colspan="7" class="text-center text-secondary py-4">No payslips yet.</td></tr>';
@@ -3448,7 +3495,7 @@ async function prLoadPayslips() {
 }
 
 function prFmtDate(d) {
-  if (!d) return '\u2014';
+  if (!d) return '-';
   return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
@@ -3464,12 +3511,12 @@ async function prOpenPayslipDetail(id) {
   body.innerHTML = '<div class="spinner-border text-primary"></div>';
   try {
     var p = await PayrollSelf.getPayslipDetail(id);
-    title.textContent = 'Payslip \u2014 ' + (p.payrollPeriod ? p.payrollPeriod.label : '');
+    title.textContent = 'Payslip: ' + (p.payrollPeriod ? p.payrollPeriod.label : '');
 
     var html = '';
 
     html += '<div class="pr-detail-section"><h4>Overview</h4>';
-    html += prDetailRow('Reference', escapeHtml(p.payslipReference || '\u2014'));
+    html += prDetailRow('Reference', escapeHtml(p.payslipReference || '-'));
     html += prDetailRow('Status', p.status === 'CORRECTED' ? '<span class="badge b-amber">Corrected</span>' : '<span class="badge b-green">Published</span>');
     html += prDetailRow('Published', prFmtDate(p.publishedAt));
     html += '</div>';
@@ -3700,10 +3747,10 @@ async function loadCommission() {
       '</tr></thead><tbody>' +
       data.entries.map(function (e) {
         return '<tr>' +
-          '<td>' + (e.bookingDate ? StaffSelf.formatDate(e.bookingDate) : '\u2014') + '</td>' +
-          '<td>' + escapeHtml(e.customerName || '\u2014') + '</td>' +
-          '<td class="text-secondary small">' + escapeHtml((e.serviceNames || []).join(', ') || '\u2014') + '</td>' +
-          '<td>' + (e.bookingTotal != null ? sbFormatMoney(e.bookingTotal) : '\u2014') + '</td>' +
+          '<td>' + (e.bookingDate ? StaffSelf.formatDate(e.bookingDate) : '-') + '</td>' +
+          '<td>' + escapeHtml(e.customerName || '-') + '</td>' +
+          '<td class="text-secondary small">' + escapeHtml((e.serviceNames || []).join(', ') || '-') + '</td>' +
+          '<td>' + (e.bookingTotal != null ? sbFormatMoney(e.bookingTotal) : '-') + '</td>' +
           '<td>' + (e.rateApplied * 100).toFixed(1).replace(/\.0$/, '') + '%</td>' +
           '<td style="font-weight:700;color:var(--green)">' + sbFormatMoney(e.amount) + '</td>' +
           '</tr>';
@@ -3731,7 +3778,7 @@ async function loadInventoryDashboard() {
 }
 
 // -- Product Sales --------------------------------------------------------
-// Standalone retail sale — no service attached. Distinct from the Bookings
+// Standalone retail sale: no service attached. Distinct from the Bookings
 // screen's "Products Sold" lines, which always ride on a service
 // appointment; this is for a walk-in who just wants to buy something.
 
@@ -3770,7 +3817,7 @@ function populateSaleItemSelect(select) {
   var items = saleItemsCache || [];
   select.innerHTML = '<option value="">Select product…</option>' + items.map(function (i) {
     var price = i.price != null ? i.price : 0;
-    return '<option value="' + i.id + '" data-price="' + price + '" data-stock="' + (i.salesStock || 0) + '">' + escapeHtml(i.name) + ' — ' + sbFormatMoney(price) + ' (' + (i.salesStock || 0) + ' in stock)</option>';
+    return '<option value="' + i.id + '" data-price="' + price + '" data-stock="' + (i.salesStock || 0) + '">' + escapeHtml(i.name) + ': ' + sbFormatMoney(price) + ' (' + (i.salesStock || 0) + ' in stock)</option>';
   }).join('');
   if (current) select.value = current;
 }
@@ -3838,7 +3885,7 @@ async function submitProductSale() {
     document.getElementById('sale-lines').innerHTML = '';
     document.getElementById('sale-customer-name').value = '';
     document.getElementById('sale-customer-phone').value = '';
-    saleItemsCache = null; // stock levels changed — force a fresh fetch next time
+    saleItemsCache = null; // stock levels changed: force a fresh fetch next time
     updateSaleTotal();
     await loadSalesData();
   } catch (err) {
@@ -3870,13 +3917,13 @@ async function loadSalesData() {
     tbody.innerHTML = sales.length
       ? sales.map(function (s) {
         var itemsLabel = (s.items || []).map(function (line) {
-          return (line.item ? line.item.name : '—') + ' ×' + line.quantity;
+          return (line.item ? line.item.name : '-') + ' ×' + line.quantity;
         }).join(', ');
         return '<tr>' +
           '<td class="text-secondary small">' + new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</td>' +
-          '<td>' + escapeHtml(s.customerName || '—') + '</td>' +
-          '<td class="text-secondary small">' + escapeHtml(itemsLabel || '—') + '</td>' +
-          '<td>' + escapeHtml(s.soldBy ? s.soldBy.name : '—') + '</td>' +
+          '<td>' + escapeHtml(s.customerName || '-') + '</td>' +
+          '<td class="text-secondary small">' + escapeHtml(itemsLabel || '-') + '</td>' +
+          '<td>' + escapeHtml(s.soldBy ? s.soldBy.name : '-') + '</td>' +
           '<td style="font-weight:700">' + sbFormatMoney(s.totalAmount) + '</td>' +
           '</tr>';
       }).join('')

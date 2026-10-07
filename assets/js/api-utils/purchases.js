@@ -1,5 +1,5 @@
 /**
- * Purchases API helper — /admin/purchases
+ * Purchases API helper: /admin/purchases
  * Requires: auth.js (Auth.fetch)
  */
 const Purchases = (function () {

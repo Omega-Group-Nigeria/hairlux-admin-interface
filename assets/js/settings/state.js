@@ -1,5 +1,5 @@
 /**
- * settings/state.js — central page state for Profile & Settings
+ * settings/state.js: central page state for Profile & Settings
  */
 (function (global) {
     'use strict';

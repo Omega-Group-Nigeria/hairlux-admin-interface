@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Audit Trail</title>
+    <title>Hairlux Admin | Audit Trail</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -84,7 +84,7 @@
                             <div class="page-pretitle">Operations</div>
                             <h2 class="page-title">Audit Trail</h2>
                             <div class="text-secondary small mt-1">Every important action across Roles &amp;
-                                Permissions, Payroll, and the rest of the system — who did what, and when.</div>
+                                Permissions, Payroll, and the rest of the system: who did what, and when.</div>
                         </div>
                     </div>
                 </div>
@@ -263,7 +263,7 @@
                             '<td class="fw-semibold">' + esc(r.action.replace(/_/g, ' ')) + '</td>' +
                             '<td>' + esc(r.entityType) + (r.entityId ? '<div class="text-secondary small">' + esc(r.entityId) + '</div>' : '') + '</td>' +
                             '<td>' + esc(r.actorName || (r.actorId ? r.actorId : 'System')) + '</td>' +
-                            '<td>' + esc(r.subjectName || '—') + '</td>' +
+                            '<td>' + esc(r.subjectName || '-') + '</td>' +
                             '<td class="text-nowrap">' +
                             ((r.before || r.after || r.note)
                                 ? '<button class="btn btn-sm btn-outline-secondary btn-view-details" data-entry=\'' + esc(JSON.stringify(r)) + '\'>Details</button>'
@@ -283,7 +283,7 @@
             body.innerHTML =
                 '<dl class="row small mb-3">' +
                 '<dt class="col-3 text-secondary">Action</dt><dd class="col-9">' + esc(entry.action.replace(/_/g, ' ')) + '</dd>' +
-                '<dt class="col-3 text-secondary">Record</dt><dd class="col-9">' + esc(entry.entityType) + (entry.entityId ? ' — ' + esc(entry.entityId) : '') + '</dd>' +
+                '<dt class="col-3 text-secondary">Record</dt><dd class="col-9">' + esc(entry.entityType) + (entry.entityId ? ': ' + esc(entry.entityId) : '') + '</dd>' +
                 '<dt class="col-3 text-secondary">Actor</dt><dd class="col-9">' + esc(entry.actorName || 'System') + '</dd>' +
                 (entry.subjectName ? '<dt class="col-3 text-secondary">Subject</dt><dd class="col-9">' + esc(entry.subjectName) + '</dd>' : '') +
                 '<dt class="col-3 text-secondary">Time</dt><dd class="col-9">' + AuditTrail.formatDate(entry.createdAt) + '</dd>' +

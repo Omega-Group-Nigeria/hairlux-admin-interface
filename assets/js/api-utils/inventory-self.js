@@ -1,5 +1,5 @@
 /**
- * Inventory API helper (staff self-service) — /staff/me/inventory-items
+ * Inventory API helper (staff self-service): /staff/me/inventory-items
  * Requires: auth.js (Auth.fetch)
  */
 const InventorySelf = (function () {

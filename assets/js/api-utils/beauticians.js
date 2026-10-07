@@ -1,5 +1,5 @@
 /**
- * beauticians.js — Hairlux Admin
+ * beauticians.js: Hairlux Admin
  * /admin/beauticians/* + /admin/settings/home-service +
  * /admin/settings/service-commission-rates + /admin/settings/dispatch +
  * /admin/payouts/* API calls.
@@ -403,21 +403,21 @@ const Beauticians = (() => {
     }
 
     function formatMoney(amount) {
-        if (amount === null || amount === undefined) return '—';
+        if (amount === null || amount === undefined) return '-';
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-        if (Number.isNaN(num)) return '—';
+        if (Number.isNaN(num)) return '-';
         return '\u20A6' + Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function formatDate(value) {
-        if (!value) return '—';
+        if (!value) return '-';
         const d = new Date(value);
         if (Number.isNaN(d.getTime())) return String(value);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     function formatDateTime(value) {
-        if (!value) return '—';
+        if (!value) return '-';
         const d = new Date(value);
         if (Number.isNaN(d.getTime())) return String(value);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
@@ -425,9 +425,9 @@ const Beauticians = (() => {
     }
 
     function formatBytes(bytes) {
-        if (bytes === null || bytes === undefined || bytes === '') return '—';
+        if (bytes === null || bytes === undefined || bytes === '') return '-';
         const num = typeof bytes === 'string' ? parseFloat(bytes) : Number(bytes);
-        if (!Number.isFinite(num) || num < 0) return '—';
+        if (!Number.isFinite(num) || num < 0) return '-';
         if (num < 1024) return Math.round(num) + ' B';
         if (num < 1048576) return (num / 1024).toFixed(1) + ' KB';
         return (num / 1048576).toFixed(2) + ' MB';
@@ -437,7 +437,7 @@ const Beauticians = (() => {
         const user = b.user || {};
         const parts = [user.firstName, user.lastName].filter(Boolean);
         if (parts.length) return parts.join(' ');
-        return user.name || '—';
+        return user.name || '-';
     }
 
     function dateOfBirth(b) {

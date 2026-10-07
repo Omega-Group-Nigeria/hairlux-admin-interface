@@ -1,5 +1,5 @@
 /**
- * Financial Transactions API helper — read-only ledger view.
+ * Financial Transactions API helper: read-only ledger view.
  * Requires: auth.js (Auth.fetch)
  */
 const FinancialTransactions = (function () {

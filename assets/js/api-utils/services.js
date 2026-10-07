@@ -1,5 +1,5 @@
 /**
- * services.js — Hairlux Admin
+ * services.js: Hairlux Admin
  * API helper for service catalog + category management.
  *
  * Requires:
@@ -36,7 +36,7 @@ const Services = (() => {
         return raw.data !== undefined ? raw.data : raw;
     }
 
-    // ── Auth-aware multipart fetch (FormData — must NOT set Content-Type) ─────────
+    // ── Auth-aware multipart fetch (FormData: must NOT set Content-Type) ─────────
     async function multipartFetch(path, method, formData) {
         // Proactively refresh if near expiry
         if (Auth.isTokenExpired()) {
@@ -232,7 +232,7 @@ const Services = (() => {
 
     /** Short ISO date → "15 Jan 2026" */
     function formatDate(iso) {
-        if (!iso) return "—";
+        if (!iso) return "-";
         try {
             return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
         } catch { return iso; }

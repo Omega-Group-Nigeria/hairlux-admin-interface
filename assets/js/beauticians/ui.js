@@ -1,5 +1,5 @@
 /**
- * beauticians/ui.js — DOM rendering and presentation helpers
+ * beauticians/ui.js: DOM rendering and presentation helpers
  */
 (function (global) {
     'use strict';
@@ -116,13 +116,13 @@ function renderListTable(rows, meta) {
         var email = (b.user && b.user.email) || '';
         var phone = (b.user && b.user.phone) || '';
         var dob = Beauticians.formatDateOfBirth(b);
-        var contactMeta = [email, phone, dob !== '—' ? dob : ''].filter(Boolean).join(' · ');
-        var rating = b.ratingAverage != null ? b.ratingAverage.toFixed(1) : '—';
-        var jobs = b.totalJobsCompleted ?? '—';
+        var contactMeta = [email, phone, dob !== '-' ? dob : ''].filter(Boolean).join(' · ');
+        var rating = b.ratingAverage != null ? b.ratingAverage.toFixed(1) : '-';
+        var jobs = b.totalJobsCompleted ?? '-';
         var earnings = Beauticians.formatMoney(b.totalEarnings);
         return '<tr class="beautician-row" data-id="' + b.id + '">' +
             '<td class="text-secondary small">' + ((State.list.page - 1) * State.list.limit + i + 1) + '</td>' +
-            '<td><div class="fw-semibold">' + name + '</div><div class="text-secondary small">' + (contactMeta || '—') + '</div></td>' +
+            '<td><div class="fw-semibold">' + name + '</div><div class="text-secondary small">' + (contactMeta || '-') + '</div></td>' +
             '<td>' + Beauticians.kycBadge(b.kycStatus) + '</td>' +
             '<td>' + Beauticians.profileBadge(b.profileStatus) + '</td>' +
             '<td>' + Beauticians.availabilityBadge(b.availabilityStatus) + '</td>' +
@@ -140,7 +140,7 @@ function openPhotoPreview(url, name) {
     if (!url) return;
     document.getElementById('modal-photo-img').src = url;
     document.getElementById('modal-photo-img').alt = name || 'Profile photo';
-    document.getElementById('modal-photo-title').textContent = (name || 'Beautician') + ' — Profile Photo';
+    document.getElementById('modal-photo-title').textContent = (name || 'Beautician') + ': Profile Photo';
     document.getElementById('modal-photo-open').href = url;
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-photo-preview')).show();
 }
@@ -198,13 +198,13 @@ function openCertificationPreview(url, title) {
 }
 function renderProfileReviewer(reviewer) {
     if (!reviewer || typeof reviewer !== 'object') {
-        return '<span class="text-secondary">—</span>';
+        return '<span class="text-secondary">-</span>';
     }
     var name = [reviewer.firstName, reviewer.lastName].filter(Boolean).join(' ');
     var parts = [];
     if (name) parts.push('<div class="fw-semibold">' + escHtml(name) + '</div>');
     if (reviewer.email) parts.push('<div class="text-secondary small">' + escHtml(reviewer.email) + '</div>');
-    return parts.length ? parts.join('') : '<span class="text-secondary">—</span>';
+    return parts.length ? parts.join('') : '<span class="text-secondary">-</span>';
 }
 function renderCertifications(certifications) {
     if (!Array.isArray(certifications) || !certifications.length) {
@@ -258,7 +258,7 @@ function fetchKycVideoBlob(url) {
         xhr.open('GET', url, true);
         xhr.responseType = 'blob';
         xhr.withCredentials = false;
-        // Do not send Range — we want the full object when possible
+        // Do not send Range: we want the full object when possible
         xhr.onload = function () {
             // 200 OK and 206 Partial Content are both usable when the body is present
             if (xhr.status !== 200 && xhr.status !== 206) {
@@ -798,7 +798,7 @@ function initKycVideoModal() {
             retryKycVideoLoad({
                 resume: video.currentTime > 0,
                 delay: delayMs,
-                message: 'Network is unstable — retrying (' + _kycVideoRetryCount + '/' + KYC_VIDEO_MAX_AUTO_RETRIES + ')…',
+                message: 'Network is unstable: retrying (' + _kycVideoRetryCount + '/' + KYC_VIDEO_MAX_AUTO_RETRIES + ')…',
             });
             return;
         }
@@ -823,9 +823,9 @@ function renderBeauticianBankDetails(b) {
         return '<div class="text-secondary small">No payout bank details on file</div>';
     }
     return '<div class="row g-3">' +
-        detailField('Bank', escHtml(bankName || '—'), 'col-sm-6') +
-        detailField('Account Number', '<span class="font-monospace">' + escHtml(accountNumber || '—') + '</span>', 'col-sm-6') +
-        detailField('Account Name', escHtml(accountName || '—'), 'col-sm-12') +
+        detailField('Bank', escHtml(bankName || '-'), 'col-sm-6') +
+        detailField('Account Number', '<span class="font-monospace">' + escHtml(accountNumber || '-') + '</span>', 'col-sm-6') +
+        detailField('Account Name', escHtml(accountName || '-'), 'col-sm-12') +
         '</div>';
 }
 
@@ -954,21 +954,21 @@ function updateDetailReviewsPanel(rows, meta, opts) {
 function renderBeauticianDetailContent(b, settings) {
     var user = b.user || {};
     var name = Beauticians.fullName(b);
-    var email = user.email || '—';
-    var phone = user.phone || '—';
+    var email = user.email || '-';
+    var phone = user.phone || '-';
     var dateOfBirth = Beauticians.formatDateOfBirth(b);
-    var walletBalance = b.walletBalance != null ? Beauticians.formatMoney(b.walletBalance) : '—';
-    var totalEarnings = b.totalEarnings != null ? Beauticians.formatMoney(b.totalEarnings) : '—';
-    var ratingAverage = b.ratingAverage != null ? Number(b.ratingAverage).toFixed(1) : '—';
+    var walletBalance = b.walletBalance != null ? Beauticians.formatMoney(b.walletBalance) : '-';
+    var totalEarnings = b.totalEarnings != null ? Beauticians.formatMoney(b.totalEarnings) : '-';
+    var ratingAverage = b.ratingAverage != null ? Number(b.ratingAverage).toFixed(1) : '-';
     var platformCommission = settings ? formatCommissionLabel(settings.commissionRate) : null;
     // Per-beautician commissionRateOverride is no longer applied to job offers / payouts / wallet credit.
     // Pay is platform default + per-service overrides (Beauticians → Service Rates).
     var commissionDisplay = platformCommission
         ? platformCommission + '% <span class="text-secondary small fw-normal">(platform default; per-service overrides may apply)</span>'
-        : '—';
+        : '-';
     var payoutMode = settings && settings.payoutMode
         ? escHtml(String(settings.payoutMode).replace(/_/g, ' '))
-        : '—';
+        : '-';
 
     var specialties = Array.isArray(b.specialties) && b.specialties.length
         ? b.specialties.map(function (s) { return '<span class="badge bg-azure-lt me-1 mb-1">' + escHtml(s) + '</span>'; }).join('')
@@ -989,7 +989,7 @@ function renderBeauticianDetailContent(b, settings) {
     var recentJobsHtml = recentCount
         ? b.recentJobs.slice(0, 5).map(function (j) {
             return '<div class="detail-job-row d-flex justify-content-between align-items-start gap-2 py-2 border-bottom small">' +
-                '<span class="font-monospace">' + escHtml(j.reservationCode || '—') + '</span>' +
+                '<span class="font-monospace">' + escHtml(j.reservationCode || '-') + '</span>' +
                 '<span class="text-secondary">' + escHtml(Beauticians.formatDate(j.bookingDate)) + '</span>' +
                 '<span class="text-nowrap">' + Beauticians.formatMoney(j.totalAmount) + '</span></div>';
         }).join('')
@@ -1047,7 +1047,7 @@ function renderBeauticianDetailContent(b, settings) {
     var performanceBody =
         '<div class="row g-2">' +
         detailMetric('Avg rating', escHtml(ratingAverage)) +
-        detailMetric('Jobs completed', escHtml(b.totalJobsCompleted != null ? b.totalJobsCompleted : '—')) +
+        detailMetric('Jobs completed', escHtml(b.totalJobsCompleted != null ? b.totalJobsCompleted : '-')) +
         detailMetric('Wallet', escHtml(walletBalance), 'text-success') +
         '</div>' +
         '<div class="mt-3 pt-3 border-top">' +
@@ -1111,9 +1111,9 @@ function renderBeauticianDetailContent(b, settings) {
             '<div class="detail-field-label mb-2">QoreID references</div>' +
             '<dl class="row g-2 small mb-0">' +
             '<dt class="col-sm-5 text-secondary fw-normal">QoreID Customer</dt>' +
-            '<dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdCustomerId || '—') + '</dd>' +
+            '<dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdCustomerId || '-') + '</dd>' +
             '<dt class="col-sm-5 text-secondary fw-normal">QoreID Session</dt>' +
-            '<dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdSessionId || '—') + '</dd>' +
+            '<dd class="col-sm-7 mb-0 font-monospace">' + escHtml(b.kycReferences.qoreIdSessionId || '-') + '</dd>' +
             '</dl></div>'
         : '';
     var kycBody =
@@ -1178,8 +1178,8 @@ function renderReviewsTable(rows, meta) {
     tbody.innerHTML = rows.map(function (b, i) {
         var name = Beauticians.fullName(b);
         var dob = Beauticians.formatDateOfBirth(b);
-        var specs = Array.isArray(b.specialties) ? b.specialties.join(', ') : '—';
-        var exp = b.yearsOfExperience ? b.yearsOfExperience + ' yrs' : '—';
+        var specs = Array.isArray(b.specialties) ? b.specialties.join(', ') : '-';
+        var exp = b.yearsOfExperience ? b.yearsOfExperience + ' yrs' : '-';
         var submitted = Beauticians.formatDateTime(b.profileSubmittedAt || b.updatedAt || b.createdAt);
         return '<tr>' +
             '<td class="text-secondary small">' + ((State.reviews.page - 1) * State.reviews.limit + i + 1) + '</td>' +
@@ -1206,11 +1206,11 @@ function setSvcBeauticianLabel(text, isPlaceholder) {
 function setSvcBeauticianSelection(id) {
     document.getElementById('svc-beautician-select').value = id || '';
     if (!id) {
-        setSvcBeauticianLabel('— Select a beautician —', true);
+        setSvcBeauticianLabel('Select a beautician', true);
         return;
     }
     var row = State.svcBeauticianRows.find(function (b) { return b.id === id; });
-    setSvcBeauticianLabel(row ? Beauticians.fullName(row) : '— Select a beautician —', !row);
+    setSvcBeauticianLabel(row ? Beauticians.fullName(row) : 'Select a beautician', !row);
 }
 function renderSvcBeauticianPicker(query) {
     var list = document.getElementById('svc-beautician-list');
@@ -1243,7 +1243,7 @@ function renderSvcBeauticianPicker(query) {
         var user = b.user || {};
         var dob = Beauticians.formatDateOfBirth(b);
         var metaParts = [user.email, user.phone];
-        if (dob !== '—') metaParts.push('Born ' + dob);
+        if (dob !== '-') metaParts.push('Born ' + dob);
         var meta = metaParts.filter(Boolean).join(' · ');
         var active = b.id === selected ? ' active' : '';
         return '<button type="button" class="dropdown-item svc-beautician-option' + active + '" data-id="' + escHtml(b.id) + '">' +
@@ -1320,13 +1320,13 @@ function renderBeauticianRateRows(rows, byUserId) {
         var rateLabel;
         if (override && override.commissionRate != null) {
             var pct = formatCommissionLabel(override.commissionRate);
-            rateLabel = '<span class="badge bg-azure-lt" title="Personal override">' + escHtml(pct != null ? pct + '%' : '—') + '</span>';
+            rateLabel = '<span class="badge bg-azure-lt" title="Personal override">' + escHtml(pct != null ? pct + '%' : '-') + '</span>';
         } else {
             rateLabel = '<span class="text-secondary">Platform default</span>';
         }
         var updated = override && override.updatedAt
             ? escHtml(Beauticians.formatDateTime(override.updatedAt))
-            : '<span class="text-secondary">—</span>';
+            : '<span class="text-secondary">-</span>';
 
         var actions;
         if (!userId) {
@@ -1370,8 +1370,8 @@ function renderServiceCommissionRows(rows) {
     }
     tbody.innerHTML = rows.map(function (row) {
         var pct = formatCommissionLabel(row.commissionRate);
-        var pctLabel = pct != null ? pct + '%' : '—';
-        var updated = row.updatedAt ? Beauticians.formatDateTime(row.updatedAt) : '—';
+        var pctLabel = pct != null ? pct + '%' : '-';
+        var updated = row.updatedAt ? Beauticians.formatDateTime(row.updatedAt) : '-';
         var price = getServiceCatalogPrice(row.serviceId);
         var actions = canManage
             ? '<div class="btn-list flex-nowrap justify-content-end">' +
@@ -1385,7 +1385,7 @@ function renderServiceCommissionRows(rows) {
               '</div>'
             : '';
         return '<tr data-service-id="' + escHtml(row.serviceId) + '">' +
-            '<td><div class="fw-semibold">' + escHtml(row.serviceName || '—') + '</div></td>' +
+            '<td><div class="fw-semibold">' + escHtml(row.serviceName || '-') + '</div></td>' +
             '<td class="text-nowrap"><span class="badge bg-azure-lt">' + escHtml(pctLabel) + '</span></td>' +
             '<td>' + formatEarningsCell(price, row.commissionRate) + '</td>' +
             '<td class="text-secondary text-nowrap small">' + escHtml(updated) + '</td>' +
@@ -1404,12 +1404,12 @@ function setScrServiceLabel(text, isPlaceholder) {
 function setScrServiceSelection(id) {
     document.getElementById('scr-service-select').value = id || '';
     if (!id) {
-        setScrServiceLabel('— Select a service —', true);
+        setScrServiceLabel('Select a service', true);
         updateScrEarningsPreview();
         return;
     }
     var row = (State.scr.catalogServices || []).find(function (s) { return s.id === id; });
-    setScrServiceLabel(row ? (row.name || id) : '— Select a service —', !row);
+    setScrServiceLabel(row ? (row.name || id) : 'Select a service', !row);
     updateScrEarningsPreview();
 }
 function getScrModalServicePrice() {
@@ -1441,17 +1441,17 @@ function updateScrEarningsPreview() {
     }
 
     box.classList.remove('d-none');
-    amountEl.textContent = price != null ? Services.formatMoney(price) : '— (select a service)';
+    amountEl.textContent = price != null ? Services.formatMoney(price) : '(select a service)';
     if (price != null && hasPct && rate >= 0 && rate <= 1) {
         var earn = Math.round(price * rate * 100) / 100;
         earnEl.textContent = Services.formatMoney(earn);
         var pctLabel = formatCommissionLabel(rate);
         pctEl.textContent = pctLabel != null ? ' (' + pctLabel + '%)' : '';
     } else if (hasPct && price == null) {
-        earnEl.textContent = '—';
+        earnEl.textContent = '-';
         pctEl.textContent = ' (select a service)';
     } else {
-        earnEl.textContent = '—';
+        earnEl.textContent = '-';
         pctEl.textContent = '';
     }
 }
@@ -1524,7 +1524,7 @@ function openScrModalForEdit(serviceId, serviceName, rate, servicePrice) {
     document.getElementById('scr-modal-error').classList.add('d-none');
     document.getElementById('scr-service-select-wrap').classList.add('d-none');
     document.getElementById('scr-service-name-wrap').classList.remove('d-none');
-    document.getElementById('scr-service-name-display').textContent = serviceName || serviceId || '—';
+    document.getElementById('scr-service-name-display').textContent = serviceName || serviceId || '-';
     document.getElementById('scr-service-select').value = '';
     var price = servicePrice != null && servicePrice !== ''
         ? Number(servicePrice)

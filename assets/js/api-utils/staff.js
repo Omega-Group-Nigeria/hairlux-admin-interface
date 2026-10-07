@@ -1,5 +1,5 @@
 /**
- * Staff API helper — /admin/staff/*
+ * Staff API helper: /admin/staff/*
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const Staff = (() => {

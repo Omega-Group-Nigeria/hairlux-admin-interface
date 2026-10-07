@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Tasks &amp; Directives</title>
+    <title>Hairlux Admin | Tasks &amp; Directives</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -126,7 +126,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Pending</div>
-                                    <div class="h1 mb-0" id="stat-pending">—</div>
+                                    <div class="h1 mb-0" id="stat-pending">-</div>
                                 </div>
                             </div>
                         </div>
@@ -134,7 +134,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Acknowledged</div>
-                                    <div class="h1 mb-0" id="stat-acknowledged">—</div>
+                                    <div class="h1 mb-0" id="stat-acknowledged">-</div>
                                 </div>
                             </div>
                         </div>
@@ -142,7 +142,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="subheader mb-2">Completed</div>
-                                    <div class="h1 mb-0" id="stat-completed">—</div>
+                                    <div class="h1 mb-0" id="stat-completed">-</div>
                                 </div>
                             </div>
                         </div>
@@ -250,7 +250,7 @@
                 <div id="directive-preview-step" class="d-none">
                     <div class="modal-body">
                         <div class="alert alert-danger d-none mb-3" id="directive-preview-error"></div>
-                        <p class="text-secondary small mb-3">Review before sending — each task below becomes its own
+                        <p class="text-secondary small mb-3">Review before sending: each task below becomes its own
                             tracked
                             row per recipient.</p>
                         <div id="directive-preview-list"></div>
@@ -275,7 +275,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="modal-edit-directive-error"></div>
-                    <div class="form-hint mb-3">Editing this only changes this one person's task — not the wider batch
+                    <div class="form-hint mb-3">Editing this only changes this one person's task: not the wider batch
                         it
                         may have been sent as part of.</div>
                     <div class="mb-3">
@@ -320,7 +320,9 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-comms.js"></script>
+    <script src="./assets/js/api-utils/roles.js"></script>
     <script src="./assets/js/simple-pager.js"></script>
+    <script src="./assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script src="./assets/js/rich-text-editor.js"></script>
@@ -337,6 +339,7 @@
 
         var _branchesCache = null;
         var _staffCache = null;
+        var _rolesCache = null;
         var _currentFilters = {};
         var pageAlertTimer = null;
         var _taskRowSeq = 0;
@@ -354,6 +357,16 @@
                 return !RBAC.isManagerScoped() || managedIds.indexOf(s.locationId) !== -1;
             });
             return _staffCache;
+        }
+
+        async function ensureRolesCache() {
+            if (_rolesCache) return _rolesCache;
+            _rolesCache = await Roles.fetchRoles();
+            return _rolesCache;
+        }
+
+        function roleOptionsHtml(roles) {
+            return roles.map(function (r) { return '<option value="' + r.id + '">' + esc(r.name) + '</option>'; }).join("");
         }
 
         function branchOptionsHtml(branches) {
@@ -393,10 +406,12 @@
                 '</div>' +
                 '<div class="row g-2 mb-2">' +
                 '<div class="col-6">' +
-                '<label class="form-label">Send to <span class="text-danger">*</span></label>' +
+                '<label class="form-label">Visible to <span class="text-danger">*</span></label>' +
                 '<select class="form-select task-recipient-type">' +
-                '<option value="INDIVIDUAL">One specific staff member</option>' +
-                '<option value="BRANCH">Everyone at a branch</option>' +
+                // Same "Visible to" options as Training Library (LMS) courses.
+                '<option value="STAFF">Specific staff</option>' +
+                '<option value="BRANCH">Specific branches</option>' +
+                (RBAC.isManagerScoped() ? '' : '<option value="ROLE">Specific roles</option><option value="ALL">Everyone</option>') +
                 '</select>' +
                 '</div>' +
                 '<div class="col-6">' +
@@ -405,13 +420,19 @@
                 '</div>' +
                 '</div>' +
                 '<div class="mb-0 task-staff-wrap">' +
-                '<label class="form-label">Staff member <span class="text-danger">*</span></label>' +
-                '<select class="form-select task-staff"><option value="">Loading staff…</option></select>' +
+                '<select class="form-select task-staff" id="' + rowId + '-staff" multiple></select>' +
+                '<div class="form-hint">Each selected staff member gets their own copy of the task.</div>' +
                 '</div>' +
                 '<div class="mb-0 d-none task-branch-wrap">' +
-                '<label class="form-label">Branch <span class="text-danger">*</span></label>' +
-                '<select class="form-select task-branch"><option value="">Loading branches…</option></select>' +
-                '<div class="form-hint">Creates one independent task per staff member there — each tracks their own status separately.</div>' +
+                '<select class="form-select task-branch" id="' + rowId + '-branches" multiple></select>' +
+                '<div class="form-hint">Every active staff member at the selected branches gets their own copy: each tracks their own status.</div>' +
+                '</div>' +
+                '<div class="mb-0 d-none task-role-wrap">' +
+                '<select class="form-select task-role" id="' + rowId + '-roles" multiple></select>' +
+                '<div class="form-hint">Every active staff member with at least one of the selected roles gets their own copy.</div>' +
+                '</div>' +
+                '<div class="mb-0 d-none task-all-wrap">' +
+                '<div class="text-secondary small">Every active staff member gets their own copy of this task: no selection needed.</div>' +
                 '</div>';
             container.appendChild(row);
             RichTextEditor.attach(row.querySelector('.task-body'));
@@ -425,16 +446,44 @@
             var typeSelect = row.querySelector(".task-recipient-type");
             typeSelect.addEventListener("change", function () { onTaskRecipientTypeChange(row); });
 
-            ensureStaffCache().then(function (list) { row.querySelector(".task-staff").innerHTML = staffOptionsHtml(list); }).catch(function () { });
-            ensureBranchesCache().then(function (list) { row.querySelector(".task-branch").innerHTML = branchOptionsHtml(list); }).catch(function () { });
+            ensureStaffCache().then(function (list) {
+                row.querySelector(".task-staff").innerHTML = staffOptionsHtml(list);
+                MultiSelectDropdown.attach(rowId + "-staff", { placeholder: "Select staff…" });
+            }).catch(function () { });
+            ensureBranchesCache().then(function (list) {
+                row.querySelector(".task-branch").innerHTML = branchOptionsHtml(list);
+                MultiSelectDropdown.attach(rowId + "-branches", { placeholder: "Select branches…" });
+            }).catch(function () { });
+            if (!RBAC.isManagerScoped()) {
+                ensureRolesCache().then(function (list) {
+                    row.querySelector(".task-role").innerHTML = roleOptionsHtml(list);
+                    MultiSelectDropdown.attach(rowId + "-roles", { placeholder: "Select roles…" });
+                }).catch(function () {
+                    row.querySelector(".task-role-wrap").insertAdjacentHTML("beforeend", '<div class="text-danger small mt-1">Could not load roles.</div>');
+                });
+            }
 
             return row;
         }
 
         function onTaskRecipientTypeChange(row) {
             var type = row.querySelector(".task-recipient-type").value;
-            row.querySelector(".task-staff-wrap").classList.toggle("d-none", type !== "INDIVIDUAL");
+            row.querySelector(".task-staff-wrap").classList.toggle("d-none", type !== "STAFF");
             row.querySelector(".task-branch-wrap").classList.toggle("d-none", type !== "BRANCH");
+            row.querySelector(".task-role-wrap").classList.toggle("d-none", type !== "ROLE");
+            row.querySelector(".task-all-wrap").classList.toggle("d-none", type !== "ALL");
+        }
+
+        function rowSelection(row, cls) {
+            var sel = row.querySelector(cls);
+            return {
+                ids: Array.from(sel.selectedOptions).map(function (o) { return o.value; }),
+                labels: Array.from(sel.selectedOptions).map(function (o) { return o.textContent; }),
+            };
+        }
+
+        function shortList(labels, plural) {
+            return labels.length <= 2 ? labels.join(", ") : labels.length + " " + plural;
         }
 
         function setPageAlert(type, message) {
@@ -492,10 +541,10 @@
                             var assignedTo = d.targetStaff ? d.targetStaff.name + " (" + (d.targetStaff.staffCode || "") + ")" : "-";
                             var dueCell = d.dueDate
                                 ? '<span class="' + (isOverdue(d) ? "text-danger fw-semibold" : "") + '">' + StaffComms.formatDate(d.dueDate) + (isOverdue(d) ? " (overdue)" : "") + '</span>'
-                                : '<span class="text-secondary">—</span>';
+                                : '<span class="text-secondary">-</span>';
                             var evidenceCell = d.evidenceUrl
                                 ? '<button type="button" class="btn btn-ghost-primary btn-sm directive-view-evidence" data-id="' + d.id + '">View</button>'
-                                : '<span class="text-secondary small">—</span>';
+                                : '<span class="text-secondary small">-</span>';
                             return '<tr>' +
                                 '<td class="fw-semibold">' + esc(d.title) + '</td>' +
                                 '<td>' + esc(assignedTo) + '</td>' +
@@ -546,7 +595,7 @@
             try {
                 var staffList = await Staff.getOptions({ locationId: RBAC.scopeBranchId(branchId) || undefined });
                 document.getElementById("filter-staff").innerHTML = '<option value="">All staff</option>' + staffOptionsHtml(staffList);
-            } catch (e) { /* non-fatal — staff filter just stays at "All staff" */ }
+            } catch (e) { /* non-fatal: staff filter just stays at "All staff" */ }
         }
 
         function applyFiltersFromInputs() {
@@ -675,22 +724,24 @@
                 var task = { title: title, body: body };
                 if (due) task.dueDate = due;
 
-                if (type === "INDIVIDUAL") {
-                    var staffId = row.querySelector(".task-staff").value;
-                    if (!staffId) { errEl.textContent = label + ": select a staff member."; errEl.classList.remove("d-none"); return null; }
-                    task.targetStaffId = staffId;
-                    task._recipientLabel = (function () {
-                        var opt = row.querySelector(".task-staff").selectedOptions[0];
-                        return opt ? opt.textContent : "";
-                    })();
+                task.audience = type;
+                if (type === "STAFF") {
+                    var staffSel = rowSelection(row, ".task-staff");
+                    if (!staffSel.ids.length) { errEl.textContent = label + ": select at least one staff member."; errEl.classList.remove("d-none"); return null; }
+                    task.staffIds = staffSel.ids;
+                    task._recipientLabel = shortList(staffSel.labels, "staff members");
+                } else if (type === "BRANCH") {
+                    var branchSel = rowSelection(row, ".task-branch");
+                    if (!branchSel.ids.length) { errEl.textContent = label + ": select at least one branch."; errEl.classList.remove("d-none"); return null; }
+                    task.branchIds = branchSel.ids;
+                    task._recipientLabel = "Everyone at " + shortList(branchSel.labels, "branches");
+                } else if (type === "ROLE") {
+                    var roleSel = rowSelection(row, ".task-role");
+                    if (!roleSel.ids.length) { errEl.textContent = label + ": select at least one role."; errEl.classList.remove("d-none"); return null; }
+                    task.roleIds = roleSel.ids;
+                    task._recipientLabel = "Everyone with the role " + shortList(roleSel.labels, "roles");
                 } else {
-                    var branchId = row.querySelector(".task-branch").value;
-                    if (!branchId) { errEl.textContent = label + ": select a branch."; errEl.classList.remove("d-none"); return null; }
-                    task.targetLocationId = branchId;
-                    task._recipientLabel = "Everyone at " + (function () {
-                        var opt = row.querySelector(".task-branch").selectedOptions[0];
-                        return opt ? opt.textContent : "this branch";
-                    })();
+                    task._recipientLabel = "Every active staff member";
                 }
                 tasks.push(task);
             }
@@ -732,12 +783,12 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Sending…';
             try {
-                var result = payload.tasks.length === 1 && !payload.tasks[0].targetLocationId
+                var result = payload.tasks.length === 1
                     ? await StaffComms.createDirective(payload.tasks[0])
                     : await StaffComms.bulkCreateDirectives(payload);
                 bootstrap.Modal.getInstance(document.getElementById("modal-directive")).hide();
                 if (result && result.failedCount) {
-                    flashPageAlert("warning", result.succeededCount + " task(s) sent, " + result.failedCount + " failed — check the list and resend those.");
+                    flashPageAlert("warning", result.succeededCount + " task(s) sent, " + result.failedCount + " failed: check the list and resend those.");
                 } else {
                     flashPageAlert("success", "Task(s) sent successfully.");
                 }

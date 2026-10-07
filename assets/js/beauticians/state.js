@@ -1,5 +1,5 @@
 /**
- * beauticians/state.js — central page state for Beauticians admin page
+ * beauticians/state.js: central page state for Beauticians admin page
  */
 (function (global) {
     'use strict';

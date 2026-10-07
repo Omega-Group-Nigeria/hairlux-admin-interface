@@ -1,5 +1,5 @@
 /**
- * beauticians/index.js — bootstraps the Beauticians admin page modules
+ * beauticians/index.js: bootstraps the Beauticians admin page modules
  *
  * Load order (required):
  *   state.js → utils.js → api.js → ui.js → handlers.js → index.js
@@ -9,7 +9,7 @@
 
     var BP = global.BeauticiansPage;
     if (!BP || !BP.Handlers || !BP.Handlers.init) {
-        console.error('[BeauticiansPage] modules failed to load — check script tags / order');
+        console.error('[BeauticiansPage] modules failed to load: check script tags / order');
         return;
     }
 

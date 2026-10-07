@@ -1,5 +1,5 @@
 /**
- * shop/handlers.js — loaders, CRUD actions, event binding
+ * shop/handlers.js: loaders, CRUD actions, event binding
  */
 (function (global) {
     'use strict';
@@ -359,7 +359,7 @@ async function loadCategoriesTable() {
                     '<button class="btn btn-sm btn-ghost-primary btn-cat-edit" data-id="' + c.id + '" data-name="' + escAttr(c.name) + '" data-desc="' + escAttr(c.description || "") + '">Edit</button>' +
                     '<button class="btn btn-sm btn-ghost-danger btn-cat-delete" data-id="' + c.id + '" data-name="' + escAttr(c.name) + '">Delete</button></div>';
             }
-            return '<tr data-id="' + c.id + '"><td class="fw-semibold">' + esc(c.name) + '</td><td class="text-secondary small">' + esc(c.description || "—") + '</td><td class="text-center">' + (c.productCount || 0) + '</td><td>' + actions + '</td></tr>';
+            return '<tr data-id="' + c.id + '"><td class="fw-semibold">' + esc(c.name) + '</td><td class="text-secondary small">' + esc(c.description || "-") + '</td><td class="text-center">' + (c.productCount || 0) + '</td><td>' + actions + '</td></tr>';
         }).join("");
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
@@ -486,7 +486,7 @@ async function openRegionModal() {
     setTimeout(function () { document.getElementById("new-region-name").focus(); }, 300);
 }
 
-/** States for the region modal — same reference data as the settings "Add Service Areas" picker (NG_CITIES), falling back to the states JSON. */
+/** States for the region modal: same reference data as the settings "Add Service Areas" picker (NG_CITIES), falling back to the states JSON. */
 function regionStateList() {
     if (global.NG_CITIES && typeof global.NG_CITIES === "object") {
         return Object.keys(global.NG_CITIES).sort();
@@ -501,7 +501,7 @@ function populateRegionStateSelect() {
     }).join("");
 }
 
-/** City multiselect state — locked until a state is chosen. */
+/** City multiselect state: locked until a state is chosen. */
 function resetRegionCitySelect() {
     var el = document.getElementById("new-region-city");
     el.innerHTML = '<option value="">Select a state first…</option>';
@@ -533,7 +533,7 @@ function onRegionStateChange() {
     } else {
         resetRegionCitySelect();
         if (state) {
-            flashPageAlert("warning", 'No city list available for "' + state + '" — the region will be state-wide.');
+            flashPageAlert("warning", 'No city list available for "' + state + '": the region will be state-wide.');
         }
     }
     toggleRegionNameField();
@@ -700,7 +700,7 @@ async function loadOrders(opts) {
         }
         tbody.innerHTML = rows.map(function (o) {
             var itemCount = (o.items || []).reduce(function (sum, i) { return sum + (i.quantity || 1); }, 0);
-            var customer = (o.user && (o.user.firstName || o.user.email)) ? [o.user.firstName, o.user.lastName].filter(Boolean).join(" ") || o.user.email : (o.userId ? o.userId.slice(0, 8) + "…" : "—");
+            var customer = (o.user && (o.user.firstName || o.user.email)) ? [o.user.firstName, o.user.lastName].filter(Boolean).join(" ") || o.user.email : (o.userId ? o.userId.slice(0, 8) + "…" : "-");
             return '<tr class="order-row" data-id="' + o.id + '">' +
                 '<td><span class="fw-semibold">' + esc(Shop.orderRef(o)) + '</span></td>' +
                 '<td class="small">' + esc(customer) + '</td>' +
@@ -731,7 +731,7 @@ async function openOrderDetail(id) {
             '<div class="p-3 border-bottom"><div class="text-secondary small">Order Code</div><div class="fw-semibold">' + esc(Shop.orderRef(o)) + '</div></div>' +
             '<div class="p-3 border-bottom"><div class="d-flex justify-content-between"><span>Status</span>' + Shop.statusBadge(o.status) + '</div>' +
             '<div class="mt-2 text-secondary small">Placed ' + Shop.formatDateTime(o.createdAt) + '</div></div>' +
-            '<div class="p-3 border-bottom"><div class="subheader mb-2">Delivery Address</div><div class="small">' + esc(addr.fullAddress || [addr.streetAddress, addr.city, addr.state].filter(Boolean).join(", ") || "—") + '</div></div>' +
+            '<div class="p-3 border-bottom"><div class="subheader mb-2">Delivery Address</div><div class="small">' + esc(addr.fullAddress || [addr.streetAddress, addr.city, addr.state].filter(Boolean).join(", ") || "-") + '</div></div>' +
             '<div class="p-3 border-bottom"><table class="table table-sm mb-0"><thead><tr><th>Item</th><th class="text-end">Qty</th><th class="text-end">Price</th></tr></thead><tbody>' + itemsHtml + '</tbody></table>' +
             '<div class="mt-3 small"><div class="d-flex justify-content-between"><span>Subtotal</span><span>' + Shop.formatMoney(o.subtotal) + '</span></div>' +
             '<div class="d-flex justify-content-between"><span>Delivery</span><span>' + Shop.formatMoney(o.deliveryFee) + '</span></div>' +

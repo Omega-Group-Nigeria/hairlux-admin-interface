@@ -1,5 +1,5 @@
 /**
- * Leave & Permission Requests API helper (admin) — /admin/leave-requests
+ * Leave & Permission Requests API helper (admin): /admin/leave-requests
  * Requires: auth.js (Auth.fetch)
  */
 const LeaveRequests = (function () {
@@ -8,8 +8,8 @@ const LeaveRequests = (function () {
         SICK_LEAVE: 'Sick Leave',
         CASUAL_LEAVE: 'Casual Leave',
         DAY_OFF: 'Day Off',
-        PERMISSION_LATE_ARRIVAL: 'Permission — Late Arrival',
-        PERMISSION_EARLY_DEPARTURE: 'Permission — Early Departure',
+        PERMISSION_LATE_ARRIVAL: 'Permission: Late Arrival',
+        PERMISSION_EARLY_DEPARTURE: 'Permission: Early Departure',
         OVERTIME_REQUEST: 'Overtime Request',
     };
 
@@ -24,7 +24,7 @@ const LeaveRequests = (function () {
     }
 
     function formatDate(value) {
-        if (!value) return '—';
+        if (!value) return '-';
         const d = new Date(value);
         return d.toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: 'numeric' });
     }

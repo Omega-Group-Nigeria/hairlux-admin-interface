@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin — Lifecycle Campaigns</title>
+    <title>Hairlux Admin | Lifecycle Campaigns</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -74,7 +74,7 @@
                             <div class="page-pretitle">Contacts</div>
                             <h2 class="page-title">Lifecycle Campaigns</h2>
                             <div class="text-secondary small mt-1">Automated messages for customers in a lifecycle
-                                stage — sent to customers already in the stage and to anyone who moves into it later
+                                stage: sent to customers already in the stage and to anyone who moves into it later
                                 (e.g. Active → At Risk).</div>
                         </div>
                         <div class="col-auto ms-auto d-flex gap-2">
@@ -249,7 +249,7 @@
                                 <option value="INACTIVE">Inactive</option>
                                 <option value="NEVER_VISITED">Never Visited</option>
                             </select>
-                            <div class="form-hint">Customers in this stage receive the message — everyone already
+                            <div class="form-hint">Customers in this stage receive the message: everyone already
                                 here (if ticked below) and anyone who lands here later.</div>
                         </div>
                         <div class="col-md-6">
@@ -270,7 +270,7 @@
                                 <option value="PREMIUM">Premium</option>
                                 <option value="VIP">VIP</option>
                             </select>
-                            <div class="form-hint">Further narrows the audience — leave as "Any" to ignore Value
+                            <div class="form-hint">Further narrows the audience: leave as "Any" to ignore Value
                                 tier entirely.</div>
                         </div>
                         <div class="col-md-6">
@@ -290,11 +290,11 @@
                     <div class="mb-3">
                         <label class="form-label">Message</label>
                         <textarea class="form-control" id="f-body" rows="4"
-                            placeholder="Hi {{firstName}}, it's been a while since your last visit on {{lastVisitDate}} — we'd love to see you again!"></textarea>
+                            placeholder="Hi {{firstName}}, it's been a while since your last visit on {{lastVisitDate}}: we'd love to see you again!"></textarea>
                         <div class="form-hint">Available placeholders: <code>{{firstName}}</code>,
                             <code>{{lastName}}</code>, <code>{{lastVisitDate}}</code>.
                             <span id="f-body-plain-hint" style="display:none">SMS and push notifications are sent as
-                                plain text — formatting is dropped, links are written out in full.</span>
+                                plain text: formatting is dropped, links are written out in full.</span>
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
@@ -315,7 +315,7 @@
                             <input class="form-check-input" type="checkbox" id="f-send-immediately" checked>
                             <label class="form-check-label" for="f-send-immediately">Send immediately</label>
                         </div>
-                        <div class="form-hint">As soon as the next check runs (within 15 minutes) — no delay, no
+                        <div class="form-hint">As soon as the next check runs (within 15 minutes): no delay, no
                             time-of-day restriction. Uncheck to set a delay and/or a specific send time instead.
                         </div>
                     </div>
@@ -340,7 +340,7 @@
                                 in this stage</label>
                         </div>
                         <div class="form-hint">When saved (or switched on, or its stage/filters change), everyone
-                            currently in the stage who matches the filters is queued too — at the send time above,
+                            currently in the stage who matches the filters is queued too: at the send time above,
                             respecting opt-outs and cooldown. Untick to only message people who enter the stage from
                             now on. Editing just the wording never re-sends.</div>
                     </div>
@@ -395,7 +395,7 @@
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label mb-0">Steps <span class="text-secondary small">(execution order — top
+                        <label class="form-label mb-0">Steps <span class="text-secondary small">(execution order: top
                                 to bottom)</span></label>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="sf-add-step">+ Add
                             step</button>
@@ -565,7 +565,7 @@
                         ? '<span class="badge bg-green-lt">Enabled</span>'
                         : '<span class="badge bg-secondary-lt">Disabled</span>';
                     var bodyText = RichTextEditor.toText(t.bodyTemplate || '');
-                    var preview = (t.subject ? '<strong>' + esc(t.subject) + '</strong> — ' : '') + esc(bodyText.slice(0, 60)) + (bodyText.length > 60 ? '…' : '');
+                    var preview = (t.subject ? '<strong>' + esc(t.subject) + '</strong>: ' : '') + esc(bodyText.slice(0, 60)) + (bodyText.length > 60 ? '…' : '');
                     var sendTime = (t.sendHour !== null && t.sendHour !== undefined)
                         ? (String(t.sendHour).padStart(2, '0') + ':' + String(t.sendMinute || 0).padStart(2, '0'))
                         : '<span class="text-secondary">Any time</span>';
@@ -591,7 +591,7 @@
                 }).join('')
                 : '<tr><td colspan="9" class="text-center text-secondary py-5">' +
                 (_allTemplates.length === 0
-                    ? 'No templates yet — nothing sends until at least one is created.'
+                    ? 'No templates yet: nothing sends until at least one is created.'
                     : 'No templates match the current filters.') +
                 '</td></tr>';
         }
@@ -709,7 +709,7 @@
                         var statusBadge = s.isEnabled
                             ? '<span class="badge bg-green-lt">Enabled</span>'
                             : '<span class="badge bg-secondary-lt">Disabled</span>';
-                        var stepsSummary = (s.steps || []).map(function (step) { return step.template ? (CHANNEL_LABELS[step.template.channel] || step.template.channel) : '\u2014'; }).join(' → ') || '<span class="text-secondary">No steps</span>';
+                        var stepsSummary = (s.steps || []).map(function (step) { return step.template ? (CHANNEL_LABELS[step.template.channel] || step.template.channel) : '-'; }).join(' → ') || '<span class="text-secondary">No steps</span>';
                         return '<tr>' +
                             '<td class="fw-semibold">' + esc(LIFECYCLE_LABELS[s.targetLifecycle] || s.targetLifecycle) + '</td>' +
                             '<td>' + esc(s.name) + '</td>' +
@@ -723,7 +723,7 @@
                             '</td>' +
                             '</tr>';
                     }).join('')
-                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No sequences yet — nothing sends until at least one is created.</td></tr>';
+                    : '<tr><td colspan="6" class="text-center text-secondary py-5">No sequences yet: nothing sends until at least one is created.</td></tr>';
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || 'Failed to load.') + '</td></tr>';
             }
@@ -757,14 +757,14 @@
             var templateSel = block.querySelector('.step-template');
             var previewEl = block.querySelector('.step-template-preview');
             templateSel.innerHTML = '<option value="">Select a template…</option>' + _allTemplates.map(function (t) {
-                return '<option value="' + t.id + '">' + esc(LIFECYCLE_LABELS[t.targetLifecycle] || t.targetLifecycle) + ' \u2014 ' + esc(CHANNEL_LABELS[t.channel] || t.channel) + '</option>';
+                return '<option value="' + t.id + '">' + esc(LIFECYCLE_LABELS[t.targetLifecycle] || t.targetLifecycle) + ': ' + esc(CHANNEL_LABELS[t.channel] || t.channel) + '</option>';
             }).join('');
 
             var syncPreview = function () {
                 var t = _allTemplates.find(function (x) { return x.id === templateSel.value; });
                 if (!t) { previewEl.textContent = ''; return; }
                 var bodyText = RichTextEditor.toText(t.bodyTemplate || '');
-                var preview = (t.subject ? t.subject + ' \u2014 ' : '') + bodyText.slice(0, 100) + (bodyText.length > 100 ? '…' : '');
+                var preview = (t.subject ? t.subject + ': ' : '') + bodyText.slice(0, 100) + (bodyText.length > 100 ? '…' : '');
                 previewEl.textContent = preview;
             };
             templateSel.addEventListener('change', function () { syncPreview(); syncTargetLifecycleHint(); });
@@ -882,7 +882,7 @@
             // Step 1 actually targets.
             var firstStepTemplate = _allTemplates.find(function (t) { return t.id === steps[0].templateId; });
             if (!firstStepTemplate) {
-                errEl.textContent = 'Could not determine this sequence\'s target lifecycle from Step 1\'s template — try reselecting it.';
+                errEl.textContent = 'Could not determine this sequence\'s target lifecycle from Step 1\'s template: try reselecting it.';
                 errEl.classList.remove('d-none');
                 return;
             }
@@ -934,7 +934,7 @@
             try {
                 var a = await preview();
                 if (!a.toEnroll) {
-                    alert('Nobody new to send to — ' + describeAudience(a) + '.');
+                    alert('Nobody new to send to: ' + describeAudience(a) + '.');
                     return;
                 }
                 if (!confirm('Send to ' + a.toEnroll + ' existing customer' + (a.toEnroll === 1 ? '' : 's') + '?\n\n' +

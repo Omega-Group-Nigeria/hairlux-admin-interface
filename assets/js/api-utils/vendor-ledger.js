@@ -1,5 +1,5 @@
 /**
- * Vendor Ledger API helper — /admin/vendor-ledger
+ * Vendor Ledger API helper: /admin/vendor-ledger
  * Requires: auth.js (Auth.fetch)
  */
 const VendorLedger = (function () {
@@ -27,7 +27,7 @@ const VendorLedger = (function () {
     }
 
     function formatMoney(amount) {
-        if (amount == null) return '\u2014';
+        if (amount == null) return '-';
         return '\u20a6' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 

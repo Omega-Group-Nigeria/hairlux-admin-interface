@@ -1,5 +1,5 @@
 /**
- * Approval Chains API helper — /admin/approval-chains
+ * Approval Chains API helper: /admin/approval-chains
  * Requires: auth.js (Auth.fetch)
  */
 const ApprovalChains = (function () {

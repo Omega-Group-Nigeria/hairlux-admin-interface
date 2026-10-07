@@ -1,5 +1,5 @@
 /**
- * Staff Operations API helper (admin) — /admin/attendance, /admin/inventory/*
+ * Staff Operations API helper (admin): /admin/attendance, /admin/inventory/*
  * Depends on auth.js (Auth.fetch) being loaded first.
  */
 const StaffOps = (() => {

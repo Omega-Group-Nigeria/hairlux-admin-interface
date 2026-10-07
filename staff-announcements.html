@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Hairlux Admin — Announcements</title>
+    <title>Hairlux Admin | Announcements</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
@@ -190,7 +190,7 @@
                             <label class="form-label" for="announcement-title">Title <span
                                     class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="announcement-title" maxlength="200"
-                                placeholder="e.g. Public holiday closure — 3rd October">
+                                placeholder="e.g. Public holiday closure: 3rd October">
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="announcement-body">Message <span
@@ -217,31 +217,34 @@
                                 Leave blank for no
                                 expiry.</div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Audience <span class="text-danger">*</span></label>
-                            <select class="form-select" id="announcement-target">
-                                <option value="ALL">All Staff</option>
-                                <option value="BRANCH">A specific branch</option>
-                                <option value="INDIVIDUAL">A specific staff member</option>
+                        <!-- Same "Visible to" options as Training Library (LMS) courses -->
+                        <div class="mb-0">
+                            <label class="form-label">Visible to <span class="text-danger">*</span></label>
+                            <select class="form-select mb-2" id="announcement-target">
+                                <option value="ROLE">Specific roles</option>
+                                <option value="BRANCH">Specific branches</option>
+                                <option value="INDIVIDUAL">Specific staff</option>
+                                <option value="ALL">Everyone</option>
                             </select>
-                        </div>
-                        <div class="mb-3 d-none" id="announcement-branch-wrap">
-                            <label class="form-label" for="announcement-branch">Branch <span
-                                    class="text-danger">*</span></label>
-                            <select class="form-select" id="announcement-branch">
-                                <option value="">Loading branches…</option>
-                            </select>
-                        </div>
-                        <div class="mb-0 d-none" id="announcement-staff-wrap">
-                            <label class="form-label" for="announcement-staff">Staff member <span
-                                    class="text-danger">*</span></label>
-                            <select class="form-select" id="announcement-staff">
-                                <option value="">Loading staff…</option>
-                            </select>
+                            <div class="d-none" id="announcement-role-wrap">
+                                <select class="form-select" id="announcement-roles" multiple></select>
+                                <div class="form-hint">Staff with at least one of the selected roles will see this announcement.</div>
+                            </div>
+                            <div class="d-none" id="announcement-branch-wrap">
+                                <select class="form-select" id="announcement-branches" multiple></select>
+                                <div class="form-hint">Staff at any of the selected branches will see this announcement.</div>
+                            </div>
+                            <div class="d-none" id="announcement-staff-wrap">
+                                <select class="form-select" id="announcement-staff" multiple></select>
+                                <div class="form-hint">Only the selected staff members will see this announcement.</div>
+                            </div>
+                            <div class="d-none" id="announcement-all-wrap">
+                                <div class="text-secondary small">Every staff member will see this announcement: no selection needed.</div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Step 2: preview — exactly how staff will see it -->
+                    <!-- Step 2: preview: exactly how staff will see it -->
                     <div id="announcement-preview-step" class="d-none">
                         <div class="text-secondary small mb-2">This is how it will appear to the recipient:</div>
                         <div class="card">
@@ -281,7 +284,9 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-comms.js"></script>
+    <script src="./assets/js/api-utils/roles.js"></script>
     <script src="./assets/js/simple-pager.js"></script>
+    <script src="./assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <!-- Quill rich text editor -->
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
@@ -298,6 +303,7 @@
 
         var _branchesLoaded = false;
         var _staffLoaded = false;
+        var _rolesLoaded = false;
         var pageAlertTimer = null;
 
         function setPageAlert(type, message) {
@@ -347,8 +353,14 @@
                         if (managedIds.indexOf(s.locationId) !== -1) myStaffIds[s.id] = true;
                     });
                     announcements = announcements.filter(function (a) {
-                        if (a.target === "BRANCH") return managedIds.indexOf(a.targetLocationId) !== -1;
-                        if (a.target === "INDIVIDUAL") return !!myStaffIds[a.targetStaffId];
+                        if (a.target === "BRANCH") {
+                            var bIds = (a.branches && a.branches.length) ? a.branches.map(function (b) { return b.branchId; }) : [a.targetLocationId];
+                            return bIds.some(function (id) { return managedIds.indexOf(id) !== -1; });
+                        }
+                        if (a.target === "INDIVIDUAL") {
+                            var sIds = (a.staff && a.staff.length) ? a.staff.map(function (s) { return s.staffId; }) : [a.targetStaffId];
+                            return sIds.some(function (id) { return !!myStaffIds[id]; });
+                        }
                         return true;
                     });
                 }
@@ -404,10 +416,11 @@
             if (_branchesLoaded) return;
             try {
                 var branches = RBAC.filterBranches(await Staff.getLocations());
-                var sel = document.getElementById("announcement-branch");
+                var sel = document.getElementById("announcement-branches");
                 sel.innerHTML = branches.map(function (b) {
                     return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
                 }).join("");
+                MultiSelectDropdown.attach("announcement-branches", { placeholder: "Select branches…" });
                 _branchesLoaded = true;
             } catch (e) {
                 flashPageAlert("danger", "Failed to load branches: " + (e.message || ""));
@@ -425,10 +438,40 @@
                 sel.innerHTML = staffList.map(function (s) {
                     return '<option value="' + s.id + '">' + esc(Staff.fullName(s)) + ' (' + esc(s.staffCode || "") + ')</option>';
                 }).join("");
+                MultiSelectDropdown.attach("announcement-staff", { placeholder: "Select staff…" });
                 _staffLoaded = true;
             } catch (e) {
                 flashPageAlert("danger", "Failed to load staff: " + (e.message || ""));
             }
+        }
+
+        async function ensureRolesLoaded() {
+            if (_rolesLoaded) return;
+            var sel = document.getElementById("announcement-roles");
+            try {
+                var roles = await Roles.fetchRoles();
+                sel.innerHTML = roles.map(function (r) {
+                    return '<option value="' + r.id + '">' + esc(r.name) + '</option>';
+                }).join("");
+                MultiSelectDropdown.attach("announcement-roles", { placeholder: "Select roles…" });
+                _rolesLoaded = true;
+            } catch (e) {
+                flashPageAlert("danger", "Failed to load roles: " + (e.message || ""));
+            }
+        }
+
+        function selectedValues(id) {
+            return Array.from(document.getElementById(id).selectedOptions).map(function (o) { return o.value; });
+        }
+
+        function setSelectedValues(id, ids) {
+            var set = new Set(ids || []);
+            Array.from(document.getElementById(id).options).forEach(function (o) { o.selected = set.has(o.value); });
+            MultiSelectDropdown.refresh(id);
+        }
+
+        function selectedLabels(id) {
+            return Array.from(document.getElementById(id).selectedOptions).map(function (o) { return o.textContent; });
         }
 
         var _annQuill = null;
@@ -445,8 +488,11 @@
 
         function onTargetChange() {
             var target = document.getElementById("announcement-target").value;
+            document.getElementById("announcement-role-wrap").classList.toggle("d-none", target !== "ROLE");
             document.getElementById("announcement-branch-wrap").classList.toggle("d-none", target !== "BRANCH");
             document.getElementById("announcement-staff-wrap").classList.toggle("d-none", target !== "INDIVIDUAL");
+            document.getElementById("announcement-all-wrap").classList.toggle("d-none", target !== "ALL");
+            if (target === "ROLE") ensureRolesLoaded();
             if (target === "BRANCH") ensureBranchesLoaded();
             if (target === "INDIVIDUAL") ensureStaffLoaded();
         }
@@ -479,11 +525,13 @@
             document.getElementById("modal-announcement-title").textContent = editing ? "Edit Announcement" : "New Announcement";
             document.getElementById("announcement-title").value = editing ? editing.title : "";
             document.getElementById("announcement-expires").value = editing && editing.expiresAt ? editing.expiresAt.slice(0, 10) : "";
-            // Branch managers can't publish company-wide -- Branch or Individual only.
+            // Branch managers can't publish company-wide or to a role -- branches or staff only.
             var targetSel = document.getElementById("announcement-target");
             if (RBAC.isManagerScoped()) {
-                var allOpt = targetSel.querySelector('option[value="ALL"]');
-                if (allOpt) allOpt.remove();
+                ["ALL", "ROLE"].forEach(function (v) {
+                    var opt = targetSel.querySelector('option[value="' + v + '"]');
+                    if (opt) opt.remove();
+                });
             }
             targetSel.value = editing ? editing.target : (RBAC.isManagerScoped() ? "BRANCH" : "ALL");
             onTargetChange();
@@ -493,7 +541,7 @@
             document.getElementById("announcement-remove-video").checked = false;
             var removeVideoWrap = document.getElementById("announcement-remove-video-wrap");
             if (editing && editing.videoKey) {
-                document.getElementById("announcement-video-status").textContent = "A video is already attached — choose a new file only to replace it.";
+                document.getElementById("announcement-video-status").textContent = "A video is already attached: choose a new file only to replace it.";
                 removeVideoWrap.classList.remove("d-none");
             } else {
                 document.getElementById("announcement-video-status").textContent = "";
@@ -508,18 +556,29 @@
                 // than empty.
                 _annQuill.setContents([]);
                 _annQuill.clipboard.dangerouslyPasteHTML(editing.body || "");
-                if (editing.target === "BRANCH" && editing.targetLocationId) {
-                    ensureBranchesLoaded().then(function () {
-                        document.getElementById("announcement-branch").value = editing.targetLocationId;
+                // Audience lists, falling back to the older single fields.
+                if (editing.target === "ROLE") {
+                    ensureRolesLoaded().then(function () {
+                        setSelectedValues("announcement-roles", (editing.roles || []).map(function (r) { return r.adminRoleId; }));
                     });
                 }
-                if (editing.target === "INDIVIDUAL" && editing.targetStaffId) {
+                if (editing.target === "BRANCH") {
+                    ensureBranchesLoaded().then(function () {
+                        var ids = (editing.branches || []).map(function (b) { return b.branchId; });
+                        setSelectedValues("announcement-branches", ids.length ? ids : [editing.targetLocationId]);
+                    });
+                }
+                if (editing.target === "INDIVIDUAL") {
                     ensureStaffLoaded().then(function () {
-                        document.getElementById("announcement-staff").value = editing.targetStaffId;
+                        var ids = (editing.staff || []).map(function (s) { return s.staffId; });
+                        setSelectedValues("announcement-staff", ids.length ? ids : [editing.targetStaffId]);
                     });
                 }
             } else {
                 _annQuill.setContents([]);
+                ["announcement-roles", "announcement-branches", "announcement-staff"].forEach(function (id) {
+                    if (document.getElementById(id).options.length) setSelectedValues(id, []);
+                });
             }
 
             showFormStep();
@@ -536,8 +595,9 @@
             if (expiresDate) {
                 payload.expiresAt = new Date(expiresDate + 'T23:59:59').toISOString();
             }
-            if (target === "BRANCH") payload.targetLocationId = document.getElementById("announcement-branch").value;
-            if (target === "INDIVIDUAL") payload.targetStaffId = document.getElementById("announcement-staff").value;
+            if (target === "ROLE") payload.roleIds = selectedValues("announcement-roles");
+            if (target === "BRANCH") payload.branchIds = selectedValues("announcement-branches");
+            if (target === "INDIVIDUAL") payload.staffIds = selectedValues("announcement-staff");
             // Dev Feedback Round 9: video announcements -- a new file always
             // takes priority; removeVideo only sent when there's no new file
             // (matches the backend's own precedence, see updateAnnouncement).
@@ -552,17 +612,10 @@
 
         function targetLabelFromForm(target) {
             if (target === "ALL") return "All Staff";
-            if (target === "BRANCH") {
-                var branchSel = document.getElementById("announcement-branch");
-                var opt = branchSel.options[branchSel.selectedIndex];
-                return opt ? opt.textContent : "Branch";
-            }
-            if (target === "INDIVIDUAL") {
-                var staffSel = document.getElementById("announcement-staff");
-                var opt2 = staffSel.options[staffSel.selectedIndex];
-                return opt2 ? opt2.textContent : "Individual";
-            }
-            return target;
+            var id = target === "ROLE" ? "announcement-roles" : target === "BRANCH" ? "announcement-branches" : "announcement-staff";
+            var labels = selectedLabels(id);
+            if (labels.length <= 2) return labels.join(", ");
+            return labels.length + (target === "ROLE" ? " roles" : target === "BRANCH" ? " branches" : " staff");
         }
 
         function showPreview() {
@@ -574,8 +627,9 @@
 
             if (!gathered.title) { errEl.textContent = "Title is required."; errEl.classList.remove("d-none"); return; }
             if (!gathered.bodyText) { errEl.textContent = "Message is required."; errEl.classList.remove("d-none"); return; }
-            if (gathered.target === "BRANCH" && !payload.targetLocationId) { errEl.textContent = "Select a branch."; errEl.classList.remove("d-none"); return; }
-            if (gathered.target === "INDIVIDUAL" && !payload.targetStaffId) { errEl.textContent = "Select a staff member."; errEl.classList.remove("d-none"); return; }
+            if (gathered.target === "ROLE" && !(payload.roleIds || []).length) { errEl.textContent = "Select at least one role."; errEl.classList.remove("d-none"); return; }
+            if (gathered.target === "BRANCH" && !(payload.branchIds || []).length) { errEl.textContent = "Select at least one branch."; errEl.classList.remove("d-none"); return; }
+            if (gathered.target === "INDIVIDUAL" && !(payload.staffIds || []).length) { errEl.textContent = "Select at least one staff member."; errEl.classList.remove("d-none"); return; }
 
             // The admin's own just-typed Quill content, rendered as-is for their
             // own preview of what they wrote -- final sanitization still happens

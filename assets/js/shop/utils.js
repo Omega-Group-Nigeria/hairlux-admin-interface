@@ -1,5 +1,5 @@
 /**
- * shop/utils.js — alerts, escaping, table loading helpers
+ * shop/utils.js: alerts, escaping, table loading helpers
  */
 (function (global) {
     'use strict';

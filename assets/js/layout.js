@@ -1,5 +1,5 @@
 /**
- * layout.js — Hairlux Admin
+ * layout.js: Hairlux Admin
  * Renders shared sidebar navigation and initializes header user menu.
  * Requires nav-config.js (NavConfig) to be loaded first.
  */
