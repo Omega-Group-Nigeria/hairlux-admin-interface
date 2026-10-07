@@ -53,7 +53,8 @@ const StaffComms = (() => {
         Object.keys(payload).forEach((key) => {
             var value = payload[key];
             if (value === undefined || value === null) return;
-            fd.append(key, value);
+            // Audience id lists go as JSON text over multipart (the API parses them back).
+            fd.append(key, Array.isArray(value) ? JSON.stringify(value) : value);
         });
         return fd;
     }
@@ -154,10 +155,27 @@ const StaffComms = (() => {
         return [entity.createdBy.firstName, entity.createdBy.lastName].filter(Boolean).join(" ") || "Unknown";
     }
 
+    /** Short "Visible to" summary: names when one or two are chosen, otherwise a count. */
+    function listLabel(names, singular, plural) {
+        names = names.filter(Boolean);
+        if (!names.length) return null;
+        if (names.length <= 2) return names.join(", ");
+        return names.length + " " + plural;
+    }
+
     function announcementTargetLabel(a) {
         if (a.target === "ALL") return "All Staff";
-        if (a.target === "BRANCH") return a.targetLocation ? a.targetLocation.name : "Branch";
-        if (a.target === "INDIVIDUAL") return a.targetStaff ? a.targetStaff.name : "Individual";
+        if (a.target === "ROLE") {
+            return listLabel((a.roles || []).map(function (r) { return r.adminRole && r.adminRole.name; }), "role", "roles") || "Roles";
+        }
+        if (a.target === "BRANCH") {
+            return listLabel((a.branches || []).map(function (b) { return b.branch && b.branch.name; }), "branch", "branches")
+                || (a.targetLocation ? a.targetLocation.name : "Branch");
+        }
+        if (a.target === "INDIVIDUAL") {
+            return listLabel((a.staff || []).map(function (s) { return s.staff && s.staff.name; }), "staff member", "staff")
+                || (a.targetStaff ? a.targetStaff.name : "Individual");
+        }
         return a.target;
     }
 

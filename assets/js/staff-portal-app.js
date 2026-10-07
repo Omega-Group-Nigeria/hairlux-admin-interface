@@ -324,7 +324,7 @@ function renderDashboard() {
         : '';
       previewHtml +=
         '<div class="banner"><div class="tag">\uD83D\uDCE2 Management: ' +
-        (topAnnouncement.target === 'ALL' ? 'All Staff' : topAnnouncement.target === 'BRANCH' ? 'Your Branch' : 'You') +
+        (topAnnouncement.target === 'ALL' ? 'All Staff' : topAnnouncement.target === 'BRANCH' ? 'Your Branch' : topAnnouncement.target === 'ROLE' ? 'Your Role' : 'You') +
         '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3>' + topVideoHtml + '<div class="ann-body">' + topAnnouncement.body + '</div>' +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(topAnnouncement.createdAt) + '</div></div>';
     }
@@ -590,10 +590,31 @@ async function loadTraining() {
   }
 }
 
+// Full screen viewing for training resources. Requested straight from the
+// click, before any await, because browsers only allow it then; where it
+// isn't allowed the viewer still fills the whole window.
+function enterViewerFullscreen(el) {
+  try {
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req && !document.fullscreenElement) {
+      const p = req.call(el);
+      if (p && p.catch) p.catch(() => {});
+    }
+  } catch (e) { /* not supported */ }
+}
+
+function exitViewerFullscreen() {
+  try {
+    if (document.fullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } catch (e) { /* ignore */ }
+}
+
 async function openTrainingViewer(id) {
   const box = document.getElementById('training-viewer-box');
+  const overlay = document.getElementById('training-viewer-overlay');
   box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted)">Loading…</div>';
-  document.getElementById('training-viewer-overlay').style.display = 'flex';
+  overlay.style.display = 'flex';
+  enterViewerFullscreen(overlay);
 
   try {
     // Fresh, short-lived URLs fetched every time this is opened -- never
@@ -611,17 +632,17 @@ async function openTrainingViewer(id) {
       // right-click save. None of this is unbypassable -- it's the same
       // "inconvenient, not impossible" mitigation level already agreed on
       // for this feature.
-      mainContentHtml = '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;border-radius:var(--r2);margin-bottom:12px" src="' + course.videoUrl + '"></video>';
+      mainContentHtml = '<video controls controlsList="nodownload noremoteplayback" disablePictureInPicture oncontextmenu="return false" style="width:100%;max-height:78vh;background:#000;border-radius:var(--r2);margin-bottom:12px" src="' + course.videoUrl + '"></video>';
       if (course.pdfUrl) {
         attachmentsHtml =
           '<div style="font-size:13px;font-weight:600;color:var(--muted);margin:16px 0 8px">Attachments</div>' +
-          '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2)"></iframe>';
+          '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:85vh;border:1px solid var(--line);border-radius:var(--r2)"></iframe>';
       }
     } else if (course.pdfUrl) {
       // #toolbar=0&navpanes=0 hides the browser's built-in PDF viewer
       // toolbar (including its own download button) in Chrome/Firefox --
       // not honored by every browser, same caveat as above.
-      mainContentHtml = '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px"></iframe>';
+      mainContentHtml = '<iframe src="' + course.pdfUrl + '#toolbar=0&navpanes=0" style="width:100%;height:calc(100vh - 120px);min-height:400px;border:1px solid var(--line);border-radius:var(--r2);margin-bottom:12px"></iframe>';
     }
 
     box.innerHTML =
@@ -639,6 +660,7 @@ async function openTrainingViewer(id) {
 }
 
 function closeTrainingViewer() {
+  exitViewerFullscreen();
   document.getElementById('training-viewer-overlay').style.display = 'none';
   // Clear content on close rather than just hiding -- the video element
   // would otherwise keep its src (and the short-lived presigned URL
@@ -719,12 +741,11 @@ function openAddressVerificationModal() {
     '<div class="oc-field"><label>LGA (Local Government Area)</label><input type="text" id="av-lga" value="' + escapeHtml((av && av.lgaName) || '') + '"></div>' +
     '<div class="oc-field"><label>State</label><input type="text" id="av-state" value="' + escapeHtml((av && av.stateName) || '') + '"></div>' +
     '<div class="oc-field"><label>Landmark <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
-    // Everything below maps to QoreID's addressExtraData -- all optional in
-    // the API and hidden here. Markup kept (not deleted) so it can be
-    // switched back on by removing display:none from this wrapper.
-    '<div id="av-extra-fields" style="display:none">' +
+    // Everything below maps to QoreID's addressExtraData, which Physical
+    // Address Verification Pro requires. Shown and sent with every submission.
+    '<div id="av-extra-fields">' +
     '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
-    '<div class="oc-field"><label>Description</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
+    '<div class="oc-field"><label>Description of the property</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
 
     '<div class="oc-field">' +
     '<label>Location</label>' +
@@ -798,9 +819,24 @@ async function submitAddressVerificationForm() {
   formData.append('lgaName', lga);
   formData.append('stateName', state);
   const landmark = val('av-landmark'); if (landmark) formData.append('landmark', landmark);
-  // addressExtraData fields (house number, description, location, building
-  // details, photos) are hidden and optional -- not sent. Sending the hidden
-  // dropdowns' default values would report details nobody actually chose.
+
+  // QoreID addressExtraData (required by Physical Address Verification Pro).
+  const description = val('av-general-description');
+  if (!description) { showOnboardingModalError('Describe the property so the field agent can find it (e.g. gate colour, nearby landmark).'); return; }
+  formData.append('generalDescription', description);
+  formData.append('buildingDescription', val('av-building-description'));
+  formData.append('buildingStatus', val('av-building-status'));
+  formData.append('buildingType', val('av-building-type'));
+  formData.append('hasGateAndFence', document.getElementById('av-has-gate-and-fence').checked ? 'true' : 'false');
+  const houseNumber = val('av-house-number'); if (houseNumber) formData.append('houseNumber', houseNumber);
+  const colour = val('av-building-colour'); if (colour) formData.append('buildingColour', colour);
+  const lat = val('av-latitude'), lng = val('av-longitude');
+  if ((lat && !lng) || (!lat && lng)) { showOnboardingModalError('Enter both latitude and longitude, or leave both empty.'); return; }
+  if (lat && lng) { formData.append('latitude', lat); formData.append('longitude', lng); }
+  ['av-photo1', 'av-photo2', 'av-photo3'].forEach((id, i) => {
+    const file = document.getElementById(id).files[0];
+    if (file) formData.append('photo' + (i + 1), file);
+  });
 
   const btn = document.getElementById('oc-modal-submit-btn');
   btn.disabled = true;
@@ -1439,7 +1475,7 @@ async function loadAnnouncements() {
 
   screen.innerHTML = announcements
     .map((a) => {
-      const targetLabel = a.target === 'ALL' ? 'All Staff' : a.target === 'BRANCH' ? 'Your Branch' : 'Just You';
+      const targetLabel = a.target === 'ALL' ? 'All Staff' : a.target === 'BRANCH' ? 'Your Branch' : a.target === 'ROLE' ? 'Your Role' : 'Just You';
       const fromName = a.createdBy ? [a.createdBy.firstName, a.createdBy.lastName].filter(Boolean).join(' ') : 'Management';
       // a.body is server-sanitized HTML, not plain text (see note above) --
       // rendered directly, no escaping, no extra wrapping <p>.

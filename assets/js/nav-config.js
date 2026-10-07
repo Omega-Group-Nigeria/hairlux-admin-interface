@@ -193,6 +193,7 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Expense Requests", href: "expense-requests.html", permission: read("expense_requests:read") },
                 { label: "Branch Bank Accounts", href: "branch-bank-accounts.html", permission: read("branch_bank_accounts:read") },
                 { label: "Branch Finance", href: "branch-finance.html", permission: read("branch_finance:read") },
+                { label: "Software Costs", href: "software-costs.html", permission: read("software_costs:read") },
             ],
         }),
         {
