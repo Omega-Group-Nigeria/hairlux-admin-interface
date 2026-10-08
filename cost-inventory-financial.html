@@ -313,6 +313,11 @@
                             <div class="h3 mb-0" id="cif-loans">-</div>
                             <div class="small text-secondary" id="cif-loans-note">-</div>
                         </div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
+                            <div class="text-secondary small">Software Costs (per month)</div>
+                            <div class="h3 mb-0" id="cif-software-runrate">-</div>
+                            <div class="small text-secondary" id="cif-software-note">-</div>
+                        </div></div></div>
                     </div>
 
                     <div class="row row-deck row-cards mb-3">
@@ -339,6 +344,24 @@
                                     </table>
                                 </div>
                                 <div id="cif-purchases-pager"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Software Bills Due (next 30 days)</h3>
+                                    <div class="card-actions"><a href="software-costs.html" class="btn btn-sm btn-outline-secondary">Software Costs</a></div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table table-sm">
+                                        <thead><tr><th>Service</th><th>Due</th><th class="text-end">Amount (NGN)</th></tr></thead>
+                                        <tbody id="cif-software-tbody"><tr><td colspan="3" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer small text-secondary" id="cif-software-footnote">Not added to Total Obligations: a renewal is not owed until its date. Paid bills already count in Expenses above.</div>
                             </div>
                         </div>
                     </div>
@@ -388,6 +411,14 @@
             return new Date(d).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
+        /** Readable names for the ledger's expense categories. */
+        var CATEGORY_LABEL = {
+            SALARY: 'Salary', REFUND: 'Refund', OPERATIONAL_EXPENSE: 'Operational Expense',
+            LOGISTICS: 'Logistics', OTHER_EXPENSE: 'Other Expense', SOFTWARE_TECHNOLOGY: 'Software & Technology',
+            VENDOR_PAYMENT: 'Vendor Payment',
+        };
+        function categoryLabel(c) { return CATEGORY_LABEL[c] || c; }
+
         /** Client-side paged table: holds the full row array and renders only
          * the current SimplePager page into the tbody. */
         function pagedTable(tbodyId, pagerId, colspan, emptyMsg, rowHtml) {
@@ -425,7 +456,7 @@
         });
         var categoryTable = pagedTable('cif-category-tbody', 'cif-category-pager', 3, 'No expenses recorded in this period.', function (c) {
             var growthClass = c.growthPercent > 0 ? 'text-red' : (c.growthPercent < 0 ? 'text-green' : 'text-secondary');
-            return '<tr><td>' + esc(c.category) + (c.unusualMovement ? ' <span class="badge bg-orange-lt ms-1">unusual</span>' : '') + '</td>' +
+            return '<tr><td>' + esc(categoryLabel(c.category)) + (c.unusualMovement ? ' <span class="badge bg-orange-lt ms-1">unusual</span>' : '') + '</td>' +
                 '<td class="text-end">' + BusinessIntelligence.formatMoney(c.amount) + '</td>' +
                 '<td class="text-end ' + growthClass + '">' + BusinessIntelligence.formatPercent(c.growthPercent) + '</td></tr>';
         });
@@ -640,7 +671,7 @@
             _cifCategoryChart = destroyChart(_cifCategoryChart);
             _cifCategoryChart = renderVBar(
                 'cif-category-chart', 200,
-                d.byCategory.map(function (c) { return c.category; }),
+                d.byCategory.map(function (c) { return categoryLabel(c.category); }),
                 d.byCategory.map(function (c) { return c.amount; }),
                 function (v) { return BusinessIntelligence.formatMoney(v); },
                 'var(--tblr-red)'
@@ -709,6 +740,39 @@
             purchasesTable.set(d.purchasesByPaymentStatus);
 
             vendorTable.set(d.outstandingPayables.byVendor);
+
+            renderSoftwareCosts(d.softwareCosts);
+        }
+
+        /** Software Costs: monthly run rate and the bills due in the next 30 days. */
+        function renderSoftwareCosts(sc) {
+            var tbody = document.getElementById('cif-software-tbody');
+            if (!sc) {
+                document.getElementById('cif-software-runrate').textContent = '-';
+                document.getElementById('cif-software-note').textContent = 'Not available';
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-secondary py-3">Not available.</td></tr>';
+                return;
+            }
+            document.getElementById('cif-software-runrate').textContent = BusinessIntelligence.formatMoney(sc.monthlyRunRateNgn);
+            var parts = ['Due in 30 days: ' + BusinessIntelligence.formatMoney(sc.dueNext30Days.amountNgn) + ' (' + sc.dueNext30Days.count + ')'];
+            if (sc.overdue.count) parts.push('Overdue: ' + BusinessIntelligence.formatMoney(sc.overdue.amountNgn) + ' (' + sc.overdue.count + ')');
+            var noteEl = document.getElementById('cif-software-note');
+            noteEl.textContent = parts.join(' · ');
+            noteEl.className = 'small ' + (sc.overdue.count ? 'text-red' : 'text-secondary');
+
+            tbody.innerHTML = sc.bills.length ? sc.bills.map(function (b) {
+                var when = b.daysUntilDue < 0
+                    ? '<span class="text-red">' + Math.abs(b.daysUntilDue) + ' day(s) overdue</span>'
+                    : (b.daysUntilDue === 0 ? 'Today' : 'In ' + b.daysUntilDue + ' day(s)');
+                var amount = b.amountNgn === null ? '<span class="text-secondary">No naira amount</span>'
+                    : (b.estimate ? 'About ' : '') + BusinessIntelligence.formatMoney(b.amountNgn);
+                return '<tr><td>' + esc(b.name) + '</td><td>' + fmtDate(b.nextDueDate) + ' <span class="small text-secondary">' + when + '</span></td><td class="text-end">' + amount + '</td></tr>';
+            }).join('') : '<tr><td colspan="3" class="text-center text-secondary py-3">No software bills due in the next 30 days.</td></tr>';
+
+            var foot = ['Not added to Total Obligations: a renewal is not owed until its date. Paid bills already count in Expenses above, as Software & Technology.'];
+            if (sc.paymentsNotInLedger) foot.push(sc.paymentsNotInLedger + ' foreign payment(s) have no naira cost yet, so they are not in Expenses.');
+            foot.push(sc.note);
+            document.getElementById('cif-software-footnote').textContent = foot.join(' ');
         }
 
         init();
