@@ -85,7 +85,7 @@ const ExpenseRequests = (function () {
         });
     }
 
-    /** Retry a FAILED branch payout (or start one that never ran). */
+    /** Retry a FAILED payout (or start one that never ran). */
     async function retryPayout(id) {
         return apiFetch(`/admin/expense-requests/${id}/payout/retry`, { method: 'POST' });
     }
@@ -95,5 +95,21 @@ const ExpenseRequests = (function () {
         return apiFetch(`/admin/expense-requests/${id}/payout/resync`, { method: 'POST' });
     }
 
-    return { getAll, getOne, create, update, submit, remove, approve, reject, overrideAmount, reverse, retryPayout, resyncPayout };
+    let _banksCache = null;
+    /** Banks (Paystack) for the "Account to pay" picker. */
+    async function banks() {
+        if (!_banksCache) _banksCache = await apiFetch('/admin/expense-requests/banks');
+        return _banksCache;
+    }
+
+    /** Account name for a bank + account number. Saves nothing. */
+    async function resolveAccount(bankCode, accountNumber) {
+        return apiFetch('/admin/expense-requests/resolve-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bankCode, accountNumber }),
+        });
+    }
+
+    return { getAll, getOne, create, update, submit, remove, approve, reject, overrideAmount, reverse, retryPayout, resyncPayout, banks, resolveAccount };
 })();

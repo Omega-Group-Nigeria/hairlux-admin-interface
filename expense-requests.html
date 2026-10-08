@@ -191,9 +191,9 @@
                 <div class="modal-body">
                     <div class="alert alert-danger d-none" id="form-error"></div>
                     <div class="alert alert-warning">
-                        Paying a vendor or supplier for goods/services? Use <strong>Purchase Requests</strong> instead
-: it tracks that vendor's outstanding balance and keeps this amount from being counted
-                        as both a Purchase liability and an Expense.
+                        <div>Paying a vendor or supplier for goods/services? Use <strong>Purchase Requests</strong> instead:
+                        it tracks that vendor's outstanding balance and keeps this amount from being counted
+                        as both a Purchase liability and an Expense.</div>
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
@@ -232,7 +232,7 @@
                                 <option value="CARD">Card</option>
                                 <option value="WALLET">Wallet</option>
                             </select>
-                            <div class="form-hint">For a branch expense, Bank Transfer or Not specified means the amount is sent to the branch's approved bank account once the request is approved.</div>
+                            <div class="form-hint">Bank Transfer (or Not specified with an account added below) means the amount is sent to the account to pay once the request is approved.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Attachment URL <span class="text-secondary">(optional)</span></label>
@@ -240,11 +240,35 @@
                                 placeholder="Receipt or invoice link">
                         </div>
                     </div>
+                    <!-- Account to pay (2026-10-08): each expense is paid into its own account. -->
+                    <div class="card card-sm mt-3" id="f-recipient-card">
+                        <div class="card-body">
+                            <div class="fw-semibold mb-1">Account to pay</div>
+                            <div class="text-secondary small mb-2" id="f-recipient-help">The person or business receiving this money. It is paid by bank transfer when the request is approved.</div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Bank</label>
+                                    <select class="form-select" id="f-recipient-bank">
+                                        <option value="">Loading banks...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Account number</label>
+                                    <input type="text" inputmode="numeric" maxlength="10" class="form-control" id="f-recipient-number" placeholder="10-digit account number">
+                                </div>
+                                <div class="col-12">
+                                    <div class="small text-secondary">Account name</div>
+                                    <div class="fw-semibold" id="f-recipient-name">Choose the bank and enter the account number to see the name.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-check mt-3">
                         <input class="form-check-input" type="checkbox" id="f-vendor-ack">
                         <label class="form-check-label" for="f-vendor-ack">
-                            I confirm this is <strong>not</strong> a payment to a vendor/supplier for goods or services
-: those must go through Purchase Requests.
+                            I confirm this is <strong>not</strong> a payment to a vendor/supplier for goods or services:
+                            those must go through Purchase Requests.
                         </label>
                     </div>
                 </div>
@@ -328,9 +352,66 @@
         var PAYOUT_BADGE = { PROCESSING: 'bg-azure-lt', COMPLETED: 'bg-green-lt', FAILED: 'bg-red-lt' };
         var PAYOUT_LABEL = { PROCESSING: 'Sending', COMPLETED: 'Paid', FAILED: 'Failed' };
 
-        // A branch expense paid by bank transfer (or no method chosen) is sent to the branch account.
+        // Paid by bank transfer (or no method chosen) into the request's own account.
         function isPayoutRequest(r) {
-            return !!r.branchId && (!r.paymentMethod || r.paymentMethod === 'BANK_TRANSFER');
+            if (r.paymentMethod && r.paymentMethod !== 'BANK_TRANSFER') return false;
+            return !!r.recipientAccountNumber;
+        }
+
+        function recipientBlock(name, bank, number) {
+            return '<div class="fw-semibold">' + esc(name) + '</div><div class="text-secondary small">' + esc(bank) + ' · ' + esc(number) + '</div>';
+        }
+
+        // ── Account to pay (form) ────────────────────────────────────────
+        var NON_TRANSFER = ['CASH', 'POS', 'CARD', 'WALLET'];
+        var _recipientResolvedFor = null; // "bankCode:accountNumber" the shown name belongs to
+        var _recipientTimer = null;
+
+        async function loadRecipientBanks(selected) {
+            var sel = document.getElementById('f-recipient-bank');
+            try {
+                var banks = await ExpenseRequests.banks();
+                sel.innerHTML = '<option value="">Select bank</option>' + banks.map(function (b) {
+                    return '<option value="' + esc(b.code) + '">' + esc(b.name) + '</option>';
+                }).join('');
+                sel.value = selected || '';
+            } catch (e) {
+                sel.innerHTML = '<option value="">Could not load banks</option>';
+            }
+        }
+
+        function syncRecipientCard() {
+            var method = document.getElementById('f-payment-method').value;
+            var card = document.getElementById('f-recipient-card');
+            card.classList.toggle('d-none', NON_TRANSFER.indexOf(method) !== -1);
+            document.getElementById('f-recipient-help').textContent = method === 'BANK_TRANSFER'
+                ? 'Required. The person or business receiving this money. It is paid by bank transfer when the request is approved.'
+                : 'Optional. Add the account of the person or business receiving this money and it is paid by bank transfer when the request is approved.';
+        }
+
+        function scheduleRecipientResolve() {
+            clearTimeout(_recipientTimer);
+            _recipientResolvedFor = null;
+            var bank = document.getElementById('f-recipient-bank').value;
+            var number = document.getElementById('f-recipient-number').value;
+            var nameEl = document.getElementById('f-recipient-name');
+            nameEl.classList.remove('text-danger');
+            if (!bank || number.length !== 10) {
+                nameEl.textContent = 'Choose the bank and enter the account number to see the name.';
+                return;
+            }
+            nameEl.textContent = 'Checking account...';
+            _recipientTimer = setTimeout(async function () {
+                try {
+                    var r = await ExpenseRequests.resolveAccount(bank, number);
+                    if (document.getElementById('f-recipient-bank').value !== bank || document.getElementById('f-recipient-number').value !== number) return;
+                    nameEl.textContent = r.accountName;
+                    _recipientResolvedFor = bank + ':' + number;
+                } catch (e) {
+                    nameEl.textContent = e.message || 'Could not verify this account.';
+                    nameEl.classList.add('text-danger');
+                }
+            }, 400);
         }
 
         function payoutCell(r) {
@@ -363,6 +444,12 @@
 
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
             document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('f-payment-method').addEventListener('change', syncRecipientCard);
+            document.getElementById('f-recipient-bank').addEventListener('change', scheduleRecipientResolve);
+            document.getElementById('f-recipient-number').addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                scheduleRecipientResolve();
+            });
             document.getElementById('btn-override-save').addEventListener('click', saveOverride);
             document.getElementById('f-branch-filter').addEventListener('change', load);
             document.getElementById('f-category-filter').addEventListener('change', load);
@@ -523,6 +610,11 @@
                     document.getElementById('f-payment-method').value = r.paymentMethod || '';
                     document.getElementById('f-attachment-url').value = r.attachmentUrl || '';
                     document.getElementById('f-vendor-ack').checked = false;
+                    document.getElementById('f-recipient-number').value = r.recipientAccountNumber || '';
+                    document.getElementById('f-recipient-name').textContent = r.recipientAccountName || 'Choose the bank and enter the account number to see the name.';
+                    document.getElementById('f-recipient-name').classList.remove('text-danger');
+                    _recipientResolvedFor = r.recipientAccountNumber ? r.recipientBankCode + ':' + r.recipientAccountNumber : null;
+                    loadRecipientBanks(r.recipientBankCode);
                 } catch (e) {
                     alert(e.message || 'Failed to load.');
                     return;
@@ -535,7 +627,13 @@
                 document.getElementById('f-payment-method').value = '';
                 document.getElementById('f-attachment-url').value = '';
                 document.getElementById('f-vendor-ack').checked = false;
+                document.getElementById('f-recipient-number').value = '';
+                document.getElementById('f-recipient-name').textContent = 'Choose the bank and enter the account number to see the name.';
+                document.getElementById('f-recipient-name').classList.remove('text-danger');
+                _recipientResolvedFor = null;
+                loadRecipientBanks('');
             }
+            syncRecipientCard();
             new bootstrap.Modal(document.getElementById('modal-form')).show();
         }
 
@@ -556,6 +654,19 @@
                 errEl.classList.remove('d-none'); return;
             }
 
+            var method = document.getElementById('f-payment-method').value;
+            var recipientBank = document.getElementById('f-recipient-bank').value;
+            var recipientNumber = document.getElementById('f-recipient-number').value;
+            var usesAccount = NON_TRANSFER.indexOf(method) === -1;
+            if (usesAccount) {
+                if (method === 'BANK_TRANSFER' && !recipientBank && !recipientNumber) {
+                    errEl.textContent = 'Enter the bank account this expense should be paid into.'; errEl.classList.remove('d-none'); return;
+                }
+                if ((recipientBank || recipientNumber) && _recipientResolvedFor !== recipientBank + ':' + recipientNumber) {
+                    errEl.textContent = 'Wait for the account name to show (choose the bank and enter all 10 digits), then save.'; errEl.classList.remove('d-none'); return;
+                }
+            }
+
             var payload = {
                 branchId: RBAC.scopeBranchId(document.getElementById('f-branch').value) || undefined,
                 category: document.getElementById('f-category').value,
@@ -563,6 +674,8 @@
                 description: description,
                 paymentMethod: document.getElementById('f-payment-method').value || undefined,
                 attachmentUrl: document.getElementById('f-attachment-url').value.trim() || undefined,
+                recipientBankCode: usesAccount && recipientBank ? recipientBank : undefined,
+                recipientAccountNumber: usesAccount && recipientNumber ? recipientNumber : undefined,
                 vendorPurchaseAcknowledged: true,
             };
 
@@ -634,16 +747,16 @@
             try {
                 var result = await ExpenseRequests.approve(id, comment);
                 if (result && result.payoutStatus === 'FAILED') {
-                    alert('Approved, but the payout to the branch account did not go through:\n\n' + (result.payoutFailureReason || 'Unknown error') + '\n\nFix the cause, then use "Retry payout".');
+                    alert('Approved, but the payout did not go through:\n\n' + (result.payoutFailureReason || 'Unknown error') + '\n\nFix the cause, then use "Retry payout".');
                 } else if (result && result.payoutStatus === 'PROCESSING') {
-                    alert('Approved. The transfer to the branch account has started and will show as Paid once Paystack confirms it.');
+                    alert('Approved. The transfer to the account to pay has started and will show as Paid once Paystack confirms it.');
                 }
                 load();
             } catch (e) { alert(e.message || 'Failed to approve: you may not be the current approver for this request.'); }
         }
 
         async function retryPayout(id) {
-            if (!confirm('Send this approved amount to the branch\'s approved bank account now?')) return;
+            if (!confirm('Send this approved amount to the account to pay now?')) return;
             try {
                 var result = await ExpenseRequests.retryPayout(id);
                 if (result && result.payoutStatus === 'FAILED') alert('Payout failed:\n\n' + (result.payoutFailureReason || 'Unknown error'));
@@ -705,12 +818,12 @@
 
                 var payoutHtml = '';
                 if (isPayoutRequest(r)) {
-                    payoutHtml = '<hr><div class="fw-semibold mb-2">Payout to branch account</div>' +
+                    payoutHtml = '<hr><div class="fw-semibold mb-2">Payout by bank transfer</div>' +
                         '<div class="row g-2">' +
                         '<div class="col-6"><div class="text-secondary small">Payout status</div><div>' + payoutCell(r) + '</div></div>' +
                         (r.payoutAccountNumber
-                            ? '<div class="col-6"><div class="text-secondary small">Paid to</div><div>' + esc(r.payoutAccountName) + '<br><span class="text-secondary small">' + esc(r.payoutBankName) + ' · ' + esc(r.payoutAccountNumber) + '</span></div></div>'
-                            : '<div class="col-6"><div class="text-secondary small">Paid to</div><div class="text-secondary small">The branch\'s approved bank account, when approved</div></div>') +
+                            ? '<div class="col-6"><div class="text-secondary small">Paid to</div><div>' + recipientBlock(r.payoutAccountName, r.payoutBankName, r.payoutAccountNumber) + '</div></div>'
+                            : '<div class="col-6"><div class="text-secondary small">Account to pay (when approved)</div><div>' + recipientBlock(r.recipientAccountName, r.recipientBankName, r.recipientAccountNumber) + '</div></div>') +
                         (r.paidOutAt ? '<div class="col-6"><div class="text-secondary small">Paid on</div><div>' + new Date(r.paidOutAt).toLocaleString() + '</div></div>' : '') +
                         (r.paystackTransferReference ? '<div class="col-6"><div class="text-secondary small">Transfer reference</div><div class="small">' + esc(r.paystackTransferReference) + '</div></div>' : '') +
                         (r.payoutStatus === 'FAILED' && r.payoutFailureReason ? '<div class="col-12"><div class="alert alert-danger mb-0 mt-2">' + esc(r.payoutFailureReason) + '</div></div>' : '') +

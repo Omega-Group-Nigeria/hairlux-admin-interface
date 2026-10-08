@@ -1,7 +1,8 @@
 /**
  * Software Costs page (software-costs.html).
  * Paid services that run the software, their payments, reminders and a cost
- * overview. Standalone: nothing here feeds Business Intelligence or Expenses.
+ * overview. Each payment is posted (by the API) to the finance ledger as a
+ * Software & Technology expense, so it reaches Finance and BI.
  * Requires: auth.js, rbac.js, software-costs.js, multi-select-dropdown.js,
  * csv-export.js, apexcharts.min.js, tabler.min.js
  */
@@ -604,7 +605,7 @@
     async function deleteService(id) {
         var s = serviceById(id) || _detail;
         if (!s) return;
-        if (!confirm('Delete ' + s.name + ' and ALL its recorded payments and receipts?\n\nThis cannot be undone. To keep the history, cancel the service instead.')) return;
+        if (!confirm('Delete ' + s.name + '?\n\nThis cannot be undone. A service with payments in Finance cannot be deleted: cancel it to keep its history, or delete its payments first.')) return;
         try {
             await SoftwareCosts.deleteService(id);
             if (_detailId === id) modal('modal-detail').hide();
@@ -628,6 +629,7 @@
         formError('payment-error', null);
         _payCtx = { mode: 'create', serviceId: serviceId || null, payment: null };
         $('modal-payment-title').textContent = 'Record payment';
+        setLedgerLock(false, '');
         $('pay-receipt-wrap').classList.remove('d-none');
         $('pay-receipt').value = '';
         $('pay-date').max = today();
@@ -678,7 +680,7 @@
         if (cur === 'NGN') return;
         var amount = Number($('pay-amount').value);
         var naira = Number($('pay-ngn').value);
-        var hint = 'Lets this payment count in the naira totals.';
+        var hint = 'Required: Finance records every payment in naira.';
         var last = _summary && _summary.runRate.ratesUsed[cur];
         if (amount > 0 && naira > 0) hint = 'Rate: ' + ngn(naira / amount) + ' per ' + cur + '.';
         else if (last) hint += ' Last rate used: ' + ngn(last.rate) + ' per ' + cur + ' (' + fmtDate(last.asOf) + ').';
@@ -717,6 +719,14 @@
         $('pay-advance-hint').textContent = hint;
     }
 
+    /** Locks the money fields of a payment that is already in the finance ledger. */
+    function setLedgerLock(locked, note) {
+        ['pay-currency', 'pay-amount', 'pay-ngn', 'pay-date'].forEach(function (id) { $(id).disabled = locked; });
+        // Wrapped in one div: Tabler's .alert is a flex row.
+        $('pay-ledger-note').innerHTML = note ? '<div>' + note + '</div>' : '';
+        $('pay-ledger-note').classList.toggle('d-none', !note);
+    }
+
     async function openPaymentEdit(paymentId) {
         var p = findPayment(paymentId);
         if (!p) return;
@@ -739,6 +749,13 @@
         $('pay-reference').value = p.reference || '';
         $('pay-notes').value = p.notes || '';
         $('pay-ngn-wrap').classList.toggle('d-none', p.currency === 'NGN');
+        if (p.ledger) {
+            setLedgerLock(true, 'In Finance as <strong>' + esc(p.ledger.reference) + '</strong>. Amount, currency, naira cost and date are locked. ' +
+                'To correct them, delete this payment (Finance reverses it on the same date) and record it again.');
+        } else {
+            setLedgerLock(false, p.currency !== 'NGN' && p.amountNgn === null
+                ? 'Not in Finance yet. Add what it cost in naira and save to post it.' : '');
+        }
         syncRateHint();
         modal('modal-payment').show();
     }
@@ -759,6 +776,10 @@
         if (file && file.size > 10 * 1024 * 1024) return formError('payment-error', 'The receipt must be 10MB or smaller.');
 
         var ngnRaw = $('pay-ngn').value.trim();
+        if (currency !== 'NGN' && ngnRaw === '' && _payCtx.mode === 'create') {
+            return formError('payment-error', 'Enter what this ' + currency + ' payment cost in naira. Finance records every payment in naira.');
+        }
+        if (currency !== 'NGN' && ngnRaw !== '' && !(Number(ngnRaw) > 0)) return formError('payment-error', 'Enter the naira cost.');
         var payload = {
             amount: amount,
             currency: currency,
@@ -807,6 +828,7 @@
         var p = findPayment(id);
         if (!p) return;
         var note = p.advancedDueTo ? '\n\nIf the due date has not moved since, it goes back to ' + fmtDate(p.settledDueDate) + '.' : '';
+        if (p.ledger) note += '\n\nIts Finance entry ' + p.ledger.reference + ' is reversed on the same date.';
         if (!confirm('Delete the ' + money(p.amount, p.currency) + ' payment for ' + p.subscription.name + ' on ' + fmtDate(p.paidAt) + '?' + note)) return;
         try {
             var r = await SoftwareCosts.deletePayment(id);
@@ -875,6 +897,12 @@
         return out.join('');
     }
 
+    /** The payment's finance ledger reference, or a note that it is not posted yet. */
+    function ledgerTag(p) {
+        if (p.ledger) return '<div class="small"><a href="financial-transactions.html" class="text-secondary" title="Posted to Finance">' + esc(p.ledger.reference) + '</a></div>';
+        return '<div class="small text-warning" title="Add the naira cost to post it">Not in Finance</div>';
+    }
+
     function periodText(p) {
         if (!p.periodStart && !p.periodEnd) return '<span class="text-secondary">-</span>';
         return '<span class="small">' + fmtDate(p.periodStart) + ' to ' + fmtDate(p.periodEnd) + '</span>';
@@ -907,7 +935,7 @@
                 '<td><a href="#" class="text-reset fw-semibold" data-act="view" data-id="' + p.subscriptionId + '">' + esc(p.subscription.name) + '</a>' +
                 '<div class="text-secondary small">' + esc(p.subscription.categoryLabel) + '</div></td>' +
                 '<td class="text-end text-nowrap">' + esc(money(p.amount, p.currency)) + '</td>' +
-                '<td class="text-end text-nowrap">' + (p.amountNgn === null ? '<span class="text-secondary small">Not converted</span>' : esc(ngn(p.amountNgn))) + '</td>' +
+                '<td class="text-end text-nowrap">' + (p.amountNgn === null ? '<span class="text-secondary small">Not converted</span>' : esc(ngn(p.amountNgn))) + ledgerTag(p) + '</td>' +
                 '<td>' + periodText(p) + '</td>' +
                 '<td class="small">' + esc(p.paymentMethod || '-') + (p.reference ? '<div class="text-secondary">' + esc(p.reference) + '</div>' : '') + '</td>' +
                 '<td>' + receiptCell(p) + '</td>' +
@@ -944,6 +972,7 @@
                 { label: 'Notes', get: function (p) { return p.notes || ''; } },
                 { label: 'Receipt', get: function (p) { return p.hasReceipt ? 'Yes' : 'No'; } },
                 { label: 'Recorded by', get: function (p) { return p.recordedBy || ''; } },
+                { label: 'Finance reference', get: function (p) { return p.ledger ? p.ledger.reference : ''; } },
             ], _payments.payments);
         };
         if (_paymentsLoaded) go(); else loadPayments().then(function () { if (_payments) go(); });
@@ -985,7 +1014,7 @@
                 d.payments.map(function (p) {
                     return '<tr><td class="text-nowrap">' + fmtDate(p.paidAt) + (p.settledDueDate ? '<div class="text-secondary small">for ' + fmtDate(p.settledDueDate) + '</div>' : '') + '</td>' +
                         '<td class="text-end text-nowrap">' + esc(money(p.amount, p.currency)) + '</td>' +
-                        '<td class="text-end text-nowrap">' + (p.amountNgn === null ? '<span class="text-secondary small">-</span>' : esc(ngn(p.amountNgn))) + '</td>' +
+                        '<td class="text-end text-nowrap">' + (p.amountNgn === null ? '<span class="text-secondary small">-</span>' : esc(ngn(p.amountNgn))) + ledgerTag(p) + '</td>' +
                         '<td>' + periodText(p) + '</td>' +
                         '<td class="small">' + esc(p.paymentMethod || '-') + (p.reference ? '<div class="text-secondary">' + esc(p.reference) + '</div>' : '') + (p.notes ? '<div class="text-secondary">' + esc(p.notes) + '</div>' : '') + '</td>' +
                         '<td>' + receiptCell(p) + '</td>' +

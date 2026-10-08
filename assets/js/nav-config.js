@@ -191,7 +191,6 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Financial Dashboard", href: "financial-transactions.html", permission: read("financial_transactions:read") },
                 { label: "Profitability Report", href: "profitability-report.html", permission: read("reports:read_profitability") },
                 { label: "Expense Requests", href: "expense-requests.html", permission: read("expense_requests:read") },
-                { label: "Branch Bank Accounts", href: "branch-bank-accounts.html", permission: read("branch_bank_accounts:read") },
                 { label: "Branch Finance", href: "branch-finance.html", permission: read("branch_finance:read") },
                 { label: "Software Costs", href: "software-costs.html", permission: read("software_costs:read") },
             ],
