@@ -510,10 +510,12 @@
                 // there's actually something to review (RECEIVED) -- stays
                 // hidden at PENDING (nothing delivered yet) and once
                 // everything's already FULLY_ACCEPTED.
+                // Each action is shown only to roles that hold its permission,
+                // so nobody clicks into a "no permission" error.
                 document.getElementById('view-footer').innerHTML =
-                    '<button class="btn btn-outline-primary" onclick="openPaymentForm()">Record Payment</button>' +
-                    '<button class="btn btn-outline-success" onclick="openReceiveForm()">Receive Goods</button>' +
-                    (p.acceptanceStatus === 'RECEIVED' ? '<button class="btn btn-outline-warning" onclick="openAcceptForm()">Accept Products</button>' : '') +
+                    (RBAC.can('purchases:record_payment') ? '<button class="btn btn-outline-primary" onclick="openPaymentForm()">Record Payment</button>' : '') +
+                    (RBAC.can('purchases:receive_goods') ? '<button class="btn btn-outline-success" onclick="openReceiveForm()">Receive Goods</button>' : '') +
+                    (p.acceptanceStatus === 'RECEIVED' && RBAC.can('purchases:accept_goods') ? '<button class="btn btn-outline-warning" onclick="openAcceptForm()">Accept Products</button>' : '') +
                     '<button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>';
             } catch (e) {
                 document.getElementById('view-body').innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
