@@ -465,6 +465,14 @@
                 '<div class="detail-label">Total Amount</div>' +
                 '<div class="fw-semibold fs-4">' + Bookings.formatMoney(b.totalAmount ?? b.amount ?? 0) + '</div>' +
                 (b.paymentMethod ? '<div class="text-secondary small">' + b.paymentMethod.replace(/_/g, " ") + '</div>' : '') +
+                (b.amountPaid !== undefined && b.amountPaid !== null
+                    ? '<div class="small mt-1">Paid: <strong>' + Bookings.formatMoney(b.amountPaid) + '</strong>' +
+                      (Number(b.balanceDue) > 0 ? ' &middot; Balance to collect: <strong class="text-danger">' + Bookings.formatMoney(b.balanceDue) + '</strong>' : '') +
+                      '</div>'
+                    : '') +
+                (b.source === 'AD'
+                    ? '<div class="small mt-1"><span class="badge bg-purple-lt">Ad booking</span> <span class="text-secondary">' + escHtml(b.acquisitionChannel || '') + (b.utmCampaign ? ' &middot; ' + escHtml(b.utmCampaign) : '') + '</span></div>'
+                    : '') +
                 '</div>' +
                 '</div>' +
 
@@ -544,7 +552,17 @@
                 if (isUsed) {
                     return '<span class="text-secondary"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>This reservation has already been used.</span>';
                 }
-                return '<button class="btn btn-success" id="btn-mark-used" onclick="markAsUsed(\'' + code + '\')">' +
+                // Not fully paid yet (online deposit or pay at branch): take the balance first.
+                var due = Number(b.balanceDue) || 0;
+                var balancePicker = due > 0
+                    ? '<div class="mb-2" style="max-width:360px">' +
+                      '<label class="form-label" for="use-balance-method">Collect ' + Bookings.formatMoney(due) + ' balance by</label>' +
+                      '<select class="form-select" id="use-balance-method">' +
+                      '<option value="">Select payment method\u2026</option>' +
+                      '<option value="CASH">Cash</option><option value="BANK_TRANSFER">Bank transfer</option>' +
+                      '<option value="POS">POS</option><option value="CARD">Card</option></select></div>'
+                    : '';
+                return balancePicker + '<button class="btn btn-success" id="btn-mark-used" onclick="markAsUsed(\'' + code + '\')">' +
                     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>' +
                     'Mark as Used / Check In' +
                     '</button>';
@@ -613,6 +631,15 @@
         // ── Mark as Used (WALK_IN) ─────────────────────────────────────────────
         async function markAsUsed(code) {
             if (!code) return;
+            var methodEl = document.getElementById("use-balance-method");
+            var balanceMethod = methodEl ? methodEl.value : "";
+            if (methodEl && !balanceMethod) {
+                var a = document.getElementById("action-alert");
+                a.className = "alert alert-danger";
+                a.textContent = "Collect the balance and choose how the customer paid before checking in.";
+                methodEl.focus();
+                return;
+            }
             if (!confirm('Mark reservation "' + code + '" as used?\nThis sets the booking to IN_PROGRESS and is irreversible.')) return;
             var btn   = document.getElementById("btn-mark-used");
             var alert = document.getElementById("action-alert");
@@ -620,7 +647,7 @@
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Marking…';
             alert.className = "alert d-none";
             try {
-                await Bookings.useReservation(code);
+                await Bookings.useReservation(code, balanceMethod || undefined);
                 alert.className = "alert alert-success";
                 alert.innerHTML = '<strong>Success!</strong> Reservation marked as used. Booking is now IN_PROGRESS.';
                 document.getElementById("action-buttons").innerHTML =

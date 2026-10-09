@@ -289,9 +289,11 @@ const Bookings = (() => {
   /**
    * Mark a reservation as used → sets booking status to IN_PROGRESS. Irreversible.
    */
-  async function useReservation(code) {
+  async function useReservation(code, balancePaymentMethod) {
     const res = await Auth.fetch(`/admin/bookings/reservation/${encodeURIComponent(code)}/use`, {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(balancePaymentMethod ? { balancePaymentMethod } : {}),
     });
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Failed to mark reservation used (${res.status})`);

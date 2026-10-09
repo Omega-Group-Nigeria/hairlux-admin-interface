@@ -115,11 +115,12 @@ const SalonBookingsSelf = (function () {
         return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}`);
     }
 
-    async function confirmVerification(code, assignedStaffId) {
+    /** balancePaymentMethod: how the customer paid what was still owed (CASH, BANK_TRANSFER, POS, CARD); needed when the booking has a balance. */
+    async function confirmVerification(code, assignedStaffId, balancePaymentMethod) {
         return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}/confirm`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ assignedStaffId }),
+            body: JSON.stringify(balancePaymentMethod ? { assignedStaffId, balancePaymentMethod } : { assignedStaffId }),
         });
     }
 
