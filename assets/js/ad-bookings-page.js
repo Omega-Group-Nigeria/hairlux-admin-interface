@@ -141,6 +141,15 @@
             return '<option value="' + esc(n) + '"' + (n === current ? ' selected' : '') + '>' + esc(n) + '</option>';
         }).join('');
 
+        // Checkout source options: channels seen in this period, keeping the current pick.
+        var chSel = $('i-channel');
+        var chCurrent = chSel.value;
+        var channels = _summary.byChannel.map(function (r) { return r.key; });
+        if (chCurrent && channels.indexOf(chCurrent) === -1) channels.push(chCurrent);
+        chSel.innerHTML = '<option value="">All sources</option>' + channels.sort().map(function (n) {
+            return '<option value="' + esc(n) + '"' + (n === chCurrent ? ' selected' : '') + '>' + esc(n) + '</option>';
+        }).join('');
+
         renderBreakdown();
         renderTrend();
     }
@@ -194,13 +203,82 @@
 
     // ── Checkouts ───────────────────────────────────────────────────────────
 
-    function intentParams(extra) {
-        return Object.assign({}, filters(), {
+    /**
+     * Checkouts have their own date, branch, source and payment filters. They
+     * start as a copy of the filters at the top of the page and follow them when
+     * those change; the campaign filter at the top always applies.
+     */
+    function checkoutFilters() {
+        var byAppointment = $('i-date-by').value === 'appointment';
+        return {
+            from: $('i-from').value || undefined,
+            to: $('i-to').value || undefined,
+            branchId: $('i-branch').value || undefined,
+            campaign: $('f-campaign').value || undefined,
+            dateBy: byAppointment ? 'appointment' : undefined,
+            channel: $('i-channel').value || undefined,
+            paymentOption: $('i-pay').value || undefined,
             status: $('i-status').value || undefined,
             search: $('i-search').value.trim() || undefined,
+        };
+    }
+
+    function intentParams(extra) {
+        return Object.assign({}, checkoutFilters(), {
             page: _page,
             limit: LIMIT,
         }, extra || {});
+    }
+
+    /**
+     * Copy the page-level date range and branch into the checkout filters. In
+     * appointment view the dates are left alone: the page range looks back,
+     * appointments look ahead.
+     */
+    function syncCheckoutFilters() {
+        if ($('i-date-by').value !== 'appointment') {
+            $('i-from').value = $('f-from').value;
+            $('i-to').value = $('f-to').value;
+        }
+        var branch = $('f-branch').value;
+        var sel = $('i-branch');
+        sel.value = branch;
+        if (sel.value !== branch) sel.selectedIndex = 0;
+    }
+
+    function renderFilterNote() {
+        var notes = [];
+        if ($('i-date-by').value === 'appointment') notes.push('Showing appointments in this range, earliest first.');
+        var campaign = $('f-campaign').value;
+        if (campaign) notes.push('Campaign filter at the top also applies: ' + campaign + '.');
+        $('i-filter-note').textContent = notes.join(' ');
+    }
+
+    var _intentTimer = null;
+
+    /** Re-run the checkout list from page 1; a from date after the to date waits to be fixed. */
+    function reloadIntents() {
+        var from = $('i-from').value, to = $('i-to').value;
+        renderFilterNote();
+        if (from && to && from > to) {
+            $('intents-body').innerHTML = '<tr><td colspan="7" class="text-warning text-center py-4">"From" must be on or before "To".</td></tr>';
+            $('intents-info').textContent = '';
+            $('i-prev').disabled = true;
+            $('i-next').disabled = true;
+            return;
+        }
+        _page = 1;
+        loadIntents();
+    }
+
+    function resetCheckoutFilters() {
+        $('i-date-by').value = 'created';
+        syncCheckoutFilters();
+        $('i-channel').value = '';
+        $('i-pay').value = '';
+        $('i-status').value = '';
+        $('i-search').value = '';
+        reloadIntents();
     }
 
     function sourceCell(it) {
@@ -276,7 +354,8 @@
                 if (page >= data.pagination.totalPages) break;
             }
             if (!rows.length) { showAlert('warning', 'Nothing to export for these filters.'); return; }
-            CsvExport.download('ad-bookings-' + ($('f-from').value || 'all') + '-to-' + ($('f-to').value || lagosToday()) + '.csv', [
+            CsvExport.download('ad-bookings-' + ($('i-date-by').value === 'appointment' ? 'appointments-' : '') +
+                ($('i-from').value || 'all') + '-to-' + ($('i-to').value || lagosToday()) + '.csv', [
                 { label: 'Started', get: function (r) { return fmtDateTime(r.createdAt); } },
                 { label: 'Status', get: function (r) { return (STATUS_BADGE[r.status] || [0, r.status])[1]; } },
                 { label: 'Reference', get: function (r) { return r.reference; } },
@@ -421,14 +500,29 @@
         $('f-from').value = r === 'month' ? to.slice(0, 8) + '01' : addDays(to, -(Number(r) - 1));
     }
 
+    var _reloadTimer = null;
+
+    /** Filters apply as soon as they change; a from date after the to date waits to be fixed. */
     function reloadAll() {
-        _page = 1;
+        var from = $('f-from').value, to = $('f-to').value;
+        if (from && to && from > to) {
+            showAlert('warning', '"From" must be on or before "To".');
+            return;
+        }
+        showAlert('', '');
+        syncCheckoutFilters();
         loadSummary();
-        loadIntents();
+        reloadIntents();
     }
 
     function wireEvents() {
-        $('btn-apply').addEventListener('click', reloadAll);
+        // Dates: wait a moment so typing a date does not reload on every keystroke.
+        ['f-from', 'f-to'].forEach(function (id) {
+            $(id).addEventListener('change', function () {
+                clearTimeout(_reloadTimer);
+                _reloadTimer = setTimeout(reloadAll, 400);
+            });
+        });
         $('f-branch').addEventListener('change', reloadAll);
         $('f-campaign').addEventListener('change', reloadAll);
         $('quick-ranges').addEventListener('click', function (e) {
@@ -447,11 +541,30 @@
             });
             renderBreakdown();
         });
-        $('i-status').addEventListener('change', function () { _page = 1; loadIntents(); });
+        // Appointment view opens on the next 30 days; checkout view goes back to the page range.
+        $('i-date-by').addEventListener('change', function () {
+            if (this.value === 'appointment') {
+                $('i-from').value = lagosToday();
+                $('i-to').value = addDays(lagosToday(), 29);
+            } else {
+                $('i-from').value = $('f-from').value;
+                $('i-to').value = $('f-to').value;
+            }
+        });
+        ['i-date-by', 'i-branch', 'i-channel', 'i-pay', 'i-status'].forEach(function (id) {
+            $(id).addEventListener('change', reloadIntents);
+        });
+        ['i-from', 'i-to'].forEach(function (id) {
+            $(id).addEventListener('change', function () {
+                clearTimeout(_intentTimer);
+                _intentTimer = setTimeout(reloadIntents, 400);
+            });
+        });
         $('i-search').addEventListener('input', function () {
             clearTimeout(_searchTimer);
-            _searchTimer = setTimeout(function () { _page = 1; loadIntents(); }, 350);
+            _searchTimer = setTimeout(reloadIntents, 350);
         });
+        $('i-reset').addEventListener('click', resetCheckoutFilters);
         $('i-prev').addEventListener('click', function () { if (_page > 1) { _page--; loadIntents(); } });
         $('i-next').addEventListener('click', function () { if (_page < _totalPages) { _page++; loadIntents(); } });
         $('btn-export').addEventListener('click', exportCsv);
@@ -493,6 +606,7 @@
             $('f-branch').innerHTML = (managed ? '' : '<option value="">All branches</option>') + _landing.branches
                 .filter(function (b) { return !managed || managed.indexOf(b.id) !== -1; })
                 .map(function (b) { return '<option value="' + esc(b.id) + '">' + esc(b.name) + '</option>'; }).join('');
+            $('i-branch').innerHTML = $('f-branch').innerHTML;
         } catch (e) { /* filters still work without branch names */ }
 
         reloadAll();
