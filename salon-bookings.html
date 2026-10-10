@@ -343,6 +343,11 @@
                             <div><strong>Date/Time:</strong> <span id="vr-datetime"></span></div>
                             <div><strong>Services:</strong> <span id="vr-services"></span></div>
                             <div><strong>Total:</strong> <span id="vr-total"></span></div>
+                            <div id="vr-payment" style="display:none">
+                                <div><strong>Paid:</strong> <span id="vr-paid"></span> <span id="vr-paid-note" class="text-secondary"></span></div>
+                                <div><strong>Balance to collect:</strong> <span id="vr-balance" class="fw-bold"></span></div>
+                            </div>
+                            <div id="vr-source" class="mt-1" style="display:none"></div>
                             <div id="vr-already-used" class="text-danger fw-bold mt-2" style="display:none">This
                                 reservation
                                 has already been used.</div>
@@ -350,6 +355,18 @@
                         <div id="vr-assign-section">
                             <label class="form-label">Assign Stylist</label>
                             <select class="form-select" id="vr-staff-select"></select>
+                            <div id="vr-transfer" class="mt-3" style="display:none"></div>
+                            <div id="vr-balance-section" class="mt-3" style="display:none">
+                                <label class="form-label">How did the customer pay the balance of <span id="vr-balance-inline"></span>?</label>
+                                <select class="form-select" id="vr-balance-method">
+                                    <option value="">Select payment method…</option>
+                                    <option value="CASH">Cash</option>
+                                    <option value="BANK_TRANSFER">Bank transfer</option>
+                                    <option value="POS">POS</option>
+                                    <option value="CARD">Card</option>
+                                </select>
+                                <div class="form-hint">Collect the balance before you confirm. It is recorded with the booking.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -685,6 +702,7 @@
     <script src="assets/js/api-utils/services.js"></script>
     <script src="assets/js/api-utils/inventory.js"></script>
     <script src="assets/js/api-utils/salon-bookings.js"></script>
+    <script src="assets/js/balance-transfer.js"></script>
     <script src="assets/js/closing-time-guard.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
@@ -1074,6 +1092,7 @@
             _verifyBooking = null;
             _verifySource = null;
             _verifyCode = null;
+            if (_vrTransfer) { _vrTransfer.stop(); _vrTransfer = null; }
             new bootstrap.Modal(document.getElementById('modal-verify-reservation')).show();
             setTimeout(function () { document.getElementById('verify-code-input').focus(); }, 300);
         }
@@ -1116,6 +1135,43 @@
                 document.getElementById('vr-services').textContent = servicesLabel || '-';
                 document.getElementById('vr-total').textContent = SalonBookings.formatMoney(booking.totalAmount);
 
+                // Online bookings: what was paid already and what is left to collect here.
+                var hasMoney = isLegacy && booking.balanceDue !== undefined && booking.balanceDue !== null;
+                var balanceDue = hasMoney ? Number(booking.balanceDue) || 0 : 0;
+                document.getElementById('vr-payment').style.display = hasMoney ? '' : 'none';
+                if (hasMoney) {
+                    var paidNote = booking.paymentMethod === 'MONNIFY' || booking.paymentMethod === 'PAYSTACK'
+                        ? (booking.depositAmount ? '(deposit, paid online)' : '(paid online)')
+                        : booking.paymentMethod === 'WALLET' ? '(wallet)' : '';
+                    document.getElementById('vr-paid').textContent = SalonBookings.formatMoney(booking.amountPaid || 0);
+                    document.getElementById('vr-paid-note').textContent = paidNote;
+                    var balEl = document.getElementById('vr-balance');
+                    balEl.textContent = balanceDue > 0 ? SalonBookings.formatMoney(balanceDue) : 'Nothing, fully paid';
+                    balEl.className = balanceDue > 0 ? 'fw-bold text-danger' : 'fw-bold text-success';
+                }
+                var srcEl = document.getElementById('vr-source');
+                if (isLegacy && booking.source === 'AD') {
+                    srcEl.innerHTML = '<span class="badge bg-purple-lt">Ad booking</span> <span class="text-secondary">' + esc(booking.acquisitionChannel || '') + (booking.utmCampaign ? ' · ' + esc(booking.utmCampaign) : '') + '</span>';
+                    srcEl.style.display = '';
+                } else {
+                    srcEl.style.display = 'none';
+                }
+                document.getElementById('vr-balance-method').value = '';
+                document.getElementById('vr-balance-inline').textContent = SalonBookings.formatMoney(balanceDue);
+                // Ad bookings: the balance is paid only by transfer to the customer's own account.
+                var transferOnly = isLegacy && BalanceTransfer.isTransferOnly(booking);
+                document.getElementById('vr-balance-section').style.display = balanceDue > 0 && !booking.reservationUsed && !transferOnly ? '' : 'none';
+                if (_vrTransfer) { _vrTransfer.stop(); _vrTransfer = null; }
+                var transferEl = document.getElementById('vr-transfer');
+                transferEl.style.display = transferOnly ? '' : 'none';
+                transferEl.innerHTML = '';
+                document.getElementById('btn-confirm-verify').disabled = false;
+                if (transferOnly) {
+                    _vrTransfer = BalanceTransfer.mount(transferEl, function () { return SalonBookings.balanceAccount(code); }, {
+                        onChange: function (covered) { document.getElementById('btn-confirm-verify').disabled = !covered; },
+                    });
+                }
+
                 document.getElementById('verify-code-entry').style.display = 'none';
                 document.getElementById('verify-result').style.display = 'block';
 
@@ -1141,17 +1197,35 @@
             }
         }
 
+        var _vrTransfer = null;
+
         async function confirmVerification() {
             var errEl = document.getElementById('verify-error');
             errEl.classList.add('d-none');
 
             var staffId = document.getElementById('vr-staff-select').value;
             if (!staffId) { errEl.textContent = 'Please select a Stylist.'; errEl.classList.remove('d-none'); return; }
+            var owes = _verifySource === 'booking' && _verifyBooking && Number(_verifyBooking.balanceDue) > 0;
+            if (owes && _vrTransfer) {
+                // Ad booking: the API takes the balance from the transfer that arrived.
+                if (!_vrTransfer.covered()) {
+                    errEl.textContent = 'The transfer has not arrived yet. Wait for it to show as received, then confirm.';
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+                owes = false;
+            }
+            var balanceMethod = owes ? document.getElementById('vr-balance-method').value : '';
+            if (owes && !balanceMethod) {
+                errEl.textContent = 'Collect the balance of ' + SalonBookings.formatMoney(_verifyBooking.balanceDue) + ' and choose how the customer paid.';
+                errEl.classList.remove('d-none');
+                return;
+            }
 
             var btn = document.getElementById('btn-confirm-verify');
             btn.disabled = true;
             try {
-                await SalonBookings.confirmVerification(_verifyCode, staffId);
+                await SalonBookings.confirmVerification(_verifyCode, staffId, balanceMethod || undefined);
                 bootstrap.Modal.getInstance(document.getElementById('modal-verify-reservation')).hide();
                 loadBookings();
             } catch (e) {

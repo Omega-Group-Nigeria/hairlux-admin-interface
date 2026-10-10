@@ -2767,6 +2767,10 @@ async function sbLookupReservationCode() {
       return;
     }
 
+    // Ad booking with a balance: transfer to the customer's own account only.
+    var sbTransferOnly = isLegacy && window.BalanceTransfer && BalanceTransfer.isTransferOnly(booking);
+    if (_sbTransferPanel) { _sbTransferPanel.stop(); _sbTransferPanel = null; }
+
     if (!sbStaffCache) {
       var staffResult = await SalonBookingsSelf.getBranchStaff();
       sbStaffCache = staffResult || [];
@@ -2781,11 +2785,30 @@ async function sbLookupReservationCode() {
       '<div class="oc-modal-sub"><strong>' + escapeHtml(customerName || '') + '</strong>' + (customerPhone ? ' (' + escapeHtml(customerPhone) + ')' : '') + '<br>' +
       StaffSelf.formatDate(booking.bookingDate) + ' \u00B7 ' + escapeHtml(booking.bookingTime) + '<br>' +
       (services || '-') + ': ' + sbFormatMoney(booking.totalAmount) + '</div>' +
+      sbVerifyPaymentHtml(isLegacy, booking) +
       '<div class="oc-field"><label>Assign Stylist</label><select id="sbv-staff">' + staffOptions + '</select></div>' +
+      (sbTransferOnly
+        ? '<div id="sbv-transfer"></div>'
+        : sbBalanceDue(isLegacy, booking) > 0
+        ? '<div class="oc-field"><label>How did the customer pay the balance of ' + sbFormatMoney(sbBalanceDue(isLegacy, booking)) + '?</label>' +
+          '<select id="sbv-balance-method"><option value="">Select payment method\u2026</option>' +
+          '<option value="CASH">Cash</option><option value="BANK_TRANSFER">Bank transfer</option>' +
+          '<option value="POS">POS</option><option value="CARD">Card</option></select></div>'
+        : '') +
       '<div class="oc-modal-actions">' +
       '<button class="btn btn-ghost btn-sm" onclick="closeProfileModal()">Cancel</button>' +
       '<button class="btn btn-gold btn-sm" id="sbv-confirm-btn" onclick="sbConfirmVerification()">Confirm &amp; Assign</button>' +
       '</div>';
+    if (sbTransferOnly) {
+      _sbTransferPanel = BalanceTransfer.mount(document.getElementById('sbv-transfer'), function () {
+        return SalonBookingsSelf.balanceAccount(code);
+      }, {
+        onChange: function (covered) {
+          var b = document.getElementById('sbv-confirm-btn');
+          if (b) b.disabled = !covered;
+        },
+      });
+    }
   } catch (err) {
     sbShowVerifyError(err.message || 'Reservation not found.');
   } finally {
@@ -2793,14 +2816,66 @@ async function sbLookupReservationCode() {
   }
 }
 
+/** What is still owed on an online (Booking table) reservation; 0 for salon bookings. */
+function sbBalanceDue(isLegacy, booking) {
+  if (!isLegacy || !booking || booking.balanceDue === undefined || booking.balanceDue === null) return 0;
+  return Number(booking.balanceDue) || 0;
+}
+
+/** Paid so far and the balance to collect, plus where an ad booking came from. */
+function sbVerifyPaymentHtml(isLegacy, booking) {
+  if (!isLegacy || booking.balanceDue === undefined || booking.balanceDue === null) return '';
+  var due = sbBalanceDue(isLegacy, booking);
+  var note = booking.paymentMethod === 'MONNIFY' || booking.paymentMethod === 'PAYSTACK'
+    ? (booking.depositAmount ? 'deposit, paid online' : 'paid online')
+    : booking.paymentMethod === 'WALLET' ? 'wallet' : '';
+  return '<div class="oc-modal-sub" style="margin-top:-4px">' +
+    'Paid: <strong>' + sbFormatMoney(booking.amountPaid || 0) + '</strong>' + (note ? ' (' + note + ')' : '') + '<br>' +
+    'Balance to collect: <strong style="color:' + (due > 0 ? 'var(--red)' : 'var(--green, #2fb344)') + '">' +
+    (due > 0 ? sbFormatMoney(due) : 'Nothing, fully paid') + '</strong>' +
+    (booking.source === 'AD'
+      ? '<br><span style="opacity:.75">Ad booking' + (booking.acquisitionChannel ? ': ' + escapeHtml(booking.acquisitionChannel) : '') + '</span>'
+      : '') +
+    '</div>';
+}
+
+var _sbTransferPanel = null;
+
 async function sbConfirmVerification() {
   var staffId = document.getElementById('sbv-staff').value;
   if (!staffId) { sbShowVerifyError('Please select a Stylist.'); return; }
+  if (_sbTransferPanel) {
+    // Ad booking: the API takes the balance from the transfer that arrived.
+    if (!_sbTransferPanel.covered()) {
+      sbShowVerifyError('The transfer has not arrived yet. Wait for it to show as received, then confirm.');
+      return;
+    }
+    var tbtn = document.getElementById('sbv-confirm-btn');
+    tbtn.disabled = true;
+    try {
+      await SalonBookingsSelf.confirmVerification(_sbVerifyCode, staffId);
+      _sbTransferPanel.stop();
+      _sbTransferPanel = null;
+      closeProfileModal();
+      await loadSalonBookings();
+    } catch (err) {
+      sbShowVerifyError(err.message || 'Failed to verify reservation.');
+      tbtn.disabled = false;
+    }
+    return;
+  }
+  var due = sbBalanceDue(_sbVerifySource === 'booking', _sbVerifyBooking);
+  var methodEl = document.getElementById('sbv-balance-method');
+  var balanceMethod = due > 0 && methodEl ? methodEl.value : '';
+  if (due > 0 && !balanceMethod) {
+    sbShowVerifyError('Collect the balance of ' + sbFormatMoney(due) + ' and choose how the customer paid.');
+    return;
+  }
 
   var btn = document.getElementById('sbv-confirm-btn');
   btn.disabled = true;
   try {
-    await SalonBookingsSelf.confirmVerification(_sbVerifyCode, staffId);
+    await SalonBookingsSelf.confirmVerification(_sbVerifyCode, staffId, balanceMethod || undefined);
     closeProfileModal();
     await loadSalonBookings();
   } catch (err) {

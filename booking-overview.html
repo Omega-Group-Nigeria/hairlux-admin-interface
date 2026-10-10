@@ -403,7 +403,9 @@
 
                 tbody.innerHTML = bookings.length
                     ? bookings.map(function (b) {
-                        var sourceLabel = b.source === 'booking' ? 'Customer-booked' : 'Staff-created';
+                        var sourceLabel = b.source !== 'booking' ? 'Staff-created'
+                            : b.bookingSource === 'AD' ? 'Ad booking' + (b.acquisitionChannel ? ' (' + esc(b.acquisitionChannel) + ')' : '')
+                            : 'Customer-booked';
                         var deleteBtn = (isSuperAdmin && b.source === 'salon_booking')
                             ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteBooking(\'' + b.id + '\', \'' + b.bucket + '\')">Delete</button>'
                             : '';

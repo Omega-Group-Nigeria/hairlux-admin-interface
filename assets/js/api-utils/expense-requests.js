@@ -95,6 +95,25 @@ const ExpenseRequests = (function () {
         return apiFetch(`/admin/expense-requests/${id}/payout/resync`, { method: 'POST' });
     }
 
+    /** Paystack transfer receipt for a paid payout: { expense, receipt }. */
+    async function payoutReceipt(id) {
+        return apiFetch(`/admin/expense-requests/${id}/payout-receipt`);
+    }
+
+    /**
+     * The receipt PDF as { blob, filename }. Fetched with the login token,
+     * so it cannot be a plain link.
+     */
+    async function payoutReceiptPdf(id) {
+        const res = await Auth.fetch(`/admin/expense-requests/${id}/payout-receipt.pdf`);
+        if (!res.ok) {
+            const raw = await res.json().catch(() => ({}));
+            throw new Error(raw.message || `Could not load the receipt (${res.status})`);
+        }
+        const match = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '');
+        return { blob: await res.blob(), filename: match ? match[1] : 'payout-receipt.pdf' };
+    }
+
     let _banksCache = null;
     /** Banks (Paystack) for the "Account to pay" picker. */
     async function banks() {
@@ -111,5 +130,5 @@ const ExpenseRequests = (function () {
         });
     }
 
-    return { getAll, getOne, create, update, submit, remove, approve, reject, overrideAmount, reverse, retryPayout, resyncPayout, banks, resolveAccount };
+    return { getAll, getOne, create, update, submit, remove, approve, reject, overrideAmount, reverse, retryPayout, resyncPayout, payoutReceipt, payoutReceiptPdf, banks, resolveAccount };
 })();

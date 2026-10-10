@@ -564,6 +564,7 @@
                             var canReverseThis = canReverse && r.status === 'APPROVED' && r.payoutStatus !== 'PROCESSING';
                             var canRetryPayout = canApprove && r.status === 'APPROVED' && isPayoutRequest(r) && (r.payoutStatus === 'FAILED' || !r.payoutStatus);
                             var canCheckPayout = canApprove && r.payoutStatus === 'PROCESSING';
+                            var hasReceipt = r.payoutStatus === 'COMPLETED';
                             var canOverrideThis = canOverride && (r.status === 'PENDING' || r.status === 'UNDER_REVIEW');
                             return '<tr>' +
                                 '<td class="fw-semibold">' + formatRequestNumber(r.requestNumber, r.createdAt) + '</td>' +
@@ -582,6 +583,7 @@
                                 (canAct ? '<button class="btn btn-sm btn-outline-success me-1" onclick="approveRequest(\'' + r.id + '\')">Approve</button><button class="btn btn-sm btn-outline-danger me-1" onclick="rejectRequest(\'' + r.id + '\')">Reject</button>' : '') +
                                 (canRetryPayout ? '<button class="btn btn-sm btn-outline-primary me-1" onclick="retryPayout(\'' + r.id + '\')">' + (r.payoutStatus === 'FAILED' ? 'Retry payout' : 'Send payout') + '</button>' : '') +
                                 (canCheckPayout ? '<button class="btn btn-sm btn-outline-secondary me-1" onclick="resyncPayout(\'' + r.id + '\')">Check status</button>' : '') +
+                                (hasReceipt ? '<button class="btn btn-sm btn-outline-success me-1" onclick="viewPayoutReceipt(\'' + r.id + '\')" title="Paystack transfer receipt">Receipt</button>' : '') +
                                 (canReverseThis ? '<button class="btn btn-sm btn-outline-danger me-1" onclick="reverseRequest(\'' + r.id + '\')" title="Undo this posting -- money has already moved">Reverse</button>' : '') +
                                 (canDelete ? '<button class="btn btn-sm btn-outline-danger" onclick="deleteRequest(\'' + r.id + '\')">Delete</button>' : '') +
                                 '</td>' +
@@ -799,6 +801,62 @@
             } catch (e) { alert(e.message || 'Failed to reverse.'); }
         }
 
+        // ── Payout receipt (Paystack) ────────────────────────────────────
+        /** Receipt summary inside the expense view, with View / Download PDF. */
+        async function loadReceiptBox(id) {
+            var box = document.getElementById('payout-receipt-box');
+            if (!box) return;
+            try {
+                var data = await ExpenseRequests.payoutReceipt(id);
+                var rc = data.receipt;
+                var fromPaystack = rc.source === 'PAYSTACK';
+                box.innerHTML =
+                    '<div class="card card-sm"><div class="card-body">' +
+                    '<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">' +
+                    '<div class="fw-semibold">Payout receipt <span class="badge bg-success-lt ms-1">Paid</span></div>' +
+                    '<div class="btn-list">' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="openReceiptPdf(\'' + id + '\', false)">View PDF</button>' +
+                    '<button type="button" class="btn btn-sm btn-success" onclick="openReceiptPdf(\'' + id + '\', true)">Download PDF</button>' +
+                    '</div></div>' +
+                    '<div class="row g-2 small">' +
+                    '<div class="col-6"><div class="text-secondary">Session ID (NIP)</div><div class="fw-semibold text-break">' + esc(rc.sessionId || (fromPaystack ? 'Not yet issued' : '-')) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary">Transfer code</div><div class="text-break">' + esc(rc.transferCode || '-') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary">Date paid</div><div>' + esc(rc.transferredAt ? new Date(rc.transferredAt).toLocaleString() : '-') + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary">Transfer fee</div><div>' + (rc.feeCharged == null ? '-' : formatMoney(rc.feeCharged)) + '</div></div>' +
+                    '</div>' +
+                    (fromPaystack ? '' : '<div class="text-warning small mt-2">Paystack could not be reached, so this shows the details Hairlux recorded. Open it again later for the full Paystack receipt.</div>') +
+                    '</div></div>';
+            } catch (e) {
+                box.innerHTML = '<div class="text-danger small">' + esc(e.message || 'Could not load the receipt.') + '</div>';
+            }
+        }
+
+        /** Opens the receipt PDF in a new tab, or downloads it. */
+        async function openReceiptPdf(id, download) {
+            var win = download ? null : window.open('', '_blank');
+            try {
+                var file = await ExpenseRequests.payoutReceiptPdf(id);
+                var url = URL.createObjectURL(file.blob);
+                if (download) {
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.filename;
+                    document.body.appendChild(a); a.click(); a.remove();
+                } else if (win) {
+                    win.location = url;
+                } else {
+                    window.location.href = url;
+                }
+                setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+            } catch (e) {
+                if (win) win.close();
+                alert(e.message || 'Could not open the receipt.');
+            }
+        }
+
+        /** "Receipt" button in the list: opens the expense with its receipt. */
+        function viewPayoutReceipt(id) { viewOne(id); }
+
         // ── View ─────────────────────────────────────────────────────────
         async function viewOne(id) {
             document.getElementById('view-body').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
@@ -827,7 +885,8 @@
                         (r.paidOutAt ? '<div class="col-6"><div class="text-secondary small">Paid on</div><div>' + new Date(r.paidOutAt).toLocaleString() + '</div></div>' : '') +
                         (r.paystackTransferReference ? '<div class="col-6"><div class="text-secondary small">Transfer reference</div><div class="small">' + esc(r.paystackTransferReference) + '</div></div>' : '') +
                         (r.payoutStatus === 'FAILED' && r.payoutFailureReason ? '<div class="col-12"><div class="alert alert-danger mb-0 mt-2">' + esc(r.payoutFailureReason) + '</div></div>' : '') +
-                        '</div>';
+                        '</div>' +
+                        (r.payoutStatus === 'COMPLETED' ? '<div id="payout-receipt-box" class="mt-3"><div class="text-secondary small"><span class="spinner-border spinner-border-sm me-1"></span>Loading the Paystack receipt...</div></div>' : '');
                 }
 
                 document.getElementById('view-body').innerHTML =
@@ -850,6 +909,7 @@
                     ledgerLink +
                     payoutHtml +
                     '<hr><div class="fw-semibold mb-2">Approval History</div>' + actionsHtml;
+                if (r.payoutStatus === 'COMPLETED') loadReceiptBox(r.id);
             } catch (e) {
                 document.getElementById('view-body').innerHTML = '<div class="text-danger text-center py-4">' + esc(e.message || 'Failed to load.') + '</div>';
             }

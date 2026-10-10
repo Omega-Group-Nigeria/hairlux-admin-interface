@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Ad Bookings</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Bookings</div>
+                            <h2 class="page-title">Ad Bookings</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list">
+                                <button class="btn btn-outline-primary" id="btn-link-builder">Ad link builder</button>
+                                <button class="btn btn-primary d-none" id="btn-settings">Settings</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="alert alert-info">
+                        <div>Ads point to the landing page <a href="#" id="landing-link" target="_blank" rel="noopener">salon.html</a>, which leads to the booking form (book-now.html).
+                        The visitor picks a branch, services and time and pays a deposit (or the full price) through Monnify, and the booking is logged with its source,
+                        e.g. <strong>Facebook Ad</strong>. A customer account is created for new emails. At the branch, staff verify the reservation code and collect the balance.</div>
+                    </div>
+                    <div id="page-alert"></div>
+
+                    <!-- Filters -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="f-from">From</label>
+                                    <input type="date" class="form-control" id="f-from" />
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="f-to">To</label>
+                                    <input type="date" class="form-control" id="f-to" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="f-branch">Branch</label>
+                                    <select class="form-select" id="f-branch"><option value="">All branches</option></select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="f-campaign">Campaign</label>
+                                    <select class="form-select" id="f-campaign"><option value="">All campaigns</option></select>
+                                </div>
+                            </div>
+                            <div class="mt-2 d-flex flex-wrap gap-1" id="quick-ranges">
+                                <button class="btn btn-sm btn-ghost-secondary" data-range="7">Last 7 days</button>
+                                <button class="btn btn-sm btn-ghost-secondary" data-range="30">Last 30 days</button>
+                                <button class="btn btn-sm btn-ghost-secondary" data-range="90">Last 90 days</button>
+                                <button class="btn btn-sm btn-ghost-secondary" data-range="month">This month</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPIs -->
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card"><div class="card-body">
+                                <div class="subheader">Checkouts started</div>
+                                <div class="h1 mb-1" id="kpi-started">-</div>
+                                <div class="text-secondary small" id="kpi-started-sub">Visitors who reached payment</div>
+                            </div></div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card"><div class="card-body">
+                                <div class="subheader">Booked (paid)</div>
+                                <div class="h1 mb-1" id="kpi-booked">-</div>
+                                <div class="text-secondary small" id="kpi-booked-sub">-</div>
+                            </div></div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card"><div class="card-body">
+                                <div class="subheader">Collected</div>
+                                <div class="h1 mb-1" id="kpi-collected">-</div>
+                                <div class="text-secondary small" id="kpi-collected-sub">-</div>
+                            </div></div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card"><div class="card-body">
+                                <div class="subheader">Balance still to collect</div>
+                                <div class="h1 mb-1" id="kpi-outstanding">-</div>
+                                <div class="text-secondary small" id="kpi-outstanding-sub">-</div>
+                            </div></div>
+                        </div>
+                    </div>
+
+                    <div class="row row-cards mb-3">
+                        <div class="col-lg-8">
+                            <div class="card h-100">
+                                <div class="card-header"><h3 class="card-title">Checkouts and bookings by day</h3></div>
+                                <div class="card-body"><div id="chart-trend" style="min-height:260px"></div></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-header"><h3 class="card-title">Outcome of paid bookings</h3></div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between py-1"><span class="text-secondary">Upcoming</span><strong id="o-upcoming">-</strong></div>
+                                    <div class="d-flex justify-content-between py-1"><span class="text-secondary">Completed (checked in)</span><strong id="o-completed">-</strong></div>
+                                    <div class="d-flex justify-content-between py-1"><span class="text-secondary">No-show (not checked in)</span><strong id="o-noshow">-</strong></div>
+                                    <div class="d-flex justify-content-between py-1"><span class="text-secondary">Cancelled (refunded to wallet)</span><strong id="o-cancelled">-</strong></div>
+                                    <hr class="my-2" />
+                                    <div class="d-flex justify-content-between py-1"><span class="text-secondary">Paid deposit / paid in full</span><strong id="o-split">-</strong></div>
+                                    <div class="d-flex justify-content-between py-1"><span class="text-secondary">New customer accounts</span><strong id="o-accounts">-</strong></div>
+                                    <div class="d-flex justify-content-between py-1"><span class="text-secondary">Refunded to wallets</span><strong id="o-refunded">-</strong></div>
+                                    <div class="d-flex justify-content-between py-1"><span class="text-secondary">Unpaid (pending / expired)</span><strong id="o-unpaid">-</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs" id="breakdown-tabs">
+                                <li class="nav-item"><a href="#" class="nav-link active" data-group="byCampaign">By campaign</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-group="byChannel">By channel</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-group="byBranch">By branch</a></li>
+                                <li class="nav-item"><a href="#" class="nav-link" data-group="byService">By service</a></li>
+                            </ul>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th id="breakdown-head">Campaign</th>
+                                        <th class="text-end">Started</th>
+                                        <th class="text-end">Booked</th>
+                                        <th class="text-end">Conversion</th>
+                                        <th class="text-end">Booked value</th>
+                                        <th class="text-end">Collected</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="breakdown-body"><tr><td colspan="6" class="text-secondary text-center py-4">Loading&hellip;</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Checkouts -->
+                    <div class="card">
+                        <div class="card-header flex-wrap gap-2">
+                            <h3 class="card-title">Checkouts</h3>
+                            <div class="ms-auto d-flex flex-wrap gap-2">
+                                <button class="btn btn-sm btn-ghost-secondary" id="i-reset" title="Match the filters at the top of the page and clear the rest">Reset filters</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="btn-export">Export CSV</button>
+                            </div>
+                        </div>
+                        <div class="card-body border-bottom py-3">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-6 col-md-4 col-xl-2">
+                                    <label class="form-label small mb-1" for="i-date-by">Date by</label>
+                                    <select class="form-select form-select-sm" id="i-date-by">
+                                        <option value="created">Checkout started</option>
+                                        <option value="appointment">Appointment date</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-4 col-xl-2">
+                                    <label class="form-label small mb-1" for="i-from">From</label>
+                                    <input type="date" class="form-control form-control-sm" id="i-from" />
+                                </div>
+                                <div class="col-6 col-md-4 col-xl-2">
+                                    <label class="form-label small mb-1" for="i-to">To</label>
+                                    <input type="date" class="form-control form-control-sm" id="i-to" />
+                                </div>
+                                <div class="col-6 col-md-4 col-xl-2">
+                                    <label class="form-label small mb-1" for="i-branch">Branch</label>
+                                    <select class="form-select form-select-sm" id="i-branch"><option value="">All branches</option></select>
+                                </div>
+                                <div class="col-6 col-md-4 col-xl-2">
+                                    <label class="form-label small mb-1" for="i-channel">Source</label>
+                                    <select class="form-select form-select-sm" id="i-channel"><option value="">All sources</option></select>
+                                </div>
+                                <div class="col-6 col-md-4 col-xl-2">
+                                    <label class="form-label small mb-1" for="i-pay">Payment</label>
+                                    <select class="form-select form-select-sm" id="i-pay">
+                                        <option value="">Deposit or full</option>
+                                        <option value="DEPOSIT">Deposit only</option>
+                                        <option value="FULL">Paid in full</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-4 col-xl-2">
+                                    <label class="form-label small mb-1" for="i-status">Status</label>
+                                    <select class="form-select form-select-sm" id="i-status">
+                                        <option value="">All statuses</option>
+                                        <option value="BOOKED">Booked (paid)</option>
+                                        <option value="PENDING">Pending payment</option>
+                                        <option value="EXPIRED">Expired (unpaid leads)</option>
+                                        <option value="FAILED">Failed</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-8 col-xl-4">
+                                    <label class="form-label small mb-1" for="i-search">Search</label>
+                                    <input type="search" class="form-control form-control-sm" id="i-search" placeholder="Name, email, phone or code" />
+                                </div>
+                                <div class="col-12 col-xl-6 text-secondary small" id="i-filter-note"></div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead>
+                                    <tr>
+                                        <th>Started</th>
+                                        <th>Customer</th>
+                                        <th>Service and slot</th>
+                                        <th>Source</th>
+                                        <th class="text-end">Paid online</th>
+                                        <th class="text-end">Balance</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="intents-body"><tr><td colspan="7" class="text-secondary text-center py-4">Loading&hellip;</td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center">
+                            <div class="text-secondary small" id="intents-info"></div>
+                            <div class="ms-auto btn-group">
+                                <button class="btn btn-sm btn-outline-secondary" id="i-prev">Previous</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="i-next">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="modal modal-blur fade" id="modal-settings" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ad booking settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="settings-error"></div>
+                    <label class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="s-enabled" />
+                        <span class="form-check-label">Online booking from the landing page is on</span>
+                    </label>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="s-percent">Deposit (% of the service price)</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="s-percent" min="0" max="100" step="1" />
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="s-min">Smallest deposit</label>
+                            <div class="input-group">
+                                <span class="input-group-text">&#8358;</span>
+                                <input type="number" class="form-control" id="s-min" min="0" step="100" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-hint" id="s-example"></div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-check">
+                                <input class="form-check-input" type="checkbox" id="s-full" />
+                                <span class="form-check-label">Let customers pay the full price online instead of a deposit</span>
+                            </label>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="s-lead">Shortest notice for a slot</label>
+                            <select class="form-select" id="s-lead">
+                                <option value="0">None</option>
+                                <option value="30">30 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="120">2 hours</option>
+                                <option value="180">3 hours</option>
+                                <option value="240">4 hours</option>
+                                <option value="720">12 hours</option>
+                                <option value="1440">1 day</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="s-days">Book up to (days ahead)</label>
+                            <input type="number" class="form-control" id="s-days" min="1" max="180" step="1" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="s-pixel">Meta (Facebook) Pixel ID</label>
+                            <input type="text" class="form-control" id="s-pixel" inputmode="numeric" placeholder="e.g. 1234567890123456" />
+                            <div class="form-hint">From Meta Events Manager. The landing page then reports PageView, ViewContent, InitiateCheckout and Purchase, so Meta can optimise your ads for real bookings. Leave empty to turn it off.</div>
+                        </div>
+                    </div>
+                    <div class="text-secondary small mt-3" id="s-updated"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-save-settings">Save settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link builder -->
+    <div class="modal modal-blur fade" id="modal-links" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ad link builder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary">Use this link as the ad's destination URL. The tags tell us which platform and campaign each booking came from.</p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" for="l-dest">Send visitors to</label>
+                            <select class="form-select mb-2" id="l-dest">
+                                <option value="https://www.hairlux.com.ng/salon.html">Landing page (salon.html): services, prices and branches first</option>
+                                <option value="https://www.hairlux.com.ng/book-now.html">Booking form directly (book-now.html)</option>
+                            </select>
+                            <input type="url" class="form-control" id="l-base" aria-label="Destination URL" />
+                            <div class="form-hint">Change the address only if the site runs on a different domain.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="l-source">Platform</label>
+                            <select class="form-select" id="l-source">
+                                <option value="facebook">Facebook</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="google">Google</option>
+                                <option value="tiktok">TikTok</option>
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="x">X (Twitter)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="l-medium">Type</label>
+                            <select class="form-select" id="l-medium">
+                                <option value="paid_social">Paid social</option>
+                                <option value="cpc">Search (cost per click)</option>
+                                <option value="display">Display</option>
+                                <option value="social">Organic post</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="l-campaign">Campaign name</label>
+                            <input type="text" class="form-control" id="l-campaign" placeholder="e.g. oct-knotless-ibadan" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="l-content">Ad or creative (optional)</label>
+                            <input type="text" class="form-control" id="l-content" placeholder="e.g. video-1" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="l-service">Preselect a service (optional)</label>
+                            <select class="form-select" id="l-service"><option value="">None</option></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="l-branch">Preselect a branch (optional)</label>
+                            <select class="form-select" id="l-branch"><option value="">None</option></select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="l-output">Your link</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="l-output" readonly />
+                                <button class="btn btn-primary" id="btn-copy-link">Copy</button>
+                            </div>
+                            <div class="form-hint">Meta and Google also add their own click ids (fbclid, gclid) automatically; those are captured too.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/ad-bookings.js"></script>
+    <script src="assets/js/csv-export.js"></script>
+    <script src="./assets/js/apexcharts.min.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/ad-bookings-page.js"></script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

@@ -41,7 +41,50 @@ const Suppliers = (function () {
     async function remove(id) {
         return apiFetch(`/admin/suppliers/${id}`, { method: 'DELETE' });
     }
-    
 
-    return { getAll, getOne, create, update, remove };
+    // ── Bank accounts (verified with Paystack; purchase payments go to one of them) ──
+
+    let _banksCache = null;
+    /** Banks (Paystack) for the account picker. */
+    async function banks() {
+        if (!_banksCache) _banksCache = await apiFetch('/admin/suppliers/banks');
+        return _banksCache;
+    }
+
+    /** Account name for a bank + account number. Saves nothing. */
+    async function resolveAccount(bankCode, accountNumber) {
+        return apiFetch('/admin/suppliers/resolve-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bankCode, accountNumber }),
+        });
+    }
+
+    async function bankAccounts(id) {
+        return apiFetch(`/admin/suppliers/${id}/bank-accounts`);
+    }
+
+    async function addBankAccount(id, payload) {
+        return apiFetch(`/admin/suppliers/${id}/bank-accounts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    /** payload: { isDefault } or { isActive } */
+    async function updateBankAccount(id, accountId, payload) {
+        return apiFetch(`/admin/suppliers/${id}/bank-accounts/${accountId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    /** Deleted if never paid to, otherwise deactivated (kept for payment history). */
+    async function removeBankAccount(id, accountId) {
+        return apiFetch(`/admin/suppliers/${id}/bank-accounts/${accountId}`, { method: 'DELETE' });
+    }
+
+    return { getAll, getOne, create, update, remove, banks, resolveAccount, bankAccounts, addBankAccount, updateBankAccount, removeBankAccount };
 })();

@@ -94,6 +94,7 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Overview", href: "bookings.html", permission: read("bookings:read") },
                 { label: "Booking Overview", href: "booking-overview.html", permission: read("bookings:read") },
                 { label: "Salon Bookings", href: "salon-bookings.html", permission: read("bookings:read") },
+                { label: "Ad Bookings", href: "ad-bookings.html", permission: read("ad_bookings:read") },
                 { label: "Calendar", href: "bookings/calendar.html", permission: read("bookings:read") },
                 { label: "Verify Booking", href: "bookings/index.html", permission: read("bookings:read") },
             ],

@@ -115,15 +115,22 @@ const SalonBookingsSelf = (function () {
         return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}`);
     }
 
-    async function confirmVerification(code, assignedStaffId) {
+    /** balancePaymentMethod: how the customer paid what was still owed (CASH, BANK_TRANSFER, POS, CARD); needed when the booking has a balance. */
+    async function confirmVerification(code, assignedStaffId, balancePaymentMethod) {
         return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}/confirm`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ assignedStaffId }),
+            body: JSON.stringify(balancePaymentMethod ? { assignedStaffId, balancePaymentMethod } : { assignedStaffId }),
         });
     }
 
+    /** Ad booking balance: the customer's own transfer account and how much has arrived (call again to re-check). */
+    async function balanceAccount(code) {
+        return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}/balance-account`, { method: 'POST' });
+    }
+
     return {
+        balanceAccount,
         getAll, getOne, getBranchStaff, getMyCommission, searchCustomers, checkPhoneMatch,
         create, previewDiscount, editBooking, addServiceToCompletedBooking, getTodayStylistPerformance,
         addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification,

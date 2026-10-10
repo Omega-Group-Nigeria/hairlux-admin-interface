@@ -235,21 +235,26 @@
                     </div>
                     <!-- Banking -- only rendered at all for a user with suppliers:view_banking; see toggleBankingSection() -->
                     <div id="f-banking-section" style="display:none">
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Bank Name <span
-                                        class="text-secondary">(optional)</span></label>
-                                <input type="text" class="form-control" id="f-bank-name">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Account Number <span
-                                        class="text-secondary">(optional)</span></label>
-                                <input type="text" class="form-control" id="f-account-number">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Verified Account Name <span
-                                        class="text-secondary">(optional)</span></label>
-                                <input type="text" class="form-control" id="f-verified-account-name">
+                        <div class="card card-sm mb-3">
+                            <div class="card-body">
+                                <div class="fw-semibold">Bank accounts</div>
+                                <div class="text-secondary small mb-2">Each account is checked with Paystack and the real account name is saved. Purchase payments are sent to one of these by bank transfer. The default is picked first.</div>
+                                <div id="f-legacy-bank" class="alert alert-warning py-2 small d-none mb-2"></div>
+                                <div id="f-accounts-list" class="mb-2"></div>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-5">
+                                        <label class="form-label small mb-1" for="f-acct-bank">Bank</label>
+                                        <select class="form-select" id="f-acct-bank"><option value="">Loading banks...</option></select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-1" for="f-acct-number">Account number</label>
+                                        <input type="text" inputmode="numeric" maxlength="10" class="form-control" id="f-acct-number" placeholder="10 digits">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="button" class="btn btn-outline-primary w-100" id="f-acct-add" disabled>Add account</button>
+                                    </div>
+                                    <div class="col-12 small text-secondary" id="f-acct-name">Choose the bank and enter the account number to see the name.</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -395,6 +400,13 @@
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
             document.getElementById('btn-export').addEventListener('click', exportSuppliers);
             document.getElementById('btn-save').addEventListener('click', save);
+            document.getElementById('f-acct-bank').addEventListener('change', scheduleAccountResolve);
+            document.getElementById('f-acct-number').addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                scheduleAccountResolve();
+            });
+            document.getElementById('f-acct-add').addEventListener('click', addAccount);
+            document.getElementById('f-accounts-list').addEventListener('click', onAccountListClick);
 
             document.getElementById('lf-status').addEventListener('change', renderSupplierTable);
             document.getElementById('lf-category').addEventListener('change', renderSupplierTable);
@@ -559,14 +571,10 @@
                     document.getElementById('f-payment-terms').value = s.paymentTerms || '';
                     document.getElementById('f-average-delivery-days').value = s.averageDeliveryDays != null ? s.averageDeliveryDays : '';
                     document.getElementById('f-performance-rating').value = s.performanceRating != null ? s.performanceRating : '';
-                    // s.bankName etc. simply won't exist on the response at
-                    // all for a user without suppliers:view_banking (the
-                    // backend strips them, not masks them) -- these lines
-                    // just harmlessly clear to empty in that case, matching
-                    // the section itself being hidden.
-                    document.getElementById('f-bank-name').value = s.bankName || '';
-                    document.getElementById('f-account-number').value = s.accountNumber || '';
-                    document.getElementById('f-verified-account-name').value = s.verifiedAccountName || '';
+                    // Bank accounts (only for suppliers:view_banking; the
+                    // backend strips banking from everyone else).
+                    showLegacyBank(s);
+                    if (bankingVisible()) await loadAccounts();
                     document.getElementById('f-remarks').value = s.remarks || '';
                     document.getElementById('f-preferred').checked = !!s.isPreferred;
                     document.getElementById('f-notes').value = s.notes || '';
@@ -578,11 +586,16 @@
             } else {
                 ['f-name', 'f-contact-person', 'f-phone', 'f-email', 'f-address', 'f-whatsapp', 'f-city', 'f-state',
                     'f-vendor-category', 'f-payment-terms', 'f-average-delivery-days', 'f-performance-rating',
-                    'f-bank-name', 'f-account-number', 'f-verified-account-name', 'f-remarks', 'f-notes'].forEach(function (id) {
+                    'f-remarks', 'f-notes'].forEach(function (id) {
                         document.getElementById(id).value = '';
                     });
                 document.getElementById('f-preferred').checked = false;
+                showLegacyBank(null);
+                _accounts = [];
+                renderAccounts();
             }
+            resetAccountEntry();
+            if (bankingVisible()) loadAccountBanks();
             new bootstrap.Modal(document.getElementById('modal-form')).show();
         }
 
@@ -610,23 +623,31 @@
                 isPreferred: document.getElementById('f-preferred').checked,
                 notes: document.getElementById('f-notes').value.trim() || undefined,
             };
-            // Only ever sent if the banking section is actually visible --
-            // for a user without suppliers:view_banking, these fields are
-            // simply never included in the payload at all, so an update
-            // from that user can never accidentally blank out existing
-            // banking data.
-            if (document.getElementById('f-banking-section').style.display !== 'none') {
-                payload.bankName = document.getElementById('f-bank-name').value.trim() || undefined;
-                payload.accountNumber = document.getElementById('f-account-number').value.trim() || undefined;
-                payload.verifiedAccountName = document.getElementById('f-verified-account-name').value.trim() || undefined;
-            }
+            // Bank accounts are saved through their own endpoints (each one
+            // checked with Paystack), never as part of this payload.
             if (editingId) payload.isActive = document.getElementById('f-active').checked;
 
             var btn = document.getElementById('btn-save');
             btn.disabled = true;
             try {
-                if (editingId) await Suppliers.update(editingId, payload);
-                else await Suppliers.create(payload);
+                if (editingId) {
+                    await Suppliers.update(editingId, payload);
+                } else {
+                    var created = await Suppliers.create(payload);
+                    // Accounts added before the vendor existed are saved now.
+                    var failed = [];
+                    for (var i = 0; i < _accounts.length; i++) {
+                        var a = _accounts[i];
+                        try {
+                            await Suppliers.addBankAccount(created.id, { bankCode: a.bankCode, accountNumber: a.accountNumber, isDefault: a.isDefault });
+                        } catch (err) {
+                            failed.push(a.bankName + ' ' + a.accountNumber + ': ' + (err.message || 'failed'));
+                        }
+                    }
+                    if (failed.length) {
+                        alert(typeLabel + ' saved, but these bank accounts were not added:\n\n' + failed.join('\n') + '\n\nEdit the ' + typeLabel.toLowerCase() + ' to add them again.');
+                    }
+                }
                 bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
                 load();
             } catch (e) {
@@ -634,6 +655,162 @@
                 errEl.classList.remove('d-none');
             } finally {
                 btn.disabled = false;
+            }
+        }
+
+        // ── Bank accounts ────────────────────────────────────────────────
+        // Edit: changes are saved straight away. New vendor: accounts are
+        // checked now and saved right after the vendor is created.
+        var _accounts = [];
+        var _acctResolved = null; // { key: "bank:number", accountName, bankName }
+        var _acctTimer = null;
+
+        function bankingVisible() {
+            return document.getElementById('f-banking-section').style.display !== 'none';
+        }
+
+        /** The single, unverified account from before (free text): shown, but it cannot be paid to. */
+        function showLegacyBank(s) {
+            var el = document.getElementById('f-legacy-bank');
+            if (!s || !s.accountNumber) { el.classList.add('d-none'); el.textContent = ''; return; }
+            el.textContent = 'Old account on file, not verified, so purchases cannot be paid to it: ' +
+                [s.bankName, s.accountNumber, s.verifiedAccountName].filter(Boolean).join(' / ') +
+                '. Add it below to verify it with Paystack.';
+            el.classList.remove('d-none');
+        }
+
+        async function loadAccountBanks() {
+            var sel = document.getElementById('f-acct-bank');
+            if (sel.options.length > 1) return;
+            try {
+                var banks = await Suppliers.banks();
+                sel.innerHTML = '<option value="">Choose bank</option>' + banks.map(function (b) {
+                    return '<option value="' + esc(b.code) + '">' + esc(b.name) + '</option>';
+                }).join('');
+            } catch (e) {
+                sel.innerHTML = '<option value="">Could not load banks</option>';
+            }
+        }
+
+        async function loadAccounts() {
+            var list = document.getElementById('f-accounts-list');
+            list.innerHTML = '<div class="text-secondary small">Loading accounts...</div>';
+            try {
+                _accounts = await Suppliers.bankAccounts(editingId);
+            } catch (e) {
+                _accounts = [];
+                list.innerHTML = '<div class="text-danger small">' + esc(e.message || 'Could not load accounts.') + '</div>';
+                return;
+            }
+            renderAccounts();
+        }
+
+        function renderAccounts() {
+            var list = document.getElementById('f-accounts-list');
+            if (!_accounts.length) {
+                list.innerHTML = '<div class="text-secondary small">No bank account yet. Purchases cannot be paid by transfer until one is added.</div>';
+                return;
+            }
+            list.innerHTML = '<div class="list-group list-group-flush border rounded">' + _accounts.map(function (a, i) {
+                return '<div class="list-group-item py-2 d-flex align-items-center gap-2 flex-wrap">' +
+                    '<div class="flex-fill"><div class="fw-semibold">' + esc(a.accountName) +
+                    (a.isDefault ? ' <span class="badge bg-green-lt ms-1">Default</span>' : '') + '</div>' +
+                    '<div class="text-secondary small">' + esc(a.bankName) + ' &middot; ' + esc(a.accountNumber) + '</div></div>' +
+                    (a.isDefault ? '' : '<button type="button" class="btn btn-sm btn-ghost-secondary" data-acct-default="' + i + '">Make default</button>') +
+                    '<button type="button" class="btn btn-sm btn-ghost-danger" data-acct-remove="' + i + '">Remove</button>' +
+                    '</div>';
+            }).join('') + '</div>';
+        }
+
+        function resetAccountEntry() {
+            clearTimeout(_acctTimer);
+            _acctResolved = null;
+            document.getElementById('f-acct-bank').value = '';
+            document.getElementById('f-acct-number').value = '';
+            var nameEl = document.getElementById('f-acct-name');
+            nameEl.textContent = 'Choose the bank and enter the account number to see the name.';
+            nameEl.className = 'col-12 small text-secondary';
+            document.getElementById('f-acct-add').disabled = true;
+        }
+
+        /** Looks the account name up with Paystack once the bank and 10 digits are in. */
+        function scheduleAccountResolve() {
+            clearTimeout(_acctTimer);
+            _acctResolved = null;
+            document.getElementById('f-acct-add').disabled = true;
+            var bank = document.getElementById('f-acct-bank').value;
+            var number = document.getElementById('f-acct-number').value;
+            var nameEl = document.getElementById('f-acct-name');
+            nameEl.className = 'col-12 small text-secondary';
+            if (!bank || !/^\d{10}$/.test(number)) {
+                nameEl.textContent = 'Choose the bank and enter the account number to see the name.';
+                return;
+            }
+            nameEl.textContent = 'Checking with Paystack...';
+            _acctTimer = setTimeout(async function () {
+                try {
+                    var r = await Suppliers.resolveAccount(bank, number);
+                    if (document.getElementById('f-acct-bank').value !== bank || document.getElementById('f-acct-number').value !== number) return;
+                    _acctResolved = { key: bank + ':' + number, accountName: r.accountName, bankName: r.bankName };
+                    nameEl.textContent = r.accountName;
+                    nameEl.className = 'col-12 fw-semibold text-success';
+                    document.getElementById('f-acct-add').disabled = false;
+                } catch (e) {
+                    if (document.getElementById('f-acct-bank').value !== bank || document.getElementById('f-acct-number').value !== number) return;
+                    nameEl.textContent = e.message || 'Could not verify this account.';
+                    nameEl.className = 'col-12 small text-danger';
+                }
+            }, 400);
+        }
+
+        async function addAccount() {
+            var bank = document.getElementById('f-acct-bank').value;
+            var number = document.getElementById('f-acct-number').value;
+            if (!_acctResolved || _acctResolved.key !== bank + ':' + number) return;
+            var btn = document.getElementById('f-acct-add');
+            btn.disabled = true;
+            try {
+                if (editingId) {
+                    await Suppliers.addBankAccount(editingId, { bankCode: bank, accountNumber: number });
+                    await loadAccounts();
+                } else {
+                    if (_accounts.some(function (a) { return a.bankCode === bank && a.accountNumber === number; })) {
+                        throw new Error('This account is already in the list.');
+                    }
+                    _accounts.push({ bankCode: bank, accountNumber: number, bankName: _acctResolved.bankName, accountName: _acctResolved.accountName, isDefault: _accounts.length === 0 });
+                    renderAccounts();
+                }
+                resetAccountEntry();
+            } catch (e) {
+                var nameEl = document.getElementById('f-acct-name');
+                nameEl.textContent = e.message || 'Could not add the account.';
+                nameEl.className = 'col-12 small text-danger';
+                btn.disabled = false;
+            }
+        }
+
+        async function onAccountListClick(e) {
+            var def = e.target.closest('[data-acct-default]');
+            var rem = e.target.closest('[data-acct-remove]');
+            if (!def && !rem) return;
+            var a = _accounts[Number((def || rem).getAttribute(def ? 'data-acct-default' : 'data-acct-remove'))];
+            if (!a) return;
+            if (rem && !confirm('Remove ' + a.bankName + ' ' + a.accountNumber + ' (' + a.accountName + ')?')) return;
+            try {
+                if (editingId) {
+                    if (def) await Suppliers.updateBankAccount(editingId, a.id, { isDefault: true });
+                    else await Suppliers.removeBankAccount(editingId, a.id);
+                    await loadAccounts();
+                } else {
+                    if (def) _accounts.forEach(function (x) { x.isDefault = x === a; });
+                    else {
+                        _accounts.splice(_accounts.indexOf(a), 1);
+                        if (a.isDefault && _accounts.length) _accounts[0].isDefault = true;
+                    }
+                    renderAccounts();
+                }
+            } catch (err) {
+                alert(err.message || 'Could not update the account.');
             }
         }
 

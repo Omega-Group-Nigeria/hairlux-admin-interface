@@ -289,13 +289,27 @@ const Bookings = (() => {
   /**
    * Mark a reservation as used → sets booking status to IN_PROGRESS. Irreversible.
    */
-  async function useReservation(code) {
+  async function useReservation(code, balancePaymentMethod) {
     const res = await Auth.fetch(`/admin/bookings/reservation/${encodeURIComponent(code)}/use`, {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(balancePaymentMethod ? { balancePaymentMethod } : {}),
     });
     const raw = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(raw.message || `Failed to mark reservation used (${res.status})`);
     return normalizeBooking(raw.data || raw);
+  }
+
+  // ─── POST /admin/bookings/reservation/:code/balance-account ───────────────────
+  /**
+   * Ad booking balance: the customer's own Hairlux transfer account (issued
+   * the first time) and how much has arrived. Call again to re-check.
+   */
+  async function balanceAccount(code) {
+    const res = await Auth.fetch(`/admin/bookings/reservation/${encodeURIComponent(code)}/balance-account`, { method: "POST" });
+    const raw = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(raw.message || `Could not get the transfer details (${res.status})`);
+    return raw.data || raw;
   }
 
   // ─── GET /admin/bookings/:id ──────────────────────────────────────────────────
@@ -878,6 +892,7 @@ const Bookings = (() => {
     getStats,
     getByReservationCode,
     useReservation,
+    balanceAccount,
     getOne,
     updateStatus,
     getCancellationPolicy,
