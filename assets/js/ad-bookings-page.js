@@ -1,6 +1,6 @@
 /**
  * Ad Bookings page (ad-bookings.html).
- * Funnel and money for bookings from the ad landing page (book-now.html):
+ * Funnel and money for bookings from ads (landing page salon.html, booking form book-now.html):
  * checkouts started vs paid, what was collected online and at the branch,
  * results by campaign / channel / branch / service, and the list of
  * checkouts (unpaid ones are leads to follow up). Settings (deposit %,
@@ -100,7 +100,7 @@
     }
 
     /** The public landing page on the customer site (editable in the link builder). */
-    function landingUrl() { return 'https://www.hairlux.com.ng/book-now.html'; }
+    function landingUrl() { return 'https://www.hairlux.com.ng/salon.html'; }
 
     // ── Summary ─────────────────────────────────────────────────────────────
 
@@ -459,6 +459,7 @@
         $('btn-save-settings').addEventListener('click', saveSettings);
         ['s-percent', 's-min'].forEach(function (id) { $(id).addEventListener('input', depositExample); });
         $('btn-link-builder').addEventListener('click', openLinks);
+        $('l-dest').addEventListener('change', function () { $('l-base').value = this.value; buildLink(); });
         ['l-base', 'l-source', 'l-medium', 'l-campaign', 'l-content', 'l-service', 'l-branch'].forEach(function (id) {
             $(id).addEventListener('input', buildLink);
             $(id).addEventListener('change', buildLink);
