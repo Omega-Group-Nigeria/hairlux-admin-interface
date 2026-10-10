@@ -1137,10 +1137,9 @@
                 var balanceDue = hasMoney ? Number(booking.balanceDue) || 0 : 0;
                 document.getElementById('vr-payment').style.display = hasMoney ? '' : 'none';
                 if (hasMoney) {
-                    var paidNote = booking.paymentMethod === 'PAYSTACK'
+                    var paidNote = booking.paymentMethod === 'MONNIFY' || booking.paymentMethod === 'PAYSTACK'
                         ? (booking.depositAmount ? '(deposit, paid online)' : '(paid online)')
-                        : booking.paymentMethod === 'WALLET' ? '(wallet)'
-                        : booking.paymentMethod === 'MONNIFY' ? '(paid online)' : '';
+                        : booking.paymentMethod === 'WALLET' ? '(wallet)' : '';
                     document.getElementById('vr-paid').textContent = SalonBookings.formatMoney(booking.amountPaid || 0);
                     document.getElementById('vr-paid-note').textContent = paidNote;
                     var balEl = document.getElementById('vr-balance');

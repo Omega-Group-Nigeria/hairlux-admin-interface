@@ -2810,10 +2810,9 @@ function sbBalanceDue(isLegacy, booking) {
 function sbVerifyPaymentHtml(isLegacy, booking) {
   if (!isLegacy || booking.balanceDue === undefined || booking.balanceDue === null) return '';
   var due = sbBalanceDue(isLegacy, booking);
-  var note = booking.paymentMethod === 'PAYSTACK'
+  var note = booking.paymentMethod === 'MONNIFY' || booking.paymentMethod === 'PAYSTACK'
     ? (booking.depositAmount ? 'deposit, paid online' : 'paid online')
-    : booking.paymentMethod === 'WALLET' ? 'wallet'
-    : booking.paymentMethod === 'MONNIFY' ? 'paid online' : '';
+    : booking.paymentMethod === 'WALLET' ? 'wallet' : '';
   return '<div class="oc-modal-sub" style="margin-top:-4px">' +
     'Paid: <strong>' + sbFormatMoney(booking.amountPaid || 0) + '</strong>' + (note ? ' (' + note + ')' : '') + '<br>' +
     'Balance to collect: <strong style="color:' + (due > 0 ? 'var(--red)' : 'var(--green, #2fb344)') + '">' +
