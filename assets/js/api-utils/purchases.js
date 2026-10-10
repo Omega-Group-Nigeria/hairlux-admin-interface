@@ -52,5 +52,48 @@ const Purchases = (function () {
         });
     }
 
-    return { getAll, getOne, recordPayment, receiveGoods, acceptGoods };
+    // ── Paying the vendor by Paystack transfer ───────────────────────────
+
+    /** { grandTotal, amountPaid, processing, outstanding, vendor, accounts: [{ id, bankName, accountName, accountNumberMasked, isDefault }] } */
+    async function paymentOptions(id) {
+        return apiFetch(`/admin/purchases/${id}/payment-options`);
+    }
+
+    /** payload: { amount, vendorBankAccountId }. Returns the payment (transferStatus COMPLETED, PROCESSING or FAILED). */
+    async function payVendor(id, payload) {
+        return apiFetch(`/admin/purchases/${id}/transfers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async function retryTransfer(paymentId) {
+        return apiFetch(`/admin/purchases/payments/${paymentId}/retry`, { method: 'POST' });
+    }
+
+    async function resyncTransfer(paymentId) {
+        return apiFetch(`/admin/purchases/payments/${paymentId}/resync`, { method: 'POST' });
+    }
+
+    /** Paystack receipt for a paid transfer: { payment, receipt }. */
+    async function transferReceipt(paymentId) {
+        return apiFetch(`/admin/purchases/payments/${paymentId}/receipt`);
+    }
+
+    /** The receipt PDF as { blob, filename }. Fetched with the login token, so it cannot be a plain link. */
+    async function transferReceiptPdf(paymentId) {
+        const res = await Auth.fetch(`/admin/purchases/payments/${paymentId}/receipt.pdf`);
+        if (!res.ok) {
+            const raw = await res.json().catch(() => ({}));
+            throw new Error(raw.message || `Could not load the receipt (${res.status})`);
+        }
+        const match = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '');
+        return { blob: await res.blob(), filename: match ? match[1] : 'vendor-payment-receipt.pdf' };
+    }
+
+    return {
+        getAll, getOne, recordPayment, receiveGoods, acceptGoods,
+        paymentOptions, payVendor, retryTransfer, resyncTransfer, transferReceipt, transferReceiptPdf,
+    };
 })();

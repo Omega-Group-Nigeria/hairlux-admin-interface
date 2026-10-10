@@ -207,35 +207,70 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none" id="payment-error"></div>
-                    <div class="mb-3">
-                        <label class="form-label">Amount</label>
-                        <input type="number" step="0.01" min="0.01" class="form-control" id="p-amount">
-                    </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Payment Method</label>
-                            <select class="form-select" id="p-method">
-                                <option value="">Select...</option>
-                                <option value="CASH">Cash</option>
-                                <option value="BANK_TRANSFER">Bank Transfer</option>
-                                <option value="POS">POS</option>
-                                <option value="CARD">Card</option>
-                                <option value="WALLET">Wallet</option>
-                            </select>
+                    <div class="row g-3 mb-1">
+                        <div class="col-6">
+                            <label class="form-label" for="p-total">Total payable</label>
+                            <input type="text" class="form-control" id="p-total" readonly disabled>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Payment Date</label>
-                            <input type="date" class="form-control" id="p-date">
+                        <div class="col-6">
+                            <label class="form-label" for="p-outstanding">Total outstanding</label>
+                            <input type="text" class="form-control fw-bold" id="p-outstanding" readonly disabled>
                         </div>
                     </div>
+                    <div class="text-secondary small mb-3" id="p-figures-note"></div>
+
                     <div class="mb-3">
-                        <label class="form-label">Reference <span class="text-secondary">(optional)</span></label>
-                        <input type="text" class="form-control" id="p-reference">
+                        <label class="form-label" for="p-amount">Amount to pay now</label>
+                        <div class="input-group">
+                            <span class="input-group-text">&#8358;</span>
+                            <input type="number" step="0.01" min="1" class="form-control" id="p-amount" placeholder="0.00">
+                            <button class="btn btn-outline-secondary" type="button" id="p-pay-all">Full balance</button>
+                        </div>
+                        <div class="form-hint">Part payments and overpayments are both fine: the payment status shows Partially paid or Overpaid.</div>
+                        <div class="text-warning small mt-1 d-none" id="p-over-note"></div>
+                    </div>
+
+                    <div class="btn-group w-100 mb-3" role="group" id="p-mode-group">
+                        <input type="radio" class="btn-check" name="p-mode" id="p-mode-transfer" value="TRANSFER" checked>
+                        <label class="btn" for="p-mode-transfer">Pay by transfer</label>
+                        <input type="radio" class="btn-check" name="p-mode" id="p-mode-manual" value="MANUAL">
+                        <label class="btn" for="p-mode-manual">Already paid</label>
+                    </div>
+
+                    <div id="p-transfer-section">
+                        <label class="form-label" for="p-account">Pay to account</label>
+                        <select class="form-select" id="p-account"></select>
+                        <div class="form-hint" id="p-account-hint">Paid by Paystack transfer: the money goes straight away. It counts towards this purchase once Paystack confirms it.</div>
+                    </div>
+
+                    <div id="p-manual-section" style="display:none">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="p-method">Payment Method</label>
+                                <select class="form-select" id="p-method">
+                                    <option value="">Select...</option>
+                                    <option value="CASH">Cash</option>
+                                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                                    <option value="POS">POS</option>
+                                    <option value="CARD">Card</option>
+                                    <option value="WALLET">Wallet</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="p-date">Payment Date</label>
+                                <input type="date" class="form-control" id="p-date">
+                            </div>
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label" for="p-reference">Reference <span class="text-secondary">(optional)</span></label>
+                            <input type="text" class="form-control" id="p-reference">
+                        </div>
+                        <div class="form-hint">Only records a payment already made another way (cash, POS, your own bank app). No money is sent.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary" id="btn-save-payment">Record Payment</button>
+                    <button class="btn btn-primary" id="btn-save-payment">Pay now</button>
                 </div>
             </div>
         </div>
@@ -359,6 +394,12 @@
             });
             document.getElementById('btn-export').addEventListener('click', exportPurchases);
             document.getElementById('btn-save-payment').addEventListener('click', savePayment);
+            document.getElementById('p-mode-transfer').addEventListener('change', syncPaymentMode);
+            document.getElementById('p-mode-manual').addEventListener('change', syncPaymentMode);
+            document.getElementById('p-amount').addEventListener('input', updatePayButton);
+            document.getElementById('p-pay-all').addEventListener('click', function () {
+                if (_payOptions) { document.getElementById('p-amount').value = _payOptions.outstanding; updatePayButton(); }
+            });
             document.getElementById('btn-save-receive').addEventListener('click', saveReceive);
             document.getElementById('btn-save-accept').addEventListener('click', saveAccept);
 
@@ -469,10 +510,8 @@
                 }).join('');
 
                 var paymentsHtml = (p.payments || []).length
-                    ? p.payments.map(function (pay) {
-                        return '<tr><td>' + new Date(pay.paymentDate).toLocaleDateString() + '</td><td>' + formatMoney(pay.amount) + '</td><td>' + esc(pay.paymentMethod) + '</td><td>' + esc(pay.paymentReference || '-') + '</td></tr>';
-                    }).join('')
-                    : '<tr><td colspan="4" class="text-secondary text-center">No payments recorded yet.</td></tr>';
+                    ? p.payments.map(paymentRow).join('')
+                    : '<tr><td colspan="5" class="text-secondary text-center">No payments recorded yet.</td></tr>';
 
                 var receiptsHtml = (p.goodsReceipts || []).length
                     ? p.goodsReceipts.map(function (r) {
@@ -496,13 +535,18 @@
                     '<div class="col-6"><div class="text-secondary small">Vendor</div><div>' + esc(p.vendor.name) + '</div></div>' +
                     '<div class="col-4"><div class="text-secondary small">Grand Total</div><div>' + formatMoney(p.grandTotal) + '</div></div>' +
                     '<div class="col-4"><div class="text-secondary small">Paid</div><div>' + formatMoney(p.amountPaid) + '</div></div>' +
+                    (Number(p.amountPaid) > Number(p.grandTotal)
+                        ? '<div class="col-4"><div class="text-secondary small">Overpaid by</div><div class="fw-bold text-warning">' + formatMoney(Number(p.amountPaid) - Number(p.grandTotal)) + '</div>'
+                        : '<div class="col-4"><div class="text-secondary small">Outstanding</div><div class="fw-bold">' + formatMoney(p.outstanding != null ? p.outstanding : Math.max(0, p.grandTotal - p.amountPaid)) + '</div>') +
+                    (Number(p.inProgressAmount) > 0 ? '<div class="text-secondary small">' + formatMoney(p.inProgressAmount) + ' transfer in progress</div>' : '') + '</div>' +
+                    '<div class="col-4"><div class="text-secondary small">Payment</div><div><span class="badge ' + (PAYMENT_BADGE[p.paymentStatus] || 'bg-secondary-lt') + '">' + esc(String(p.paymentStatus || '').replace('_', ' ')) + '</span></div></div>' +
                     '<div class="col-4"><div class="text-secondary small">Status</div><div><span class="badge ' + (STATUS_BADGE[p.status] || 'bg-secondary-lt') + '">' + esc(p.status.replace('_', ' ')) + '</span></div></div>' +
                     '<div class="col-4"><div class="text-secondary small">Acceptance</div><div><span class="badge ' + (ACCEPTANCE_BADGE[p.acceptanceStatus] || 'bg-secondary-lt') + '">' + esc(ACCEPTANCE_LABEL[p.acceptanceStatus] || p.acceptanceStatus) + '</span></div></div>' +
                     '</div>' +
                     '<div class="fw-semibold mb-1">Products</div>' +
                     '<table class="table table-sm mb-3"><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Line Total</th></tr></thead><tbody>' + linesHtml + '</tbody></table>' +
                     '<div class="fw-semibold mb-1">Payments</div>' +
-                    '<table class="table table-sm mb-3"><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead><tbody>' + paymentsHtml + '</tbody></table>' +
+                    '<div class="table-responsive"><table class="table table-sm mb-3"><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status / paid to</th><th></th></tr></thead><tbody>' + paymentsHtml + '</tbody></table></div>' +
                     '<div class="fw-semibold mb-1">Goods Received</div>' +
                     '<table class="table table-sm"><thead><tr><th>Date</th><th>Summary</th></tr></thead><tbody>' + receiptsHtml + '</tbody></table>';
 
@@ -513,7 +557,7 @@
                 // Each action is shown only to roles that hold its permission,
                 // so nobody clicks into a "no permission" error.
                 document.getElementById('view-footer').innerHTML =
-                    (RBAC.can('purchases:record_payment') ? '<button class="btn btn-outline-primary" onclick="openPaymentForm()">Record Payment</button>' : '') +
+                    (RBAC.can('purchases:record_payment') || RBAC.can('purchases:pay_vendor') ? '<button class="btn btn-outline-primary" onclick="openPaymentForm()">Record Payment</button>' : '') +
                     (RBAC.can('purchases:receive_goods') ? '<button class="btn btn-outline-success" onclick="openReceiveForm()">Receive Goods</button>' : '') +
                     (p.acceptanceStatus === 'RECEIVED' && RBAC.can('purchases:accept_goods') ? '<button class="btn btn-outline-warning" onclick="openAcceptForm()">Accept Products</button>' : '') +
                     '<button class="btn btn-link link-secondary" data-bs-dismiss="modal">Close</button>';
@@ -523,42 +567,224 @@
         }
 
         // ── Record Payment ───────────────────────────────────────────────
-        function openPaymentForm() {
-            document.getElementById('payment-error').classList.add('d-none');
+        // Default: pay the vendor by Paystack transfer to one of its
+        // verified accounts (same flow as an expense payout). "Already paid
+        // another way" only records a payment made outside the system.
+        var _payOptions = null;
+
+        var TRANSFER_BADGE = { PROCESSING: ['bg-yellow-lt', 'In progress'], COMPLETED: ['bg-green-lt', 'Paid'], FAILED: ['bg-red-lt', 'Failed'] };
+        var METHOD_LABEL = { PAYSTACK_TRANSFER: 'Paystack transfer', BANK_TRANSFER: 'Bank transfer', CASH: 'Cash', POS: 'POS', CARD: 'Card', WALLET: 'Wallet' };
+
+        function maskNumber(n) { return n ? String(n).replace(/^(\d*)(\d{4})$/, function (m, a, b) { return a.replace(/\d/g, '*') + b; }) : ''; }
+
+        function paymentRow(pay) {
+            var canPay = RBAC.can('purchases:pay_vendor');
+            var status = '', actions = '';
+            if (pay.transferStatus) {
+                var b = TRANSFER_BADGE[pay.transferStatus] || ['bg-secondary-lt', pay.transferStatus];
+                status = '<span class="badge ' + b[0] + '">' + b[1] + '</span>' +
+                    '<div class="small text-secondary">' + esc(pay.payoutAccountName || '') + ' &middot; ' + esc(pay.payoutBankName || '') + ' ' + esc(maskNumber(pay.payoutAccountNumber)) + '</div>' +
+                    (pay.transferStatus === 'FAILED' && pay.payoutFailureReason ? '<div class="small text-danger">' + esc(pay.payoutFailureReason) + '</div>' : '');
+                if (pay.transferStatus === 'COMPLETED') {
+                    actions = '<button class="btn btn-sm btn-outline-success" onclick="openTransferReceipt(\'' + pay.id + '\', false)">Receipt</button> ' +
+                        '<button class="btn btn-sm btn-ghost-secondary" onclick="openTransferReceipt(\'' + pay.id + '\', true)" title="Download PDF">PDF</button>';
+                } else if (canPay && pay.transferStatus === 'PROCESSING') {
+                    actions = '<button class="btn btn-sm btn-outline-secondary" onclick="resyncTransfer(\'' + pay.id + '\')">Check status</button>';
+                } else if (canPay && pay.transferStatus === 'FAILED') {
+                    actions = '<button class="btn btn-sm btn-outline-primary" onclick="retryTransfer(\'' + pay.id + '\')">Retry</button>';
+                }
+            } else {
+                status = '<span class="badge bg-secondary-lt">Recorded</span>' + (pay.paymentReference ? '<div class="small text-secondary">' + esc(pay.paymentReference) + '</div>' : '');
+            }
+            return '<tr><td class="text-nowrap">' + new Date(pay.paidOutAt || pay.paymentDate).toLocaleDateString() + '</td>' +
+                '<td class="text-nowrap">' + formatMoney(pay.amount) + '</td>' +
+                '<td>' + esc(METHOD_LABEL[pay.paymentMethod] || pay.paymentMethod) + '</td>' +
+                '<td>' + status + '</td><td class="text-end text-nowrap">' + actions + '</td></tr>';
+        }
+
+        function paymentMode() {
+            return document.getElementById('p-mode-manual').checked ? 'MANUAL' : 'TRANSFER';
+        }
+
+        function syncPaymentMode() {
+            var manual = paymentMode() === 'MANUAL';
+            document.getElementById('p-transfer-section').style.display = manual ? 'none' : '';
+            document.getElementById('p-manual-section').style.display = manual ? '' : 'none';
+            updatePayButton();
+        }
+
+        function updatePayButton() {
+            var btn = document.getElementById('btn-save-payment');
+            var amount = Number(document.getElementById('p-amount').value) || 0;
+            // Overpaying is allowed; say so plainly before it happens.
+            var over = _payOptions ? Math.round((amount - _payOptions.outstanding) * 100) / 100 : 0;
+            var overEl = document.getElementById('p-over-note');
+            overEl.classList.toggle('d-none', !(over > 0));
+            if (over > 0) overEl.textContent = formatMoney(over) + ' more than outstanding: this purchase will show as Overpaid.';
+            if (paymentMode() === 'MANUAL') { btn.textContent = 'Record payment'; btn.disabled = false; return; }
+            btn.textContent = amount > 0 ? 'Pay ' + formatMoney(amount) + ' now' : 'Pay now';
+            btn.disabled = !_payOptions || !_payOptions.accounts.length;
+        }
+
+        async function openPaymentForm() {
+            var errEl = document.getElementById('payment-error');
+            errEl.classList.add('d-none');
+            _payOptions = null;
             document.getElementById('p-amount').value = '';
             document.getElementById('p-method').value = '';
             document.getElementById('p-date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('p-reference').value = '';
+            // Sending money (pay_vendor) and recording a payment made another
+            // way (record_payment) are separate permissions: show only what
+            // this person may do.
+            var canTransfer = RBAC.can('purchases:pay_vendor');
+            var canRecord = RBAC.can('purchases:record_payment');
+            document.getElementById(canTransfer ? 'p-mode-transfer' : 'p-mode-manual').checked = true;
+            document.getElementById('p-mode-group').style.display = canTransfer && canRecord ? '' : 'none';
+            document.getElementById('p-total').value = formatMoney(_currentPurchase.grandTotal);
+            document.getElementById('p-outstanding').value = '...';
+            document.getElementById('p-figures-note').textContent = '';
+            document.getElementById('p-account').innerHTML = '<option value="">Loading accounts...</option>';
+            syncPaymentMode();
             new bootstrap.Modal(document.getElementById('modal-payment')).show();
+
+            try {
+                var o = await Purchases.paymentOptions(_currentPurchase.id);
+                _payOptions = o;
+                document.getElementById('p-total').value = formatMoney(o.grandTotal);
+                document.getElementById('p-outstanding').value = formatMoney(o.outstanding);
+                var note = [formatMoney(o.amountPaid) + ' paid so far'];
+                if (o.processing > 0) note.push(formatMoney(o.processing) + ' transfer still in progress');
+                if (o.overpaidBy > 0) note.push('overpaid by ' + formatMoney(o.overpaidBy));
+                document.getElementById('p-figures-note').textContent = note.join(' \u00B7 ');
+                var sel = document.getElementById('p-account');
+                var hint = document.getElementById('p-account-hint');
+                if (!o.accounts.length) {
+                    sel.innerHTML = '<option value="">No verified bank account</option>';
+                    hint.innerHTML = '<span class="text-danger">' + esc(o.vendor ? o.vendor.name : 'This vendor') + ' has no verified bank account yet. Add one on the Vendors page (Edit, Bank accounts), then pay.</span>';
+                } else {
+                    sel.innerHTML = o.accounts.map(function (a) {
+                        return '<option value="' + esc(a.id) + '"' + (a.isDefault ? ' selected' : '') + '>' +
+                            esc(a.accountName) + ' \u00B7 ' + esc(a.bankName) + ' ' + esc(a.accountNumberMasked) + (a.isDefault ? ' (default)' : '') + '</option>';
+                    }).join('');
+                    hint.textContent = 'Paid by Paystack transfer: the money goes straight away. It counts towards this purchase once Paystack confirms it.';
+                }
+                if (o.outstanding <= 0) {
+                    errEl.className = 'alert alert-info';
+                    errEl.textContent = (o.processing > 0
+                        ? 'A transfer in progress already covers the rest of this purchase.'
+                        : o.overpaidBy > 0 ? 'This purchase is already overpaid.' : 'This purchase is fully paid.') +
+                        ' You can still pay more; it will show as Overpaid.';
+                } else if (o.processing > 0) {
+                    errEl.className = 'alert alert-warning';
+                    errEl.textContent = 'A transfer of ' + formatMoney(o.processing) + ' is still in progress on this purchase. Check it before paying again, so the vendor is not paid twice.';
+                }
+            } catch (e) {
+                errEl.className = 'alert alert-danger';
+                errEl.textContent = e.message || 'Could not load the payment details.';
+            }
+            updatePayButton();
         }
 
         async function savePayment() {
             var errEl = document.getElementById('payment-error');
-            errEl.classList.add('d-none');
-            var amount = Number(document.getElementById('p-amount').value);
-            var method = document.getElementById('p-method').value;
-            var date = document.getElementById('p-date').value;
-            if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount.'; errEl.classList.remove('d-none'); return; }
-            if (!method) { errEl.textContent = 'Select a payment method.'; errEl.classList.remove('d-none'); return; }
-            if (!date) { errEl.textContent = 'Payment date is required.'; errEl.classList.remove('d-none'); return; }
+            errEl.className = 'alert alert-danger d-none';
+            var amount = Math.round(Number(document.getElementById('p-amount').value) * 100) / 100;
+            var fail = function (msg) { errEl.textContent = msg; errEl.classList.remove('d-none'); };
+            if (!amount || amount <= 0) return fail('Enter the amount to pay now.');
 
             var btn = document.getElementById('btn-save-payment');
+            if (paymentMode() === 'MANUAL') {
+                var method = document.getElementById('p-method').value;
+                var date = document.getElementById('p-date').value;
+                if (!method) return fail('Select a payment method.');
+                if (!date) return fail('Payment date is required.');
+                btn.disabled = true;
+                try {
+                    await Purchases.recordPayment(_currentPurchase.id, {
+                        amount: amount,
+                        paymentMethod: method,
+                        paymentDate: date,
+                        paymentReference: document.getElementById('p-reference').value.trim() || undefined,
+                    });
+                    bootstrap.Modal.getInstance(document.getElementById('modal-payment')).hide();
+                    viewOne(_currentPurchase.id);
+                    load();
+                } catch (e) {
+                    fail(e.message || 'Failed to record payment.');
+                } finally {
+                    btn.disabled = false;
+                }
+                return;
+            }
+
+            if (!_payOptions) return fail('The payment details have not loaded yet.');
+            var sel = document.getElementById('p-account');
+            var account = _payOptions.accounts.filter(function (a) { return a.id === sel.value; })[0];
+            if (!account) return fail('Choose the account to pay.');
+            var over = Math.round((amount - _payOptions.outstanding) * 100) / 100;
+            if (!confirm('Send ' + formatMoney(amount) + ' to ' + account.accountName + ' (' + account.bankName + ' ' + account.accountNumberMasked + ') by Paystack transfer?' +
+                (over > 0 ? '\n\nThis is ' + formatMoney(over) + ' more than outstanding, so the purchase will show as Overpaid.' : '') +
+                '\n\nThis sends real money and cannot be undone.')) return;
+
             btn.disabled = true;
             try {
-                await Purchases.recordPayment(_currentPurchase.id, {
-                    amount: amount,
-                    paymentMethod: method,
-                    paymentDate: date,
-                    paymentReference: document.getElementById('p-reference').value.trim() || undefined,
-                });
+                var pay = await Purchases.payVendor(_currentPurchase.id, { amount: amount, vendorBankAccountId: account.id });
                 bootstrap.Modal.getInstance(document.getElementById('modal-payment')).hide();
+                if (pay && pay.transferStatus === 'FAILED') {
+                    alert('The transfer did not go through:\n\n' + (pay.payoutFailureReason || 'Unknown error') + '\n\nFix the cause, then use "Retry" on the payment.');
+                } else if (pay && pay.transferStatus === 'PROCESSING') {
+                    alert('Transfer started. Paystack is still processing it, so it will show as paid once it settles. Use "Check status" on the payment to update it.');
+                }
                 viewOne(_currentPurchase.id);
                 load();
             } catch (e) {
-                errEl.textContent = e.message || 'Failed to record payment.';
-                errEl.classList.remove('d-none');
+                fail(e.message || 'Failed to start the transfer.');
             } finally {
                 btn.disabled = false;
+                updatePayButton();
+            }
+        }
+
+        async function retryTransfer(paymentId) {
+            if (!confirm('Retry this transfer to the same account?\n\nThis sends real money.')) return;
+            try {
+                var pay = await Purchases.retryTransfer(paymentId);
+                if (pay && pay.transferStatus === 'FAILED') alert('The transfer failed again:\n\n' + (pay.payoutFailureReason || 'Unknown error'));
+            } catch (e) { alert(e.message || 'Failed to retry the transfer.'); }
+            viewOne(_currentPurchase.id);
+            load();
+        }
+
+        async function resyncTransfer(paymentId) {
+            try {
+                var pay = await Purchases.resyncTransfer(paymentId);
+                if (pay && pay.transferStatus === 'PROCESSING') alert('Paystack still shows this transfer as in progress. Check again later.');
+            } catch (e) { alert(e.message || 'Failed to check the transfer.'); }
+            viewOne(_currentPurchase.id);
+            load();
+        }
+
+        /** Opens the Paystack receipt PDF in a new tab, or downloads it. */
+        async function openTransferReceipt(paymentId, download) {
+            var win = download ? null : window.open('', '_blank');
+            try {
+                var file = await Purchases.transferReceiptPdf(paymentId);
+                var url = URL.createObjectURL(file.blob);
+                if (download) {
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.filename;
+                    document.body.appendChild(a); a.click(); a.remove();
+                } else if (win) {
+                    win.location = url;
+                } else {
+                    window.location.href = url;
+                }
+                setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+            } catch (e) {
+                if (win) win.close();
+                alert(e.message || 'Could not open the receipt.');
             }
         }
 
@@ -736,4 +962,4 @@
 <script src="assets/js/pwa.js" defer></script>
 </body>
 
-</html>
+</html>
