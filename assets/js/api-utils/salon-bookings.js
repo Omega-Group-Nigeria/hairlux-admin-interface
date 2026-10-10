@@ -190,10 +190,15 @@ const SalonBookings = (function () {
         });
     }
 
+    /** Ad booking balance: the customer's own transfer account and how much has arrived (call again to re-check). */
+    async function balanceAccount(code) {
+        return apiFetch(`/admin/bookings/reservation/${encodeURIComponent(code)}/balance-account`, { method: 'POST' });
+    }
+
     return {
         getAll, getOne, create, previewDiscount, editBooking, addServiceToCompletedBooking,
         addInventoryItem, start, complete, cancel, noShow,
-        verifyCode, confirmVerification, searchCustomers, checkPhoneMatch, findAllCustomers,
+        verifyCode, confirmVerification, balanceAccount, searchCustomers, checkPhoneMatch, findAllCustomers,
         getCustomerContactsPerformance, getCustomerProfile,
         getCustomerClassificationSettings, updateCustomerClassificationSettings,
         getOverview, deleteBooking, reverseCompletion,

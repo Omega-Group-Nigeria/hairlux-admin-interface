@@ -47,6 +47,7 @@
     <script src="../assets/js/nav-config.js"></script>
     <script src="../assets/js/api-utils/rbac.js"></script>
     <script src="../assets/js/api-utils/bookings.js"></script>
+    <script src="../assets/js/balance-transfer.js"></script>
     <script src="../assets/js/api-utils/beauticians.js"></script>
     <script src="../assets/js/force-assign-modal.js"></script>
     <script src="../assets/js/booking-cancel-modal.js"></script>
@@ -534,6 +535,22 @@
 
                 '</div>' + // card-body
                 '</div>';  // card
+
+            mountBalanceTransfer(b);
+        }
+
+        // Ad booking with a balance: transfer to the customer's own account only.
+        var _balancePanel = null;
+        function mountBalanceTransfer(b) {
+            if (_balancePanel) { _balancePanel.stop(); _balancePanel = null; }
+            var el = document.getElementById("use-balance-transfer");
+            if (!el || !BalanceTransfer.isTransferOnly(b)) return;
+            _balancePanel = BalanceTransfer.mount(el, function () { return Bookings.balanceAccount(b.reservationCode); }, {
+                onChange: function (covered) {
+                    var btn = document.getElementById("btn-mark-used");
+                    if (btn) btn.disabled = !covered;
+                },
+            });
         }
 
         // ── Build action buttons based on bookingType ──────────────────────────
@@ -553,7 +570,15 @@
                     return '<span class="text-secondary"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>This reservation has already been used.</span>';
                 }
                 // Not fully paid yet (online deposit or pay at branch): take the balance first.
+                // Ad bookings: only by transfer to the customer's own account (panel mounted after render).
                 var due = Number(b.balanceDue) || 0;
+                if (BalanceTransfer.isTransferOnly(b)) {
+                    return '<div id="use-balance-transfer" style="max-width:520px"></div>' +
+                        '<button class="btn btn-success" id="btn-mark-used" disabled onclick="markAsUsed(\'' + code + '\')">' +
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1"><path d="M5 12l5 5l10 -10"/></svg>' +
+                        'Take balance from transfer and check in' +
+                        '</button>';
+                }
                 var balancePicker = due > 0
                     ? '<div class="mb-2" style="max-width:360px">' +
                       '<label class="form-label" for="use-balance-method">Collect ' + Bookings.formatMoney(due) + ' balance by</label>' +
@@ -638,6 +663,12 @@
                 a.className = "alert alert-danger";
                 a.textContent = "Collect the balance and choose how the customer paid before checking in.";
                 methodEl.focus();
+                return;
+            }
+            if (_balancePanel && !_balancePanel.covered()) {
+                var a2 = document.getElementById("action-alert");
+                a2.className = "alert alert-warning";
+                a2.textContent = "The transfer has not arrived yet. Wait for it to show as received, then check in.";
                 return;
             }
             if (!confirm('Mark reservation "' + code + '" as used?\nThis sets the booking to IN_PROGRESS and is irreversible.')) return;

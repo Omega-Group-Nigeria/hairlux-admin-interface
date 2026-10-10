@@ -124,7 +124,13 @@ const SalonBookingsSelf = (function () {
         });
     }
 
+    /** Ad booking balance: the customer's own transfer account and how much has arrived (call again to re-check). */
+    async function balanceAccount(code) {
+        return jsonFetch(`/staff/me/salon-bookings/verify/${encodeURIComponent(code)}/balance-account`, { method: 'POST' });
+    }
+
     return {
+        balanceAccount,
         getAll, getOne, getBranchStaff, getMyCommission, searchCustomers, checkPhoneMatch,
         create, previewDiscount, editBooking, addServiceToCompletedBooking, getTodayStylistPerformance,
         addInventoryItem, start, complete, cancel, noShow, verifyCode, confirmVerification,
