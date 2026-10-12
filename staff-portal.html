@@ -751,6 +751,25 @@
       justify-content: space-between
     }
 
+    /* Inventory: Stock Register search, filters and pages */
+    .inv-register-h { flex-wrap: wrap; gap: 12px; }
+    .inv-register-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .inv-register-tools #inv-search { width: 230px; }
+    .inv-register-tools select.input { width: auto; min-width: 150px; }
+    .inv-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 22px; border-top: 1px solid var(--border); }
+    .inv-pager-info { color: var(--muted, #8a8f98); font-size: 13px; }
+    .inv-pager-btns { display: flex; align-items: center; gap: 8px; }
+    .inv-pager-btns select.input { width: auto; padding-top: 6px; padding-bottom: 6px; }
+    .inv-pager-page { font-size: 13px; white-space: nowrap; }
+    .inv-pager .btn { white-space: nowrap; }
+    .inv-pager .btn:disabled { opacity: .45; cursor: not-allowed; }
+    @media (max-width: 560px) {
+      .inv-register-tools, .inv-register-tools #inv-search, .inv-register-tools select.input { width: 100%; }
+      .inv-pager { justify-content: center; text-align: center; }
+      .inv-pager-btns { flex-wrap: wrap; justify-content: center; width: 100%; }
+      .inv-pager-btns select.input { width: 100%; }
+    }
+
     .card-h h3 {
       font-size: 14px;
       font-weight: 700;
@@ -2860,14 +2879,24 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-h">
+            <div class="card-h inv-register-h">
               <h3>Stock Register</h3>
-              <select class="input" id="inv-category-filter" style="max-width:180px" onchange="loadInventoryItems()">
-                <option value="">All Categories</option>
-                <option value="FOR_SALE">For Sale</option>
-                <option value="INTERNAL_USE">Internal Use</option>
-                <option value="STORAGE">Storage</option>
-              </select>
+              <div class="inv-register-tools">
+                <input class="input" type="search" id="inv-search" placeholder="Search name, SKU or brand" autocomplete="off"
+                  oninput="onInventorySearch()" aria-label="Search stock">
+                <select class="input" id="inv-status-filter" onchange="onInventoryFilter()" aria-label="Stock status">
+                  <option value="">All Stock Levels</option>
+                  <option value="LOW">Low Stock</option>
+                  <option value="OUT">Out of Stock</option>
+                  <option value="GOOD">Healthy</option>
+                </select>
+                <select class="input" id="inv-category-filter" onchange="_invPage = 1; loadInventoryItems()" aria-label="Category">
+                  <option value="">All Categories</option>
+                  <option value="FOR_SALE">For Sale</option>
+                  <option value="INTERNAL_USE">Internal Use</option>
+                  <option value="STORAGE">Storage</option>
+                </select>
+              </div>
             </div>
             <div class="tbl-wrap">
               <table>
@@ -2887,6 +2916,20 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <div class="inv-pager" id="inv-pager" style="display:none">
+              <span class="inv-pager-info" id="inv-pager-info"></span>
+              <div class="inv-pager-btns">
+                <select class="input" id="inv-per-page" onchange="onInventoryPerPage()" aria-label="Items per page">
+                  <option value="10">10 per page</option>
+                  <option value="20" selected>20 per page</option>
+                  <option value="50">50 per page</option>
+                  <option value="100">100 per page</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" id="inv-prev" onclick="goInventoryPage(-1)">&lsaquo; Previous</button>
+                <span class="inv-pager-page" id="inv-pager-page"></span>
+                <button class="btn btn-ghost btn-sm" id="inv-next" onclick="goInventoryPage(1)">Next &rsaquo;</button>
+              </div>
             </div>
           </div>
         </div>
