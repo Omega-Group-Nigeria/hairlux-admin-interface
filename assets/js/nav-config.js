@@ -208,6 +208,7 @@ var NavConfig = window.NavConfig || (() => {
             label: "Academy",
             icon: "academy",
             children: [
+                { label: "Enrolments (Landing Page)", href: "academy-enrolments.html", permission: read("academy_enrolments:read") },
                 { label: "Commerce (Orders, Refunds, Certificates)", href: "academy-commerce.html", permission: read("academy_commerce:read") },
                 { label: "Trainings & Curriculum", href: "academy-training.html", permission: read("academy_training:read") },
                 { label: "Cohorts", href: "academy-cohorts.html", permission: read("academy_training:read") },
@@ -347,6 +348,7 @@ var NavConfig = window.NavConfig || (() => {
             "inventory-products.html",
             "financial-transactions.html",
             "branches.html",
+            "academy-enrolments.html",
             "academy-commerce.html",
             "academy-training.html",
             "academy-cohorts.html",
