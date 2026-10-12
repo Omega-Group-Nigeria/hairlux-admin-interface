@@ -506,7 +506,7 @@
                 document.getElementById('view-title').textContent = formatPoNumber(p.purchaseNumber);
 
                 var linesHtml = p.lines.map(function (l) {
-                    return '<tr><td>' + esc(l.product ? l.product.name : '') + '</td><td>' + l.quantity + '</td><td>' + formatMoney(l.unitPrice) + '</td><td>' + formatMoney(l.lineTotal) + '</td></tr>';
+                    return '<tr><td>' + esc(productLabel(l.product)) + '</td><td>' + l.quantity + '</td><td>' + formatMoney(l.unitPrice) + '</td><td>' + formatMoney(l.lineTotal) + '</td></tr>';
                 }).join('');
 
                 var paymentsHtml = (p.payments || []).length
@@ -521,10 +521,10 @@
                         // yet-reviewed line used to look identical to a
                         // 0-accepted, fully-reviewed-and-rejected one.
                         var lineSummary = r.lines.map(function (l) {
-                            return l.acceptedAt
+                            return receiptLineProductName(l) + ': ' + (l.acceptedAt
                                 ? (l.acceptedQty + ' accepted (of ' + l.deliveredQty + ' delivered)')
-                                : (l.deliveredQty + ' delivered: awaiting acceptance');
-                        }).join(', ');
+                                : (l.deliveredQty + ' delivered, awaiting acceptance'));
+                        }).join('; ');
                         return '<tr><td>' + new Date(r.receivedDate).toLocaleDateString() + '</td><td>' + esc(lineSummary) + '</td></tr>';
                     }).join('')
                     : '<tr><td colspan="2" class="text-secondary text-center">No deliveries received yet.</td></tr>';
@@ -788,6 +788,20 @@
             }
         }
 
+        // ── Product names ─────────────────────────────────────────────────
+        function productLabel(product) {
+            if (!product) return 'Unknown product';
+            return product.name || product.sku || 'Unnamed product';
+        }
+
+        // A goods receipt line names its product through its purchase line.
+        // Falls back to the purchase's own lines if the API left it out.
+        function receiptLineProductName(l) {
+            if (l.purchaseLine && l.purchaseLine.product) return productLabel(l.purchaseLine.product);
+            var match = ((_currentPurchase && _currentPurchase.lines) || []).find(function (pl) { return pl.id === l.purchaseLineId; });
+            return productLabel(match && match.product);
+        }
+
         // ── Receive Goods ─────────────────────────────────────────────────
         function openReceiveForm() {
             document.getElementById('receive-error').classList.add('d-none');
@@ -804,7 +818,7 @@
                 .map(function (l) {
                     return {
                         purchaseLineId: l.id,
-                        productName: l.product ? l.product.name : '',
+                        productName: productLabel(l.product),
                         ordered: l.quantity,
                         previouslyReceived: deliveredByLine[l.id] || 0,
                         deliveredQty: '',
@@ -894,7 +908,7 @@
                     if (l.acceptedAt) return; // already reviewed -- nothing left to do for this line
                     _acceptLines.push({
                         goodsReceiptLineId: l.id,
-                        productName: l.purchaseLine && l.purchaseLine.product ? l.purchaseLine.product.name : '',
+                        productName: receiptLineProductName(l),
                         deliveredQty: l.deliveredQty,
                         damagedQty: l.damagedQty || 0,
                         acceptedQty: '',

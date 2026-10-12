@@ -3947,10 +3947,19 @@ async function submitProductSale() {
     return;
   }
 
+  var methodEl = document.getElementById('sale-payment-method');
+  if (!methodEl.value) {
+    errorEl.textContent = 'Choose how the customer paid.';
+    errorEl.style.display = '';
+    methodEl.focus();
+    return;
+  }
+
   var payload = {
     items: lines,
     customerName: document.getElementById('sale-customer-name').value.trim() || undefined,
     customerPhone: document.getElementById('sale-customer-phone').value.trim() || undefined,
+    paymentMethod: methodEl.value,
   };
 
   var btn = document.getElementById('btn-submit-sale');
@@ -3960,6 +3969,7 @@ async function submitProductSale() {
     document.getElementById('sale-lines').innerHTML = '';
     document.getElementById('sale-customer-name').value = '';
     document.getElementById('sale-customer-phone').value = '';
+    methodEl.value = '';
     saleItemsCache = null; // stock levels changed: force a fresh fetch next time
     updateSaleTotal();
     await loadSalesData();
