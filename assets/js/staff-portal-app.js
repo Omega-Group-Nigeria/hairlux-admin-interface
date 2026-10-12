@@ -3115,6 +3115,7 @@ async function loadInventoryItems() {
   }
 
   const items = result.data || [];
+  _invItems = items; // keeps the current page after Receive Goods / Adjustment reloads
   const outOfStock = items.filter((i) => totalStock(i) <= 0).length;
   const lowStock = items.filter((i) => totalStock(i) > 0 && totalStock(i) <= i.lowStockThreshold).length;
   const healthy = items.length - outOfStock - lowStock;
@@ -3124,9 +3125,74 @@ async function loadInventoryItems() {
   document.getElementById('inv-low').textContent = String(lowStock);
   document.getElementById('inv-out').textContent = String(outOfStock);
 
-  const tbody = document.getElementById('inv-items-tbody');
-  if (!items.length) {
+  renderInventoryRegister();
+
+  // Populate the transfer-item dropdown from the same item list (all items, not just this page).
+  var transferSelect = document.getElementById('inv-transfer-item');
+  transferSelect.innerHTML = '<option value="">Select an item…</option>' +
+    items.map(function (i) { return '<option value="' + i.id + '">' + escapeHtml(i.name) + ' (' + totalStock(i) + ' in stock)</option>'; }).join('');
+}
+
+// ── Stock Register: search, stock-level filter and pages ─────────────────
+// All of the branch's items are loaded once (the stat cards and the transfer
+// dropdown need them all); search, filter and paging work on that list.
+var _invItems = [];
+var _invPage = 1;
+var _invSearchTimer = null;
+
+function inventoryStockState(i) {
+  var total = totalStock(i);
+  if (total <= 0) return 'OUT';
+  return total <= i.lowStockThreshold ? 'LOW' : 'GOOD';
+}
+
+function filteredInventoryItems() {
+  var q = (document.getElementById('inv-search').value || '').trim().toLowerCase();
+  var state = document.getElementById('inv-status-filter').value;
+  return _invItems.filter(function (i) {
+    if (state && inventoryStockState(i) !== state) return false;
+    if (!q) return true;
+    var hay = [i.name, i.sku, i.brand, i.productType, i.unit, InventorySelf.CATEGORY_LABELS[i.category] || i.category]
+      .filter(Boolean).join(' ').toLowerCase();
+    return q.split(/\s+/).every(function (word) { return hay.indexOf(word) !== -1; });
+  });
+}
+
+function onInventorySearch() {
+  clearTimeout(_invSearchTimer);
+  _invSearchTimer = setTimeout(function () { _invPage = 1; renderInventoryRegister(); }, 200);
+}
+
+function onInventoryFilter() { _invPage = 1; renderInventoryRegister(); }
+
+function onInventoryPerPage() { _invPage = 1; renderInventoryRegister(); }
+
+function goInventoryPage(step) { _invPage += step; renderInventoryRegister(); }
+
+function renderInventoryRegister() {
+  var tbody = document.getElementById('inv-items-tbody');
+  var pager = document.getElementById('inv-pager');
+  var perPage = Number(document.getElementById('inv-per-page').value) || 20;
+  var list = filteredInventoryItems();
+  var pages = Math.max(1, Math.ceil(list.length / perPage));
+  if (_invPage > pages) _invPage = pages;
+  if (_invPage < 1) _invPage = 1;
+  var start = (_invPage - 1) * perPage;
+  var items = list.slice(start, start + perPage);
+
+  pager.style.display = list.length > 10 ? '' : 'none';
+  document.getElementById('inv-pager-info').textContent = list.length
+    ? 'Showing ' + (start + 1) + ' to ' + (start + items.length) + ' of ' + list.length +
+      (list.length !== _invItems.length ? ' (filtered from ' + _invItems.length + ')' : '')
+    : '';
+  document.getElementById('inv-pager-page').textContent = 'Page ' + _invPage + ' of ' + pages;
+  document.getElementById('inv-prev').disabled = _invPage <= 1;
+  document.getElementById('inv-next').disabled = _invPage >= pages;
+
+  if (!_invItems.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="text-secondary">No items yet for this branch.</td></tr>';
+  } else if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-secondary">No items match your search.</td></tr>';
   } else {
     tbody.innerHTML = items.map(function (i) {
       var statusBadge = totalStock(i) <= 0
@@ -3144,11 +3210,6 @@ async function loadInventoryItems() {
         '<button class="btn btn-ghost btn-sm" onclick="promptRequestAdjustment(\'' + i.id + '\', \'' + escapeHtml(i.name).replace(/'/g, "\\'") + '\')">Request Adjustment</button></td>' + '</tr>';
     }).join('');
   }
-
-  // Populate the transfer-item dropdown from the same item list.
-  var transferSelect = document.getElementById('inv-transfer-item');
-  transferSelect.innerHTML = '<option value="">Select an item…</option>' +
-    items.map(function (i) { return '<option value="' + i.id + '">' + escapeHtml(i.name) + ' (' + totalStock(i) + ' in stock)</option>'; }).join('');
 }
 
 async function promptReceiveGoods(itemId, itemName) {
