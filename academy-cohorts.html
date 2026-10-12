@@ -332,7 +332,7 @@
                                                     <th>Applicant</th>
                                                     <th>Registration Code</th>
                                                     <th>Status</th>
-                                                    <th>Order</th>
+                                                    <th>Payment</th>
                                                     <th>Identity</th>
                                                     <th>Registered</th>
                                                 </tr>
@@ -547,6 +547,8 @@
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/academy-training.js"></script>
+    <script src="assets/js/api-utils/academy-enrolments.js"></script>
+    <script src="assets/js/academy-balance-modal.js"></script>
     <script src="assets/js/simple-pager.js"></script>
     <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/tabler.min.js"></script>
@@ -1273,12 +1275,12 @@
                         tbody.innerHTML = pageRows.map(function (r) {
                             var a = r.applicant || {};
                             var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "-";
-                            var order = r.order ? AcademyTraining.formatMoney(r.order.amount) + " (" + r.order.status + ")" : "-";
+                            var order = registrationPaymentCell(r);
                             return '<tr>' +
                                 '<td>' + name + '<div class="text-secondary small">' + (a.email || "") + '</div></td>' +
                                 '<td><code class="text-primary">' + r.registrationCode + '</code></td>' +
                                 '<td>' + AcademyTraining.registrationStatusBadge(r.status) + '</td>' +
-                                '<td class="text-secondary small">' + order + '</td>' +
+                                '<td class="small">' + order + '</td>' +
                                 '<td>' + AcademyTraining.identityStatusBadge(r.identityVerification ? r.identityVerification.status : null) + '</td>' +
                                 '<td class="text-secondary small">' + AcademyTraining.formatDate(r.createdAt) + '</td>' +
                                 '</tr>';
@@ -1290,6 +1292,39 @@
             }
             populateRegistrationSelects();
         }
+
+        // Payment column: the first order, and for a deposit registration (public
+        // enrolment page) the balance still owed with "Record balance" for those
+        // allowed to take it at the branch.
+        function registrationPaymentCell(r) {
+            var html = r.order
+                ? '<span class="text-secondary">' + AcademyTraining.formatMoney(r.order.amount) + ' (' + r.order.status + ')' + (r.paymentPlan === "DEPOSIT" ? ' deposit' : '') + '</span>'
+                : '<span class="text-secondary">-</span>';
+            var owed = Number(r.balanceDue) || 0;
+            if (r.paymentPlan === "DEPOSIT" && owed > 0) {
+                html += '<div class="text-danger fw-semibold">Owes ' + AcademyTraining.formatMoney(owed) + '</div>';
+                if (r.status === "CONFIRMED" && RBAC.can("academy_training:record_balance_payment")) {
+                    html += '<button type="button" class="btn btn-sm btn-outline-primary mt-1" data-record-balance="' + r.id + '">Record balance</button>';
+                }
+            } else if (r.paymentPlan === "DEPOSIT") {
+                html += '<div class="text-success">Balance paid</div>';
+            }
+            return html;
+        }
+
+        document.getElementById("registrations-tbody").addEventListener("click", function (e) {
+            var b = e.target.closest("[data-record-balance]");
+            if (!b) return;
+            var r = currentCohortRegistrations.filter(function (x) { return x.id === b.getAttribute("data-record-balance"); })[0];
+            if (!r) return;
+            var a = r.applicant || {};
+            AcademyBalanceModal.open({
+                id: r.id,
+                registrationCode: r.registrationCode,
+                name: [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email || "Learner",
+                balanceDue: r.balanceDue,
+            }, function () { loadRegistrations(); });
+        });
 
         function populateRegistrationSelects() {
             var confirmed = currentCohortRegistrations.filter(function (r) { return r.status === "CONFIRMED"; });
