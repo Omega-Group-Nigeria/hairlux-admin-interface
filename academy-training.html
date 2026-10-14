@@ -291,6 +291,51 @@
                                 <input type="number" class="form-control" id="training-price" min="0" step="0.01" required>
                             </div>
                             <div class="col-md-4">
+                                <label class="form-label">Duration</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="training-duration-value" min="1" max="365" step="1" placeholder="e.g. 6">
+                                    <select class="form-select" id="training-duration-unit" style="max-width:120px">
+                                        <option value="">Unit</option>
+                                        <option value="DAYS">Days</option>
+                                        <option value="WEEKS">Weeks</option>
+                                        <option value="MONTHS">Months</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Curriculum shown as</label>
+                                <select class="form-select" id="training-curriculum-layout">
+                                    <option value="MODULES">A list of modules</option>
+                                    <option value="WEEKS">Grouped by week</option>
+                                    <option value="DAYS">Grouped by day (daily lessons)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="border rounded p-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="fw-semibold">Promotional price <span class="text-secondary fw-normal small">(optional)</span></div>
+                                        <span class="badge bg-green-lt d-none" id="training-promo-live">Running now</span>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-1">Promo price (₦)</label>
+                                            <input type="number" class="form-control" id="training-promo-price" min="0" step="0.01" placeholder="Lower than the price">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-1">Starts</label>
+                                            <input type="date" class="form-control" id="training-promo-start">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-1">Ends</label>
+                                            <input type="date" class="form-control" id="training-promo-end">
+                                        </div>
+                                    </div>
+                                    <div class="form-hint">The promotional price is charged from the start date to the end date (inclusive, Lagos time) and shown next to the normal price. After the end date the normal price applies again automatically. Leave the price empty for no promotion.</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
                                 <label class="form-label">Status</label>
                                 <select class="form-select" id="training-status">
                                     <option value="DRAFT">Draft</option>
@@ -317,6 +362,25 @@
                             <div class="col-md-6">
                                 <label class="form-label">Do's &amp; Don'ts</label>
                                 <textarea class="form-control" id="training-do-donts" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Starter kit</label>
+                                <select class="form-select" id="training-kit-option">
+                                    <option value="NOT_AVAILABLE">No kit</option>
+                                    <option value="INCLUDED">Included in the fee</option>
+                                    <option value="OPTIONAL">Optional (bought separately)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8" id="training-kit-desc-wrap">
+                                <label class="form-label">What the kit contains <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="training-kit-description" rows="2" maxlength="2000"
+                                    placeholder="e.g. Braiding comb set, 3 packs of extensions, mannequin head. For an optional kit, say how much it costs and where to get it."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">What is included (benefits)</label>
+                                <textarea class="form-control" id="training-benefits" rows="4"
+                                    placeholder="One per line, e.g.&#10;Hairlux certificate&#10;Hands-on practice on live models&#10;Lunch every training day"></textarea>
+                                <div class="form-hint">One benefit per line (up to 30). Shown as a checklist on the public training page.</div>
                             </div>
                         </div>
                     </div>
@@ -362,11 +426,13 @@
                 </div>
                 <div class="modal-body">
                     <div id="curriculum-alert" class="alert d-none mb-3" role="alert"></div>
+                    <div class="text-secondary small mb-2" id="curriculum-layout-note"></div>
                     <div class="table-responsive mb-3">
                         <table class="table table-sm table-vcenter">
                             <thead>
                                 <tr>
                                     <th class="w-1">#</th>
+                                    <th class="curriculum-period-col">Week</th>
                                     <th>Name</th>
                                     <th>Duration</th>
                                     <th>Practical</th>
@@ -376,7 +442,7 @@
                             </thead>
                             <tbody id="curriculum-tbody">
                                 <tr>
-                                    <td colspan="6" class="text-center py-3">
+                                    <td colspan="7" class="text-center py-3">
                                         <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                                     </td>
                                 </tr>
@@ -396,6 +462,10 @@
                             <div class="col-md-6">
                                 <input type="text" class="form-control form-control-sm" id="module-description"
                                     placeholder="Description (optional)">
+                            </div>
+                            <div class="col-md-3" id="module-period-wrap">
+                                <input type="number" class="form-control form-control-sm" id="module-period"
+                                    placeholder="Week number" min="1" max="366" step="1">
                             </div>
                             <div class="col-md-3">
                                 <input type="number" class="form-control form-control-sm" id="module-duration"
@@ -440,6 +510,7 @@
         var trainingsData = [];
         var currentCurriculumTrainingId = null;
         var currentCurriculumModules = [];
+        var currentCurriculumLayout = "MODULES";
         var pendingDeleteTrainingId = null;
 
         document.addEventListener("DOMContentLoaded", function () {
@@ -468,6 +539,8 @@
                 document.getElementById("training-cover-preview").src = "";
                 document.getElementById("training-cover-status").textContent = "";
                 document.getElementById("training-cert-enabled").checked = true;
+                document.getElementById("training-promo-live").classList.add("d-none");
+                applyKitUI();
                 document.getElementById("training-alert").className = "alert d-none";
                 document.getElementById("training-modal-title").textContent = "New Training";
             });
@@ -497,10 +570,19 @@
                 }
             });
 
+            document.getElementById("training-kit-option").addEventListener("change", applyKitUI);
+            applyKitUI();
+
             document.getElementById("form-training").addEventListener("submit", async function (e) {
                 e.preventDefault();
                 var alertEl = document.getElementById("training-alert");
                 alertEl.className = "alert d-none";
+                var extras = readTrainingExtras();
+                if (typeof extras === "string") {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = extras;
+                    return;
+                }
                 var btn = document.getElementById("btn-save-training");
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
@@ -516,6 +598,7 @@
                         coverImageKey: document.getElementById("training-cover-image-key").value || undefined,
                         status: document.getElementById("training-status").value,
                     };
+                    Object.assign(payload, extras);
                     var id = document.getElementById("training-id").value;
                     if (id) await AcademyTraining.updateTraining(id, payload);
                     else await AcademyTraining.createTraining(payload);
@@ -596,7 +679,12 @@
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
                 try {
+                    var periodRaw = document.getElementById("module-period").value;
+                    if (currentCurriculumLayout !== "MODULES" && !(Number(periodRaw) >= 1)) {
+                        throw new Error("Enter the " + periodWord() + " number for this module.");
+                    }
                     var payload = {
+                        period: currentCurriculumLayout !== "MODULES" && periodRaw ? Number(periodRaw) : null,
                         name: document.getElementById("module-name").value.trim(),
                         description: document.getElementById("module-description").value.trim() || undefined,
                         estimatedDuration: document.getElementById("module-duration").value ? Number(document.getElementById("module-duration").value) : undefined,
@@ -661,7 +749,7 @@
                     return '<tr class="training-row">' +
                         '<td class="fw-semibold">' + t.name + '</td>' +
                         '<td class="text-secondary small">' + (t.category || "-") + '</td>' +
-                        '<td>' + AcademyTraining.formatMoney(t.price) + '</td>' +
+                        '<td>' + priceCell(t) + '</td>' +
                         '<td>' + (t.certificationEnabled ? '<span class="badge bg-success-lt text-success">Yes</span>' : '<span class="badge bg-secondary-lt text-secondary">No</span>') + '</td>' +
                         '<td>' + AcademyTraining.trainingStatusBadge(t.status) + '</td>' +
                         '<td class="text-nowrap">' + actions + '</td>' +
@@ -685,10 +773,73 @@
             document.getElementById("training-cert-enabled").checked = !!t.certificationEnabled;
             document.getElementById("training-status").value = t.status || "DRAFT";
             document.getElementById("training-cover-image-key").value = t.coverImageKey || "";
+            document.getElementById("training-promo-price").value = t.promoPrice != null ? Number(t.promoPrice) : "";
+            document.getElementById("training-promo-start").value = AcademyTraining.toLagosDateInputValue(t.promoStartsAt);
+            document.getElementById("training-promo-end").value = AcademyTraining.toLagosDateInputValue(t.promoEndsAt);
+            document.getElementById("training-promo-live").classList.toggle("d-none", !(t.pricing && t.pricing.promoActive));
+            document.getElementById("training-duration-value").value = t.durationValue || "";
+            document.getElementById("training-duration-unit").value = t.durationUnit || "";
+            document.getElementById("training-curriculum-layout").value = t.curriculumLayout || "MODULES";
+            document.getElementById("training-kit-option").value = t.kitOption || "NOT_AVAILABLE";
+            document.getElementById("training-kit-description").value = t.kitDescription || "";
+            document.getElementById("training-benefits").value = (t.benefits || []).join("\n");
+            applyKitUI();
             var trnCoverPreview = document.getElementById("training-cover-preview");
             if (t.coverImageUrl) { trnCoverPreview.src = t.coverImageUrl; trnCoverPreview.classList.remove("d-none"); }
             else { trnCoverPreview.classList.add("d-none"); trnCoverPreview.src = ""; }
             new bootstrap.Modal(document.getElementById("modal-training")).show();
+        }
+
+        function applyKitUI() {
+            var on = document.getElementById("training-kit-option").value !== "NOT_AVAILABLE";
+            document.getElementById("training-kit-desc-wrap").style.display = on ? "" : "none";
+        }
+
+        /** Promotion, duration, curriculum layout, kit and benefits, checked before saving. Returns an error message string when invalid. */
+        function readTrainingExtras() {
+            var price = Number(document.getElementById("training-price").value || 0);
+            var promoRaw = document.getElementById("training-promo-price").value;
+            var promoStart = document.getElementById("training-promo-start").value;
+            var promoEnd = document.getElementById("training-promo-end").value;
+            var out = {};
+            if (promoRaw === "") {
+                if (promoStart || promoEnd) return "Enter the promotional price, or clear the promotion dates.";
+                out.promoPrice = null; out.promoStartsAt = null; out.promoEndsAt = null;
+            } else {
+                var promo = Number(promoRaw);
+                if (!(promo >= 0) || !(promo < price)) return "The promotional price must be lower than the normal price.";
+                if (promoStart && promoEnd && promoEnd < promoStart) return "The promotion must end on or after its start date.";
+                out.promoPrice = promo; out.promoStartsAt = promoStart || null; out.promoEndsAt = promoEnd || null;
+            }
+            var dv = document.getElementById("training-duration-value").value;
+            var du = document.getElementById("training-duration-unit").value;
+            if ((dv && !du) || (!dv && du)) return "Enter the duration as a number and a unit (days, weeks or months).";
+            if (dv && !(Number(dv) >= 1 && Number(dv) <= 365 && Number.isInteger(Number(dv)))) return "Duration must be a whole number from 1 to 365.";
+            out.durationValue = dv ? Number(dv) : null;
+            out.durationUnit = du || null;
+            out.curriculumLayout = document.getElementById("training-curriculum-layout").value;
+            out.kitOption = document.getElementById("training-kit-option").value;
+            var kitDesc = document.getElementById("training-kit-description").value.trim();
+            if (out.kitOption !== "NOT_AVAILABLE" && !kitDesc) return "Describe what the starter kit contains.";
+            out.kitDescription = out.kitOption === "NOT_AVAILABLE" ? null : kitDesc;
+            var benefits = document.getElementById("training-benefits").value.split("\n").map(function (b) { return b.trim(); }).filter(Boolean);
+            if (benefits.length > 30) return "Add at most 30 benefits.";
+            if (benefits.some(function (b) { return b.length > 200; })) return "Each benefit must be 200 characters or fewer.";
+            out.benefits = benefits;
+            return out;
+        }
+
+        function priceCell(t) {
+            var p = t.pricing || {};
+            if (p.promoActive) {
+                return '<div class="fw-semibold text-success">' + AcademyTraining.formatMoney(p.price) + '</div>' +
+                    '<div class="small text-secondary"><s>' + AcademyTraining.formatMoney(p.regularPrice) + '</s> promo to ' + (p.promoEndsAt ? AcademyTraining.formatDate(p.promoEndsAt) : "further notice") + '</div>';
+            }
+            var html = AcademyTraining.formatMoney(t.price);
+            if (t.promoPrice != null && p.promoStartsAt && new Date(p.promoStartsAt) > new Date()) {
+                html += '<div class="small text-secondary">Promo ' + AcademyTraining.formatMoney(t.promoPrice) + ' from ' + AcademyTraining.formatDate(p.promoStartsAt) + '</div>';
+            }
+            return html;
         }
 
         // ── Curriculum ───────────────────────────────────────────────────────
@@ -703,21 +854,40 @@
 
         async function reloadCurriculum() {
             var tbody = document.getElementById("curriculum-tbody");
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary" role="status"></div></td></tr>';
             try {
                 var training = await AcademyTraining.getTraining(currentCurriculumTrainingId);
+                currentCurriculumLayout = training.curriculumLayout || "MODULES";
                 currentCurriculumModules = (training.curriculumModules || []).slice().sort(function (a, b) { return a.order - b.order; });
+                applyCurriculumLayoutUI();
                 renderCurriculum();
             } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">' + err.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">' + err.message + '</td></tr>';
             }
+        }
+
+        function periodWord() { return currentCurriculumLayout === "DAYS" ? "day" : "week"; }
+
+        /** Shows the Week / Day column and input only when the training groups its curriculum that way. */
+        function applyCurriculumLayoutUI() {
+            var grouped = currentCurriculumLayout !== "MODULES";
+            var word = periodWord();
+            document.querySelectorAll(".curriculum-period-col").forEach(function (el) {
+                el.style.display = grouped ? "" : "none";
+                el.textContent = word === "day" ? "Day" : "Week";
+            });
+            document.getElementById("module-period-wrap").style.display = grouped ? "" : "none";
+            document.getElementById("module-period").placeholder = word === "day" ? "Day number" : "Week number";
+            document.getElementById("curriculum-layout-note").textContent = grouped
+                ? "This training shows its curriculum grouped by " + word + " (change it in Edit). Give each module its " + word + " number; modules in the same " + word + " are listed in the order below."
+                : "This training shows its curriculum as a list of modules. To group it by week or by day, change \"Curriculum shown as\" in Edit.";
         }
 
         function renderCurriculum() {
             var canManage = RBAC.can('academy_training:manage');
             var tbody = document.getElementById("curriculum-tbody");
             if (!currentCurriculumModules.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-3">No modules yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-3">No modules yet.</td></tr>';
                 return;
             }
             tbody.innerHTML = currentCurriculumModules.map(function (m, idx) {
@@ -731,6 +901,7 @@
                 }
                 return '<tr class="module-row">' +
                     '<td class="text-secondary">' + (idx + 1) + '</td>' +
+                    '<td class="curriculum-period-col"' + (currentCurriculumLayout === "MODULES" ? ' style="display:none"' : '') + '>' + (m.period ? '<span class="badge bg-blue-lt">' + (periodWord() === "day" ? "Day " : "Week ") + m.period + '</span>' : '<span class="text-danger small">Not set</span>') + '</td>' +
                     '<td>' + m.name + (m.description ? '<div class="text-secondary small">' + m.description + '</div>' : '') + '</td>' +
                     '<td class="text-secondary small">' + (m.estimatedDuration ? m.estimatedDuration + ' min' : '-') + '</td>' +
                     '<td>' + (m.isPractical ? '<span class="badge bg-info-lt text-info">Practical</span>' : '-') + '</td>' +
@@ -751,8 +922,9 @@
                 // on this: arrows over drag-and-drop, calling the existing
                 // per-module update, not a `.../reorder` route that doesn't exist).
                 await Promise.all([
-                    AcademyTraining.updateCurriculumModule(currentCurriculumTrainingId, a.id, { order: b.order }),
-                    AcademyTraining.updateCurriculumModule(currentCurriculumTrainingId, b.id, { order: a.order }),
+                    // name is required by the update endpoint, so it is sent along unchanged.
+                    AcademyTraining.updateCurriculumModule(currentCurriculumTrainingId, a.id, { name: a.name, order: b.order }),
+                    AcademyTraining.updateCurriculumModule(currentCurriculumTrainingId, b.id, { name: b.name, order: a.order }),
                 ]);
                 reloadCurriculum();
             } catch (err) {
@@ -768,6 +940,7 @@
             document.getElementById("module-name").value = m.name || "";
             document.getElementById("module-description").value = m.description || "";
             document.getElementById("module-duration").value = m.estimatedDuration || "";
+            document.getElementById("module-period").value = m.period || "";
             document.getElementById("module-practical").checked = !!m.isPractical;
             document.getElementById("module-assessment-required").checked = !!m.assessmentRequired;
             document.getElementById("btn-save-module").textContent = "Update Module";

@@ -1026,14 +1026,18 @@
             }
             var docs = documents.documents || [];
             if (!docs.length) {
-                return '<div class="text-secondary small">No company documents have been created yet. Add them under Staff &rarr; Company Documents.</div>';
+                return '<div class="text-secondary small">No company documents are addressed to this staff member. Manage them under Staff &rarr; Company Documents.</div>';
             }
             return docs.map(function (d) {
                 var badge = d.acknowledged
-                    ? '<span class="badge bg-success-lt">Acknowledged ' + esc(Staff.formatDate(d.acknowledgedAt)) + '</span>'
-                    : '<span class="badge bg-warning-lt">Not yet acknowledged</span>';
+                    ? '<span class="badge bg-success-lt" title="' + esc(d.signedName ? 'Signed as ' + d.signedName : 'Accepted before typed signatures') + '">Signed ' + esc(Staff.formatDate(d.acknowledgedAt)) + '</span>'
+                    : d.resignRequired
+                        ? '<span class="badge bg-warning-lt">Updated to v' + esc(d.version) + ', not signed yet</span>'
+                        : '<span class="badge bg-warning-lt">Not signed yet</span>';
                 return '<div class="d-flex align-items-center justify-content-between py-1">' +
-                    '<div class="small">' + esc(d.title) + '</div>' + badge + '</div>';
+                    '<div class="small">' + esc(d.title) + ' <span class="text-secondary">v' + esc(d.version) + '</span>' +
+                    (d.acknowledged && d.signedName ? '<div class="text-secondary" style="font-size:11px">Signed as ' + esc(d.signedName) + '</div>' : '') +
+                    '</div>' + badge + '</div>';
             }).join('');
         }
 

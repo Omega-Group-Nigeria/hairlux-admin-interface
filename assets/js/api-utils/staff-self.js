@@ -42,9 +42,12 @@ const StaffSelf = (() => {
         return jsonFetch("/staff/me/documents");
     }
 
-    async function acknowledgeDocument(documentId) {
+    /** Signs a company document. fullName is the name the staff member typed (must match their staff record). */
+    async function acknowledgeDocument(documentId, fullName) {
         return jsonFetch("/staff/me/documents/" + documentId + "/acknowledge", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fullName: fullName }),
         });
     }
 

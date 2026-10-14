@@ -37,6 +37,15 @@
         table td {
             vertical-align: middle;
         }
+
+        .audience-badges .badge {
+            margin: 0 4px 4px 0;
+        }
+
+        .sig-progress {
+            height: 6px;
+            min-width: 90px;
+        }
     </style>
 </head>
 
@@ -120,11 +129,11 @@
                     <div id="page-alert" class="alert d-none mb-3" role="alert"></div>
 
                     <div class="alert alert-info mb-4">
-                        Every new hire must acknowledge the current version of each document below before their
-                        onboarding is complete.
-                        Uploading a new version here does <strong>not</strong> erase history: every staff member's
-                        acknowledgement of a
-                        prior version stays on record as a true account of what they actually agreed to at the time.
+                        <div>Each document is signed by the staff it is addressed to (everyone, chosen roles, chosen
+                        branches or chosen staff). Staff sign by typing their full name.
+                        Saving a <strong>new version</strong> makes everyone it is addressed to sign again. Older
+                        signatures are never erased: they stay on record as a true account of what each person
+                        agreed to at the time. Changing only who must sign keeps the signatures already given.</div>
                     </div>
 
                     <div class="card">
@@ -141,13 +150,15 @@
                                         <th>Document Type</th>
                                         <th>Current Title</th>
                                         <th>Version</th>
-                                        <th>Created</th>
+                                        <th>Who must sign</th>
+                                        <th>Signed</th>
+                                        <th>Updated</th>
                                         <th class="w-1">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="documents-tbody">
                                     <tr>
-                                        <td colspan="5" class="text-center py-5">
+                                        <td colspan="7" class="text-center py-5">
                                             <div class="spinner-border text-primary"></div>
                                         </td>
                                     </tr>
@@ -162,7 +173,7 @@
 
     <!-- Document version modal -->
     <div class="modal modal-blur fade" id="modal-document" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modal-document-title">New Document Version</h5>
@@ -170,21 +181,59 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="modal-document-error"></div>
-                    <div class="mb-3">
+                    <div class="alert alert-warning d-none mb-3" id="modal-document-resign"></div>
+                    <div class="alert alert-info d-none mb-3" id="modal-document-audience-note">
+                        Signatures already given are kept, because the document has not changed. Anyone you add will be
+                        asked to sign. To make everyone sign again, save a new version instead.
+                    </div>
+                    <div class="mb-3" data-version-only>
                         <label class="form-label">Document type <span class="text-danger">*</span></label>
                         <select class="form-select" id="document-type" disabled></select>
                         <div class="form-hint">Set automatically from the row you clicked.</div>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3" data-version-only>
                         <label class="form-label" for="document-title">Title <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="document-title" maxlength="200"
                             placeholder="e.g. Hairlux Confidentiality Agreement (NDA)">
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-3" data-version-only>
                         <label class="form-label" for="document-file">Document file (PDF) <span
-                                class="text-danger">*</span></label>
+                                class="text-danger" id="document-file-required">*</span></label>
                         <input type="file" class="form-control" id="document-file" accept="application/pdf">
-                        <div class="form-hint">Max 15MB, PDF only.</div>
+                        <div class="form-hint" id="document-file-hint">Max 15MB, PDF only.</div>
+                    </div>
+                    <div class="mb-3 d-none" id="document-change-wrap" data-version-only>
+                        <label class="form-label" for="document-change-note">What changed</label>
+                        <textarea class="form-control" id="document-change-note" rows="2" maxlength="1000"
+                            placeholder="e.g. Clause 4 updated: notice period is now 30 days."></textarea>
+                        <div class="form-hint">Shown to staff when they are asked to sign again.</div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label" for="doc-audience-mode">Who must sign <span
+                                class="text-danger">*</span></label>
+                        <select class="form-select mb-2" id="doc-audience-mode">
+                            <option value="ALL">All staff</option>
+                            <option value="ROLE">Specific roles</option>
+                            <option value="BRANCH">Specific branches</option>
+                            <option value="STAFF">Specific staff</option>
+                        </select>
+                        <div id="doc-audience-role-wrap" style="display:none">
+                            <select class="form-select" id="doc-roles" multiple></select>
+                            <div class="form-hint">Staff with any of the selected roles (main or additional role) must
+                                sign.</div>
+                        </div>
+                        <div id="doc-audience-branch-wrap" style="display:none">
+                            <select class="form-select" id="doc-branches" multiple></select>
+                            <div class="form-hint">Every staff member at any of the selected branches must sign.</div>
+                        </div>
+                        <div id="doc-audience-staff-wrap" style="display:none">
+                            <select class="form-select" id="doc-staff" multiple></select>
+                            <div class="form-hint">Only the selected staff members must sign.</div>
+                        </div>
+                        <div id="doc-audience-all-wrap">
+                            <div class="text-secondary small">Every active staff member, including staff who join
+                                later, must sign.</div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -219,8 +268,55 @@
         </div>
     </div>
 
+    <!-- Signatures modal -->
+    <div class="modal modal-blur fade" id="modal-signatures" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modal-signatures-title">Signatures</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                        <div class="text-secondary" id="sig-summary">Loading…</div>
+                        <div class="ms-auto d-flex flex-wrap gap-2">
+                            <input type="search" class="form-control form-control-sm" id="sig-search"
+                                placeholder="Search name, code, branch" style="width:220px">
+                            <select class="form-select form-select-sm" id="sig-filter" style="width:140px">
+                                <option value="">Everyone</option>
+                                <option value="UNSIGNED">Not signed</option>
+                                <option value="SIGNED">Signed</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="sig-export">Download
+                                CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Branch</th>
+                                    <th>Status</th>
+                                    <th>Signed as</th>
+                                    <th>Signed on</th>
+                                    <th>IP address</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sig-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="./assets/js/api-utils/auth.js"></script>
     <script src="./assets/js/api-utils/rbac.js"></script>
+    <script src="./assets/js/api-utils/roles.js"></script>
+    <script src="./assets/js/api-utils/branches.js"></script>
+    <script src="./assets/js/api-utils/staff.js"></script>
+    <script src="./assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/api-utils/staff-documents.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script>
@@ -233,6 +329,11 @@
         var _activeDocsByType = {};
         var _allTypes = [];
         var _pendingTypeId = null;
+        var _modalMode = "version"; // "version" = save a new version, "audience" = change who must sign only
+        var _audienceDocId = null;
+        var _allRoles = [], _allBranches = [], _allStaff = [];
+        var _audienceOptionsLoaded = false;
+        var _sigRows = [], _sigDoc = null;
         var pageAlertTimer = null;
 
         function setPageAlert(type, message) {
@@ -264,6 +365,12 @@
                     ? '<button type="button" class="btn btn-sm btn-outline-primary btn-doc-version" data-id="' + t.id + '">' + (doc ? "New Version" : "Create") + '</button>'
                     : "";
                 var typeActions = "";
+                if (canManage && doc) {
+                    typeActions += ' <button type="button" class="btn btn-sm btn-outline-secondary btn-doc-audience" data-id="' + t.id + '">Who signs</button>';
+                }
+                if (doc) {
+                    typeActions += ' <button type="button" class="btn btn-sm btn-outline-secondary btn-doc-signatures" data-id="' + doc.id + '">Signatures</button>';
+                }
                 if (canDelete && doc) {
                     typeActions += ' <button type="button" class="btn btn-sm btn-outline-danger btn-delete-document" data-id="' + doc.id + '" data-name="' + esc(t.name) + '">Delete</button>';
                 }
@@ -275,15 +382,41 @@
                 }
                 if (!doc) {
                     return '<tr><td class="fw-semibold">' + esc(t.name) + '</td>' +
-                        '<td colspan="3" class="text-secondary">Not created yet</td>' +
+                        '<td colspan="5" class="text-secondary">Not created yet</td>' +
                         '<td>' + versionBtn + typeActions + '</td></tr>';
                 }
                 return '<tr><td class="fw-semibold">' + esc(t.name) + '</td>' +
                     '<td>' + esc(doc.title) + '</td>' +
                     '<td><span class="badge bg-blue-lt">v' + doc.version + '</span></td>' +
+                    '<td class="audience-badges">' + audienceSummary(doc) + '</td>' +
+                    '<td>' + signedSummary(doc) + '</td>' +
                     '<td class="text-secondary small">' + StaffDocuments.formatDate(doc.createdAt) + '</td>' +
                     '<td>' + versionBtn + typeActions + '</td></tr>';
             }).join("");
+        }
+
+        /** Badges for whichever audience mode the current version uses. */
+        function audienceSummary(doc) {
+            var mode = doc.audienceMode || "ALL";
+            if (mode === "ALL") return '<span class="badge bg-blue-lt">All staff</span>';
+            var list = mode === "ROLE" ? doc.audienceRoles : mode === "BRANCH" ? doc.audienceBranches : doc.audienceStaff;
+            var label = mode === "ROLE" ? "Roles" : mode === "BRANCH" ? "Branches" : "Staff";
+            list = list || [];
+            if (!list.length) return '<span class="text-secondary small">No ' + label.toLowerCase() + ' chosen</span>';
+            var shown = list.slice(0, 3).map(function (x) {
+                return '<span class="badge bg-secondary-lt">' + esc(x.name) + '</span>';
+            }).join("");
+            var more = list.length > 3 ? '<span class="badge bg-secondary-lt">+' + (list.length - 3) + ' more</span>' : "";
+            return '<div class="text-secondary small mb-1">' + label + '</div>' + shown + more;
+        }
+
+        function signedSummary(doc) {
+            var req = doc.requiredCount || 0, signed = doc.signedCount || 0;
+            if (!req) return '<span class="text-secondary small">No staff</span>';
+            var pct = Math.round((signed / req) * 100);
+            var cls = signed === req ? "bg-success" : signed === 0 ? "bg-danger" : "bg-warning";
+            return '<div class="small fw-semibold">' + signed + ' of ' + req + '</div>' +
+                '<div class="progress sig-progress mt-1"><div class="progress-bar ' + cls + '" style="width:' + pct + '%"></div></div>';
         }
 
         async function loadDocuments(options) {
@@ -303,16 +436,102 @@
                 if (options.notifySuccess) flashPageAlert("success", "Refreshed.");
             } catch (e) {
                 document.getElementById("documents-tbody").innerHTML =
-                    '<tr><td colspan="5" class="text-center text-danger py-4">' + esc(e.message || "Failed to load documents.") + '</td></tr>';
+                    '<tr><td colspan="7" class="text-center text-danger py-4">' + esc(e.message || "Failed to load documents.") + '</td></tr>';
                 document.getElementById("results-label").textContent = "Error";
             }
         }
 
-        function openDocumentModal(typeId) {
+        /* ---------- Who must sign (same options as LMS courses) ---------- */
+
+        async function loadAudienceOptions() {
+            if (_audienceOptionsLoaded) return;
+            var results = await Promise.all([
+                (typeof Roles !== "undefined" && Roles.fetchRoles ? Roles.fetchRoles() : Promise.resolve([])).catch(function () { return []; }),
+                (typeof Branches !== "undefined" && Branches.getBranches ? Branches.getBranches() : Promise.resolve([])).catch(function () { return []; }),
+                (typeof Staff !== "undefined" && Staff.getOptions ? Staff.getOptions() : Promise.resolve([])).catch(function () { return []; }),
+            ]);
+            _allRoles = results[0] || [];
+            _allBranches = results[1] || [];
+            _allStaff = results[2] || [];
+            fillMulti("doc-roles", _allRoles.map(function (r) { return { id: r.id, name: r.name }; }), "Select roles…");
+            fillMulti("doc-branches", _allBranches.map(function (b) { return { id: b.id, name: b.name }; }), "Select branches…");
+            fillMulti("doc-staff", _allStaff.map(function (st) {
+                return { id: st.id, name: st.name + (st.staffCode ? " (" + st.staffCode + ")" : "") };
+            }), "Select staff…");
+            _audienceOptionsLoaded = true;
+        }
+
+        function fillMulti(id, items, placeholder) {
+            var select = document.getElementById(id);
+            select.innerHTML = items.map(function (x) {
+                return '<option value="' + esc(x.id) + '">' + esc(x.name) + '</option>';
+            }).join("");
+            MultiSelectDropdown.attach(id, { placeholder: items.length ? placeholder : "Nothing to choose from" });
+        }
+
+        function selectedValues(id) {
+            return Array.from(document.getElementById(id).selectedOptions).map(function (o) { return o.value; });
+        }
+
+        function setSelected(id, ids) {
+            var set = new Set(ids || []);
+            var select = document.getElementById(id);
+            Array.from(select.options).forEach(function (o) { o.selected = set.has(o.value); });
+            // Keep a chosen entry visible even if it is no longer in the options list (e.g. an exited staff member).
+            (ids || []).forEach(function (v) {
+                if (!Array.from(select.options).some(function (o) { return o.value === v; })) {
+                    var opt = document.createElement("option");
+                    opt.value = v; opt.textContent = "(no longer listed)"; opt.selected = true;
+                    select.appendChild(opt);
+                }
+            });
+            MultiSelectDropdown.refresh(id);
+        }
+
+        function applyAudienceModeUI() {
+            var mode = document.getElementById("doc-audience-mode").value;
+            document.getElementById("doc-audience-role-wrap").style.display = mode === "ROLE" ? "block" : "none";
+            document.getElementById("doc-audience-branch-wrap").style.display = mode === "BRANCH" ? "block" : "none";
+            document.getElementById("doc-audience-staff-wrap").style.display = mode === "STAFF" ? "block" : "none";
+            document.getElementById("doc-audience-all-wrap").style.display = mode === "ALL" ? "block" : "none";
+        }
+
+        function fillAudienceForm(doc) {
+            document.getElementById("doc-audience-mode").value = (doc && doc.audienceMode) || "ALL";
+            var ids = function (list) { return (list || []).map(function (x) { return x.id; }); };
+            setSelected("doc-roles", doc ? ids(doc.audienceRoles) : []);
+            setSelected("doc-branches", doc ? ids(doc.audienceBranches) : []);
+            setSelected("doc-staff", doc ? ids(doc.audienceStaff) : []);
+            applyAudienceModeUI();
+        }
+
+        /** Returns the audience payload, or a string error message. */
+        function readAudienceForm() {
+            var mode = document.getElementById("doc-audience-mode").value;
+            var payload = { audienceMode: mode };
+            if (mode === "ROLE") {
+                payload.roleIds = selectedValues("doc-roles");
+                if (!payload.roleIds.length) return "Choose at least one role.";
+            }
+            if (mode === "BRANCH") {
+                payload.branchIds = selectedValues("doc-branches");
+                if (!payload.branchIds.length) return "Choose at least one branch.";
+            }
+            if (mode === "STAFF") {
+                payload.staffIds = selectedValues("doc-staff");
+                if (!payload.staffIds.length) return "Choose at least one staff member.";
+            }
+            return payload;
+        }
+
+        async function openDocumentModal(typeId, mode) {
             if (!RBAC.can(StaffDocuments.PERMISSIONS.MANAGE)) return;
+            _modalMode = mode === "audience" ? "audience" : "version";
             _pendingTypeId = typeId;
             var type = _allTypes.find(function (t) { return t.id === typeId; });
             var existing = _activeDocsByType[typeId];
+            _audienceDocId = existing ? existing.id : null;
+            var isAudience = _modalMode === "audience";
             var errEl = document.getElementById("modal-document-error");
             errEl.classList.add("d-none");
 
@@ -321,47 +540,192 @@
                 return '<option value="' + t.id + '"' + (t.id === typeId ? " selected" : "") + '>' + esc(t.name) + '</option>';
             }).join("");
 
-            document.getElementById("modal-document-title").textContent = existing
-                ? "New Version: " + (type ? type.name : "")
-                : "Create: " + (type ? type.name : "");
-            document.getElementById("btn-save-document").textContent = existing ? "Create New Version" : "Create Version";
+            document.querySelectorAll("#modal-document [data-version-only]").forEach(function (el) {
+                el.style.display = isAudience ? "none" : "";
+            });
+            document.getElementById("modal-document-audience-note").classList.toggle("d-none", !isAudience);
+            document.getElementById("document-change-wrap").classList.toggle("d-none", isAudience || !existing);
+
+            var resignEl = document.getElementById("modal-document-resign");
+            if (!isAudience && existing) {
+                resignEl.innerHTML = "<div>Saving creates <strong>version " + (existing.version + 1) + "</strong>. Everyone it is addressed to " +
+                    "will be marked <strong>not signed</strong> and asked to sign again" +
+                    (existing.signedCount ? " (" + existing.signedCount + " current signature" + (existing.signedCount === 1 ? "" : "s") + " will move to the old version)." : ".") + "</div>";
+                resignEl.classList.remove("d-none");
+            } else {
+                resignEl.classList.add("d-none");
+            }
+
+            document.getElementById("modal-document-title").textContent = isAudience
+                ? "Who must sign: " + (type ? type.name : "")
+                : existing ? "New Version: " + (type ? type.name : "") : "Create: " + (type ? type.name : "");
+            document.getElementById("btn-save-document").textContent = saveButtonLabel();
             document.getElementById("document-title").value = existing ? existing.title : "";
             document.getElementById("document-file").value = "";
+            document.getElementById("document-change-note").value = "";
+            document.getElementById("document-file-required").style.display = existing ? "none" : "";
+            document.getElementById("document-file-hint").textContent = existing
+                ? "Optional. Leave empty to keep the current file. Max 15MB, PDF only."
+                : "Max 15MB, PDF only.";
 
             new bootstrap.Modal(document.getElementById("modal-document")).show();
+            try { await loadAudienceOptions(); } catch (e) { /* lists stay empty; the API still validates */ }
+            fillAudienceForm(existing);
+        }
+
+        function saveButtonLabel() {
+            if (_modalMode === "audience") return "Save Who Must Sign";
+            return _activeDocsByType[_pendingTypeId] ? "Save New Version" : "Create Version";
         }
 
         async function saveDocument() {
             var errEl = document.getElementById("modal-document-error");
             errEl.classList.add("d-none");
+            var showErr = function (m) { errEl.textContent = m; errEl.classList.remove("d-none"); };
+
+            var audience = readAudienceForm();
+            if (typeof audience === "string") { showErr(audience); return; }
+
+            var btn = document.getElementById("btn-save-document");
+
+            if (_modalMode === "audience") {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
+                try {
+                    await StaffDocuments.updateAudience(_audienceDocId, audience);
+                    bootstrap.Modal.getInstance(document.getElementById("modal-document")).hide();
+                    flashPageAlert("success", "Who must sign updated. Existing signatures were kept.");
+                    loadDocuments();
+                } catch (e) {
+                    showErr(e.message || "Failed to update who must sign.");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = saveButtonLabel();
+                }
+                return;
+            }
+
+            var existing = _activeDocsByType[_pendingTypeId];
             var title = document.getElementById("document-title").value.trim();
+            var changeNote = document.getElementById("document-change-note").value.trim();
             var fileInput = document.getElementById("document-file");
             var file = fileInput.files && fileInput.files[0];
 
-            if (!title) { errEl.textContent = "Title is required."; errEl.classList.remove("d-none"); return; }
-            if (!file) { errEl.textContent = "Choose a PDF file."; errEl.classList.remove("d-none"); return; }
-            if (file.type !== "application/pdf") { errEl.textContent = "Only PDF files are accepted."; errEl.classList.remove("d-none"); return; }
-            if (file.size > 15 * 1024 * 1024) { errEl.textContent = "File must be 15MB or smaller."; errEl.classList.remove("d-none"); return; }
+            if (!title) { showErr("Title is required."); return; }
+            if (!file && !existing) { showErr("Choose a PDF file."); return; }
+            if (file && file.type !== "application/pdf") { showErr("Only PDF files are accepted."); return; }
+            if (file && file.size > 15 * 1024 * 1024) { showErr("File must be 15MB or smaller."); return; }
 
-            var btn = document.getElementById("btn-save-document");
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Uploading…';
             try {
-                var uploadResult = await StaffDocuments.uploadFile(file);
+                var payload = Object.assign({ documentTypeId: _pendingTypeId, title: title }, audience);
+                if (changeNote) payload.changeNote = changeNote;
+                if (file) {
+                    btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Uploading…';
+                    var uploadResult = await StaffDocuments.uploadFile(file);
+                    payload.contentUrl = uploadResult.contentUrl;
+                }
                 btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
-                await StaffDocuments.createDocument({ documentTypeId: _pendingTypeId, title: title, contentUrl: uploadResult.contentUrl });
+                var created = await StaffDocuments.createDocument(payload);
                 bootstrap.Modal.getInstance(document.getElementById("modal-document")).hide();
-                flashPageAlert("success", "Document version created successfully.");
+                flashPageAlert("success", existing
+                    ? "Version " + (created && created.version ? created.version : "") + " saved. Everyone it is addressed to must sign again."
+                    : "Document created. Staff it is addressed to can now sign it.");
                 loadDocuments();
             } catch (e) {
                 var msg = e.message || "Failed to save document.";
-                errEl.textContent = msg;
-                errEl.classList.remove("d-none");
+                showErr(msg);
                 flashPageAlert("danger", msg);
             } finally {
                 btn.disabled = false;
-                btn.textContent = _activeDocsByType[_pendingTypeId] ? "Create New Version" : "Create Version";
+                btn.textContent = saveButtonLabel();
             }
+        }
+
+        /* ---------- Signatures register ---------- */
+
+        async function openSignatures(docId) {
+            _sigRows = []; _sigDoc = null;
+            document.getElementById("sig-search").value = "";
+            document.getElementById("sig-filter").value = "";
+            document.getElementById("sig-summary").textContent = "Loading…";
+            document.getElementById("sig-tbody").innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+            document.getElementById("modal-signatures-title").textContent = "Signatures";
+            new bootstrap.Modal(document.getElementById("modal-signatures")).show();
+            try {
+                var data = await StaffDocuments.getSignatures(docId);
+                _sigDoc = data.document || {};
+                _sigRows = data.staff || [];
+                document.getElementById("modal-signatures-title").textContent =
+                    "Signatures: " + (_sigDoc.title || "") + " (v" + (_sigDoc.version || "") + ")";
+                document.getElementById("sig-summary").innerHTML =
+                    "<strong>" + (data.signedCount || 0) + " of " + (data.requiredCount || 0) + "</strong> signed" +
+                    ((data.requiredCount || 0) - (data.signedCount || 0) > 0
+                        ? ", <span class=\"text-danger\">" + ((data.requiredCount || 0) - (data.signedCount || 0)) + " not signed</span>" : "");
+                renderSignatures();
+            } catch (e) {
+                document.getElementById("sig-summary").textContent = "";
+                document.getElementById("sig-tbody").innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message || "Failed to load signatures.") + '</td></tr>';
+            }
+        }
+
+        function filteredSignatures() {
+            var words = document.getElementById("sig-search").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+            var status = document.getElementById("sig-filter").value;
+            return _sigRows.filter(function (r) {
+                if (status === "SIGNED" && !r.signed) return false;
+                if (status === "UNSIGNED" && r.signed) return false;
+                var hay = [r.name, r.staffCode, r.branch, r.role, r.signedName].join(" ").toLowerCase();
+                return words.every(function (w) { return hay.indexOf(w) !== -1; });
+            });
+        }
+
+        function formatDateTime(v) {
+            if (!v) return "-";
+            var d = new Date(v);
+            if (isNaN(d.getTime())) return String(v);
+            return d.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+        }
+
+        function renderSignatures() {
+            var rows = filteredSignatures();
+            var tbody = document.getElementById("sig-tbody");
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary py-4">' +
+                    (_sigRows.length ? "No staff match this search." : "Nobody is addressed by this document yet.") + '</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (r) {
+                return '<tr>' +
+                    '<td><div class="fw-semibold">' + esc(r.name) + '</div><div class="text-secondary small">' + esc(r.staffCode || "") + (r.role ? " · " + esc(r.role) : "") + '</div></td>' +
+                    '<td>' + esc(r.branch || "-") + '</td>' +
+                    '<td>' + (r.signed ? '<span class="badge bg-success-lt">Signed</span>' : '<span class="badge bg-danger-lt">Not signed</span>') + '</td>' +
+                    '<td>' + (r.signed ? (r.signedName ? esc(r.signedName) : '<span class="text-secondary small">Accepted (before typed signatures)</span>') : "-") + '</td>' +
+                    '<td class="text-secondary small">' + (r.signed ? formatDateTime(r.signedAt) : "-") + '</td>' +
+                    '<td class="text-secondary small">' + esc(r.ipAddress || "-") + '</td>' +
+                    '</tr>';
+            }).join("");
+        }
+
+        function exportSignaturesCsv() {
+            var rows = filteredSignatures();
+            var cell = function (v) {
+                var t = String(v == null ? "" : v);
+                if (/^[=+\-@]/.test(t)) t = "'" + t; // stop spreadsheet formula injection
+                return '"' + t.replace(/"/g, '""') + '"';
+            };
+            var lines = [["Staff", "Staff code", "Role", "Branch", "Status", "Signed as", "Signed on", "IP address"].map(cell).join(",")];
+            rows.forEach(function (r) {
+                lines.push([r.name, r.staffCode, r.role, r.branch, r.signed ? "Signed" : "Not signed", r.signedName || "",
+                    r.signed ? formatDateTime(r.signedAt) : "", r.ipAddress || ""].map(cell).join(","));
+            });
+            var blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = ((_sigDoc && _sigDoc.title) || "document").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + "-v" + ((_sigDoc && _sigDoc.version) || "") + "-signatures.csv";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
         }
 
         function openAddTypeModal() {
@@ -443,10 +807,18 @@
             document.getElementById("btn-add-type").addEventListener("click", openAddTypeModal);
             if (RBAC.can(StaffDocuments.PERMISSIONS.MANAGE_CATEGORIES)) document.getElementById("btn-add-type").classList.remove("d-none");
             document.getElementById("btn-save-type").addEventListener("click", saveNewType);
+            document.getElementById("doc-audience-mode").addEventListener("change", applyAudienceModeUI);
+            document.getElementById("sig-search").addEventListener("input", renderSignatures);
+            document.getElementById("sig-filter").addEventListener("change", renderSignatures);
+            document.getElementById("sig-export").addEventListener("click", exportSignaturesCsv);
 
             document.getElementById("documents-tbody").addEventListener("click", function (e) {
                 var versionBtn = e.target.closest(".btn-doc-version");
-                if (versionBtn) { openDocumentModal(versionBtn.dataset.id); return; }
+                if (versionBtn) { openDocumentModal(versionBtn.dataset.id, "version"); return; }
+                var audienceBtn = e.target.closest(".btn-doc-audience");
+                if (audienceBtn) { openDocumentModal(audienceBtn.dataset.id, "audience"); return; }
+                var sigBtn = e.target.closest(".btn-doc-signatures");
+                if (sigBtn) { openSignatures(sigBtn.dataset.id); return; }
                 var deactivateBtn = e.target.closest(".btn-deactivate-type");
                 if (deactivateBtn) { deactivateType(deactivateBtn.dataset.id, deactivateBtn.dataset.name); return; }
                 var deleteBtn = e.target.closest(".btn-delete-type");
