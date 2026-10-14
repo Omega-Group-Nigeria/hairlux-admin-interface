@@ -1250,6 +1250,17 @@ async function handlePayrollNavClick() {
     // entirely on a transient network error.
   }
 
+  // Updated or newly assigned company documents lock Payroll until they are signed.
+  const unsigned = currentOnboarding ? Number(currentOnboarding.unsignedDocuments || 0) : 0;
+  if (currentOnboarding && unsigned > 0) {
+    alert('Payslips & Payroll is locked until you sign ' + unsigned + ' company document' + (unsigned === 1 ? '' : 's') +
+      ' (updated to a new version or newly assigned to you). Taking you to Documents & Agreements now.');
+    renderOnboardingBadge();
+    applyPayrollGate();
+    await loadDocuments();
+    show('agreements');
+    return;
+  }
   if (!currentOnboarding || !currentOnboarding.onboardingComplete) {
     alert('Payslips & Payroll unlocks once your onboarding checklist -- including all Documents & Agreements -- is complete and approved. Open "Complete Onboarding" to see what\'s left.');
     renderOnboardingBadge();
@@ -1396,26 +1407,38 @@ function renderDocumentList(containerSelector, isStandalone) {
   const docs = currentDocuments.documents;
   const badge = container.parentElement.querySelector('.card-h .badge');
   if (badge) {
-    badge.textContent = docs.filter((d) => d.acknowledged).length + ' of ' + docs.length + ' acknowledged';
+    badge.textContent = docs.filter((d) => d.acknowledged).length + ' of ' + docs.length + ' signed';
   }
 
   const intro = !isStandalone
-    ? '<p style="font-size:13px;color:var(--muted);margin-bottom:20px">Read each document carefully. Your electronic acknowledgement creates a legal and timestamped record.</p>'
+    ? '<p style="font-size:13px;color:var(--muted);margin-bottom:20px">Read each document carefully, then sign by typing your full name. Your signature is recorded with the date, time and IP address.</p>'
     : '';
+
+  if (!docs.length) {
+    container.innerHTML = intro + '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">There are no company documents for you to sign right now.</div>';
+    return;
+  }
 
   const items = docs.map((doc) => {
     if (doc.acknowledged) {
+      const signedLine = doc.signedName
+        ? 'Signed as <strong style="color:var(--light)">' + escapeHtml(doc.signedName) + '</strong> on ' + StaffSelf.formatDate(doc.acknowledgedAt)
+        : 'Accepted on ' + StaffSelf.formatDate(doc.acknowledgedAt);
       return (
         '<div class="ag-item done"><div class="ag-chk">\u2713</div><div style="flex:1">' +
-        '<div class="ag-title">' + escapeHtml(doc.title) + '</div>' +
-        '<div class="ag-desc">Acknowledged ' + StaffSelf.formatDate(doc.acknowledgedAt) + '</div></div>' +
+        '<div class="ag-title">' + escapeHtml(doc.title) + ' <span style="font-size:11px;color:var(--muted);font-weight:500">v' + escapeHtml(doc.version) + '</span></div>' +
+        '<div class="ag-desc">' + signedLine + '</div></div>' +
         '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(doc.viewUrl) + '" target="_blank" rel="noopener">View PDF</a></div>'
       );
     }
+    const desc = doc.resignRequired
+      ? '<span style="color:var(--gold);font-weight:600">Updated to version ' + escapeHtml(doc.version) + ', please sign again.</span>' +
+        (doc.changeNote ? '<br><span>What changed: ' + escapeHtml(doc.changeNote) + '</span>' : '')
+      : 'Please read and sign before proceeding.';
     return (
       '<div class="ag-item cur"><div class="ag-chk" style="color:var(--gold)">\u2192</div><div style="flex:1">' +
-      '<div class="ag-title">' + escapeHtml(doc.title) + '</div>' +
-      '<div class="ag-desc">Please review and acknowledge before proceeding.</div></div>' +
+      '<div class="ag-title">' + escapeHtml(doc.title) + ' <span style="font-size:11px;color:var(--muted);font-weight:500">v' + escapeHtml(doc.version) + '</span></div>' +
+      '<div class="ag-desc">' + desc + '</div></div>' +
       '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(doc.viewUrl) + '" target="_blank" rel="noopener">View PDF</a>' +
       '<button class="btn btn-gold btn-sm" onclick="handleAcknowledge(\'' + doc.documentId + '\')">Sign</button></div>'
     );
@@ -1432,17 +1455,68 @@ function renderDocumentList(containerSelector, isStandalone) {
   container.innerHTML = intro + items.join('') + footer;
 }
 
-async function handleAcknowledge(documentId) {
-  if (!confirm('By continuing, you confirm you have read and accept the terms of this document. This is recorded with a timestamp and cannot be undone. Continue?')) {
+/**
+ * Opens the signing modal: the staff member reads the document, then types
+ * their full name (as on their staff record) to sign. Replaces the old
+ * confirm() box.
+ */
+function handleAcknowledge(documentId) {
+  const doc = currentDocuments && (currentDocuments.documents || []).find((d) => d.documentId === documentId);
+  if (!doc) return;
+  const recordName = (currentStaff && currentStaff.name) || '';
+  const changeHtml = doc.resignRequired && doc.changeNote
+    ? '<div style="font-size:12px;background:var(--off);border:1px solid var(--border);border-radius:var(--r3);padding:8px 10px;margin-bottom:14px"><strong>What changed:</strong> ' + escapeHtml(doc.changeNote) + '</div>'
+    : '';
+
+  document.getElementById('onboarding-modal-box').innerHTML =
+    '<div class="oc-modal-error" id="oc-modal-error"></div>' +
+    '<h3>Sign: ' + escapeHtml(doc.title) + '</h3>' +
+    '<div class="oc-modal-sub">Version ' + escapeHtml(doc.version) + '. Read the document before you sign. ' +
+    '<a href="' + escapeHtml(doc.viewUrl) + '" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600">Open the PDF</a></div>' +
+    changeHtml +
+    '<div class="oc-field"><label for="doc-sign-name">Type your full name to sign</label>' +
+    '<input type="text" id="doc-sign-name" autocomplete="name" maxlength="160" placeholder="' + escapeHtml(recordName || 'Your full name') + '" ' +
+    'oninput="updateDocSignPreview()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();submitDocumentSignature(\'' + doc.documentId + '\')}">' +
+    '<div style="font-size:11px;color:var(--muted);margin-top:6px">Use your name exactly as it appears on your staff record' +
+    (recordName ? ' (' + escapeHtml(recordName) + ')' : '') + '.</div></div>' +
+    '<div id="doc-sign-preview" style="min-height:34px;font-family:\'Brush Script MT\',\'Segoe Script\',cursive;font-size:24px;color:var(--light);border-bottom:1px solid var(--border);padding:0 4px 4px;margin-bottom:12px"></div>' +
+    '<div style="font-size:12px;color:var(--muted)">By typing your name and pressing Sign, you confirm you have read and accept this document. ' +
+    'Your typed name is your electronic signature. It is recorded with the date, time and IP address and cannot be undone.</div>' +
+    '<div class="oc-modal-actions">' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeOnboardingModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="doc-sign-submit" onclick="submitDocumentSignature(\'' + doc.documentId + '\')">Sign</button>' +
+    '</div>';
+
+  document.getElementById('onboarding-modal-overlay').style.display = 'flex';
+  setTimeout(() => { const el = document.getElementById('doc-sign-name'); if (el) el.focus(); }, 50);
+}
+
+function updateDocSignPreview() {
+  const input = document.getElementById('doc-sign-name');
+  const preview = document.getElementById('doc-sign-preview');
+  if (input && preview) preview.textContent = input.value;
+  const err = document.getElementById('oc-modal-error');
+  if (err) err.style.display = 'none';
+}
+
+async function submitDocumentSignature(documentId) {
+  const input = document.getElementById('doc-sign-name');
+  const btn = document.getElementById('doc-sign-submit');
+  const fullName = input ? input.value.replace(/\s+/g, ' ').trim() : '';
+  if (fullName.split(' ').filter(Boolean).length < 2) {
+    showOnboardingModalError('Type your full name (at least your first name and surname).');
     return;
   }
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing…'; }
   try {
-    await StaffSelf.acknowledgeDocument(documentId);
+    await StaffSelf.acknowledgeDocument(documentId, fullName);
+    closeOnboardingModal();
     await loadDocuments();
     await loadOnboarding();
     renderDashboard();
   } catch (err) {
-    alert('Could not record acknowledgement: ' + err.message);
+    showOnboardingModalError(err.message || 'Could not record your signature. Please try again.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign'; }
   }
 }
 

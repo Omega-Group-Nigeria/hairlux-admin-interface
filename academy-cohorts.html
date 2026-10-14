@@ -66,6 +66,21 @@
             font-size: 1rem;
             font-weight: 600;
         }
+
+        .cohort-day-picks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .cohort-day-picks .btn-check + .btn {
+            min-width: 52px;
+        }
+
+        .cohort-section-title {
+            font-weight: 600;
+            margin-bottom: .5rem;
+        }
     </style>
 </head>
 
@@ -305,6 +320,18 @@
                                     <div class="col-6 col-md-2">
                                         <div class="detail-stat-label">Training Price</div>
                                         <div class="detail-stat-value" id="detail-stat-price">-</div>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <div class="detail-stat-label">Class Days &amp; Hours</div>
+                                        <div class="detail-stat-value" id="detail-stat-schedule">-</div>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <div class="detail-stat-label">Accommodation</div>
+                                        <div class="detail-stat-value" id="detail-stat-accommodation">-</div>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <div class="detail-stat-label">Instalments</div>
+                                        <div class="detail-stat-value" id="detail-stat-instalments">-</div>
                                     </div>
                                 </div>
                             </div>
@@ -606,10 +633,108 @@
                                 <input type="date" class="form-control" id="cohort-reg-close">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Assigned Trainer</label>
+                                <label class="form-label">Instructor</label>
                                 <select class="form-select" id="cohort-trainer-id">
                                     <option value="">None</option>
                                 </select>
+                                <div class="form-text">Shown to learners on the class listing.</div>
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"></div>
+                            <div class="col-12">
+                                <div class="cohort-section-title">Class days &amp; hours</div>
+                                <div class="cohort-day-picks" id="cohort-days">
+                                    <input type="checkbox" class="btn-check" id="cohort-day-1" value="1" autocomplete="off"><label class="btn btn-sm btn-outline-primary" for="cohort-day-1">Mon</label>
+                                    <input type="checkbox" class="btn-check" id="cohort-day-2" value="2" autocomplete="off"><label class="btn btn-sm btn-outline-primary" for="cohort-day-2">Tue</label>
+                                    <input type="checkbox" class="btn-check" id="cohort-day-3" value="3" autocomplete="off"><label class="btn btn-sm btn-outline-primary" for="cohort-day-3">Wed</label>
+                                    <input type="checkbox" class="btn-check" id="cohort-day-4" value="4" autocomplete="off"><label class="btn btn-sm btn-outline-primary" for="cohort-day-4">Thu</label>
+                                    <input type="checkbox" class="btn-check" id="cohort-day-5" value="5" autocomplete="off"><label class="btn btn-sm btn-outline-primary" for="cohort-day-5">Fri</label>
+                                    <input type="checkbox" class="btn-check" id="cohort-day-6" value="6" autocomplete="off"><label class="btn btn-sm btn-outline-primary" for="cohort-day-6">Sat</label>
+                                    <input type="checkbox" class="btn-check" id="cohort-day-0" value="0" autocomplete="off"><label class="btn btn-sm btn-outline-primary" for="cohort-day-0">Sun</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Daily start</label>
+                                <input type="time" class="form-control" id="cohort-time-start" step="300">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Daily end</label>
+                                <input type="time" class="form-control" id="cohort-time-end" step="300">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-text mb-2">Shown on the class listing and enrolment page, e.g. "Mon, Wed, Fri, 9:00am to 3:00pm".</div>
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"></div>
+                            <div class="col-12">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="cohort-section-title mb-0">Accommodation</div>
+                                    <label class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="cohort-acc-enabled">
+                                        <span class="form-check-label">Offer accommodation</span>
+                                    </label>
+                                </div>
+                                <div class="form-text">Learners choose it when they register. Beds are counted separately from training seats and the option closes when they are all booked.</div>
+                            </div>
+                            <div class="col-12" id="cohort-acc-fields">
+                                <div class="row g-3">
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <label class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="cohort-acc-free">
+                                            <span class="form-check-label">Free / included in the fee</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-6 col-md-4" id="cohort-acc-fee-wrap">
+                                        <label class="form-label">Accommodation fee (₦) <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="cohort-acc-fee" min="0" step="0.01">
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <label class="form-label">Beds available <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="cohort-acc-beds" min="0" max="1000" step="1">
+                                        <div class="form-text" id="cohort-acc-booked"></div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Details for learners</label>
+                                        <input type="text" class="form-control" id="cohort-acc-note" maxlength="500"
+                                            placeholder="e.g. Shared room for two, 5 minutes walk from the branch">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"></div>
+                            <div class="col-md-6">
+                                <div class="cohort-section-title">Instalments</div>
+                                <select class="form-select" id="cohort-instalment-mode">
+                                    <option value="DEFAULT">Use the Academy default (Enrolments &gt; Settings)</option>
+                                    <option value="CUSTOM">Custom for this cohort</option>
+                                    <option value="OFF">Full payment only</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-text mb-2" id="cohort-instalment-hint"></div>
+                            </div>
+                            <div class="col-12" id="cohort-instalment-fields">
+                                <div class="row g-3">
+                                    <div class="col-6 col-md-4">
+                                        <label class="form-label">Initial deposit as</label>
+                                        <select class="form-select" id="cohort-deposit-type">
+                                            <option value="PERCENT">% of the training fee</option>
+                                            <option value="AMOUNT">Fixed amount (₦)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-4">
+                                        <label class="form-label" id="cohort-deposit-value-label">Deposit (%) <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="cohort-deposit-value" min="1" step="1">
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label">Balance due</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="cohort-balance-days" min="0" max="90" step="1" value="0">
+                                            <span class="input-group-text">days before the start</span>
+                                        </div>
+                                        <div class="form-text">0 = by the start date.</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -844,11 +969,21 @@
                 new bootstrap.Modal(document.getElementById("modal-cohort")).show();
             });
             document.getElementById("modal-cohort").addEventListener("hidden.bs.modal", resetCohortForm);
+            ["cohort-acc-enabled", "cohort-acc-free", "cohort-instalment-mode", "cohort-deposit-type"].forEach(function (id) {
+                document.getElementById(id).addEventListener("change", applyCohortExtrasUI);
+            });
+            applyCohortExtrasUI();
 
             document.getElementById("form-cohort").addEventListener("submit", async function (e) {
                 e.preventDefault();
                 var alertEl = document.getElementById("cohort-alert");
                 alertEl.className = "alert d-none";
+                var extras = readCohortExtras();
+                if (typeof extras === "string") {
+                    alertEl.className = "alert alert-danger";
+                    alertEl.textContent = extras;
+                    return;
+                }
                 var btn = document.getElementById("btn-save-cohort");
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
@@ -862,8 +997,9 @@
                         capacityMin: Number(document.getElementById("cohort-capacity-min").value),
                         registrationOpenDate: document.getElementById("cohort-reg-open").value || undefined,
                         registrationCloseDate: document.getElementById("cohort-reg-close").value || undefined,
-                        assignedTrainerId: document.getElementById("cohort-trainer-id").value || undefined,
+                        assignedTrainerId: document.getElementById("cohort-trainer-id").value || (id ? null : undefined),
                     };
+                    Object.assign(payload, extras);
                     if (!id) {
                         payload.trainingId = document.getElementById("cohort-training-id").value;
                         payload.branchId = document.getElementById("cohort-branch-id").value;
@@ -1227,7 +1363,16 @@
             document.getElementById("detail-stat-seats").textContent = (c.confirmedCount != null ? c.confirmedCount : "-") + " / " + (c.seatsRemaining != null ? c.seatsRemaining + " left" : "-");
             document.getElementById("detail-stat-reg-window").textContent = (c.registrationOpenDate ? AcademyTraining.formatDate(c.registrationOpenDate) : "-") + " – " + (c.registrationCloseDate ? AcademyTraining.formatDate(c.registrationCloseDate) : "-");
             document.getElementById("detail-stat-trainer").textContent = c.assignedTrainer ? c.assignedTrainer.name : "Unassigned";
-            document.getElementById("detail-stat-price").textContent = c.training ? AcademyTraining.formatMoney(c.training.price) : "-";
+            var pr = c.pricing || {};
+            document.getElementById("detail-stat-price").innerHTML = pr.promoActive
+                ? AcademyTraining.formatMoney(pr.price) + ' <span class="badge bg-green-lt">Promo</span><div class="small text-secondary fw-normal"><s>' + AcademyTraining.formatMoney(pr.regularPrice) + '</s></div>'
+                : (c.training ? AcademyTraining.formatMoney(c.training.price) : "-");
+            document.getElementById("detail-stat-schedule").textContent = scheduleLabel(c) || "Not set";
+            var acc = c.accommodation || {};
+            document.getElementById("detail-stat-accommodation").innerHTML = acc.enabled
+                ? (acc.free ? "Free" : AcademyTraining.formatMoney(acc.fee)) + ' <span class="fw-normal text-secondary">' + (acc.beds - acc.bedsLeft) + " of " + acc.beds + " beds booked</span>" + (acc.available ? "" : ' <span class="badge bg-red-lt">Full</span>')
+                : "Not offered";
+            document.getElementById("detail-stat-instalments").textContent = instalmentLabel(c);
             document.getElementById("btn-resolve-below-minimum").classList.toggle("d-none", c.status !== "BELOW_MINIMUM" || !canManage);
         }
 
@@ -1248,6 +1393,100 @@
             document.getElementById("cohort-reg-close").value = AcademyTraining.toDateInputValue(c.registrationCloseDate);
             document.getElementById("cohort-trainer-id").value = c.assignedTrainerId || "";
             if (window.SearchableSelect) SearchableSelect.refresh("cohort-trainer-id");
+            var days = c.trainingDays || [];
+            [0, 1, 2, 3, 4, 5, 6].forEach(function (d) { document.getElementById("cohort-day-" + d).checked = days.indexOf(d) !== -1; });
+            document.getElementById("cohort-time-start").value = c.dailyStartTime || "";
+            document.getElementById("cohort-time-end").value = c.dailyEndTime || "";
+            document.getElementById("cohort-acc-enabled").checked = !!c.accommodationEnabled;
+            document.getElementById("cohort-acc-free").checked = !!c.accommodationFree;
+            document.getElementById("cohort-acc-fee").value = Number(c.accommodationFee) || "";
+            document.getElementById("cohort-acc-beds").value = c.accommodationBeds || "";
+            document.getElementById("cohort-acc-note").value = c.accommodationNote || "";
+            document.getElementById("cohort-acc-booked").textContent = c.bedsTaken ? c.bedsTaken + " already booked" : "";
+            document.getElementById("cohort-instalment-mode").value = c.instalmentMode || "DEFAULT";
+            document.getElementById("cohort-deposit-type").value = c.depositType || "PERCENT";
+            document.getElementById("cohort-deposit-value").value = Number(c.depositValue) || "";
+            document.getElementById("cohort-balance-days").value = c.balanceDueDaysBefore || 0;
+            applyCohortExtrasUI();
+        }
+
+        var DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        function clock12(hhmm) {
+            if (!hhmm) return "";
+            var parts = hhmm.split(":"), h = Number(parts[0]);
+            return ((h % 12) || 12) + ":" + parts[1] + (h >= 12 ? "pm" : "am");
+        }
+        function scheduleLabel(c) {
+            var days = (c.trainingDays || []).slice().sort(function (a, b) { return ((a + 6) % 7) - ((b + 6) % 7); }).map(function (d) { return DAY_SHORT[d]; }).join(", ");
+            var hours = c.dailyStartTime && c.dailyEndTime ? clock12(c.dailyStartTime) + " to " + clock12(c.dailyEndTime) : "";
+            return [days, hours].filter(Boolean).join(", ");
+        }
+        function instalmentLabel(c) {
+            if (c.instalmentMode === "OFF") return "Full payment only";
+            if (c.instalmentMode === "CUSTOM") {
+                var dep = c.depositType === "AMOUNT" ? AcademyTraining.formatMoney(c.depositValue) : Number(c.depositValue) + "%";
+                var days = Number(c.balanceDueDaysBefore) || 0;
+                return dep + " deposit, balance " + (days ? days + " day" + (days === 1 ? "" : "s") + " before the start" : "by the start date");
+            }
+            return "Academy default";
+        }
+
+        /** Show only the fields that apply to the current choices. */
+        function applyCohortExtrasUI() {
+            var accOn = document.getElementById("cohort-acc-enabled").checked;
+            document.getElementById("cohort-acc-fields").style.display = accOn ? "" : "none";
+            document.getElementById("cohort-acc-fee-wrap").style.display = document.getElementById("cohort-acc-free").checked ? "none" : "";
+            var mode = document.getElementById("cohort-instalment-mode").value;
+            document.getElementById("cohort-instalment-fields").style.display = mode === "CUSTOM" ? "" : "none";
+            document.getElementById("cohort-instalment-hint").textContent = mode === "DEFAULT"
+                ? "Uses the deposit %, minimum and cut-off set in Academy > Enrolments > Settings."
+                : mode === "OFF" ? "Learners pay the full fee when they enrol." : "Learners can pay this deposit now and the balance before the class.";
+            var isAmount = document.getElementById("cohort-deposit-type").value === "AMOUNT";
+            document.getElementById("cohort-deposit-value-label").innerHTML = (isAmount ? "Deposit (₦)" : "Deposit (%)") + ' <span class="text-danger">*</span>';
+            document.getElementById("cohort-deposit-value").max = isAmount ? "" : "99";
+        }
+
+        /** Schedule, accommodation and instalment fields, checked before saving. Returns an error message string when invalid. */
+        function readCohortExtras() {
+            var out = {};
+            out.trainingDays = [0, 1, 2, 3, 4, 5, 6].filter(function (d) { return document.getElementById("cohort-day-" + d).checked; });
+            var start = document.getElementById("cohort-time-start").value;
+            var end = document.getElementById("cohort-time-end").value;
+            if ((start && !end) || (!start && end)) return "Enter both the daily start and end time, or neither.";
+            if (start && end && end <= start) return "The daily end time must be after the start time.";
+            out.dailyStartTime = start || null;
+            out.dailyEndTime = end || null;
+
+            var accOn = document.getElementById("cohort-acc-enabled").checked;
+            var free = document.getElementById("cohort-acc-free").checked;
+            var fee = Number(document.getElementById("cohort-acc-fee").value || 0);
+            var beds = Number(document.getElementById("cohort-acc-beds").value || 0);
+            if (accOn) {
+                if (!(beds >= 1) || !Number.isInteger(beds)) return "Enter how many beds are available (a whole number, at least 1).";
+                if (!free && !(fee > 0)) return "Enter the accommodation fee, or mark accommodation as free / included.";
+            }
+            out.accommodationEnabled = accOn;
+            out.accommodationFree = accOn && free;
+            out.accommodationFee = accOn && !free ? fee : 0;
+            out.accommodationBeds = accOn ? beds : (currentCohortForForm() ? Number(currentCohortForForm().accommodationBeds) || 0 : 0);
+            out.accommodationNote = document.getElementById("cohort-acc-note").value.trim() || null;
+
+            var mode = document.getElementById("cohort-instalment-mode").value;
+            out.instalmentMode = mode;
+            if (mode === "CUSTOM") {
+                out.depositType = document.getElementById("cohort-deposit-type").value;
+                out.depositValue = Number(document.getElementById("cohort-deposit-value").value || 0);
+                out.balanceDueDaysBefore = Number(document.getElementById("cohort-balance-days").value || 0);
+                if (out.depositType === "PERCENT" && !(out.depositValue >= 1 && out.depositValue <= 99)) return "The deposit percentage must be between 1 and 99.";
+                if (out.depositType === "AMOUNT" && !(out.depositValue >= 1)) return "Enter the deposit amount.";
+                if (!(out.balanceDueDaysBefore >= 0 && out.balanceDueDaysBefore <= 90) || !Number.isInteger(out.balanceDueDaysBefore)) return "Balance due must be 0 to 90 days before the start.";
+            }
+            return out;
+        }
+
+        /** The cohort being edited (null when creating). */
+        function currentCohortForForm() {
+            return document.getElementById("cohort-id").value ? currentCohort : null;
         }
 
         function resetCohortForm() {
@@ -1256,6 +1495,9 @@
             document.getElementById("cohort-training-id").disabled = false;
             document.getElementById("cohort-branch-id").disabled = false;
             document.getElementById("cohort-alert").className = "alert d-none";
+            document.getElementById("cohort-acc-booked").textContent = "";
+            document.getElementById("cohort-balance-days").value = 0;
+            applyCohortExtrasUI();
             if (window.SearchableSelect) { SearchableSelect.refresh("cohort-training-id"); SearchableSelect.refresh("cohort-branch-id"); SearchableSelect.refresh("cohort-trainer-id"); }
         }
 
@@ -1276,6 +1518,9 @@
                             var a = r.applicant || {};
                             var name = [a.firstName, a.lastName].filter(Boolean).join(" ") || "-";
                             var order = registrationPaymentCell(r);
+                            if (r.accommodationBooked) {
+                                order += '<div><span class="badge bg-purple-lt">Bed booked' + (Number(r.accommodationFee) > 0 ? ' · ' + AcademyTraining.formatMoney(r.accommodationFee) : ' · free') + '</span></div>';
+                            }
                             return '<tr>' +
                                 '<td>' + name + '<div class="text-secondary small">' + (a.email || "") + '</div></td>' +
                                 '<td><code class="text-primary">' + r.registrationCode + '</code></td>' +

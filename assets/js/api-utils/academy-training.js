@@ -166,6 +166,13 @@ const AcademyTraining = (() => {
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleString("en-NG", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   }
+  /** A stored date as YYYY-MM-DD in Lagos time (for promotion start / end, saved as Lagos day boundaries). */
+  function toLagosDateInputValue(dateStr) {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    return new Date(d.getTime() + 60 * 60 * 1000).toISOString().split("T")[0];
+  }
   function toDateInputValue(dateStr) {
     if (!dateStr) return "";
     const d = new Date(dateStr);
@@ -232,7 +239,7 @@ const AcademyTraining = (() => {
     getSettings, updateSettings,
     getSessions, createSession, getSessionAttendance, markAttendance,
     recordAssessmentResult, getAssessmentResults, getEligibility, issueCertificateForRegistration,
-    formatMoney, formatDate, formatDateTime, toDateInputValue,
+    formatMoney, formatDate, formatDateTime, toDateInputValue, toLagosDateInputValue,
     trainingStatusBadge, cohortStatusBadge, registrationStatusBadge, waitlistStatusBadge, identityStatusBadge, attendanceStatusBadge,
   };
 })();

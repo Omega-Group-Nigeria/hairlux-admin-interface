@@ -54,6 +54,20 @@ const StaffDocuments = (() => {
         return raw.data !== undefined ? raw.data : raw;
     }
 
+    /** Change who must sign the current version. Signatures already given are kept. */
+    async function updateAudience(id, payload) {
+        return jsonFetch("/admin/company-documents/" + id + "/audience", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+    }
+
+    /** Everyone a version is addressed to, with signature status, typed name, date and IP. */
+    async function getSignatures(id) {
+        return jsonFetch("/admin/company-documents/" + id + "/signatures");
+    }
+
     async function getDocumentTypes(activeOnly) {
         return jsonFetch("/admin/document-types" + (activeOnly ? "?activeOnly=true" : ""));
     }
@@ -93,6 +107,8 @@ const StaffDocuments = (() => {
         PERMISSIONS,
         getActiveDocuments,
         createDocument,
+        updateAudience,
+        getSignatures,
         uploadFile,
         getDocumentTypes,
         createDocumentType,
