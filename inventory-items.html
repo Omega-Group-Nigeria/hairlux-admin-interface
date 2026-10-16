@@ -137,18 +137,18 @@
                         <div class="card">
                             <div class="card-body border-bottom py-4">
                                 <div class="row g-2 align-items-end">
-                                    <div class="col-12 col-md-3">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label text-secondary small mb-1">Search</label>
                                         <input type="text" id="filter-search" class="form-control form-control-sm"
                                             placeholder="Search by item name…">
                                     </div>
-                                    <div class="col-6 col-md-3">
+                                    <div class="col-6 col-md-2">
                                         <label class="form-label text-secondary small mb-1">Branch</label>
                                         <select id="filter-branch" class="form-select form-select-sm">
                                             <option value="">All branches</option>
                                         </select>
                                     </div>
-                                    <div class="col-6 col-md-3">
+                                    <div class="col-6 col-md-2">
                                         <label class="form-label text-secondary small mb-1">Category</label>
                                         <select id="filter-category" class="form-select form-select-sm">
                                             <option value="">All categories</option>
@@ -157,12 +157,19 @@
                                             <option value="STORAGE">Storage</option>
                                         </select>
                                     </div>
-                                    <div class="col-6 col-md-3">
+                                    <div class="col-6 col-md-2">
                                         <label class="form-label text-secondary small mb-1">Stock Status</label>
                                         <select id="filter-stock-status" class="form-select form-select-sm">
                                             <option value="">All</option>
                                             <option value="LOW">Low Stock</option>
                                             <option value="OUT">Out of Stock</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-2">
+                                        <label class="form-label text-secondary small mb-1">Show</label>
+                                        <select id="filter-archived" class="form-select form-select-sm">
+                                            <option value="">Active items</option>
+                                            <option value="true">Archived items</option>
                                         </select>
                                     </div>
                                 </div>
@@ -642,6 +649,32 @@
         </div>
     </div>
 
+    <!-- Archive Item Modal: only items not linked to a product -->
+    <div class="modal modal-blur fade" id="modal-archive-item" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Archive Item</h5><button type="button" class="btn-close"
+                        data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none mb-3" id="archive-item-error"></div>
+                    <p class="mb-2"><strong id="archive-item-name"></strong> at <span id="archive-item-branch"></span></p>
+                    <p class="text-secondary small mb-3">Archived items are hidden from the Items list, booking and sale
+                        pickers, and stock alerts. Their history is kept, and you can restore them any time from
+                        Show &gt; Archived items. The item must have zero stock and no pending transfer or adjustment.</p>
+                    <label class="form-label">Reason <span class="text-secondary small">(optional)</span></label>
+                    <textarea class="form-control" id="archive-item-reason" rows="2" maxlength="300"
+                        placeholder="e.g. Duplicate of another item, no longer stocked"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-archive-item">Archive Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Reject Transfer Modal -->
     <div class="modal modal-blur fade" id="modal-reject-transfer" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -843,6 +876,8 @@
             document.getElementById("filter-branch").addEventListener("change", reloadItemsFromFirstPage);
             document.getElementById("filter-category").addEventListener("change", reloadItemsFromFirstPage);
             document.getElementById("filter-stock-status").addEventListener("change", reloadItemsFromFirstPage);
+            document.getElementById("filter-archived").addEventListener("change", reloadItemsFromFirstPage);
+            document.getElementById("btn-confirm-archive-item").addEventListener("click", submitArchiveItem);
             var _searchDebounce;
             document.getElementById("filter-search").addEventListener("input", function () {
                 clearTimeout(_searchDebounce);
@@ -1140,17 +1175,35 @@
                     branchId: RBAC.scopeBranchId(document.getElementById("filter-branch").value),
                     category: document.getElementById("filter-category").value,
                     stockStatus: document.getElementById("filter-stock-status").value || undefined,
+                    archived: document.getElementById("filter-archived").value || undefined,
                     page: _itemsPager.page,
                     limit: _itemsPager.perPage,
                 });
                 var items = result.data || [];
                 _itemsPager.setTotal(result.meta ? result.meta.total : items.length);
 
+                var showingArchived = document.getElementById("filter-archived").value === 'true';
                 if (!items.length) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">No items found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">' + (showingArchived ? 'No archived items.' : 'No items found.') + '</td></tr>';
                     return;
                 }
                 tbody.innerHTML = items.map(function (i) {
+                    var historyBtn = '<button class="btn btn-sm btn-outline-secondary btn-history" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">History</button>';
+                    var actions;
+                    var status = Inventory.statusBadge(i);
+                    if (!i.isActive) {
+                        status = '<span class="badge bg-secondary-lt">Archived</span>' +
+                            (i.archivedAt ? '<div class="text-secondary small">' + new Date(i.archivedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + '</div>' : '') +
+                            (i.archiveReason ? '<div class="text-secondary small">' + escapeHtml(i.archiveReason) + '</div>' : '');
+                        actions = '<button class="btn btn-sm btn-outline-primary me-1 btn-restore-item" data-id="' + i.id + '">Restore</button>' + historyBtn;
+                    } else {
+                        // Only items not linked to a product master record can be archived.
+                        var archiveBtn = i.productId ? '' :
+                            '<button class="btn btn-sm btn-outline-danger me-1 btn-archive-item" data-id="' + i.id + '">Archive</button>';
+                        actions = '<button class="btn btn-sm btn-outline-secondary me-1 btn-edit-item" data-id="' + i.id + '">Edit</button>' +
+                            '<button class="btn btn-sm btn-outline-secondary me-1 btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button>' +
+                            archiveBtn + historyBtn;
+                    }
                     return '<tr>' +
                         '<td class="fw-semibold">' + escapeHtml(i.name) + '</td>' +
                         '<td>' + escapeHtml(i.branch ? i.branch.name : '-') + '</td>' +
@@ -1159,10 +1212,8 @@
                         '<td>' + totalStock(i) + (i.unit ? ' ' + escapeHtml(i.unit) : '') +
                         '<div class="text-secondary small">Store: ' + i.storeStock + ' \u00b7 Sales: ' + i.salesStock + ' \u00b7 Usage: ' + i.usageStock + '</div></td>' +
                         '<td>' + i.lowStockThreshold + '</td>' +
-                        '<td>' + Inventory.statusBadge(i) + '</td>' +
-                        '<td class="text-nowrap"><button class="btn btn-sm btn-outline-secondary me-1 btn-edit-item" data-id="' + i.id + '">Edit</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary me-1 btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button>' +
-                        '<button class="btn btn-sm btn-outline-secondary btn-history" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">History</button></td>' +
+                        '<td>' + status + '</td>' +
+                        '<td class="text-nowrap">' + actions + '</td>' +
                         '</tr>';
                 }).join('');
                 _itemsCache = items;
@@ -1171,6 +1222,12 @@
                 });
                 tbody.querySelectorAll('.btn-history').forEach(function (btn) {
                     btn.addEventListener('click', function () { openHistoryModal(btn.dataset.id, btn.dataset.name); });
+                });
+                tbody.querySelectorAll('.btn-archive-item').forEach(function (btn) {
+                    btn.addEventListener('click', function () { openArchiveItemModal(btn.dataset.id); });
+                });
+                tbody.querySelectorAll('.btn-restore-item').forEach(function (btn) {
+                    btn.addEventListener('click', function () { restoreItem(btn); });
                 });
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
@@ -1181,6 +1238,58 @@
         }
 
         var _itemsCache = [];
+
+        // ── Archive / restore (items not linked to a product) ──────────────
+        var _archiveItemId = null;
+
+        function openArchiveItemModal(id) {
+            var item = _itemsCache.find(function (x) { return x.id === id; });
+            if (!item) return;
+            _archiveItemId = id;
+            document.getElementById("archive-item-name").textContent = item.name;
+            document.getElementById("archive-item-branch").textContent = item.branch ? item.branch.name : 'this branch';
+            document.getElementById("archive-item-reason").value = '';
+            var err = document.getElementById("archive-item-error");
+            var stock = totalStock(item);
+            if (stock !== 0) {
+                err.textContent = 'This item still holds ' + stock + ' in stock. Use Adjust to bring it to zero (with a reason) first, so the write-off is recorded.';
+                err.classList.remove('d-none');
+            } else {
+                err.classList.add('d-none');
+            }
+            document.getElementById("btn-confirm-archive-item").disabled = stock !== 0;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-archive-item")).show();
+        }
+
+        async function submitArchiveItem() {
+            if (!_archiveItemId) return;
+            var btn = document.getElementById("btn-confirm-archive-item");
+            var err = document.getElementById("archive-item-error");
+            btn.disabled = true;
+            err.classList.add('d-none');
+            try {
+                await Inventory.archive(_archiveItemId, document.getElementById("archive-item-reason").value.trim());
+                bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-archive-item")).hide();
+                _archiveItemId = null;
+                loadItems(); loadSummaryStats(); refreshBadgeCounts();
+            } catch (e) {
+                err.textContent = e.message || 'Could not archive this item.';
+                err.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function restoreItem(btn) {
+            btn.disabled = true;
+            try {
+                await Inventory.restore(btn.dataset.id);
+                loadItems(); loadSummaryStats(); refreshBadgeCounts();
+            } catch (e) {
+                btn.disabled = false;
+                alert(e.message || 'Could not restore this item.');
+            }
+        }
 
         function updatePriceRequirement(categorySelectId, labelHintId, requiredMarkId) {
             var select = document.getElementById(categorySelectId);

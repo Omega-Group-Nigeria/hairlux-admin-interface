@@ -85,6 +85,19 @@ const Inventory = (function () {
         });
     }
 
+    /** Archive an item that is not linked to a product (zero stock, nothing pending). */
+    async function archive(id, reason) {
+        return jsonFetch(`/admin/inventory-items/${id}/archive`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: reason || undefined }),
+        });
+    }
+
+    async function restore(id) {
+        return jsonFetch(`/admin/inventory-items/${id}/restore`, { method: 'PATCH' });
+    }
+
     function formatMoney(amount) {
         if (amount == null) return '-';
         return '₦' + Number(amount).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -196,7 +209,7 @@ const Inventory = (function () {
     }
 
     return {
-        getAll, getOne, create, createBulk, update, adjust, transferStockType,
+        getAll, getOne, create, createBulk, update, adjust, transferStockType, archive, restore,
         getMovementHistory, MOVEMENT_TYPE_LABELS,
         getAlerts, resolveAlert,
         getExpiryAlerts, resolveExpiryAlert,
