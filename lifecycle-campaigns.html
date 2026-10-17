@@ -283,6 +283,13 @@
                             </select>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Branches</label>
+                        <select multiple class="form-select" id="f-target-branches"></select>
+                        <div class="form-hint">Leave empty for all branches, or pick one or more. A customer counts for
+                            the branch they last visited. Several templates can share a stage and channel (e.g. one
+                            per branch) as long as they can't reach the same customer.</div>
+                    </div>
                     <div class="mb-3" id="f-subject-wrap">
                         <label class="form-label">Subject <span class="text-secondary">(Email only)</span></label>
                         <input type="text" class="form-control" id="f-subject" placeholder="We miss you at Hairlux!">
@@ -394,6 +401,13 @@
                             now on.</div>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">Branches</label>
+                        <select multiple class="form-select" id="sf-target-branches"></select>
+                        <div class="form-hint">Leave empty for all branches, or pick one or more. A customer counts for
+                            the branch they last visited. One sequence per stage per branch.</div>
+                    </div>
+
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <label class="form-label mb-0">Steps <span class="text-secondary small">(execution order: top
                                 to bottom)</span></label>
@@ -413,6 +427,8 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/lifecycle-campaigns.js"></script>
+    <script src="assets/js/api-utils/branches.js"></script>
+    <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script src="assets/js/rich-text-editor.js"></script>
@@ -429,8 +445,45 @@
         var VALUE_TIER_LABELS = { STANDARD: 'Standard', PREMIUM: 'Premium', VIP: 'VIP' };
         var AUDIENCE_SOURCE_LABELS = { USER: 'Users only', CUSTOMER: 'Customer Contacts only' };
 
+        // ── Branch targeting: empty = all branches ──
+        var _branchNames = {};
+
+        async function loadBranches() {
+            try {
+                var branches = await Branches.getBranches();
+                _branchNames = {};
+                var options = (branches || []).map(function (b) {
+                    _branchNames[b.id] = b.name;
+                    return '<option value="' + b.id + '">' + esc(b.name) + '</option>';
+                }).join('');
+                ['f-target-branches', 'sf-target-branches'].forEach(function (id) {
+                    document.getElementById(id).innerHTML = options;
+                    MultiSelectDropdown.attach(id, { placeholder: 'All branches\u2026' });
+                    MultiSelectDropdown.refresh(id);
+                });
+                if (_allTemplates.length) renderFilteredTemplates(); // show branch names in the list
+            } catch (e) { /* branch picker stays empty: campaigns save as all branches */ }
+        }
+
+        function setSelectedBranches(selectId, ids) {
+            var wanted = ids || [];
+            Array.from(document.getElementById(selectId).options).forEach(function (o) { o.selected = wanted.indexOf(o.value) !== -1; });
+            // MultiSelectDropdown is a const global (not on window), so check it with typeof.
+            if (typeof MultiSelectDropdown !== 'undefined') MultiSelectDropdown.sync(selectId);
+        }
+
+        function selectedBranches(selectId) {
+            return Array.from(document.getElementById(selectId).selectedOptions).map(function (o) { return o.value; });
+        }
+
+        /** "Ibadan, Oyo", or "" for all branches. */
+        function branchNames(ids) {
+            return (ids || []).map(function (id) { return _branchNames[id] || 'Unknown branch'; }).join(', ');
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             RBAC.applyPageGuard('lifecycle_campaigns:read');
+            loadBranches();
 
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
             document.getElementById('tf-lifecycle').addEventListener('change', renderFilteredTemplates);
@@ -536,8 +589,8 @@
             }
         }
 
-        // Templates are a small, bounded set -- max 18 (6 lifecycle stages
-        // x 3 channels, enforced by a unique constraint) -- so filtering
+        // Templates are a small set (a few per lifecycle stage and channel,
+        // e.g. one per branch) -- so filtering
         // the already-loaded list client-side is simpler than adding
         // query params to a backend endpoint that has no pagination need.
         function renderFilteredTemplates() {
@@ -572,6 +625,7 @@
                     var audienceParts = [];
                     if (t.targetValue) audienceParts.push('<span class="badge bg-purple-lt">' + esc(VALUE_TIER_LABELS[t.targetValue] || t.targetValue) + '</span>');
                     if (t.audienceSource) audienceParts.push('<span class="badge bg-azure-lt">' + esc(AUDIENCE_SOURCE_LABELS[t.audienceSource] || t.audienceSource) + '</span>');
+                    if (t.targetBranchIds && t.targetBranchIds.length) audienceParts.push('<span class="badge bg-teal-lt" title="Branches">' + esc(branchNames(t.targetBranchIds)) + '</span>');
                     var audience = audienceParts.length ? audienceParts.join(' ') : '<span class="text-secondary small">Everyone</span>';
                     return '<tr>' +
                         '<td class="fw-semibold">' + esc(LIFECYCLE_LABELS[t.targetLifecycle] || t.targetLifecycle) + '</td>' +
@@ -620,6 +674,7 @@
                     document.getElementById('f-target-value').value = t.targetValue || '';
                     document.getElementById('f-audience-source').value = t.audienceSource || '';
                     document.getElementById('f-include-existing').checked = t.includeExisting !== false;
+                    setSelectedBranches('f-target-branches', t.targetBranchIds);
                 } catch (e) {
                     alert(e.message || 'Failed to load.');
                     return;
@@ -638,6 +693,7 @@
                 document.getElementById('f-target-value').value = '';
                 document.getElementById('f-audience-source').value = '';
                 document.getElementById('f-include-existing').checked = true;
+                setSelectedBranches('f-target-branches', []);
             }
             syncSubjectVisibility();
             syncSendImmediately();
@@ -659,6 +715,7 @@
                 sendMinute: document.getElementById('f-send-minute').value !== '' ? Number(document.getElementById('f-send-minute').value) : null,
                 targetValue: document.getElementById('f-target-value').value || null,
                 audienceSource: document.getElementById('f-audience-source').value || null,
+                targetBranchIds: selectedBranches('f-target-branches'),
                 isEnabled: document.getElementById('f-enabled').checked,
                 includeExisting: document.getElementById('f-include-existing').checked,
             };
@@ -712,7 +769,7 @@
                         var stepsSummary = (s.steps || []).map(function (step) { return step.template ? (CHANNEL_LABELS[step.template.channel] || step.template.channel) : '-'; }).join(' → ') || '<span class="text-secondary">No steps</span>';
                         return '<tr>' +
                             '<td class="fw-semibold">' + esc(LIFECYCLE_LABELS[s.targetLifecycle] || s.targetLifecycle) + '</td>' +
-                            '<td>' + esc(s.name) + '</td>' +
+                            '<td>' + esc(s.name) + '<div class="text-secondary small">' + (s.targetBranchIds && s.targetBranchIds.length ? esc(branchNames(s.targetBranchIds)) : 'All branches') + '</div></td>' +
                             '<td>' + statusBadge + '</td>' +
                             '<td class="text-secondary small">' + stepsSummary + '</td>' +
                             '<td>' + s.cooldownDays + ' day' + (s.cooldownDays === 1 ? '' : 's') + '</td>' +
@@ -757,7 +814,8 @@
             var templateSel = block.querySelector('.step-template');
             var previewEl = block.querySelector('.step-template-preview');
             templateSel.innerHTML = '<option value="">Select a template…</option>' + _allTemplates.map(function (t) {
-                return '<option value="' + t.id + '">' + esc(LIFECYCLE_LABELS[t.targetLifecycle] || t.targetLifecycle) + ': ' + esc(CHANNEL_LABELS[t.channel] || t.channel) + '</option>';
+                var tBranches = t.targetBranchIds && t.targetBranchIds.length ? ' (' + branchNames(t.targetBranchIds) + ')' : '';
+                return '<option value="' + t.id + '">' + esc(LIFECYCLE_LABELS[t.targetLifecycle] || t.targetLifecycle) + ': ' + esc(CHANNEL_LABELS[t.channel] || t.channel) + esc(tBranches) + '</option>';
             }).join('');
 
             var syncPreview = function () {
@@ -833,6 +891,7 @@
                     document.getElementById('sf-cooldown-days').value = s.cooldownDays;
                     document.getElementById('sf-enabled').checked = !!s.isEnabled;
                     document.getElementById('sf-include-existing').checked = s.includeExisting !== false;
+                    setSelectedBranches('sf-target-branches', s.targetBranchIds);
                     (s.steps || []).forEach(function (step) { addStepLine(step); });
                     if (!s.steps || !s.steps.length) addStepLine();
                 } catch (e) {
@@ -844,6 +903,7 @@
                 document.getElementById('sf-cooldown-days').value = 30;
                 document.getElementById('sf-enabled').checked = true;
                 document.getElementById('sf-include-existing').checked = true;
+                setSelectedBranches('sf-target-branches', []);
                 addStepLine();
             }
 
@@ -893,6 +953,7 @@
                 cooldownDays: Number(document.getElementById('sf-cooldown-days').value) || 0,
                 isEnabled: document.getElementById('sf-enabled').checked,
                 includeExisting: document.getElementById('sf-include-existing').checked,
+                targetBranchIds: selectedBranches('sf-target-branches'),
                 steps: steps,
             };
 
