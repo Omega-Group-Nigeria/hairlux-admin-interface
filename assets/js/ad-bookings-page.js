@@ -127,7 +127,7 @@
         $('o-completed').textContent = t.completed;
         $('o-noshow').textContent = t.noShows;
         $('o-cancelled').textContent = t.cancelled;
-        $('o-split').textContent = t.depositPayments + ' / ' + t.fullPayments;
+        $('o-split').textContent = t.depositPayments + ' / ' + t.fullPayments + ' / ' + (t.payAtBranchBookings || 0);
         $('o-accounts').textContent = t.newAccounts;
         $('o-refunded').textContent = ngn(t.refundedToWallet);
         $('o-unpaid').textContent = (t.pending + t.expired) + (t.failed ? ' (+' + t.failed + ' failed)' : '');
@@ -330,7 +330,7 @@
                 fmtDate(it.bookingDate) + ', ' + time12(it.bookingTime) + '</div></td>' +
                 '<td>' + sourceCell(it) + '</td>' +
                 '<td class="text-end">' + (it.status === 'BOOKED' ? ngn(it.amountToPay) : '<span class="text-secondary">' + ngn(0) + '</span>') +
-                '<div class="text-secondary small">' + (it.paymentOption === 'FULL' ? 'Full price' : 'Deposit') + '</div></td>' +
+                '<div class="text-secondary small">' + payLabel(it.paymentOption) + '</div></td>' +
                 '<td class="text-end">' + balanceCell(it) + '</td>' +
                 '<td>' + statusCell(it) + '</td>' +
                 '</tr>';
@@ -367,7 +367,7 @@
                 { label: 'Branch', get: function (r) { return r.branch ? r.branch.name : ''; } },
                 { label: 'Date', get: function (r) { return r.bookingDate; } },
                 { label: 'Time', get: function (r) { return r.bookingTime; } },
-                { label: 'Payment option', get: function (r) { return r.paymentOption === 'FULL' ? 'Full' : 'Deposit'; } },
+                { label: 'Payment option', get: function (r) { return payLabel(r.paymentOption); } },
                 { label: 'Service price', get: function (r) { return r.totalAmount; } },
                 { label: 'Paid online', get: function (r) { return r.status === 'BOOKED' ? r.amountToPay : 0; } },
                 { label: 'Balance due', get: function (r) { return r.booking ? r.booking.balanceDue : ''; } },
@@ -412,6 +412,7 @@
         $('s-percent').value = s.depositPercent;
         $('s-min').value = s.minDepositAmount;
         $('s-full').checked = s.allowFullPayment;
+        $('s-later').checked = s.allowPayAtBranch !== false;
         $('s-pixel').value = s.metaPixelId || '';
         $('s-days').value = s.maxDaysAhead;
         var lead = $('s-lead');
@@ -424,6 +425,10 @@
         modal('modal-settings').show();
     }
 
+    function payLabel(option) {
+        return option === 'FULL' ? 'Full price' : option === 'PAY_AT_BRANCH' ? 'Pay at the branch' : 'Deposit';
+    }
+
     async function saveSettings() {
         var err = $('settings-error');
         err.classList.add('d-none');
@@ -432,6 +437,7 @@
             depositPercent: Number($('s-percent').value),
             minDepositAmount: Number($('s-min').value),
             allowFullPayment: $('s-full').checked,
+            allowPayAtBranch: $('s-later').checked,
             metaPixelId: $('s-pixel').value.trim(),
             minLeadMinutes: Number($('s-lead').value),
             maxDaysAhead: Number($('s-days').value),
