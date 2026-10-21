@@ -94,7 +94,7 @@
                             <h2 class="page-title">Purchases</h2>
                             <div class="text-secondary small mt-1">Created automatically once a Purchase Request is
                                 fully
-                                approved. Record vendor payments and confirm goods received from here.</div>
+                                approved. Record supplier payments and confirm goods received from here.</div>
                         </div>
                         <div class="col-auto ms-auto">
                             <button type="button" class="btn btn-outline-secondary" id="btn-export">Export CSV</button>
@@ -115,7 +115,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <select class="form-select" id="f-vendor-filter">
-                                        <option value="">All vendors</option>
+                                        <option value="">All suppliers</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4">
@@ -155,7 +155,7 @@
                                     <tr>
                                         <th>PO #</th>
                                         <th>Branch</th>
-                                        <th>Vendor</th>
+                                        <th>Supplier</th>
                                         <th>Grand Total</th>
                                         <th>Paid</th>
                                         <th>Payment Status</th>
@@ -447,7 +447,7 @@
             CsvExport.download('purchases.csv', [
                 { label: 'PO Number', get: function (p) { return formatPoNumber(p.purchaseNumber); } },
                 { label: 'Branch', get: function (p) { return p.branch ? p.branch.name : ''; } },
-                { label: 'Vendor', get: function (p) { return p.vendor ? p.vendor.name : ''; } },
+                { label: 'Supplier', get: function (p) { return p.vendor ? p.vendor.name : ''; } },
                 { label: 'Grand Total', get: function (p) { return p.grandTotal; } },
                 { label: 'Amount Paid', get: function (p) { return p.amountPaid; } },
                 { label: 'Payment Status', get: function (p) { return p.paymentStatus; } },
@@ -532,7 +532,7 @@
                 document.getElementById('view-body').innerHTML =
                     '<div class="row g-2 mb-3">' +
                     '<div class="col-6"><div class="text-secondary small">Branch</div><div>' + esc(p.branch.name) + '</div></div>' +
-                    '<div class="col-6"><div class="text-secondary small">Vendor</div><div>' + esc(p.vendor.name) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Supplier</div><div>' + esc(p.vendor.name) + '</div></div>' +
                     '<div class="col-4"><div class="text-secondary small">Grand Total</div><div>' + formatMoney(p.grandTotal) + '</div></div>' +
                     '<div class="col-4"><div class="text-secondary small">Paid</div><div>' + formatMoney(p.amountPaid) + '</div></div>' +
                     (Number(p.amountPaid) > Number(p.grandTotal)
@@ -567,7 +567,7 @@
         }
 
         // ── Record Payment ───────────────────────────────────────────────
-        // Default: pay the vendor by Paystack transfer to one of its
+        // Default: pay the supplier by Paystack transfer to one of its
         // verified accounts (same flow as an expense payout). "Already paid
         // another way" only records a payment made outside the system.
         var _payOptions = null;
@@ -661,7 +661,7 @@
                 var hint = document.getElementById('p-account-hint');
                 if (!o.accounts.length) {
                     sel.innerHTML = '<option value="">No verified bank account</option>';
-                    hint.innerHTML = '<span class="text-danger">' + esc(o.vendor ? o.vendor.name : 'This vendor') + ' has no verified bank account yet. Add one on the Vendors page (Edit, Bank accounts), then pay.</span>';
+                    hint.innerHTML = '<span class="text-danger">' + esc(o.vendor ? o.vendor.name : 'This supplier') + ' has no verified bank account yet. Add one on the Suppliers page (Edit, Bank accounts), then pay.</span>';
                 } else {
                     sel.innerHTML = o.accounts.map(function (a) {
                         return '<option value="' + esc(a.id) + '"' + (a.isDefault ? ' selected' : '') + '>' +
@@ -677,7 +677,7 @@
                         ' You can still pay more; it will show as Overpaid.';
                 } else if (o.processing > 0) {
                     errEl.className = 'alert alert-warning';
-                    errEl.textContent = 'A transfer of ' + formatMoney(o.processing) + ' is still in progress on this purchase. Check it before paying again, so the vendor is not paid twice.';
+                    errEl.textContent = 'A transfer of ' + formatMoney(o.processing) + ' is still in progress on this purchase. Check it before paying again, so the supplier is not paid twice.';
                 }
             } catch (e) {
                 errEl.className = 'alert alert-danger';

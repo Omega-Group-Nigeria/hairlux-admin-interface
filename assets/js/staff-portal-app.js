@@ -2735,7 +2735,7 @@ async function showNewInventoryItemForm() {
     '</select></div>' +
     '<div class="oc-field" style="flex:1"><label>Unit</label><input type="text" id="nii-unit" placeholder="e.g. bottle"></div>' +
     '</div>' +
-    '<div class="oc-field"><label>Supplier / Vendor</label><select id="nii-supplier"><option value="">None</option></select></div>' +
+    '<div class="oc-field"><label>Supplier</label><select id="nii-supplier"><option value="">None</option></select></div>' +
     '<div style="display:flex;gap:12px">' +
     '<div class="oc-field" style="flex:1"><label>Initial Quantity</label><input type="number" min="0" id="nii-quantity" value="0"></div>' +
     '<div class="oc-field" style="flex:1"><label>Low Stock Threshold</label><input type="number" min="0" id="nii-threshold" value="5"></div>' +
@@ -2753,7 +2753,7 @@ async function showNewInventoryItemForm() {
     try {
       var suppliers = await SuppliersSelf.getAll();
       _supplierOptionsCache = suppliers.map(function (s) {
-        return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.type === 'VENDOR' ? ' (Vendor)' : ' (Supplier)') + '</option>';
+        return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>';
       }).join('');
     } catch (err) {
       _supplierOptionsCache = '';

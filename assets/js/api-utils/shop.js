@@ -30,6 +30,7 @@
  *   GET    /admin/shop/orders
  *   GET    /admin/shop/orders/:id
  *   PATCH  /admin/shop/orders/:id/status     (JSON)
+ *   POST   /admin/shop/orders/:id/record-balance (JSON, Pay on Delivery)
  */
 
 const Shop = (() => {
@@ -39,6 +40,7 @@ const Shop = (() => {
         MANAGE_CATEGORIES: "shop:manage_categories",
         MANAGE_DELIVERY:   "shop:manage_delivery",
         UPDATE_STATUS:     "shop:update_status",
+        RECORD_PAYMENTS:   "shop:record_payments",
     };
 
     const ORDER_STATUSES = ["CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
@@ -252,6 +254,14 @@ const Shop = (() => {
         return apiFetch(`/admin/shop/orders/${id}`);
     }
 
+    /** Pay on Delivery: record a balance paid by TRANSFER, CASH or POS. */
+    async function recordOrderBalance(id, method, reference) {
+        return apiFetch(`/admin/shop/orders/${id}/record-balance`, {
+            method: "POST",
+            body: JSON.stringify({ method, reference: reference || undefined }),
+        });
+    }
+
     async function updateOrderStatus(id, status, notes) {
         const body = { status };
         if (notes) body.notes = notes;
@@ -357,6 +367,7 @@ const Shop = (() => {
         getOrders,
         getOrder,
         updateOrderStatus,
+        recordOrderBalance,
         getProductImages,
         getProductImageUrl,
         statusBadge,

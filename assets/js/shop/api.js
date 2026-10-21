@@ -31,5 +31,6 @@
         getOrders: function (params) { return Shop.getOrders(params); },
         getOrder: function (id) { return Shop.getOrder(id); },
         updateOrderStatus: function (id, status, notes) { return Shop.updateOrderStatus(id, status, notes); },
+        recordOrderBalance: function (id, method, reference) { return Shop.recordOrderBalance(id, method, reference); },
     };
 })(window);

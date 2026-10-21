@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Marketplace Settings</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Marketplace</div>
+                            <h2 class="page-title">Settings</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list"><button class="btn btn-primary d-none" id="btn-save">Save settings</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert"></div>
+                    <div class="row row-cards">
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Vendor applications</h3></div>
+                                <div class="card-body">
+                                    <label class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="s-accepting">
+                                        <span class="form-check-label">Accept new vendor sign-ups on the vendor site</span>
+                                    </label>
+                                    <div class="mb-3">
+                                        <label class="form-label">Review target (hours)</label>
+                                        <input type="number" class="form-control" id="s-sla" min="1" max="720">
+                                        <div class="form-hint">How quickly vendors and products should be reviewed. Shown to vendors and used to highlight late reviews.</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Vendor agreement version</label>
+                                        <input type="text" class="form-control" id="s-agreement-version" maxlength="40">
+                                        <div class="form-hint">Changing the version asks every vendor to accept the agreement again before they submit.</div>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">Vendor agreement link</label>
+                                        <input type="url" class="form-control" id="s-agreement-url" placeholder="https://...">
+                                        <div class="form-hint">The PDF or page vendors read before accepting.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card mb-3">
+                                <div class="card-header"><h3 class="card-title">Commission</h3></div>
+                                <div class="card-body">
+                                    <label class="form-label">Default commission</label>
+                                    <div class="input-group" style="max-width:220px"><input type="number" class="form-control" id="s-commission" min="0" max="100" step="0.01"><span class="input-group-text">%</span></div>
+                                    <div class="form-hint">Taken from each vendor sale unless the vendor has its own rate (set on the vendor).</div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Payment and delivery (web shop)</h3></div>
+                                <div class="card-body">
+                                    <label class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="s-pod">
+                                        <span class="form-check-label">Offer Pay on Delivery</span>
+                                    </label>
+                                    <div class="mb-3">
+                                        <label class="form-label">Downpayment for Pay on Delivery</label>
+                                        <div class="input-group" style="max-width:220px"><input type="number" class="form-control" id="s-pod-percent" min="0" max="100" step="0.01"><span class="input-group-text">%</span></div>
+                                        <div class="form-hint">Paid at checkout. The delivery fee is always paid in full on top. The balance is paid to Hairlux on delivery.</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Delivery</label>
+                                        <select class="form-select" id="s-delivery-mode">
+                                            <option value="UNAVAILABLE">Not available yet (customers see "delivery unavailable")</option>
+                                            <option value="STATIC">One flat delivery fee per vendor shipment</option>
+                                            <option value="PARTNER_API">Delivery partner (not connected yet)</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-0" id="s-static-fee-wrap">
+                                        <label class="form-label">Flat delivery fee</label>
+                                        <div class="input-group" style="max-width:260px"><span class="input-group-text">₦</span><input type="number" class="form-control" id="s-static-fee" min="0" step="0.01"></div>
+                                        <div class="form-hint">Charged for each vendor in the cart, because each vendor ships separately. Hairlux's own stock keeps the delivery region fee.</div>
+                                    </div>
+                                    <div class="mt-3 mb-0">
+                                        <label class="form-label">Time for vendors to confirm an order (hours)</label>
+                                        <input type="number" class="form-control" id="s-confirm-hours" min="1" max="168" style="max-width:220px">
+                                        <div class="form-hint">Orders a vendor has not confirmed by then are cancelled and the customer is refunded to the wallet.</div>
+                                    </div>
+                                    <div class="alert alert-warning mt-3 mb-0" id="s-partner-note" hidden>No delivery partner is connected yet, so checkout treats vendor delivery as unavailable until the partner's pricing is set up.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-end text-secondary small" id="s-updated"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/marketplace.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/marketplace-settings-page.js"></script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

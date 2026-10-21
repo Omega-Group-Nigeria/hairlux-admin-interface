@@ -399,7 +399,7 @@
                             <input class="form-control" id="ni-unit" placeholder="e.g. bottle">
                         </div>
                     </div>
-                    <div class="mb-2"><label class="form-label">Supplier / Vendor</label>
+                    <div class="mb-2"><label class="form-label">Supplier</label>
                         <select class="form-select" id="ni-supplier">
                             <option value="">None</option>
                         </select>
@@ -454,7 +454,7 @@
                             <input class="form-control" id="ei-unit">
                         </div>
                     </div>
-                    <div class="mb-2"><label class="form-label">Supplier / Vendor</label>
+                    <div class="mb-2"><label class="form-label">Supplier</label>
                         <select class="form-select" id="ei-supplier">
                             <option value="">None</option>
                         </select>
@@ -628,9 +628,9 @@
                 <div class="modal-body">
                     <div class="alert alert-danger d-none mb-3" id="push-alerts-error"></div>
                     <p class="text-secondary small" id="push-alerts-count"></p>
-                    <div class="mb-2"><label class="form-label">Vendor <span class="text-danger">*</span></label>
+                    <div class="mb-2"><label class="form-label">Supplier <span class="text-danger">*</span></label>
                         <select class="form-select" id="push-alerts-vendor">
-                            <option value="">Select a vendor…</option>
+                            <option value="">Select a supplier…</option>
                         </select>
                     </div>
                     <div class="mb-2"><label class="form-label">Reason</label>
@@ -1029,7 +1029,7 @@
             try {
                 var suppliers = await Suppliers.getAll(undefined, true);
                 var opts = suppliers.map(function (s) {
-                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + (s.type === 'VENDOR' ? ' (Vendor)' : ' (Supplier)') + '</option>';
+                    return '<option value="' + s.id + '">' + escapeHtml(s.name) + '</option>';
                 }).join('');
                 document.getElementById("ni-supplier").innerHTML = '<option value="">None</option>' + opts;
                 document.getElementById("ei-supplier").innerHTML = '<option value="">None</option>' + opts;
@@ -1054,11 +1054,11 @@
         }
 
         /**
-         * Dev Feedback Round 8: auto-picks the item's Supplier/Vendor when
+         * Dev Feedback Round 8: auto-picks the item's Supplier when
          * a Linked Product is chosen, IF that product has exactly one
-         * vendor already attached (InventoryProducts.getAll already
+         * supplier already attached (InventoryProducts.getAll already
          * includes `suppliers`, so this is a local lookup, no extra
-         * request). Zero or multiple vendors on the product is left
+         * request). Zero or multiple suppliers on the product is left
          * alone -- picking one arbitrarily out of several would guess
          * wrong as often as right, so that case still needs the admin's
          * own deliberate choice.
@@ -1736,7 +1736,7 @@
                     _vendorsCache = [];
                 }
             }
-            select.innerHTML = '<option value="">Select a vendor\u2026</option>' +
+            select.innerHTML = '<option value="">Select a supplier\u2026</option>' +
                 _vendorsCache.map(function (v) { return '<option value="' + v.id + '">' + escapeHtml(v.name) + '</option>'; }).join('');
 
             new bootstrap.Modal(document.getElementById("modal-push-alerts")).show();

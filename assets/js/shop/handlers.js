@@ -705,13 +705,66 @@ async function loadOrders(opts) {
                 '<td><span class="fw-semibold">' + esc(Shop.orderRef(o)) + '</span></td>' +
                 '<td class="small">' + esc(customer) + '</td>' +
                 '<td class="small">' + itemCount + ' item' + (itemCount !== 1 ? "s" : "") + '</td>' +
-                '<td class="fw-semibold">' + Shop.formatMoney(o.totalAmount) + '</td>' +
+                '<td class="fw-semibold">' + Shop.formatMoney(o.totalAmount) +
+                    (o.paymentMethod === "PAY_ON_DELIVERY" ? '<div class="small fw-normal ' + (o.balanceDue > 0 ? 'text-warning' : 'text-secondary') + '">Pay on Delivery' + (o.balanceDue > 0 ? ': ' + Shop.formatMoney(o.balanceDue) + ' due' : ', paid') + '</div>' : '') + '</td>' +
                 '<td>' + Shop.statusBadge(o.status) + '</td>' +
                 '<td class="text-secondary small">' + Shop.formatDateTime(o.createdAt) + '</td></tr>';
         }).join("");
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">' + esc(e.message) + '</td></tr>';
     }
+}
+
+/** Marketplace Phase 2: how the order is paid, and any Pay on Delivery balance. */
+function paymentHtml(o) {
+    var pod = o.paymentMethod === "PAY_ON_DELIVERY";
+    var BAL = { WALLET: "Wallet", TRANSFER: "Bank transfer", CASH: "Cash", POS: "POS" };
+    var rows =
+        '<div class="d-flex justify-content-between"><span>Method</span><span>' + (pod ? "Pay on Delivery" : "Wallet") + (o.channel === "web" ? ' <span class="badge bg-secondary-lt">Web</span>' : "") + '</span></div>' +
+        '<div class="d-flex justify-content-between"><span>Received</span><span>' + Shop.formatMoney(o.amountPaid) + '</span></div>' +
+        (o.refundedAmount > 0 ? '<div class="d-flex justify-content-between"><span>Refunded</span><span>' + Shop.formatMoney(o.refundedAmount) + '</span></div>' : "") +
+        (pod ? '<div class="d-flex justify-content-between fw-semibold"><span>Balance due</span><span class="' + (o.balanceDue > 0 ? "text-warning" : "") + '">' + Shop.formatMoney(o.balanceDue) + '</span></div>' : "") +
+        (o.balancePaidAt ? '<div class="text-secondary mt-1">Balance paid ' + Shop.formatDateTime(o.balancePaidAt) + ' by ' + esc(BAL[o.balancePaymentMethod] || o.balancePaymentMethod || "-") + (o.balanceReference ? " (" + esc(o.balanceReference) + ")" : "") + '</div>' : "");
+    var form = "";
+    if (pod && o.balanceDue > 0 && o.status !== "CANCELLED" && RBAC.can(Shop.PERMISSIONS.RECORD_PAYMENTS)) {
+        form = '<div class="mt-3 p-2 rounded bg-warning-lt"><div class="small mb-2">The customer\'s delivery code is released once the balance is paid. If they paid Hairlux outside the wallet, record it here.</div>' +
+            '<div class="row g-2"><div class="col-5"><select class="form-select form-select-sm" id="bal-method"><option value="TRANSFER">Bank transfer</option><option value="CASH">Cash</option><option value="POS">POS</option></select></div>' +
+            '<div class="col-7"><input class="form-control form-control-sm" id="bal-ref" maxlength="120" placeholder="Reference or receipt no."></div></div>' +
+            '<button class="btn btn-sm btn-warning mt-2 w-100" id="btn-record-balance">Record ' + Shop.formatMoney(o.balanceDue) + ' received</button></div>';
+    }
+    return '<div class="p-3 border-bottom small"><div class="subheader mb-2">Payment</div>' + rows + form + '</div>';
+}
+
+/** Vendor shipments in this order (admins see the vendor; customers never do). */
+function shipmentsHtml(o) {
+    var list = o.vendorShipments || [];
+    if (!list.length) return "";
+    return '<div class="p-3 border-bottom"><div class="subheader mb-2">Vendor shipments</div>' + list.map(function (s) {
+        return '<a class="d-flex justify-content-between align-items-center small py-1 text-reset" href="marketplace-orders.html?id=' + encodeURIComponent(s.id) + '">' +
+            '<span><span class="fw-semibold">' + esc(s.code) + '</span><span class="text-secondary"> &middot; ' + esc(s.seller ? s.seller.name : "-") + '</span></span>' +
+            '<span class="badge bg-secondary-lt">' + esc(String(s.status).replace(/_/g, " ").toLowerCase()) + '</span></a>';
+    }).join("") + '</div>';
+}
+
+function wireRecordBalance(o) {
+    var btn = document.getElementById("btn-record-balance");
+    if (!btn) return;
+    btn.addEventListener("click", async function () {
+        var method = document.getElementById("bal-method").value;
+        var ref = document.getElementById("bal-ref").value.trim();
+        if (method === "TRANSFER" && !ref) { flashPageAlert("danger", "Enter the transfer reference."); return; }
+        if (!confirm("Record " + Shop.formatMoney(o.balanceDue) + " received for order " + Shop.orderRef(o) + "? This releases the customer's delivery code.")) return;
+        btn.disabled = true;
+        try {
+            await Api.recordOrderBalance(o.id, method, ref);
+            flashPageAlert("success", "Balance recorded.");
+            loadOrders({ keepPage: true });
+            openOrderDetail(o.id);
+        } catch (e) {
+            flashPageAlert("danger", e.message || "Could not record the balance.");
+            btn.disabled = false;
+        }
+    });
 }
 
 async function openOrderDetail(id) {
@@ -736,9 +789,17 @@ async function openOrderDetail(id) {
             '<div class="mt-3 small"><div class="d-flex justify-content-between"><span>Subtotal</span><span>' + Shop.formatMoney(o.subtotal) + '</span></div>' +
             '<div class="d-flex justify-content-between"><span>Delivery</span><span>' + Shop.formatMoney(o.deliveryFee) + '</span></div>' +
             '<div class="d-flex justify-content-between fw-semibold mt-1"><span>Total</span><span>' + Shop.formatMoney(o.totalAmount) + '</span></div></div></div>' +
+            paymentHtml(o) + shipmentsHtml(o) +
             (o.notes ? '<div class="p-3"><div class="subheader mb-1">Notes</div><div class="small text-secondary">' + esc(o.notes) + '</div></div>' : "");
+        wireRecordBalance(o);
+        // Orders of vendor items only follow their vendor shipments; admins can only cancel them here.
+        var vendorOnly = (o.vendorShipments || []).length > 0 && (o.shipments || []).length === o.vendorShipments.length;
         if (RBAC.can(Shop.PERMISSIONS.UPDATE_STATUS)) {
-            var transitions = Shop.orderStatusTransitions(o.status);
+            var transitions = Shop.orderStatusTransitions(o.status).filter(function (s) {
+                if (vendorOnly) return s === "CANCELLED";
+                if (s === "DELIVERED" && o.balanceDue > 0) return false;
+                return true;
+            });
             transitions.forEach(function (s) {
                 var col = s === "CANCELLED" ? "danger" : "primary";
                 actions.innerHTML += '<button class="btn btn-' + col + ' btn-order-status" data-id="' + o.id + '" data-status="' + s + '">' + s.replace(/_/g, " ") + '</button>';

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Marketplace Vendors</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Marketplace</div>
+                            <h2 class="page-title">Vendors</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list"><a class="btn btn-outline-primary" href="marketplace-products.html">Product approvals</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="alert alert-info">
+                        <div>Vendors here registered on the <strong>vendor site</strong> to sell through Hairlux. They are not suppliers (companies Hairlux buys from).
+                        Customers never see a vendor's name: Hairlux is shown as the seller of every product.</div>
+                    </div>
+                    <div id="page-alert"></div>
+
+                    <div class="row row-deck row-cards mb-3">
+                        <div class="col-sm-6 col-lg-3"><div class="card"><div class="card-body">
+                            <div class="subheader">Vendors waiting for review</div>
+                            <div class="h1 mb-1" id="kpi-pending">-</div>
+                            <div class="text-secondary small" id="kpi-pending-sub">-</div>
+                        </div></div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="card"><div class="card-body">
+                            <div class="subheader">Products waiting for review</div>
+                            <div class="h1 mb-1" id="kpi-products">-</div>
+                            <div class="text-secondary small" id="kpi-products-sub"><a href="marketplace-products.html">Open product approvals</a></div>
+                        </div></div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="card"><div class="card-body">
+                            <div class="subheader">Approved vendors</div>
+                            <div class="h1 mb-1" id="kpi-approved">-</div>
+                            <div class="text-secondary small" id="kpi-approved-sub">-</div>
+                        </div></div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="card"><div class="card-body">
+                            <div class="subheader">Flagged vendors</div>
+                            <div class="h1 mb-1" id="kpi-flagged">-</div>
+                            <div class="text-secondary small">Name mismatches and other checks</div>
+                        </div></div></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="status-tabs">
+                                <li class="nav-item"><a class="nav-link active" href="#" data-status="PENDING_REVIEW">Waiting for review</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="CHANGES_REQUESTED">Changes requested</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="APPROVED">Approved</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="SUSPENDED">Suspended</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="REJECTED">Rejected</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="DRAFT">Still registering</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="">All</a></li>
+                            </ul>
+                        </div>
+                        <div class="card-body border-bottom py-3">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-6"><input type="search" class="form-control" id="f-search" placeholder="Search business, owner, email or phone"></div>
+                                <div class="col-md-3">
+                                    <label class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="f-flagged">
+                                        <span class="form-check-label">Flagged only</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-3 text-md-end text-secondary small" id="results-label"></div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead><tr><th>Business</th><th>Owner</th><th>Location</th><th>Status</th><th>NIN</th><th>Flags</th><th>Submitted</th><th class="text-end">Products</th><th></th></tr></thead>
+                                <tbody id="vendors-tbody"><tr><td colspan="9" class="text-center text-secondary py-5">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center">
+                            <div class="text-secondary small" id="page-label"></div>
+                            <div class="ms-auto btn-list">
+                                <button class="btn btn-sm" id="btn-prev">Previous</button>
+                                <button class="btn btn-sm" id="btn-next">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor details -->
+    <div class="modal modal-blur fade" id="modal-vendor" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="vendor-title">Vendor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="vendor-body"></div>
+                <div class="modal-footer" id="vendor-footer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decision (approve / changes / reject / suspend / reinstate) and document rejection -->
+    <div class="modal modal-blur fade" id="modal-decision" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="decision-title">Decision</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-secondary mb-3" id="decision-help"></div>
+                    <div class="mb-3" id="decision-override-wrap" hidden>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="decision-override">
+                            <span class="form-check-label">Approve even though the owner's NIN has not matched (give the reason below)</span>
+                        </label>
+                    </div>
+                    <label class="form-label" id="decision-reason-label">Reason</label>
+                    <textarea class="form-control" id="decision-reason" rows="4" maxlength="2000"></textarea>
+                    <div class="form-hint" id="decision-reason-hint">The vendor will see this in their email and on the vendor site.</div>
+                    <div class="text-danger small mt-2" id="decision-error" hidden></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-decision-confirm">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/marketplace.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/marketplace-vendors-page.js"></script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

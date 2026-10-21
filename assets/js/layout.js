@@ -62,6 +62,11 @@ var Layout = window.Layout || (() => {
             return '<span class="badge bg-warning text-dark ms-auto nav-pending-commissions-badge" hidden ' +
                 'aria-label="Commissions awaiting approval"></span>';
         }
+        if (item.badge === "marketplacePending") {
+            // Vendors + products waiting for review; filled by refreshMarketplaceBadge().
+            return '<span class="badge bg-warning text-dark ms-auto nav-marketplace-badge" hidden ' +
+                'aria-label="Vendors and products waiting for review, and overdue vendor orders"></span>';
+        }
         if (item.badge !== "confirmedOrders") return "";
         return (
             '<span class="badge nav-shop-order-badge bg-warning text-dark" ' +
@@ -126,6 +131,32 @@ var Layout = window.Layout || (() => {
             updateCommissionApprovalBadge(data && data.totals ? data.totals.count : 0);
         } catch (_) {
             updateCommissionApprovalBadge(0);
+        }
+    }
+
+    function updateMarketplaceBadge(count) {
+        const n = Number(count) || 0;
+        document.querySelectorAll(".nav-marketplace-badge").forEach(function (el) {
+            el.hidden = n <= 0;
+            el.textContent = n <= 0 ? "" : (n > 99 ? "99+" : String(n));
+        });
+    }
+
+    /** Vendors plus products waiting for review (marketplace). */
+    async function refreshMarketplaceBadge() {
+        if (typeof RBAC === "undefined" || !RBAC.can || !RBAC.can("marketplace:read") || !document.querySelector(".nav-marketplace-badge")) {
+            updateMarketplaceBadge(0);
+            return;
+        }
+        try {
+            const res = await Auth.fetch("/admin/marketplace/summary");
+            if (!res || !res.ok) { updateMarketplaceBadge(0); return; }
+            const raw = await res.json().catch(function () { return {}; });
+            const data = raw.data !== undefined ? raw.data : raw;
+            // Reviews waiting, plus vendor orders past their confirm deadline.
+            updateMarketplaceBadge((data.pendingVendors || 0) + (data.pendingProducts || 0) + (data.ordersOverdue || 0));
+        } catch (_) {
+            updateMarketplaceBadge(0);
         }
     }
 
@@ -344,6 +375,7 @@ var Layout = window.Layout || (() => {
         initHeader();
         refreshShopOrderBadge();
         refreshCommissionApprovalBadge();
+        refreshMarketplaceBadge();
     });
 
     return {
@@ -359,6 +391,7 @@ var Layout = window.Layout || (() => {
         updateShopConfirmedBadge,
         refreshCommissionApprovalBadge,
         updateCommissionApprovalBadge,
+        refreshMarketplaceBadge,
     };
 })();
 window.Layout = Layout;

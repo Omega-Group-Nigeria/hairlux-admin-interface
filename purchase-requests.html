@@ -128,7 +128,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <select class="form-select" id="f-vendor-filter">
-                                        <option value="">All vendors</option>
+                                        <option value="">All suppliers</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
@@ -166,7 +166,7 @@
                                     <tr>
                                         <th>Request #</th>
                                         <th>Branch</th>
-                                        <th>Vendor</th>
+                                        <th>Supplier</th>
                                         <th>Reason</th>
                                         <th>Grand Total</th>
                                         <th>Status</th>
@@ -205,7 +205,7 @@
                             <select class="form-select" id="f-branch"></select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Vendor</label>
+                            <label class="form-label">Supplier</label>
                             <select class="form-select" id="f-vendor"></select>
                         </div>
                         <div class="col-md-4">
@@ -440,7 +440,7 @@
             CsvExport.download('purchase-requests.csv', [
                 { label: 'Request Number', get: function (r) { return formatRequestNumber(r.requestNumber); } },
                 { label: 'Branch', get: function (r) { return r.branch ? r.branch.name : ''; } },
-                { label: 'Vendor', get: function (r) { return r.vendor ? r.vendor.name : ''; } },
+                { label: 'Supplier', get: function (r) { return r.vendor ? r.vendor.name : ''; } },
                 { label: 'Reason', get: function (r) { return r.reason; } },
                 { label: 'Grand Total', get: function (r) { return r.grandTotal; } },
                 { label: 'Status', get: function (r) { return r.status; } },
@@ -529,7 +529,7 @@
             errEl.classList.add('d-none');
 
             if (!document.getElementById('f-branch').value || !document.getElementById('f-vendor').value) {
-                errEl.textContent = 'Branch and vendor are required.'; errEl.classList.remove('d-none'); return;
+                errEl.textContent = 'Branch and supplier are required.'; errEl.classList.remove('d-none'); return;
             }
             if (!_formLines.length || _formLines.some(function (l) { return !l.productId || !l.quantity; })) {
                 errEl.textContent = 'Every line needs a product and a quantity.'; errEl.classList.remove('d-none'); return;
@@ -622,7 +622,7 @@
                 document.getElementById('view-body').innerHTML =
                     '<div class="row g-2 mb-3">' +
                     '<div class="col-6"><div class="text-secondary small">Branch</div><div>' + esc(r.branch.name) + '</div></div>' +
-                    '<div class="col-6"><div class="text-secondary small">Vendor</div><div>' + esc(r.vendor.name) + '</div></div>' +
+                    '<div class="col-6"><div class="text-secondary small">Supplier</div><div>' + esc(r.vendor.name) + '</div></div>' +
                     '<div class="col-12"><div class="text-secondary small">Reason</div><div>' + esc(r.reason) + '</div></div>' +
                     '<div class="col-6"><div class="text-secondary small">Status</div><div><span class="badge ' + (STATUS_BADGE[r.status] || 'bg-secondary-lt') + '">' + esc(r.status.replace('_', ' ')) + '</span></div></div>' +
                     '<div class="col-6"><div class="text-secondary small">Grand Total</div><div>' + formatMoney(r.grandTotal) + '</div></div>' +
