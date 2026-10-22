@@ -65,7 +65,7 @@ var Layout = window.Layout || (() => {
         if (item.badge === "marketplacePending") {
             // Vendors + products waiting for review; filled by refreshMarketplaceBadge().
             return '<span class="badge bg-warning text-dark ms-auto nav-marketplace-badge" hidden ' +
-                'aria-label="Vendors and products waiting for review, and overdue vendor orders"></span>';
+                'aria-label="Vendors and products waiting for review, overdue vendor orders and payouts to approve"></span>';
         }
         if (item.badge !== "confirmedOrders") return "";
         return (
@@ -154,7 +154,7 @@ var Layout = window.Layout || (() => {
             const raw = await res.json().catch(function () { return {}; });
             const data = raw.data !== undefined ? raw.data : raw;
             // Reviews waiting, plus vendor orders past their confirm deadline.
-            updateMarketplaceBadge((data.pendingVendors || 0) + (data.pendingProducts || 0) + (data.ordersOverdue || 0));
+            updateMarketplaceBadge((data.pendingVendors || 0) + (data.pendingProducts || 0) + (data.ordersOverdue || 0) + (data.payoutsAwaitingApproval || 0));
         } catch (_) {
             updateMarketplaceBadge(0);
         }

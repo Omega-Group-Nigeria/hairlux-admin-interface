@@ -90,7 +90,8 @@
         var a = o.recipient.address || {};
         var steps = [['Placed', o.createdAt], ['Confirmed', o.confirmedAt], ['Packed', o.packedAt], ['Handed to delivery', o.handedOverAt], ['Delivered', o.deliveredAt]];
         var lines = o.items.map(function (i) {
-            return '<tr><td>' + esc(i.name) + (i.sellerSku ? '<div class="small text-secondary">SKU ' + esc(i.sellerSku) + '</div>' : '') + '</td><td class="text-end">' + i.quantity + '</td>' +
+            return '<tr><td>' + esc(i.name) + (i.sellerSku ? '<div class="small text-secondary">SKU ' + esc(i.sellerSku) + '</div>' : '') +
+                (i.returnedQuantity ? '<div class="small text-danger">' + i.returnedQuantity + ' returned</div>' : '') + '</td><td class="text-end">' + i.quantity + '</td>' +
                 '<td class="text-end">' + ngn(i.lineTotal) + '</td><td class="text-end">' + i.commissionPercent + '%</td><td class="text-end">' + ngn(i.commissionAmount) + '</td><td class="text-end">' + ngn(i.vendorAmount) + '</td></tr>';
         }).join('');
         var so = o.shopOrder || {};
@@ -107,9 +108,12 @@
             '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Item</th><th class="text-end">Qty</th><th class="text-end">Sale</th><th class="text-end">Rate</th><th class="text-end">Commission</th><th class="text-end">Vendor gets</th></tr></thead><tbody>' + lines + '</tbody>' +
             '<tfoot><tr class="fw-semibold"><td colspan="2">Total</td><td class="text-end">' + ngn(o.subtotal) + '</td><td></td><td class="text-end">' + ngn(o.commissionAmount) + '</td><td class="text-end">' + ngn(o.vendorAmount) + '</td></tr></tfoot></table></div>' +
             '<div class="row g-3"><div class="col-md-6"><div class="subheader mb-1">Customer money for this shipment</div><div class="small">' +
-            'Paid at checkout: ' + ngn(o.paidAmount) + ' (includes delivery ' + ngn(o.deliveryFee) + ')<br>Share of balance: ' + ngn(o.balanceAmount) + (o.refundedAmount > 0 ? '<br>Refunded: ' + ngn(o.refundedAmount) : '') + '</div></div>' +
+            'Paid at checkout: ' + ngn(o.paidAmount) + ' (includes delivery ' + ngn(o.deliveryFee) + ')<br>Share of balance: ' + ngn(o.balanceAmount) + (o.refundedAmount > 0 ? '<br>Refunded: ' + ngn(o.refundedAmount) : '') +
+            (o.returnedAmount > 0 ? '<br>Refunded for returns: ' + ngn(o.returnedAmount) : '') + '</div></div>' +
             '<div class="col-md-6"><div class="subheader mb-1">Deliver to</div><div class="small">' + esc(o.recipient.name) + (o.recipient.phone ? ', ' + esc(o.recipient.phone) : '') + '<br>' + esc(a.fullAddress || [a.streetAddress, a.city, a.state].filter(Boolean).join(', ')) +
-            (o.trackingNote ? '<br><span class="text-secondary">Courier: ' + esc(o.trackingNote) + '</span>' : '') + '</div></div></div>';
+            (o.trackingNote ? '<br><span class="text-secondary">Courier: ' + esc(o.trackingNote) + '</span>' : '') + '</div></div></div>' +
+            (o.status === 'DELIVERED' ? '<div class="mt-3" id="returns-box"></div>' : '');
+        if (o.status === 'DELIVERED') loadReturns(o.id);
 
         var open = o.status !== 'DELIVERED' && o.status !== 'CANCELLED';
         var foot = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Close</button>';
@@ -117,11 +121,72 @@
             foot += '<button class="btn btn-outline-danger" id="btn-open-cancel">Cancel and refund</button>';
             if (o.status !== 'PENDING_CONFIRMATION') foot += '<button class="btn btn-primary" id="btn-open-deliver"' + (so.balanceDue > 0 ? ' disabled title="The customer has not paid the balance yet"' : '') + '>Confirm delivery</button>';
         }
+        var returnable = o.status === 'DELIVERED' && o.items.some(function (i) { return i.quantity > (i.returnedQuantity || 0); });
+        if (returnable && RBAC.can(P.manage)) foot += '<button class="btn btn-outline-primary" id="btn-open-return">Record a return</button>';
         $('order-footer').innerHTML = foot;
+        var br = $('btn-open-return');
+        if (br) br.addEventListener('click', openReturn);
         var bc = $('btn-open-cancel');
         if (bc) bc.addEventListener('click', function () { $('cancel-reason').value = ''; bootstrap.Modal.getOrCreateInstance($('modal-cancel')).show(); });
         var bd = $('btn-open-deliver');
         if (bd) bd.addEventListener('click', function () { $('deliver-code').value = ''; bootstrap.Modal.getOrCreateInstance($('modal-deliver')).show(); });
+    }
+
+    async function loadReturns(id) {
+        try {
+            var rows = await Marketplace.listReturns(id);
+            if (!rows.length || !$('returns-box')) return;
+            $('returns-box').innerHTML = '<div class="subheader mb-1">Returns</div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Date</th><th>Items</th><th class="text-end">Refunded</th><th class="text-end">Off vendor</th></tr></thead><tbody>' +
+                rows.map(function (r) {
+                    return '<tr><td class="small">' + fmtDateTime(r.createdAt) + '</td><td class="small">' + esc((r.items || []).map(function (i) { return i.quantity + ' x ' + i.name; }).join(', ')) +
+                        '<div class="text-secondary">' + esc(r.reason) + (r.restocked ? ' (restocked)' : '') + '</div></td><td class="text-end">' + ngn(r.refundAmount) + '</td><td class="text-end">' + ngn(r.vendorAmount) + '</td></tr>';
+                }).join('') + '</tbody></table></div>';
+        } catch (e) { /* the order still shows */ }
+    }
+
+    function returnTotals() {
+        var refund = 0;
+        document.querySelectorAll('#return-lines [data-ret]').forEach(function (inp) {
+            var i = _order.items.find(function (x) { return x.productId === inp.dataset.ret; });
+            var q = Math.max(0, Math.min(Number(inp.max), Math.floor(Number(inp.value) || 0)));
+            refund += i.price * q;
+        });
+        $('return-total').textContent = refund > 0 ? 'Customer refund: about ' + ngn(Math.round(refund * 100) / 100) : '';
+    }
+
+    function openReturn() {
+        $('return-lines').innerHTML = '<table class="table table-sm"><thead><tr><th>Item</th><th class="text-end">Can return</th><th style="width:110px">Returned</th></tr></thead><tbody>' +
+            _order.items.map(function (i) {
+                var left = i.quantity - (i.returnedQuantity || 0);
+                return '<tr><td>' + esc(i.name) + '<div class="small text-secondary">' + ngn(i.price) + ' each</div></td><td class="text-end">' + left + '</td>' +
+                    '<td><input type="number" class="form-control form-control-sm" min="0" max="' + left + '" value="0" data-ret="' + esc(i.productId) + '"' + (left ? '' : ' disabled') + '></td></tr>';
+            }).join('') + '</tbody></table>';
+        $('return-reason').value = '';
+        $('return-restock').checked = false;
+        $('return-total').textContent = '';
+        bootstrap.Modal.getOrCreateInstance($('modal-return')).show();
+    }
+
+    async function doReturn() {
+        var items = [];
+        document.querySelectorAll('#return-lines [data-ret]').forEach(function (inp) {
+            var q = Math.floor(Number(inp.value) || 0);
+            if (q > 0) items.push({ productId: inp.dataset.ret, quantity: q });
+        });
+        if (!items.length) { alert('Enter how many of each item came back.'); return; }
+        var reason = $('return-reason').value.trim();
+        if (reason.length < 3) { $('return-reason').classList.add('is-invalid'); return; }
+        $('return-reason').classList.remove('is-invalid');
+        var btn = $('btn-return-confirm');
+        btn.disabled = true;
+        try {
+            var o = await Marketplace.recordReturn(_order.id, { items: items, reason: reason, restock: $('return-restock').checked });
+            bootstrap.Modal.getInstance($('modal-return')).hide();
+            render(o);
+            alertBox('Return recorded on ' + o.code + '. The customer was refunded ' + ngn(o.lastReturn.refund) + ' and ' + ngn(o.lastReturn.vendorAmount) + ' came off the vendor balance.');
+            load();
+        } catch (e) { alert(e.message); }
+        finally { btn.disabled = false; }
     }
 
     async function openOrder(id) {
@@ -193,6 +258,8 @@
         });
         $('btn-cancel-confirm').addEventListener('click', doCancel);
         $('btn-deliver-confirm').addEventListener('click', doDeliver);
+        $('btn-return-confirm').addEventListener('click', doReturn);
+        $('return-lines').addEventListener('input', returnTotals);
         $('deliver-code').addEventListener('input', function () { this.value = this.value.replace(/\D/g, '').slice(0, 6); });
         load();
         if (params.get('id')) openOrder(params.get('id'));

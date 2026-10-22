@@ -1,7 +1,8 @@
 /**
  * Marketplace API helper: /admin/marketplace
  * Third-party vendors from the vendor site (separate from Suppliers): vendor
- * review and KYC documents, product approval, vendor orders, marketplace settings.
+ * review and KYC documents, product approval, vendor orders, marketplace settings,
+ * and (Phase 3) balances, payouts, returns and category commission.
  * Requires: auth.js (Auth.fetch)
  */
 const Marketplace = (function () {
@@ -55,5 +56,28 @@ const Marketplace = (function () {
         getOrder: (id) => apiFetch(`${base}/orders/${id}`),
         cancelOrder: (id, reason) => apiFetch(`${base}/orders/${id}/cancel`, jsonBody('POST', { reason })),
         confirmDelivery: (id, code) => apiFetch(`${base}/orders/${id}/confirm-delivery`, jsonBody('POST', { code })),
+        listReturns: (id) => apiFetch(`${base}/orders/${id}/returns`),
+        recordReturn: (id, payload) => apiFetch(`${base}/orders/${id}/returns`, jsonBody('POST', payload)),
+
+        // Balances and payouts (Phase 3)
+        payoutSummary: () => apiFetch(base + '/payouts/summary'),
+        balances: (params) => apiFetch(base + '/balances' + qs(params)),
+        vendorLedger: (id, params) => apiFetch(`${base}/vendors/${id}/ledger` + qs(params)),
+        adjustBalance: (id, amount, note) => apiFetch(`${base}/vendors/${id}/adjustments`, jsonBody('POST', { amount, note })),
+        listRuns: (params) => apiFetch(base + '/payout-runs' + qs(params)),
+        getRun: (id) => apiFetch(`${base}/payout-runs/${id}`),
+        prepareRun: (note) => apiFetch(base + '/payout-runs', jsonBody('POST', { note })),
+        approveRun: (id) => apiFetch(`${base}/payout-runs/${id}/approve`, { method: 'POST' }),
+        cancelRun: (id) => apiFetch(`${base}/payout-runs/${id}/cancel`, { method: 'POST' }),
+        listPayouts: (params) => apiFetch(base + '/payouts' + qs(params)),
+        approvePayout: (id) => apiFetch(`${base}/payouts/${id}/approve`, { method: 'POST' }),
+        rejectPayout: (id, reason) => apiFetch(`${base}/payouts/${id}/reject`, jsonBody('POST', { reason })),
+        markPaid: (id, reference) => apiFetch(`${base}/payouts/${id}/mark-paid`, jsonBody('POST', { reference })),
+        markFailed: (id, reason) => apiFetch(`${base}/payouts/${id}/mark-failed`, jsonBody('POST', { reason })),
+        checkPayout: (id) => apiFetch(`${base}/payouts/${id}/check`, { method: 'POST' }),
+
+        // Category commission (Phase 3)
+        categories: () => apiFetch(base + '/categories'),
+        setCategoryCommission: (id, marketplaceCommissionPercent) => apiFetch(`${base}/categories/${id}/commission`, jsonBody('PATCH', { marketplaceCommissionPercent })),
     };
 })();

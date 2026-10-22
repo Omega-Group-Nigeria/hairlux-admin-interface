@@ -117,7 +117,38 @@
                                 <div class="card-body">
                                     <label class="form-label">Default commission</label>
                                     <div class="input-group" style="max-width:220px"><input type="number" class="form-control" id="s-commission" min="0" max="100" step="0.01"><span class="input-group-text">%</span></div>
-                                    <div class="form-hint">Taken from each vendor sale unless the vendor has its own rate (set on the vendor).</div>
+                                    <div class="form-hint">Taken from each vendor sale unless the category or the vendor has its own rate. Order: vendor rate, then category rate, then this default.</div>
+                                </div>
+                            </div>
+                            <div class="card mb-3">
+                                <div class="card-header"><h3 class="card-title">Vendor payouts</h3></div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Who starts a payout</label>
+                                        <select class="form-select" id="s-payout-mode">
+                                            <option value="PAYOUT_RUN">Hairlux payout runs (one admin prepares, another approves)</option>
+                                            <option value="VENDOR_REQUEST">Vendors request a payout, an admin approves it</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">How the money is sent</label>
+                                        <select class="form-select" id="s-payout-method">
+                                            <option value="PAYSTACK_TRANSFER">Paystack transfer, sent on approval</option>
+                                            <option value="MANUAL">Manual bank transfer, then mark it paid</option>
+                                        </select>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <label class="form-label">Hold after delivery (days)</label>
+                                            <input type="number" class="form-control" id="s-hold-days" min="0" max="60">
+                                            <div class="form-hint">The return window. Earnings can be paid after this. Applies to new deliveries.</div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="form-label">Minimum payout</label>
+                                            <div class="input-group"><span class="input-group-text">₦</span><input type="number" class="form-control" id="s-min-payout" min="0" step="0.01"></div>
+                                            <div class="form-hint">Smaller balances wait for the next payout.</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="card">
@@ -156,6 +187,17 @@
                         </div>
                     </div>
                     <div class="mt-3 text-end text-secondary small" id="s-updated"></div>
+
+                    <div class="card mt-3">
+                        <div class="card-header"><h3 class="card-title">Commission by category</h3></div>
+                        <div class="card-body border-bottom py-2"><div class="small text-secondary">Leave a rate empty to use the default. A vendor's own rate still wins. Changes apply to new orders only.</div></div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead><tr><th>Category</th><th class="text-end">Vendor products</th><th>Rate</th><th>Applies</th><th></th></tr></thead>
+                                <tbody id="cat-tbody"><tr><td colspan="5" class="text-center text-secondary py-4">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
