@@ -1381,7 +1381,7 @@
                             dur = h + 'h' + (m ? m + 'm' : '');
                         }
                         return '<li>' +
-                            '<span class="svc-name">' + (s.name || s.serviceName || "Service") + '</span>' +
+                            '<span class="svc-name">' + (s.addOnOf ? '+ ' : '') + (s.name || s.serviceName || "Service") + (s.addOnOf ? ' <span class="badge bg-azure-lt">add-on</span>' : '') + '</span>' +
                             '<span class="svc-meta">' +
                             (s.price != null ? Bookings.formatMoney(s.price) : "") +
                             (dur ? ' &middot; ' + dur : "") +
@@ -1578,8 +1578,9 @@
                     var name = s.name || s.serviceName || "Service";
                     var meta = Bookings.formatMoney(s.price ?? 0) +
                         (s.duration ? " \u00b7 " + s.duration + " min" : "");
-                    return '<div class="detail-service-row">' +
-                        '<span class="fw-semibold">' + escHtml(name) + "</span>" +
+                    return '<div class="detail-service-row' + (s.addOnOf ? ' ps-3' : '') + '">' +
+                        '<span class="' + (s.addOnOf ? '' : 'fw-semibold') + '">' + (s.addOnOf ? '+ ' : '') + escHtml(name) +
+                        (s.addOnOf ? ' <span class="badge bg-azure-lt">add-on</span>' : '') + "</span>" +
                         '<span class="text-secondary text-nowrap small">' + escHtml(meta) + "</span>" +
                         "</div>";
                 }).join("")
@@ -1652,6 +1653,7 @@
             var feedbackInner = Bookings.renderCustomerFeedbackHtml(b, { plain: true, esc: escHtml });
             var timelineInner = Bookings.renderHomeServiceTimelineHtml(b, { plain: true, esc: escHtml });
             var cancellationInner = Bookings.renderCancellationDetailHtml(b, { plain: true, esc: escHtml });
+            var mobilePricingInner = Bookings.renderMobilePricingHtml(b, { esc: escHtml });
 
             var stack =
                 '<div class="detail-stack" data-booking-id="' + escHtml(id) + '">' +
@@ -1667,6 +1669,7 @@
                 "</div>" +
                 (assigneeBody ? detailCard("Location", locationBody) : "") +
                 detailCard("Services", svcRows, { count: services.length || null }) +
+                (mobilePricingInner ? detailCard("Mobile price", mobilePricingInner) : "") +
                 (timelineInner ? detailCard("Service timeline", timelineInner) : "") +
                 (guestBody ? detailCard("Guest", guestBody) : "") +
                 (notesBody ? detailCard("Notes", notesBody) : "") +

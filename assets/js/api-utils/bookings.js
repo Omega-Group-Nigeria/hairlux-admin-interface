@@ -787,6 +787,46 @@ const Bookings = (() => {
     return '<div class="col-12">' + inner + "</div>";
   }
 
+  /**
+   * Mobile pricing (2026-10-23): the breakdown the customer accepted, plus
+   * the split (admin detail only). Empty string for bookings without it.
+   */
+  function renderMobilePricingHtml(booking, opts = {}) {
+    const p = booking && booking.pricing;
+    if (!p) return "";
+    const esc = opts.esc || ((s) => String(s == null ? "" : s));
+    const m = (n) => formatMoney(n);
+    const row = (label, value, cls = "") =>
+      '<div class="d-flex justify-content-between py-1 ' + cls + '"><span class="text-secondary">' + label + "</span><span>" + value + "</span></div>";
+    const snap = p.snapshot || {};
+    const shares = snap.shares || {};
+    const beauticianTravel = p.travelBeauticianAmount != null ? Number(p.travelBeauticianAmount) : null;
+    let html =
+      row("Services", m(p.serviceSubtotal)) +
+      (p.discountAmount > 0 ? row("Discount", "-" + m(p.discountAmount)) : "") +
+      row(
+        "Travel fee" + (p.travelDistanceKm != null ? ' <span class="small">(' + esc(p.travelDistanceKm) + " km x 2 x " + m(p.travelRatePerKm) + ")</span>" : ""),
+        m(p.travelFee),
+      ) +
+      row("Service fee", m(p.serviceFee)) +
+      row("<strong>Total</strong>", "<strong>" + m(p.total) + "</strong>", "border-top mt-1") +
+      row(
+        p.paymentPlan === "DEPOSIT" ? "Deposit paid at booking" : "Paid at booking",
+        m(p.paymentPlan === "DEPOSIT" ? p.depositAmount : p.amountPaid),
+      ) +
+      (p.balanceDue > 0
+        ? row("Balance due before start", '<strong class="text-danger">' + m(p.balanceDue) + "</strong>")
+        : row("Balance", '<span class="text-success">Paid in full</span>'));
+    if (beauticianTravel != null) {
+      html +=
+        '<div class="text-secondary small mt-2">Beautician gets ' + m(beauticianTravel) + " of the travel fee" +
+        (shares.serviceFeeHairlux != null ? "; Hairlux keeps the service fee and " + m(Number(p.travelFee) - beauticianTravel) + " of travel" : "") +
+        (snap.travel && snap.travel.method ? ". Distance: " + (snap.travel.method === "GOOGLE_ROUTES" ? "Google road distance" : "estimated") : "") +
+        ".</div>";
+    }
+    return html;
+  }
+
   function renderAssignmentAlertHtml(booking, opts = {}) {
     const esc = opts.esc || ((value) => String(value || ""));
     const message = getAssignmentStatusMessage(booking);
@@ -924,6 +964,7 @@ const Bookings = (() => {
     dispatchStatusBadge,
     formatIsoDateTime,
     renderAssignmentAlertHtml,
+    renderMobilePricingHtml,
     renderHomeServiceTimelineHtml,
     renderCustomerFeedbackHtml,
     formatCustomerRating,

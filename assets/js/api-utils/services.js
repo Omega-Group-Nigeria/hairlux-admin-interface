@@ -161,6 +161,21 @@ const Services = (() => {
     }
 
     /**
+     * Mobile booking rules (2026-10-23): add-on only, optional add-ons,
+     * services it cannot be booked with.
+     * GET/PUT /admin/services/:id/compatibility
+     */
+    async function getCompatibility(id) {
+        return apiFetch(`/admin/services/${id}/compatibility`);
+    }
+    async function setCompatibility(id, body) {
+        return apiFetch(`/admin/services/${id}/compatibility`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+        });
+    }
+
+    /**
      * PUT /admin/services/:id/status  { status: "ACTIVE" | "INACTIVE" }
      */
     async function updateStatus(id, status) {
@@ -255,6 +270,8 @@ const Services = (() => {
         remove,
         getRecipe,
         setRecipe,
+        getCompatibility,
+        setCompatibility,
         // Helpers
         statusBadge,
         formatMoney,
