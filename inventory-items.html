@@ -1166,9 +1166,26 @@
             loadItems();
         }
 
-        async function loadItems() {
+        /**
+         * Refreshes the items table after a change to one item (edit, adjust,
+         * archive, restore) without jumping to the top: the rows stay on
+         * screen while it loads, then the page scrolls so that item is back
+         * where it was, briefly highlighted.
+         */
+        function reloadItemsInPlace(itemId) {
+            var row = itemId ? document.querySelector('#items-tbody tr[data-item-id="' + itemId + '"]') : null;
+            return loadItems({ quiet: true, focusId: itemId, anchorTop: row ? row.getBoundingClientRect().top : null });
+        }
+
+        async function loadItems(opts) {
+            opts = opts || {};
             var tbody = document.getElementById("items-tbody");
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            var keepY = window.scrollY;
+            if (opts.quiet && tbody.querySelector('tr[data-item-id]')) {
+                tbody.style.opacity = '0.5';
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            }
             try {
                 var result = await Inventory.getAll({
                     search: document.getElementById("filter-search").value.trim() || undefined,
@@ -1204,7 +1221,7 @@
                             '<button class="btn btn-sm btn-outline-secondary me-1 btn-adjust" data-id="' + i.id + '" data-name="' + escapeHtml(i.name) + '">Adjust</button>' +
                             archiveBtn + historyBtn;
                     }
-                    return '<tr>' +
+                    return '<tr data-item-id="' + i.id + '">' +
                         '<td class="fw-semibold">' + escapeHtml(i.name) + '</td>' +
                         '<td>' + escapeHtml(i.branch ? i.branch.name : '-') + '</td>' +
                         '<td>' + (Inventory.CATEGORY_LABELS[i.category] || i.category) + '</td>' +
@@ -1229,12 +1246,29 @@
                 tbody.querySelectorAll('.btn-restore-item').forEach(function (btn) {
                     btn.addEventListener('click', function () { restoreItem(btn); });
                 });
+                if (opts.quiet) keepItemInView(opts, keepY);
             } catch (err) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">' + escapeHtml(err.message || "Failed to load.") + '</td></tr>';
                 document.getElementById("stat-total").textContent = "-";
                 document.getElementById("stat-low").textContent = "-";
                 document.getElementById("stat-out").textContent = "-";
+            } finally {
+                tbody.style.opacity = '';
             }
+        }
+
+        /** After a quiet reload: put the changed item back where it was on screen and flash it. */
+        function keepItemInView(opts, keepY) {
+            window.scrollTo(0, keepY);
+            var row = opts.focusId ? document.querySelector('#items-tbody tr[data-item-id="' + opts.focusId + '"]') : null;
+            if (!row) return; // e.g. archived, or no longer matches the filters
+            if (opts.anchorTop !== null && opts.anchorTop !== undefined) {
+                window.scrollBy(0, row.getBoundingClientRect().top - opts.anchorTop);
+            } else {
+                row.scrollIntoView({ block: 'center' });
+            }
+            row.classList.add('table-active');
+            setTimeout(function () { row.classList.remove('table-active'); }, 1800);
         }
 
         var _itemsCache = [];
@@ -1270,8 +1304,9 @@
             try {
                 await Inventory.archive(_archiveItemId, document.getElementById("archive-item-reason").value.trim());
                 bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-archive-item")).hide();
+                reloadItemsInPlace(_archiveItemId);
                 _archiveItemId = null;
-                loadItems(); loadSummaryStats(); refreshBadgeCounts();
+                loadSummaryStats(); refreshBadgeCounts();
             } catch (e) {
                 err.textContent = e.message || 'Could not archive this item.';
                 err.classList.remove('d-none');
@@ -1284,7 +1319,7 @@
             btn.disabled = true;
             try {
                 await Inventory.restore(btn.dataset.id);
-                loadItems(); loadSummaryStats(); refreshBadgeCounts();
+                reloadItemsInPlace(btn.dataset.id); loadSummaryStats(); refreshBadgeCounts();
             } catch (e) {
                 btn.disabled = false;
                 alert(e.message || 'Could not restore this item.');
@@ -1393,7 +1428,7 @@
                     productId: document.getElementById('ei-product').value || null,
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modal-edit-item')).hide();
-                loadItems();
+                reloadItemsInPlace(id);
                 loadSummaryStats();
             } catch (err) {
                 errEl.textContent = err.message || 'Failed to update item.';
@@ -1542,7 +1577,7 @@
             try {
                 await Inventory.adjust(_pendingAdjustItemId, { stockType: stockType, quantityDelta: delta, reasonCategory: reasonCategory, reason: reason || undefined });
                 bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
-                loadItems();
+                reloadItemsInPlace(_pendingAdjustItemId);
                 loadSummaryStats();
                 refreshBadgeCounts();
             } catch (err) {
@@ -1576,7 +1611,7 @@
             try {
                 await Inventory.transferStockType(_pendingAdjustItemId, { fromStockType: fromStockType, toStockType: toStockType, quantity: quantity, reason: reason || undefined });
                 bootstrap.Modal.getInstance(document.getElementById("modal-adjust")).hide();
-                loadItems();
+                reloadItemsInPlace(_pendingAdjustItemId);
                 loadSummaryStats();
                 refreshBadgeCounts();
             } catch (err) {

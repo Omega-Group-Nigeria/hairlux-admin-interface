@@ -704,6 +704,7 @@
     <script src="assets/js/api-utils/salon-bookings.js"></script>
     <script src="assets/js/balance-transfer.js"></script>
     <script src="assets/js/closing-time-guard.js"></script>
+    <script src="assets/js/add-on-picker.js"></script>
     <script src="assets/js/tabler.min.js"></script>
     <script>
         Auth.requireAuth();
@@ -720,6 +721,7 @@
         var _limit = 50;
         var _totalPages = 1;
         var _editingBookingId = null;
+        var _ebBranchId = null;
         var _addServiceBookingId = null;
 
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -1040,8 +1042,10 @@
 
             try {
                 var b = await SalonBookings.getOne(id);
-                var servicesHtml = (b.services || []).map(function (s) {
-                    return '<tr><td>' + esc(s.service ? s.service.name : '') + '</td><td>' + s.quantity + '</td><td>' + SalonBookings.formatMoney(s.price) + '</td></tr>';
+                var servicesHtml = SalonBookings.orderLines(b.services).map(function (s) {
+                    var name = esc(s.service ? s.service.name : '');
+                    if (s.isAddOn) name = '<span class="ps-3 text-secondary">+ </span>' + name + ' <span class="badge bg-azure-lt">add-on</span>';
+                    return '<tr><td>' + name + '</td><td>' + s.quantity + '</td><td>' + SalonBookings.formatMoney(s.price) + '</td></tr>';
                 }).join('');
                 var itemsHtml = (b.inventoryItems || []).map(function (i) {
                     return '<tr><td>' + esc(i.item ? i.item.name : '') + '</td><td>' + i.quantity + '</td><td>' + (i.unitPrice ? SalonBookings.formatMoney(i.unitPrice) : '<span class="text-secondary">not sold</span>') + '</td></tr>';
@@ -1366,12 +1370,17 @@
             // Refresh any already-added line dropdowns with branch-effective pricing
             document.querySelectorAll('#nb-item-lines .line-item-select').forEach(populateItemSelect);
             document.querySelectorAll('#nb-service-lines .line-service-select').forEach(populateServiceSelect);
+            // Add-on prices and availability are per branch.
+            document.querySelectorAll('#nb-service-lines .line-row').forEach(function (row) { AddOnPicker.refresh(row); });
             updateEstimatedTotal();
         }
 
         function populateServiceSelect(select) {
             var current = select.value;
-            select.innerHTML = '<option value="">Select service…</option>' + _services.map(function (s) {
+            // Add-on-only services are chosen through a service's Add-ons, not as a main line.
+            select.innerHTML = '<option value="">Select service…</option>' + _services.filter(function (s) {
+                return !s.isAddOn || s.id === current;
+            }).map(function (s) {
                 var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
                 return '<option value="' + s.id + '" data-price="' + price + '">' + esc(s.name) + ': ' + SalonBookings.formatMoney(price) + '</option>';
             }).join('');
@@ -1388,11 +1397,18 @@
                 '<div class="line-row-total">-</div>' +
                 '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
             container.appendChild(row);
-            populateServiceSelect(row.querySelector('.line-service-select'));
+            var sel = row.querySelector('.line-service-select');
+            populateServiceSelect(sel);
+            AddOnPicker.attach(row, {
+                mode: 'WALK_IN',
+                getServiceId: function () { return sel.value; },
+                getBranchId: function () { return document.getElementById('nb-branch').value; },
+                onChange: updateEstimatedTotal,
+            });
 
-            row.querySelector('.line-service-select').addEventListener('change', updateEstimatedTotal);
+            sel.addEventListener('change', function () { AddOnPicker.refresh(row); updateEstimatedTotal(); });
             row.querySelector('.line-qty').addEventListener('input', updateEstimatedTotal);
-            row.querySelector('.btn-remove-line').addEventListener('click', function () { row.remove(); updateEstimatedTotal(); });
+            row.querySelector('.btn-remove-line').addEventListener('click', function () { AddOnPicker.remove(row); row.remove(); updateEstimatedTotal(); });
             updateEstimatedTotal();
         }
 
@@ -1434,7 +1450,7 @@
                 var qty = Number(row.querySelector('.line-qty').value) || 0;
                 var opt = sel.options[sel.selectedIndex];
                 var price = opt ? Number(opt.dataset.price || 0) : 0;
-                var lineTotal = price * qty;
+                var lineTotal = price * qty + AddOnPicker.total(row);
                 row.querySelector('.line-row-total').textContent = opt && opt.value ? SalonBookings.formatMoney(lineTotal) : '-';
                 total += lineTotal;
             });
@@ -1472,7 +1488,7 @@
                 var sel = row.querySelector('.line-service-select');
                 var qty = Number(row.querySelector('.line-qty').value) || 0;
                 var opt = sel.options[sel.selectedIndex];
-                total += (opt ? Number(opt.dataset.price || 0) : 0) * qty;
+                total += (opt ? Number(opt.dataset.price || 0) : 0) * qty + AddOnPicker.total(row);
             });
             document.querySelectorAll('#nb-item-lines .line-row').forEach(function (row) {
                 var sel = row.querySelector('.line-item-select');
@@ -1544,12 +1560,19 @@
                 '<button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">&times;</button>';
             container.appendChild(row);
             var sel = row.querySelector('.line-service-select');
+            if (serviceId) sel.innerHTML = '<option value="' + serviceId + '"></option>';
             populateServiceSelect(sel);
             if (serviceId) sel.value = serviceId;
+            AddOnPicker.attach(row, {
+                mode: 'WALK_IN',
+                getServiceId: function () { return sel.value; },
+                getBranchId: function () { return _ebBranchId; },
+                onChange: updateEditEstimatedTotal,
+            });
 
-            sel.addEventListener('change', updateEditEstimatedTotal);
+            sel.addEventListener('change', function () { AddOnPicker.refresh(row); updateEditEstimatedTotal(); });
             row.querySelector('.line-qty').addEventListener('input', updateEditEstimatedTotal);
-            row.querySelector('.btn-remove-line').addEventListener('click', function () { row.remove(); updateEditEstimatedTotal(); });
+            row.querySelector('.btn-remove-line').addEventListener('click', function () { AddOnPicker.remove(row); row.remove(); updateEditEstimatedTotal(); });
             return row;
         }
 
@@ -1598,7 +1621,7 @@
                 var qty = Number(row.querySelector('.line-qty').value) || 0;
                 var opt = sel.options[sel.selectedIndex];
                 var price = opt ? Number(opt.dataset.price || 0) : 0;
-                var lineTotal = price * qty;
+                var lineTotal = price * qty + AddOnPicker.total(row);
                 row.querySelector('.line-row-total').textContent = opt && opt.value ? SalonBookings.formatMoney(lineTotal) : '-';
                 total += lineTotal;
             });
@@ -1629,6 +1652,7 @@
             document.getElementById('eb-item-lines').innerHTML = '';
 
             var branchId = b.branchId || (b.branch && b.branch.id);
+            _ebBranchId = branchId;
             await loadServices(branchId);
 
             // Products are branch-scoped, same as the New Booking modal --
@@ -1653,10 +1677,19 @@
                 if (b.assignedStaffId) staffSel.value = b.assignedStaffId;
             } catch (e) { staffSel.innerHTML = '<option value="">Failed to load staff</option>'; }
 
+            // Main services get a line each; their saved add-ons are ticked under them.
             var container = document.getElementById('eb-service-lines');
-            (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
-                edLine(container, line.service ? line.service.id : undefined, line.quantity);
+            var allLines = b.services && b.services.length ? b.services : [{}];
+            var mainLines = allLines.filter(function (line) { return !line.addOnOfServiceId; });
+            var preselects = [];
+            (mainLines.length ? mainLines : [{}]).forEach(function (line) {
+                var mainId = line.service ? line.service.id : undefined;
+                var row = edLine(container, mainId, line.quantity);
+                var addOnIds = allLines.filter(function (l) { return l.addOnOfServiceId && l.addOnOfServiceId === mainId; })
+                    .map(function (l) { return l.service ? l.service.id : l.serviceId; });
+                if (addOnIds.length) preselects.push(AddOnPicker.preselect(row, addOnIds));
             });
+            await Promise.all(preselects);
 
             var itemContainer = document.getElementById('eb-item-lines');
             (b.inventoryItems || []).forEach(function (line) {
@@ -1676,7 +1709,10 @@
             document.querySelectorAll('#eb-service-lines .line-row').forEach(function (row) {
                 var serviceId = row.querySelector('.line-service-select').value;
                 var quantity = Number(row.querySelector('.line-qty').value) || 1;
-                if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+                if (serviceId) {
+                    services.push({ serviceId: serviceId, quantity: quantity });
+                    AddOnPicker.lines(row).forEach(function (l) { services.push(l); });
+                }
             });
             if (!services.length) {
                 errEl.textContent = 'At least one service is required.';
@@ -1769,10 +1805,10 @@
                 // or a misleading name.
                 document.getElementById('pr-served-by').textContent = b.createdBy ? b.createdBy.name : 'Online booking';
                 var servicesContainer = document.getElementById('pr-services-list');
-                var services = b.services || [];
+                var services = SalonBookings.orderLines(b.services);
                 servicesContainer.innerHTML = services.length
                     ? services.map(function (s) {
-                        var name = esc(s.service ? s.service.name : 'Service');
+                        var name = (s.isAddOn ? '+ Add-on: ' : '') + esc(s.service ? s.service.name : 'Service');
                         var qty = s.quantity && s.quantity > 1 ? ' x' + s.quantity : '';
                         return '<div class="pr-service-line"><span>' + name + qty + '</span></div>';
                     }).join('')
@@ -1842,7 +1878,10 @@
             document.querySelectorAll('#nb-service-lines .line-row').forEach(function (row) {
                 var serviceId = row.querySelector('.line-service-select').value;
                 var quantity = Number(row.querySelector('.line-qty').value) || 1;
-                if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+                if (serviceId) {
+                    services.push({ serviceId: serviceId, quantity: quantity });
+                    AddOnPicker.lines(row).forEach(function (l) { services.push(l); });
+                }
             });
 
             var inventoryItems = [];

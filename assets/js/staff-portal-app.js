@@ -2505,7 +2505,10 @@ function sbEditLine(container, serviceId, quantity) {
   row.style.gridTemplateColumns = '1fr 70px 32px';
   row.style.gap = '8px';
   row.style.marginBottom = '6px';
-  var options = '<option value="">Select service…</option>' + (sbServicesCache || []).map(function (s) {
+  // Add-on-only services are chosen through a service's Add-ons, not as a main line.
+  var options = '<option value="">Select service…</option>' + (sbServicesCache || []).filter(function (s) {
+    return !s.isAddOn || s.id === serviceId;
+  }).map(function (s) {
     var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
     return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ': ' + sbFormatMoney(price) + '</option>';
   }).join('');
@@ -2516,8 +2519,15 @@ function sbEditLine(container, serviceId, quantity) {
   container.appendChild(row);
   var sel = row.querySelector('.sb-eb-service-select');
   if (serviceId) sel.value = serviceId;
-  row.querySelector('.sb-eb-remove-line').addEventListener('click', function () { row.remove(); });
+  // Service add-ons (2026-10-24): optional add-ons under the line.
+  AddOnPicker.attach(row, { mode: 'WALK_IN', getServiceId: function () { return sel.value; }, getBranchId: sbOwnBranchId });
+  sel.addEventListener('change', function () { AddOnPicker.refresh(row); });
+  row.querySelector('.sb-eb-remove-line').addEventListener('click', function () { AddOnPicker.remove(row); row.remove(); });
   return row;
+}
+
+function sbOwnBranchId() {
+  return (currentStaff && (currentStaff.locationId || (currentStaff.location && currentStaff.location.id))) || '';
 }
 
 async function sbOpenEditModal(b) {
@@ -2557,9 +2567,16 @@ async function sbOpenEditModal(b) {
     '<button class="btn btn-gold btn-sm" id="sbeb-submit-btn" onclick="sbSubmitEditBooking()">Save Changes</button>' +
     '</div>';
 
+  // Main services get a line each; their saved add-ons are ticked under them.
   var lineContainer = document.getElementById('sbeb-service-lines');
-  (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
-    sbEditLine(lineContainer, line.service ? line.service.id : undefined, line.quantity);
+  var allLines = b.services && b.services.length ? b.services : [{}];
+  var mainLines = allLines.filter(function (line) { return !line.addOnOfServiceId; });
+  (mainLines.length ? mainLines : [{}]).forEach(function (line) {
+    var mainId = line.service ? line.service.id : undefined;
+    var row = sbEditLine(lineContainer, mainId, line.quantity);
+    var addOnIds = allLines.filter(function (l) { return l.addOnOfServiceId && l.addOnOfServiceId === mainId; })
+      .map(function (l) { return l.service ? l.service.id : l.serviceId; });
+    if (addOnIds.length) AddOnPicker.preselect(row, addOnIds);
   });
 
   restrictToPhoneChars(document.getElementById('sbeb-customer-phone'));
@@ -2575,10 +2592,13 @@ async function sbSubmitEditBooking() {
   errEl.style.display = 'none';
 
   var services = [];
-  document.querySelectorAll('#sbeb-service-lines > div').forEach(function (row) {
+  document.querySelectorAll('#sbeb-service-lines > div:not(.aop-box)').forEach(function (row) {
     var serviceId = row.querySelector('.sb-eb-service-select').value;
     var quantity = Number(row.querySelector('.sb-eb-qty').value) || 1;
-    if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+    if (serviceId) {
+      services.push({ serviceId: serviceId, quantity: quantity });
+      AddOnPicker.lines(row).forEach(function (l) { services.push(l); });
+    }
   });
   if (!services.length) {
     errEl.textContent = 'At least one service is required.';
@@ -2966,7 +2986,7 @@ function sbAddServiceLine() {
   row.style.gridTemplateColumns = '1fr 70px 32px';
   row.style.gap = '8px';
   row.style.marginBottom = '6px';
-  var options = '<option value="">Select service…</option>' + sbServicesCache.map(function (s) {
+  var options = '<option value="">Select service…</option>' + sbServicesCache.filter(function (s) { return !s.isAddOn; }).map(function (s) {
     var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
     return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ': ' + sbFormatMoney(price) + '</option>';
   }).join('');
@@ -2975,9 +2995,12 @@ function sbAddServiceLine() {
     '<input type="number" min="1" value="1" class="input sb-qty">' +
     '<button type="button" class="btn btn-ghost btn-sm sb-remove-line">&times;</button>';
   container.appendChild(row);
-  row.querySelector('.sb-service-select').addEventListener('change', sbUpdateTotal);
+  var sel = row.querySelector('.sb-service-select');
+  // Service add-ons (2026-10-24): optional add-ons under the line.
+  AddOnPicker.attach(row, { mode: 'WALK_IN', getServiceId: function () { return sel.value; }, getBranchId: sbOwnBranchId, onChange: sbUpdateTotal });
+  sel.addEventListener('change', function () { AddOnPicker.refresh(row); sbUpdateTotal(); });
   row.querySelector('.sb-qty').addEventListener('input', sbUpdateTotal);
-  row.querySelector('.sb-remove-line').addEventListener('click', function () { row.remove(); sbUpdateTotal(); });
+  row.querySelector('.sb-remove-line').addEventListener('click', function () { AddOnPicker.remove(row); row.remove(); sbUpdateTotal(); });
   sbUpdateTotal();
 }
 
@@ -3032,11 +3055,11 @@ var _sbAppliedCoupon = null; // { id, code, percentage }
 
 function sbCurrentSubtotal() {
   var total = 0;
-  document.querySelectorAll('#sb-service-lines > div').forEach(function (row) {
+  document.querySelectorAll('#sb-service-lines > div:not(.aop-box)').forEach(function (row) {
     var sel = row.querySelector('.sb-service-select');
     var qty = Number(row.querySelector('.sb-qty').value) || 0;
     var opt = sel.options[sel.selectedIndex];
-    if (opt && opt.value) total += Number(opt.dataset.price || 0) * qty;
+    if (opt && opt.value) total += Number(opt.dataset.price || 0) * qty + AddOnPicker.total(row);
   });
   document.querySelectorAll('#sb-item-lines > div').forEach(function (row) {
     var sel = row.querySelector('.sb-item-select');
@@ -3108,10 +3131,13 @@ async function submitBookingForm() {
   var notes = document.getElementById('sb-notes').value.trim();
 
   var services = [];
-  document.querySelectorAll('#sb-service-lines > div').forEach(function (row) {
+  document.querySelectorAll('#sb-service-lines > div:not(.aop-box)').forEach(function (row) {
     var serviceId = row.querySelector('.sb-service-select').value;
     var quantity = Number(row.querySelector('.sb-qty').value) || 1;
-    if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+    if (serviceId) {
+      services.push({ serviceId: serviceId, quantity: quantity });
+      AddOnPicker.lines(row).forEach(function (l) { services.push(l); });
+    }
   });
 
   var inventoryItems = [];
