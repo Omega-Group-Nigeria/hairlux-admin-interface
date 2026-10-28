@@ -195,7 +195,27 @@ const SalonBookings = (function () {
         return apiFetch(`/admin/bookings/reservation/${encodeURIComponent(code)}/balance-account`, { method: 'POST' });
     }
 
+    /**
+     * Service add-ons (2026-10-24): booking service lines in reading order,
+     * each main service followed by its add-ons (isAddOn: true on those).
+     */
+    function orderLines(services) {
+        const lines = services || [];
+        const out = [];
+        lines.filter((l) => !l.addOnOfServiceId).forEach((main) => {
+            out.push(Object.assign({}, main, { isAddOn: false }));
+            const mainId = main.service ? main.service.id : main.serviceId;
+            lines.filter((l) => l.addOnOfServiceId && l.addOnOfServiceId === mainId && out.indexOf(l) < 0)
+                .forEach((a) => out.push(Object.assign({}, a, { isAddOn: true })));
+        });
+        lines.forEach((l) => {
+            if (!out.some((o) => o.id && o.id === l.id)) out.push(Object.assign({}, l, { isAddOn: !!l.addOnOfServiceId }));
+        });
+        return out;
+    }
+
     return {
+        orderLines,
         getAll, getOne, create, previewDiscount, editBooking, addServiceToCompletedBooking,
         addInventoryItem, start, complete, cancel, noShow,
         verifyCode, confirmVerification, balanceAccount, searchCustomers, checkPhoneMatch, findAllCustomers,

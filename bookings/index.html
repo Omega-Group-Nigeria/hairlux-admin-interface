@@ -412,7 +412,7 @@
                         ? (h > 0 ? h + 'h' : '') + (m > 0 ? m + 'min' : '')
                         : "-";
                     return '<tr>' +
-                        '<td>' + (s.name || s.serviceName || "Service") + '</td>' +
+                        '<td>' + (s.addOnOf ? '<span class="ps-3">+ </span>' : '') + (s.name || s.serviceName || "Service") + (s.addOnOf ? ' <span class="badge bg-azure-lt">add-on</span>' : '') + '</td>' +
                         '<td class="text-secondary">' + dur + '</td>' +
                         '<td class="fw-semibold text-end">' + Bookings.formatMoney(s.price ?? 0) + '</td>' +
                         '</tr>';
@@ -476,6 +476,9 @@
                     : '') +
                 '</div>' +
                 '</div>' +
+                (b.pricing
+                    ? '<div class="mb-3" style="max-width:460px"><div class="detail-label">Mobile price</div>' + Bookings.renderMobilePricingHtml(b, { esc: escHtml }) + '</div>'
+                    : '') +
 
                 // Services table
                 '<div class="detail-section">' +

@@ -14,6 +14,9 @@
  * Usage:
  *   MultiSelectDropdown.attach('my-select-id');   // once, after the element exists (with its <option>s already populated)
  *   MultiSelectDropdown.refresh('my-select-id');  // after repopulating its <option>s
+ *   MultiSelectDropdown.clear('my-select-id');    // deselect everything
+ *   MultiSelectDropdown.setPlaceholder('my-select-id', 'text');
+ * A disabled <select> disables the dropdown too (call sync after toggling it).
  */
 const MultiSelectDropdown = (function () {
     const registry = {}; // selectId -> { select, wrap, trigger, panel, search, list, options: [{value, label}] }
@@ -35,7 +38,9 @@ const MultiSelectDropdown = (function () {
     }
 
     function updateTrigger(state) {
-        const selected = selectedValues(state.select);
+        state.trigger.disabled = !!state.select.disabled;
+        if (state.select.disabled) closePanel(state);
+        const selected = selectedValues(state.select).filter(function (v) { return v !== ''; });
         if (!selected.length) {
             state.trigger.textContent = state.placeholder;
             state.trigger.classList.add('msd-placeholder');
@@ -86,6 +91,7 @@ const MultiSelectDropdown = (function () {
     }
 
     function openPanel(state) {
+        if (state.select.disabled) return;
         state.panel.style.display = 'block';
         state.search.value = '';
         renderList(state, '');
@@ -182,6 +188,27 @@ const MultiSelectDropdown = (function () {
         if (!state) return;
         state.options = readOptions(state.select);
         updateTrigger(state);
+        rerenderIfOpen(state);
+    }
+
+    function rerenderIfOpen(state) {
+        if (state.panel.style.display === 'block') renderList(state, state.search.value);
+    }
+
+    /** Deselect everything (no 'change' event, same as MultiSelect.clear). */
+    function clear(selectId) {
+        const state = registry[selectId];
+        if (!state) return;
+        Array.from(state.select.options).forEach(function (o) { o.selected = false; });
+        updateTrigger(state);
+        rerenderIfOpen(state);
+    }
+
+    function setPlaceholder(selectId, text) {
+        const state = registry[selectId];
+        if (!state) return;
+        state.placeholder = text || 'Select\u2026';
+        updateTrigger(state);
     }
 
     /** Call after changing .selected on the underlying select's options programmatically (e.g. pre-filling an edit form). */
@@ -189,6 +216,7 @@ const MultiSelectDropdown = (function () {
         const state = registry[selectId];
         if (!state) return;
         updateTrigger(state);
+        rerenderIfOpen(state);
     }
 
     function detach(selectId) {
@@ -226,5 +254,5 @@ const MultiSelectDropdown = (function () {
         document.head.appendChild(style);
     }
 
-    return { attach: attach, refresh: refresh, sync: sync, detach: detach };
+    return { attach: attach, refresh: refresh, sync: sync, detach: detach, clear: clear, setPlaceholder: setPlaceholder };
 })();
