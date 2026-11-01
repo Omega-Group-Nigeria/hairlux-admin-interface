@@ -262,8 +262,9 @@ const Shop = (() => {
         });
     }
 
-    async function updateOrderStatus(id, status, notes) {
-        const body = { status };
+    /** extra: { stage } while PROCESSING, { deliveryCode } to mark a marketplace order DELIVERED. */
+    async function updateOrderStatus(id, status, notes, extra) {
+        const body = Object.assign({ status }, extra || {});
         if (notes) body.notes = notes;
         return apiFetch(`/admin/shop/orders/${id}/status`, {
             method: "PATCH",

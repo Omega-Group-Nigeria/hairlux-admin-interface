@@ -84,33 +84,33 @@
             <div class="page-body">
                 <div class="container-xl">
                     <div class="alert alert-info">
-                        <div>Each row is one vendor's part of a web shop order. Vendors confirm, pack, hand over and complete delivery with the customer's 6-digit code.
-                        Unconfirmed orders cancel themselves after the time set in Marketplace Settings, and the customer is refunded to the wallet.</div>
+                        <div>Each row is one vendor's part of a web shop order. Hairlux picks it from the vendor's stock at the <a href="marketplace-receiving.html">Receiving Center</a> and delivers it;
+                        its status follows the shop order (move orders along in <a href="shop.html">Shop</a>). Cancel a vendor's part here if it fails quality check, or record a return after delivery.</div>
                     </div>
                     <div id="page-alert"></div>
                     <div class="row row-cards mb-3">
-                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">To confirm</div><div class="h1 mb-0" id="c-pending">-</div></div></div></div>
-                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">Overdue</div><div class="h1 mb-0 text-danger" id="c-overdue">-</div></div></div></div>
-                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">On the way</div><div class="h1 mb-0" id="c-shipped">-</div></div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">New</div><div class="h1 mb-0" id="c-pending">-</div></div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">Being prepared</div><div class="h1 mb-0" id="c-preparing">-</div></div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">Out for delivery</div><div class="h1 mb-0" id="c-shipped">-</div></div></div></div>
                         <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">Delivered</div><div class="h1 mb-0" id="c-delivered">-</div></div></div></div>
                     </div>
 
                     <div class="card">
                         <div class="card-header">
-                            <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="status-tabs">
+                            <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto text-nowrap" id="status-tabs">
                                 <li class="nav-item"><a class="nav-link active" href="#" data-status="">All</a></li>
-                                <li class="nav-item"><a class="nav-link" href="#" data-status="PENDING_CONFIRMATION">To confirm</a></li>
-                                <li class="nav-item"><a class="nav-link" href="#" data-status="OVERDUE">Overdue</a></li>
-                                <li class="nav-item"><a class="nav-link" href="#" data-status="CONFIRMED">Confirmed</a></li>
-                                <li class="nav-item"><a class="nav-link" href="#" data-status="PACKED">Packed</a></li>
-                                <li class="nav-item"><a class="nav-link" href="#" data-status="HANDED_TO_DELIVERY">On the way</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="NEW">New</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="PREPARING">Picking</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="QUALITY_CHECK">Quality check</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="READY_FOR_DISPATCH">Ready for dispatch</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-status="OUT_FOR_DELIVERY">Out for delivery</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#" data-status="DELIVERED">Delivered</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#" data-status="CANCELLED">Cancelled</a></li>
                             </ul>
                         </div>
                         <div class="card-body border-bottom py-3">
                             <div class="row g-2 align-items-center">
-                                <div class="col-md-6"><input type="search" class="form-control" id="f-search" placeholder="Search order code, customer or vendor"></div>
+                                <div class="col-md-6"><input type="search" class="form-control" id="f-search" placeholder="Search order code or vendor"></div>
                                 <div class="col-md-6 text-md-end text-secondary small" id="results-label"></div>
                             </div>
                         </div>
@@ -153,9 +153,10 @@
             <div class="modal-content">
                 <div class="modal-header"><h5 class="modal-title">Cancel vendor order</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
-                    <p class="text-secondary">Stock goes back to the vendor's product and the customer is refunded what they paid for these items, to the wallet. The vendor is emailed your reason.</p>
+                    <p class="text-secondary">The customer is refunded what they paid for these items, to the wallet. The vendor is emailed your reason.</p>
                     <label class="form-label required" for="cancel-reason">Reason</label>
-                    <textarea class="form-control" id="cancel-reason" rows="3" maxlength="500" placeholder="e.g. Vendor did not respond to calls"></textarea>
+                    <textarea class="form-control" id="cancel-reason" rows="3" maxlength="500" placeholder="e.g. Failed quality check: seal broken"></textarea>
+                    <label class="form-check mt-3 mb-0"><input class="form-check-input" type="checkbox" id="cancel-restock" checked><span class="form-check-label">Put the items back on the Receiving Center shelf (untick if they are damaged and cannot be sold)</span></label>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Back</button>
@@ -164,23 +165,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Confirm delivery -->
-    <div class="modal modal-blur fade" id="modal-deliver" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Confirm delivery</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <p class="text-secondary small">Ask the customer for the 6-digit delivery code shown in their order, and enter it here.</p>
-                    <input class="form-control form-control-lg text-center" id="deliver-code" inputmode="numeric" maxlength="6" placeholder="000000" style="letter-spacing:.3em;font-weight:700">
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary w-100" id="btn-deliver-confirm">Confirm delivery</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 
     <!-- Record a return (Phase 3) -->
     <div class="modal modal-blur fade" id="modal-return" tabindex="-1">
@@ -192,7 +176,7 @@
                     <div id="return-lines"></div>
                     <label class="form-label required mt-3" for="return-reason">Reason</label>
                     <textarea class="form-control" id="return-reason" rows="2" maxlength="500" placeholder="e.g. Wrong shade, returned unopened"></textarea>
-                    <label class="form-check mt-3 mb-0"><input class="form-check-input" type="checkbox" id="return-restock"><span class="form-check-label">Put the returned items back in stock (only if they can be sold again)</span></label>
+                    <label class="form-check mt-3 mb-0"><input class="form-check-input" type="checkbox" id="return-restock"><span class="form-check-label">Put the returned items back on the Receiving Center shelf (only if they can be sold again)</span></label>
                     <div class="mt-3 fw-semibold" id="return-total"></div>
                 </div>
                 <div class="modal-footer">

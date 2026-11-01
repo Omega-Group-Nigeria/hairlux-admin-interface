@@ -1,7 +1,9 @@
 /**
  * Marketplace Vendor Orders page (marketplace-orders.html).
- * One row per vendor per web shop order: who ships what, confirm deadlines,
- * cancel with a refund, or confirm delivery with the customer's code.
+ * One row per vendor per web shop order. Phase 4: Hairlux picks it from the
+ * vendor's stock at the Receiving Center and delivers it, so its status
+ * follows the shop order. Here: cancel one vendor's part (e.g. failed quality
+ * check, with or without restocking) or record a return after delivery.
  * Requires: auth.js, rbac.js, marketplace.js, tabler.min.js
  */
 (function () {
@@ -10,14 +12,15 @@
     var bootstrap = window.tabler.bootstrap;
     var P = { read: 'marketplace:read', manage: 'marketplace:manage_orders' };
     var STATUS = {
-        PENDING_CONFIRMATION: { label: 'To confirm', cls: 'bg-yellow-lt' },
-        CONFIRMED: { label: 'Confirmed', cls: 'bg-blue-lt' },
-        PACKED: { label: 'Packed', cls: 'bg-blue-lt' },
-        HANDED_TO_DELIVERY: { label: 'On the way', cls: 'bg-purple-lt' },
+        NEW: { label: 'New', cls: 'bg-yellow-lt' },
+        PREPARING: { label: 'Picking', cls: 'bg-blue-lt' },
+        QUALITY_CHECK: { label: 'Quality check', cls: 'bg-blue-lt' },
+        READY_FOR_DISPATCH: { label: 'Ready for dispatch', cls: 'bg-blue-lt' },
+        OUT_FOR_DELIVERY: { label: 'Out for delivery', cls: 'bg-purple-lt' },
         DELIVERED: { label: 'Delivered', cls: 'bg-green-lt' },
         CANCELLED: { label: 'Cancelled', cls: 'bg-red-lt' },
     };
-    var BY = { VENDOR: 'the vendor', ADMIN: 'Hairlux', SYSTEM: 'automatically (not confirmed in time)' };
+    var BY = { VENDOR: 'the vendor', ADMIN: 'Hairlux', SYSTEM: 'automatically', CUSTOMER: 'the customer' };
 
     var _status = '';
     var _page = 1;
@@ -49,18 +52,16 @@
     async function load() {
         $('orders-tbody').innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-5">Loading...</td></tr>';
         try {
-            var overdue = _status === 'OVERDUE';
             var res = await Marketplace.listOrders({
-                status: overdue ? undefined : (_status || undefined),
-                overdue: overdue ? 'true' : undefined,
+                status: _status || undefined,
                 search: $('f-search').value.trim() || undefined,
                 page: _page,
             });
             _meta = res.meta;
             var c = res.counts || {};
-            $('c-pending').textContent = c.PENDING_CONFIRMATION || 0;
-            $('c-overdue').textContent = c.OVERDUE || 0;
-            $('c-shipped').textContent = c.HANDED_TO_DELIVERY || 0;
+            $('c-pending').textContent = c.NEW || 0;
+            $('c-preparing').textContent = (c.PREPARING || 0) + (c.QUALITY_CHECK || 0) + (c.READY_FOR_DISPATCH || 0);
+            $('c-shipped').textContent = c.OUT_FOR_DELIVERY || 0;
             $('c-delivered').textContent = c.DELIVERED || 0;
             $('results-label').textContent = _meta.total + ' order' + (_meta.total === 1 ? '' : 's');
             $('page-label').textContent = _meta.totalPages > 1 ? 'Page ' + _meta.page + ' of ' + _meta.totalPages : '';
@@ -69,13 +70,12 @@
             $('orders-tbody').innerHTML = res.data.length ? res.data.map(function (o) {
                 var items = o.items.map(function (i) { return i.quantity + ' x ' + i.name; }).join(', ');
                 return '<tr>' +
-                    '<td><div class="fw-semibold">' + esc(o.code) + '</div><div class="small text-secondary">' + esc(o.recipient.name) + '</div></td>' +
+                    '<td><div class="fw-semibold">' + esc(o.code) + '</div><div class="small text-secondary">' + esc(o.shopOrder ? o.shopOrder.orderCode : '') + '</div></td>' +
                     '<td><a href="marketplace-vendors.html?vendor=' + esc(o.seller.id) + '">' + esc(vendorName(o)) + '</a></td>' +
                     '<td class="small" style="max-width:260px">' + esc(items) + '</td>' +
                     '<td class="text-end">' + ngn(o.subtotal) + '</td>' +
                     '<td class="text-end">' + ngn(o.vendorAmount) + '</td>' +
-                    '<td>' + badge(o.status) + (o.overdue ? ' <span class="badge bg-red-lt">Overdue</span>' : '') +
-                        (o.status === 'PENDING_CONFIRMATION' && !o.overdue ? '<div class="small text-secondary">by ' + fmtDateTime(o.confirmBy) + '</div>' : '') + '</td>' +
+                    '<td>' + badge(o.status) + '</td>' +
                     '<td class="small text-secondary">' + fmtDateTime(o.createdAt) + '</td>' +
                     '<td class="text-end"><button class="btn btn-sm" data-open="' + esc(o.id) + '">View</button></td></tr>';
             }).join('') : '<tr><td colspan="8" class="text-center text-secondary py-5">No vendor orders here.</td></tr>';
@@ -87,8 +87,9 @@
     function render(o) {
         _order = o;
         $('order-title').textContent = 'Vendor order ' + o.code;
-        var a = o.recipient.address || {};
-        var steps = [['Placed', o.createdAt], ['Confirmed', o.confirmedAt], ['Packed', o.packedAt], ['Handed to delivery', o.handedOverAt], ['Delivered', o.deliveredAt]];
+        var flow = ['NEW', 'PREPARING', 'QUALITY_CHECK', 'READY_FOR_DISPATCH', 'OUT_FOR_DELIVERY', 'DELIVERED'];
+        var at = flow.indexOf(o.status);
+        var steps = flow.map(function (k, i) { return [STATUS[k].label, i <= at, k === 'NEW' ? o.createdAt : k === 'DELIVERED' ? o.deliveredAt : null]; });
         var lines = o.items.map(function (i) {
             return '<tr><td>' + esc(i.name) + (i.sellerSku ? '<div class="small text-secondary">SKU ' + esc(i.sellerSku) + '</div>' : '') +
                 (i.returnedQuantity ? '<div class="small text-danger">' + i.returnedQuantity + ' returned</div>' : '') + '</td><td class="text-end">' + i.quantity + '</td>' +
@@ -96,30 +97,25 @@
         }).join('');
         var so = o.shopOrder || {};
         $('order-body').innerHTML =
-            '<div class="d-flex justify-content-between align-items-start mb-3"><div>' + badge(o.status) + (o.overdue ? ' <span class="badge bg-red-lt">Overdue</span>' : '') +
-            '<div class="small text-secondary mt-1">Customer order ' + esc(so.orderCode || '-') + ' &middot; ' + (so.paymentMethod === 'PAY_ON_DELIVERY' ? 'Pay on Delivery' + (so.balanceDue > 0 ? ', balance of ' + ngn(so.balanceDue) + ' not paid yet' : ', balance paid') : 'Paid from wallet') + '</div></div>' +
+            '<div class="d-flex justify-content-between align-items-start mb-3"><div>' + badge(o.status) +
+            '<div class="small text-secondary mt-1">Customer order <a href="shop.html">' + esc(so.orderCode || '-') + '</a> &middot; ' + (so.paymentMethod === 'PAY_ON_DELIVERY' ? 'Pay on Delivery' + (so.balanceDue > 0 ? ', balance of ' + ngn(so.balanceDue) + ' not paid yet' : ', balance paid') : 'Paid from wallet') + '</div></div>' +
             '<div class="text-end small"><div class="fw-semibold">' + esc(vendorName(o)) + '</div><div class="text-secondary">' + esc(o.seller.businessPhone || '') + '</div></div></div>' +
             (o.status === 'CANCELLED' ? '<div class="alert alert-danger">Cancelled ' + fmtDateTime(o.cancelledAt) + ' by ' + esc(BY[o.cancelledBy] || o.cancelledBy || '-') + ': ' + esc(o.cancelReason || '') + '. Refunded ' + ngn(o.refundedAmount) + '.</div>' : '') +
-            (o.deliveryCodeLocked && o.status !== 'DELIVERED' && o.status !== 'CANCELLED' ? '<div class="alert alert-warning">The vendor entered too many wrong delivery codes. Call the customer, then confirm delivery here with their code.</div>' : '') +
-            '<div class="row g-2 mb-3">' + steps.map(function (s) {
-                return '<div class="col"><div class="small ' + (s[1] ? 'fw-semibold' : 'text-secondary') + '">' + s[0] + '</div><div class="small text-secondary">' + (s[1] ? fmtDateTime(s[1]) : '-') + '</div></div>';
-            }).join('') + '</div>' +
-            (o.status === 'PENDING_CONFIRMATION' ? '<div class="small mb-3">Vendor must confirm by <strong>' + fmtDateTime(o.confirmBy) + '</strong>.</div>' : '') +
+            (o.status !== 'CANCELLED' ? '<div class="row g-2 mb-3">' + steps.map(function (s) {
+                return '<div class="col"><div class="small ' + (s[1] ? 'fw-semibold' : 'text-secondary') + '">' + s[0] + '</div><div class="small text-secondary">' + (s[2] ? fmtDateTime(s[2]) : '') + '</div></div>';
+            }).join('') + '</div>' : '') +
             '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Item</th><th class="text-end">Qty</th><th class="text-end">Sale</th><th class="text-end">Rate</th><th class="text-end">Commission</th><th class="text-end">Vendor gets</th></tr></thead><tbody>' + lines + '</tbody>' +
             '<tfoot><tr class="fw-semibold"><td colspan="2">Total</td><td class="text-end">' + ngn(o.subtotal) + '</td><td></td><td class="text-end">' + ngn(o.commissionAmount) + '</td><td class="text-end">' + ngn(o.vendorAmount) + '</td></tr></tfoot></table></div>' +
-            '<div class="row g-3"><div class="col-md-6"><div class="subheader mb-1">Customer money for this shipment</div><div class="small">' +
-            'Paid at checkout: ' + ngn(o.paidAmount) + ' (includes delivery ' + ngn(o.deliveryFee) + ')<br>Share of balance: ' + ngn(o.balanceAmount) + (o.refundedAmount > 0 ? '<br>Refunded: ' + ngn(o.refundedAmount) : '') +
-            (o.returnedAmount > 0 ? '<br>Refunded for returns: ' + ngn(o.returnedAmount) : '') + '</div></div>' +
-            '<div class="col-md-6"><div class="subheader mb-1">Deliver to</div><div class="small">' + esc(o.recipient.name) + (o.recipient.phone ? ', ' + esc(o.recipient.phone) : '') + '<br>' + esc(a.fullAddress || [a.streetAddress, a.city, a.state].filter(Boolean).join(', ')) +
-            (o.trackingNote ? '<br><span class="text-secondary">Courier: ' + esc(o.trackingNote) + '</span>' : '') + '</div></div></div>' +
+            '<div class="subheader mb-1">Customer money for these items</div><div class="small">' +
+            'Paid at checkout: ' + ngn(o.paidAmount) + '<br>Share of balance: ' + ngn(o.balanceAmount) + (o.refundedAmount > 0 ? '<br>Refunded: ' + ngn(o.refundedAmount) : '') +
+            (o.returnedAmount > 0 ? '<br>Refunded for returns: ' + ngn(o.returnedAmount) : '') + '</div>' +
             (o.status === 'DELIVERED' ? '<div class="mt-3" id="returns-box"></div>' : '');
         if (o.status === 'DELIVERED') loadReturns(o.id);
 
         var open = o.status !== 'DELIVERED' && o.status !== 'CANCELLED';
         var foot = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Close</button>';
-        if (open && RBAC.can(P.manage)) {
-            foot += '<button class="btn btn-outline-danger" id="btn-open-cancel">Cancel and refund</button>';
-            if (o.status !== 'PENDING_CONFIRMATION') foot += '<button class="btn btn-primary" id="btn-open-deliver"' + (so.balanceDue > 0 ? ' disabled title="The customer has not paid the balance yet"' : '') + '>Confirm delivery</button>';
+        if (open && o.status !== 'OUT_FOR_DELIVERY' && RBAC.can(P.manage)) {
+            foot += '<button class="btn btn-outline-danger" id="btn-open-cancel">Cancel this vendor\'s part</button>';
         }
         var returnable = o.status === 'DELIVERED' && o.items.some(function (i) { return i.quantity > (i.returnedQuantity || 0); });
         if (returnable && RBAC.can(P.manage)) foot += '<button class="btn btn-outline-primary" id="btn-open-return">Record a return</button>';
@@ -127,9 +123,7 @@
         var br = $('btn-open-return');
         if (br) br.addEventListener('click', openReturn);
         var bc = $('btn-open-cancel');
-        if (bc) bc.addEventListener('click', function () { $('cancel-reason').value = ''; bootstrap.Modal.getOrCreateInstance($('modal-cancel')).show(); });
-        var bd = $('btn-open-deliver');
-        if (bd) bd.addEventListener('click', function () { $('deliver-code').value = ''; bootstrap.Modal.getOrCreateInstance($('modal-deliver')).show(); });
+        if (bc) bc.addEventListener('click', function () { $('cancel-reason').value = ''; $('cancel-restock').checked = true; bootstrap.Modal.getOrCreateInstance($('modal-cancel')).show(); });
     }
 
     async function loadReturns(id) {
@@ -204,28 +198,13 @@
         var btn = $('btn-cancel-confirm');
         btn.disabled = true;
         try {
-            var o = await Marketplace.cancelOrder(_order.id, reason);
+            var restock = $('cancel-restock').checked;
+            var o = await Marketplace.cancelOrder(_order.id, reason, restock);
             bootstrap.Modal.getInstance($('modal-cancel')).hide();
             render(o);
-            alertBox(o.code + ' cancelled. The customer was refunded ' + ngn(o.refundedAmount) + ' and the vendor was emailed.');
+            alertBox(o.code + ' cancelled. The customer was refunded ' + ngn(o.refundedAmount) + (restock ? ' and the items went back on the shelf.' : '. The items were kept off sale.') + ' The vendor was emailed.');
             load();
         } catch (e) { alert(e.message); }
-        finally { btn.disabled = false; }
-    }
-
-    async function doDeliver() {
-        var code = $('deliver-code').value.replace(/\D/g, '');
-        if (code.length !== 6) { $('deliver-code').classList.add('is-invalid'); return; }
-        $('deliver-code').classList.remove('is-invalid');
-        var btn = $('btn-deliver-confirm');
-        btn.disabled = true;
-        try {
-            var o = await Marketplace.confirmDelivery(_order.id, code);
-            bootstrap.Modal.getInstance($('modal-deliver')).hide();
-            render(o);
-            alertBox(o.code + ' marked as delivered.');
-            load();
-        } catch (e) { $('deliver-code').classList.add('is-invalid'); alert(e.message); }
         finally { btn.disabled = false; }
     }
 
@@ -257,10 +236,8 @@
             if (b) openOrder(b.dataset.open);
         });
         $('btn-cancel-confirm').addEventListener('click', doCancel);
-        $('btn-deliver-confirm').addEventListener('click', doDeliver);
         $('btn-return-confirm').addEventListener('click', doReturn);
         $('return-lines').addEventListener('input', returnTotals);
-        $('deliver-code').addEventListener('input', function () { this.value = this.value.replace(/\D/g, '').slice(0, 6); });
         load();
         if (params.get('id')) openOrder(params.get('id'));
     });

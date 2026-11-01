@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Receiving Center</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Marketplace</div>
+                            <h2 class="page-title">Receiving Center</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list"><a class="btn" href="marketplace-settings.html">Address and hours</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="alert alert-info">
+                        <div>Vendors do not ship to customers. They bring stock here: count and inspect each delivery, and only accepted units go on sale.
+                        Orders are picked from this stock (see the pick list on each order in <a href="shop.html">Shop</a>). Vendors can ask to take unsold stock back.</div>
+                    </div>
+                    <div id="page-alert"></div>
+                    <div class="row row-cards mb-3">
+                        <div class="col-6 col-lg-3"><a class="card card-sm card-link" href="#" data-goto="intakes"><div class="card-body"><div class="subheader">Deliveries expected</div><div class="h1 mb-0" id="c-expected">-</div></div></a></div>
+                        <div class="col-6 col-lg-3"><a class="card card-sm card-link" href="#" data-goto="stock-low"><div class="card-body"><div class="subheader">Low or out of stock</div><div class="h1 mb-0 text-warning" id="c-low">-</div></div></a></div>
+                        <div class="col-6 col-lg-3"><a class="card card-sm card-link" href="#" data-goto="withdrawals"><div class="card-body"><div class="subheader">Take-back requests</div><div class="h1 mb-0" id="c-requests">-</div></div></a></div>
+                        <div class="col-6 col-lg-3"><a class="card card-sm card-link" href="#" data-goto="withdrawals-approved"><div class="card-body"><div class="subheader">Waiting to be collected</div><div class="h1 mb-0" id="c-collect">-</div></div></a></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto text-nowrap" id="main-tabs">
+                                <li class="nav-item"><a class="nav-link active" href="#" data-tab="intakes">Stock deliveries</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="stock">Stock</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="withdrawals">Take-back requests</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="history">History</a></li>
+                            </ul>
+                        </div>
+                        <div class="card-body border-bottom py-3">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-auto"><div class="btn-group" id="sub-filters"></div></div>
+                                <div class="col-md"><input type="search" class="form-control" id="f-search" placeholder="Search"></div>
+                                <div class="col-md-auto text-md-end text-secondary small" id="results-label"></div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead id="list-head"></thead>
+                                <tbody id="list-body"><tr><td class="text-center text-secondary py-5">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer d-flex align-items-center">
+                            <div class="text-secondary small" id="page-label"></div>
+                            <div class="ms-auto btn-list">
+                                <button class="btn btn-sm" id="btn-prev">Previous</button>
+                                <button class="btn btn-sm" id="btn-next">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receive a stock delivery -->
+    <div class="modal modal-blur fade" id="modal-receive" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="receive-title">Stock delivery</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body" id="receive-body"></div>
+                <div class="modal-footer" id="receive-footer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Small form: reasons, notes, corrections -->
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="form-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body" id="form-body"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Back</button>
+                    <button class="btn btn-primary" id="form-submit"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/marketplace.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/marketplace-receiving-page.js"></script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

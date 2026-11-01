@@ -18,9 +18,6 @@
     }
 
     function syncDelivery() {
-        var mode = $('s-delivery-mode').value;
-        $('s-static-fee-wrap').hidden = mode !== 'STATIC';
-        $('s-partner-note').hidden = mode !== 'PARTNER_API';
         $('s-pod-percent').disabled = !$('s-pod').checked || !_canEdit;
     }
 
@@ -34,9 +31,11 @@
         $('s-commission').value = s.defaultCommissionPercent;
         $('s-pod').checked = s.payOnDeliveryEnabled;
         $('s-pod-percent').value = s.payOnDeliveryDownpaymentPercent;
-        $('s-delivery-mode').value = s.deliveryMode;
-        $('s-static-fee').value = s.staticDeliveryFee === null ? '' : s.staticDeliveryFee;
-        $('s-confirm-hours').value = s.vendorConfirmHours;
+        $('s-rc-name').value = s.receivingCenterName || '';
+        $('s-rc-address').value = s.receivingCenterAddress || '';
+        $('s-rc-phone').value = s.receivingCenterPhone || '';
+        $('s-rc-hours').value = s.receivingCenterHours || '';
+        $('s-low-stock').value = s.lowStockThreshold;
         $('s-payout-mode').value = s.payoutMode;
         $('s-payout-method').value = s.payoutMethod;
         $('s-hold-days').value = s.payoutHoldDays;
@@ -49,7 +48,6 @@
         var btn = $('btn-save');
         try {
             btn.disabled = true;
-            var fee = $('s-static-fee').value.trim();
             var s = await Marketplace.saveSettings({
                 acceptingApplications: $('s-accepting').checked,
                 reviewSlaHours: Number($('s-sla').value),
@@ -58,9 +56,11 @@
                 defaultCommissionPercent: Number($('s-commission').value),
                 payOnDeliveryEnabled: $('s-pod').checked,
                 payOnDeliveryDownpaymentPercent: Number($('s-pod-percent').value),
-                deliveryMode: $('s-delivery-mode').value,
-                staticDeliveryFee: fee === '' ? null : Number(fee),
-                vendorConfirmHours: Number($('s-confirm-hours').value),
+                receivingCenterName: $('s-rc-name').value.trim(),
+                receivingCenterAddress: $('s-rc-address').value.trim() || null,
+                receivingCenterPhone: $('s-rc-phone').value.trim() || null,
+                receivingCenterHours: $('s-rc-hours').value.trim() || null,
+                lowStockThreshold: Number($('s-low-stock').value),
                 payoutMode: $('s-payout-mode').value,
                 payoutMethod: $('s-payout-method').value,
                 payoutHoldDays: Number($('s-hold-days').value),
@@ -109,7 +109,6 @@
         _canEdit = RBAC.can('marketplace:manage_settings');
         document.querySelectorAll('.page-body input, .page-body select').forEach(function (el) { el.disabled = !_canEdit; });
         if (_canEdit) $('btn-save').classList.remove('d-none');
-        $('s-delivery-mode').addEventListener('change', syncDelivery);
         $('s-pod').addEventListener('change', syncDelivery);
         $('btn-save').addEventListener('click', save);
         $('cat-tbody').addEventListener('click', function (e) {

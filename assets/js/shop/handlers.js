@@ -735,11 +735,40 @@ function paymentHtml(o) {
     return '<div class="p-3 border-bottom small"><div class="subheader mb-2">Payment</div>' + rows + form + '</div>';
 }
 
-/** Vendor shipments in this order (admins see the vendor; customers never do). */
+var STAGE_LABEL = { PICKING: "Picking", QUALITY_CHECK: "Quality check", READY_FOR_DISPATCH: "Ready for dispatch" };
+
+/** Marketplace Phase 4: what to pick, and from where (Hairlux stock or a vendor's stock at the Receiving Center). */
+function pickListHtml(o) {
+    var list = o.pickList || [];
+    if (!list.some(function (i) { return i.source === "RECEIVING_CENTER"; })) return "";
+    return '<div class="p-3 border-bottom"><div class="subheader mb-2">Pick list</div><table class="table table-sm mb-0"><thead><tr><th>Item</th><th class="text-end">Qty</th><th>From</th></tr></thead><tbody>' +
+        list.map(function (i) {
+            return '<tr class="' + (i.cancelled ? "text-secondary text-decoration-line-through" : "") + '"><td>' + esc(i.name) + '</td><td class="text-end">' + i.quantity + '</td><td class="small">' +
+                (i.source === "RECEIVING_CENTER" ? "Receiving Center, " + esc(i.vendor && i.vendor.name || "vendor") : "Hairlux stock") + '</td></tr>';
+        }).join("") + '</tbody></table></div>';
+}
+
+/** Next Hairlux steps for an order. Orders with vendor items go through the Receiving Center steps. */
+function orderSteps(o) {
+    var hasVendor = (o.vendorShipments || []).length > 0;
+    var steps = [];
+    if (!hasVendor) {
+        steps = Shop.orderStatusTransitions(o.status).filter(function (s) { return s !== "CANCELLED"; }).map(function (s) { return { status: s, label: s.replace(/_/g, " ") }; });
+    } else if (o.status === "CONFIRMED") steps = [{ status: "PROCESSING", stage: "PICKING", label: "Start picking" }];
+    else if (o.status === "PROCESSING" && (o.fulfilmentStage || "PICKING") === "PICKING") steps = [{ status: "PROCESSING", stage: "QUALITY_CHECK", label: "Picked: quality check" }];
+    else if (o.status === "PROCESSING" && o.fulfilmentStage === "QUALITY_CHECK") steps = [{ status: "PROCESSING", stage: "READY_FOR_DISPATCH", label: "Passed: ready for dispatch" }];
+    else if (o.status === "PROCESSING") steps = [{ status: "SHIPPED", label: "Out for delivery" }];
+    else if (o.status === "SHIPPED") steps = [{ status: "DELIVERED", label: "Delivered" }];
+    steps = steps.filter(function (s) { return !(s.status === "DELIVERED" && o.balanceDue > 0); });
+    if (o.status !== "DELIVERED" && o.status !== "CANCELLED") steps.push({ status: "CANCELLED", label: "Cancel" });
+    return steps;
+}
+
+/** Vendors' parts of this order (admins see the vendor; customers never do). */
 function shipmentsHtml(o) {
     var list = o.vendorShipments || [];
     if (!list.length) return "";
-    return '<div class="p-3 border-bottom"><div class="subheader mb-2">Vendor shipments</div>' + list.map(function (s) {
+    return '<div class="p-3 border-bottom"><div class="subheader mb-2">Vendor parts</div><div class="small text-secondary mb-2">Cancel one vendor\'s part (for example, it failed quality check) from Vendor Orders.</div>' + list.map(function (s) {
         return '<a class="d-flex justify-content-between align-items-center small py-1 text-reset" href="marketplace-orders.html?id=' + encodeURIComponent(s.id) + '">' +
             '<span><span class="fw-semibold">' + esc(s.code) + '</span><span class="text-secondary"> &middot; ' + esc(s.seller ? s.seller.name : "-") + '</span></span>' +
             '<span class="badge bg-secondary-lt">' + esc(String(s.status).replace(/_/g, " ").toLowerCase()) + '</span></a>';
@@ -782,31 +811,30 @@ async function openOrderDetail(id) {
         var addr = o.deliveryAddress || {};
         body.innerHTML =
             '<div class="p-3 border-bottom"><div class="text-secondary small">Order Code</div><div class="fw-semibold">' + esc(Shop.orderRef(o)) + '</div></div>' +
-            '<div class="p-3 border-bottom"><div class="d-flex justify-content-between"><span>Status</span>' + Shop.statusBadge(o.status) + '</div>' +
+            '<div class="p-3 border-bottom"><div class="d-flex justify-content-between"><span>Status</span><span>' + Shop.statusBadge(o.status) +
+            (o.status === "PROCESSING" && o.fulfilmentStage ? ' <span class="badge bg-azure-lt">' + esc(STAGE_LABEL[o.fulfilmentStage] || o.fulfilmentStage) + '</span>' : "") + '</span></div>' +
             '<div class="mt-2 text-secondary small">Placed ' + Shop.formatDateTime(o.createdAt) + '</div></div>' +
             '<div class="p-3 border-bottom"><div class="subheader mb-2">Delivery Address</div><div class="small">' + esc(addr.fullAddress || [addr.streetAddress, addr.city, addr.state].filter(Boolean).join(", ") || "-") + '</div></div>' +
             '<div class="p-3 border-bottom"><table class="table table-sm mb-0"><thead><tr><th>Item</th><th class="text-end">Qty</th><th class="text-end">Price</th></tr></thead><tbody>' + itemsHtml + '</tbody></table>' +
             '<div class="mt-3 small"><div class="d-flex justify-content-between"><span>Subtotal</span><span>' + Shop.formatMoney(o.subtotal) + '</span></div>' +
             '<div class="d-flex justify-content-between"><span>Delivery</span><span>' + Shop.formatMoney(o.deliveryFee) + '</span></div>' +
             '<div class="d-flex justify-content-between fw-semibold mt-1"><span>Total</span><span>' + Shop.formatMoney(o.totalAmount) + '</span></div></div></div>' +
-            paymentHtml(o) + shipmentsHtml(o) +
+            pickListHtml(o) + paymentHtml(o) + shipmentsHtml(o) +
             (o.notes ? '<div class="p-3"><div class="subheader mb-1">Notes</div><div class="small text-secondary">' + esc(o.notes) + '</div></div>' : "");
         wireRecordBalance(o);
-        // Orders of vendor items only follow their vendor shipments; admins can only cancel them here.
-        var vendorOnly = (o.vendorShipments || []).length > 0 && (o.shipments || []).length === o.vendorShipments.length;
+        // Marketplace Phase 4: Hairlux fulfils every order, vendor items included (picked at the Receiving Center).
         if (RBAC.can(Shop.PERMISSIONS.UPDATE_STATUS)) {
-            var transitions = Shop.orderStatusTransitions(o.status).filter(function (s) {
-                if (vendorOnly) return s === "CANCELLED";
-                if (s === "DELIVERED" && o.balanceDue > 0) return false;
-                return true;
-            });
-            transitions.forEach(function (s) {
-                var col = s === "CANCELLED" ? "danger" : "primary";
-                actions.innerHTML += '<button class="btn btn-' + col + ' btn-order-status" data-id="' + o.id + '" data-status="' + s + '">' + s.replace(/_/g, " ") + '</button>';
+            orderSteps(o).forEach(function (s) {
+                var col = s.status === "CANCELLED" ? "outline-danger" : "primary";
+                actions.innerHTML += '<button class="btn btn-' + col + ' btn-order-status" data-id="' + o.id + '" data-status="' + s.status + '" data-stage="' + (s.stage || "") + '" data-label="' + esc(s.label) + '">' + esc(s.label) + '</button>';
             });
             actions.querySelectorAll(".btn-order-status").forEach(function (btn) {
                 btn.addEventListener("click", function () {
-                    confirmOrderStatus(btn.dataset.id, btn.dataset.status, o.status, Shop.orderRef(o));
+                    confirmOrderStatus(btn.dataset.id, btn.dataset.status, o.status, Shop.orderRef(o), {
+                        stage: btn.dataset.stage || undefined,
+                        label: btn.dataset.label,
+                        needsCode: btn.dataset.status === "DELIVERED" && !!o.deliveryCodeRequired,
+                    });
                 });
             });
         }
@@ -815,13 +843,18 @@ async function openOrderDetail(id) {
     }
 }
 
-function confirmOrderStatus(id, newStatus, currentStatus, orderLabel) {
-    State.pendingOp = { type: "orderStatus", id: id, newStatus: newStatus };
+function confirmOrderStatus(id, newStatus, currentStatus, orderLabel, opts) {
+    opts = opts || {};
+    State.pendingOp = { type: "orderStatus", id: id, newStatus: newStatus, stage: opts.stage, needsCode: !!opts.needsCode };
     document.getElementById("confirm-title").textContent = "Update Order Status";
-    document.getElementById("confirm-msg").textContent = "Change order " + (orderLabel || "") + " from " + currentStatus + " to " + newStatus + "?";
+    document.getElementById("confirm-msg").textContent = newStatus === "CANCELLED"
+        ? "Cancel order " + (orderLabel || "") + "? The customer is refunded and stock goes back."
+        : "Order " + (orderLabel || "") + ": " + (opts.label || newStatus.replace(/_/g, " ")) + "?";
     var notesWrap = document.getElementById("confirm-notes-wrap");
     notesWrap.classList.toggle("d-none", newStatus !== "CANCELLED");
     document.getElementById("confirm-notes").value = "";
+    document.getElementById("confirm-code-wrap").classList.toggle("d-none", !opts.needsCode);
+    document.getElementById("confirm-code").value = "";
     document.getElementById("btn-confirm-action").className = "btn " + (newStatus === "CANCELLED" ? "btn-danger" : "btn-primary");
     document.getElementById("btn-confirm-action").textContent = newStatus === "CANCELLED" ? "Cancel Order" : "Update";
     new bootstrap.Modal(document.getElementById("modal-confirm")).show();
@@ -853,14 +886,27 @@ async function executeConfirmedOp() {
             var orderId = State.pendingOp.id;
             var newStatus = State.pendingOp.newStatus;
             var notes = newStatus === "CANCELLED" ? document.getElementById("confirm-notes").value.trim() : "";
-            await Api.updateOrderStatus(orderId, newStatus, notes || undefined);
+            var extra = {};
+            if (State.pendingOp.stage) extra.stage = State.pendingOp.stage;
+            if (State.pendingOp.needsCode) {
+                var code = document.getElementById("confirm-code").value.replace(/\D/g, "");
+                if (code.length !== 6) {
+                    document.getElementById("confirm-code").classList.add("is-invalid");
+                    btn.disabled = false;
+                    btn.textContent = "Update";
+                    return;
+                }
+                document.getElementById("confirm-code").classList.remove("is-invalid");
+                extra.deliveryCode = code;
+            }
+            await Api.updateOrderStatus(orderId, newStatus, notes || undefined, extra);
             bootstrap.Modal.getInstance(document.getElementById("modal-confirm")).hide();
             if (typeof Layout !== "undefined" && Layout.refreshShopOrderBadge) Layout.refreshShopOrderBadge();
             loadOrders({ keepPage: true });
             openOrderDetail(orderId);
             flashPageAlert("success", newStatus === "CANCELLED"
                 ? "Order cancelled successfully."
-                : "Order status updated to " + newStatus.replace(/_/g, " ") + ".");
+                : "Order updated: " + (State.pendingOp.stage ? STAGE_LABEL[State.pendingOp.stage] : newStatus.replace(/_/g, " ")).toLowerCase() + ".");
             State.pendingOp = null;
             btn.disabled = false;
             btn.textContent = "Confirm";

@@ -2,7 +2,8 @@
  * Marketplace API helper: /admin/marketplace
  * Third-party vendors from the vendor site (separate from Suppliers): vendor
  * review and KYC documents, product approval, vendor orders, marketplace settings,
- * and (Phase 3) balances, payouts, returns and category commission.
+ * (Phase 3) balances, payouts, returns and category commission, and (Phase 4)
+ * the Receiving Center: vendor stock deliveries, stock and withdrawals.
  * Requires: auth.js (Auth.fetch)
  */
 const Marketplace = (function () {
@@ -54,8 +55,7 @@ const Marketplace = (function () {
         // Vendor orders (one per vendor per web shop order)
         listOrders: (params) => apiFetch(base + '/orders' + qs(params)),
         getOrder: (id) => apiFetch(`${base}/orders/${id}`),
-        cancelOrder: (id, reason) => apiFetch(`${base}/orders/${id}/cancel`, jsonBody('POST', { reason })),
-        confirmDelivery: (id, code) => apiFetch(`${base}/orders/${id}/confirm-delivery`, jsonBody('POST', { code })),
+        cancelOrder: (id, reason, restock) => apiFetch(`${base}/orders/${id}/cancel`, jsonBody('POST', { reason, restock })),
         listReturns: (id) => apiFetch(`${base}/orders/${id}/returns`),
         recordReturn: (id, payload) => apiFetch(`${base}/orders/${id}/returns`, jsonBody('POST', payload)),
 
@@ -75,6 +75,19 @@ const Marketplace = (function () {
         markPaid: (id, reference) => apiFetch(`${base}/payouts/${id}/mark-paid`, jsonBody('POST', { reference })),
         markFailed: (id, reason) => apiFetch(`${base}/payouts/${id}/mark-failed`, jsonBody('POST', { reason })),
         checkPayout: (id) => apiFetch(`${base}/payouts/${id}/check`, { method: 'POST' }),
+
+        // Receiving Center (Phase 4)
+        rcIntakes: (params) => apiFetch(base + '/receiving-center/intakes' + qs(params)),
+        rcIntake: (id) => apiFetch(`${base}/receiving-center/intakes/${id}`),
+        rcReceive: (id, payload) => apiFetch(`${base}/receiving-center/intakes/${id}/receive`, jsonBody('POST', payload)),
+        rcCancelIntake: (id, reason) => apiFetch(`${base}/receiving-center/intakes/${id}/cancel`, jsonBody('POST', { reason })),
+        rcStock: (params) => apiFetch(base + '/receiving-center/stock' + qs(params)),
+        rcMovements: (params) => apiFetch(base + '/receiving-center/stock/movements' + qs(params)),
+        rcAdjust: (productId, quantity, reason) => apiFetch(`${base}/receiving-center/stock/${productId}/adjust`, jsonBody('POST', { quantity, reason })),
+        rcWithdrawals: (params) => apiFetch(base + '/receiving-center/withdrawals' + qs(params)),
+        rcApproveWithdrawal: (id, note) => apiFetch(`${base}/receiving-center/withdrawals/${id}/approve`, jsonBody('POST', { note })),
+        rcRejectWithdrawal: (id, note) => apiFetch(`${base}/receiving-center/withdrawals/${id}/reject`, jsonBody('POST', { note })),
+        rcCollectedWithdrawal: (id, collectedBy) => apiFetch(`${base}/receiving-center/withdrawals/${id}/collected`, jsonBody('POST', { collectedBy })),
 
         // Category commission (Phase 3)
         categories: () => apiFetch(base + '/categories'),

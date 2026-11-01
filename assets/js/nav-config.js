@@ -181,6 +181,7 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Vendors", href: "marketplace-vendors.html", permission: read("marketplace:read") },
                 { label: "Product Approvals", href: "marketplace-products.html", permission: read("marketplace:read") },
                 { label: "Vendor Orders", href: "marketplace-orders.html", permission: read("marketplace:read") },
+                { label: "Receiving Center", href: "marketplace-receiving.html", permission: read("marketplace:read") },
                 { label: "Payouts", href: "marketplace-payouts.html", permission: read("marketplace:read") },
                 { label: "Settings", href: "marketplace-settings.html", permission: read("marketplace:read") },
             ],
