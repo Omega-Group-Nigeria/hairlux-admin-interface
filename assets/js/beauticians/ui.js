@@ -1253,15 +1253,30 @@ function renderSvcBeauticianPicker(query) {
     }).join('');
 }
 function updateSvcSelectedCount() {
-    var checkboxes = document.querySelectorAll('.svc-checkbox');
     var count = document.querySelectorAll('.svc-checkbox:checked').length;
     document.getElementById('svc-count-label').textContent = count + ' selected';
+    // Select All reflects the services showing (current category tab and search).
+    var shown = Array.from(document.querySelectorAll('.svc-catalog-row')).filter(function (row) { return row.style.display !== 'none'; });
+    var shownChecked = shown.filter(function (row) { return row.querySelector('.svc-checkbox').checked; }).length;
     var selectAll = document.getElementById('svc-select-all');
     if (selectAll) {
-        var total = checkboxes.length;
-        selectAll.checked = total > 0 && count === total;
-        selectAll.indeterminate = count > 0 && count < total;
+        selectAll.checked = shown.length > 0 && shownChecked === shown.length;
+        selectAll.indeterminate = shownChecked > 0 && shownChecked < shown.length;
     }
+    // Category tabs show "assigned / total" for each category.
+    var totals = { all: [0, 0] };
+    document.querySelectorAll('.svc-cat-section').forEach(function (section) {
+        var all = section.querySelectorAll('.svc-checkbox').length;
+        var on = section.querySelectorAll('.svc-checkbox:checked').length;
+        totals[section.dataset.cat] = [on, all];
+        totals.all[0] += on;
+        totals.all[1] += all;
+    });
+    document.querySelectorAll('[data-svc-cat-count]').forEach(function (badge) {
+        var t = totals[badge.dataset.svcCatCount] || [0, 0];
+        badge.textContent = t[0] + '/' + t[1];
+        badge.className = 'badge ms-1 ' + (t[0] ? 'bg-primary-lt' : 'bg-secondary-lt');
+    });
 }
 function showScrDefaultAlert(type, message) {
     var ok = document.getElementById('scr-default-success');

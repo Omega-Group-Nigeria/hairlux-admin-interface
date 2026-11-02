@@ -680,14 +680,43 @@ async function loadServicesForBeautician() {
         });
 
         if (!Array.isArray(allServices) || !allServices.length) {
+            document.getElementById('svc-category-tabs').classList.add('d-none');
             list.innerHTML = '<div class="text-center text-secondary py-4">No active home-service catalog items available.</div>';
             return;
         }
 
-        list.innerHTML = allServices.map(function (s) {
-            var checked = assignedIds[s.id] ? 'checked' : '';
-            return '<label class="service-check-label svc-catalog-row" data-name="' + escAttrLower(s.name) + '"><input type="checkbox" class="form-check-input svc-checkbox" value="' + s.id + '" ' + checked + '> <span>' + s.name + '</span> <span class="text-secondary ms-auto small">' + Services.formatMoney(s.homeServicePrice || 0) + '</span></label>';
+        // One section per service category (A-Z, uncategorised last); every
+        // service stays in the page so ticks survive switching tabs and Save
+        // still sends the whole selection.
+        var groups = {};
+        allServices.forEach(function (s) {
+            var key = s.category && s.category.id ? s.category.id : 'none';
+            if (!groups[key]) groups[key] = { id: key, name: s.category && s.category.name ? s.category.name : 'Other', services: [] };
+            groups[key].services.push(s);
+        });
+        var categories = Object.keys(groups).map(function (k) { return groups[k]; }).sort(function (a, b) {
+            if (a.id === 'none') return 1;
+            if (b.id === 'none') return -1;
+            return a.name.localeCompare(b.name);
+        });
+        if (_svcCategory !== 'all' && !groups[_svcCategory]) _svcCategory = 'all';
+
+        list.innerHTML = categories.map(function (c) {
+            return '<div class="svc-cat-section" data-cat="' + c.id + '">' +
+                '<div class="subheader mb-1 svc-cat-heading">' + escHtml(c.name) + '</div>' +
+                c.services.map(function (s) {
+                    var checked = assignedIds[s.id] ? 'checked' : '';
+                    return '<label class="service-check-label svc-catalog-row" data-name="' + escAttrLower(s.name) + '"><input type="checkbox" class="form-check-input svc-checkbox" value="' + s.id + '" ' + checked + '> <span>' + escHtml(s.name) + '</span> <span class="text-secondary ms-auto small">' + Services.formatMoney(s.homeServicePrice || 0) + '</span></label>';
+                }).join('') +
+                '</div>';
         }).join('');
+
+        var tabs = document.getElementById('svc-category-tabs');
+        tabs.innerHTML = [{ id: 'all', name: 'All' }].concat(categories).map(function (c) {
+            return '<li class="nav-item"><a href="#" class="nav-link' + (c.id === _svcCategory ? ' active' : '') + '" data-svc-cat="' + c.id + '">' +
+                escHtml(c.name) + ' <span class="badge bg-secondary-lt ms-1" data-svc-cat-count="' + c.id + '"></span></a></li>';
+        }).join('');
+        tabs.classList.remove('d-none');
         selectAllWrap.classList.remove('d-none');
         updateSvcSelectedCount();
         applySvcCatalogFilter();
@@ -700,9 +729,21 @@ async function loadServicesForBeautician() {
     }
 }
 
+/** The category tab open in the service assignment list ('all' or a category id). */
+var _svcCategory = 'all';
+
+function selectSvcCategory(id) {
+    _svcCategory = id;
+    document.querySelectorAll('#svc-category-tabs [data-svc-cat]').forEach(function (a) {
+        a.classList.toggle('active', a.dataset.svcCat === id);
+    });
+    applySvcCatalogFilter();
+}
+
 /**
- * Service name lookup for the assignment list: hides non-matching rows
- * instead of re-rendering, so existing checkbox selections survive.
+ * Category tab plus service name lookup for the assignment list: hides
+ * non-matching rows instead of re-rendering, so existing checkbox
+ * selections survive. Category headings show only on the All tab.
  */
 function applySvcCatalogFilter() {
     var list = document.getElementById('svc-catalog-list');
@@ -710,11 +751,22 @@ function applySvcCatalogFilter() {
     var q = String((document.getElementById('svc-service-search') || {}).value || '').trim().toLowerCase();
     var rows = list.querySelectorAll('.svc-catalog-row');
     var visible = 0;
-    rows.forEach(function (row) {
-        var match = !q || String(row.dataset.name || '').indexOf(q) !== -1;
-        row.style.display = match ? '' : 'none';
-        if (match) visible++;
+    list.querySelectorAll('.svc-cat-section').forEach(function (section) {
+        var inTab = _svcCategory === 'all' || section.dataset.cat === _svcCategory;
+        var shown = 0;
+        section.querySelectorAll('.svc-catalog-row').forEach(function (row) {
+            var match = inTab && (!q || String(row.dataset.name || '').indexOf(q) !== -1);
+            row.style.display = match ? '' : 'none';
+            if (match) shown++;
+        });
+        section.style.display = shown ? '' : 'none';
+        var heading = section.querySelector('.svc-cat-heading');
+        if (heading) heading.style.display = _svcCategory === 'all' ? '' : 'none';
+        visible += shown;
     });
+    var allText = document.getElementById('svc-select-all-text');
+    if (allText) allText.textContent = _svcCategory === 'all' ? (q ? 'Select all shown' : 'Select All') : 'Select all in this category';
+    updateSvcSelectedCount();
     var emptyEl = list.querySelector('.svc-catalog-empty');
     if (rows.length && !visible) {
         if (!emptyEl) {
@@ -1654,10 +1706,18 @@ function init() {
     document.getElementById('btn-svc-save').addEventListener('click', saveServiceAssignments);
     document.getElementById('svc-select-all').addEventListener('change', function () {
         var checked = this.checked;
-        document.querySelectorAll('.svc-checkbox').forEach(function (cb) {
-            cb.checked = checked;
+        // Only the services showing (current category tab and search).
+        document.querySelectorAll('.svc-catalog-row').forEach(function (row) {
+            if (row.style.display === 'none') return;
+            row.querySelector('.svc-checkbox').checked = checked;
         });
         updateSvcSelectedCount();
+    });
+    document.getElementById('svc-category-tabs').addEventListener('click', function (e) {
+        var tab = e.target.closest('[data-svc-cat]');
+        if (!tab) return;
+        e.preventDefault();
+        selectSvcCategory(tab.dataset.svcCat);
     });
     if (!RBAC.can('beauticians:assign_services')) {
         document.getElementById('btn-svc-save').classList.add('d-none');
