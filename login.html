@@ -295,6 +295,17 @@
             themeObserver.observe(document.body, { attributes: true, attributeFilter: ['data-bs-theme'] });
         }
 
+        // login.html?portal=staff (the new-staff welcome email links here)
+        // opens on the "For Staff" tab.
+        (function () {
+            var wanted = null;
+            try { wanted = new URLSearchParams(window.location.search).get('portal'); } catch (_) { }
+            if (wanted === 'staff') {
+                var staffTab = document.getElementById('login-type-staff');
+                if (staffTab) staffTab.checked = true;
+            }
+        })();
+
         // Forgot password resets the account for the selected tab (staff or admin).
         (function () {
             var link = document.getElementById('forgot-password-link');
