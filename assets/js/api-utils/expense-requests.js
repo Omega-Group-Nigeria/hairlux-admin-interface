@@ -121,6 +121,11 @@ const ExpenseRequests = (function () {
         return _banksCache;
     }
 
+    /** Software Costs services, categories and billing cycles for a Software & Technology expense. */
+    async function softwareOptions() {
+        return apiFetch('/admin/expense-requests/software-options');
+    }
+
     /** Account name for a bank + account number. Saves nothing. */
     async function resolveAccount(bankCode, accountNumber) {
         return apiFetch('/admin/expense-requests/resolve-account', {
@@ -130,5 +135,5 @@ const ExpenseRequests = (function () {
         });
     }
 
-    return { getAll, getOne, create, update, submit, remove, approve, reject, overrideAmount, reverse, retryPayout, resyncPayout, payoutReceipt, payoutReceiptPdf, banks, resolveAccount };
+    return { getAll, getOne, create, update, submit, remove, approve, reject, overrideAmount, reverse, retryPayout, resyncPayout, payoutReceipt, payoutReceiptPdf, banks, resolveAccount, softwareOptions };
 })();
