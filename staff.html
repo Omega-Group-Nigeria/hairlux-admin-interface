@@ -267,18 +267,13 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="row g-2 mb-2">
-                                        <div class="col-6">
+                                        <div class="col-12">
                                             <input id="birthdays-days" type="text" class="form-control form-control-sm"
                                                 inputmode="numeric" pattern="[0-9]*" maxlength="3" value="30"
                                                 placeholder="e.g. 30">
                                             <div class="form-hint" style="font-size: 10px;">Days to look ahead (1-365).
+                                                Active and on-leave staff only.
                                             </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <select id="birthdays-include-former" class="form-select form-select-sm">
-                                                <option value="false">Active only</option>
-                                                <option value="true">Include former</option>
-                                            </select>
                                         </div>
                                     </div>
                                     <div id="birthdays-list" class="birthday-list text-secondary small">No data loaded.
@@ -900,8 +895,7 @@
             try {
                 var daysAheadRaw = Number(document.getElementById("birthdays-days").value || 30);
                 var daysAhead = Math.max(1, Math.min(365, daysAheadRaw || 30));
-                var includeFormer = document.getElementById("birthdays-include-former").value === "true";
-                var rows = await Staff.getUpcomingBirthdays({ daysAhead: daysAhead, includeFormer: includeFormer });
+                var rows = await Staff.getUpcomingBirthdays({ daysAhead: daysAhead });
                 if (RBAC.isManagerScoped()) {
                     var managedIds = RBAC.getManagedBranchIds();
                     rows = rows.filter(function (x) { return x.location && managedIds.indexOf(x.location.id) !== -1; });
