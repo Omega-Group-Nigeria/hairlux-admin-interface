@@ -95,10 +95,37 @@ const LifecycleCampaigns = (function () {
         return raw;
     }
 
+    // ── SMS consent: campaigns only text people who agreed to SMS ──
+
+    async function smsConsentSummary() {
+        return apiFetch('/admin/lifecycle-campaigns/sms-consent/summary');
+    }
+
+    async function smsConsentLookup(phones) {
+        return apiFetch('/admin/lifecycle-campaigns/sms-consent/lookup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phones }),
+        });
+    }
+
+    /** consent true needs source (how they agreed). Returns the raw envelope for its message. */
+    async function setSmsConsent(phones, consent, source) {
+        const res = await Auth.fetch('/admin/lifecycle-campaigns/sms-consent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phones, consent, source: source || undefined }),
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(Array.isArray(raw.message) ? raw.message.join(' ') : raw.message || `Request failed (${res.status})`);
+        return raw;
+    }
+
     return {
         getAll, getOne, create, update, remove,
         getAllSequences, getOneSequence, createSequence, updateSequence, removeSequence,
         runNow,
         previewExisting, sendToExisting, previewSequenceExisting, sendSequenceToExisting,
+        smsConsentSummary, smsConsentLookup, setSmsConsent,
     };
 })();

@@ -108,6 +108,7 @@
                     <ul class="nav nav-tabs mb-3" id="main-tabs">
                         <li class="nav-item"><a href="#" class="nav-link active" data-tab="templates">Templates</a></li>
                         <li class="nav-item"><a href="#" class="nav-link" data-tab="sequences">Sequences</a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" data-tab="sms-consent">SMS consent</a></li>
                     </ul>
 
                     <div id="tab-templates">
@@ -220,6 +221,53 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SMS consent: campaigns only text people who agreed to SMS -->
+                    <div id="tab-sms-consent" style="display:none">
+                        <div class="row row-cards">
+                            <div class="col-lg-5">
+                                <div class="card">
+                                    <div class="card-header"><h3 class="card-title">Who can get SMS</h3></div>
+                                    <div class="card-body">
+                                        <p class="text-secondary small">SMS campaigns only reach customers who agreed to SMS. Customers agree by ticking "Text me Hairlux offers" on the website booking form or sign-up. If a customer agreed another way (in person, on a paper form), record it here. An unsubscribe link in every SMS turns it off again.</p>
+                                        <div class="row g-2 text-center">
+                                            <div class="col-6"><div class="border rounded p-2"><div class="h2 mb-0" id="sc-count-customers">-</div><div class="small text-secondary">Customer contacts</div></div></div>
+                                            <div class="col-6"><div class="border rounded p-2"><div class="h2 mb-0" id="sc-count-users">-</div><div class="small text-secondary">App users</div></div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-7">
+                                <div class="card">
+                                    <div class="card-header"><h3 class="card-title">Check or change SMS consent</h3></div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="sc-phones">Phone numbers</label>
+                                            <textarea class="form-control" id="sc-phones" rows="5" placeholder="One per line, e.g.&#10;0803 123 4567&#10;+2348123456789"></textarea>
+                                            <div class="form-hint">Up to 500 at a time. A number can match a customer contact and an app user: both are updated.</div>
+                                        </div>
+                                        <div class="mb-3" id="sc-source-wrap">
+                                            <label class="form-label" for="sc-source">How did they agree?</label>
+                                            <input class="form-control" id="sc-source" maxlength="150" placeholder="e.g. Paper form at Lekki branch">
+                                            <div class="form-hint">Needed to turn SMS on. Kept with their record as proof of consent.</div>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn" id="sc-btn-check">Check</button>
+                                            <button type="button" class="btn btn-primary" id="sc-btn-on">Turn SMS on</button>
+                                            <button type="button" class="btn btn-outline-danger" id="sc-btn-off">Turn SMS off</button>
+                                        </div>
+                                        <div id="sc-alert" class="mt-3"></div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter card-table">
+                                            <thead><tr><th>Number</th><th>Customer</th><th>SMS</th><th>How / when</th></tr></thead>
+                                            <tbody id="sc-tbody"><tr><td colspan="4" class="text-center text-secondary py-4">Enter numbers and press Check.</td></tr></tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -427,6 +475,7 @@
     <script src="assets/js/api-utils/auth.js"></script>
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/lifecycle-campaigns.js"></script>
+    <script src="assets/js/lifecycle-sms-consent.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
@@ -506,12 +555,14 @@
                 tab.classList.add('active');
                 document.getElementById('tab-templates').style.display = tab.dataset.tab === 'templates' ? '' : 'none';
                 document.getElementById('tab-sequences').style.display = tab.dataset.tab === 'sequences' ? '' : 'none';
+                document.getElementById('tab-sms-consent').style.display = tab.dataset.tab === 'sms-consent' ? '' : 'none';
                 // "New Template" lives in the page header, outside either
                 // tab -- the Sequences tab has its own "+ New Sequence"
                 // button in its own card header, so hide this one there
                 // rather than leave two ambiguous "new" actions visible.
                 document.getElementById('btn-new').style.display = tab.dataset.tab === 'templates' ? '' : 'none';
                 if (tab.dataset.tab === 'sequences') loadSequences();
+                if (tab.dataset.tab === 'sms-consent') SmsConsentTab.load();
             });
 
             document.getElementById('btn-run-now').addEventListener('click', async function () {
