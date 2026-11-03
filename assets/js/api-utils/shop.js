@@ -31,6 +31,7 @@
  *   GET    /admin/shop/orders/:id
  *   PATCH  /admin/shop/orders/:id/status     (JSON)
  *   POST   /admin/shop/orders/:id/record-balance (JSON, Pay on Delivery)
+ *   POST   /admin/shop/orders/:id/fez/book, /fez/sync; GET /admin/shop/orders/:id/fez (Fez Delivery)
  */
 
 const Shop = (() => {
@@ -262,6 +263,22 @@ const Shop = (() => {
         });
     }
 
+    /** Fez Delivery: book (or retry), read tracking, or apply Fez's status now. */
+    async function fezBook(id) {
+        const res = await Auth.fetch(`/admin/shop/orders/${id}/fez/book`, { method: "POST" });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || `Request failed (${res.status})`);
+        return raw; // { success, message, data }: success false when Fez refused the booking
+    }
+
+    async function fezTrack(id) {
+        return apiFetch(`/admin/shop/orders/${id}/fez`);
+    }
+
+    async function fezSync(id) {
+        return apiFetch(`/admin/shop/orders/${id}/fez/sync`, { method: "POST" });
+    }
+
     /** extra: { stage } while PROCESSING, { deliveryCode } to mark a marketplace order DELIVERED. */
     async function updateOrderStatus(id, status, notes, extra) {
         const body = Object.assign({ status }, extra || {});
@@ -369,6 +386,9 @@ const Shop = (() => {
         getOrder,
         updateOrderStatus,
         recordOrderBalance,
+        fezBook,
+        fezTrack,
+        fezSync,
         getProductImages,
         getProductImageUrl,
         statusBadge,

@@ -1,6 +1,6 @@
 /**
  * Marketplace Settings page (marketplace-settings.html): vendor sign-ups,
- * review target, agreement, default commission, Pay on Delivery and delivery,
+ * review target, agreement, default commission, Pay on Delivery and delivery, Fez Delivery,
  * vendor payouts (mode, method, hold, minimum) and commission by category.
  * Requires: auth.js, rbac.js, marketplace.js
  */
@@ -36,6 +36,13 @@
         $('s-rc-phone').value = s.receivingCenterPhone || '';
         $('s-rc-hours').value = s.receivingCenterHours || '';
         $('s-low-stock').value = s.lowStockThreshold;
+        $('s-fez').checked = s.fezEnabled;
+        $('s-rc-state').value = s.receivingCenterState || '';
+        $('s-fez-markup').value = s.fezMarkupPercent;
+        $('s-parcel-kg').value = s.defaultParcelWeightKg;
+        $('s-fez-badge').innerHTML = !s.fezConfigured
+            ? '<span class="badge bg-danger-lt">Fez login not set on the server</span>'
+            : (s.fezSandbox ? '<span class="badge bg-warning-lt">Sandbox</span>' : '<span class="badge bg-success-lt">Live</span>');
         $('s-payout-mode').value = s.payoutMode;
         $('s-payout-method').value = s.payoutMethod;
         $('s-hold-days').value = s.payoutHoldDays;
@@ -61,6 +68,10 @@
                 receivingCenterPhone: $('s-rc-phone').value.trim() || null,
                 receivingCenterHours: $('s-rc-hours').value.trim() || null,
                 lowStockThreshold: Number($('s-low-stock').value),
+                fezEnabled: $('s-fez').checked,
+                receivingCenterState: $('s-rc-state').value.trim() || null,
+                fezMarkupPercent: Number($('s-fez-markup').value),
+                defaultParcelWeightKg: Number($('s-parcel-kg').value),
                 payoutMode: $('s-payout-mode').value,
                 payoutMethod: $('s-payout-method').value,
                 payoutHoldDays: Number($('s-hold-days').value),

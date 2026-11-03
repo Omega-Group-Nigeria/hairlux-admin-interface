@@ -775,6 +775,83 @@ function shipmentsHtml(o) {
     }).join("") + '</div>';
 }
 
+/**
+ * Fez Delivery: booked automatically at Ready for dispatch. Shows the Fez
+ * order number and status, a failed booking's reason with Retry, and lets
+ * staff check Fez now (which also applies Out for delivery / Delivered).
+ */
+function fezHtml(o) {
+    var f = o.fez || {};
+    var canAct = RBAC.can(Shop.PERMISSIONS.UPDATE_STATUS);
+    var open = o.status !== "CANCELLED" && o.status !== "DELIVERED";
+    var readyForFez = o.status === "PROCESSING" && o.fulfilmentStage === "READY_FOR_DISPATCH";
+    if (!f.orderNo && !f.bookingError && !readyForFez) return "";
+    var body;
+    if (f.orderNo) {
+        body = '<div class="d-flex justify-content-between"><span>Fez order</span><span class="fw-semibold">' + esc(f.orderNo) + '</span></div>' +
+            '<div class="d-flex justify-content-between"><span>Fez status</span><span>' + esc(f.status || "-") + '</span></div>' +
+            (f.statusAt ? '<div class="text-secondary">Updated ' + Shop.formatDateTime(f.statusAt) + '</div>' : "") +
+            (f.note ? '<div class="text-danger mt-1">' + esc(f.note) + '</div>' : "") +
+            '<div id="fez-history" class="mt-2"></div>' +
+            '<div class="d-flex gap-2 mt-2"><button class="btn btn-sm" id="btn-fez-track">Show tracking</button>' +
+            (canAct && open ? '<button class="btn btn-sm" id="btn-fez-sync">Check Fez now</button>' : "") + '</div>';
+    } else if (f.bookingError) {
+        body = '<div class="text-danger">Booking failed: ' + esc(f.bookingError) + '</div>' +
+            (canAct && open ? '<button class="btn btn-sm btn-primary mt-2 w-100" id="btn-fez-book">Retry Fez booking</button>' : "");
+    } else {
+        body = '<div class="text-secondary">Not booked with Fez yet.</div>' +
+            (canAct && open ? '<button class="btn btn-sm btn-primary mt-2 w-100" id="btn-fez-book">Book with Fez</button>' : "");
+    }
+    return '<div class="p-3 border-bottom small"><div class="subheader mb-2">Fez Delivery</div>' + body + '</div>';
+}
+
+function wireFez(o) {
+    var book = document.getElementById("btn-fez-book");
+    if (book) book.addEventListener("click", async function () {
+        book.disabled = true;
+        try {
+            var r = await Api.fezBook(o.id);
+            flashPageAlert(r.success ? "success" : "danger", r.message);
+            loadOrders({ keepPage: true });
+            openOrderDetail(o.id);
+        } catch (e) {
+            flashPageAlert("danger", e.message || "Could not book with Fez.");
+            book.disabled = false;
+        }
+    });
+    var sync = document.getElementById("btn-fez-sync");
+    if (sync) sync.addEventListener("click", async function () {
+        sync.disabled = true;
+        try {
+            var r = await Api.fezSync(o.id);
+            flashPageAlert("success", "Fez says: " + (r.status || "no status yet"));
+            loadOrders({ keepPage: true });
+            openOrderDetail(o.id);
+        } catch (e) {
+            flashPageAlert("danger", e.message || "Could not reach Fez.");
+            sync.disabled = false;
+        }
+    });
+    var track = document.getElementById("btn-fez-track");
+    if (track) track.addEventListener("click", async function () {
+        var box = document.getElementById("fez-history");
+        track.disabled = true;
+        box.innerHTML = '<div class="spinner-border spinner-border-sm"></div>';
+        try {
+            var t = await Api.fezTrack(o.id);
+            var h = t.history || [];
+            box.innerHTML = h.length ? '<ul class="list-unstyled mb-0">' + h.map(function (x) {
+                return '<li class="py-1 border-top"><span class="fw-semibold">' + esc(x.status) + '</span>' + (x.at ? ' <span class="text-secondary">' + esc(x.at) + '</span>' : "") +
+                    (x.description ? '<div class="text-secondary">' + esc(x.description) + '</div>' : "") + '</li>';
+            }).join("") + '</ul>' : '<div class="text-secondary">No tracking events yet.</div>';
+        } catch (e) {
+            box.innerHTML = '<div class="text-danger">' + esc(e.message) + '</div>';
+        } finally {
+            track.disabled = false;
+        }
+    });
+}
+
 function wireRecordBalance(o) {
     var btn = document.getElementById("btn-record-balance");
     if (!btn) return;
@@ -819,9 +896,10 @@ async function openOrderDetail(id) {
             '<div class="mt-3 small"><div class="d-flex justify-content-between"><span>Subtotal</span><span>' + Shop.formatMoney(o.subtotal) + '</span></div>' +
             '<div class="d-flex justify-content-between"><span>Delivery</span><span>' + Shop.formatMoney(o.deliveryFee) + '</span></div>' +
             '<div class="d-flex justify-content-between fw-semibold mt-1"><span>Total</span><span>' + Shop.formatMoney(o.totalAmount) + '</span></div></div></div>' +
-            pickListHtml(o) + paymentHtml(o) + shipmentsHtml(o) +
+            pickListHtml(o) + fezHtml(o) + paymentHtml(o) + shipmentsHtml(o) +
             (o.notes ? '<div class="p-3"><div class="subheader mb-1">Notes</div><div class="small text-secondary">' + esc(o.notes) + '</div></div>' : "");
         wireRecordBalance(o);
+        wireFez(o);
         // Marketplace Phase 4: Hairlux fulfils every order, vendor items included (picked at the Receiving Center).
         if (RBAC.can(Shop.PERMISSIONS.UPDATE_STATUS)) {
             orderSteps(o).forEach(function (s) {
