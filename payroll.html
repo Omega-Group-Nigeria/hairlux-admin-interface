@@ -462,6 +462,7 @@
                 </div>
                 <div class="modal-body">
                     <div id="detail-actions" class="mb-3 d-flex gap-2"></div>
+                    <div id="detail-alert"></div>
                     <div class="table-responsive">
                         <table class="table table-sm table-vcenter">
                             <thead>
@@ -1201,6 +1202,7 @@
 
         async function viewPeriod(id) {
             currentPeriodId = id;
+            document.getElementById('detail-alert').innerHTML = '';
             var tbody = document.getElementById('detail-tbody');
             tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
             new bootstrap.Modal(document.getElementById('modal-period-detail')).show();
@@ -1209,8 +1211,11 @@
                 var period = await Payroll.getPeriod(id);
                 document.getElementById('detail-title').textContent = period.label + ': ' + period.status.replace(/_/g, ' ');
 
+                // 2026-11-03: also after generation. Awaiting release: the
+                // staff member's payslip updates straight away. Released: it is
+                // recorded, and applied by correcting the payslip.
                 var actions = document.getElementById('detail-actions');
-                actions.innerHTML = period.status === 'DRAFT'
+                actions.innerHTML = RBAC.can('payroll:manage_adjustments')
                     ? '<button class="btn btn-sm btn-outline-primary" onclick="openAdjustmentModal()">+ Add Bonus / Deduction</button>'
                     : '';
 
@@ -1347,7 +1352,8 @@
             try {
                 await Payroll.correctAdjustment(_pendingCorrectAdjustmentId, { amount: Number(amount), correctionReason: reason });
                 bootstrap.Modal.getInstance(document.getElementById('modal-correct-adjustment')).hide();
-                loadAdjustments(currentPeriodId, currentPeriodStatus);
+                // The payslip may have been recalculated too, so reload both tables.
+                viewPeriod(currentPeriodId);
             } catch (e) {
                 errEl.textContent = e.message || 'Failed to save correction.';
                 errEl.classList.remove('d-none');
@@ -1509,7 +1515,7 @@
             if (!staffId || !amount || !reason) { errEl.textContent = 'All fields are required.'; errEl.classList.remove('d-none'); return; }
 
             try {
-                await Payroll.createAdjustment(currentPeriodId, {
+                var saved = await Payroll.createAdjustment(currentPeriodId, {
                     staffId: staffId,
                     type: document.getElementById('adj-type').value,
                     category: document.getElementById('adj-category').value,
@@ -1519,7 +1525,15 @@
                     notes: document.getElementById('adj-notes').value.trim() || undefined,
                 });
                 bootstrap.Modal.getInstance(document.getElementById('modal-adjustment')).hide();
-                viewPeriod(currentPeriodId);
+                await viewPeriod(currentPeriodId);
+                var EFFECT = {
+                    APPLIED_AT_GENERATION: ['info', 'Saved. It is added to the payslip when payroll is generated.'],
+                    PAYSLIP_UPDATED: ['success', "Saved, and the staff member's payslip is updated."],
+                    NEEDS_CORRECTION: ['warning', 'Saved. This payslip is already published: use Correct on it to pay the change.'],
+                    NOT_UPDATED: ['warning', 'Saved, but the payslip was not updated now: use Recalculate on it.'],
+                };
+                var effect = EFFECT[saved && saved.payslipEffect] || ['success', 'Saved.'];
+                document.getElementById('detail-alert').innerHTML = '<div class="alert alert-' + effect[0] + ' alert-dismissible">' + esc(effect[1]) + '<a class="btn-close" data-bs-dismiss="alert"></a></div>';
             } catch (e) {
                 errEl.textContent = e.message || 'Failed to save adjustment.';
                 errEl.classList.remove('d-none');
