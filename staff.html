@@ -952,7 +952,7 @@
             // it's a separate, selective (admin-requested-only) track with
             // its own dedicated section below (renderAddressVerificationStatus),
             // never the generic Approve/Reject flow this checklist uses.
-            // Approving it generically here would bypass QoreID entirely --
+            // Approving it generically here would bypass the field verification entirely --
             // marking it verified with no actual physical check having
             // happened.
             var items = (onboarding.items || []).filter(function (i) { return i.type !== 'PHYSICAL_ADDRESS_VERIFICATION'; });
@@ -1365,7 +1365,7 @@
                 html += '<div class="text-secondary small">Submitted ' + esc(Staff.formatDate(av.submittedAt)) + '</div>';
             }
             if ((av.status === 'VERIFIED' || av.status === 'REJECTED') && av.reportUrl) {
-                html += '<div class="small mt-1"><a href="' + esc(av.reportUrl) + '" target="_blank" rel="noopener">View QoreID report</a></div>';
+                html += '<div class="small mt-1"><a href="' + esc(av.reportUrl) + '" target="_blank" rel="noopener">View verification report</a></div>';
             }
             return html;
         }
@@ -2167,7 +2167,7 @@
         }
 
         async function handleRequestAddressVerification(id) {
-            if (!confirm("Request Physical Address Verification for this staff member? They'll see this pending request on their Staff Portal and need to submit their address details there. QoreID's field agents then verify it physically, typically within 24-48 hours.")) return;
+            if (!confirm("Request Physical Address Verification for this staff member? They'll see this pending request on their Staff Portal and need to submit their address details there. A Prembly field agent then verifies it in person, usually within 2-3 days.")) return;
             try {
                 await Staff.requestAddressVerification(id);
                 if (_currentStaffId === id) await openStaffDetail(id);
@@ -2177,7 +2177,7 @@
         }
 
         async function handleCancelAddressVerification(id) {
-            if (!confirm("Cancel this Physical Address Verification request? This only stops us from tracking it -- if a QoreID field visit is already underway, it is not actually called off.")) return;
+            if (!confirm("Cancel this Physical Address Verification request? This only stops us from tracking it -- if a field visit is already underway, it is not actually called off.")) return;
             try {
                 await Staff.cancelAddressVerification(id);
                 if (_currentStaffId === id) await openStaffDetail(id);

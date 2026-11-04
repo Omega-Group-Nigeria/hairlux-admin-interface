@@ -734,17 +734,17 @@ function openAddressVerificationModal() {
   document.getElementById('onboarding-modal-box').innerHTML =
     '<div class="oc-modal-error" id="oc-modal-error"></div>' +
     '<h3>Physical Address Verification</h3>' +
-    '<div class="oc-modal-sub">QoreID field agents will visit within 24-48 hours to confirm this address. Fill in every field accurately -- an agent physically checks against what you enter here.</div>' +
+    '<div class="oc-modal-sub">A field agent will visit (usually within 2-3 days) to confirm this address. Fill in every field accurately -- an agent physically checks against what you enter here.</div>' +
 
     '<div class="oc-field"><label>Full Address</label><input type="text" id="av-street" value="' + escapeHtml((av && av.street) || '') + '"></div>' +
     '<div class="oc-field"><label>City</label><input type="text" id="av-city" value="' + escapeHtml((av && av.city) || '') + '"></div>' +
     '<div class="oc-field"><label>LGA (Local Government Area)</label><input type="text" id="av-lga" value="' + escapeHtml((av && av.lgaName) || '') + '"></div>' +
     '<div class="oc-field"><label>State</label><input type="text" id="av-state" value="' + escapeHtml((av && av.stateName) || '') + '"></div>' +
-    '<div class="oc-field"><label>Landmark <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
-    // Everything below maps to QoreID's addressExtraData, which Physical
-    // Address Verification Pro requires. Shown and sent with every submission.
+    '<div class="oc-field"><label>Nearest Landmark</label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
+    // House number goes to Prembly; the building details below are kept
+    // with the request for admin review. Shown and sent with every submission.
     '<div id="av-extra-fields">' +
-    '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
+    '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(write None if there is no number)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
     '<div class="oc-field"><label>Description of the property</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
 
     '<div class="oc-field">' +
@@ -818,9 +818,11 @@ async function submitAddressVerificationForm() {
   formData.append('city', city);
   formData.append('lgaName', lga);
   formData.append('stateName', state);
-  const landmark = val('av-landmark'); if (landmark) formData.append('landmark', landmark);
+  const landmark = val('av-landmark');
+  if (!landmark) { showOnboardingModalError('Enter the nearest landmark so the field agent can find the address.'); return; }
+  formData.append('landmark', landmark);
 
-  // QoreID addressExtraData (required by Physical Address Verification Pro).
+  // Building details (kept for admin review).
   const description = val('av-general-description');
   if (!description) { showOnboardingModalError('Describe the property so the field agent can find it (e.g. gate colour, nearby landmark).'); return; }
   formData.append('generalDescription', description);
@@ -828,7 +830,9 @@ async function submitAddressVerificationForm() {
   formData.append('buildingStatus', val('av-building-status'));
   formData.append('buildingType', val('av-building-type'));
   formData.append('hasGateAndFence', document.getElementById('av-has-gate-and-fence').checked ? 'true' : 'false');
-  const houseNumber = val('av-house-number'); if (houseNumber) formData.append('houseNumber', houseNumber);
+  const houseNumber = val('av-house-number');
+  if (!houseNumber) { showOnboardingModalError('Enter the house number, or None if the house has no number.'); return; }
+  formData.append('houseNumber', houseNumber);
   const colour = val('av-building-colour'); if (colour) formData.append('buildingColour', colour);
   const lat = val('av-latitude'), lng = val('av-longitude');
   if ((lat && !lng) || (!lat && lng)) { showOnboardingModalError('Enter both latitude and longitude, or leave both empty.'); return; }
