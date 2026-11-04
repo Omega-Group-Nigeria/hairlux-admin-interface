@@ -2168,6 +2168,8 @@
       </div>
       <div class="sb-item" onclick="show('attendance')"><span class="ico">🕐</span>Attendance</div>
       <div class="sb-item" onclick="show('leave')"><span class="ico">🗓️</span>Leave & Permission</div>
+      <div class="sb-item" onclick="show('company-property')"><span class="ico">🧰</span>Company Property<span
+          class="bdg amber" id="cp-nav-badge" style="display:none" title="Items to confirm">0</span></div>
       <div class="sb-item" id="sb-payroll-item" onclick="handlePayrollNavClick()"><span class="ico">🧾</span>Payslips &
         Payroll</div>
       <div class="sb-item" onclick="show('announcements')"><span class="ico">📢</span>Announcements<span
@@ -2268,7 +2270,7 @@
               <div style="font-size:13px;font-weight:700;color:var(--gold)" id="cp-banner-title">Company property to confirm</div>
               <div style="font-size:12px;color:var(--muted)">Items have been issued to you. Check you have them and confirm.</div>
             </div>
-            <button class="btn btn-gold btn-sm" onclick="show('profile')">Review →</button>
+            <button class="btn btn-gold btn-sm" onclick="show('company-property')">Review →</button>
           </div>
 
           <div class="g4 mb6">
@@ -2454,13 +2456,6 @@
 
         <!-- ═══ PROFILE ═══ -->
         <div id="profile" class="screen">
-          <!-- Company property issued to me (hidden when there's none) -->
-          <div class="card mb4" id="my-property-card" style="display:none">
-            <div class="card-h">
-              <h3>My Company Property</h3><span class="badge" id="my-property-count">-</span>
-            </div>
-            <div class="card-b" id="my-property-list"></div>
-          </div>
           <div class="card mb4">
             <div class="prof-hero">
               <div class="av xl">-</div>
@@ -2749,6 +2744,18 @@
         </div>
 
         <!-- ═══ LEAVE REQUEST ═══ -->
+
+        <!-- ═══ COMPANY PROPERTY ═══ -->
+        <div id="company-property" class="screen">
+          <div class="card mb4" id="my-property-card">
+            <div class="card-h">
+              <h3>My Company Property</h3><span class="badge" id="my-property-count">-</span>
+            </div>
+            <div class="card-b" id="my-property-list">
+              <div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Loading…</div>
+            </div>
+          </div>
+        </div>
 
         <div id="leave" class="screen">
           <div class="card mb4">
@@ -3421,6 +3428,7 @@
       'agreements': ['Documents & Agreements', 'Documents'],
       'attendance': ['Attendance', 'Attendance'],
       'leave': ['Leave & Permission', 'Leave'],
+      'company-property': ['Company Property', 'Company Property'],
       'approvals': ['My Approvals', 'Approvals'],
       'bookings': ['Salon Bookings', 'Bookings'],
       'inventory': ['Inventory: Stock Management', 'Inventory'],
@@ -3499,7 +3507,7 @@
       if (id === 'dashboard' && typeof loadOnboarding === 'function') {
         loadOnboarding().then(() => { if (typeof renderDashboard === 'function') renderDashboard(); });
       }
-      if ((id === 'dashboard' || id === 'profile') && typeof loadMyCompanyProperty === 'function') {
+      if ((id === 'dashboard' || id === 'company-property') && typeof loadMyCompanyProperty === 'function') {
         loadMyCompanyProperty();
       }
       if (id === 'training' && typeof loadTraining === 'function') {

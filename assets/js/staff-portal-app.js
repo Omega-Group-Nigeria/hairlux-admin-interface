@@ -83,21 +83,31 @@ async function loadMyCompanyProperty() {
   const card = document.getElementById('my-property-card');
   const banner = document.getElementById('cp-banner');
   if (!card) return;
+  const list = document.getElementById('my-property-list');
   let items = [];
   try {
     items = await StaffSelf.getMyCompanyProperty();
   } catch (err) {
-    return; // the card just stays hidden
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Could not load your company property. Please try again later.</div>';
+    return;
   }
   const pending = items.filter((a) => !a.acknowledgedAt);
-  card.style.display = items.length ? '' : 'none';
   document.getElementById('my-property-count').textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
+  const navBadge = document.getElementById('cp-nav-badge');
+  if (navBadge) {
+    navBadge.textContent = String(pending.length);
+    navBadge.style.display = pending.length ? '' : 'none';
+  }
   if (banner) {
     banner.style.display = pending.length ? 'flex' : 'none';
     document.getElementById('cp-banner-title').textContent = pending.length + ' company item' + (pending.length === 1 ? '' : 's') + ' to confirm';
   }
+  if (!items.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">No company items are issued to you. When your branch gives you equipment, it will show here for you to confirm.</div>';
+    return;
+  }
   const CONDITION = { WORKING: 'Working', NEEDS_REPAIR: 'Needs repair', UNDER_REPAIR: 'Under repair', INOPERABLE: 'Inoperable', LOST: 'Lost', DISPOSED: 'Disposed' };
-  document.getElementById('my-property-list').innerHTML = items.map((a) =>
+  list.innerHTML = items.map((a) =>
     '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">' +
     '<div style="flex:1">' +
     '<div style="font-size:13px;font-weight:600">' + escapeHtml(a.name) + ' <span style="color:var(--muted);font-weight:400">' + escapeHtml(a.assetTag) + '</span></div>' +
