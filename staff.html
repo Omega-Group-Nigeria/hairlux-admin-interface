@@ -1391,6 +1391,13 @@
                 var compensationHistory = await Staff.getCompensationHistory(id).catch(function () { return []; });
                 var addressVerification = await Staff.getAddressVerification(id).catch(function () { return null; });
                 var statusHistory = await Staff.getStatusHistory(id).catch(function () { return []; });
+                // Company items issued to this person (needs company_property:read; hidden without it).
+                var heldAssets = RBAC.can('company_property:read')
+                    ? await Auth.fetch('/admin/company-property?assignedStaffId=' + encodeURIComponent(id))
+                        .then(function (r) { return r.ok ? r.json() : null; })
+                        .then(function (j) { return j && Array.isArray(j.data) ? j.data : null; })
+                        .catch(function () { return null; })
+                    : null;
                 var history = s.histories || s.employmentHistory || s.history || [];
                 var employmentStartDate = s.employmentStartDate || s.startDate || null;
                 if (!employmentStartDate && history.length) {
@@ -1480,6 +1487,20 @@
                     '</div>' +
                     (renderAddressVerificationStatus(addressVerification)) +
                     '</div>' +
+                    (heldAssets === null ? '' :
+                        '<div class="mb-3">' +
+                        '<div class="d-flex align-items-center justify-content-between mb-1"><div class="fw-semibold">Company Property</div>' +
+                        '<a class="small" href="company-property.html">Open</a></div>' +
+                        (heldAssets.length && s.employmentStatus !== 'ACTIVE' && s.employmentStatus !== 'ON_LEAVE'
+                            ? '<div class="alert alert-danger py-2 px-3 small mb-2">This staff member is ' + esc(String(s.employmentStatus).toLowerCase()) + ' but still has ' + heldAssets.length + ' company item(s). Recover them and record the return.</div>' : '') +
+                        (heldAssets.length
+                            ? heldAssets.map(function (a) {
+                                return '<div class="history-item small"><span class="fw-semibold">' + esc(a.assetTag) + '</span> ' + esc(a.name) +
+                                    ' <span class="text-secondary">&middot; since ' + esc(Staff.formatDate(a.assignedAt)) + '</span>' +
+                                    (a.acknowledgedAt ? ' <span class="badge bg-success-lt">Confirmed</span>' : ' <span class="badge bg-warning-lt">Not confirmed</span>') + '</div>';
+                            }).join('')
+                            : '<div class="text-secondary small">No company items issued.</div>') +
+                        '</div>') +
                     // Every status change with its reason (newest first).
                     '<div class="mb-3">' +
                     '<div class="fw-semibold mb-1">Status History</div>' +
