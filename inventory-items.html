@@ -1628,17 +1628,30 @@
 
             var btn = document.getElementById('btn-save-edit-item');
             btn.disabled = true;
+            var payload = {
+                name: name,
+                category: category,
+                unit: unit || undefined,
+                lowStockThreshold: threshold ? Number(threshold) : undefined,
+                price: price ? Number(price) : undefined,
+                expiryDate: expiry || undefined,
+                supplierId: document.getElementById('ei-supplier').value || null,
+                productId: document.getElementById('ei-product').value || null,
+            };
             try {
-                await Inventory.update(id, {
-                    name: name,
-                    category: category,
-                    unit: unit || undefined,
-                    lowStockThreshold: threshold ? Number(threshold) : undefined,
-                    price: price ? Number(price) : undefined,
-                    expiryDate: expiry || undefined,
-                    supplierId: document.getElementById('ei-supplier').value || null,
-                    productId: document.getElementById('ei-product').value || null,
-                });
+                try {
+                    await Inventory.update(id, payload);
+                } catch (err) {
+                    // Unlinking an item that service recipes rely on: show which
+                    // services and ask before going ahead.
+                    if (err.code !== 'UNLINK_AFFECTS_SERVICES') throw err;
+                    var list = (err.services || []).map(function (s) { return '  - ' + s; }).join('\n');
+                    var ok = confirm('These services use this item\'s product in their recipe:\n\n' + list +
+                        '\n\nAfter unlinking, completing a booking for any of them at this branch will fail until another item here is linked to the product.\n\nUnlink anyway?');
+                    if (!ok) { errEl.textContent = 'Not saved: the item is still linked to its product.'; errEl.classList.remove('d-none'); return; }
+                    payload.confirmUnlink = true;
+                    await Inventory.update(id, payload);
+                }
                 bootstrap.Modal.getInstance(document.getElementById('modal-edit-item')).hide();
                 reloadItemsInPlace(id);
                 loadSummaryStats();
