@@ -8,6 +8,9 @@
  *
  * Usage:
  *   SearchableSelect.attach('my-select-id');           // once, after the element exists
+ *   SearchableSelect.attach('my-select-id', { allowClear: true }); // also offer the empty-value
+ *                                                       // option (e.g. "Not linked") and treat an
+ *                                                       // emptied box as choosing it
  *   SearchableSelect.refresh('my-select-id');           // after repopulating its <option>s
  *
  * Deliberately dependency-free (no external library), matching the rest of
@@ -41,7 +44,8 @@ const SearchableSelect = (function () {
     function renderList(state, query) {
         const q = (query || '').trim().toLowerCase();
         const matches = state.options.filter(function (o) {
-            return o.value !== '' && !o.disabled && o.label.toLowerCase().indexOf(q) !== -1;
+            if (o.value === '' && !state.allowClear) return false;
+            return !o.disabled && o.label.toLowerCase().indexOf(q) !== -1;
         });
 
         if (!matches.length) {
@@ -52,7 +56,8 @@ const SearchableSelect = (function () {
         }
 
         state.list.innerHTML = matches.map(function (o) {
-            return '<div class="ss-item" data-value="' + escapeHtml(o.value) + '">' + escapeHtml(o.label) + '</div>';
+            const cls = o.value === '' ? 'ss-item ss-clear' : 'ss-item';
+            return '<div class="' + cls + '" data-value="' + escapeHtml(o.value) + '">' + escapeHtml(o.label) + '</div>';
         }).join('');
     }
 
@@ -64,7 +69,7 @@ const SearchableSelect = (function () {
         closeList(state);
     }
 
-    function attach(selectId) {
+    function attach(selectId, opts) {
         const select = document.getElementById(selectId);
         if (!select) return;
 
@@ -108,7 +113,7 @@ const SearchableSelect = (function () {
         wrap.appendChild(input);
         wrap.appendChild(list);
 
-        const state = { select: select, wrap: wrap, input: input, list: list, options: readOptions(select) };
+        const state = { select: select, wrap: wrap, input: input, list: list, options: readOptions(select), allowClear: !!(opts && opts.allowClear) };
         registry[selectId] = state;
 
         // Pre-fill the input if the select already has a selected value (e.g. edit forms).
@@ -119,7 +124,13 @@ const SearchableSelect = (function () {
         input.addEventListener('input', function () { renderList(state, input.value); state.list.style.display = 'block'; });
         input.addEventListener('blur', function () {
             // Delay so a click on a list item registers before the list disappears.
-            setTimeout(function () { closeList(state); }, 150);
+            setTimeout(function () {
+                // allowClear: an emptied box means the empty-value option.
+                if (state.allowClear && !state.input.value.trim() && state.select.value !== '') {
+                    selectValue(state, '');
+                }
+                closeList(state);
+            }, 150);
         });
         list.addEventListener('mousedown', function (e) {
             const item = e.target.closest('.ss-item');
@@ -167,6 +178,7 @@ const SearchableSelect = (function () {
             'box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:2000;font-size:.875rem;}' +
             '.ss-item{padding:8px 12px;cursor:pointer;}' +
             '.ss-item:hover{background:var(--tblr-primary-lt,#f1f5f9);}' +
+            '.ss-clear{font-style:italic;color:var(--tblr-secondary,#6c757d);border-bottom:1px solid var(--tblr-border-color,#dde1e6);}' +
             '.ss-empty{padding:8px 12px;color:var(--tblr-secondary,#6c757d);}';
         document.head.appendChild(style);
     }

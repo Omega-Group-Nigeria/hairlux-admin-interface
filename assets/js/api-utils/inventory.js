@@ -25,7 +25,13 @@ const Inventory = (function () {
     async function jsonFetch(path, options) {
         const res = await Auth.fetch(path, options);
         const raw = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(raw.message || 'Request failed');
+        if (!res.ok) {
+            const err = new Error(raw.message || 'Request failed');
+            // e.g. UNLINK_AFFECTS_SERVICES, with the services that would be affected
+            err.code = raw.code;
+            err.services = raw.services;
+            throw err;
+        }
         return raw.data || raw;
     }
 
