@@ -66,12 +66,75 @@ async function initStaffPortal() {
     loadSalesData(),
     loadPayrollSection(),
     loadCommission(),
+    loadMyCompanyProperty(),
   ]);
 
   sbWireSearchAndPagination();
   renderDashboard();
   renderOnboardingStatusStrip();
   renderNotifications();
+}
+
+/**
+ * Company property issued to me (2026-11-04): a card on My Profile with a
+ * Confirm button per item, and a dashboard banner while any are unconfirmed.
+ */
+async function loadMyCompanyProperty() {
+  const card = document.getElementById('my-property-card');
+  const banner = document.getElementById('cp-banner');
+  if (!card) return;
+  const list = document.getElementById('my-property-list');
+  let items = [];
+  try {
+    items = await StaffSelf.getMyCompanyProperty();
+  } catch (err) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Could not load your company property. Please try again later.</div>';
+    return;
+  }
+  const pending = items.filter((a) => !a.acknowledgedAt);
+  document.getElementById('my-property-count').textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
+  const navBadge = document.getElementById('cp-nav-badge');
+  if (navBadge) {
+    navBadge.textContent = String(pending.length);
+    navBadge.style.display = pending.length ? '' : 'none';
+  }
+  if (banner) {
+    banner.style.display = pending.length ? 'flex' : 'none';
+    document.getElementById('cp-banner-title').textContent = pending.length + ' company item' + (pending.length === 1 ? '' : 's') + ' to confirm';
+  }
+  if (!items.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">No company items are issued to you. When your branch gives you equipment, it will show here for you to confirm.</div>';
+    return;
+  }
+  const CONDITION = { WORKING: 'Working', NEEDS_REPAIR: 'Needs repair', UNDER_REPAIR: 'Under repair', INOPERABLE: 'Inoperable', LOST: 'Lost', DISPOSED: 'Disposed' };
+  list.innerHTML = items.map((a) =>
+    '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">' +
+    '<div style="flex:1">' +
+    '<div style="font-size:13px;font-weight:600">' + escapeHtml(a.name) + ' <span style="color:var(--muted);font-weight:400">' + escapeHtml(a.assetTag) + '</span></div>' +
+    '<div style="font-size:12px;color:var(--muted)">' + [
+      [a.brand, a.model].filter(Boolean).join(' '),
+      a.serialNumber ? 'S/N ' + a.serialNumber : '',
+      CONDITION[a.condition] || a.condition,
+      'issued ' + StaffSelf.formatDate(a.assignedAt),
+    ].filter(Boolean).map(escapeHtml).join(' &middot; ') + '</div>' +
+    '</div>' +
+    (a.acknowledgedAt
+      ? '<span class="badge b-green">Confirmed</span>'
+      : '<button class="btn btn-gold btn-sm" onclick="confirmCompanyProperty(\'' + a.id + '\', this)">I have it</button>') +
+    '</div>'
+  ).join('') + '<div style="font-size:12px;color:var(--muted);margin-top:10px">These items belong to HairLux. Look after them and return them when asked or when you leave.</div>';
+}
+
+async function confirmCompanyProperty(id, btn) {
+  if (!confirm('Confirm you have received this item and will look after it?')) return;
+  btn.disabled = true;
+  try {
+    await StaffSelf.acknowledgeCompanyProperty(id);
+    await loadMyCompanyProperty();
+  } catch (err) {
+    alert(err.message || 'Could not confirm. Please try again.');
+    btn.disabled = false;
+  }
 }
 
 function sbWireSearchAndPagination() {

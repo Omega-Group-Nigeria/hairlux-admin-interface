@@ -355,8 +355,18 @@ const StaffSelf = (() => {
         return formatDate(value);
     }
 
+    // Company property issued to me, and confirming I received it.
+    async function getMyCompanyProperty() {
+        return jsonFetch('/staff/me/company-property');
+    }
+    async function acknowledgeCompanyProperty(id) {
+        return jsonFetch('/staff/me/company-property/' + id + '/acknowledge', { method: 'POST' });
+    }
+
     return {
         getMe,
+        getMyCompanyProperty,
+        acknowledgeCompanyProperty,
         updateMyProfile,
         changePassword,
         getOnboarding,

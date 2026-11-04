@@ -216,10 +216,18 @@ const Staff = (() => {
         });
     }
 
-    async function restore(id) {
+    /** reason is required: it goes into the staff member's status history. */
+    async function restore(id, reason) {
         return jsonFetch("/admin/staff/" + id + "/restore", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason: reason }),
         });
+    }
+
+    /** Every employment status change with its reason, newest first. */
+    async function getStatusHistory(id) {
+        return jsonFetch("/admin/staff/" + id + "/status-history");
     }
 
     async function addHistory(id, payload) {
@@ -413,6 +421,7 @@ const Staff = (() => {
         removeRole,
         archive,
         restore,
+        getStatusHistory,
         addHistory,
         updateHistory,
         removeHistory,

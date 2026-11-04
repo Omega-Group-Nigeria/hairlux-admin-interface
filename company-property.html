@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Company Property</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Inventory &amp; Procurement</div>
+                            <h2 class="page-title">Company Property</h2>
+                            <div class="text-secondary small mt-1">Equipment and other company items at each branch: who has them, their condition, transfers between branches and full history.</div>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <button class="btn btn-primary d-none" id="btn-add-asset">Add item</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert"></div>
+
+                    <div class="row row-cards mb-3">
+                        <div class="col-6 col-lg"><div class="card card-sm"><div class="card-body"><div class="text-secondary small">Items</div><div class="h2 mb-0" id="sum-items">-</div></div></div></div>
+                        <div class="col-6 col-lg"><div class="card card-sm"><div class="card-body"><div class="text-secondary small">Purchase value</div><div class="h2 mb-0" id="sum-value">-</div></div></div></div>
+                        <div class="col-6 col-lg"><div class="card card-sm"><div class="card-body"><div class="text-secondary small">Issued to staff</div><div class="h2 mb-0" id="sum-issued">-</div><div class="small text-warning" id="sum-unconfirmed"></div></div></div></div>
+                        <div class="col-6 col-lg"><div class="card card-sm"><div class="card-body"><div class="text-secondary small">Not working</div><div class="h2 mb-0 text-danger" id="sum-notworking">-</div></div></div></div>
+                        <div class="col-6 col-lg"><div class="card card-sm"><div class="card-body"><div class="text-secondary small">In transit</div><div class="h2 mb-0" id="sum-transit">-</div></div></div></div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header"><h3 class="card-title">By branch</h3></div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead><tr><th>Branch</th><th class="text-end">Items</th><th class="text-end">Value</th><th class="text-end">Issued</th><th class="text-end">Needs repair</th><th class="text-end">Under repair</th><th class="text-end">Inoperable</th><th class="text-end">Lost</th><th class="text-end">In transit</th></tr></thead>
+                                <tbody id="branch-tbody"><tr><td colspan="9" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs mb-3" id="cp-tabs">
+                        <li class="nav-item"><a href="#" class="nav-link active" data-tab="items">Items</a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" data-tab="transfers">Transfers <span class="badge bg-azure-lt ms-1 d-none" id="transit-badge"></span></a></li>
+                    </ul>
+
+                    <div id="tab-items" class="card">
+                        <div class="card-header d-block">
+                            <div class="row g-2">
+                                <div class="col-md-3"><input class="form-control form-control-sm" id="f-search" placeholder="Search tag, name, serial, staff..."></div>
+                                <div class="col-6 col-md-2"><select class="form-select form-select-sm" id="f-branch"><option value="">All branches</option></select></div>
+                                <div class="col-6 col-md-2"><select class="form-select form-select-sm" id="f-category"><option value="">All categories</option></select></div>
+                                <div class="col-6 col-md-2"><select class="form-select form-select-sm" id="f-condition"><option value="">Any condition</option></select></div>
+                                <div class="col-6 col-md-2"><select class="form-select form-select-sm" id="f-assigned"><option value="">Issued or not</option><option value="yes">Issued to staff</option><option value="no">Not issued</option></select></div>
+                                <div class="col-md-1 d-flex align-items-center"><label class="form-check mb-0 small"><input type="checkbox" class="form-check-input" id="f-disposed"><span class="form-check-label">Disposed</span></label></div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead><tr><th>Tag</th><th>Item</th><th>Branch</th><th>Condition</th><th>Issued to</th><th class="text-end">Cost</th><th></th></tr></thead>
+                                <tbody id="items-tbody"><tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer text-secondary small" id="items-count"></div>
+                    </div>
+
+                    <div id="tab-transfers" class="card" style="display:none">
+                        <div class="card-header">
+                            <select class="form-select form-select-sm" id="t-status" style="max-width:200px">
+                                <option value="IN_TRANSIT">In transit</option>
+                                <option value="RECEIVED">Received</option>
+                                <option value="CANCELLED">Cancelled</option>
+                                <option value="">All</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead><tr><th>Item</th><th>From</th><th>To</th><th>Reason</th><th>Sent</th><th>Status</th><th></th></tr></thead>
+                                <tbody id="transfers-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item detail -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="oc-asset" style="width:520px;max-width:100%">
+        <div class="offcanvas-header"><h2 class="offcanvas-title" id="oc-title">Item</h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div>
+        <div class="offcanvas-body" id="oc-body"></div>
+    </div>
+
+    <!-- One modal for every form: add/edit, condition, issue, return, transfer -->
+    <div class="modal modal-blur fade" id="modal-form" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="mf-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="alert alert-danger d-none" id="mf-error"></div>
+                    <div class="row g-3" id="mf-body"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="mf-submit">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/company-property.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/company-property-page.js"></script>
+    <script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

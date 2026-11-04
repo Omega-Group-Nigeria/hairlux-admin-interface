@@ -1390,6 +1390,14 @@
                 var workCalendarResult = await Staff.getWorkCalendar(id).catch(function () { return null; });
                 var compensationHistory = await Staff.getCompensationHistory(id).catch(function () { return []; });
                 var addressVerification = await Staff.getAddressVerification(id).catch(function () { return null; });
+                var statusHistory = await Staff.getStatusHistory(id).catch(function () { return []; });
+                // Company items issued to this person (needs company_property:read; hidden without it).
+                var heldAssets = RBAC.can('company_property:read')
+                    ? await Auth.fetch('/admin/company-property?assignedStaffId=' + encodeURIComponent(id))
+                        .then(function (r) { return r.ok ? r.json() : null; })
+                        .then(function (j) { return j && Array.isArray(j.data) ? j.data : null; })
+                        .catch(function () { return null; })
+                    : null;
                 var history = s.histories || s.employmentHistory || s.history || [];
                 var employmentStartDate = s.employmentStartDate || s.startDate || null;
                 if (!employmentStartDate && history.length) {
@@ -1404,7 +1412,9 @@
                     '<div class="text-secondary">' + esc(s.staffCode || s.code || '-') + '</div>' +
                     '</div>' +
                     '<dl class="row small mb-3">' +
-                    '<dt class="col-5 text-secondary">Status</dt><dd class="col-7">' + Staff.statusBadge(s.employmentStatus) + '</dd>' +
+                    '<dt class="col-5 text-secondary">Status</dt><dd class="col-7">' + Staff.statusBadge(s.employmentStatus) +
+                    (statusHistory.length && statusHistory[0].toStatus === s.employmentStatus && s.employmentStatus !== 'ACTIVE'
+                        ? '<div class="text-secondary small mt-1">' + esc(statusHistory[0].reason) + '</div>' : '') + '</dd>' +
                     '<dt class="col-5 text-secondary">Work Mode</dt><dd class="col-7">' + Staff.workModeBadge(s.workMode) + workModeAttentionBadge(s, workCalendarResult) + '</dd>' +
                     '<dt class="col-5 text-secondary">Role</dt><dd class="col-7">' + esc(s.currentRole || '-') + '</dd>' +
                     '<dt class="col-5 text-secondary">Location</dt><dd class="col-7">' + esc(s.businessLocation || (s.location && locationLabel(s.location)) || '-') + '</dd>' +
@@ -1476,6 +1486,37 @@
                     '</div>' +
                     '</div>' +
                     (renderAddressVerificationStatus(addressVerification)) +
+                    '</div>' +
+                    (heldAssets === null ? '' :
+                        '<div class="mb-3">' +
+                        '<div class="d-flex align-items-center justify-content-between mb-1"><div class="fw-semibold">Company Property</div>' +
+                        '<a class="small" href="company-property.html">Open</a></div>' +
+                        (heldAssets.length && s.employmentStatus !== 'ACTIVE' && s.employmentStatus !== 'ON_LEAVE'
+                            ? '<div class="alert alert-danger py-2 px-3 small mb-2">This staff member is ' + esc(String(s.employmentStatus).toLowerCase()) + ' but still has ' + heldAssets.length + ' company item(s). Recover them and record the return.</div>' : '') +
+                        (heldAssets.length
+                            ? heldAssets.map(function (a) {
+                                return '<div class="history-item small"><span class="fw-semibold">' + esc(a.assetTag) + '</span> ' + esc(a.name) +
+                                    ' <span class="text-secondary">&middot; since ' + esc(Staff.formatDate(a.assignedAt)) + '</span>' +
+                                    (a.acknowledgedAt ? ' <span class="badge bg-success-lt">Confirmed</span>' : ' <span class="badge bg-warning-lt">Not confirmed</span>') + '</div>';
+                            }).join('')
+                            : '<div class="text-secondary small">No company items issued.</div>') +
+                        '</div>') +
+                    // Every status change with its reason (newest first).
+                    '<div class="mb-3">' +
+                    '<div class="fw-semibold mb-1">Status History</div>' +
+                    (statusHistory.length
+                        ? '<div class="d-flex flex-column gap-1">' + statusHistory.map(function (c) {
+                            var label = function (v) { return esc(String(v || '').replace(/_/g, ' ').toLowerCase()); };
+                            return '<div class="history-item">' +
+                                '<div class="fw-semibold small">' + label(c.fromStatus) + ' &rarr; ' + label(c.toStatus) + '</div>' +
+                                '<div class="small">' + esc(c.reason) + '</div>' +
+                                '<div class="text-secondary small">' + esc(Staff.formatDate(c.createdAt)) +
+                                (c.effectiveDate ? ' &middot; Exit date ' + esc(Staff.formatDate(c.effectiveDate)) : '') +
+                                ' &middot; By ' + esc(c.changedByName || 'Unknown') + '</div>' +
+                                '</div>';
+                        }).join('') + '</div>'
+                        : '<div class="text-secondary small">No status changes recorded yet.' +
+                        (s.reasonForExit ? ' Earlier exit reason: ' + esc(s.reasonForExit) : '') + '</div>') +
                     '</div>' +
                     '<div class="d-flex align-items-center justify-content-between mb-2">' +
                     '<div class="fw-semibold">Employment History</div>' +
@@ -1617,13 +1658,14 @@
             return String(history.id || history.historyId || history._id || "");
         }
 
-        function wireExitFieldsToggle(statusSelectId, exitFieldsWrapId) {
+        function wireExitFieldsToggle(statusSelectId, exitFieldsWrapId, includeArchived) {
             var statusEl = document.getElementById(statusSelectId);
             var wrapEl = document.getElementById(exitFieldsWrapId);
             if (!statusEl || !wrapEl) return;
 
             function sync() {
-                var isExited = String(statusEl.value || "").toUpperCase() === "EXITED";
+                var v = String(statusEl.value || "").toUpperCase();
+                var isExited = v === "EXITED" || (includeArchived && v === "ARCHIVED");
                 wrapEl.classList.toggle("d-none", !isExited);
             }
 
@@ -1690,19 +1732,18 @@
                     buildSelect('col-md-4', 'Work Mode', 'sf-work-mode', d.workMode || 'ON_SITE', workModeOpts) +
                     buildFieldLocationRow(d.fieldLocationId) +
                     '<div class="col-12 d-none" id="sf-work-mode-hint"><div class="alert alert-warning py-2 px-3 small mb-0">Hybrid requires each day\'s mode to be set individually in <strong>Work Calendar</strong> after saving -- any day left unset behaves as On-site.</div></div>' +
+                    '<div class="col-12"><div class="form-hint mt-0">To change employment status, use <strong>Update Employment Status</strong> (it asks for the reason).</div></div>' +
                     buildOptionSelect('col-md-6', 'Reports To', 'sf-reporting-to-id', String(d.reportingToId || ''), managerOptions, 'No manager assigned', false) +
                     '<div class="col-md-6"><label class="form-label" for="sf-grace-override">Personal Late Grace Period (minutes)</label>' +
                     '<input type="number" min="0" step="1" class="form-control" id="sf-grace-override" value="' + esc(d.lateGracePeriodOverride != null ? d.lateGracePeriodOverride : '') + '" placeholder="Leave blank to use branch default">' +
                     '<div class="form-hint">Overrides the branch\'s grace period for this staff member specifically. Leave blank to use the branch default.</div>' +
                     '</div>' +
-                    '<div class="col-12" id="sf-exit-fields-wrap">' +
-                    '<div class="row g-3">' +
-                    buildInput('col-md-6', 'Reason For Exit', 'sf-reason-for-exit', d.reasonForExit || '') +
-                    buildInput('col-md-6', 'Exit Date', 'sf-exit-date', d.exitDate || '', 'date') +
-                    '</div>' +
-                    '</div>';
+                    (d.reasonForExit || d.exitDate
+                        ? '<div class="col-12"><div class="text-secondary small">Exit: ' + esc(d.exitDate || '-') + (d.reasonForExit ? ' &middot; ' + esc(d.reasonForExit) : '') + '</div></div>'
+                        : '');
                 attachPhoneInputGuard('sf-phone');
-                wireExitFieldsToggle('sf-employment-status', 'sf-exit-fields-wrap');
+                // Status is read-only here: Update Employment Status asks for the reason.
+                document.getElementById('sf-employment-status').disabled = true;
                 ensureFieldLocationsLoaded().then(function () { populateFieldLocationDropdown(); });
                 wireFieldLocationToggle('sf-work-mode', 'sf-field-location-wrap');
                 wireWorkModeHint('sf-work-mode', 'sf-work-mode-hint');
@@ -1711,15 +1752,18 @@
             }
 
             if (action.type === "status") {
+                // A reason is required for every status change and kept in the
+                // staff member's status history (shown on their record).
                 form.innerHTML =
-                    buildSelect('col-md-6', 'Status', 'sf-status', d.status || 'ACTIVE', statusOpts) +
-                    '<div class="col-12 d-none" id="sf-exit-fields-wrap">' +
-                    '<div class="row g-3">' +
-                    buildInput('col-md-6', 'Exit Date', 'sf-exit-date', d.exitDate || '', 'date') +
-                    '<div class="col-md-6"><label class="form-label" for="sf-reason-for-exit">Reason For Exit</label><textarea class="form-control" id="sf-reason-for-exit" rows="1" placeholder="Optional reason">' + esc(d.reasonForExit || '') + '</textarea></div>' +
+                    (d.currentStatus ? '<div class="col-12"><div class="text-secondary small">Current status: <strong>' + esc(String(d.currentStatus).replace(/_/g, ' ')) + '</strong></div></div>' : '') +
+                    buildSelect('col-md-6', 'New Status', 'sf-status', d.status || 'ACTIVE', statusOpts.filter(function (s) { return s !== d.currentStatus; })) +
+                    '<div class="col-md-6 d-none" id="sf-exit-fields-wrap">' +
+                    buildInput('col-12 p-0', 'Exit Date', 'sf-exit-date', d.exitDate || '', 'date') +
                     '</div>' +
-                    '</div>';
-                wireExitFieldsToggle('sf-status', 'sf-exit-fields-wrap');
+                    '<div class="col-12"><label class="form-label required" for="sf-status-reason">Reason</label>' +
+                    '<textarea class="form-control" id="sf-status-reason" rows="3" maxlength="1000" placeholder="e.g. Suspended pending investigation into cash shortage on 2 Nov"></textarea>' +
+                    '<div class="form-hint">Required. Saved in this staff member\'s status history for future reference.</div></div>';
+                wireExitFieldsToggle('sf-status', 'sf-exit-fields-wrap', true);
                 return;
             }
 
@@ -1796,7 +1840,8 @@
                 form.innerHTML =
                     buildInput('col-md-6', 'Archived Date', 'sf-archived-at', d.archivedAt || '', 'date') +
                     '<div class="col-md-6"></div>' +
-                    '<div class="col-12"><label class="form-label" for="sf-archive-reason">Reason</label><textarea class="form-control" id="sf-archive-reason" rows="3" placeholder="Reason for archive">' + esc(d.reason || '') + '</textarea></div>' +
+                    '<div class="col-12"><label class="form-label required" for="sf-archive-reason">Reason</label><textarea class="form-control" id="sf-archive-reason" rows="3" maxlength="900" placeholder="Reason for archive">' + esc(d.reason || '') + '</textarea>' +
+                    '<div class="form-hint">Required. Saved in this staff member\'s status history.</div></div>' +
                     '<div class="col-12"><label class="form-label" for="sf-archive-notes">Notes</label><textarea class="form-control" id="sf-archive-notes" rows="2" placeholder="Optional notes">' + esc(d.notes || '') + '</textarea></div>';
                 return;
             }
@@ -1856,11 +1901,8 @@
                     email: trimOrUndef(document.getElementById("sf-email").value),
                     phone: trimOrUndef(normalizePhoneInput(document.getElementById("sf-phone").value)),
                     dateOfBirth: trimOrUndef(document.getElementById("sf-dob").value),
-                    employmentStatus: document.getElementById("sf-employment-status").value,
                     workMode: document.getElementById("sf-work-mode").value,
                     fieldLocationId: document.getElementById("sf-field-location").value || null,
-                    reasonForExit: trimOrUndef(document.getElementById("sf-reason-for-exit").value),
-                    exitDate: trimOrUndef(document.getElementById("sf-exit-date").value),
                     reportingToId: document.getElementById("sf-reporting-to-id").value || null,
                     lateGracePeriodOverride: (function () {
                         var v = document.getElementById("sf-grace-override").value.trim();
@@ -1868,23 +1910,17 @@
                     })(),
                 };
 
-                if (String(updatePayload.employmentStatus || "").toUpperCase() !== "EXITED") {
-                    delete updatePayload.reasonForExit;
-                    delete updatePayload.exitDate;
-                }
                 Object.keys(updatePayload).forEach(function (k) { if (updatePayload[k] === undefined) delete updatePayload[k]; });
                 return updatePayload;
             }
             if (actionType === "status") {
                 var statusPayload = {
                     status: document.getElementById("sf-status").value,
-                    reasonForExit: trimOrUndef(document.getElementById("sf-reason-for-exit").value),
+                    reason: trimOrUndef(document.getElementById("sf-status-reason").value),
                     exitDate: trimOrUndef(document.getElementById("sf-exit-date").value),
                 };
-                if (String(statusPayload.status || "").toUpperCase() !== "EXITED") {
-                    delete statusPayload.reasonForExit;
-                    delete statusPayload.exitDate;
-                }
+                var st = String(statusPayload.status || "").toUpperCase();
+                if (st !== "EXITED" && st !== "ARCHIVED") delete statusPayload.exitDate;
                 Object.keys(statusPayload).forEach(function (k) { if (statusPayload[k] === undefined) delete statusPayload[k]; });
                 return statusPayload;
             }
@@ -1927,10 +1963,12 @@
             }
 
             if (actionType === "archive") {
+                // The API takes reasonForExit + exitDate; notes are added to the reason.
+                var archiveReason = trimOrUndef(document.getElementById("sf-archive-reason").value);
+                var archiveNotes = trimOrUndef(document.getElementById("sf-archive-notes").value);
                 var archivePayload = {
-                    archivedAt: trimOrUndef(document.getElementById("sf-archived-at").value),
-                    reason: trimOrUndef(document.getElementById("sf-archive-reason").value),
-                    notes: trimOrUndef(document.getElementById("sf-archive-notes").value),
+                    exitDate: trimOrUndef(document.getElementById("sf-archived-at").value),
+                    reasonForExit: archiveReason ? archiveReason + (archiveNotes ? ' (Notes: ' + archiveNotes + ')' : '') : undefined,
                 };
                 Object.keys(archivePayload).forEach(function (k) { if (archivePayload[k] === undefined) delete archivePayload[k]; });
                 return archivePayload;
@@ -2022,6 +2060,12 @@
                     return;
                 }
             }
+            // Every status change and archive needs a reason (kept in the status history).
+            if ((_staffFormAction.type === "status" && !payload.reason) || (_staffFormAction.type === "archive" && !payload.reasonForExit)) {
+                errorEl.textContent = "Please give a reason. It is kept in this staff member's status history.";
+                errorEl.classList.remove("d-none");
+                return;
+            }
 
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Submitting...';
@@ -2109,15 +2153,17 @@
             }
         }
 
-        function handleStatusStaff(id) {
+        async function handleStatusStaff(id) {
+            var current = '';
+            try { current = (await Staff.getOne(id)).employmentStatus || ''; } catch (e) { /* form still works without it */ }
             openStaffFormModal({
                 type: "status",
                 staffId: id,
                 title: "Update Employment Status",
-                help: "Update employment status and provide reason if needed.",
+                help: "Choose the new status and say why. The reason is kept in the staff member's status history.",
                 data: {
-                    status: "ACTIVE",
-                    reasonForExit: "",
+                    currentStatus: current,
+                    status: current === "ACTIVE" ? "SUSPENDED" : "ACTIVE",
                     exitDate: ""
                 }
             });
@@ -2230,9 +2276,12 @@
         }
 
         async function handleRestoreStaff(id) {
-            if (!confirm("Restore this archived staff record?")) return;
+            var reason = prompt("Restore this archived staff record to Active?\n\nReason (required, kept in their status history):");
+            if (reason === null) return;
+            reason = reason.trim();
+            if (!reason) { alert("A reason is required to restore a staff record."); return; }
             try {
-                await Staff.restore(id);
+                await Staff.restore(id, reason);
                 if (_currentStaffId) await openStaffDetail(_currentStaffId);
                 await loadStaff();
             } catch (err) {
