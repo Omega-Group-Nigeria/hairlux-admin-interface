@@ -991,13 +991,14 @@
             var checkbox = document.getElementById('payday-switch');
             var active = checkbox.checked;
             var confirmMsg = active
-                ? 'Turn Payday ON? Every staff member with a wallet balance will be able to withdraw immediately, except anyone individually locked under Staff Withdrawal Locks.'
+                ? 'Turn Payday ON? Every staff member with a wallet balance will be able to withdraw immediately, except anyone individually locked under Staff Withdrawal Locks. Active staff are emailed and see an announcement in the Staff Portal telling them they can withdraw.'
                 : 'Turn Payday OFF? All withdrawals will be locked until switched back on.';
             if (!confirm(confirmMsg)) { checkbox.checked = !active; return; }
 
             try {
-                await Payroll.setReleaseActive(active);
+                var result = await Payroll.setReleaseActive(active);
                 document.getElementById('payday-label').textContent = 'Payday: ' + (active ? 'ON' : 'OFF');
+                if (active && result && result.notified) alert('Payday is on. ' + result.notified + ' active staff were notified that they can withdraw.');
             } catch (e) {
                 alert(e.message || 'Failed to update Payday setting.');
                 checkbox.checked = !active;
