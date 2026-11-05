@@ -44,6 +44,7 @@ const Marketplace = (function () {
         documentViews: (id, docId) => apiFetch(`${base}/vendors/${id}/documents/${docId}/views`),
         reviewDocument: (id, docId, status, note) => apiFetch(`${base}/vendors/${id}/documents/${docId}`, jsonBody('PATCH', { status, note })),
         verifyNin: (id) => apiFetch(`${base}/vendors/${id}/verify-nin`, { method: 'POST' }),
+        verifyCac: (id) => apiFetch(`${base}/vendors/${id}/verify-cac`, { method: 'POST' }),
         decideVendor: (id, payload) => apiFetch(`${base}/vendors/${id}/decision`, jsonBody('POST', payload)),
         saveNotes: (id, payload) => apiFetch(`${base}/vendors/${id}/notes`, jsonBody('PATCH', payload)),
         setCommission: (id, commissionPercent) => apiFetch(`${base}/vendors/${id}/commission`, jsonBody('PATCH', { commissionPercent })),

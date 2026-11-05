@@ -31,6 +31,14 @@
         MISMATCH: { label: 'Did not match', cls: 'bg-red-lt' },
         ERROR: { label: 'Check failed', cls: 'bg-orange-lt' },
     };
+    var CAC = {
+        NOT_CHECKED: { label: 'CAC not checked', cls: 'bg-secondary-lt' },
+        VERIFIED: { label: 'CAC verified', cls: 'bg-green-lt' },
+        NAME_MISMATCH: { label: 'CAC name differs', cls: 'bg-red-lt' },
+        INACTIVE: { label: 'CAC inactive', cls: 'bg-red-lt' },
+        NOT_FOUND: { label: 'Not on CAC', cls: 'bg-red-lt' },
+        ERROR: { label: 'CAC check failed', cls: 'bg-orange-lt' },
+    };
     var DOC_TYPES = {
         CAC_CERTIFICATE: 'CAC certificate', OWNER_ID: "Owner's government ID", SHOP_PHOTO: 'Shop photo',
         PROOF_OF_ADDRESS: 'Proof of address', OTHER: 'Other',
@@ -44,6 +52,9 @@
         BANK_NAME_MISMATCH: 'Bank account name does not match the business or owner',
         PAYOUT_ACCOUNT_CHANGED_AFTER_APPROVAL: 'Payout account changed after approval',
         NIN_MISMATCH: "Owner's NIN did not match the owner's name",
+        CAC_NAME_MISMATCH: 'CAC has the number registered under a different name',
+        CAC_INACTIVE: 'CAC lists the business as not active',
+        CAC_NOT_FOUND: 'CAC has no record for the CAC number',
     };
 
     var _status = 'PENDING_REVIEW';
@@ -132,7 +143,7 @@
                 '<td><div>' + esc(v.owner.name) + '</div><div class="small text-secondary">' + esc(v.owner.email) + '</div></td>' +
                 '<td>' + esc([v.city, v.state].filter(Boolean).join(', ') || '-') + '</td>' +
                 '<td>' + badge(STATUS, v.status) + (v.status === 'APPROVED' ? '<div class="small text-secondary mt-1">' + (v.isLive ? 'Live' : 'Paused') + '</div>' : '') + '</td>' +
-                '<td>' + badge(NIN, v.ownerNinStatus) + '</td>' +
+                '<td>' + badge(NIN, v.ownerNinStatus) + (v.cacStatus ? '<div class="mt-1">' + badge(CAC, v.cacStatus) + '</div>' : '') + '</td>' +
                 '<td>' + flags + '</td>' +
                 '<td>' + submitted + '</td>' +
                 '<td class="text-end">' + v.productCount + '</td>' +
@@ -194,9 +205,34 @@
             (v.description ? '<div class="col-12 mb-3"><div class="text-secondary small">About</div><div>' + esc(v.description) + '</div></div>' : '') +
             '</div>');
 
+        // CAC check (registered businesses only)
+        var cc = v.cacCheck;
+        if (cc && cc.required) {
+            var cacBtn = can(P.review) && v.cacNumber ? ' <button class="btn btn-sm btn-outline-primary ms-2" id="btn-check-cac">Check CAC with Prembly</button>' : '';
+            var people = (cc.directors || []).map(function (d) {
+                return '<li>' + esc(d.name) + (d.role ? ' <span class="text-secondary">(' + esc(d.role.toLowerCase()) + ')</span>' : '') +
+                    (d.status && !/^active$/i.test(d.status) ? ' <span class="badge bg-secondary-lt">' + esc(d.status.toLowerCase()) + '</span>' : '') + '</li>';
+            }).join('');
+            var found = cc.registeredName ? '<div class="row mt-2">' +
+                row('Registered name', esc(cc.registeredName)) +
+                row('CAC status', esc(cc.companyStatus || '-')) +
+                row('Registered on', cc.registeredAt ? fmtDate(cc.registeredAt) : '-') +
+                row('Registered address', esc(cc.address || '-')) +
+                '<div class="col-12 mb-3"><div class="text-secondary small">People on the CAC record</div>' +
+                (people ? '<ul class="mb-1">' + people + '</ul>' : '<div>None returned</div>') +
+                (cc.ownerListed === true ? '<span class="badge bg-green-lt">Owner is on the record</span>'
+                    : cc.ownerListed === false ? '<span class="badge bg-orange-lt">Owner is not on the record</span>' : '') +
+                '</div></div>' : '';
+            parts.push('<h3 class="mb-2">CAC check</h3><div class="mb-3"><div class="d-flex align-items-center flex-wrap gap-2">' +
+                badge(CAC, cc.status) +
+                (cc.checkedAt ? '<span class="small text-secondary">checked ' + fmtDateTime(cc.checkedAt) + '</span>' : '') + cacBtn +
+                '</div><div class="form-hint">Looks up the CAC number on the Corporate Affairs Commission register and compares the registered name with the business name. Each check is a paid Prembly lookup.</div>' +
+                found + '</div>');
+        }
+
         // Owner and NIN
         var o = v.owner;
-        var ninBtn = can(P.review) && v.ownerNin ? ' <button class="btn btn-sm btn-outline-primary ms-2" id="btn-check-nin">Check NIN with QoreID</button>' : '';
+        var ninBtn = can(P.review) && v.ownerNin ? ' <button class="btn btn-sm btn-outline-primary ms-2" id="btn-check-nin">Check NIN with Prembly</button>' : '';
         parts.push('<h3 class="mb-2">Owner</h3><div class="row">' +
             row('Name', esc(o.firstName + ' ' + o.lastName)) +
             row('Email', esc(o.email) + ' ' + (o.emailVerified ? '<span class="badge bg-green-lt">verified</span>' : '<span class="badge bg-red-lt">not verified</span>')) +
@@ -204,7 +240,7 @@
             '<div class="col-12 mb-3"><div class="text-secondary small">NIN</div><div class="d-flex align-items-center flex-wrap gap-2">' +
             '<span class="font-monospace">' + esc(v.ownerNin || '-') + '</span> ' + badge(NIN, v.ownerNinStatus) +
             (v.ownerNinCheckedAt ? '<span class="small text-secondary">checked ' + fmtDateTime(v.ownerNinCheckedAt) + '</span>' : '') + ninBtn +
-            '</div><div class="form-hint">Checks the NIN against the owner\'s account name. Each check is a paid QoreID lookup.</div></div>' +
+            '</div><div class="form-hint">Checks the NIN against the owner\'s account name. Each check is a paid Prembly lookup.</div></div>' +
             '</div>');
 
         // Documents
@@ -278,7 +314,7 @@
     // ── Decisions ───────────────────────────────────────────────────────────
 
     var DECISIONS = {
-        APPROVE: { title: 'Approve vendor', help: 'The vendor can then add products. Every product is still reviewed before it goes on sale. Pending documents are marked accepted.', reason: 'Note (optional, shown to the vendor only if you override the NIN check)', btn: 'Approve', cls: 'btn-success', needsReason: false },
+        APPROVE: { title: 'Approve vendor', help: 'The vendor can then add products. Every product is still reviewed before it goes on sale. Pending documents are marked accepted.', reason: 'Note (optional; required if you approve without a passed NIN or CAC check)', btn: 'Approve', cls: 'btn-success', needsReason: false },
         REQUEST_CHANGES: { title: 'Request changes', help: 'The vendor can edit the application and submit it again.', reason: 'What needs to change', btn: 'Send back', cls: 'btn-warning', needsReason: true },
         REJECT: { title: 'Reject vendor', help: 'This is final: the vendor cannot submit this application again.', reason: 'Reason', btn: 'Reject', cls: 'btn-danger', needsReason: true },
         SUSPEND: { title: 'Suspend vendor', help: 'Their listings stop at once and they cannot add or edit products.', reason: 'Reason', btn: 'Suspend', cls: 'btn-danger', needsReason: true },
@@ -296,6 +332,9 @@
         var needsOverride = action === 'APPROVE' && _vendor.ownerNinStatus !== 'VERIFIED';
         $('decision-override-wrap').hidden = !needsOverride;
         $('decision-override').checked = false;
+        var needsCacOverride = action === 'APPROVE' && !!_vendor.cacCheck && _vendor.cacCheck.required && _vendor.cacCheck.status !== 'VERIFIED';
+        $('decision-override-cac-wrap').hidden = !needsCacOverride;
+        $('decision-override-cac').checked = false;
         $('decision-reason-hint').textContent = 'The vendor will see this in their email and on the vendor site.';
         var btn = $('btn-decision-confirm');
         btn.className = 'btn ' + d.cls;
@@ -311,6 +350,7 @@
         $('decision-reason').value = '';
         $('decision-error').hidden = true;
         $('decision-override-wrap').hidden = true;
+        $('decision-override-cac-wrap').hidden = true;
         $('decision-reason-hint').textContent = 'Shown to the vendor next to the document.';
         $('btn-decision-confirm').className = 'btn btn-danger';
         $('btn-decision-confirm').textContent = 'Reject document';
@@ -331,11 +371,16 @@
                 var d = DECISIONS[_decision.action];
                 var override = !$('decision-override-wrap').hidden && $('decision-override').checked;
                 if (d.needsReason && !reason) throw new Error('Give a reason. The vendor will see it.');
+                var overrideCac = !$('decision-override-cac-wrap').hidden && $('decision-override-cac').checked;
                 if (_decision.action === 'APPROVE' && !$('decision-override-wrap').hidden) {
                     if (!override) throw new Error("Run the NIN check first, or tick the box to approve without a NIN match.");
                     if (!reason) throw new Error('Give the reason for approving without a NIN match.');
                 }
-                await Marketplace.decideVendor(_vendor.id, { action: _decision.action, reason: reason || undefined, overrideNinCheck: override || undefined });
+                if (_decision.action === 'APPROVE' && !$('decision-override-cac-wrap').hidden) {
+                    if (!overrideCac) throw new Error('Run the CAC check first, or tick the box to approve without a passed CAC check.');
+                    if (!reason) throw new Error('Give the reason for approving without a passed CAC check.');
+                }
+                await Marketplace.decideVendor(_vendor.id, { action: _decision.action, reason: reason || undefined, overrideNinCheck: override || undefined, overrideCacCheck: overrideCac || undefined });
                 loadSummary();
                 load();
                 if (window.Layout && Layout.refreshMarketplaceBadge) Layout.refreshMarketplaceBadge();
@@ -380,6 +425,12 @@
                 var r = await Marketplace.verifyNin(_vendor.id);
                 await openVendor(_vendor.id);
                 showInModal(r.message, r.ownerNinStatus === 'VERIFIED' ? 'success' : 'warning');
+            } else if (t.id === 'btn-check-cac') {
+                t.disabled = true;
+                t.textContent = 'Checking...';
+                var rc = await Marketplace.verifyCac(_vendor.id);
+                await openVendor(_vendor.id);
+                showInModal(rc.message, rc.cacStatus === 'VERIFIED' ? 'success' : 'warning');
             } else if (t.id === 'btn-save-commission') {
                 var raw = $('f-commission').value.trim();
                 await Marketplace.setCommission(_vendor.id, raw === '' ? null : Number(raw));
