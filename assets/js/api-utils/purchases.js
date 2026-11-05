@@ -43,6 +43,26 @@ const Purchases = (function () {
         });
     }
 
+    /** Attach (or replace) a delivery's supporting document: PDF, JPG, PNG or WEBP, up to 10MB. */
+    async function uploadReceiptDocument(id, receiptId, file) {
+        const apiBase = (window.API_BASE || '').replace(/\/$/, '');
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(`${apiBase}/admin/purchases/${id}/receipts/${receiptId}/document`, {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + Auth.getToken() },
+            body: formData,
+        });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || `Upload failed (${res.status})`);
+        return raw.data !== undefined ? raw.data : raw;
+    }
+
+    /** { url, name }: a 10-minute link to view a delivery's supporting document. */
+    async function receiptDocumentUrl(id, receiptId) {
+        return apiFetch(`/admin/purchases/${id}/receipts/${receiptId}/document`);
+    }
+
     /** Dev Feedback Round 9: Product Acceptance -- the separate review-and-credit-to-inventory step, now distinct from receiveGoods above. */
     async function acceptGoods(id, payload) {
         return apiFetch(`/admin/purchases/${id}/accept-goods`, {
@@ -93,7 +113,7 @@ const Purchases = (function () {
     }
 
     return {
-        getAll, getOne, recordPayment, receiveGoods, acceptGoods,
+        getAll, getOne, recordPayment, receiveGoods, acceptGoods, uploadReceiptDocument, receiptDocumentUrl,
         paymentOptions, payVendor, retryTransfer, resyncTransfer, transferReceipt, transferReceiptPdf,
     };
 })();

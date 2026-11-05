@@ -66,12 +66,75 @@ async function initStaffPortal() {
     loadSalesData(),
     loadPayrollSection(),
     loadCommission(),
+    loadMyCompanyProperty(),
   ]);
 
   sbWireSearchAndPagination();
   renderDashboard();
   renderOnboardingStatusStrip();
   renderNotifications();
+}
+
+/**
+ * Company property issued to me (2026-11-04): a card on My Profile with a
+ * Confirm button per item, and a dashboard banner while any are unconfirmed.
+ */
+async function loadMyCompanyProperty() {
+  const card = document.getElementById('my-property-card');
+  const banner = document.getElementById('cp-banner');
+  if (!card) return;
+  const list = document.getElementById('my-property-list');
+  let items = [];
+  try {
+    items = await StaffSelf.getMyCompanyProperty();
+  } catch (err) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Could not load your company property. Please try again later.</div>';
+    return;
+  }
+  const pending = items.filter((a) => !a.acknowledgedAt);
+  document.getElementById('my-property-count').textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
+  const navBadge = document.getElementById('cp-nav-badge');
+  if (navBadge) {
+    navBadge.textContent = String(pending.length);
+    navBadge.style.display = pending.length ? '' : 'none';
+  }
+  if (banner) {
+    banner.style.display = pending.length ? 'flex' : 'none';
+    document.getElementById('cp-banner-title').textContent = pending.length + ' company item' + (pending.length === 1 ? '' : 's') + ' to confirm';
+  }
+  if (!items.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">No company items are issued to you. When your branch gives you equipment, it will show here for you to confirm.</div>';
+    return;
+  }
+  const CONDITION = { WORKING: 'Working', NEEDS_REPAIR: 'Needs repair', UNDER_REPAIR: 'Under repair', INOPERABLE: 'Inoperable', LOST: 'Lost', DISPOSED: 'Disposed' };
+  list.innerHTML = items.map((a) =>
+    '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">' +
+    '<div style="flex:1">' +
+    '<div style="font-size:13px;font-weight:600">' + escapeHtml(a.name) + ' <span style="color:var(--muted);font-weight:400">' + escapeHtml(a.assetTag) + '</span></div>' +
+    '<div style="font-size:12px;color:var(--muted)">' + [
+      [a.brand, a.model].filter(Boolean).join(' '),
+      a.serialNumber ? 'S/N ' + a.serialNumber : '',
+      CONDITION[a.condition] || a.condition,
+      'issued ' + StaffSelf.formatDate(a.assignedAt),
+    ].filter(Boolean).map(escapeHtml).join(' &middot; ') + '</div>' +
+    '</div>' +
+    (a.acknowledgedAt
+      ? '<span class="badge b-green">Confirmed</span>'
+      : '<button class="btn btn-gold btn-sm" onclick="confirmCompanyProperty(\'' + a.id + '\', this)">I have it</button>') +
+    '</div>'
+  ).join('') + '<div style="font-size:12px;color:var(--muted);margin-top:10px">These items belong to HairLux. Look after them and return them when asked or when you leave.</div>';
+}
+
+async function confirmCompanyProperty(id, btn) {
+  if (!confirm('Confirm you have received this item and will look after it?')) return;
+  btn.disabled = true;
+  try {
+    await StaffSelf.acknowledgeCompanyProperty(id);
+    await loadMyCompanyProperty();
+  } catch (err) {
+    alert(err.message || 'Could not confirm. Please try again.');
+    btn.disabled = false;
+  }
 }
 
 function sbWireSearchAndPagination() {
@@ -734,17 +797,17 @@ function openAddressVerificationModal() {
   document.getElementById('onboarding-modal-box').innerHTML =
     '<div class="oc-modal-error" id="oc-modal-error"></div>' +
     '<h3>Physical Address Verification</h3>' +
-    '<div class="oc-modal-sub">QoreID field agents will visit within 24-48 hours to confirm this address. Fill in every field accurately -- an agent physically checks against what you enter here.</div>' +
+    '<div class="oc-modal-sub">A field agent will visit (usually within 2-3 days) to confirm this address. Fill in every field accurately -- an agent physically checks against what you enter here.</div>' +
 
     '<div class="oc-field"><label>Full Address</label><input type="text" id="av-street" value="' + escapeHtml((av && av.street) || '') + '"></div>' +
     '<div class="oc-field"><label>City</label><input type="text" id="av-city" value="' + escapeHtml((av && av.city) || '') + '"></div>' +
     '<div class="oc-field"><label>LGA (Local Government Area)</label><input type="text" id="av-lga" value="' + escapeHtml((av && av.lgaName) || '') + '"></div>' +
     '<div class="oc-field"><label>State</label><input type="text" id="av-state" value="' + escapeHtml((av && av.stateName) || '') + '"></div>' +
-    '<div class="oc-field"><label>Landmark <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
-    // Everything below maps to QoreID's addressExtraData, which Physical
-    // Address Verification Pro requires. Shown and sent with every submission.
+    '<div class="oc-field"><label>Nearest Landmark</label><input type="text" id="av-landmark" value="' + escapeHtml((av && av.landmark) || '') + '"></div>' +
+    // House number goes to Prembly; the building details below are kept
+    // with the request for admin review. Shown and sent with every submission.
     '<div id="av-extra-fields">' +
-    '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(optional)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
+    '<div class="oc-field"><label>House Number <span style="color:var(--muted)">(write None if there is no number)</span></label><input type="text" id="av-house-number" value="' + escapeHtml((av && av.houseNumber) || '') + '"></div>' +
     '<div class="oc-field"><label>Description of the property</label><textarea id="av-general-description" rows="2" placeholder="e.g. Green gate, third house on the left after the junction">' + escapeHtml((av && av.generalDescription) || '') + '</textarea></div>' +
 
     '<div class="oc-field">' +
@@ -818,9 +881,11 @@ async function submitAddressVerificationForm() {
   formData.append('city', city);
   formData.append('lgaName', lga);
   formData.append('stateName', state);
-  const landmark = val('av-landmark'); if (landmark) formData.append('landmark', landmark);
+  const landmark = val('av-landmark');
+  if (!landmark) { showOnboardingModalError('Enter the nearest landmark so the field agent can find the address.'); return; }
+  formData.append('landmark', landmark);
 
-  // QoreID addressExtraData (required by Physical Address Verification Pro).
+  // Building details (kept for admin review).
   const description = val('av-general-description');
   if (!description) { showOnboardingModalError('Describe the property so the field agent can find it (e.g. gate colour, nearby landmark).'); return; }
   formData.append('generalDescription', description);
@@ -828,7 +893,9 @@ async function submitAddressVerificationForm() {
   formData.append('buildingStatus', val('av-building-status'));
   formData.append('buildingType', val('av-building-type'));
   formData.append('hasGateAndFence', document.getElementById('av-has-gate-and-fence').checked ? 'true' : 'false');
-  const houseNumber = val('av-house-number'); if (houseNumber) formData.append('houseNumber', houseNumber);
+  const houseNumber = val('av-house-number');
+  if (!houseNumber) { showOnboardingModalError('Enter the house number, or None if the house has no number.'); return; }
+  formData.append('houseNumber', houseNumber);
   const colour = val('av-building-colour'); if (colour) formData.append('buildingColour', colour);
   const lat = val('av-latitude'), lng = val('av-longitude');
   if ((lat && !lng) || (!lat && lng)) { showOnboardingModalError('Enter both latitude and longitude, or leave both empty.'); return; }
@@ -2505,7 +2572,10 @@ function sbEditLine(container, serviceId, quantity) {
   row.style.gridTemplateColumns = '1fr 70px 32px';
   row.style.gap = '8px';
   row.style.marginBottom = '6px';
-  var options = '<option value="">Select service…</option>' + (sbServicesCache || []).map(function (s) {
+  // Add-on-only services are chosen through a service's Add-ons, not as a main line.
+  var options = '<option value="">Select service…</option>' + (sbServicesCache || []).filter(function (s) {
+    return !s.isAddOn || s.id === serviceId;
+  }).map(function (s) {
     var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
     return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ': ' + sbFormatMoney(price) + '</option>';
   }).join('');
@@ -2516,8 +2586,15 @@ function sbEditLine(container, serviceId, quantity) {
   container.appendChild(row);
   var sel = row.querySelector('.sb-eb-service-select');
   if (serviceId) sel.value = serviceId;
-  row.querySelector('.sb-eb-remove-line').addEventListener('click', function () { row.remove(); });
+  // Service add-ons (2026-10-24): optional add-ons under the line.
+  AddOnPicker.attach(row, { mode: 'WALK_IN', getServiceId: function () { return sel.value; }, getBranchId: sbOwnBranchId });
+  sel.addEventListener('change', function () { AddOnPicker.refresh(row); });
+  row.querySelector('.sb-eb-remove-line').addEventListener('click', function () { AddOnPicker.remove(row); row.remove(); });
   return row;
+}
+
+function sbOwnBranchId() {
+  return (currentStaff && (currentStaff.locationId || (currentStaff.location && currentStaff.location.id))) || '';
 }
 
 async function sbOpenEditModal(b) {
@@ -2557,9 +2634,16 @@ async function sbOpenEditModal(b) {
     '<button class="btn btn-gold btn-sm" id="sbeb-submit-btn" onclick="sbSubmitEditBooking()">Save Changes</button>' +
     '</div>';
 
+  // Main services get a line each; their saved add-ons are ticked under them.
   var lineContainer = document.getElementById('sbeb-service-lines');
-  (b.services && b.services.length ? b.services : [{}]).forEach(function (line) {
-    sbEditLine(lineContainer, line.service ? line.service.id : undefined, line.quantity);
+  var allLines = b.services && b.services.length ? b.services : [{}];
+  var mainLines = allLines.filter(function (line) { return !line.addOnOfServiceId; });
+  (mainLines.length ? mainLines : [{}]).forEach(function (line) {
+    var mainId = line.service ? line.service.id : undefined;
+    var row = sbEditLine(lineContainer, mainId, line.quantity);
+    var addOnIds = allLines.filter(function (l) { return l.addOnOfServiceId && l.addOnOfServiceId === mainId; })
+      .map(function (l) { return l.service ? l.service.id : l.serviceId; });
+    if (addOnIds.length) AddOnPicker.preselect(row, addOnIds);
   });
 
   restrictToPhoneChars(document.getElementById('sbeb-customer-phone'));
@@ -2575,10 +2659,13 @@ async function sbSubmitEditBooking() {
   errEl.style.display = 'none';
 
   var services = [];
-  document.querySelectorAll('#sbeb-service-lines > div').forEach(function (row) {
+  document.querySelectorAll('#sbeb-service-lines > div:not(.aop-box)').forEach(function (row) {
     var serviceId = row.querySelector('.sb-eb-service-select').value;
     var quantity = Number(row.querySelector('.sb-eb-qty').value) || 1;
-    if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+    if (serviceId) {
+      services.push({ serviceId: serviceId, quantity: quantity });
+      AddOnPicker.lines(row).forEach(function (l) { services.push(l); });
+    }
   });
   if (!services.length) {
     errEl.textContent = 'At least one service is required.';
@@ -2966,7 +3053,7 @@ function sbAddServiceLine() {
   row.style.gridTemplateColumns = '1fr 70px 32px';
   row.style.gap = '8px';
   row.style.marginBottom = '6px';
-  var options = '<option value="">Select service…</option>' + sbServicesCache.map(function (s) {
+  var options = '<option value="">Select service…</option>' + sbServicesCache.filter(function (s) { return !s.isAddOn; }).map(function (s) {
     var price = s.effectivePrice != null ? s.effectivePrice : s.walkInPrice;
     return '<option value="' + s.id + '" data-price="' + price + '">' + escapeHtml(s.name) + ': ' + sbFormatMoney(price) + '</option>';
   }).join('');
@@ -2975,9 +3062,12 @@ function sbAddServiceLine() {
     '<input type="number" min="1" value="1" class="input sb-qty">' +
     '<button type="button" class="btn btn-ghost btn-sm sb-remove-line">&times;</button>';
   container.appendChild(row);
-  row.querySelector('.sb-service-select').addEventListener('change', sbUpdateTotal);
+  var sel = row.querySelector('.sb-service-select');
+  // Service add-ons (2026-10-24): optional add-ons under the line.
+  AddOnPicker.attach(row, { mode: 'WALK_IN', getServiceId: function () { return sel.value; }, getBranchId: sbOwnBranchId, onChange: sbUpdateTotal });
+  sel.addEventListener('change', function () { AddOnPicker.refresh(row); sbUpdateTotal(); });
   row.querySelector('.sb-qty').addEventListener('input', sbUpdateTotal);
-  row.querySelector('.sb-remove-line').addEventListener('click', function () { row.remove(); sbUpdateTotal(); });
+  row.querySelector('.sb-remove-line').addEventListener('click', function () { AddOnPicker.remove(row); row.remove(); sbUpdateTotal(); });
   sbUpdateTotal();
 }
 
@@ -3032,11 +3122,11 @@ var _sbAppliedCoupon = null; // { id, code, percentage }
 
 function sbCurrentSubtotal() {
   var total = 0;
-  document.querySelectorAll('#sb-service-lines > div').forEach(function (row) {
+  document.querySelectorAll('#sb-service-lines > div:not(.aop-box)').forEach(function (row) {
     var sel = row.querySelector('.sb-service-select');
     var qty = Number(row.querySelector('.sb-qty').value) || 0;
     var opt = sel.options[sel.selectedIndex];
-    if (opt && opt.value) total += Number(opt.dataset.price || 0) * qty;
+    if (opt && opt.value) total += Number(opt.dataset.price || 0) * qty + AddOnPicker.total(row);
   });
   document.querySelectorAll('#sb-item-lines > div').forEach(function (row) {
     var sel = row.querySelector('.sb-item-select');
@@ -3108,10 +3198,13 @@ async function submitBookingForm() {
   var notes = document.getElementById('sb-notes').value.trim();
 
   var services = [];
-  document.querySelectorAll('#sb-service-lines > div').forEach(function (row) {
+  document.querySelectorAll('#sb-service-lines > div:not(.aop-box)').forEach(function (row) {
     var serviceId = row.querySelector('.sb-service-select').value;
     var quantity = Number(row.querySelector('.sb-qty').value) || 1;
-    if (serviceId) services.push({ serviceId: serviceId, quantity: quantity });
+    if (serviceId) {
+      services.push({ serviceId: serviceId, quantity: quantity });
+      AddOnPicker.lines(row).forEach(function (l) { services.push(l); });
+    }
   });
 
   var inventoryItems = [];

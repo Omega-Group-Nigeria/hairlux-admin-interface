@@ -654,6 +654,95 @@
                                                 </tbody>
                                             </table>
                                         </div>
+                                        <!-- Mobile pricing (2026-10-23): travel fee, service fee, deposit -->
+                                        <div class="card mt-4" id="mobile-pricing-card">
+                                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                                <div>
+                                                    <h3 class="card-title mb-0">Mobile Pricing</h3>
+                                                    <div class="text-secondary small">Customers pay: services (walk-in prices) + travel fee + service fee. Every value here is enforced by the API.</div>
+                                                </div>
+                                                <button type="button" class="btn btn-primary btn-sm" id="btn-save-mobile-pricing">Save pricing</button>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="mp-alert" class="alert d-none" role="alert"></div>
+                                                <div class="row g-4">
+                                                    <div class="col-lg-6">
+                                                        <div class="subheader mb-2">Travel fee</div>
+                                                        <div class="small text-secondary mb-2">Fee = road distance from the nearest online beautician &times; trip multiplier &times; the area rate. One travel fee per booking.</div>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm table-vcenter mb-2">
+                                                                <thead><tr><th>State</th><th>City</th><th style="width:130px">&#8358; per km</th><th class="w-1"></th></tr></thead>
+                                                                <tbody id="mp-rates-tbody"></tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div class="small text-secondary mb-2">A city rate wins over the "All cities" rate for the same state. Addresses are matched on the city saved with the customer's address, so keep an "All cities" rate for every state you serve.</div>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="mp-add-rate">Add area rate</button>
+                                                        <div class="row g-2">
+                                                            <div class="col-6">
+                                                                <label class="form-label" for="mp-multiplier">Trip multiplier</label>
+                                                                <input type="number" class="form-control" id="mp-multiplier" min="1" max="4" step="0.5">
+                                                                <div class="form-hint">2 = there and back.</div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label" for="mp-travel-share">Beautician share of travel</label>
+                                                                <div class="input-group"><input type="number" class="form-control" id="mp-travel-share" min="0" max="100" step="0.5"><span class="input-group-text">%</span></div>
+                                                                <div class="form-hint">Hairlux keeps the rest.</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-6">
+                                                        <div class="subheader mb-2">Customer service fee</div>
+                                                        <div class="row g-2 mb-2">
+                                                            <div class="col-6">
+                                                                <label class="form-label" for="mp-fee-percent">Fee (% of services)</label>
+                                                                <div class="input-group"><input type="number" class="form-control" id="mp-fee-percent" min="0" max="100" step="0.5"><span class="input-group-text">%</span></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="small text-secondary mb-2">Capped by the service subtotal band (travel is not included). Separate from the beautician commission.</div>
+                                                        <table class="table table-sm table-vcenter mb-2">
+                                                            <thead><tr><th>Services up to (&#8358;)</th><th>Most the fee can be (&#8358;)</th><th class="w-1"></th></tr></thead>
+                                                            <tbody id="mp-bands-tbody"></tbody>
+                                                        </table>
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="mp-add-band">Add band</button>
+
+                                                        <div class="subheader mb-2 mt-2">Payment</div>
+                                                        <label class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" id="mp-full-on"><span class="form-check-label">Allow full payment</span></label>
+                                                        <label class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="mp-deposit-on"><span class="form-check-label">Allow deposit</span></label>
+                                                        <div class="row g-2">
+                                                            <div class="col-6">
+                                                                <label class="form-label" for="mp-deposit-percent">Deposit</label>
+                                                                <div class="input-group"><input type="number" class="form-control" id="mp-deposit-percent" min="1" max="99" step="1"><span class="input-group-text">%</span></div>
+                                                                <div class="form-hint">The rest is paid in the app before the beautician starts.</div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label" for="mp-quote-minutes">Price quote valid for</label>
+                                                                <div class="input-group"><input type="number" class="form-control" id="mp-quote-minutes" min="5" max="120"><span class="input-group-text">min</span></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="subheader mb-2">Road distance</div>
+                                                        <div class="row g-2 align-items-end">
+                                                            <div class="col-md-5">
+                                                                <label class="form-label" for="mp-routing">Distance from</label>
+                                                                <select class="form-select" id="mp-routing">
+                                                                    <option value="GOOGLE">Google road distance (falls back to an estimate if Google fails)</option>
+                                                                    <option value="ESTIMATE">Estimate only (straight line &times; road factor)</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <label class="form-label" for="mp-road-factor">Road factor (estimate)</label>
+                                                                <input type="number" class="form-control" id="mp-road-factor" min="1" max="3" step="0.05">
+                                                            </div>
+                                                            <div class="col-md-4 small text-secondary">
+                                                                Beautician share of the service price (<span id="mp-service-share">-</span>%) and the 5 / 12 / 15 km search radius are set on <a href="beauticians.html">Beauticians</a>.
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
 
                                     </div>
                                     <!-- ═══ END SECTION: HOME SERVICE ════════ -->
@@ -1078,15 +1167,15 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required" id="add-area-city-label">City / Cities <span class="text-secondary fw-normal">(multi-select)</span></label>
+                            <label class="form-label required" id="add-area-city-label">City / Cities <span class="text-secondary fw-normal">(search and tick one or more)</span></label>
                             <div id="add-area-city-notice" class="alert alert-info py-2 px-3 small mb-2 d-none" role="status" aria-live="polite"></div>
                             <select multiple class="form-select" id="add-area-city" disabled aria-describedby="add-area-city-hint add-area-city-notice">
                                 <option value="">Select a state first…</option>
                             </select>
                             <div class="form-hint" id="add-area-city-hint">
-                                Click cities to add them; each appears in the field with an <strong>×</strong> to remove it
-                                individually or clear all. Choose <strong>All Cities (*)</strong> to enable the whole state
-                                specific cities in that state become unnecessary and will be replaced automatically.
+                                Type to search, then tick the cities you want. Ticked cities appear in the preview below, each
+                                with an <strong>×</strong> to remove it, or clear all. Tick <strong>All Cities (*)</strong> to enable
+                                the whole state: specific cities in that state are then replaced automatically.
                             </div>
                         </div>
                         <div class="col-12">
@@ -1460,7 +1549,7 @@
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/salon-bookings.js"></script>
     <script src="assets/js/searchable-select.js"></script>
-    <script src="assets/js/multi-select.js"></script>
+    <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="assets/js/simple-pager.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script src="assets/js/data/nigeria-cities.js"></script>
@@ -1472,6 +1561,7 @@
     <script src="assets/js/settings/ui.js"></script>
     <script src="assets/js/settings/handlers.js"></script>
     <script src="assets/js/settings/index.js"></script>
+    <script src="assets/js/settings/mobile-pricing.js"></script>
 
 <script src="assets/js/pwa.js" defer></script>
 </body>

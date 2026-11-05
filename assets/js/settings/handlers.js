@@ -514,7 +514,7 @@
         }
 
         // ── Home service: add-area modal wiring ────────────────────────
-        MultiSelect.attach('add-area-city');
+        UI.CityPicker.attach();
         var prevCitySelection = [];
 
         var btnAddArea = document.getElementById('btn-add-serviceable-area');
@@ -530,7 +530,7 @@
                 prevCitySelection = [];
                 populateAddAreaState();
                 populateAddAreaCity('');
-                MultiSelect.clear('add-area-city');
+                UI.CityPicker.clear();
                 renderAddAreaPreview();
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-add-serviceable-area')).show();
             });
@@ -578,7 +578,7 @@
                     Array.from(citySel.options).forEach(function (opt) {
                         if (opt.value && opt.value !== '*') opt.selected = false;
                     });
-                    MultiSelect.refresh('add-area-city');
+                    UI.CityPicker.refresh();
                     selected = ['*'];
                 } else if (prevCitySelection.indexOf('*') !== -1 && added.length && added.indexOf('*') === -1) {
                     reconcileCityPickerSelection(state);
@@ -603,13 +603,13 @@
                     var city = removeBtn.getAttribute('data-preview-remove');
                     var opt = Array.from(citySel.options).find(function (o) { return o.value === city; });
                     if (opt) opt.selected = false;
-                    MultiSelect.refresh('add-area-city');
+                    UI.CityPicker.refresh();
                     prevCitySelection = Array.from(citySel.selectedOptions)
                         .map(function (o) { return o.value; })
                         .filter(Boolean);
                     renderAddAreaPreview();
                 } else if (clearBtn) {
-                    MultiSelect.clear('add-area-city');
+                    UI.CityPicker.clear();
                     prevCitySelection = [];
                     renderAddAreaPreview();
                 }
@@ -663,7 +663,7 @@
                 updateDraftBanner();
                 var savedBadge = document.getElementById('home-service-saved');
                 if (savedBadge) savedBadge.classList.add('d-none');
-                MultiSelect.clear('add-area-city');
+                UI.CityPicker.clear();
                 populateAddAreaCity(state);
                 renderAddAreaPreview();
                 var noteParts = [mergeResult.added.length + ' area(s) added to draft'];

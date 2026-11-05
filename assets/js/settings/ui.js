@@ -10,6 +10,40 @@
     var Api = SP.Api;
     var bootstrap = global.tabler && global.tabler.bootstrap;
 
+    // "Add service area" city picker: searchable multi-select dropdown
+    // (assets/js/multi-select-dropdown.js). Locked = All Cities already saved
+    // for the state; the notice above the field offers the way out.
+    var CITY_PICKER_ID = 'add-area-city';
+    var cityPickerLocked = false;
+    var CityPicker = {
+        attach: function () {
+            MultiSelectDropdown.attach(CITY_PICKER_ID, { placeholder: 'Select a state first\u2026' });
+        },
+        refresh: function () {
+            MultiSelectDropdown.refresh(CITY_PICKER_ID);
+            CityPicker.updatePlaceholder();
+        },
+        clear: function () {
+            MultiSelectDropdown.clear(CITY_PICKER_ID);
+        },
+        setLocked: function (locked) {
+            var sel = document.getElementById(CITY_PICKER_ID);
+            var stateEl = document.getElementById('add-area-state');
+            if (!sel) return;
+            cityPickerLocked = !!locked;
+            sel.disabled = cityPickerLocked || !(stateEl && stateEl.value);
+            MultiSelectDropdown.sync(CITY_PICKER_ID);
+            CityPicker.updatePlaceholder();
+        },
+        updatePlaceholder: function () {
+            var stateEl = document.getElementById('add-area-state');
+            var text = !(stateEl && stateEl.value)
+                ? 'Select a state first\u2026'
+                : (cityPickerLocked ? 'All Cities already active for this state' : 'Search and select cities\u2026');
+            MultiSelectDropdown.setPlaceholder(CITY_PICKER_ID, text);
+        },
+    };
+
     var showAlert = Utils.showAlert;
     var dismissAlert = Utils.dismissAlert;
     var setSpinner = Utils.setSpinner;
@@ -645,7 +679,7 @@
         if (!state) {
             notice.classList.add('d-none');
             notice.innerHTML = '';
-            MultiSelect.setLocked('add-area-city', false);
+            CityPicker.setLocked(false);
             return;
         }
 
@@ -658,18 +692,7 @@
                 '<button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" id="btn-override-all-cities">' +
                 'Choose specific cities instead</button></div>';
             notice.classList.remove('d-none');
-            MultiSelect.setLocked('add-area-city', true, {
-                message: 'All Cities is already active for ' + state + '. Individual cities are not needed.',
-                actionLabel: 'Choose specific cities instead',
-                placeholder: 'All Cities already active: click to see options',
-                onAction: function () {
-                    removeWildcardForState(state);
-                    populateAddAreaCity(state);
-                    updateAddAreaCityNotice(state);
-                    renderAddAreaPreview();
-                    document.dispatchEvent(new CustomEvent('hairlux:add-area-override'));
-                },
-            });
+            CityPicker.setLocked(true);
             return;
         }
 
@@ -679,13 +702,13 @@
                 '<strong>All Cities selected.</strong> This will cover every city in ' + _esc(state) + '. ' +
                 'To limit coverage, pick one or more specific cities below: that will replace All Cities for this add.';
             notice.classList.remove('d-none');
-            MultiSelect.setLocked('add-area-city', false);
+            CityPicker.setLocked(false);
             return;
         }
 
         notice.classList.add('d-none');
         notice.innerHTML = '';
-        MultiSelect.setLocked('add-area-city', false);
+        CityPicker.setLocked(false);
     }
 
     function reconcileCityPickerSelection(state) {
@@ -699,7 +722,7 @@
         Array.from(cityEl.options).forEach(function (opt) {
             if (opt.value === '*') opt.selected = false;
         });
-        MultiSelect.refresh('add-area-city');
+        CityPicker.refresh();
         var notice = document.getElementById('add-area-city-notice');
         if (notice) {
             notice.className = 'alert alert-warning py-2 px-3 small mb-2';
@@ -716,7 +739,7 @@
         if (!state) {
             sel.innerHTML = '<option value="" disabled selected>Select a state first…</option>';
             sel.disabled = true;
-            MultiSelect.refresh('add-area-city');
+            CityPicker.refresh();
             updateAddAreaCityNotice('');
             return;
         }
@@ -733,7 +756,7 @@
             return '<option value="' + _esc(c) + '">' + _esc(c) + suffix + '</option>';
         }).join('');
         sel.disabled = false;
-        MultiSelect.refresh('add-area-city');
+        CityPicker.refresh();
         updateAddAreaCityNotice(state);
     }
 
@@ -895,6 +918,7 @@
         removeWildcardForState: removeWildcardForState,
         updateDraftBanner: updateDraftBanner,
         renderAddAreaPreview: renderAddAreaPreview,
+        CityPicker: CityPicker,
         formatAreaLabel: formatAreaLabel,
         renderCancellationPolicy: renderCancellationPolicy,
         collectCancellationPolicyRules: collectCancellationPolicyRules,

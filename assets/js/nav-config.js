@@ -193,6 +193,7 @@ var NavConfig = window.NavConfig || (() => {
             children: [
                 { label: "Inventory Products", href: "inventory-products.html", permission: read("inventory_products:read") },
                 { label: "Inventory Items", href: "inventory-items.html", permission: read("inventory:read") },
+                { label: "Company Property", href: "company-property.html", permission: read("company_property:read") },
                 { label: "Product Sales", href: "product-sales.html", permission: read("product_sales:read") },
                 { label: "Purchase Requests", href: "purchase-requests.html", permission: read("purchase_requests:read") },
                 { label: "Purchases", href: "purchases.html", permission: read("purchases:read") },

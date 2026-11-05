@@ -117,6 +117,7 @@
                                         <option value="LOGISTICS">Logistics</option>
                                         <option value="OTHER_EXPENSE">Other Expense</option>
                                         <option value="REFUND">Refund</option>
+                                        <option value="SOFTWARE_TECHNOLOGY">Software &amp; Technology</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
@@ -209,11 +210,43 @@
                                 <option value="LOGISTICS">Logistics</option>
                                 <option value="OTHER_EXPENSE">Other Expense</option>
                                 <option value="REFUND">Refund</option>
+                                <option value="SOFTWARE_TECHNOLOGY">Software &amp; Technology</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Amount (₦)</label>
                             <input type="number" min="0.01" step="0.01" class="form-control" id="f-amount">
+                        </div>
+                    </div>
+                    <!-- Software service (2026-11-03): a Software & Technology expense is also recorded in Software Costs when approved. -->
+                    <div class="card card-sm mb-3 d-none" id="f-software-card">
+                        <div class="card-body">
+                            <div class="fw-semibold mb-1">Software service</div>
+                            <div class="text-secondary small mb-2">When this expense is approved, the payment is also recorded in
+                                <a href="software-costs.html" target="_blank" rel="noopener">Software Costs</a> under this service, and its next due date moves on.
+                                It is counted once in Finance.</div>
+                            <select class="form-select" id="f-software-service">
+                                <option value="">Loading services...</option>
+                            </select>
+                            <div class="row g-2 mt-1 d-none" id="f-software-new">
+                                <div class="col-md-6">
+                                    <label class="form-label">Service name</label>
+                                    <input type="text" class="form-control" id="f-software-name" maxlength="120" placeholder="e.g. Railway, Google Workspace">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Provider <span class="text-secondary">(optional)</span></label>
+                                    <input type="text" class="form-control" id="f-software-provider" maxlength="120">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Type</label>
+                                    <select class="form-select" id="f-software-category"></select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Billing cycle</label>
+                                    <select class="form-select" id="f-software-cycle"></select>
+                                </div>
+                                <div class="col-12"><div class="form-hint">Added to Software Costs when this expense is approved.</div></div>
+                            </div>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -428,7 +461,72 @@
         var CATEGORY_LABEL = {
             OPERATIONAL_EXPENSE: 'Operational Expense', LOGISTICS: 'Logistics',
             OTHER_EXPENSE: 'Other Expense', REFUND: 'Refund',
+            SOFTWARE_TECHNOLOGY: 'Software & Technology',
         };
+
+        // ── Software service (Software & Technology expenses) ────────────
+        var NEW_SOFTWARE = '__new';
+        var _softwareOptions = null;
+
+        async function loadSoftwareOptions() {
+            if (!_softwareOptions) _softwareOptions = await ExpenseRequests.softwareOptions();
+            var o = _softwareOptions;
+            document.getElementById('f-software-category').innerHTML = o.categories.map(function (c) {
+                return '<option value="' + esc(c.value) + '">' + esc(c.label) + '</option>';
+            }).join('');
+            document.getElementById('f-software-cycle').innerHTML = o.billingCycles.map(function (c) {
+                return '<option value="' + esc(c.value) + '"' + (c.value === 'MONTHLY' ? ' selected' : '') + '>' + esc(c.label) + '</option>';
+            }).join('');
+            return o;
+        }
+
+        /** Fills the picker; selects a service id, or "new" with its details. */
+        async function fillSoftwarePicker(subscriptionId, newService) {
+            var select = document.getElementById('f-software-service');
+            try {
+                var o = await loadSoftwareOptions();
+                select.innerHTML = '<option value="">Choose a service...</option>' +
+                    o.services.map(function (s) {
+                        return '<option value="' + esc(s.id) + '">' + esc(s.name) + (s.provider && s.provider !== s.name ? ' (' + esc(s.provider) + ')' : '') +
+                            ' · ' + esc(s.billingCycleLabel) + (s.status === 'PAUSED' ? ' · paused' : '') + '</option>';
+                    }).join('') +
+                    '<option value="' + NEW_SOFTWARE + '">+ New service (not in Software Costs yet)</option>';
+            } catch (e) {
+                select.innerHTML = '<option value="">Could not load services</option>';
+            }
+            select.value = newService ? NEW_SOFTWARE : (subscriptionId || '');
+            document.getElementById('f-software-name').value = newService ? newService.name || '' : '';
+            document.getElementById('f-software-provider').value = newService ? newService.provider || '' : '';
+            if (newService) {
+                document.getElementById('f-software-category').value = newService.category;
+                document.getElementById('f-software-cycle').value = newService.billingCycle;
+            }
+            syncSoftwareCard();
+        }
+
+        function syncSoftwareCard() {
+            var isSoftware = document.getElementById('f-category').value === 'SOFTWARE_TECHNOLOGY';
+            document.getElementById('f-software-card').classList.toggle('d-none', !isSoftware);
+            document.getElementById('f-software-new').classList.toggle('d-none', document.getElementById('f-software-service').value !== NEW_SOFTWARE);
+        }
+
+        /** Payload fields for the software service, or an error message. */
+        function softwarePayload() {
+            if (document.getElementById('f-category').value !== 'SOFTWARE_TECHNOLOGY') return {};
+            var value = document.getElementById('f-software-service').value;
+            if (!value) return { error: 'Choose the software service this expense pays for, or add a new one.' };
+            if (value !== NEW_SOFTWARE) return { softwareSubscriptionId: value };
+            var name = document.getElementById('f-software-name').value.trim();
+            if (!name) return { error: 'Enter the new software service name.' };
+            return {
+                newSoftwareService: {
+                    name: name,
+                    provider: document.getElementById('f-software-provider').value.trim() || undefined,
+                    category: document.getElementById('f-software-category').value,
+                    billingCycle: document.getElementById('f-software-cycle').value,
+                },
+            };
+        }
 
         document.addEventListener('DOMContentLoaded', async function () {
             RBAC.loadFromStorage();
@@ -445,6 +543,8 @@
             document.getElementById('btn-new').addEventListener('click', function () { openForm(null); });
             document.getElementById('btn-save').addEventListener('click', save);
             document.getElementById('f-payment-method').addEventListener('change', syncRecipientCard);
+            document.getElementById('f-category').addEventListener('change', syncSoftwareCard);
+            document.getElementById('f-software-service').addEventListener('change', syncSoftwareCard);
             document.getElementById('f-recipient-bank').addEventListener('change', scheduleRecipientResolve);
             document.getElementById('f-recipient-number').addEventListener('input', function () {
                 this.value = this.value.replace(/\D/g, '').slice(0, 10);
@@ -617,6 +717,7 @@
                     document.getElementById('f-recipient-name').classList.remove('text-danger');
                     _recipientResolvedFor = r.recipientAccountNumber ? r.recipientBankCode + ':' + r.recipientAccountNumber : null;
                     loadRecipientBanks(r.recipientBankCode);
+                    fillSoftwarePicker(r.softwareSubscriptionId, r.softwareNewService);
                 } catch (e) {
                     alert(e.message || 'Failed to load.');
                     return;
@@ -634,8 +735,10 @@
                 document.getElementById('f-recipient-name').classList.remove('text-danger');
                 _recipientResolvedFor = null;
                 loadRecipientBanks('');
+                fillSoftwarePicker(null, null);
             }
             syncRecipientCard();
+            syncSoftwareCard();
             new bootstrap.Modal(document.getElementById('modal-form')).show();
         }
 
@@ -654,6 +757,11 @@
             if (!document.getElementById('f-vendor-ack').checked) {
                 errEl.textContent = 'Please confirm this is not a supplier payment (use Purchase Requests for those).';
                 errEl.classList.remove('d-none'); return;
+            }
+
+            var software = softwarePayload();
+            if (software.error) {
+                errEl.textContent = software.error; errEl.classList.remove('d-none'); return;
             }
 
             var method = document.getElementById('f-payment-method').value;
@@ -678,6 +786,8 @@
                 attachmentUrl: document.getElementById('f-attachment-url').value.trim() || undefined,
                 recipientBankCode: usesAccount && recipientBank ? recipientBank : undefined,
                 recipientAccountNumber: usesAccount && recipientNumber ? recipientNumber : undefined,
+                softwareSubscriptionId: software.softwareSubscriptionId,
+                newSoftwareService: software.newSoftwareService,
                 vendorPurchaseAcknowledged: true,
             };
 
@@ -874,6 +984,23 @@
                     ? '<div class="alert alert-success mt-3">Posted to the ledger as ' + esc(r.financialTransaction.reference) + '</div>'
                     : '';
 
+                var softwareHtml = '';
+                if (r.category === 'SOFTWARE_TECHNOLOGY') {
+                    var serviceName = r.softwareSubscription
+                        ? esc(r.softwareSubscription.name) + (r.softwareSubscription.provider && r.softwareSubscription.provider !== r.softwareSubscription.name ? ' (' + esc(r.softwareSubscription.provider) + ')' : '')
+                        : r.softwareNewService
+                            ? esc(r.softwareNewService.name) + ' <span class="badge bg-azure-lt">New: added to Software Costs on approval</span>'
+                            : '<span class="text-secondary">Not chosen</span>';
+                    softwareHtml = '<div class="alert alert-info mt-3 mb-0"><div><div class="fw-semibold">Software service: ' + serviceName + '</div>' +
+                        (r.softwarePayment
+                            ? '<div class="small">Recorded in <a href="software-costs.html" target="_blank" rel="noopener">Software Costs</a> as a payment on ' + esc(new Date(r.softwarePayment.paidAt).toLocaleDateString()) +
+                                (r.softwarePayment.advancedDueTo ? '; next due ' + esc(new Date(r.softwarePayment.advancedDueTo).toLocaleDateString()) : '') + '.</div>'
+                            : r.status === 'APPROVED'
+                                ? '<div class="small text-warning">Not recorded in Software Costs. Record it there by hand if needed.</div>'
+                                : '<div class="small">Recorded in Software Costs when this expense is approved.</div>') +
+                        '</div></div>';
+                }
+
                 var payoutHtml = '';
                 if (isPayoutRequest(r)) {
                     payoutHtml = '<hr><div class="fw-semibold mb-2">Payout by bank transfer</div>' +
@@ -906,6 +1033,7 @@
                     '<div class="col-6"><div class="text-secondary small">Payment Method</div><div>' + esc(r.paymentMethod || '-') + '</div></div>' +
                     (r.attachmentUrl ? '<div class="col-6"><div class="text-secondary small">Attachment</div><div><a href="' + esc(r.attachmentUrl) + '" target="_blank" rel="noopener">View</a></div></div>' : '') +
                     '</div>' +
+                    softwareHtml +
                     ledgerLink +
                     payoutHtml +
                     '<hr><div class="fw-semibold mb-2">Approval History</div>' + actionsHtml;

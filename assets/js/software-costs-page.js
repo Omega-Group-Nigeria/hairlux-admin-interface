@@ -749,7 +749,10 @@
         $('pay-reference').value = p.reference || '';
         $('pay-notes').value = p.notes || '';
         $('pay-ngn-wrap').classList.toggle('d-none', p.currency === 'NGN');
-        if (p.ledger) {
+        if (p.expenseRequest) {
+            setLedgerLock(true, 'Came from expense request <strong>' + esc(p.expenseRequest.reference) + '</strong>. Amount, currency and date are locked. ' +
+                'To undo it, reverse that expense request.');
+        } else if (p.ledger) {
             setLedgerLock(true, 'In Finance as <strong>' + esc(p.ledger.reference) + '</strong>. Amount, currency, naira cost and date are locked. ' +
                 'To correct them, delete this payment (Finance reverses it on the same date) and record it again.');
         } else {
@@ -893,12 +896,17 @@
     function paymentActions(p) {
         var out = [];
         if (can(P.pay)) out.push('<a href="#" class="btn btn-sm btn-ghost-secondary" data-act="edit-payment" data-id="' + p.id + '">Edit</a>');
-        if (can(P.del)) out.push('<a href="#" class="btn btn-sm btn-ghost-danger" data-act="delete-payment" data-id="' + p.id + '">Delete</a>');
+        // A payment from an expense request is undone by reversing that request.
+        if (can(P.del) && !p.expenseRequest) out.push('<a href="#" class="btn btn-sm btn-ghost-danger" data-act="delete-payment" data-id="' + p.id + '">Delete</a>');
         return out.join('');
     }
 
     /** The payment's finance ledger reference, or a note that it is not posted yet. */
     function ledgerTag(p) {
+        if (p.expenseRequest) {
+            return '<div class="small"><a href="expense-requests.html" class="text-secondary" title="Came from this expense request, posted to Finance once">' +
+                'From ' + esc(p.expenseRequest.reference) + '</a></div>';
+        }
         if (p.ledger) return '<div class="small"><a href="financial-transactions.html" class="text-secondary" title="Posted to Finance">' + esc(p.ledger.reference) + '</a></div>';
         return '<div class="small text-warning" title="Add the naira cost to post it">Not in Finance</div>';
     }

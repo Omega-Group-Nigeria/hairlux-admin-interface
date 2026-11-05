@@ -297,6 +297,11 @@
                         <div>Batch / Expiry</div>
                     </div>
                     <div id="receive-lines-container"></div>
+                    <div class="mt-3">
+                        <label class="form-label" for="receive-document">Supporting document <span class="text-secondary">(optional)</span></label>
+                        <input type="file" class="form-control" id="receive-document" accept="application/pdf,image/jpeg,image/png,image/webp">
+                        <div class="form-hint">Waybill, delivery note or supplier invoice. PDF, JPG, PNG or WEBP, up to 10MB.</div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -525,9 +530,14 @@
                                 ? (l.acceptedQty + ' accepted (of ' + l.deliveredQty + ' delivered)')
                                 : (l.deliveredQty + ' delivered, awaiting acceptance'));
                         }).join('; ');
-                        return '<tr><td>' + new Date(r.receivedDate).toLocaleDateString() + '</td><td>' + esc(lineSummary) + '</td></tr>';
+                        var docCell = r.documentKey
+                            ? '<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewReceiptDocument(\'' + r.id + '\')" title="' + esc(r.documentName || '') + '">View</button>'
+                            : (RBAC.can('purchases:receive_goods')
+                                ? '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="pickReceiptDocument(\'' + r.id + '\')">Add</button>'
+                                : '<span class="text-secondary small">None</span>');
+                        return '<tr><td>' + new Date(r.receivedDate).toLocaleDateString() + '</td><td>' + esc(lineSummary) + '</td><td class="text-end text-nowrap">' + docCell + '</td></tr>';
                     }).join('')
-                    : '<tr><td colspan="2" class="text-secondary text-center">No deliveries received yet.</td></tr>';
+                    : '<tr><td colspan="3" class="text-secondary text-center">No deliveries received yet.</td></tr>';
 
                 document.getElementById('view-body').innerHTML =
                     '<div class="row g-2 mb-3">' +
@@ -548,7 +558,7 @@
                     '<div class="fw-semibold mb-1">Payments</div>' +
                     '<div class="table-responsive"><table class="table table-sm mb-3"><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status / paid to</th><th></th></tr></thead><tbody>' + paymentsHtml + '</tbody></table></div>' +
                     '<div class="fw-semibold mb-1">Goods Received</div>' +
-                    '<table class="table table-sm"><thead><tr><th>Date</th><th>Summary</th></tr></thead><tbody>' + receiptsHtml + '</tbody></table>';
+                    '<table class="table table-sm"><thead><tr><th>Date</th><th>Summary</th><th class="text-end">Document</th></tr></thead><tbody>' + receiptsHtml + '</tbody></table>';
 
                 // Dev Feedback Round 9: "Accept Products" only shown once
                 // there's actually something to review (RECEIVED) -- stays
@@ -803,8 +813,48 @@
         }
 
         // ── Receive Goods ─────────────────────────────────────────────────
+        // Supporting document for a delivery: PDF or image, up to 10MB.
+        var RECEIPT_DOC_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+        function receiptDocumentProblem(file) {
+            if (RECEIPT_DOC_TYPES.indexOf(file.type) === -1) return 'The document must be a PDF, JPG, PNG or WEBP file.';
+            if (file.size > 10 * 1024 * 1024) return 'The document must be 10MB or smaller.';
+            return null;
+        }
+
+        async function viewReceiptDocument(receiptId) {
+            // Open the tab now (a tab opened after waiting on the API is blocked as a pop-up).
+            var tab = window.open('', '_blank');
+            try {
+                var doc = await Purchases.receiptDocumentUrl(_currentPurchase.id, receiptId);
+                if (tab) tab.location.href = doc.url; else window.location.href = doc.url;
+            } catch (e) {
+                if (tab) tab.close();
+                alert(e.message || 'Could not open the document.');
+            }
+        }
+
+        function pickReceiptDocument(receiptId) {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = RECEIPT_DOC_TYPES.join(',');
+            input.addEventListener('change', async function () {
+                var file = input.files && input.files[0];
+                if (!file) return;
+                var problem = receiptDocumentProblem(file);
+                if (problem) { alert(problem); return; }
+                try {
+                    await Purchases.uploadReceiptDocument(_currentPurchase.id, receiptId, file);
+                    viewOne(_currentPurchase.id);
+                } catch (e) {
+                    alert(e.message || 'Could not upload the document.');
+                }
+            });
+            input.click();
+        }
+
         function openReceiveForm() {
             document.getElementById('receive-error').classList.add('d-none');
+            document.getElementById('receive-document').value = '';
 
             var deliveredByLine = {};
             (_currentPurchase.goodsReceipts || []).forEach(function (r) {
@@ -880,13 +930,35 @@
                 }),
             };
 
+            var docInput = document.getElementById('receive-document');
+            var docFile = docInput.files && docInput.files[0];
+            if (docFile) {
+                var problem = receiptDocumentProblem(docFile);
+                if (problem) {
+                    errEl.textContent = problem;
+                    errEl.classList.remove('d-none');
+                    return;
+                }
+            }
+
             var btn = document.getElementById('btn-save-receive');
             btn.disabled = true;
             try {
-                await Purchases.receiveGoods(_currentPurchase.id, payload);
+                var receipt = await Purchases.receiveGoods(_currentPurchase.id, payload);
+                // The delivery is saved first; the document follows. If the upload
+                // fails the delivery stands and the document can be added from Deliveries.
+                var docError = null;
+                if (docFile && receipt && receipt.id) {
+                    try {
+                        await Purchases.uploadReceiptDocument(_currentPurchase.id, receipt.id, docFile);
+                    } catch (e) {
+                        docError = e.message || 'upload failed';
+                    }
+                }
                 bootstrap.Modal.getInstance(document.getElementById('modal-receive')).hide();
                 viewOne(_currentPurchase.id);
                 load();
+                if (docError) alert('The delivery was saved, but the document did not upload (' + docError + '). Add it from the Deliveries list on this purchase.');
             } catch (e) {
                 errEl.textContent = e.message || 'Failed to record receipt.';
                 errEl.classList.remove('d-none');

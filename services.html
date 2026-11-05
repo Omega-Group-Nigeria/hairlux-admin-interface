@@ -596,6 +596,8 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/services.js"></script>
     <script src="assets/js/api-utils/inventory-products.js"></script>
+    <script src="assets/js/multi-select.js"></script>
+    <script src="assets/js/searchable-select.js"></script>
     <script src="assets/js/simple-pager.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
@@ -724,16 +726,60 @@
                             </select>
                         </div>
                         <div class="col-md-4" id="service-walkin-price-group">
-                            <label class="form-label" for="service-walkin-price">Walk-in Price (₦) <span
+                            <label class="form-label" for="service-walkin-price">Price (₦) <span
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="service-walkin-price" min="0" step="100"
                                 placeholder="e.g. 25000">
+                            <div class="form-hint">Walk-in and mobile (home service) price. Mobile customers also pay a travel fee and a service fee.</div>
                         </div>
-                        <div class="col-md-4" id="service-home-price-group">
+                        <!-- Mobile price = walk-in price since 2026-10-23; kept hidden for older code. -->
+                        <div class="col-md-4 d-none" id="service-home-price-group">
                             <label class="form-label" for="service-home-price">Home Service Price (₦) <span
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="service-home-price" min="0" step="100"
                                 placeholder="e.g. 30000">
+                        </div>
+                    </div>
+
+                    <!-- Add-ons and booking rules (2026-10-23, add-on module 2026-10-24) -->
+                    <div class="card card-sm mt-3" id="service-mobile-rules">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                <div>
+                                    <div class="fw-semibold">Add-ons and booking rules</div>
+                                    <div class="text-secondary small">Customers can add these optional services to this one, in one booking and one payment. Nothing is added automatically.</div>
+                                </div>
+                                <div class="d-flex flex-column gap-1">
+                                    <label class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="service-addons-enabled" checked>
+                                        <span class="form-check-label">Offer add-ons</span>
+                                    </label>
+                                    <label class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="service-is-addon">
+                                        <span class="form-check-label">Add-on only</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-hint mb-2" id="service-addon-hint" style="display:none">An add-on-only service is never booked on its own: customers add it to a service that lists it as an add-on.</div>
+                            <div class="mb-3" id="service-addons-row">
+                                <label class="form-label">Add-ons for this service</label>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-vcenter mb-2">
+                                        <thead><tr><th>Add-on</th><th style="width:150px">Price with this service (&#8358;)</th><th class="text-center">Mobile</th><th class="text-center">Branch</th><th class="w-1"></th></tr></thead>
+                                        <tbody id="service-addons-tbody"></tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex gap-2 align-items-start">
+                                    <div class="flex-grow-1"><select class="form-select" id="service-addon-pick"></select></div>
+                                    <button type="button" class="btn btn-outline-primary" id="btn-add-addon-link">Add</button>
+                                </div>
+                                <div class="form-hint">Leave the price blank to charge the add-on's normal price. Mobile and Branch choose where customers see it. Past bookings keep the price they were booked at.</div>
+                            </div>
+                            <div>
+                                <label class="form-label" for="service-incompatible">Cannot be booked with</label>
+                                <select class="form-select" id="service-incompatible" multiple></select>
+                                <div class="form-hint">Use this to avoid double charging, e.g. a package that already includes a hair wash cannot be booked with Hair Wash.</div>
+                            </div>
                         </div>
                     </div>
 
@@ -953,6 +999,7 @@
             // ── Service modal toggles -> show relevant price inputs ─────────────
             document.getElementById("service-walkin-available").addEventListener("change", syncPriceFieldVisibility);
             document.getElementById("service-home-available").addEventListener("change", syncPriceFieldVisibility);
+            document.getElementById("service-is-addon").addEventListener("change", syncAddOnSwitch);
 
             // ── Track offcanvas close to avoid stale refresh target ──────────────
             document.getElementById("offcanvas-service-detail").addEventListener("hidden.bs.offcanvas", function () {
@@ -1028,11 +1075,115 @@
             var walkInInput = document.getElementById("service-walkin-price");
             var homeInput = document.getElementById("service-home-price");
 
-            walkInGroup.classList.toggle("d-none", !walkInEnabled);
-            homeGroup.classList.toggle("d-none", !homeEnabled);
+            // One price for walk-in and mobile (2026-10-23).
+            walkInGroup.classList.remove("d-none");
+            homeGroup.classList.add("d-none");
+            walkInInput.disabled = false;
+            homeInput.disabled = true;
+        }
 
-            walkInInput.disabled = !walkInEnabled;
-            homeInput.disabled = !homeEnabled;
+        // ─── Add-ons and booking rules (add-on module 2026-10-24) ─────────────────
+        var _allServicesForRules = [];
+        var _ruleSelfId = null;
+        function syncAddOnSwitch() {
+            var isAddOn = document.getElementById("service-is-addon").checked;
+            var enabled = document.getElementById("service-addons-enabled").checked;
+            document.getElementById("service-addons-row").style.display = isAddOn ? "none" : "";
+            document.getElementById("service-addons-enabled").closest("label").style.display = isAddOn ? "none" : "";
+            document.getElementById("service-addon-hint").style.display = isAddOn ? "" : "none";
+            document.getElementById("service-addons-tbody").closest(".table-responsive").style.opacity = enabled ? "1" : "0.5";
+        }
+        function serviceById(id) {
+            return _allServicesForRules.find(function (s) { return s.id === id; }) || null;
+        }
+        function addOnRowHtml(a) {
+            var svc = serviceById(a.id) || {};
+            var name = a.name || svc.name || "Service";
+            var standard = a.standardPrice != null ? a.standardPrice : svc.walkInPrice;
+            return '<tr data-addon-id="' + esc(a.id) + '">' +
+                '<td><div>' + esc(name) + '</div><div class="text-secondary small">Normal price &#8358;' + Number(standard || 0).toLocaleString() +
+                (a.duration || svc.duration ? ' &middot; ' + (a.duration || svc.duration) + ' min' : '') + '</div></td>' +
+                '<td><input type="number" class="form-control form-control-sm" data-f="price" min="0" step="100" placeholder="' + Number(standard || 0) + '" value="' + (a.price == null ? '' : esc(a.price)) + '"></td>' +
+                '<td class="text-center"><input class="form-check-input" type="checkbox" data-f="onMobile"' + (a.onMobile === false ? '' : ' checked') + '></td>' +
+                '<td class="text-center"><input class="form-check-input" type="checkbox" data-f="onBranch"' + (a.onBranch === false ? '' : ' checked') + '></td>' +
+                '<td><button type="button" class="btn btn-sm btn-ghost-danger" data-rm-addon title="Remove">&times;</button></td></tr>';
+        }
+        function refreshAddOnPicker() {
+            var linked = Array.from(document.querySelectorAll("#service-addons-tbody tr")).map(function (tr) { return tr.getAttribute("data-addon-id"); });
+            var pick = document.getElementById("service-addon-pick");
+            pick.innerHTML = '<option value="">Choose a service to add as an add-on\u2026</option>' + _allServicesForRules.filter(function (s) {
+                return s.id !== _ruleSelfId && linked.indexOf(s.id) < 0;
+            }).map(function (s) {
+                return '<option value="' + s.id + '">' + esc(s.name) + ' (&#8358;' + Number(s.walkInPrice || 0).toLocaleString() + ')' + (s.isAddOn ? ' - add-on only' : '') + '</option>';
+            }).join("");
+            if (window.SearchableSelect) { SearchableSelect.attach("service-addon-pick"); SearchableSelect.refresh("service-addon-pick"); }
+        }
+        function fillRuleOptions(selfId, rules) {
+            _ruleSelfId = selfId;
+            var others = _allServicesForRules.filter(function (s) { return s.id !== selfId; });
+            var blockedIds = (rules && rules.incompatibleWith || []).map(function (s) { return s.id; });
+            document.getElementById("service-addons-tbody").innerHTML = (rules && rules.addOns || []).map(addOnRowHtml).join("");
+            document.getElementById("service-incompatible").innerHTML = others.map(function (s) {
+                return '<option value="' + s.id + '"' + (blockedIds.indexOf(s.id) >= 0 ? ' selected' : '') + '>' + esc(s.name) + (s.isAddOn ? ' (add-on)' : '') + '</option>';
+            }).join("");
+            document.getElementById("service-is-addon").checked = !!(rules && rules.isAddOn);
+            document.getElementById("service-addons-enabled").checked = !rules || rules.addOnsEnabled !== false;
+            if (window.MultiSelect) { MultiSelect.attach("service-incompatible"); MultiSelect.refresh("service-incompatible"); }
+            refreshAddOnPicker();
+            syncAddOnSwitch();
+        }
+        function collectAddOnLinks() {
+            var out = [];
+            document.querySelectorAll("#service-addons-tbody tr").forEach(function (tr) {
+                var raw = tr.querySelector('[data-f="price"]').value.trim();
+                var onMobile = tr.querySelector('[data-f="onMobile"]').checked;
+                var onBranch = tr.querySelector('[data-f="onBranch"]').checked;
+                var name = tr.querySelector("td div").textContent;
+                if (!onMobile && !onBranch) throw new Error('"' + name + '" must be offered on Mobile, Branch or both.');
+                if (raw !== "" && !(Number(raw) >= 0)) throw new Error('Enter a valid price for "' + name + '".');
+                out.push({ serviceId: tr.getAttribute("data-addon-id"), price: raw === "" ? null : Number(raw), onMobile: onMobile, onBranch: onBranch });
+            });
+            return out;
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("btn-add-addon-link").addEventListener("click", function () {
+                var id = document.getElementById("service-addon-pick").value;
+                if (!id) return;
+                var s = serviceById(id);
+                document.getElementById("service-addons-tbody").insertAdjacentHTML("beforeend", addOnRowHtml({
+                    id: id, name: s && s.name, standardPrice: s && s.walkInPrice, duration: s && s.duration, price: null,
+                }));
+                refreshAddOnPicker();
+            });
+            document.getElementById("service-addons-tbody").addEventListener("click", function (e) {
+                var rm = e.target.closest("[data-rm-addon]");
+                if (!rm) return;
+                rm.closest("tr").remove();
+                refreshAddOnPicker();
+            });
+            document.getElementById("service-addons-enabled").addEventListener("change", syncAddOnSwitch);
+        });
+        async function loadRulesForModal(id) {
+            try {
+                _allServicesForRules = await Services.getAll({});
+            } catch (_) { _allServicesForRules = []; }
+            var rules = null;
+            if (id) {
+                try { rules = await Services.getCompatibility(id); } catch (_) { rules = null; }
+            }
+            fillRuleOptions(id, rules);
+        }
+        async function saveRulesFor(id) {
+            var isAddOn = document.getElementById("service-is-addon").checked;
+            var pick = function (sel) {
+                return Array.from(document.getElementById(sel).selectedOptions).map(function (o) { return o.value; });
+            };
+            return Services.setCompatibility(id, {
+                isAddOn: isAddOn,
+                addOnsEnabled: document.getElementById("service-addons-enabled").checked,
+                addOns: isAddOn ? [] : collectAddOnLinks(),
+                incompatibleServiceIds: pick("service-incompatible"),
+            });
         }
         function renderAvailabilityBadges(s) {
             var walkIn = s.isWalkInAvailable !== false;
@@ -1129,10 +1280,10 @@
                     '</td>' +
                     '<td><span class="badge bg-primary-lt text-primary">' + esc(catName) + '</span></td>' +
                     '<td class="small">' +
-                    '<div><span class="text-secondary">Walk-in:</span> <span class="fw-semibold text-success">' + Services.formatMoney(s.walkInPrice) + '</span></div>' +
-                    '<div><span class="text-secondary">Home:</span> <span class="fw-semibold text-info">' + Services.formatMoney(s.homeServicePrice) + '</span></div>' +
+                    '<div class="fw-semibold text-success">' + Services.formatMoney(s.walkInPrice) + '</div>' +
+                    '<div class="text-secondary">Walk-in and mobile</div>' +
                     '</td>' +
-                    '<td class="small">' + renderAvailabilityBadges(s) + '</td>' +
+                    '<td class="small">' + renderAvailabilityBadges(s) + (s.isAddOn ? ' <span class="badge bg-purple-lt">Add-on</span>' : '') + '</td>' +
                     '<td class="text-secondary">' + Services.formatDuration(s.duration) +
                     (s.estimatedCompletionMinutes ? '<div class="small">Est. finish: ' + Services.formatDuration(s.estimatedCompletionMinutes) + '</div>' : '') + '</td>' +
                     '<td>' + Services.statusBadge(s.status) + '</td>' +
@@ -1184,8 +1335,8 @@
                     '<div class="fw-bold fs-4 text-success">' + Services.formatMoney(s.walkInPrice) + '</div>' +
                     '</div>' +
                     '<div class="col-4 border-end">' +
-                    '<div class="small text-secondary mb-1">Home Price</div>' +
-                    '<div class="fw-bold fs-4 text-info">' + Services.formatMoney(s.homeServicePrice) + '</div>' +
+                    '<div class="small text-secondary mb-1">Mobile Price</div>' +
+                    '<div class="fw-bold fs-4 text-info">' + Services.formatMoney(s.walkInPrice) + '</div>' +
                     '</div>' +
                     '<div class="col-4">' +
                     '<div class="small text-secondary mb-1">Duration</div>' +
@@ -1327,6 +1478,7 @@
                 }
             }
 
+            await loadRulesForModal(isEdit ? id : null);
             new bootstrap.Modal(document.getElementById("modal-service")).show();
         }
 
@@ -1374,16 +1526,12 @@
                 errEl.classList.remove("d-none");
                 return;
             }
-            if (isWalkInAvailable && isNaN(walkInPrice)) {
-                errEl.textContent = "Please provide Walk-in price.";
+            if (isNaN(walkInPrice)) {
+                errEl.textContent = "Please provide the price.";
                 errEl.classList.remove("d-none");
                 return;
             }
-            if (isHomeServiceAvailable && isNaN(homeServicePrice)) {
-                errEl.textContent = "Please provide Home service price.";
-                errEl.classList.remove("d-none");
-                return;
-            }
+            homeServicePrice = walkInPrice; // mobile price = walk-in price
             if (!_editId && !_imageFile) {
                 errEl.textContent = "Please upload a service image.";
                 errEl.classList.remove("d-none");
@@ -1394,8 +1542,8 @@
             fd.append("name", name);
             fd.append("description", description);
             fd.append("categoryId", categoryId);
-            if (isWalkInAvailable) fd.append("walkInPrice", walkInPrice);
-            if (isHomeServiceAvailable) fd.append("homeServicePrice", homeServicePrice);
+            fd.append("walkInPrice", walkInPrice);
+            fd.append("homeServicePrice", homeServicePrice);
             appendBooleanField(fd, "isWalkInAvailable", isWalkInAvailable);
             appendBooleanField(fd, "isHomeServiceAvailable", isHomeServiceAvailable);
             fd.append("duration", duration);
@@ -1407,13 +1555,26 @@
             btn.innerHTML = '<span class="spinner-border spinner-inline me-1"></span>Saving…';
 
             try {
+                // Check the add-on rows first, so a bad row never leaves the service half saved.
+                if (!document.getElementById("service-is-addon").checked) collectAddOnLinks();
+                var savedId = _editId;
                 if (_editId) {
                     await Services.update(_editId, fd);
                     if (selectedStatus !== _editOriginalStatus) {
                         await Services.updateStatus(_editId, selectedStatus);
                     }
                 } else {
-                    await Services.create(fd);
+                    var created = await Services.create(fd);
+                    savedId = created && created.id;
+                }
+                if (savedId) {
+                    try {
+                        await saveRulesFor(savedId);
+                    } catch (ruleErr) {
+                        errEl.textContent = "Service saved, but the add-on and booking rules were not: " + ruleErr.message;
+                        errEl.classList.remove("d-none");
+                        return;
+                    }
                 }
                 bootstrap.Modal.getInstance(document.getElementById("modal-service")).hide();
                 loadCategoriesAndStats();
