@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Marketplace Payouts</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Marketplace</div>
+                            <h2 class="page-title">Vendor Payouts</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list"><button class="btn btn-primary d-none" id="btn-prepare">Prepare payout run</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="alert alert-info" id="mode-note">
+                        <div>A vendor's share of each delivered order goes on their balance and can be paid after the hold period. Returns come off it. Failed payouts go back on it.</div>
+                    </div>
+                    <div id="page-alert"></div>
+                    <div class="row row-cards mb-3">
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">Can be paid now</div><div class="h1 mb-0" id="c-payable">-</div><div class="small text-secondary" id="c-payable-n"></div></div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">In the hold period</div><div class="h1 mb-0" id="c-pending">-</div></div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">Waiting for approval</div><div class="h1 mb-0 text-warning" id="c-approve">-</div></div></div></div>
+                        <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body"><div class="subheader">Being paid</div><div class="h1 mb-0" id="c-paying">-</div><div class="small text-secondary" id="c-paying-n"></div></div></div></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="tabs">
+                                <li class="nav-item"><a class="nav-link active" href="#" data-tab="balances">Balances</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="runs">Payout runs</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="payouts">Payouts</a></li>
+                            </ul>
+                        </div>
+
+                        <div data-pane="balances">
+                            <div class="card-body border-bottom py-3">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-5"><input type="search" class="form-control" id="f-search" placeholder="Search vendor"></div>
+                                    <div class="col-md-4"><label class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f-payable"><span class="form-check-label">Only vendors who can be paid now</span></label></div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead><tr><th>Vendor</th><th class="text-end">Available</th><th class="text-end">In hold</th><th>Payout account</th><th>Next payout</th><th></th></tr></thead>
+                                    <tbody id="bal-tbody"><tr><td colspan="6" class="text-center text-secondary py-5">Loading...</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div data-pane="runs" hidden>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead><tr><th>Run</th><th>Status</th><th class="text-end">Vendors</th><th class="text-end">Total</th><th>Prepared</th><th>Approved</th><th></th></tr></thead>
+                                    <tbody id="runs-tbody"><tr><td colspan="7" class="text-center text-secondary py-5">Loading...</td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div data-pane="payouts" hidden>
+                            <div class="card-body border-bottom py-3">
+                                <div class="btn-group flex-wrap" role="group" id="p-status">
+                                    <button class="btn btn-sm active" data-status="">All</button>
+                                    <button class="btn btn-sm" data-status="PENDING">Waiting for approval <span class="badge bg-warning text-dark ms-1" data-pc="PENDING"></span></button>
+                                    <button class="btn btn-sm" data-status="PROCESSING">Being paid <span class="badge bg-blue-lt ms-1" data-pc="PROCESSING"></span></button>
+                                    <button class="btn btn-sm" data-status="PAID">Paid</button>
+                                    <button class="btn btn-sm" data-status="FAILED">Failed</button>
+                                    <button class="btn btn-sm" data-status="CANCELLED">Cancelled</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead><tr><th>Vendor</th><th class="text-end">Amount</th><th>From</th><th>Status</th><th>To</th><th>Date</th><th></th></tr></thead>
+                                    <tbody id="pay-tbody"><tr><td colspan="7" class="text-center text-secondary py-5">Loading...</td></tr></tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer d-flex align-items-center">
+                                <div class="text-secondary small" id="page-label"></div>
+                                <div class="ms-auto btn-list">
+                                    <button class="btn btn-sm" id="btn-prev">Previous</button>
+                                    <button class="btn btn-sm" id="btn-next">Next</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payout run -->
+    <div class="modal modal-blur fade" id="modal-run" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="run-title">Payout run</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body" id="run-body"></div>
+                <div class="modal-footer" id="run-footer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor ledger -->
+    <div class="modal modal-blur fade" id="modal-ledger" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="ledger-title">Vendor balance</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body" id="ledger-body"></div>
+                <div class="modal-footer d-none" id="ledger-adjust">
+                    <div class="w-100">
+                        <div class="subheader mb-2">Adjust the balance</div>
+                        <div class="row g-2">
+                            <div class="col-sm-4"><div class="input-group"><span class="input-group-text">₦</span><input type="number" step="0.01" class="form-control" id="adj-amount" placeholder="e.g. -1500"></div></div>
+                            <div class="col-sm-5"><input type="text" class="form-control" id="adj-note" maxlength="300" placeholder="Reason (the vendor sees it)"></div>
+                            <div class="col-sm-3"><button class="btn btn-outline-primary w-100" id="btn-adjust">Save adjustment</button></div>
+                        </div>
+                        <div class="form-hint">Positive adds to what Hairlux owes the vendor; negative takes off.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text prompt (reason or reference) -->
+    <div class="modal modal-blur fade" id="modal-prompt" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="prompt-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p class="text-secondary small" id="prompt-text"></p>
+                    <label class="form-label required" for="prompt-input" id="prompt-label"></label>
+                    <input class="form-control" id="prompt-input" maxlength="300">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Back</button>
+                    <button class="btn btn-primary" id="btn-prompt-ok"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/marketplace.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/marketplace-payouts-page.js"></script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

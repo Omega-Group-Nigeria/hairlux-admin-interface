@@ -328,7 +328,7 @@
             ['recalc-from', 'recalc-to', 'recalc-staff'].forEach(function (id) {
                 document.getElementById(id).addEventListener('change', function () { _lastRecalcPreview = null; document.getElementById('recalc-result').innerHTML = ''; });
             });
-            Staff.getOptions({ includeAllStatuses: true }).then(function (list) {
+            Staff.getOptions().then(function (list) { // active and on-leave staff only: payroll covers no one else
                 var managedIds = RBAC.getManagedBranchIds();
                 if (RBAC.isManagerScoped()) list = list.filter(function (s) { return !s.locationId || managedIds.indexOf(s.locationId) !== -1; });
                 document.getElementById('recalc-staff').innerHTML = '<option value="">All staff</option>' + list.map(function (s) {

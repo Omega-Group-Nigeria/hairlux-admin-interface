@@ -30,6 +30,10 @@
         // Orders
         getOrders: function (params) { return Shop.getOrders(params); },
         getOrder: function (id) { return Shop.getOrder(id); },
-        updateOrderStatus: function (id, status, notes) { return Shop.updateOrderStatus(id, status, notes); },
+        updateOrderStatus: function (id, status, notes, extra) { return Shop.updateOrderStatus(id, status, notes, extra); },
+        recordOrderBalance: function (id, method, reference) { return Shop.recordOrderBalance(id, method, reference); },
+        fezBook: function (id) { return Shop.fezBook(id); },
+        fezTrack: function (id) { return Shop.fezTrack(id); },
+        fezSync: function (id) { return Shop.fezSync(id); },
     };
 })(window);

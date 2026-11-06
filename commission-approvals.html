@@ -273,7 +273,7 @@
                 RBAC.applyBranchScope(sel);
             } catch (e) { /* optional filter */ }
             try {
-                var list = await Staff.getOptions({ includeAllStatuses: true });
+                var list = await Staff.getOptions(); // active and on-leave staff only: payroll covers no one else
                 var managedIds = RBAC.getManagedBranchIds();
                 if (RBAC.isManagerScoped()) list = list.filter(function (s) { return !s.locationId || managedIds.indexOf(s.locationId) !== -1; });
                 document.getElementById('f-staff').innerHTML = '<option value="">All staff</option>' + list.map(function (s) {

@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Hairlux" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
-    <title>Hairlux Admin | Suppliers &amp; Vendors</title>
+    <title>Hairlux Admin | Suppliers</title>
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
@@ -209,7 +209,7 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label" id="f-vendor-category-label">Vendor Category <span
+                            <label class="form-label" id="f-vendor-category-label">Supplier Category <span
                                     class="text-secondary">(optional)</span></label>
                             <input type="text" class="form-control" id="f-vendor-category"
                                 placeholder="e.g. Hair care wholesale">
@@ -265,7 +265,7 @@
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" id="f-preferred">
                         <label class="form-check-label" id="f-preferred-label" for="f-preferred">Preferred
-                            vendor</label>
+                            supplier</label>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Notes</label>
@@ -309,7 +309,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="ledger-modal-title">Vendor Ledger</h5>
+                    <h5 class="modal-title" id="ledger-modal-title">Supplier Ledger</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -371,8 +371,10 @@
     <script src="assets/js/tabler.min.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
-        var supplierType = new URLSearchParams(location.search).get('type') === 'VENDOR' ? 'VENDOR' : 'SUPPLIER';
-        var typeLabel = supplierType === 'VENDOR' ? 'Vendor' : 'Supplier';
+        // The old "Vendors" list was merged into Suppliers (same thing:
+        // companies Hairlux buys from). Marketplace vendors are separate.
+        var supplierType = 'SUPPLIER';
+        var typeLabel = 'Supplier';
         var editingId = null;
         var _lastLoadedSuppliers = [];
 
@@ -634,7 +636,7 @@
                     await Suppliers.update(editingId, payload);
                 } else {
                     var created = await Suppliers.create(payload);
-                    // Accounts added before the vendor existed are saved now.
+                    // Accounts added before the supplier existed are saved now.
                     var failed = [];
                     for (var i = 0; i < _accounts.length; i++) {
                         var a = _accounts[i];
