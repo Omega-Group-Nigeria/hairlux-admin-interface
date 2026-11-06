@@ -30,6 +30,8 @@
  *   GET    /admin/shop/orders
  *   GET    /admin/shop/orders/:id
  *   PATCH  /admin/shop/orders/:id/status     (JSON)
+ *   POST   /admin/shop/orders/:id/record-balance (JSON, Pay on Delivery)
+ *   POST   /admin/shop/orders/:id/fez/book, /fez/sync; GET /admin/shop/orders/:id/fez (Fez Delivery)
  */
 
 const Shop = (() => {
@@ -39,6 +41,7 @@ const Shop = (() => {
         MANAGE_CATEGORIES: "shop:manage_categories",
         MANAGE_DELIVERY:   "shop:manage_delivery",
         UPDATE_STATUS:     "shop:update_status",
+        RECORD_PAYMENTS:   "shop:record_payments",
     };
 
     const ORDER_STATUSES = ["CONFIRMED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"];
@@ -252,8 +255,33 @@ const Shop = (() => {
         return apiFetch(`/admin/shop/orders/${id}`);
     }
 
-    async function updateOrderStatus(id, status, notes) {
-        const body = { status };
+    /** Pay on Delivery: record a balance paid by TRANSFER, CASH or POS. */
+    async function recordOrderBalance(id, method, reference) {
+        return apiFetch(`/admin/shop/orders/${id}/record-balance`, {
+            method: "POST",
+            body: JSON.stringify({ method, reference: reference || undefined }),
+        });
+    }
+
+    /** Fez Delivery: book (or retry), read tracking, or apply Fez's status now. */
+    async function fezBook(id) {
+        const res = await Auth.fetch(`/admin/shop/orders/${id}/fez/book`, { method: "POST" });
+        const raw = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(raw.message || `Request failed (${res.status})`);
+        return raw; // { success, message, data }: success false when Fez refused the booking
+    }
+
+    async function fezTrack(id) {
+        return apiFetch(`/admin/shop/orders/${id}/fez`);
+    }
+
+    async function fezSync(id) {
+        return apiFetch(`/admin/shop/orders/${id}/fez/sync`, { method: "POST" });
+    }
+
+    /** extra: { stage } while PROCESSING, { deliveryCode } to mark a marketplace order DELIVERED. */
+    async function updateOrderStatus(id, status, notes, extra) {
+        const body = Object.assign({ status }, extra || {});
         if (notes) body.notes = notes;
         return apiFetch(`/admin/shop/orders/${id}/status`, {
             method: "PATCH",
@@ -357,6 +385,10 @@ const Shop = (() => {
         getOrders,
         getOrder,
         updateOrderStatus,
+        recordOrderBalance,
+        fezBook,
+        fezTrack,
+        fezSync,
         getProductImages,
         getProductImageUrl,
         statusBadge,

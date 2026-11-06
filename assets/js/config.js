@@ -1,4 +1,4 @@
-// Global config — loaded before all other scripts.
+// Global config: loaded before all other scripts.
 
 // API base URL (no trailing slash)
 // window.API_BASE = "https://dev-hairlux-api.up.railway.app";

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Marketplace Settings</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Marketplace</div>
+                            <h2 class="page-title">Settings</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list"><button class="btn btn-primary d-none" id="btn-save">Save settings</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert"></div>
+                    <div class="row row-cards">
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Vendor applications</h3></div>
+                                <div class="card-body">
+                                    <label class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="s-accepting">
+                                        <span class="form-check-label">Accept new vendor sign-ups on the vendor site</span>
+                                    </label>
+                                    <div class="mb-3">
+                                        <label class="form-label">Review target (hours)</label>
+                                        <input type="number" class="form-control" id="s-sla" min="1" max="720">
+                                        <div class="form-hint">How quickly vendors and products should be reviewed. Shown to vendors and used to highlight late reviews.</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Vendor agreement version</label>
+                                        <input type="text" class="form-control" id="s-agreement-version" maxlength="40">
+                                        <div class="form-hint">Changing the version asks every vendor to accept the agreement again before they submit.</div>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">Vendor agreement link</label>
+                                        <input type="url" class="form-control" id="s-agreement-url" placeholder="https://...">
+                                        <div class="form-hint">The PDF or page vendors read before accepting.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card mb-3">
+                                <div class="card-header"><h3 class="card-title">Commission</h3></div>
+                                <div class="card-body">
+                                    <label class="form-label">Default commission</label>
+                                    <div class="input-group" style="max-width:220px"><input type="number" class="form-control" id="s-commission" min="0" max="100" step="0.01"><span class="input-group-text">%</span></div>
+                                    <div class="form-hint">Taken from each vendor sale unless the category or the vendor has its own rate. Order: vendor rate, then category rate, then this default.</div>
+                                </div>
+                            </div>
+                            <div class="card mb-3">
+                                <div class="card-header"><h3 class="card-title">Vendor payouts</h3></div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Who starts a payout</label>
+                                        <select class="form-select" id="s-payout-mode">
+                                            <option value="PAYOUT_RUN">Hairlux payout runs (one admin prepares, another approves)</option>
+                                            <option value="VENDOR_REQUEST">Vendors request a payout, an admin approves it</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">How the money is sent</label>
+                                        <select class="form-select" id="s-payout-method">
+                                            <option value="PAYSTACK_TRANSFER">Paystack transfer, sent on approval</option>
+                                            <option value="MANUAL">Manual bank transfer, then mark it paid</option>
+                                        </select>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <label class="form-label">Hold after delivery (days)</label>
+                                            <input type="number" class="form-control" id="s-hold-days" min="0" max="60">
+                                            <div class="form-hint">The return window. Earnings can be paid after this. Applies to new deliveries.</div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="form-label">Minimum payout</label>
+                                            <div class="input-group"><span class="input-group-text">₦</span><input type="number" class="form-control" id="s-min-payout" min="0" step="0.01"></div>
+                                            <div class="form-hint">Smaller balances wait for the next payout.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Payment (web shop)</h3></div>
+                                <div class="card-body">
+                                    <label class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="s-pod">
+                                        <span class="form-check-label">Offer Pay on Delivery</span>
+                                    </label>
+                                    <div class="mb-3">
+                                        <label class="form-label">Downpayment for Pay on Delivery</label>
+                                        <div class="input-group" style="max-width:220px"><input type="number" class="form-control" id="s-pod-percent" min="0" max="100" step="0.01"><span class="input-group-text">%</span></div>
+                                        <div class="form-hint">Paid at checkout. The delivery fee is always paid in full on top. The balance is paid to Hairlux on delivery.</div>
+                                    </div>
+                                    <div class="form-hint mb-0">Hairlux delivers every order, vendor items included, for the delivery region fee set in Shop, or Fez's price when Fez Delivery is on.</div>
+                                </div>
+                            </div>
+                            <div class="card mb-3">
+                                <div class="card-header"><h3 class="card-title">Fez Delivery</h3><span class="ms-auto" id="s-fez-badge"></span></div>
+                                <div class="card-body">
+                                    <label class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="s-fez">
+                                        <span class="form-check-label">Deliver with Fez</span>
+                                    </label>
+                                    <p class="text-secondary small">Checkout charges Fez's live price for the customer's state and the parcel weight (the delivery region fee is used if Fez cannot price it). Orders are booked with Fez when they reach Ready for dispatch, picked up from the Receiving Center. The customer gives the rider their delivery code, and Fez's Delivered marks the order delivered.</p>
+                                    <div class="row g-3">
+                                        <div class="col-sm-4"><label class="form-label">Pickup state</label><input class="form-control" id="s-rc-state" maxlength="60" placeholder="e.g. Lagos"><div class="form-hint">Where the Receiving Center is.</div></div>
+                                        <div class="col-sm-4"><label class="form-label">Markup on Fez price</label><div class="input-group"><input type="number" class="form-control" id="s-fez-markup" min="0" max="200" step="0.01"><span class="input-group-text">%</span></div></div>
+                                        <div class="col-sm-4"><label class="form-label">Weight per item</label><div class="input-group"><input type="number" class="form-control" id="s-parcel-kg" min="0.1" max="100" step="0.1"><span class="input-group-text">kg</span></div><div class="form-hint">For products with no weight set.</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">Receiving Center</h3></div>
+                                <div class="card-body">
+                                    <p class="text-secondary small">Vendors bring their stock here. It is counted and inspected, and only accepted units go on sale. Vendors see these details on the vendor site and in emails.</p>
+                                    <div class="row g-3">
+                                        <div class="col-sm-6"><label class="form-label">Name</label><input class="form-control" id="s-rc-name" maxlength="120"></div>
+                                        <div class="col-sm-6"><label class="form-label">Phone</label><input class="form-control" id="s-rc-phone" maxlength="40"></div>
+                                        <div class="col-12"><label class="form-label">Address</label><input class="form-control" id="s-rc-address" maxlength="300" placeholder="Street, area, city"></div>
+                                        <div class="col-sm-6"><label class="form-label">Opening hours</label><input class="form-control" id="s-rc-hours" maxlength="120" placeholder="e.g. Mon-Fri 9am-5pm, Sat 10am-2pm"></div>
+                                        <div class="col-sm-6"><label class="form-label">Low-stock level</label><input type="number" class="form-control" id="s-low-stock" min="0" max="10000" style="max-width:160px">
+                                            <div class="form-hint">Vendors are emailed when a product drops to this many units.</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-end text-secondary small" id="s-updated"></div>
+
+                    <div class="card mt-3">
+                        <div class="card-header"><h3 class="card-title">Commission by category</h3></div>
+                        <div class="card-body border-bottom py-2"><div class="small text-secondary">Leave a rate empty to use the default. A vendor's own rate still wins. Changes apply to new orders only.</div></div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead><tr><th>Category</th><th class="text-end">Vendor products</th><th>Rate</th><th>Applies</th><th></th></tr></thead>
+                                <tbody id="cat-tbody"><tr><td colspan="5" class="text-center text-secondary py-4">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/marketplace.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/marketplace-settings-page.js"></script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>

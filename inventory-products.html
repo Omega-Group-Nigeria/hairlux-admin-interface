@@ -115,8 +115,8 @@
                                 </div>
                                 <div class="col-md-3">
                                     <select class="form-select" id="f-vendor-filter">
-                                        <option value="">All vendors</option>
-                                        <option value="__NONE__">No vendor attached</option>
+                                        <option value="">All suppliers</option>
+                                        <option value="__NONE__">No supplier attached</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2 d-flex align-items-center">
@@ -134,7 +134,7 @@
                                         <th>Product</th>
                                         <th>Category</th>
                                         <th>Cost / Selling Price</th>
-                                        <th>Vendors</th>
+                                        <th>Suppliers</th>
                                         <th>Status</th>
                                         <th class="w-1">Actions</th>
                                     </tr>
@@ -229,7 +229,7 @@
                         <textarea class="form-control" id="f-description" rows="2"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Supplying Vendors <span
+                        <label class="form-label">Suppliers <span
                                 class="text-secondary">(optional)</span></label>
                         <select class="form-select vendor-multiselect" id="f-vendors" multiple></select>
                         <div class="form-hint">Ctrl/Cmd-click (or drag) to select more than one.</div>
@@ -296,22 +296,22 @@
             try {
                 // Suppliers.getAll with no type filter returns both
                 // SUPPLIER and VENDOR records -- either can supply a
-                // product, matching the spec's own "Vendor" master data
+                // product, matching the spec's own "Supplier" master data
                 // (this codebase's existing Supplier model, extended).
                 _allVendors = await Suppliers.getAll();
             } catch (e) {
                 _allVendors = [];
             }
             renderVendorCheckboxes();
-            // Dev Feedback Round 9, item #10: populate the new vendor
+            // Dev Feedback Round 9, item #10: populate the new supplier
             // filter dropdown from the same _allVendors list already
             // being fetched here for the create/edit form's checkboxes
             // no extra request needed.
             var vendorFilterOpts = _allVendors.map(function (v) {
-                return '<option value="' + v.id + '">' + esc(v.name) + (v.type === 'VENDOR' ? ' (Vendor)' : ' (Supplier)') + '</option>';
+                return '<option value="' + v.id + '">' + esc(v.name) + '</option>';
             }).join('');
             document.getElementById('f-vendor-filter').innerHTML =
-                '<option value="">All vendors</option><option value="__NONE__">No vendor attached</option>' + vendorFilterOpts;
+                '<option value="">All suppliers</option><option value="__NONE__">No supplier attached</option>' + vendorFilterOpts;
 
             load();
         });
@@ -332,14 +332,14 @@
             if (!_allVendors.length) {
                 select.innerHTML = '';
                 select.disabled = true;
-                select.insertAdjacentHTML('afterend', '<div class="text-secondary small mt-1" id="f-vendors-empty">No suppliers/vendors found: add one first under Contacts → Suppliers/Vendors.</div>');
+                select.insertAdjacentHTML('afterend', '<div class="text-secondary small mt-1" id="f-vendors-empty">No suppliers found: add one first under Contacts → Suppliers.</div>');
                 return;
             }
             select.disabled = false;
             select.innerHTML = _allVendors.map(function (v) {
                 return '<option value="' + esc(v.id) + '">' + esc(v.name) + ' (' + esc(v.type) + ')</option>';
             }).join('');
-            MultiSelectDropdown.attach('f-vendors', { placeholder: 'Select vendors\u2026' });
+            MultiSelectDropdown.attach('f-vendors', { placeholder: 'Select suppliers\u2026' });
             MultiSelectDropdown.refresh('f-vendors');
         }
 
@@ -386,10 +386,10 @@
                 var search = document.getElementById('f-search').value.trim();
                 var category = document.getElementById('f-category-filter').value;
                 var activeOnly = document.getElementById('f-active-only').checked;
-                // Dev Feedback Round 9, item #10: the vendor filter is one
+                // Dev Feedback Round 9, item #10: the supplier filter is one
                 // dropdown covering two distinct backend params -- the
                 // sentinel "__NONE__" value maps to noVendor, any real
-                // vendor id maps to vendorId, and the two are mutually
+                // supplier id maps to vendorId, and the two are mutually
                 // exclusive by construction (only one can ever be
                 // selected at a time from a single-select dropdown).
                 var vendorFilterVal = document.getElementById('f-vendor-filter').value;
