@@ -1127,22 +1127,41 @@
                 actions.innerHTML =
                     '<div class="w-100">' +
                     '<div class="alert alert-warning small py-2">This creates a staff record and sends the new hire a password-setup email. This cannot be undone from here.</div>' +
-                    '<label class="form-label small mb-1">Assign to Branch</label>' +
-                    '<select class="form-select form-select-sm mb-2" id="cts-location"><option value="">Select branch…</option>' + options + '</select>' +
+                    '<label class="form-label small mb-1">Work mode</label>' +
+                    '<div class="btn-group w-100 mb-2" role="group" aria-label="Work mode">' +
+                    '<input type="radio" class="btn-check" name="cts-work-mode" id="cts-mode-onsite" value="ON_SITE" checked>' +
+                    '<label class="btn btn-sm btn-outline-primary" for="cts-mode-onsite">Onsite</label>' +
+                    '<input type="radio" class="btn-check" name="cts-work-mode" id="cts-mode-remote" value="REMOTE">' +
+                    '<label class="btn btn-sm btn-outline-primary" for="cts-mode-remote">Remote</label>' +
+                    '</div>' +
+                    '<label class="form-label small mb-1" id="cts-location-label">Assign to Branch</label>' +
+                    '<select class="form-select form-select-sm mb-1" id="cts-location"><option value="">Select branch…</option>' + options + '</select>' +
+                    '<div class="form-hint small mb-2" id="cts-location-hint">The branch they will work at.</div>' +
                     '<div class="d-flex gap-2">' +
                     '<button class="btn btn-sm btn-success flex-fill" onclick="submitConvertToStaff()">Confirm: Convert to Staff</button>' +
                     '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
                     '</div>' +
                     '</div>';
+                // Remote staff still belong to a branch (staff code, payroll, reports): say so.
+                document.querySelectorAll('input[name="cts-work-mode"]').forEach(function (r) {
+                    r.addEventListener('change', function () {
+                        var remote = document.getElementById('cts-mode-remote').checked;
+                        document.getElementById('cts-location-label').textContent = remote ? 'Home branch' : 'Assign to Branch';
+                        document.getElementById('cts-location-hint').textContent = remote
+                            ? 'Remote staff work away from the branch but belong to it for their staff code, payroll and reports.'
+                            : 'The branch they will work at.';
+                    });
+                });
             }
 
             async function submitConvertToStaff() {
                 var loc = document.getElementById('cts-location').value;
                 if (!loc) { alert('Please select a branch.'); return; }
+                var workMode = document.getElementById('cts-mode-remote').checked ? 'REMOTE' : 'ON_SITE';
                 var actions = document.getElementById('offcanvas-detail-actions');
                 actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Converting…';
                 try {
-                    var result = await Applications.convertToStaff(currentDetailId, { locationId: loc });
+                    var result = await Applications.convertToStaff(currentDetailId, { locationId: loc, workMode: workMode });
                     if (result && result.rehireWarning) {
                         alert(result.rehireWarning);
                     }
