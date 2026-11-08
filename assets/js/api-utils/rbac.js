@@ -301,7 +301,9 @@ const RBAC = (() => {
         var navMap = _getNavMap();
         var linkMap = _getLinkMap();
         sidebar.querySelectorAll(':scope > .nav-item').forEach(function (li) {
-            var dropdownLinks = Array.from(li.querySelectorAll('.dropdown-menu a[href]'));
+            // Dropdown menus and fold-out sub-navs (layout.js renders groups as
+            // [id^="nav-sub-"] lists): gate each child link on its own.
+            var dropdownLinks = Array.from(li.querySelectorAll('.dropdown-menu a[href], [id^="nav-sub-"] a[href]'));
 
             if (dropdownLinks.length) {
                 // Dropdown group: gate each child link by its OWN rule (a

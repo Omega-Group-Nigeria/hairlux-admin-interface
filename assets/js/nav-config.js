@@ -130,6 +130,7 @@ var NavConfig = window.NavConfig || (() => {
                 { label: "Users", href: "users.html", permission: read("users:read") },
                 { label: "Customer Contacts", href: "customer-contacts.html", permission: read("customer_contacts:read") },
                 { label: "Lifecycle Campaigns", href: "lifecycle-campaigns.html", permission: read("lifecycle_campaigns:read") },
+                { label: "Push Notifications", href: "push-notifications.html", permission: read("push_campaigns:read") },
                 { label: "Rewards & Loyalty", href: "rewards.html", permission: read("rewards:read") },
                 { label: "Discounts", href: "discounts.html", permission: read("discounts:read") },
                 { label: "Referrals", href: "referrals.html", permission: read("referrals:read") },

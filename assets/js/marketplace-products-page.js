@@ -38,12 +38,29 @@
     function ngn(n) { return n === null || n === undefined ? '-' : '₦' + Number(n).toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'; }
     function fmtDateTime(v) { return v ? new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'; }
+    var DUP_REASON = { NAME: 'same name', NAFDAC: 'same NAFDAC number' };
+    function dupBadge(p) {
+        if (!p.duplicateCount) return '';
+        var why = (p.duplicateReasons || []).map(function (r) { return DUP_REASON[r] || r; }).join(', ');
+        return '<div><span class="badge bg-red-lt mt-1" title="Looks like ' + p.duplicateCount + ' other product' + (p.duplicateCount === 1 ? '' : 's') + ': ' + esc(why) + '">Possible duplicate (' + esc(why) + ')</span></div>';
+    }
+
+    async function loadDuplicateNote() {
+        try {
+            var s = await Marketplace.summary();
+            var n = s.duplicateProducts || 0;
+            $('duplicate-note').innerHTML = n && !$('f-dups').checked
+                ? '<div class="alert alert-danger d-flex align-items-center justify-content-between gap-2"><div><strong>' + n + ' product' + (n === 1 ? '' : 's') + ' waiting for review</strong> look' + (n === 1 ? 's' : '') + ' like another product in the catalogue (same name or NAFDAC number). Check before approving.</div><button class="btn btn-sm btn-danger" id="btn-show-dups">Show them</button></div>'
+                : '';
+        } catch (_) { /* the list still works without the banner */ }
+    }
+
     function waited(h) { return h === null || h === undefined ? '' : h < 1 ? 'under an hour' : h < 48 ? h + ' hours' : Math.floor(h / 24) + ' days'; }
 
     async function load() {
         $('products-tbody').innerHTML = '<tr><td colspan="10" class="text-center text-secondary py-5">Loading...</td></tr>';
         try {
-            var res = await Marketplace.listProducts({ approvalStatus: _status || undefined, sellerId: _sellerId || undefined, search: $('f-search').value.trim() || undefined, page: _page });
+            var res = await Marketplace.listProducts({ approvalStatus: _status || undefined, sellerId: _sellerId || undefined, search: $('f-search').value.trim() || undefined, duplicatesOnly: $('f-dups').checked ? 'true' : undefined, page: _page });
             _meta = res.meta;
             $('results-label').textContent = _meta.total + ' product' + (_meta.total === 1 ? '' : 's');
             $('page-label').textContent = _meta.totalPages > 1 ? 'Page ' + _meta.page + ' of ' + _meta.totalPages : '';
@@ -55,7 +72,7 @@
             $('products-tbody').innerHTML = res.data.length ? res.data.map(function (p) {
                 return '<tr>' +
                     '<td>' + (p.image ? '<span class="avatar avatar-md" style="background-image:url(' + esc(p.image) + ')"></span>' : '<span class="avatar avatar-md">-</span>') + '</td>' +
-                    '<td><div class="fw-semibold">' + esc(p.name) + '</div><div class="small text-secondary">' + esc(p.brand || '') + '</div></td>' +
+                    '<td><div class="fw-semibold">' + esc(p.name) + '</div><div class="small text-secondary">' + esc(p.brand || '') + '</div>' + dupBadge(p) + '</td>' +
                     '<td><a href="marketplace-vendors.html?vendor=' + esc(p.seller.id) + '">' + esc(p.seller.legalName) + '</a></td>' +
                     '<td>' + esc(p.category ? p.category.name : '-') + '</td>' +
                     '<td class="text-end">' + ngn(p.price) + '</td>' +
@@ -95,12 +112,12 @@
         if (p.seller.riskFlags && p.seller.riskFlags.length) parts.push('<div class="alert alert-warning">This vendor has open risk flags. <a href="marketplace-vendors.html?vendor=' + esc(p.seller.id) + '">Check the vendor</a></div>');
         if (p.possibleDuplicates.length) {
             parts.push('<div class="alert alert-warning"><strong>Same name already in the catalogue:</strong><ul class="mb-0">' + p.possibleDuplicates.map(function (d) {
-                return '<li>' + esc(d.name) + ' (' + esc(d.owner) + ', ' + esc((d.approvalStatus || '').replace(/_/g, ' ').toLowerCase()) + ')</li>';
+                return '<li>' + esc(d.name) + ' (' + esc(d.owner) + (d.sameVendor ? ', this vendor\'s own' : '') + ', ' + esc((d.approvalStatus || '').replace(/_/g, ' ').toLowerCase()) + ')</li>';
             }).join('') + '</ul></div>');
         }
         if (p.sameNafdacNumber.length) {
             parts.push('<div class="alert alert-warning"><strong>Same NAFDAC number used on:</strong><ul class="mb-0">' + p.sameNafdacNumber.map(function (d) {
-                return '<li>' + esc(d.name) + ' (' + esc(d.owner) + ')</li>';
+                return '<li>' + esc(d.name) + ' (' + esc(d.owner) + (d.sameVendor ? ', this vendor\'s own' : '') + ')</li>';
             }).join('') + '</ul><div class="small">One NAFDAC number normally belongs to one product. Check the label photo.</div></div>');
         }
         if (p.reviewNotes && p.approvalStatus !== 'APPROVED') parts.push('<div class="alert alert-secondary"><strong>Last note to the vendor:</strong> ' + esc(p.reviewNotes) + '</div>');
@@ -205,6 +222,16 @@
             clearTimeout(_searchTimer);
             _searchTimer = setTimeout(function () { _page = 1; load(); }, 300);
         });
+        $('f-dups').addEventListener('change', function () { _page = 1; load(); loadDuplicateNote(); });
+        $('duplicate-note').addEventListener('click', function (e) {
+            if (!e.target.closest('#btn-show-dups')) return;
+            // Waiting-for-review products that look like another product.
+            $('f-dups').checked = true;
+            _status = 'PENDING_REVIEW';
+            document.querySelectorAll('#status-tabs .nav-link').forEach(function (x) { x.classList.toggle('active', x.dataset.status === 'PENDING_REVIEW'); });
+            _page = 1; load(); loadDuplicateNote();
+        });
+        loadDuplicateNote();
         $('btn-prev').addEventListener('click', function () { if (_page > 1) { _page--; load(); } });
         $('btn-next').addEventListener('click', function () { if (_meta && _page < _meta.totalPages) { _page++; load(); } });
         $('products-tbody').addEventListener('click', function (e) {

@@ -106,6 +106,10 @@
             $('kpi-pending-sub').innerHTML = s.oldestVendorWaitingHours === null ? 'Nothing waiting'
                 : '<span class="' + (late ? 'text-danger fw-bold' : '') + '">Oldest waiting ' + esc(waited(s.oldestVendorWaitingHours)) + '</span> (target ' + s.reviewSlaHours + ' hours)';
             $('kpi-products').textContent = s.pendingProducts;
+            var kp = $('kpi-products');
+            var dupNote = kp && kp.parentNode ? kp.parentNode.querySelector('.kpi-dup-note') : null;
+            if (kp && kp.parentNode && !dupNote) { dupNote = document.createElement('div'); dupNote.className = 'kpi-dup-note small text-danger'; kp.parentNode.appendChild(dupNote); }
+            if (dupNote) dupNote.textContent = s.duplicateProducts ? s.duplicateProducts + ' possible duplicate' + (s.duplicateProducts === 1 ? '' : 's') : '';
             $('kpi-approved').textContent = (s.vendors && s.vendors.APPROVED) || 0;
             $('kpi-approved-sub').textContent = ((s.vendors && s.vendors.SUSPENDED) || 0) + ' suspended';
             $('kpi-flagged').textContent = s.flaggedVendors;
@@ -192,7 +196,8 @@
             }).join('') + '</div>');
 
         // Business
-        parts.push('<h3 class="mb-2">Business</h3><div class="row">' +
+        var editBtn = can(P.review) ? '<button class="btn btn-sm btn-outline-primary" data-edit-details>Edit details</button>' : '';
+        parts.push('<div class="d-flex align-items-center justify-content-between mb-2"><h3 class="mb-0">Business</h3>' + editBtn + '</div><div class="row">' +
             row('Business name', esc(v.legalName)) +
             row('Trading name', esc(v.tradingName)) +
             row('Business type', esc(BUSINESS_TYPES[v.businessType] || v.businessType)) +
@@ -233,7 +238,7 @@
         // Owner and NIN
         var o = v.owner;
         var ninBtn = can(P.review) && v.ownerNin ? ' <button class="btn btn-sm btn-outline-primary ms-2" id="btn-check-nin">Check NIN with Prembly</button>' : '';
-        parts.push('<h3 class="mb-2">Owner</h3><div class="row">' +
+        parts.push('<div class="d-flex align-items-center justify-content-between mb-2"><h3 class="mb-0">Owner</h3>' + editBtn + '</div><div class="row">' +
             row('Name', esc(o.firstName + ' ' + o.lastName)) +
             row('Email', esc(o.email) + ' ' + (o.emailVerified ? '<span class="badge bg-green-lt">verified</span>' : '<span class="badge bg-red-lt">not verified</span>')) +
             row('Phone', esc(o.phone) + ' ' + (o.phoneVerified ? '<span class="badge bg-green-lt">verified</span>' : '<span class="badge bg-red-lt">not verified</span>')) +
@@ -309,6 +314,67 @@
             }
         }
         $('vendor-footer').innerHTML = '<button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Close</button>' + actions.join('');
+    }
+
+    // ── Edit details ────────────────────────────────────────────────────────
+
+    // Form id → [payload key, value on the vendor record].
+    function editFields(v) {
+        return {
+            legalName: ['legalName', v.legalName], tradingName: ['tradingName', v.tradingName], businessType: ['businessType', v.businessType],
+            cacNumber: ['cacNumber', v.cacNumber], businessPhone: ['businessPhone', v.businessPhone], businessEmail: ['businessEmail', v.businessEmail],
+            address: ['address', v.address], city: ['city', v.city], state: ['state', v.state],
+            categories: ['categories', (v.categories || []).join(', ')], description: ['description', v.description],
+            ownerFirstName: ['ownerFirstName', v.owner.firstName], ownerLastName: ['ownerLastName', v.owner.lastName],
+            ownerEmail: ['ownerEmail', v.owner.email], ownerPhone: ['ownerPhone', v.owner.phone], ownerNin: ['ownerNin', v.ownerNin],
+        };
+    }
+
+    function openEditDetails() {
+        var v = _vendor;
+        $('ed-businessType').innerHTML = Object.keys(BUSINESS_TYPES).map(function (k) {
+            return '<option value="' + k + '">' + esc(BUSINESS_TYPES[k]) + '</option>';
+        }).join('');
+        var f = editFields(v);
+        Object.keys(f).forEach(function (id) { $('ed-' + id).value = f[id][1] == null ? '' : f[id][1]; });
+        $('ed-reason').value = '';
+        $('ed-error').hidden = true;
+        bootstrap.Modal.getOrCreateInstance($('modal-edit-details')).show();
+    }
+
+    async function saveEditDetails() {
+        var err = $('ed-error');
+        err.hidden = true;
+        var f = editFields(_vendor);
+        var payload = {};
+        // Only what was changed (the NIN shows masked to some admins, so it is sent only when retyped).
+        Object.keys(f).forEach(function (id) {
+            var now = $('ed-' + id).value.trim();
+            var was = f[id][1] == null ? '' : String(f[id][1]);
+            if (now === was) return;
+            payload[f[id][0]] = id === 'categories'
+                ? now.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+                : now;
+        });
+        var reason = $('ed-reason').value.trim();
+        var btn = $('btn-ed-save');
+        try {
+            if (!Object.keys(payload).length) throw new Error('Nothing has been changed.');
+            if (!reason) throw new Error('Give a reason for the change.');
+            if (payload.ownerNin !== undefined && !/^\d{11}$/.test(payload.ownerNin)) throw new Error('The NIN must be 11 digits.');
+            payload.reason = reason;
+            btn.disabled = true;
+            var r = await Marketplace.updateDetails(_vendor.id, payload);
+            bootstrap.Modal.getOrCreateInstance($('modal-edit-details')).hide();
+            await openVendor(_vendor.id);
+            load();
+            showInModal(r.message || 'Vendor details saved.', 'success');
+        } catch (e) {
+            err.textContent = e.message;
+            err.hidden = false;
+        } finally {
+            btn.disabled = false;
+        }
     }
 
     // ── Decisions ───────────────────────────────────────────────────────────
@@ -431,6 +497,8 @@
                 var rc = await Marketplace.verifyCac(_vendor.id);
                 await openVendor(_vendor.id);
                 showInModal(rc.message, rc.cacStatus === 'VERIFIED' ? 'success' : 'warning');
+            } else if (t.hasAttribute('data-edit-details')) {
+                openEditDetails();
             } else if (t.id === 'btn-save-commission') {
                 var raw = $('f-commission').value.trim();
                 await Marketplace.setCommission(_vendor.id, raw === '' ? null : Number(raw));
@@ -490,6 +558,7 @@
             if (b) openDecision(b.dataset.decide);
         });
         $('btn-decision-confirm').addEventListener('click', confirmDecision);
+        $('btn-ed-save').addEventListener('click', saveEditDetails);
 
         var open = new URLSearchParams(location.search).get('vendor');
         loadSummary();
