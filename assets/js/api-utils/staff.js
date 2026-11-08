@@ -30,6 +30,7 @@ const Staff = (() => {
         if (params.search) q.set("search", params.search);
         if (params.employmentStatus) q.set("employmentStatus", params.employmentStatus);
         if (params.locationId) q.set("locationId", params.locationId);
+        if (params.workType) q.set("workType", params.workType); // "branch" | "remote"
         if (params.currentRole) q.set("currentRole", params.currentRole);
         if (params.includeArchived !== undefined && params.includeArchived !== null) {
             q.set("includeArchived", String(asBool(params.includeArchived)));

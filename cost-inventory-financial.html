@@ -295,7 +295,7 @@
                             <div class="h3 mb-0" id="cif-payables">-</div>
                         </div></div></div>
                         <div class="col-6 col-lg-3"><div class="card card-sm"><div class="card-body">
-                            <div class="text-secondary small">Vendor Overpayments</div>
+                            <div class="text-secondary small">Supplier Overpayments</div>
                             <div class="h3 mb-0" id="cif-vendor-overpayments">-</div>
                             <div class="small text-secondary" id="cif-vendor-overpayments-note">-</div>
                         </div></div></div>
@@ -369,10 +369,10 @@
                     <div class="row row-deck row-cards mb-3">
                         <div class="col-12">
                             <div class="card">
-                                <div class="card-header"><h3 class="card-title">Outstanding Payables by Vendor</h3></div>
+                                <div class="card-header"><h3 class="card-title">Outstanding Payables by Supplier</h3></div>
                                 <div class="table-responsive">
                                     <table class="table table-vcenter card-table table-sm">
-                                        <thead><tr><th>Vendor</th><th>Type</th><th class="text-end">Outstanding Payable</th><th class="text-end">Outstanding Goods Value</th></tr></thead>
+                                        <thead><tr><th>Supplier</th><th class="text-end">Outstanding Payable</th><th class="text-end">Outstanding Goods Value</th></tr></thead>
                                         <tbody id="cif-vendor-tbody"><tr><td colspan="4" class="text-center text-secondary py-3">Loading…</td></tr></tbody>
                                     </table>
                                 </div>
@@ -415,7 +415,7 @@
         var CATEGORY_LABEL = {
             SALARY: 'Salary', REFUND: 'Refund', OPERATIONAL_EXPENSE: 'Operational Expense',
             LOGISTICS: 'Logistics', OTHER_EXPENSE: 'Other Expense', SOFTWARE_TECHNOLOGY: 'Software & Technology',
-            VENDOR_PAYMENT: 'Vendor Payment',
+            VENDOR_PAYMENT: 'Supplier Payment',
         };
         function categoryLabel(c) { return CATEGORY_LABEL[c] || c; }
 
@@ -476,8 +476,8 @@
             return '<tr><td>' + esc(p.status) + '</td><td class="text-end">' + p.count + '</td>' +
                 '<td class="text-end">' + BusinessIntelligence.formatMoney(p.grandTotal) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(p.amountPaid) + '</td></tr>';
         });
-        var vendorTable = pagedTable('cif-vendor-tbody', 'cif-vendor-pager', 4, 'No outstanding vendor balances.', function (v) {
-            return '<tr><td>' + esc(v.vendorName) + '</td><td>' + esc(v.vendorType) + '</td>' +
+        var vendorTable = pagedTable('cif-vendor-tbody', 'cif-vendor-pager', 3, 'No outstanding supplier balances.', function (v) {
+            return '<tr><td>' + esc(v.vendorName) + '</td>' +
                 '<td class="text-end">' + BusinessIntelligence.formatMoney(v.outstandingPayable) + '</td><td class="text-end">' + BusinessIntelligence.formatMoney(v.outstandingGoodsValue) + '</td></tr>';
         });
 
@@ -503,7 +503,7 @@
                 } catch (err) { /* branch picker just stays hidden */ }
             }
 
-            // Business Intelligence's Expenses / Outstanding Payables / Vendor
+            // Business Intelligence's Expenses / Outstanding Payables / Supplier
             // Overpayments / Inventory Value cards link here with these as
             // query params -- pre-apply whichever are present before the
             // first load, so the deep-linked view matches what was on screen.
@@ -624,7 +624,7 @@
             var el = document.getElementById('cif-obligations-chart');
             if (!el || !window.ApexCharts) return null;
             el.innerHTML = '';
-            var labels = ['Vendor Payables', 'Staff Wallet Balances', 'Customer Wallet Balances', 'Unpaid Staff Commission'];
+            var labels = ['Supplier Payables', 'Staff Wallet Balances', 'Customer Wallet Balances', 'Unpaid Staff Commission'];
             var values = [ob.vendorPayables, ob.staffWalletBalances, ob.customerWalletBalances, ob.unpaidStaffCommission];
             if (values.every(function (v) { return !v; })) {
                 el.innerHTML = '<div class="text-secondary small text-center pt-4">No obligations recorded</div>';
@@ -718,8 +718,8 @@
             document.getElementById('cif-payables').textContent = BusinessIntelligence.formatMoney(d.outstandingPayables.value);
             document.getElementById('cif-vendor-overpayments').textContent = BusinessIntelligence.formatMoney(d.vendorOverpayments.value);
             document.getElementById('cif-vendor-overpayments-note').textContent = d.vendorOverpayments.value > 0
-                ? d.vendorOverpayments.byVendor.length + ' vendor(s) in credit'
-                : 'No vendor credit balances';
+                ? d.vendorOverpayments.byVendor.length + ' supplier(s) in credit'
+                : 'No supplier credit balances';
             document.getElementById('cif-obligations').textContent = BusinessIntelligence.formatMoney(d.obligations.total);
             document.getElementById('cif-receivables').textContent = BusinessIntelligence.formatMoney(d.outstandingReceivables.value);
             document.getElementById('cif-receivables-note').textContent = d.outstandingReceivables.note || '';
@@ -731,7 +731,7 @@
             _cifObligationsChart = renderObligationsDonut(ob);
 
             obligationsTable.set([
-                { label: 'Vendor Payables', amount: ob.vendorPayables },
+                { label: 'Supplier Payables', amount: ob.vendorPayables },
                 { label: 'Staff Wallet Balances', amount: ob.staffWalletBalances },
                 { label: 'Customer Wallet Balances', amount: ob.customerWalletBalances },
                 { label: 'Unpaid Staff Commission', amount: ob.unpaidStaffCommission },
