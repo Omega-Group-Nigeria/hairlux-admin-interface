@@ -106,6 +106,10 @@
             $('kpi-pending-sub').innerHTML = s.oldestVendorWaitingHours === null ? 'Nothing waiting'
                 : '<span class="' + (late ? 'text-danger fw-bold' : '') + '">Oldest waiting ' + esc(waited(s.oldestVendorWaitingHours)) + '</span> (target ' + s.reviewSlaHours + ' hours)';
             $('kpi-products').textContent = s.pendingProducts;
+            var kp = $('kpi-products');
+            var dupNote = kp && kp.parentNode ? kp.parentNode.querySelector('.kpi-dup-note') : null;
+            if (kp && kp.parentNode && !dupNote) { dupNote = document.createElement('div'); dupNote.className = 'kpi-dup-note small text-danger'; kp.parentNode.appendChild(dupNote); }
+            if (dupNote) dupNote.textContent = s.duplicateProducts ? s.duplicateProducts + ' possible duplicate' + (s.duplicateProducts === 1 ? '' : 's') : '';
             $('kpi-approved').textContent = (s.vendors && s.vendors.APPROVED) || 0;
             $('kpi-approved-sub').textContent = ((s.vendors && s.vendors.SUSPENDED) || 0) + ' suspended';
             $('kpi-flagged').textContent = s.flaggedVendors;
