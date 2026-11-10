@@ -677,8 +677,12 @@
             try {
                 var result = await StaffComms.getDirectiveEvidence(id);
                 if (!result.viewUrl) { body.innerHTML = '<div class="text-secondary">No evidence submitted.</div>'; return; }
-                body.innerHTML = '<img src="' + esc(result.viewUrl) + '" style="max-width:100%;border-radius:8px" alt="Submitted evidence">' +
-                    '<div class="mt-2"><a href="' + esc(result.viewUrl) + '" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Open Full Size</a></div>';
+                // Evidence can be a photo or a PDF; the stored file keeps its name, so the link path ends in .pdf for PDFs.
+                var isPdf = /\.pdf$/i.test(String(result.viewUrl).split('?')[0]);
+                body.innerHTML = isPdf
+                    ? '<div class="mb-2">The staff member attached a PDF.</div><a href="' + esc(result.viewUrl) + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Open PDF</a>'
+                    : '<img src="' + esc(result.viewUrl) + '" style="max-width:100%;border-radius:8px" alt="Submitted evidence">' +
+                      '<div class="mt-2"><a href="' + esc(result.viewUrl) + '" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Open Full Size</a></div>';
             } catch (e) {
                 body.innerHTML = '<div class="text-danger">' + esc(e.message || "Failed to load evidence.") + '</div>';
             }
