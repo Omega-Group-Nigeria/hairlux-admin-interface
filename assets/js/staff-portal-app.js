@@ -1731,8 +1731,8 @@ function openMarkCompleteModal(directiveId) {
   document.getElementById('profile-modal-box').innerHTML =
     '<div class="oc-modal-error" id="mc-modal-error" style="display:none"></div>' +
     '<h3>Mark Task Complete</h3>' +
-    '<div class="oc-modal-sub">You can optionally attach a photo as proof of completion.</div>' +
-    '<div class="oc-field"><label>Evidence (optional)</label><input type="file" id="mc-field-evidence" accept="image/jpeg,image/png"></div>' +
+    '<div class="oc-modal-sub">You can optionally attach a photo or PDF as proof of completion (up to 5MB).</div>' +
+    '<div class="oc-field"><label>Evidence (optional)</label><input type="file" id="mc-field-evidence" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf"></div>' +
     '<div class="oc-modal-actions">' +
     '<button class="btn btn-ghost btn-sm" id="mc-skip-btn" onclick="submitMarkComplete(\'' + directiveId + '\', true)">Skip &amp; Mark Done</button>' +
     '<button class="btn btn-gold btn-sm" id="mc-modal-submit-btn" onclick="submitMarkComplete(\'' + directiveId + '\', false)">Attach &amp; Mark Done</button>' +
@@ -1751,8 +1751,15 @@ async function submitMarkComplete(directiveId, skipEvidence) {
     // behaves like Skip rather than blocking the user.
     skipEvidence = true;
   }
-  if (file && !['image/jpeg', 'image/png'].includes(file.type)) {
-    errEl.textContent = 'Only JPEG or PNG images are accepted.';
+  // Some phones report PDFs with an empty type, so fall back to the file name.
+  var isPdf = file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name || ''));
+  if (file && !isPdf && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    errEl.textContent = 'Attach a photo (JPEG, PNG or WebP) or a PDF.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (file && file.size > 5 * 1024 * 1024) {
+    errEl.textContent = 'That file is larger than 5MB. Attach a smaller photo or PDF.';
     errEl.style.display = 'block';
     return;
   }
