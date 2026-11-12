@@ -892,6 +892,13 @@
                     : await LifecycleCampaigns.create(payload);
                 bootstrap.Modal.getInstance(document.getElementById('modal-form')).hide();
                 showExistingResult(saved && saved.existingAudience);
+                // Several templates may share a stage and channel; the API warns when they reach the same people.
+                if (saved && saved.overlapWarning) {
+                    var warnBox = document.getElementById('run-now-result');
+                    var queued = saved.existingAudience ? warnBox.textContent + ' ' : '';
+                    warnBox.className = 'alert alert-warning mb-3';
+                    warnBox.textContent = queued + 'Saved. ' + saved.overlapWarning;
+                }
                 load();
             } catch (e) {
                 errEl.textContent = e.message || 'Failed to save.';
