@@ -109,6 +109,7 @@
                         <li class="nav-item"><a href="#" class="nav-link active" data-tab="templates">Templates</a></li>
                         <li class="nav-item"><a href="#" class="nav-link" data-tab="sequences">Sequences</a></li>
                         <li class="nav-item"><a href="#" class="nav-link" data-tab="sms-consent">SMS consent</a></li>
+                        <li class="nav-item"><a href="#" class="nav-link" data-tab="thank-you">Thank-you message</a></li>
                     </ul>
 
                     <div id="tab-templates">
@@ -266,6 +267,111 @@
                                             <thead><tr><th>Number</th><th>Customer</th><th>SMS</th><th>How / when</th></tr></thead>
                                             <tbody id="sc-tbody"><tr><td colspan="4" class="text-center text-secondary py-4">Enter numbers and press Check.</td></tr></tbody>
                                         </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thank-you message after a completed service (API: /admin/thank-you-message) -->
+                    <div id="tab-thank-you" style="display:none">
+                        <div class="row row-cards">
+                            <div class="col-lg-7">
+                                <div class="card">
+                                    <div class="card-header"><h3 class="card-title">Thank-you message after a service</h3></div>
+                                    <div class="card-body">
+                                        <p class="text-secondary small">Sent to the customer once their service is completed. Every customer with a phone number gets the SMS (it is about their own visit, so SMS consent is not needed); keep the wording free of promotions. Walk-ins without the app get email or SMS only.</p>
+                                        <label class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="ty-isEnabled">
+                                            <span class="form-check-label fw-bold">Send a thank-you message</span>
+                                        </label>
+                                        <div id="ty-options">
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-md-6">
+                                                    <div class="form-label">After</div>
+                                                    <label class="form-check"><input class="form-check-input" type="checkbox" id="ty-forSalonVisits"><span class="form-check-label">Branch visits (walk-ins included)</span></label>
+                                                    <label class="form-check"><input class="form-check-input" type="checkbox" id="ty-forHomeService"><span class="form-check-label">Home-service bookings</span></label>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label" for="ty-delayAmount">When</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control" id="ty-delayAmount" min="0" max="10080" value="0">
+                                                        <select class="form-select" id="ty-delayUnit" style="max-width:9rem">
+                                                            <option value="1">minutes</option>
+                                                            <option value="60">hours</option>
+                                                            <option value="1440">days</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-hint">After the service is completed. 0 = right away. Up to 7 days.</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-hint mb-3">You can use <code>{{firstName}}</code> <code>{{customerName}}</code> <code>{{serviceName}}</code> <code>{{branchName}}</code> <code>{{bookingCode}}</code>.</div>
+
+                                            <label class="form-check form-switch"><input class="form-check-input" type="checkbox" id="ty-pushEnabled"><span class="form-check-label fw-bold">Push notification (app users)</span></label>
+                                            <div id="ty-push-fields" class="mb-3 ms-4">
+                                                <input class="form-control mb-2" id="ty-pushTitle" maxlength="80" placeholder="Title">
+                                                <textarea class="form-control" id="ty-pushBody" rows="2" maxlength="240" placeholder="Message"></textarea>
+                                                <div class="small text-secondary mt-1">Preview: <span id="ty-push-preview"></span></div>
+                                            </div>
+
+                                            <label class="form-check form-switch"><input class="form-check-input" type="checkbox" id="ty-smsEnabled"><span class="form-check-label fw-bold">SMS</span></label>
+                                            <div id="ty-sms-fields" class="mb-3 ms-4">
+                                                <textarea class="form-control" id="ty-smsBody" rows="3" maxlength="459"></textarea>
+                                                <div class="form-hint" id="ty-sms-count"></div>
+                                                <div class="small text-secondary">Preview: <span id="ty-sms-preview"></span></div>
+                                            </div>
+
+                                            <label class="form-check form-switch"><input class="form-check-input" type="checkbox" id="ty-emailEnabled"><span class="form-check-label fw-bold">Email</span></label>
+                                            <div id="ty-email-fields" class="mb-3 ms-4">
+                                                <input class="form-control mb-2" id="ty-emailSubject" maxlength="150" placeholder="Subject">
+                                                <textarea class="form-control" id="ty-emailBody" rows="7" maxlength="5000"></textarea>
+                                                <div class="form-hint">Plain text. Leave a blank line between paragraphs.</div>
+                                                <div class="small text-secondary border rounded p-2 mt-1">Preview: <div id="ty-email-preview"></div></div>
+                                            </div>
+                                        </div>
+                                        <div id="ty-alert" class="mb-3"></div>
+                                        <div id="ty-actions"><button type="button" class="btn btn-primary" id="ty-btn-save">Save</button></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card mb-3" id="ty-test-card">
+                                    <div class="card-header"><h3 class="card-title">Send a test</h3></div>
+                                    <div class="card-body">
+                                        <input class="form-control mb-2" id="ty-test-to" placeholder="Your email address or phone number">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn" id="ty-btn-test-email">Test email</button>
+                                            <button type="button" class="btn" id="ty-btn-test-sms">Test SMS</button>
+                                        </div>
+                                        <div class="form-hint">Uses the wording above (even unsaved) with sample values.</div>
+                                        <div id="ty-test-alert" class="mt-2"></div>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h3 class="card-title">Recent messages</h3>
+                                        <div class="card-actions">
+                                            <select class="form-select form-select-sm" id="ty-h-status">
+                                                <option value="">All</option>
+                                                <option value="SENT">Sent</option>
+                                                <option value="SKIPPED">Skipped</option>
+                                                <option value="FAILED">Failed</option>
+                                                <option value="PENDING">Waiting</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="card-body py-2 small text-secondary" id="ty-h-summary"></div>
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter card-table">
+                                            <thead><tr><th>When</th><th>Channel</th><th>After</th><th>To</th><th>Status</th></tr></thead>
+                                            <tbody id="ty-h-tbody"><tr><td colspan="5" class="text-center text-secondary py-4">Loading...</td></tr></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="card-footer d-flex align-items-center gap-2">
+                                        <button type="button" class="btn btn-sm" id="ty-h-prev">Previous</button>
+                                        <span class="small text-secondary" id="ty-h-page"></span>
+                                        <button type="button" class="btn btn-sm ms-auto" id="ty-h-next">Next</button>
                                     </div>
                                 </div>
                             </div>
@@ -476,6 +582,7 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/lifecycle-campaigns.js"></script>
     <script src="assets/js/lifecycle-sms-consent.js"></script>
+    <script src="assets/js/lifecycle-thank-you.js"></script>
     <script src="assets/js/api-utils/branches.js"></script>
     <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="./assets/js/tabler.min.js"></script>
@@ -556,6 +663,7 @@
                 document.getElementById('tab-templates').style.display = tab.dataset.tab === 'templates' ? '' : 'none';
                 document.getElementById('tab-sequences').style.display = tab.dataset.tab === 'sequences' ? '' : 'none';
                 document.getElementById('tab-sms-consent').style.display = tab.dataset.tab === 'sms-consent' ? '' : 'none';
+                document.getElementById('tab-thank-you').style.display = tab.dataset.tab === 'thank-you' ? '' : 'none';
                 // "New Template" lives in the page header, outside either
                 // tab -- the Sequences tab has its own "+ New Sequence"
                 // button in its own card header, so hide this one there
@@ -563,6 +671,7 @@
                 document.getElementById('btn-new').style.display = tab.dataset.tab === 'templates' ? '' : 'none';
                 if (tab.dataset.tab === 'sequences') loadSequences();
                 if (tab.dataset.tab === 'sms-consent') SmsConsentTab.load();
+                if (tab.dataset.tab === 'thank-you') ThankYouTab.load();
             });
 
             document.getElementById('btn-run-now').addEventListener('click', async function () {
