@@ -303,6 +303,13 @@
                             <input type="number" class="form-control" id="branch-grace" min="0" placeholder="10">
                         </div>
                         <div class="col-12">
+                            <label class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="branch-hairmate">
+                                <span class="form-check-label">Hairmate branch</span>
+                            </label>
+                            <div class="form-hint">Universal staff cannot clock in or out here. This branch's own staff still can.</div>
+                        </div>
+                        <div class="col-12">
                             <div class="form-hint">Required before staff at this branch can clock in via the app. Radius
                                 and grace period
                                 default to 100m / 10min if left blank.</div>
@@ -745,6 +752,7 @@
                 gpsLng: document.getElementById("branch-gps-lng").value,
                 approvedRadiusMeters: document.getElementById("branch-radius").value,
                 lateGracePeriodMinutes: document.getElementById("branch-grace").value,
+                isHairmate: document.getElementById("branch-hairmate").checked,
             };
         }
 
@@ -788,6 +796,7 @@
             lngEl.value = "";
             radiusEl.value = "";
             graceEl.value = "";
+            document.getElementById("branch-hairmate").checked = false;
 
             if (id) {
                 var branch = _branches.find(function (b) { return b.id === id; });
@@ -805,6 +814,7 @@
                 lngEl.value = branch.gpsLng != null ? branch.gpsLng : "";
                 radiusEl.value = branch.approvedRadiusMeters != null ? branch.approvedRadiusMeters : "";
                 graceEl.value = branch.lateGracePeriodMinutes != null ? branch.lateGracePeriodMinutes : "";
+                document.getElementById("branch-hairmate").checked = !!branch.isHairmate;
             }
 
             new bootstrap.Modal(document.getElementById("modal-branch")).show();
@@ -832,6 +842,7 @@
                     gpsLng: values.gpsLng,
                     approvedRadiusMeters: values.approvedRadiusMeters,
                     lateGracePeriodMinutes: values.lateGracePeriodMinutes,
+                    isHairmate: values.isHairmate,
                 };
                 if (_editBranchId) await Branches.updateBranch(_editBranchId, payload);
                 else await Branches.createBranch(payload);

@@ -90,6 +90,7 @@ const Branches = (() => {
         if (payload.gpsLng !== undefined && payload.gpsLng !== "") body.gpsLng = Number(payload.gpsLng);
         if (payload.approvedRadiusMeters !== undefined && payload.approvedRadiusMeters !== "") body.approvedRadiusMeters = Number(payload.approvedRadiusMeters);
         if (payload.lateGracePeriodMinutes !== undefined && payload.lateGracePeriodMinutes !== "") body.lateGracePeriodMinutes = Number(payload.lateGracePeriodMinutes);
+        if (payload.isHairmate !== undefined) body.isHairmate = !!payload.isHairmate;
         return body;
     }
 

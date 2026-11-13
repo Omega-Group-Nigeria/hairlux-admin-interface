@@ -1909,15 +1909,18 @@ function renderCheckinButton(todayRecord) {
   const st = document.getElementById('ci-status');
   if (!btn || !st) return;
 
+  // The branch is shown too: universal staff can clock in and out at different branches.
+  const inBranch = todayRecord && todayRecord.location ? ' (' + todayRecord.location.name + ')' : '';
+  const outBranch = todayRecord && todayRecord.checkOutLocation ? ' (' + todayRecord.checkOutLocation.name + ')' : '';
   if (todayRecord && todayRecord.checkOutAt) {
     btn.classList.remove('active');
     btn.textContent = '\u2713';
-    st.textContent = 'Checked out at ' + StaffSelf.formatTime(todayRecord.checkOutAt);
+    st.textContent = 'Checked out at ' + StaffSelf.formatTime(todayRecord.checkOutAt) + outBranch;
     st.style.color = '';
   } else if (checkedInToday) {
     btn.classList.add('active');
     btn.textContent = '\u2713';
-    st.textContent = 'Checked in at ' + StaffSelf.formatTime(todayRecord.checkInAt) + ': tap to check out';
+    st.textContent = 'Checked in at ' + StaffSelf.formatTime(todayRecord.checkInAt) + inBranch + ': tap to check out';
     st.style.color = 'var(--green)';
   } else {
     btn.classList.remove('active');
