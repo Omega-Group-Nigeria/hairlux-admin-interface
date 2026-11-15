@@ -36,7 +36,11 @@
         $('s-rc-phone').value = s.receivingCenterPhone || '';
         $('s-rc-hours').value = s.receivingCenterHours || '';
         $('s-low-stock').value = s.lowStockThreshold;
-        $('s-fez').checked = s.fezEnabled;
+        $('s-courier').innerHTML = (s.couriers || []).map(function (c) {
+            var off = !c.available && c.id !== s.deliveryCourier;
+            return '<option value="' + esc(c.id) + '"' + (off ? ' disabled' : '') + '>' + esc(c.name) + (c.note ? ' (' + esc(c.note) + ')' : '') + '</option>';
+        }).join('');
+        $('s-courier').value = s.deliveryCourier;
         $('s-rc-state').value = s.receivingCenterState || '';
         $('s-fez-markup').value = s.fezMarkupPercent;
         $('s-parcel-kg').value = s.defaultParcelWeightKg;
@@ -68,7 +72,7 @@
                 receivingCenterPhone: $('s-rc-phone').value.trim() || null,
                 receivingCenterHours: $('s-rc-hours').value.trim() || null,
                 lowStockThreshold: Number($('s-low-stock').value),
-                fezEnabled: $('s-fez').checked,
+                deliveryCourier: $('s-courier').value,
                 receivingCenterState: $('s-rc-state').value.trim() || null,
                 fezMarkupPercent: Number($('s-fez-markup').value),
                 defaultParcelWeightKg: Number($('s-parcel-kg').value),
