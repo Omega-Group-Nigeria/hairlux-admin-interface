@@ -67,6 +67,11 @@ var Layout = window.Layout || (() => {
             return '<span class="badge bg-warning text-dark ms-auto nav-marketplace-badge" hidden ' +
                 'aria-label="Vendors and products waiting for review, stock deliveries and take-back requests at the Receiving Center, and payouts to approve"></span>';
         }
+        if (item.badge === "agentsPending") {
+            // Agent applications, withdrawals and earnings waiting; filled by refreshAgentsBadge().
+            return '<span class="badge bg-warning text-dark ms-auto nav-agents-badge" hidden ' +
+                'aria-label="Agent applications, withdrawal requests and earnings waiting for approval"></span>';
+        }
         if (item.badge !== "confirmedOrders") return "";
         return (
             '<span class="badge nav-shop-order-badge bg-warning text-dark" ' +
@@ -157,6 +162,24 @@ var Layout = window.Layout || (() => {
             updateMarketplaceBadge((data.pendingVendors || 0) + (data.pendingProducts || 0) + (data.intakesExpected || 0) + (data.withdrawalRequests || 0) + (data.payoutsAwaitingApproval || 0));
         } catch (_) {
             updateMarketplaceBadge(0);
+        }
+    }
+
+    /** Field agents: applications, withdrawal requests and earnings waiting for approval. */
+    async function refreshAgentsBadge() {
+        const els = document.querySelectorAll(".nav-agents-badge");
+        const show = function (n) {
+            els.forEach(function (el) { el.hidden = n <= 0; el.textContent = n <= 0 ? "" : (n > 99 ? "99+" : String(n)); });
+        };
+        if (!els.length || typeof RBAC === "undefined" || !RBAC.can || !RBAC.can("agents:read")) return show(0);
+        try {
+            const res = await Auth.fetch("/admin/agents/overview");
+            if (!res || !res.ok) return show(0);
+            const raw = await res.json().catch(function () { return {}; });
+            const d = raw.data !== undefined ? raw.data : raw;
+            show(((d.agents || {}).PENDING || 0) + ((d.pendingWithdrawals || {}).count || 0) + (d.daysAwaitingApproval || 0));
+        } catch (_) {
+            show(0);
         }
     }
 
@@ -376,6 +399,7 @@ var Layout = window.Layout || (() => {
         refreshShopOrderBadge();
         refreshCommissionApprovalBadge();
         refreshMarketplaceBadge();
+        refreshAgentsBadge();
     });
 
     return {
