@@ -92,6 +92,8 @@ const Jobs = (() => {
     PART_TIME: 'Part-time',
     CONTRACT:  'Contract',
     FREELANCE: 'Freelance',
+    REMOTE:    'Remote',
+    HYBRID:    'Hybrid',
   };
 
   const TYPE_COLORS = {
@@ -99,6 +101,8 @@ const Jobs = (() => {
     PART_TIME: 'bg-cyan-lt',
     CONTRACT:  'bg-yellow-lt',
     FREELANCE: 'bg-purple-lt',
+    REMOTE:    'bg-green-lt',
+    HYBRID:    'bg-orange-lt',
   };
 
   function typeBadge(type) {

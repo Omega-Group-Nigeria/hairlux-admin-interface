@@ -322,12 +322,23 @@
                 },
             });
 
+            // ── Front-desk QR scanner: a scan on this page looks the code up here ──
+            window.HxVerifyCode = function (code) {
+                document.getElementById("code-input").value = String(code).toUpperCase();
+                document.getElementById("form-lookup").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+                try { history.replaceState(null, "", "?code=" + encodeURIComponent(code)); } catch (e) { /* ignore */ }
+            };
+
             // ── Auto-fill code from URL param ────────────────────────────
             var urlParams = new URLSearchParams(window.location.search);
             var urlCode = urlParams.get("code");
             if (urlCode) {
                 document.getElementById("code-input").value = urlCode.toUpperCase();
-                document.getElementById("form-lookup").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+                // After this script has set up the lookup (submit) handler below;
+                // firing it straight away did nothing, so ?code= only filled the box.
+                setTimeout(function () {
+                    document.getElementById("form-lookup").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+                }, 0);
             }
 
             // ── Auto-uppercase code input ─────────────────────────────────
