@@ -406,6 +406,7 @@
         var qsStatus = new URLSearchParams(window.location.search).get('status') || '';
         var state = { page: 1, limit: 20, status: qsStatus, search: '', locationId: '', totalPages: 1 };
         var currentDetailId = null;
+        var currentDetail = null; // the open application, for forms that need its details (e.g. the offer start date)
         var locationsCache = null;
         var staffCache = null;
 
@@ -682,6 +683,7 @@
                 oc.show();
                 try {
                     var a = await Applications.getOne(id);
+                    currentDetail = a;
                     renderDetailBody(a);
                     actions.innerHTML = buildDetailActions(a);
                 } catch (err) {
@@ -1124,6 +1126,11 @@
                 actions.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
                 var locations = RBAC.filterBranches(await ensureLocations());
                 var options = locations.map(function (l) { return '<option value="' + l.id + '">' + l.name + '</option>'; }).join('');
+                // Resumption date: today by default, or the accepted offer's start date when that is still ahead.
+                var lagosToday = new Date(Date.now() + 3600000).toISOString().slice(0, 10);
+                var offerStart = currentDetail && currentDetail.offerLetter && currentDetail.offerLetter.effectiveDate ? String(currentDetail.offerLetter.effectiveDate).slice(0, 10) : null;
+                var startValue = offerStart && offerStart > lagosToday ? offerStart : lagosToday;
+                var dayShift = function (n) { return new Date(new Date(lagosToday + 'T00:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10); };
                 actions.innerHTML =
                     '<div class="w-100">' +
                     '<div class="alert alert-warning small py-2">This creates a staff record and sends the new hire a password-setup email. This cannot be undone from here.</div>' +
@@ -1134,6 +1141,9 @@
                     '<input type="radio" class="btn-check" name="cts-work-mode" id="cts-mode-remote" value="REMOTE">' +
                     '<label class="btn btn-sm btn-outline-primary" for="cts-mode-remote">Remote</label>' +
                     '</div>' +
+                    '<label class="form-label small mb-1" for="cts-start">Resumption date (first working day)</label>' +
+                    '<input type="date" class="form-control form-control-sm mb-1" id="cts-start" value="' + startValue + '" min="' + dayShift(-60) + '" max="' + dayShift(365) + '">' +
+                    '<div class="form-hint small mb-2" id="cts-start-hint"></div>' +
                     '<label class="form-label small mb-1" id="cts-location-label">Assign to Branch</label>' +
                     '<select class="form-select form-select-sm mb-1" id="cts-location"><option value="">Select branch…</option>' + options + '</select>' +
                     '<div class="form-hint small mb-2" id="cts-location-hint">The branch they will work at.</div>' +
@@ -1142,13 +1152,21 @@
                     '<button class="btn btn-sm btn-outline-secondary" onclick="openDetail(currentDetailId)">Cancel</button>' +
                     '</div>' +
                     '</div>';
+                var startHint = function () {
+                    var v = document.getElementById('cts-start').value;
+                    document.getElementById('cts-start-hint').textContent = v && v > lagosToday
+                        ? 'They can sign in and complete their documentation now. Payroll, absences and the work calendar start counting on ' + Applications.formatDate(v + 'T12:00:00Z') + '.'
+                        : 'Payroll, absences and the work calendar start counting from this date. Pick a later date if they resume later.';
+                };
+                document.getElementById('cts-start').addEventListener('change', startHint);
+                startHint();
                 // Remote staff still belong to a branch (staff code, payroll, reports): say so.
                 document.querySelectorAll('input[name="cts-work-mode"]').forEach(function (r) {
                     r.addEventListener('change', function () {
                         var remote = document.getElementById('cts-mode-remote').checked;
                         document.getElementById('cts-location-label').textContent = remote ? 'Home branch' : 'Assign to Branch';
                         document.getElementById('cts-location-hint').textContent = remote
-                            ? 'Remote staff work away from the branch but belong to it for their staff code, payroll and reports.'
+                            ? 'Remote staff work away from the branch but belong to it for their staff code, payroll and reports. Their work calendar is set to Remote on every day; you can change any day later.'
                             : 'The branch they will work at.';
                     });
                 });
@@ -1158,10 +1176,12 @@
                 var loc = document.getElementById('cts-location').value;
                 if (!loc) { alert('Please select a branch.'); return; }
                 var workMode = document.getElementById('cts-mode-remote').checked ? 'REMOTE' : 'ON_SITE';
+                var resumptionDate = document.getElementById('cts-start').value;
+                if (!resumptionDate) { alert('Please choose the resumption date.'); return; }
                 var actions = document.getElementById('offcanvas-detail-actions');
                 actions.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Converting…';
                 try {
-                    var result = await Applications.convertToStaff(currentDetailId, { locationId: loc, workMode: workMode });
+                    var result = await Applications.convertToStaff(currentDetailId, { locationId: loc, workMode: workMode, resumptionDate: resumptionDate });
                     if (result && result.rehireWarning) {
                         alert(result.rehireWarning);
                     }

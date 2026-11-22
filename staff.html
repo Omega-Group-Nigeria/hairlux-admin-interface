@@ -885,6 +885,15 @@
                 return;
             }
 
+            // A new hire whose resumption (hire) date is still ahead: payroll, absences and the
+            // work calendar only count from that day.
+            var lagosToday = new Date(Date.now() + 3600000).toISOString().slice(0, 10);
+            function startsBadge(s) {
+                var d = s.hireDate ? String(s.hireDate).slice(0, 10) : '';
+                if (!d || d <= lagosToday) return '';
+                var label = new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                return ' <span class="badge bg-azure-lt" title="Resumes on this date. Payroll, absences and the work calendar start counting then.">Starts ' + esc(label) + '</span>';
+            }
             tbody.innerHTML = rows.map(function (s) {
                 var name = Staff.fullName(s);
                 var code = s.staffCode || s.code || "";
@@ -896,7 +905,7 @@
                     '<td><div class="fw-semibold">' + esc(name) + '</div><div class="staff-code">' + esc(code) + '</div></td>' +
                     '<td>' + esc(role) + '</td>' +
                     '<td>' + esc(location) + modeBadge + '</td>' +
-                    '<td>' + Staff.statusBadge(s.employmentStatus) + '</td>' +
+                    '<td>' + Staff.statusBadge(s.employmentStatus) + startsBadge(s) + '</td>' +
                     '<td class="small text-secondary">' + contact + '</td>' +
                     '<td><div class="btn-list flex-nowrap">' +
                     '<button class="btn btn-sm btn-ghost-secondary btn-view-staff" data-id="' + esc(s.id) + '">View</button>' +
