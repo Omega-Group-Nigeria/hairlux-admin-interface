@@ -252,6 +252,23 @@ var NavConfig = window.NavConfig || (() => {
             ],
         }),
         group({
+            // Field Sales & Booking Agents (2026-11-17): agents sign up on the agent portal.
+            id: "agents",
+            label: "Field Agents",
+            icon: "staff",
+            badge: "agentsPending",
+            children: [
+                { label: "Overview", href: "agents.html#overview", permission: read("agents:read") },
+                { label: "Agents", href: "agents.html#agents", permission: read("agents:read") },
+                { label: "Earnings Approval", href: "agents.html#earnings", permission: read("agents:read") },
+                { label: "Withdrawals", href: "agents.html#withdrawals", permission: read("agents:read") },
+                { label: "Customers & Leads", href: "agents.html#customers", permission: read("agents:read") },
+                { label: "Reports", href: "agents.html#reports", permission: read("agents:read") },
+                { label: "Alerts", href: "agents.html#alerts", permission: read("agents:read") },
+                { label: "Settings", href: "agents.html#settings", permission: read("agents:read") },
+            ],
+        }),
+        group({
             id: "payroll",
             label: "Payroll",
             icon: "users",

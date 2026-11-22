@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Field Agents</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+        .progress-xs { height: 4px; }
+        .agent-photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; background: #e9ecef; }
+        .kv dt { font-weight: 500; color: var(--tblr-secondary); font-size: .8rem; }
+        .kv dd { margin-bottom: .6rem; }
+        .terms-box { min-height: 220px; font-family: inherit; }
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Staff</div>
+                            <h2 class="page-title">Field Agents</h2>
+                        </div>
+                        <div class="col-auto ms-auto d-print-none">
+                            <div class="btn-list">
+                                <button class="btn d-none" id="btn-announce">Send announcement</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div id="page-alert"></div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="tabs">
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="overview">Overview</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="agents">Agents <span class="badge bg-warning text-dark ms-1" id="tab-pending" hidden></span></a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="earnings">Earnings approval <span class="badge bg-warning text-dark ms-1" id="tab-days" hidden></span></a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="withdrawals">Withdrawals <span class="badge bg-warning text-dark ms-1" id="tab-wd" hidden></span></a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="customers">Customers &amp; leads</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="reports">Reports</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="alerts">Alerts <span class="badge bg-red ms-1" id="tab-alerts" hidden></span></a></li>
+                                <li class="nav-item"><a class="nav-link" href="#" data-tab="settings">Settings</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Overview -->
+                        <div data-pane="overview" hidden>
+                            <div class="card-body">
+                                <div class="row row-cards mb-3" id="ov-cards"></div>
+                                <div class="row g-3">
+                                    <div class="col-lg-7">
+                                        <div class="subheader mb-2">Today so far</div>
+                                        <div class="row g-2 mb-3" id="ov-today"></div>
+                                        <div class="subheader mb-2">Leading agents today</div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-vcenter">
+                                                <thead><tr><th>#</th><th>Agent</th><th>Territory</th><th class="text-end">Sign-ups</th><th class="text-end">Paid bookings</th></tr></thead>
+                                                <tbody id="ov-leaders"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-5">
+                                        <div class="d-flex align-items-center mb-2"><div class="subheader">Latest alerts</div><a href="#" class="ms-auto small" data-goto="alerts">All alerts</a></div>
+                                        <div class="list-group list-group-flush" id="ov-alerts"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agents -->
+                        <div data-pane="agents" hidden>
+                            <div class="card-body border-bottom py-3">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-12">
+                                        <div class="btn-group flex-wrap" role="group" id="a-status">
+                                            <button class="btn btn-sm active" data-status="">All</button>
+                                            <button class="btn btn-sm" data-status="PENDING">Applied <span class="badge bg-warning text-dark ms-1" data-ac="PENDING"></span></button>
+                                            <button class="btn btn-sm" data-status="APPROVED">Approved, terms not accepted <span class="badge bg-secondary-lt ms-1" data-ac="APPROVED"></span></button>
+                                            <button class="btn btn-sm" data-status="ACTIVE">Active <span class="badge bg-green-lt ms-1" data-ac="ACTIVE"></span></button>
+                                            <button class="btn btn-sm" data-status="SUSPENDED">Suspended <span class="badge bg-red-lt ms-1" data-ac="SUSPENDED"></span></button>
+                                            <button class="btn btn-sm" data-status="REJECTED">Rejected</button>
+                                            <button class="btn btn-sm" data-status="DEACTIVATED">Deactivated</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5"><input type="search" class="form-control" id="a-search" placeholder="Search name, email, phone, agent ID or code"></div>
+                                    <div class="col-md-4"><input type="search" class="form-control" id="a-territory" placeholder="Territory, e.g. Lekki"></div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead><tr><th>Agent</th><th>Territory</th><th>Status</th><th class="text-end">Paid bookings this month</th><th class="text-end">Available</th><th class="text-end">Pending</th><th>Applied</th><th></th></tr></thead>
+                                    <tbody id="a-tbody"><tr><td colspan="8" class="text-center text-secondary py-5">Loading...</td></tr></tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer d-flex align-items-center">
+                                <div class="text-secondary small" data-pager-label="agents"></div>
+                                <div class="ms-auto btn-list"><button class="btn btn-sm" data-pager-prev="agents">Previous</button><button class="btn btn-sm" data-pager-next="agents">Next</button></div>
+                            </div>
+                        </div>
+
+                        <!-- Earnings approval -->
+                        <div data-pane="earnings" hidden>
+                            <div class="card-body border-bottom py-3">
+                                <div class="alert alert-info mb-3" id="e-note">Each finished day is checked against the qualifying condition. Qualifying days pay the daily earning after the hold period.</div>
+                                <div class="btn-group flex-wrap" role="group" id="e-status">
+                                    <button class="btn btn-sm active" data-status="AWAITING_APPROVAL">Waiting for approval</button>
+                                    <button class="btn btn-sm" data-status="APPROVED">Paid</button>
+                                    <button class="btn btn-sm" data-status="NOT_QUALIFIED">Did not qualify</button>
+                                    <button class="btn btn-sm" data-status="REJECTED">Rejected</button>
+                                    <button class="btn btn-sm" data-status="">All</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead><tr><th>Day</th><th>Agent</th><th class="text-end">Sign-ups</th><th class="text-end">Paid bookings</th><th class="text-end">Leads</th><th class="text-end">Engagements</th><th>Result</th><th class="text-end">Earning</th><th></th></tr></thead>
+                                    <tbody id="e-tbody"></tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer d-flex align-items-center">
+                                <div class="text-secondary small" data-pager-label="earnings"></div>
+                                <div class="ms-auto btn-list"><button class="btn btn-sm" data-pager-prev="earnings">Previous</button><button class="btn btn-sm" data-pager-next="earnings">Next</button></div>
+                            </div>
+                        </div>
+
+                        <!-- Withdrawals -->
+                        <div data-pane="withdrawals" hidden>
+                            <div class="card-body border-bottom py-3">
+                                <div class="btn-group flex-wrap" role="group" id="w-status">
+                                    <button class="btn btn-sm active" data-status="">All</button>
+                                    <button class="btn btn-sm" data-status="PENDING">Waiting for approval <span class="badge bg-warning text-dark ms-1" data-wc="PENDING"></span></button>
+                                    <button class="btn btn-sm" data-status="APPROVED">Approved, to pay <span class="badge bg-blue-lt ms-1" data-wc="APPROVED"></span></button>
+                                    <button class="btn btn-sm" data-status="PROCESSING">Being paid <span class="badge bg-blue-lt ms-1" data-wc="PROCESSING"></span></button>
+                                    <button class="btn btn-sm" data-status="PAID">Paid</button>
+                                    <button class="btn btn-sm" data-status="FAILED">Failed</button>
+                                    <button class="btn btn-sm" data-status="REJECTED">Rejected</button>
+                                    <button class="btn btn-sm" data-status="CANCELLED">Cancelled</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead><tr><th>Agent</th><th class="text-end">Amount</th><th class="text-end">Charge</th><th class="text-end">To send</th><th>To</th><th>Status</th><th>Date</th><th></th></tr></thead>
+                                    <tbody id="w-tbody"></tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer d-flex align-items-center">
+                                <div class="text-secondary small" data-pager-label="withdrawals"></div>
+                                <div class="ms-auto btn-list"><button class="btn btn-sm" data-pager-prev="withdrawals">Previous</button><button class="btn btn-sm" data-pager-next="withdrawals">Next</button></div>
+                            </div>
+                        </div>
+
+                        <!-- Customers & leads -->
+                        <div data-pane="customers" hidden>
+                            <div class="card-body border-bottom py-3">
+                                <ul class="nav nav-pills mb-3" id="c-sub">
+                                    <li class="nav-item"><a class="nav-link active" href="#" data-sub="credited">Credited customers</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="#" data-sub="leads">Leads</a></li>
+                                </ul>
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-4"><input type="search" class="form-control" id="c-search" placeholder="Search name, email or phone"></div>
+                                    <div class="col-md-3"><select class="form-select" id="c-agent"><option value="">All agents</option></select></div>
+                                    <div class="col-md-3"><select class="form-select" id="c-status"></select></div>
+                                    <div class="col-md-2 text-md-end" data-only="credited"><button class="btn w-100 d-none" id="btn-assign">Credit a customer</button></div>
+                                </div>
+                                <div class="form-hint mt-2" data-only="credited">A customer counts for an agent once: on their first paid booking. Settle a disagreement about who brought a customer in with Reassign.</div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead id="c-thead"></thead>
+                                    <tbody id="c-tbody"></tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer d-flex align-items-center">
+                                <div class="text-secondary small" data-pager-label="customers"></div>
+                                <div class="ms-auto btn-list"><button class="btn btn-sm" data-pager-prev="customers">Previous</button><button class="btn btn-sm" data-pager-next="customers">Next</button></div>
+                            </div>
+                        </div>
+
+                        <!-- Reports -->
+                        <div data-pane="reports" hidden>
+                            <div class="card-body border-bottom py-3">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-sm-3">
+                                        <label class="form-label" for="r-period">Report</label>
+                                        <select class="form-select" id="r-period">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <label class="form-label" for="r-date">Any day in the period</label>
+                                        <input type="date" class="form-control" id="r-date">
+                                    </div>
+                                    <div class="col-sm-2"><button class="btn btn-primary w-100" id="btn-report">Show report</button></div>
+                                    <div class="col-sm-4 text-sm-end">
+                                        <div class="btn-list justify-content-sm-end">
+                                            <button class="btn" id="btn-xlsx" disabled>Download Excel</button>
+                                            <button class="btn" id="btn-pdf" disabled>Download PDF</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body" id="r-body"><div class="text-secondary text-center py-4">Choose a report and a day, then Show report.</div></div>
+                        </div>
+
+                        <!-- Alerts -->
+                        <div data-pane="alerts" hidden>
+                            <div class="card-body border-bottom py-3 d-flex align-items-center gap-2">
+                                <label class="form-check mb-0"><input class="form-check-input" type="checkbox" id="al-unread"><span class="form-check-label">Unread only</span></label>
+                                <button class="btn btn-sm ms-auto" id="btn-read-all">Mark all read</button>
+                            </div>
+                            <div class="list-group list-group-flush" id="al-list"></div>
+                            <div class="card-footer d-flex align-items-center">
+                                <div class="text-secondary small" data-pager-label="alerts"></div>
+                                <div class="ms-auto btn-list"><button class="btn btn-sm" data-pager-prev="alerts">Previous</button><button class="btn btn-sm" data-pager-next="alerts">Next</button></div>
+                            </div>
+                        </div>
+
+                        <!-- Settings -->
+                        <div data-pane="settings" hidden>
+                            <form class="card-body" id="s-form" novalidate>
+                                <div class="alert alert-info">Changes apply from the next day that closes. Days already closed and money already paid are not changed.</div>
+                                <fieldset id="s-fields">
+                                    <h3 class="card-title">Applications</h3>
+                                    <label class="form-check form-switch mb-4"><input class="form-check-input" type="checkbox" id="s-acceptingApplications"><span class="form-check-label">Accepting new agent applications</span></label>
+
+                                    <h3 class="card-title">Daily targets (shown to agents)</h3>
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-6 col-md"><label class="form-label">Engagements</label><input type="number" min="0" class="form-control" id="s-targetEngagements"></div>
+                                        <div class="col-6 col-md"><label class="form-label">Leads</label><input type="number" min="0" class="form-control" id="s-targetLeads"></div>
+                                        <div class="col-6 col-md"><label class="form-label">Sign-ups</label><input type="number" min="0" class="form-control" id="s-targetRegistrations"></div>
+                                        <div class="col-6 col-md"><label class="form-label">Paid bookings</label><input type="number" min="0" class="form-control" id="s-targetPaidBookings"></div>
+                                        <div class="col-6 col-md"><label class="form-label">Paid bookings a month</label><input type="number" min="1" class="form-control" id="s-targetMonthlyPaidBookings"></div>
+                                    </div>
+
+                                    <h3 class="card-title">Daily earning</h3>
+                                    <div class="row g-3 mb-2">
+                                        <div class="col-6 col-md-3"><label class="form-label">Qualifying sign-ups a day</label><input type="number" min="0" class="form-control" id="s-qualifyRegistrations"><div class="form-hint">Verified customers only.</div></div>
+                                        <div class="col-6 col-md-3"><label class="form-label">Qualifying paid bookings a day</label><input type="number" min="0" class="form-control" id="s-qualifyPaidBookings"></div>
+                                        <div class="col-6 col-md-3"><label class="form-label">Daily earning (max ₦10,000)</label><div class="input-group"><span class="input-group-text">₦</span><input type="number" min="0" max="10000" step="0.01" class="form-control" id="s-dailyEarningAmount"></div></div>
+                                        <div class="col-6 col-md-3"><label class="form-label">Hold before withdrawal (hours)</label><input type="number" min="0" max="720" class="form-control" id="s-earningHoldHours"></div>
+                                    </div>
+                                    <label class="form-check mb-1"><input class="form-check-input" type="checkbox" id="s-earningsNeedApproval"><span class="form-check-label">Daily earnings need an admin's approval</span></label>
+                                    <label class="form-check mb-4"><input class="form-check-input" type="checkbox" id="s-dailyEarningsAfterMonthlyTarget"><span class="form-check-label">Keep paying daily earnings after an agent reaches the monthly target</span></label>
+
+                                    <h3 class="card-title">Monthly bonus levels</h3>
+                                    <div class="table-responsive mb-2">
+                                        <table class="table table-sm mb-0" style="max-width:520px">
+                                            <thead><tr><th>Paid bookings in the month</th><th>Bonus</th><th></th></tr></thead>
+                                            <tbody id="s-levels"></tbody>
+                                        </table>
+                                    </div>
+                                    <button type="button" class="btn btn-sm mb-3" id="btn-add-level">Add level</button>
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-4"><label class="form-label">Extra reward per paid booking above the monthly target</label><div class="input-group"><span class="input-group-text">₦</span><input type="number" min="0" step="0.01" class="form-control" id="s-extraBookingReward"></div><div class="form-hint">Paid when the month ends. 0 = off.</div></div>
+                                    </div>
+
+                                    <h3 class="card-title">What counts</h3>
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-md-4"><label class="form-label">A booking counts when</label>
+                                            <select class="form-select" id="s-bookingRule"><option value="COMPLETED">The service is completed</option><option value="PAID">It is paid in full</option></select>
+                                            <div class="form-hint">Cancelled bookings never count. With "paid in full", a booking cancelled before its day closes stops counting.</div></div>
+                                        <div class="col-md-4"><label class="form-label">First booking must be within (days of sign-up)</label><input type="number" min="0" max="365" class="form-control" id="s-qualifyWithinDays"><div class="form-hint">0 = no limit.</div></div>
+                                        <div class="col-md-4"><label class="form-label">Credit a matching lead for (days)</label><input type="number" min="0" max="365" class="form-control" id="s-leadMatchDays"><div class="form-hint">A customer who signs up without a code, with the phone of a lead an agent logged in this time, is credited to that agent. 0 = off.</div></div>
+                                    </div>
+
+                                    <h3 class="card-title">Withdrawals</h3>
+                                    <div class="row g-3 mb-2">
+                                        <div class="col-6 col-md-3"><label class="form-label">Minimum withdrawal</label><div class="input-group"><span class="input-group-text">₦</span><input type="number" min="0" step="0.01" class="form-control" id="s-minWithdrawal"></div></div>
+                                        <div class="col-6 col-md-3"><label class="form-label">Charge per withdrawal</label><div class="input-group"><span class="input-group-text">₦</span><input type="number" min="0" step="0.01" class="form-control" id="s-withdrawalFee"></div></div>
+                                        <div class="col-6 col-md-3"><label class="form-label">Days between withdrawals</label><input type="number" min="0" max="90" class="form-control" id="s-withdrawalIntervalDays"><div class="form-hint">0 = any time (one at a time).</div></div>
+                                        <div class="col-6 col-md-3"><label class="form-label">How agents are paid</label><select class="form-select" id="s-payoutMethod"><option value="PAYSTACK_TRANSFER">Paystack transfer</option><option value="MANUAL">Manual bank transfer</option></select></div>
+                                    </div>
+                                    <label class="form-check mb-4"><input class="form-check-input" type="checkbox" id="s-autoApproveWithdrawals"><span class="form-check-label">Approve withdrawals automatically (no admin approval)</span></label>
+
+                                    <h3 class="card-title">Agent terms</h3>
+                                    <textarea class="form-control terms-box mb-1" id="s-termsText" maxlength="20000" placeholder="The terms agents read and accept before they start"></textarea>
+                                    <div class="form-hint mb-4" id="s-terms-hint">Changing the terms makes every agent accept them again.</div>
+
+                                    <h3 class="card-title">Alert emails</h3>
+                                    <input type="text" class="form-control mb-1" id="s-alertEmails" placeholder="ops@hairlux.com.ng, hr@hairlux.com.ng">
+                                    <div class="form-hint mb-4">New applications, withdrawal requests, bonuses and failed payments are also emailed here. Separate addresses with commas.</div>
+                                </fieldset>
+                                <div class="d-flex"><button type="submit" class="btn btn-primary ms-auto d-none" id="btn-save-settings">Save settings</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent detail -->
+    <div class="modal modal-blur fade" id="modal-agent" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="agent-title">Agent</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body" id="agent-body"></div>
+                <div class="modal-footer" id="agent-footer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text prompt (reason, reference, note) -->
+    <div class="modal modal-blur fade" id="modal-prompt" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="prompt-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <p class="text-secondary small" id="prompt-text"></p>
+                    <div id="prompt-extra"></div>
+                    <label class="form-label" for="prompt-input" id="prompt-label"></label>
+                    <textarea class="form-control" id="prompt-input" rows="2" maxlength="500"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Back</button>
+                    <button class="btn btn-primary" id="btn-prompt-ok"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcement -->
+    <div class="modal modal-blur fade" id="modal-announce" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Send an announcement to agents</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <label class="form-label required" for="an-title">Title</label>
+                    <input class="form-control mb-3" id="an-title" maxlength="120">
+                    <label class="form-label required" for="an-message">Message</label>
+                    <textarea class="form-control mb-3" id="an-message" rows="5" maxlength="2000"></textarea>
+                    <label class="form-label" for="an-territory">Only agents in this territory (optional)</label>
+                    <input class="form-control mb-3" id="an-territory" placeholder="e.g. Lekki">
+                    <label class="form-check"><input class="form-check-input" type="checkbox" id="an-email"><span class="form-check-label">Also send it by email</span></label>
+                    <div class="form-hint">Active agents get it in the agent portal and as a push notification.</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-announce-send">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/agents.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/agents-page.js"></script>
+    <script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>
