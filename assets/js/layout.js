@@ -369,10 +369,41 @@ var Layout = window.Layout || (() => {
         initHeader();
     }
 
+    /**
+     * Front-desk QR scanner: a reservation code scanned anywhere on an admin
+     * page opens Verify Booking (in its own tab, reused by later scans) and
+     * looks the booking up. On Verify Booking itself the code is looked up in
+     * place. Admins without booking access are told so instead.
+     */
+    function initReservationScanner() {
+        var base = getBasePath();
+        var start = function () {
+            if (!window.ReservationScanner) return;
+            ReservationScanner.start(function (code) {
+                if (typeof window.HxVerifyCode === "function") { window.HxVerifyCode(code); return; }
+                if (typeof RBAC !== "undefined" && RBAC.can && !RBAC.can("bookings:read")) {
+                    ReservationScanner.notice("Scanned " + code + ". Your account cannot verify bookings.");
+                    return;
+                }
+                var url = base + "bookings/index.html?code=" + encodeURIComponent(code);
+                if (!ReservationScanner.openVerifyTab(url)) {
+                    ReservationScanner.notice("Scanned " + code + '. <a href="' + url + '" target="' + ReservationScanner.VERIFY_TAB +
+                        '" style="color:#d4af37;font-weight:600">Open verification</a> (allow pop-ups for this site to open it by itself)', 15000);
+                }
+            });
+        };
+        if (window.ReservationScanner) { start(); return; }
+        var s = document.createElement("script");
+        s.src = base + "assets/js/reservation-scanner.js";
+        s.onload = start;
+        document.head.appendChild(s);
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         initThemeToggle();
         syncNavAccess();
         initHeader();
+        initReservationScanner();
         refreshShopOrderBadge();
         refreshCommissionApprovalBadge();
         refreshMarketplaceBadge();

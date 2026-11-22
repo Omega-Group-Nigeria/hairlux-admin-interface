@@ -51,6 +51,8 @@ async function initStaffPortal() {
   renderStaffChip();
   renderProfileScreen();
   applyModuleVisibility();
+  // Scanner works as soon as we know who is signed in (Salon Bookings access).
+  initStaffReservationScanner();
 
   await Promise.allSettled([
     loadOnboarding(),
@@ -2794,6 +2796,47 @@ async function sbPrintBooking(id) {
 var _sbVerifyBooking = null;
 var _sbVerifySource = null;
 var _sbVerifyCode = null;
+
+// -- Front-desk QR scanner ----------------------------------------------------
+// A reservation code scanned anywhere in the Staff Portal opens Verify
+// Reservation (Salon Bookings), filled in and looked up, in the verification
+// tab (staff-portal.html?verify=CODE; later scans reuse that tab). Only for
+// staff with Salon Bookings access; others are told they cannot verify.
+
+function staffCanVerifyReservations() {
+  var perms = (currentStaff && currentStaff.permissions) || [];
+  return perms.indexOf('staff-portal:bookings') !== -1;
+}
+
+function openVerifyReservationFor(code) {
+  if (typeof show === 'function') show('bookings');
+  showVerifyReservationForm();
+  var input = document.getElementById('sbv-code');
+  if (input) input.value = code;
+  sbLookupReservationCode();
+}
+
+function initStaffReservationScanner() {
+  if (!window.ReservationScanner) return;
+  var fromLink = ReservationScanner.asCode(new URLSearchParams(window.location.search).get('verify'));
+  if (fromLink) {
+    try { history.replaceState(null, '', window.location.pathname); } catch (e) { /* ignore */ }
+    if (staffCanVerifyReservations()) openVerifyReservationFor(fromLink);
+    else ReservationScanner.notice('Scanned ' + fromLink + '. Your account cannot verify reservations (no Salon Bookings access).');
+  }
+  ReservationScanner.start(function (code) {
+    if (!staffCanVerifyReservations()) {
+      ReservationScanner.notice('Scanned ' + code + '. Your account cannot verify reservations (no Salon Bookings access).');
+      return;
+    }
+    if (window.name === ReservationScanner.VERIFY_TAB) { openVerifyReservationFor(code); return; }
+    var url = 'staff-portal.html?verify=' + encodeURIComponent(code);
+    if (!ReservationScanner.openVerifyTab(url)) {
+      ReservationScanner.notice('Scanned ' + code + '. <a href="' + url + '" target="' + ReservationScanner.VERIFY_TAB +
+        '" style="color:#d4af37;font-weight:600">Open verification</a> (allow pop-ups for this site to open it by itself)', 15000);
+    }
+  });
+}
 
 function showVerifyReservationForm() {
   document.getElementById('profile-modal-box').innerHTML =
