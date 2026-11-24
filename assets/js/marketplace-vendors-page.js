@@ -183,6 +183,7 @@
         if (v.statusReason && v.status !== 'APPROVED') {
             parts.push('<div class="alert alert-' + (v.status === 'SUSPENDED' || v.status === 'REJECTED' ? 'danger' : 'warning') + '"><strong>Last message to the vendor:</strong> ' + esc(v.statusReason) + '</div>');
         }
+        if (v.pendingChangeRequests) parts.push('<div id="vendor-changes" class="mb-4"><div class="text-secondary small">Loading changes waiting for approval...</div></div>');
         if (v.riskFlags.length) {
             parts.push('<div class="alert alert-danger"><strong>Check before deciding:</strong><ul class="mb-0">' +
                 v.riskFlags.map(function (f) { return '<li>' + esc(FLAGS[f] || f) + '</li>'; }).join('') + '</ul></div>');
@@ -267,9 +268,9 @@
         var banks = v.bankAccounts.map(function (b) {
             return '<tr class="' + (b.isActive ? '' : 'text-secondary') + '"><td>' + esc(b.bankName) + '</td><td class="font-monospace">' + esc(b.accountNumber) + '</td><td>' + esc(b.accountName) +
                 (b.nameMatchesBusiness ? '' : ' <span class="badge bg-red-lt">name does not match</span>') + '</td><td>' +
-                (b.isActive ? (b.isDefault ? '<span class="badge bg-blue-lt">payouts go here</span>' : 'active') : 'removed') + '</td><td>' + fmtDate(b.createdAt) + '</td></tr>';
+                (b.isActive ? (b.isDefault ? '<span class="badge bg-blue-lt">payouts go here</span>' : b.pendingApproval ? '<span class="badge bg-orange-lt">waiting for approval</span>' : 'active') : 'removed') + '</td><td>' + fmtDate(b.createdAt) + '</td></tr>';
         }).join('');
-        parts.push('<h3 class="mb-2">Payout accounts</h3><div class="text-secondary small mb-2">Only the vendor can add or change these. Names are checked with Paystack.</div>' +
+        parts.push('<h3 class="mb-2">Payout accounts</h3><div class="text-secondary small mb-2">Only the vendor can add these. Names are checked with Paystack. After approval, a new account or a switch of payout account waits for review above.</div>' +
             '<div class="table-responsive mb-4"><table class="table table-sm table-vcenter"><thead><tr><th>Bank</th><th>Account</th><th>Account name</th><th></th><th>Added</th></tr></thead><tbody>' +
             (banks || '<tr><td colspan="5" class="text-secondary">No payout account yet.</td></tr>') + '</tbody></table></div>');
 
@@ -297,6 +298,7 @@
         }).join('') + '</ul>');
 
         $('vendor-body').innerHTML = parts.join('');
+        if (v.pendingChangeRequests) loadVendorChanges(v.id);
 
         // Footer: decisions allowed from this status
         var actions = [];
@@ -526,6 +528,86 @@
         $('vendor-body').scrollTop = 0;
     }
 
+    // ── Vendor change requests (after approval) ─────────────────────────────
+
+    function changeHtml(c, withVendor) {
+        var what = c.type === 'PAYOUT_ACCOUNT'
+            ? (c.bankAccount
+                ? 'Make <strong>' + esc(c.bankAccount.bankName) + ' <span class="font-monospace">' + esc(c.bankAccount.accountNumber) + '</span></strong> (' + esc(c.bankAccount.accountName) + ') the payout account' +
+                  (c.bankAccount.isNew ? ' <span class="badge bg-orange-lt">new account</span>' : '') +
+                  (c.bankAccount.nameMatchesBusiness ? '' : ' <span class="badge bg-red-lt">name does not match the business or owner</span>')
+                : 'Change the payout account (the account was removed)')
+            : '<table class="table table-sm mb-0"><thead><tr><th>Detail</th><th>Now</th><th>Asked for</th></tr></thead><tbody>' +
+              c.fields.map(function (f) {
+                  return '<tr><td>' + esc(f.label) + '</td><td class="text-secondary">' + (f.from === null || f.from === '' ? '-' : esc(f.from)) + '</td><td class="fw-semibold">' + (f.to === null || f.to === '' ? '<span class="text-secondary">(removed)</span>' : esc(f.to)) + '</td></tr>';
+              }).join('') + '</tbody></table>';
+        var actions = can(P.review)
+            ? '<div class="btn-list mt-2"><button class="btn btn-sm btn-success" data-change-approve="' + esc(c.id) + '">Approve</button>' +
+              '<button class="btn btn-sm btn-outline-danger" data-change-reject="' + esc(c.id) + '">Reject</button></div>'
+            : '';
+        return '<div class="border rounded p-2 mb-2">' +
+            '<div class="small text-secondary mb-1">' + (withVendor && c.seller ? '<a href="#" data-open="' + esc(c.seller.id) + '">' + esc(c.seller.legalName) + '</a> · ' : '') +
+            (c.type === 'PAYOUT_ACCOUNT' ? 'Payout account' : 'Business details') + ' · asked ' + fmtDateTime(c.createdAt) + '</div>' + what + actions + '</div>';
+    }
+
+    async function loadVendorChanges(sellerId) {
+        var box = $('vendor-changes');
+        if (!box) return;
+        try {
+            var res = await Marketplace.changeRequests({ sellerId: sellerId, limit: 50 });
+            box.innerHTML = res.data.length
+                ? '<h3 class="mb-2">Changes waiting for approval</h3><div class="text-secondary small mb-2">Nothing changes until you approve it. The vendor is told either way.</div>' + res.data.map(function (c) { return changeHtml(c, false); }).join('')
+                : '';
+        } catch (e) { box.innerHTML = '<div class="text-danger small">' + esc(e.message) + '</div>'; }
+    }
+
+    async function loadChanges() {
+        var box = $('changes-card');
+        if (!box) return;
+        try {
+            var res = await Marketplace.changeRequests({ limit: 50 });
+            box.innerHTML = res.data.length
+                ? '<div class="card mb-3 border-orange"><div class="card-header"><h3 class="card-title">Vendor changes waiting for approval <span class="badge bg-orange-lt ms-1">' + res.meta.total + '</span></h3></div>' +
+                  '<div class="card-body"><div class="text-secondary small mb-2">Approved vendors asked to change sensitive details or their payout account. Nothing changes until you approve it.</div>' +
+                  res.data.map(function (c) { return changeHtml(c, true); }).join('') + '</div></div>'
+                : '';
+        } catch (e) { box.innerHTML = ''; }
+    }
+
+    async function decideChange(t) {
+        var approve = !!t.dataset.changeApprove;
+        var id = approve ? t.dataset.changeApprove : t.dataset.changeReject;
+        var note;
+        if (approve) {
+            if (!window.confirm('Approve this change? It goes live straight away and the vendor is told.')) return;
+        } else {
+            note = window.prompt('Why is it not approved? The vendor sees this.');
+            if (note === null) return;
+            note = note.trim();
+            if (!note) { window.alert('Say why, so the vendor knows what to fix.'); return; }
+        }
+        t.disabled = true;
+        try {
+            if (approve) await Marketplace.approveChange(id); else await Marketplace.rejectChange(id, note);
+            if (_vendor && $('modal-vendor').classList.contains('show')) {
+                _vendor = await Marketplace.getVendor(_vendor.id);
+                renderVendor();
+            }
+            loadChanges();
+            load();
+        } catch (err) {
+            t.disabled = false;
+            window.alert(err.message);
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        var t = e.target.closest('[data-change-approve],[data-change-reject]');
+        if (t) { e.preventDefault(); decideChange(t); return; }
+        var o = e.target.closest('#changes-card [data-open]');
+        if (o) { e.preventDefault(); openVendor(o.dataset.open); }
+    });
+
     // ── Init ────────────────────────────────────────────────────────────────
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -562,6 +644,7 @@
 
         var open = new URLSearchParams(location.search).get('vendor');
         loadSummary();
+        loadChanges();
         load();
         if (open) openVendor(open);
     });

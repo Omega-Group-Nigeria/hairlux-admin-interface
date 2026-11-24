@@ -148,6 +148,29 @@
         return 'Sending...';
     }
 
+    var APP = { CUSTOMER: 'Customer app', BEAUTICIAN: 'Beautician app' };
+    var PHONE = { ANDROID: 'Android', IOS: 'iPhone' };
+
+    /** Results per app and phone type, for sends made since this was recorded. */
+    function breakdownTable(c) {
+        if (c.status !== 'SENT' || !Array.isArray(c.breakdown) || !c.breakdown.length) return '';
+        var showApp = c.audience === 'ALL';
+        var rows = c.breakdown.map(function (r) {
+            return '<tr>' +
+                (showApp ? '<td>' + esc(APP[r.app] || r.app) + '</td>' : '') +
+                '<td>' + esc(PHONE[r.platform] || r.platform) + '</td>' +
+                '<td class="text-end">' + r.people + '</td>' +
+                '<td class="text-end">' + r.devices + '</td>' +
+                '<td class="text-end text-success">' + r.delivered + '</td>' +
+                '<td class="text-end ' + (r.failed ? 'text-danger' : 'text-secondary') + '">' + r.failed + '</td>' +
+                '</tr>';
+        }).join('');
+        return '<div class="table-responsive mt-2"><table class="table table-sm table-vcenter mb-0 small" style="max-width:560px">' +
+            '<thead><tr>' + (showApp ? '<th>App</th>' : '') + '<th>Phone</th><th class="text-end">People</th><th class="text-end">Devices</th>' +
+            '<th class="text-end">Delivered</th><th class="text-end">Not delivered</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table></div>';
+    }
+
     async function load() {
         clearTimeout(_refreshTimer);
         try {
@@ -169,8 +192,8 @@
                     '<div class="text-secondary small">' + esc(c.body) + '</div>' +
                     (c.link ? '<div class="small text-truncate">Link: ' + esc(c.link) + '</div>' : '') + '</div>' +
                     '<span class="badge ' + st.cls + ' align-self-start">' + esc(st.label) + '</span></div>' +
-                    '<div class="small mt-1">' + esc(AUDIENCE[c.audience] || c.audience) + ', ' + esc(PLATFORM[c.platform] || c.platform) + ' · ' + results(c) + '</div>' +
-                    '<div class="small text-secondary">' + (c.status === 'SCHEDULED' ? 'Scheduled' : 'Created') + ' by ' + esc(c.createdBy || 'an admin') + ' · ' + esc(fmt(c.createdAt)) +
+                    '<div class="small mt-1">' + esc(AUDIENCE[c.audience] || c.audience) + ', ' + esc(PLATFORM[c.platform] || c.platform) + ' · ' + results(c) + '</div>' + breakdownTable(c) +
+                    '<div class="small text-secondary mt-1">' + (c.status === 'SCHEDULED' ? 'Scheduled' : 'Created') + ' by ' + esc(c.createdBy || 'an admin') + ' · ' + esc(fmt(c.createdAt)) +
                     (c.sentAt ? ' · sent ' + esc(fmt(c.sentAt)) : '') + '</div>' + actions + '</div>';
             }).join('') : '<div class="list-group-item text-center text-secondary py-5">No notifications here yet.</div>';
             // Keep "Sending..." up to date until it finishes.

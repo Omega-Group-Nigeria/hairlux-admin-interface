@@ -797,8 +797,8 @@
         try {
             var r = await Agents.announce({ title: title, message: message, territory: $('an-territory').value.trim() || undefined, email: $('an-email').checked });
             bootstrap.Modal.getInstance($('modal-announce')).hide();
-            $('an-title').value = ''; $('an-message').value = ''; $('an-territory').value = ''; $('an-email').checked = false;
-            alertBox('Announcement sent to ' + r.sent + ' agent' + (r.sent === 1 ? '' : 's') + '.');
+            $('an-title').value = ''; $('an-message').value = ''; $('an-territory').value = ''; $('an-email').checked = true;
+            alertBox('Announcement sent to ' + r.sent + ' agent' + (r.sent === 1 ? '' : 's') + (typeof r.emailed === 'number' ? ', ' + r.emailed + ' by email' : '') + '.');
         } catch (e) { alert(e.message); }
         finally { btn.disabled = false; }
     }

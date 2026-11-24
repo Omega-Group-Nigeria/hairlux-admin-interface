@@ -748,12 +748,20 @@ function pickListHtml(o) {
         }).join("") + '</tbody></table></div>';
 }
 
-/** Next Hairlux steps for an order. Orders with vendor items go through the Receiving Center steps. */
+/**
+ * Next Hairlux steps for an order. Orders with vendor items go through the
+ * Receiving Center steps. Hairlux-only orders still pass Ready for dispatch
+ * before Out for delivery: that step books the courier (Fez), so skipping it
+ * meant Fez was never asked to collect.
+ */
 function orderSteps(o) {
     var hasVendor = (o.vendorShipments || []).length > 0;
     var steps = [];
     if (!hasVendor) {
-        steps = Shop.orderStatusTransitions(o.status).filter(function (s) { return s !== "CANCELLED"; }).map(function (s) { return { status: s, label: s.replace(/_/g, " ") }; });
+        if (o.status === "CONFIRMED") steps = [{ status: "PROCESSING", stage: "PICKING", label: "Start processing" }];
+        else if (o.status === "PROCESSING" && o.fulfilmentStage !== "READY_FOR_DISPATCH") steps = [{ status: "PROCESSING", stage: "READY_FOR_DISPATCH", label: "Packed: ready for dispatch" }];
+        else if (o.status === "PROCESSING") steps = [{ status: "SHIPPED", label: "Out for delivery" }];
+        else if (o.status === "SHIPPED") steps = [{ status: "DELIVERED", label: "Delivered" }];
     } else if (o.status === "CONFIRMED") steps = [{ status: "PROCESSING", stage: "PICKING", label: "Start picking" }];
     else if (o.status === "PROCESSING" && (o.fulfilmentStage || "PICKING") === "PICKING") steps = [{ status: "PROCESSING", stage: "QUALITY_CHECK", label: "Picked: quality check" }];
     else if (o.status === "PROCESSING" && o.fulfilmentStage === "QUALITY_CHECK") steps = [{ status: "PROCESSING", stage: "READY_FOR_DISPATCH", label: "Passed: ready for dispatch" }];

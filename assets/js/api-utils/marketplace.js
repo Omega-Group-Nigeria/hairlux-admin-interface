@@ -40,6 +40,10 @@ const Marketplace = (function () {
 
         listVendors: (params) => apiFetch(base + '/vendors' + qs(params)),
         getVendor: (id) => apiFetch(`${base}/vendors/${id}`),
+        // Changes approved vendors asked for (details, payout account), waiting for review.
+        changeRequests: (params) => apiFetch(base + '/change-requests' + qs(params)),
+        approveChange: (id, note) => apiFetch(`${base}/change-requests/${id}/approve`, jsonBody('POST', { note: note || undefined })),
+        rejectChange: (id, note) => apiFetch(`${base}/change-requests/${id}/reject`, jsonBody('POST', { note })),
         documentUrl: (id, docId) => apiFetch(`${base}/vendors/${id}/documents/${docId}/url`),
         documentViews: (id, docId) => apiFetch(`${base}/vendors/${id}/documents/${docId}/views`),
         reviewDocument: (id, docId, status, note) => apiFetch(`${base}/vendors/${id}/documents/${docId}`, jsonBody('PATCH', { status, note })),
