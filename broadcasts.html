@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- PWA: installable app (see sw.js / assets/js/pwa.js) -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#182433" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hairlux" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link href="assets/img/pwa/apple-touch-icon.png" rel="apple-touch-icon" />
+    <title>Hairlux Admin | Email &amp; SMS Broadcasts</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-vendors.min.css" rel="stylesheet" />
+    <link href="./assets/styles/tabler-themes.min.css" rel="stylesheet" />
+    <link href="./assets/styles/navbar-left.css" rel="stylesheet" />
+    <style>
+        @import url("https://rsms.me/inter/inter.css");
+    </style>
+</head>
+
+<body>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/tabler-theme.min.js"></script>
+    <div class="page">
+        <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
+            <div class="container-xl">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbar-menu"><span class="navbar-toggler-icon"></span></button>
+                <a href="./index.html" class="navbar-brand navbar-brand-autodark"><img
+                        src="assets/img/logo-side-white.webp" alt="" style="margin-right: 35px;" width="100px"></a>
+                <div class="navbar-nav flex-row order-md-last">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown">
+                            <span class="avatar avatar-sm bg-primary text-white" id="navbar-user-avatar">A</span>
+                            <div class="d-none d-xl-block ps-2">
+                                <div id="navbar-user-name">Admin</div>
+                                <div class="mt-1 small text-secondary" id="navbar-user-role">Administrator</div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow" data-bs-theme="light">
+                            <div class="dropdown-header">
+                                <div class="fw-semibold" id="dropdown-user-name">Admin User</div>
+                                <div class="text-secondary small text-truncate d-block" id="dropdown-user-email">
+                                    admin.email</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="./settings.html" class="dropdown-item">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logout-btn" class="dropdown-item text-danger">Logout</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-menu">
+                    <ul class="navbar-nav" id="app-sidebar"></ul>
+                    <script src="./assets/js/nav-config.js"></script>
+                    <script src="./assets/js/layout.js"></script>
+                    <script>Layout.init();</script>
+                </div>
+            </div>
+        </header>
+
+
+
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <div class="page-pretitle">Customers &amp; Marketing</div>
+                            <h2 class="page-title">Email &amp; SMS Broadcasts</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="alert alert-info">
+                        <div>Send one email or text message to customers or beauticians, now or at a time you choose.
+                        Emails go to everyone except people who unsubscribed, and include an unsubscribe link.
+                        Texts only go to people who agreed to receive marketing texts.
+                        For app notifications use <a href="push-notifications.html">Push Notifications</a>; for automatic messages use <a href="lifecycle-campaigns.html">Lifecycle Campaigns</a>.</div>
+                    </div>
+                    <div id="page-alert"></div>
+
+                    <div class="row row-cards">
+                        <!-- Compose -->
+                        <div class="col-lg-5 d-none" id="compose-col">
+                            <div class="card">
+                                <div class="card-header"><h3 class="card-title">New broadcast</h3></div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Send as</label>
+                                        <div class="form-selectgroup w-100">
+                                            <label class="form-selectgroup-item flex-fill"><input type="radio" name="f-channel" value="EMAIL" class="form-selectgroup-input" checked><span class="form-selectgroup-label">Email</span></label>
+                                            <label class="form-selectgroup-item flex-fill"><input type="radio" name="f-channel" value="SMS" class="form-selectgroup-input"><span class="form-selectgroup-label">SMS</span></label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Send to</label>
+                                        <select class="form-select" id="f-audience">
+                                            <option value="ALL_CUSTOMERS">All customers</option>
+                                            <option value="CUSTOMERS">Customers with an account (app and website)</option>
+                                            <option value="SALON_CUSTOMERS">Salon customers without an account</option>
+                                            <option value="BEAUTICIANS">Beauticians</option>
+                                        </select>
+                                        <div class="form-hint" id="audience-size">Counting...</div>
+                                    </div>
+                                    <div class="mb-3" id="subject-wrap">
+                                        <label class="form-label">Subject <span class="text-secondary small" id="subject-count">0/150</span></label>
+                                        <input class="form-control" id="f-subject" maxlength="150" placeholder="e.g. Weekend glow-up: 20% off braids">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Message <span class="text-secondary small" id="body-count"></span></label>
+                                        <textarea class="form-control" id="f-body" rows="7" placeholder="Hi {{firstName}}, ..."></textarea>
+                                        <div class="form-hint" id="body-hint"></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">When</label>
+                                        <div class="form-selectgroup">
+                                            <label class="form-selectgroup-item"><input type="radio" name="f-when" value="now" class="form-selectgroup-input" checked><span class="form-selectgroup-label">Send now</span></label>
+                                            <label class="form-selectgroup-item"><input type="radio" name="f-when" value="later" class="form-selectgroup-input"><span class="form-selectgroup-label">Schedule</span></label>
+                                        </div>
+                                        <input type="datetime-local" class="form-control mt-2 d-none" id="f-at">
+                                        <div class="form-hint d-none" id="at-hint">Your computer's time zone. Up to 90 days ahead.</div>
+                                    </div>
+                                    <div class="text-danger small mb-2" id="f-error" hidden></div>
+                                    <button class="btn btn-primary w-100" id="btn-send">Send now</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- History -->
+                        <div class="col-12" id="list-col">
+                            <div class="card">
+                                <div class="card-header">
+                                    <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="status-tabs">
+                                        <li class="nav-item"><a class="nav-link active" href="#" data-status="">All</a></li>
+                                        <li class="nav-item"><a class="nav-link" href="#" data-status="SCHEDULED">Scheduled <span class="badge bg-blue-lt ms-1" id="scheduled-count"></span></a></li>
+                                        <li class="nav-item"><a class="nav-link" href="#" data-status="SENT">Sent</a></li>
+                                        <li class="nav-item"><a class="nav-link" href="#" data-status="FAILED">Failed</a></li>
+                                        <li class="nav-item"><a class="nav-link" href="#" data-status="CANCELLED">Cancelled</a></li>
+                                    </ul>
+                                </div>
+                                <div class="card-body border-bottom py-2">
+                                    <select class="form-select form-select-sm w-auto" id="filter-channel">
+                                        <option value="">Email and SMS</option>
+                                        <option value="EMAIL">Email only</option>
+                                        <option value="SMS">SMS only</option>
+                                    </select>
+                                </div>
+                                <div class="list-group list-group-flush" id="broadcast-list">
+                                    <div class="list-group-item text-center text-secondary py-5">Loading...</div>
+                                </div>
+                                <div class="card-footer d-flex align-items-center">
+                                    <span class="text-secondary small" id="page-label"></span>
+                                    <div class="ms-auto btn-list">
+                                        <button class="btn btn-sm" id="btn-prev">Previous</button>
+                                        <button class="btn btn-sm" id="btn-next">Next</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm -->
+    <div class="modal modal-blur fade" id="modal-confirm" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-title" id="confirm-title">Send this broadcast?</div>
+                    <div id="confirm-text"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" id="btn-confirm">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/api-utils/auth.js"></script>
+    <script src="assets/js/api-utils/rbac.js"></script>
+    <script src="assets/js/api-utils/broadcasts.js"></script>
+    <script src="./assets/js/tabler.min.js"></script>
+    <script src="assets/js/broadcasts-page.js"></script>
+<script src="assets/js/pwa.js" defer></script>
+</body>
+
+</html>
