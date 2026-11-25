@@ -44,6 +44,10 @@ const Agents = (function () {
 
         list: (params) => apiFetch(base + qs(params)),
         get: (id) => apiFetch(`${base}/${id}`),
+        // New bank accounts, addresses and photos agents asked for after approval.
+        changeRequests: (params) => apiFetch(base + '/change-requests' + qs(params)),
+        approveChange: (id, note) => apiFetch(`${base}/change-requests/${id}/approve`, jsonBody('POST', { note: note || undefined })),
+        rejectChange: (id, note) => apiFetch(`${base}/change-requests/${id}/reject`, jsonBody('POST', { note })),
         setStatus: (id, action, reason) => apiFetch(`${base}/${id}/status`, jsonBody('POST', { action, reason: reason || undefined })),
         update: (id, payload) => apiFetch(`${base}/${id}`, jsonBody('PATCH', payload)),
         performance: (id, params) => apiFetch(`${base}/${id}/performance` + qs(params)),

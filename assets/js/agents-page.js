@@ -132,7 +132,75 @@
 
     // ------------------------------------------------------------- overview
 
+    // ── Changes agents asked for after approval (bank account, address, photo) ──
+
+    var CHANGE_LABEL = { BANK: 'New payout bank account', ADDRESS: 'New address', PHOTO: 'New photo' };
+
+    function changeHtml(c, withAgent) {
+        var what = '';
+        if (c.type === 'BANK' && c.bank) {
+            what = '<div><strong>' + esc(c.bank.bankName || '') + ' <span class="font-monospace">' + esc(c.bank.accountNumber) + '</span></strong> (' + esc(c.bank.accountName) + ')' +
+                (c.bank.nameMatches ? '' : ' <span class="badge bg-red-lt">name does not match the agent</span>') + '</div>' +
+                (c.previousBank ? '<div class="small text-secondary">Now: ' + esc(c.previousBank.bankName || '') + ' ' + esc(c.previousBank.accountNumber) + ' (' + esc(c.previousBank.accountName) + ')</div>' : '');
+        } else if (c.type === 'ADDRESS') {
+            what = '<div><strong>' + esc(c.address) + '</strong></div><div class="small text-secondary">Now: ' + esc(c.previousAddress || '-') + '</div>';
+        } else if (c.type === 'PHOTO') {
+            what = c.photoUrl ? '<a href="' + esc(c.photoUrl) + '" target="_blank" rel="noopener"><img class="agent-photo" src="' + esc(c.photoUrl) + '" alt="New photo"></a>' : '<span class="text-secondary">Photo not available</span>';
+        }
+        var actions = RBAC.can(P.manage)
+            ? '<div class="btn-list mt-2"><button class="btn btn-sm btn-success" data-agent-change-approve="' + esc(c.id) + '">Approve</button>' +
+              '<button class="btn btn-sm btn-outline-danger" data-agent-change-reject="' + esc(c.id) + '">Reject</button></div>'
+            : '';
+        return '<div class="border rounded p-2 mb-2"><div class="small text-secondary mb-1">' +
+            (withAgent && c.agent ? '<a href="#" data-open-agent="' + esc(c.agent.id) + '">' + esc(c.agent.name || c.agent.agentNumber) + '</a> (' + esc(c.agent.agentNumber) + ') · ' : '') +
+            esc(CHANGE_LABEL[c.type] || c.type) + ' · asked ' + fmtDateTime(c.createdAt) + '</div>' + what + actions + '</div>';
+    }
+
+    async function loadChanges() {
+        var box = $('ov-changes');
+        if (!box) return;
+        try {
+            var res = await Agents.changeRequests({ limit: 50 });
+            box.innerHTML = res.data.length
+                ? '<div class="card mb-3 border-orange"><div class="card-header"><h3 class="card-title">Agent changes waiting for approval <span class="badge bg-orange-lt ms-1">' + res.meta.total + '</span></h3></div>' +
+                  '<div class="card-body"><div class="text-secondary small mb-2">Approved agents asked to change their payout bank account, address or photo. Nothing changes until you approve it; the agent is told either way.</div>' +
+                  res.data.map(function (c) { return changeHtml(c, true); }).join('') + '</div></div>'
+                : '';
+        } catch (e) { box.innerHTML = ''; }
+    }
+
+    async function decideChange(t) {
+        var approve = !!t.dataset.agentChangeApprove;
+        var id = approve ? t.dataset.agentChangeApprove : t.dataset.agentChangeReject;
+        var note;
+        if (approve) {
+            if (!window.confirm('Approve this change? It goes live straight away and the agent is told.')) return;
+        } else {
+            note = window.prompt('Why is it not approved? The agent sees this.');
+            if (note === null) return;
+            note = note.trim();
+            if (!note) { window.alert('Say why, so the agent knows what to fix.'); return; }
+        }
+        t.disabled = true;
+        try {
+            if (approve) await Agents.approveChange(id); else await Agents.rejectChange(id, note);
+            if (_agentId && $('modal-agent').classList.contains('show')) openAgent(_agentId);
+            loadChanges();
+        } catch (err) {
+            t.disabled = false;
+            window.alert(err.message);
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        var t = e.target.closest('[data-agent-change-approve],[data-agent-change-reject]');
+        if (t) { e.preventDefault(); decideChange(t); return; }
+        var o = e.target.closest('#ov-changes [data-open-agent]');
+        if (o) { e.preventDefault(); openAgent(o.dataset.openAgent); }
+    });
+
     async function loadOverview() {
+        loadChanges();
         $('ov-cards').innerHTML = '<div class="text-center text-secondary py-4">Loading...</div>';
         try {
             var d = await Agents.overview();
@@ -222,6 +290,10 @@
         var bank = a.bankFull;
         var html = '';
         if (a.statusReason) html += '<div class="alert alert-secondary py-2">' + esc(a.statusReason) + '</div>';
+        if ((a.pendingChanges || []).length) {
+            html += '<div class="mb-3"><div class="subheader mb-1">Changes waiting for approval</div>' +
+                a.pendingChanges.map(function (c) { return changeHtml(c, false); }).join('') + '</div>';
+        }
         html += '<div class="row g-4">';
         // Profile
         html += '<div class="col-lg-4"><div class="d-flex align-items-center gap-3 mb-3">' +
