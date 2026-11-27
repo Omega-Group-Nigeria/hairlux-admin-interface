@@ -209,6 +209,11 @@
                             </div>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label">Documents <span class="text-muted">(optional)</span></label>
+                            <div id="announcement-documents"></div>
+                            <div class="form-hint">Staff can view and download them in the portal, and they are attached to the announcement email.</div>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label" for="announcement-expires">Expires <span
                                     class="text-muted">(optional)</span></label>
                             <input type="date" class="form-control" id="announcement-expires">
@@ -257,6 +262,7 @@
                                 <video id="preview-video" controls class="w-100 mb-2 d-none"
                                     style="border-radius:4px"></video>
                                 <div id="preview-body"></div>
+                                <div id="preview-documents"></div>
                                 <div class="text-secondary small mt-3" id="preview-sender"></div>
                             </div>
                         </div>
@@ -284,6 +290,7 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-comms.js"></script>
+    <script src="./assets/js/doc-files.js"></script>
     <script src="./assets/js/api-utils/roles.js"></script>
     <script src="./assets/js/simple-pager.js"></script>
     <script src="./assets/js/multi-select-dropdown.js"></script>
@@ -376,7 +383,9 @@
                             var actions =
                                 (RBAC.can(StaffComms.PERMISSIONS.ANNOUNCEMENTS_UPDATE) ? '<button class="btn btn-sm btn-ghost-secondary btn-edit-announcement" data-id="' + a.id + '">Edit</button> ' : '') +
                                 (RBAC.can(StaffComms.PERMISSIONS.ANNOUNCEMENTS_DELETE) ? '<button class="btn btn-sm btn-ghost-danger btn-delete-announcement" data-id="' + a.id + '">Delete</button>' : '');
-                            return '<tr><td class="fw-semibold">' + esc(a.title) + (a.videoKey ? ' <span class="badge bg-blue-lt">Video</span>' : '') + '</td>' +
+                            var nDocs = (a.documents || []).length;
+                            return '<tr><td class="fw-semibold">' + esc(a.title) + (a.videoKey ? ' <span class="badge bg-blue-lt">Video</span>' : '') +
+                                (nDocs ? ' <span class="badge bg-azure-lt">' + nDocs + (nDocs === 1 ? ' file' : ' files') + '</span>' : '') + '</td>' +
                                 '<td><span class="badge bg-purple-lt">' + esc(StaffComms.announcementTargetLabel(a)) + '</span></td>' +
                                 '<td>' + esc(StaffComms.createdByName(a)) + '</td>' +
                                 '<td class="text-secondary small">' + timeAgo(a.createdAt) + '</td>' +
@@ -499,6 +508,18 @@
 
         var _editingAnnouncementId = null;
         var _previewVideoObjectUrl = null;
+        var _annDocs = null; // DocFiles picker
+
+        function annDocsPicker() {
+            if (!_annDocs) {
+                _annDocs = DocFiles.picker(document.getElementById("announcement-documents"), {
+                    uploadPath: "/admin/documents/uploads",
+                    deferRemoval: true,
+                    onRemove: function (doc) { return StaffComms.discardUpload(doc.id); },
+                });
+            }
+            return _annDocs;
+        }
 
         function showFormStep() {
             document.getElementById("announcement-form-step").classList.remove("d-none");
@@ -535,6 +556,8 @@
             }
             targetSel.value = editing ? editing.target : (RBAC.isManagerScoped() ? "BRANCH" : "ALL");
             onTargetChange();
+
+            annDocsPicker().reset(editing ? editing.documents : []);
 
             // Dev Feedback Round 9: video announcements.
             document.getElementById("announcement-video").value = "";
@@ -607,6 +630,9 @@
             } else if (document.getElementById("announcement-remove-video").checked) {
                 payload.removeVideo = "true";
             }
+            var docs = annDocsPicker();
+            if (docs.newIds().length) payload.documentIds = docs.newIds();
+            if (_editingAnnouncementId && docs.removedIds().length) payload.removeDocumentIds = docs.removedIds();
             return { payload: payload, title: title, bodyText: bodyText, target: target };
         }
 
@@ -630,6 +656,8 @@
             if (gathered.target === "ROLE" && !(payload.roleIds || []).length) { errEl.textContent = "Select at least one role."; errEl.classList.remove("d-none"); return; }
             if (gathered.target === "BRANCH" && !(payload.branchIds || []).length) { errEl.textContent = "Select at least one branch."; errEl.classList.remove("d-none"); return; }
             if (gathered.target === "INDIVIDUAL" && !(payload.staffIds || []).length) { errEl.textContent = "Select at least one staff member."; errEl.classList.remove("d-none"); return; }
+            if (annDocsPicker().busy()) { errEl.textContent = "Wait for the documents to finish uploading."; errEl.classList.remove("d-none"); return; }
+            if (annDocsPicker().failedCount()) { errEl.textContent = "Retry or remove the documents that did not upload."; errEl.classList.remove("d-none"); return; }
 
             // The admin's own just-typed Quill content, rendered as-is for their
             // own preview of what they wrote -- final sanitization still happens
@@ -637,6 +665,12 @@
             // extra trust than the editor itself already has.
             document.getElementById("preview-title").textContent = gathered.title;
             document.getElementById("preview-body").innerHTML = payload.body;
+            var previewDocs = annDocsPicker().docs();
+            var previewDocsEl = document.getElementById("preview-documents");
+            previewDocsEl.innerHTML = previewDocs.length
+                ? '<div class="text-secondary small mt-3">Attached (also sent with the email):</div>' + DocFiles.listHtml(previewDocs)
+                : "";
+            DocFiles.bind(previewDocsEl, previewDocs);
             document.getElementById("preview-audience").textContent = targetLabelFromForm(gathered.target);
             document.getElementById("preview-sent-label").textContent = _editingAnnouncementId ? "Updated just now" : "Sending now";
             var senderName = (document.getElementById("dropdown-user-name") || {}).textContent || "You";

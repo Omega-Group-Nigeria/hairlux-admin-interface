@@ -288,9 +288,13 @@
                                 class="text-danger">*</span></label>
                         <textarea class="form-control" id="edit-directive-body" rows="4" maxlength="5000"></textarea>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label class="form-label" for="edit-directive-due">Due date</label>
                         <input type="date" class="form-control" id="edit-directive-due">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Files</label>
+                        <div id="edit-directive-documents"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -309,7 +313,7 @@
                     <h5 class="modal-title">Submitted Evidence</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body text-center" id="evidence-modal-body">
+                <div class="modal-body" id="evidence-modal-body">
                     <div class="spinner-border text-primary"></div>
                 </div>
             </div>
@@ -320,6 +324,7 @@
     <script src="./assets/js/api-utils/rbac.js"></script>
     <script src="./assets/js/api-utils/staff.js"></script>
     <script src="./assets/js/api-utils/staff-comms.js"></script>
+    <script src="./assets/js/doc-files.js"></script>
     <script src="./assets/js/api-utils/roles.js"></script>
     <script src="./assets/js/simple-pager.js"></script>
     <script src="./assets/js/multi-select-dropdown.js"></script>
@@ -433,8 +438,18 @@
                 '</div>' +
                 '<div class="mb-0 d-none task-all-wrap">' +
                 '<div class="text-secondary small">Every active staff member gets their own copy of this task: no selection needed.</div>' +
+                '</div>' +
+                '<div class="mt-3">' +
+                '<label class="form-label">Files <span class="text-muted">(optional)</span></label>' +
+                '<div class="task-docs"></div>' +
+                '<div class="form-hint">Each person gets the files on their task, and attached to the task email.</div>' +
                 '</div>';
             container.appendChild(row);
+            row._docs = DocFiles.picker(row.querySelector(".task-docs"), {
+                uploadPath: "/admin/documents/uploads",
+                deferRemoval: true,
+                onRemove: function (doc) { return StaffComms.discardUpload(doc.id); },
+            });
             RichTextEditor.attach(row.querySelector('.task-body'));
 
             var removeBtn = row.querySelector(".task-remove-row");
@@ -542,11 +557,14 @@
                             var dueCell = d.dueDate
                                 ? '<span class="' + (isOverdue(d) ? "text-danger fw-semibold" : "") + '">' + StaffComms.formatDate(d.dueDate) + (isOverdue(d) ? " (overdue)" : "") + '</span>'
                                 : '<span class="text-secondary">-</span>';
-                            var evidenceCell = d.evidenceUrl
-                                ? '<button type="button" class="btn btn-ghost-primary btn-sm directive-view-evidence" data-id="' + d.id + '">View</button>'
+                            var nEvidence = (d.evidence || []).length || (d.evidenceUrl ? 1 : 0);
+                            var evidenceCell = nEvidence
+                                ? '<button type="button" class="btn btn-ghost-primary btn-sm directive-view-evidence" data-id="' + d.id + '">View' + (nEvidence > 1 ? ' (' + nEvidence + ')' : '') + '</button>'
                                 : '<span class="text-secondary small">-</span>';
+                            var nFiles = (d.documents || []).length;
                             return '<tr>' +
-                                '<td class="fw-semibold">' + esc(d.title) + '</td>' +
+                                '<td class="fw-semibold">' + esc(d.title) +
+                                (nFiles ? ' <span class="badge bg-azure-lt">' + nFiles + (nFiles === 1 ? ' file' : ' files') + '</span>' : '') + '</td>' +
                                 '<td>' + esc(assignedTo) + '</td>' +
                                 '<td>' + dueCell + '</td>' +
                                 '<td>' + StaffComms.directiveStatusBadge(d.status) + '</td>' +
@@ -620,6 +638,7 @@
         }
 
         var _editingDirectiveId = null;
+        var _editDocs = null; // DocFiles picker in the edit modal
 
         function openEditDirectiveModal(id) {
             var d = _directivesCache.find(function (x) { return x.id === id; });
@@ -629,6 +648,14 @@
             document.getElementById("edit-directive-title").value = d.title;
             document.getElementById("edit-directive-body").value = d.body;
             document.getElementById("edit-directive-due").value = d.dueDate ? d.dueDate.slice(0, 10) : "";
+            if (!_editDocs) {
+                _editDocs = DocFiles.picker(document.getElementById("edit-directive-documents"), {
+                    uploadPath: "/admin/documents/uploads",
+                    deferRemoval: true,
+                    onRemove: function (doc) { return StaffComms.discardUpload(doc.id); },
+                });
+            }
+            _editDocs.reset(d.documents || []);
             new bootstrap.Modal(document.getElementById("modal-edit-directive")).show();
         }
 
@@ -641,11 +668,16 @@
 
             if (!title) { errEl.textContent = "Title is required."; errEl.classList.remove("d-none"); return; }
             if (!body) { errEl.textContent = "Instructions are required."; errEl.classList.remove("d-none"); return; }
+            if (_editDocs.busy()) { errEl.textContent = "Wait for the files to finish uploading."; errEl.classList.remove("d-none"); return; }
+            if (_editDocs.failedCount()) { errEl.textContent = "Retry or remove the files that did not upload."; errEl.classList.remove("d-none"); return; }
 
             var btn = document.getElementById("btn-save-edit-directive");
             btn.disabled = true;
             try {
-                await StaffComms.updateDirective(_editingDirectiveId, { title: title, body: body, dueDate: due || null });
+                var update = { title: title, body: body, dueDate: due || null };
+                if (_editDocs.newIds().length) update.documentIds = _editDocs.newIds();
+                if (_editDocs.removedIds().length) update.removeDocumentIds = _editDocs.removedIds();
+                await StaffComms.updateDirective(_editingDirectiveId, update);
                 bootstrap.Modal.getInstance(document.getElementById("modal-edit-directive")).hide();
                 flashPageAlert("success", "Task updated.");
                 loadDirectives();
@@ -675,14 +707,14 @@
             body.innerHTML = '<div class="spinner-border text-primary"></div>';
             new bootstrap.Modal(document.getElementById("modal-view-evidence")).show();
             try {
-                var result = await StaffComms.getDirectiveEvidence(id);
-                if (!result.viewUrl) { body.innerHTML = '<div class="text-secondary">No evidence submitted.</div>'; return; }
-                // Evidence can be a photo or a PDF; the stored file keeps its name, so the link path ends in .pdf for PDFs.
-                var isPdf = /\.pdf$/i.test(String(result.viewUrl).split('?')[0]);
-                body.innerHTML = isPdf
-                    ? '<div class="mb-2">The staff member attached a PDF.</div><a href="' + esc(result.viewUrl) + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Open PDF</a>'
-                    : '<img src="' + esc(result.viewUrl) + '" style="max-width:100%;border-radius:8px" alt="Submitted evidence">' +
-                      '<div class="mt-2"><a href="' + esc(result.viewUrl) + '" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">Open Full Size</a></div>';
+                // The list already carries every evidence file with fresh links.
+                var d = _directivesCache.find(function (x) { return x.id === id; });
+                var files = (d && d.evidence) || [];
+                if (!files.length) { body.innerHTML = '<div class="text-secondary">No evidence submitted.</div>'; return; }
+                body.innerHTML = '<div class="text-secondary small">' + files.length + (files.length === 1 ? ' file' : ' files') +
+                    ' from ' + esc(d.targetStaff ? d.targetStaff.name : 'the staff member') + '. PDFs and images open here; Word and Excel files download.</div>' +
+                    DocFiles.listHtml(files);
+                DocFiles.bind(body, files);
             } catch (e) {
                 body.innerHTML = '<div class="text-danger">' + esc(e.message || "Failed to load evidence.") + '</div>';
             }
@@ -725,8 +757,13 @@
                 if (!title) { errEl.textContent = label + ": title is required."; errEl.classList.remove("d-none"); return null; }
                 if (!body) { errEl.textContent = label + ": instructions are required."; errEl.classList.remove("d-none"); return null; }
 
+                if (row._docs.busy()) { errEl.textContent = label + ": wait for the files to finish uploading."; errEl.classList.remove("d-none"); return null; }
+                if (row._docs.failedCount()) { errEl.textContent = label + ": retry or remove the files that did not upload."; errEl.classList.remove("d-none"); return null; }
+
                 var task = { title: title, body: body };
                 if (due) task.dueDate = due;
+                if (row._docs.newIds().length) task.documentIds = row._docs.newIds();
+                task._docs = row._docs.docs();
 
                 task.audience = type;
                 if (type === "STAFF") {
@@ -766,8 +803,12 @@
                     '<div class="text-secondary small mb-1">' + t.body + '</div>' /* rich-text HTML from the editor */ +
                     '<div class="small"><strong>To:</strong> ' + esc(t._recipientLabel) + '</div>' +
                     (t.dueDate ? '<div class="small"><strong>Due:</strong> ' + esc(t.dueDate) + '</div>' : '') +
+                    (t._docs.length ? '<div class="small mt-1"><strong>Files:</strong></div><div class="task-preview-docs" data-i="' + i + '">' + DocFiles.listHtml(t._docs) + '</div>' : '') +
                     '</div>';
             }).join("");
+            document.querySelectorAll("#directive-preview-list .task-preview-docs").forEach(function (el) {
+                DocFiles.bind(el, tasks[Number(el.dataset.i)]._docs);
+            });
             showDirectivePreviewStep();
         }
 
@@ -779,7 +820,7 @@
             // Strip the UI-only preview label before sending.
             var payload = {
                 tasks: _pendingDirectiveTasks.map(function (t) {
-                    var clean = {}; for (var k in t) { if (k !== "_recipientLabel") clean[k] = t[k]; } return clean;
+                    var clean = {}; for (var k in t) { if (k !== "_recipientLabel" && k !== "_docs") clean[k] = t[k]; } return clean;
                 })
             };
 

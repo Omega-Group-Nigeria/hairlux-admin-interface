@@ -19,6 +19,7 @@
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <!-- STYLES -->
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
@@ -177,6 +178,8 @@
                             <h2 class="page-title">Applications</h2>
                         </div>
                         <div class="col-auto ms-auto d-flex flex-wrap gap-2 align-items-center">
+                            <button type="button" class="btn btn-outline-secondary d-none" id="btn-letter-templates">Letter
+                                templates</button>
                             <button type="button" class="btn btn-outline-secondary" id="btn-view-report">View
                                 Report</button>
                             <button type="button" class="btn btn-outline-secondary" id="btn-refresh">
@@ -393,6 +396,10 @@
     <script src="assets/js/api-utils/rbac.js"></script>
     <script src="assets/js/api-utils/staff.js"></script>
     <script src="assets/js/api-utils/applications.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="./assets/js/rich-text-editor.js"></script>
+    <script src="./assets/js/doc-files.js"></script>
+    <script src="./assets/js/appointment-letters.js"></script>
     <script src="assets/js/tabler.min.js"></script>
 
     <script>
@@ -415,7 +422,9 @@
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuardForCurrentPage();
                 RBAC.applyNavVisibility();
+                if (RBAC.can('application:manage_status')) document.getElementById("btn-letter-templates").classList.remove("d-none");
             });
+            document.getElementById("btn-letter-templates").addEventListener("click", function () { AppointmentLetters.openTemplates(); });
 
             // ── User info ───────────────────────────────────────────────────
             var user = Auth.getUser();
@@ -686,6 +695,15 @@
                     currentDetail = a;
                     renderDetailBody(a);
                     actions.innerHTML = buildDetailActions(a);
+                    var letterEl = document.getElementById('appt-letter-block');
+                    if (letterEl) {
+                        AppointmentLetters.mountApplication(letterEl, {
+                            applicationId: a.id,
+                            canWrite: RBAC.can('application:manage_status'),
+                            getBranches: function () { return ensureLocations().then(function (l) { return RBAC.filterBranches(l); }); },
+                            defaults: { branchId: a.offerLetter.branchId, startDate: a.offerLetter.effectiveDate, employmentType: 'FULL_TIME' },
+                        });
+                    }
                 } catch (err) {
                     body.innerHTML = '<div class="alert alert-danger">' + (err.message || 'Failed to load application.') + '</div>';
                 }
@@ -736,6 +754,8 @@
                         field('Effective Date', Applications.formatDate(a.offerLetter.effectiveDate)) +
                         (a.offerLetter.declineReason ? field('Decline Reason', a.offerLetter.declineReason) : '') +
                         '<hr>';
+                    // The appointment letter comes after the candidate accepts the offer.
+                    if (a.offerLetter.status === 'ACCEPTED') offerBlock += '<div id="appt-letter-block" class="mb-3"></div><hr>';
                 }
 
                 var notSelectedBlock = '';
@@ -1134,6 +1154,11 @@
                 actions.innerHTML =
                     '<div class="w-100">' +
                     '<div class="alert alert-warning small py-2">This creates a staff record and sends the new hire a password-setup email. This cannot be undone from here.</div>' +
+                    (AppointmentLetters.statusFor(currentDetailId) !== 'SIGNED'
+                        ? '<div class="alert alert-info small py-2">' + (AppointmentLetters.statusFor(currentDetailId)
+                            ? 'The signed appointment letter has not been uploaded yet. You can still convert now and upload it later from their staff profile.'
+                            : 'No appointment letter has been prepared yet. You can still convert now and prepare it later from their staff profile.') + '</div>'
+                        : '') +
                     '<label class="form-label small mb-1">Work mode</label>' +
                     '<div class="btn-group w-100 mb-2" role="group" aria-label="Work mode">' +
                     '<input type="radio" class="btn-check" name="cts-work-mode" id="cts-mode-onsite" value="ON_SITE" checked>' +

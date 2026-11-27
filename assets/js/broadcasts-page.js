@@ -62,10 +62,14 @@
 
     // ── Compose ─────────────────────────────────────────────────────────
 
+    var _files = null; // DocFiles picker (email only)
+    var EMAIL_FILES_MAX = 10 * 1024 * 1024;
+
     function updateCounts() {
         var isSms = channel() === 'SMS';
         var body = $('f-body').value;
         $('subject-wrap').classList.toggle('d-none', isSms);
+        $('files-wrap').classList.toggle('d-none', isSms);
         $('subject-count').textContent = $('f-subject').value.length + '/150';
         if (isSms) {
             var s = smsParts(body);
@@ -113,6 +117,13 @@
         if (payload.channel === 'EMAIL') {
             payload.subject = $('f-subject').value.trim();
             if (!payload.subject) throw new Error('Give the email a subject.');
+            if (_files) {
+                if (_files.busy()) throw new Error('Wait for the files to finish uploading.');
+                if (_files.failedCount()) throw new Error('Retry or remove the files that did not upload.');
+                var total = _files.docs().reduce(function (n, d) { return n + (d.sizeBytes || 0); }, 0);
+                if (total > EMAIL_FILES_MAX) throw new Error('The files come to ' + DocFiles.size(total) + '. Everything attached to one email must come to at most 10 MB.');
+                if (_files.newIds().length) payload.documentIds = _files.newIds();
+            }
         }
         if (!payload.body) throw new Error('Write the message.');
         if (payload.channel === 'SMS' && payload.body.length > SMS_MAX) throw new Error('An SMS can be at most ' + SMS_MAX + ' characters (4 texts).');
@@ -136,6 +147,7 @@
             return;
         }
         var reach = _size && _size.channel === _pending.channel && _size.audience === _pending.audience ? ', about ' + people(_size.people) : '';
+        if (_pending.documentIds && _pending.documentIds.length) reach += ', with ' + plural(_pending.documentIds.length, 'file') + ' attached';
         var cost = '';
         if (_pending.channel === 'SMS' && _size && _size.channel === 'SMS' && _size.audience === _pending.audience) {
             var parts = smsParts(_pending.body).parts;
@@ -155,6 +167,7 @@
     async function sendPending() {
         var r = await Broadcasts.create(_pending);
         ['f-subject', 'f-body'].forEach(function (id) { $(id).value = ''; });
+        if (_files) _files.reset([]);
         updateCounts();
         showAlert(r.status === 'SCHEDULED' ? 'Scheduled for ' + fmt(r.scheduledFor) + '.' : 'Sending now. The results appear below as it goes.', 'success');
     }
@@ -198,7 +211,9 @@
                     '<div class="d-flex justify-content-between gap-2"><div style="min-width:0">' +
                     '<span class="badge ' + (b.channel === 'SMS' ? 'bg-purple-lt' : 'bg-azure-lt') + ' me-1">' + esc(CHANNEL[b.channel] || b.channel) + '</span>' +
                     '<span class="fw-semibold">' + esc(b.subject || b.body.slice(0, 60) + (b.body.length > 60 ? '...' : '')) + '</span>' +
-                    '<div class="text-secondary small text-truncate">' + esc(b.body) + '</div></div>' +
+                    '<div class="text-secondary small text-truncate">' + esc(b.body) + '</div>' +
+                    ((b.documents || []).length ? '<div class="small text-secondary">Attached: ' + b.documents.map(function (d) { return esc(d.fileName); }).join(', ') + '</div>' : '') +
+                    '</div>' +
                     '<span class="badge ' + st.cls + ' align-self-start">' + esc(st.label) + '</span></div>' +
                     '<div class="small mt-1">' + esc(AUDIENCE[b.audience] || b.audience) + ' · ' + results(b) + '</div>' +
                     '<div class="small text-secondary mt-1">' + (b.status === 'SCHEDULED' ? 'Scheduled' : 'Created') + ' by ' + esc(b.createdBy || 'an admin') + ' · ' + esc(fmt(b.createdAt)) +
@@ -236,6 +251,10 @@
             $('f-audience').addEventListener('change', loadSize);
             document.querySelectorAll('input[name="f-when"]').forEach(function (r) { r.addEventListener('change', updateWhen); });
             $('btn-send').addEventListener('click', askToSend);
+            _files = DocFiles.picker($('f-files'), {
+                uploadPath: '/admin/documents/uploads',
+                onRemove: function (doc) { return Auth.fetch('/admin/documents/uploads/' + doc.id, { method: 'DELETE' }); },
+            });
             updateCounts();
             loadSize();
         }

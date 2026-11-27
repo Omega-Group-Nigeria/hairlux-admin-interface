@@ -51,6 +51,11 @@ const StaffSelf = (() => {
         });
     }
 
+    /** Your appointment letters (sent and signed), with view and download links. */
+    async function getAppointmentLetters() {
+        return jsonFetch("/staff/me/appointment-letters");
+    }
+
     // -- Announcements --------------------------------------------------------
     async function getAnnouncements() {
         return jsonFetch("/staff/me/announcements");
@@ -88,6 +93,11 @@ const StaffSelf = (() => {
         const raw = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(raw.message || `Upload failed (${res.status})`);
         return raw.data !== undefined ? raw.data : raw;
+    }
+
+    /** Removes one of your own evidence files (only before the task is completed). */
+    async function removeDirectiveEvidence(directiveId, documentId) {
+        return jsonFetch("/staff/me/directives/" + directiveId + "/evidence/" + documentId, { method: "DELETE" });
     }
 
     // -- Attendance -------------------------------------------------------------
@@ -377,6 +387,8 @@ const StaffSelf = (() => {
         getDirectives,
         updateDirectiveStatus,
         submitDirectiveEvidence,
+        getAppointmentLetters,
+        removeDirectiveEvidence,
         checkIn,
         checkOut,
         getAttendance,
