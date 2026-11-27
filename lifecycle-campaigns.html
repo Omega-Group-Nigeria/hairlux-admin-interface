@@ -458,6 +458,11 @@
                                 plain text: formatting is dropped, links are written out in full.</span>
                         </div>
                     </div>
+                    <div class="mb-3" id="f-files-wrap">
+                        <label class="form-label">Files <span class="text-secondary">(Email only, optional)</span></label>
+                        <div id="f-files"></div>
+                        <div class="form-hint">Sent as real attachments with every email from this template, including sequence steps that use it. 10 MB in all; keep them small.</div>
+                    </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Delay (days)</label>
@@ -588,6 +593,7 @@
     <script src="./assets/js/tabler.min.js"></script>
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script src="assets/js/rich-text-editor.js"></script>
+    <script src="./assets/js/doc-files.js"></script>
     <script>
         var bootstrap = window.tabler.bootstrap;
         var editingId = null;
@@ -710,6 +716,7 @@
         function syncSubjectVisibility() {
             var isEmail = document.getElementById('f-channel').value === 'EMAIL';
             document.getElementById('f-subject-wrap').style.display = isEmail ? 'block' : 'none';
+            document.getElementById('f-files-wrap').style.display = isEmail ? 'block' : 'none';
             document.getElementById('f-body-plain-hint').style.display = isEmail ? 'none' : 'inline';
         }
 
@@ -778,7 +785,8 @@
                         ? '<span class="badge bg-green-lt">Enabled</span>'
                         : '<span class="badge bg-secondary-lt">Disabled</span>';
                     var bodyText = RichTextEditor.toText(t.bodyTemplate || '');
-                    var preview = (t.subject ? '<strong>' + esc(t.subject) + '</strong>: ' : '') + esc(bodyText.slice(0, 60)) + (bodyText.length > 60 ? '…' : '');
+                    var preview = (t.subject ? '<strong>' + esc(t.subject) + '</strong>: ' : '') + esc(bodyText.slice(0, 60)) + (bodyText.length > 60 ? '…' : '') +
+                        ((t.documents || []).length ? ' <span class="badge bg-azure-lt">' + t.documents.length + (t.documents.length === 1 ? ' file' : ' files') + '</span>' : '');
                     var sendTime = (t.sendHour !== null && t.sendHour !== undefined)
                         ? (String(t.sendHour).padStart(2, '0') + ':' + String(t.sendMinute || 0).padStart(2, '0'))
                         : '<span class="text-secondary">Any time</span>';
@@ -810,6 +818,18 @@
                 '</td></tr>';
         }
 
+        var _tplFiles = null; // DocFiles picker (email templates)
+        function tplFiles() {
+            if (!_tplFiles) {
+                _tplFiles = DocFiles.picker(document.getElementById('f-files'), {
+                    uploadPath: '/admin/documents/uploads',
+                    deferRemoval: true,
+                    onRemove: function (doc) { return Auth.fetch('/admin/documents/uploads/' + doc.id, { method: 'DELETE' }); },
+                });
+            }
+            return _tplFiles;
+        }
+
         async function openForm(id) {
             editingId = id;
             editingHasFixedKey = !!id;
@@ -835,6 +855,7 @@
                     document.getElementById('f-audience-source').value = t.audienceSource || '';
                     document.getElementById('f-include-existing').checked = t.includeExisting !== false;
                     setSelectedBranches('f-target-branches', t.targetBranchIds);
+                    tplFiles().reset(t.documents || []);
                 } catch (e) {
                     alert(e.message || 'Failed to load.');
                     return;
@@ -854,6 +875,7 @@
                 document.getElementById('f-audience-source').value = '';
                 document.getElementById('f-include-existing').checked = true;
                 setSelectedBranches('f-target-branches', []);
+                tplFiles().reset([]);
             }
             syncSubjectVisibility();
             syncSendImmediately();
@@ -882,6 +904,15 @@
             if (!editingHasFixedKey) {
                 payload.targetLifecycle = document.getElementById('f-target-lifecycle').value;
                 payload.channel = document.getElementById('f-channel').value;
+            }
+            if (document.getElementById('f-channel').value === 'EMAIL') {
+                var files = tplFiles();
+                if (files.busy()) { errEl.textContent = 'Wait for the files to finish uploading.'; errEl.classList.remove('d-none'); return; }
+                if (files.failedCount()) { errEl.textContent = 'Retry or remove the files that did not upload.'; errEl.classList.remove('d-none'); return; }
+                var filesTotal = files.docs().reduce(function (n, d) { return n + (d.sizeBytes || 0); }, 0);
+                if (filesTotal > 10 * 1024 * 1024) { errEl.textContent = 'The files come to ' + DocFiles.size(filesTotal) + '. Everything attached to one email must come to at most 10 MB.'; errEl.classList.remove('d-none'); return; }
+                if (files.newIds().length) payload.documentIds = files.newIds();
+                if (editingId && files.removedIds().length) payload.removeDocumentIds = files.removedIds();
             }
 
             var btn = document.getElementById('btn-save');
