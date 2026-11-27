@@ -51,6 +51,11 @@ const StaffSelf = (() => {
         });
     }
 
+    /** Your appointment letters (sent and signed), with view and download links. */
+    async function getAppointmentLetters() {
+        return jsonFetch("/staff/me/appointment-letters");
+    }
+
     // -- Announcements --------------------------------------------------------
     async function getAnnouncements() {
         return jsonFetch("/staff/me/announcements");
@@ -382,6 +387,7 @@ const StaffSelf = (() => {
         getDirectives,
         updateDirectiveStatus,
         submitDirectiveEvidence,
+        getAppointmentLetters,
         removeDirectiveEvidence,
         checkIn,
         checkOut,

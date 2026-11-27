@@ -1465,6 +1465,32 @@ async function loadDocuments() {
   }
   renderDocumentList('#agreements .card .card-b', true);
   renderDocumentList('#onboarding .card .card-b', false);
+  loadAppointmentLetters();
+}
+
+/** "Your appointment letter" card under Agreements: the letter and the signed copy, to view or download. */
+async function loadAppointmentLetters() {
+  var letters = [];
+  try { letters = await StaffSelf.getAppointmentLetters(); } catch (err) { return; }
+  var screen = document.getElementById('agreements');
+  if (!screen || typeof DocFiles === 'undefined') return;
+  var box = document.getElementById('my-appt-letters');
+  var docs = [];
+  (letters || []).forEach(function (l) {
+    if (l.pdf) docs.push(Object.assign({}, l.pdf, { fileName: 'Letter of appointment: ' + l.role + (l.sentAt ? ' (' + StaffSelf.formatDate(l.sentAt) + ')' : '') + '.pdf' }));
+    if (l.signedCopy) docs.push(Object.assign({}, l.signedCopy, { fileName: 'Signed copy: ' + l.signedCopy.fileName }));
+  });
+  if (!docs.length) { if (box) box.remove(); return; }
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'my-appt-letters';
+    box.className = 'card';
+    box.style.marginTop = '16px';
+    // Added after the agreements card: that card is found as the first .card in #agreements.
+    screen.appendChild(box);
+  }
+  box.innerHTML = '<div class="card-h"><h3>Your appointment letter</h3></div><div class="card-b">' + DocFiles.listHtml(docs) + '</div>';
+  DocFiles.bind(box, docs);
 }
 
 function renderDocumentList(containerSelector, isStandalone) {
