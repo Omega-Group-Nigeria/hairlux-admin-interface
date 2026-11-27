@@ -62,6 +62,12 @@ const Rewards = (() => {
   function updateBirthdaySettings(payload) {
     return apiFetch("/admin/rewards/birthday-settings", { method: "PUT", body: JSON.stringify(payload) });
   }
+  function getBirthdayEmailHelp() {
+    return apiFetch("/admin/rewards/birthday-settings/email-help");
+  }
+  function sendBirthdayTest() {
+    return apiFetch("/admin/rewards/birthday-settings/test-email", { method: "POST" });
+  }
 
   // ─── REPORTS (Dashboard) ─────────────────────────────────────────────────
 
@@ -134,7 +140,7 @@ const Rewards = (() => {
 
   return {
     getTiers, createTier, updateTier, deleteTier,
-    getSettings, getSettingsOptions, updateSettings, getBirthdaySettings, updateBirthdaySettings,
+    getSettings, getSettingsOptions, updateSettings, getBirthdaySettings, updateBirthdaySettings, getBirthdayEmailHelp, sendBirthdayTest,
     getReports,
     adjust,
     getCustomerProfile, getCustomerTransactions, transferCashback, redeemPoints,
