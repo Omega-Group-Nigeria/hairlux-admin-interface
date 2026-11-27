@@ -18,6 +18,7 @@
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon" />
     <link href="./assets/styles/tabler.min.css" rel="stylesheet" />
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-flags.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-socials.min.css" rel="stylesheet" />
     <link href="./assets/styles/tabler-payments.min.css" rel="stylesheet" />
@@ -406,7 +407,7 @@
                             <form id="form-reward-settings">
                                 <div class="card-body">
                                     <div id="reward-settings-alert" class="alert d-none mb-3" role="alert"></div>
-                                    <p class="text-secondary small mb-3">Points and cashback are earned once, when a purchase is completed: salon (Front Desk) bookings, customer bookings made on the website/app (walk-in or home service), product sales and Academy orders. Only customers with a registered account earn.</p>
+                                    <p class="text-secondary small mb-3">Rewards are earned once, when a purchase is completed. <strong>Bookings earn cashback</strong> (Front Desk bookings and bookings made on the website/app, walk-in or home service). <strong>Shop purchases earn points</strong> (online shop orders once delivered, and Front Desk product sales). Academy orders earn both. Only customers with a registered account earn.</p>
 
                                     <div class="row g-3">
                                         <div class="col-md-4">
@@ -508,66 +509,61 @@
 
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Birthday Reward Settings</h3>
+                                <h3 class="card-title">Birthday Coupon</h3>
                             </div>
                             <form id="form-birthday-settings">
                                 <div class="card-body">
                                     <div id="birthday-settings-alert" class="alert d-none mb-3" role="alert"></div>
+                                    <p class="text-secondary small mb-3">On each customer's birthday (01:00 Lagos time) they are emailed a
+                                        personal discount code. Only their account can use it, once. At most one coupon per customer
+                                        per year, even if they change their birthday.</p>
 
                                     <div class="row g-3">
-                                        <div class="col-md-4">
-                                            <label class="form-label">Reward Type</label>
-                                            <select class="form-select" id="bs-reward-type">
-                                                <option value="CASHBACK">Cashback</option>
-                                                <option value="POINTS">Points</option>
-                                                <option value="DISCOUNT_PERCENTAGE">Discount %</option>
-                                                <option value="FREE_SERVICE">Free Service</option>
-                                            </select>
+                                        <div class="col-12">
+                                            <label class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" id="bs-enabled">
+                                                <span class="form-check-label">Send birthday coupons</span>
+                                            </label>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Reward Value</label>
-                                            <input type="number" step="0.01" min="0" class="form-control"
-                                                id="bs-reward-value">
-                                            <div class="form-text" id="bs-reward-value-hint">Naira, points, or % --
-                                                depends on the reward type above.</div>
+                                            <label class="form-label">Discount (%)</label>
+                                            <input type="number" step="0.5" min="1" max="100" class="form-control" id="bs-percentage">
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Validity (days)</label>
-                                            <input type="number" step="1" min="1" class="form-control"
-                                                id="bs-validity-days">
+                                            <label class="form-label">Valid for (days)</label>
+                                            <input type="number" step="1" min="1" max="365" class="form-control" id="bs-validity-days">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Works on</label>
+                                            <div>
+                                                <label class="form-check form-check-inline"><input class="form-check-input bs-scope" type="checkbox" value="SERVICES"><span class="form-check-label">Services</span></label>
+                                                <label class="form-check form-check-inline"><input class="form-check-input bs-scope" type="checkbox" value="SHOP"><span class="form-check-label">Shop</span></label>
+                                                <label class="form-check form-check-inline"><input class="form-check-input bs-scope" type="checkbox" value="ACADEMY"><span class="form-check-label">Academy</span></label>
+                                            </div>
                                         </div>
                                         <div class="col-12">
-                                            <label class="form-label">Eligibility Note <span
-                                                    class="text-secondary fw-normal">(free text, shown to admins
-                                                    only)</span></label>
-                                            <textarea class="form-control" id="bs-eligibility" rows="2"
-                                                placeholder="e.g. Every customer with a birthday on file"></textarea>
+                                            <label class="form-label">Email subject</label>
+                                            <input type="text" class="form-control" id="bs-subject" maxlength="150">
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Eligible Branches</label>
-                                            <select multiple class="form-select" id="bs-eligible-branches"></select>
-                                            <div class="form-text">Nothing selected = every branch qualifies.</div>
+                                        <div class="col-lg-8">
+                                            <label class="form-label">Email message</label>
+                                            <textarea id="bs-body" rows="8"></textarea>
+                                            <div class="form-text">The coupon (code, discount, where it works, last day) is added below your message automatically.
+                                                <a href="#" id="bs-use-standard">Use the standard message</a></div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Eligible Services <span
-                                                    class="text-secondary fw-normal">(for DISCOUNT_PERCENTAGE /
-                                                    FREE_SERVICE)</span></label>
-                                            <select multiple class="form-select" id="bs-eligible-services"></select>
-                                            <div class="form-text">Nothing selected = every service qualifies.</div>
+                                        <div class="col-lg-4">
+                                            <label class="form-label">Fields</label>
+                                            <div class="form-text mb-2">Click to add at the cursor. They also work in the subject.</div>
+                                            <div class="d-flex flex-wrap gap-1" id="bs-fields"></div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="card-footer text-end">
-                                    <button type="submit" class="btn btn-primary"
-                                        id="btn-save-birthday-settings">Save Birthday Settings</button>
+                                <div class="card-footer d-flex flex-wrap gap-2 justify-content-end">
+                                    <button type="button" class="btn btn-outline-secondary" id="btn-birthday-test">Send me a test</button>
+                                    <button type="submit" class="btn btn-primary" id="btn-save-birthday-settings">Save Birthday Coupon</button>
                                 </div>
                             </form>
                         </div>
-                        <div class="text-secondary small mt-2">CASHBACK/POINTS credit the customer's Wallet
-                            automatically on their birthday (daily 1am cron). DISCOUNT_PERCENTAGE/FREE_SERVICE are
-                            recorded as a redeemable ledger entry for a Front Desk/Cashier to honor at checkout --
-                            automatic redemption of those two types at the point of sale is out of scope for this
-                            phase.</div>
                     </div>
                     <!-- ========== END SETTINGS SECTION ========== -->
 
@@ -734,6 +730,8 @@
     <script src="assets/js/api-utils/rewards.js"></script>
     <script src="assets/js/multi-select-dropdown.js"></script>
     <script src="assets/js/tabler.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script src="assets/js/rich-text-editor.js"></script>
 
     <!-- ===== TIER MODAL ===== -->
     <div class="modal modal-blur fade" id="modal-tier" tabindex="-1" role="dialog">
@@ -1079,43 +1077,62 @@
                 }
             });
 
+
+            // ── Birthday coupon ──────────────────────────────────────────────
+            var bsQuill = null, bsDefaultBody = "";
+            function bsAlert(type, text) {
+                var el = document.getElementById("birthday-settings-alert");
+                el.className = type ? "alert alert-" + type : "alert d-none";
+                el.textContent = text || "";
+            }
+            function bsPayload() {
+                var scopes = Array.prototype.slice.call(document.querySelectorAll(".bs-scope:checked")).map(function (c) { return c.value; });
+                if (!scopes.length) throw new Error("Choose at least one place the coupon works.");
+                var subject = document.getElementById("bs-subject").value.trim();
+                if (!subject) throw new Error("Write the email subject.");
+                return {
+                    isEnabled: document.getElementById("bs-enabled").checked,
+                    discountPercentage: Number(document.getElementById("bs-percentage").value || 15),
+                    validityDays: Number(document.getElementById("bs-validity-days").value || 30),
+                    couponScopes: scopes,
+                    emailSubject: subject,
+                    emailBody: document.getElementById("bs-body").value || null,
+                };
+            }
             document.getElementById("form-birthday-settings").addEventListener("submit", async function (e) {
                 e.preventDefault();
-                var alertEl = document.getElementById("birthday-settings-alert");
-                alertEl.className = "alert d-none";
+                bsAlert("");
                 var btn = document.getElementById("btn-save-birthday-settings");
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-inline me-1" role="status"></span> Saving…';
                 try {
-                    var payload = {
-                        rewardType: document.getElementById("bs-reward-type").value,
-                        rewardValue: Number(document.getElementById("bs-reward-value").value || 0),
-                        eligibility: document.getElementById("bs-eligibility").value.trim() || undefined,
-                        validityDays: Number(document.getElementById("bs-validity-days").value || 30),
-                        eligibleBranchIds: getSelectedValues("bs-eligible-branches"),
-                        eligibleServiceIds: getSelectedValues("bs-eligible-services"),
-                    };
-                    await Rewards.updateBirthdaySettings(payload);
-                    alertEl.className = "alert alert-success";
-                    alertEl.textContent = "Birthday reward settings saved.";
+                    await Rewards.updateBirthdaySettings(bsPayload());
+                    bsAlert("success", "Birthday coupon settings saved.");
                 } catch (err) {
-                    alertEl.className = "alert alert-danger";
-                    alertEl.textContent = err.message || "Failed to save birthday settings.";
+                    bsAlert("danger", err.message || "Failed to save the birthday coupon settings.");
                 } finally {
                     btn.disabled = false;
-                    btn.textContent = "Save Birthday Settings";
+                    btn.textContent = "Save Birthday Coupon";
                 }
             });
-
-            document.getElementById("bs-reward-type").addEventListener("change", function () {
-                var hint = document.getElementById("bs-reward-value-hint");
-                var map = {
-                    CASHBACK: "Naira value credited to the customer's Wallet.",
-                    POINTS: "Loyalty points credited to the customer's account.",
-                    DISCOUNT_PERCENTAGE: "Percentage off, recorded as a redeemable ledger entry.",
-                    FREE_SERVICE: "Value of the free service, recorded as a redeemable ledger entry.",
-                };
-                hint.textContent = map[this.value] || "";
+            document.getElementById("btn-birthday-test").addEventListener("click", async function () {
+                bsAlert("");
+                var btn = this;
+                btn.disabled = true;
+                try {
+                    // Save first, so the test shows what customers will get.
+                    await Rewards.updateBirthdaySettings(bsPayload());
+                    var r = await Rewards.sendBirthdayTest();
+                    bsAlert("success", "Saved. A test email (with a sample code) was sent to " + r.sentTo + ".");
+                } catch (err) {
+                    bsAlert("danger", err.message || "The test email could not be sent.");
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+            document.getElementById("bs-use-standard").addEventListener("click", function (e) {
+                e.preventDefault();
+                if (bsDefaultBody) document.getElementById("bs-body").value = bsDefaultBody;
             });
 
             // ── Customer Lookup: typeahead ────────────────────────────────────────
@@ -1304,8 +1321,6 @@
             "rs-eligible-branches": "All branches",
             "rs-eligible-services": "All services",
             "rs-eligible-products": "All products",
-            "bs-eligible-branches": "All branches",
-            "bs-eligible-services": "All services",
         };
 
         function populateOptions(selectId, items, labelFn) {
@@ -1498,8 +1513,6 @@
                 populateOptions("rs-eligible-branches", optBranches, function (b) { return b.name; });
                 populateOptions("rs-eligible-services", optServices, function (s) { return s.name; });
                 populateOptions("rs-eligible-products", optProducts, function (p) { return p.name; });
-                populateOptions("bs-eligible-branches", optBranches, function (b) { return b.name; });
-                populateOptions("bs-eligible-services", optServices, function (s) { return s.name; });
 
                 var settings = await Rewards.getSettings();
                 document.getElementById("rs-cashback-percentage").value = Number(settings.cashbackPercentage);
@@ -1518,13 +1531,41 @@
                 setSelectedValues("rs-eligible-products", settings.eligibleProductIds);
 
                 var birthday = await Rewards.getBirthdaySettings();
-                document.getElementById("bs-reward-type").value = birthday.rewardType;
-                document.getElementById("bs-reward-type").dispatchEvent(new Event("change"));
-                document.getElementById("bs-reward-value").value = Number(birthday.rewardValue);
-                document.getElementById("bs-eligibility").value = birthday.eligibility || "";
+                var help = await Rewards.getBirthdayEmailHelp().catch(function () { return { fields: [], defaultBody: "" }; });
+                bsDefaultBody = help.defaultBody || "";
+                document.getElementById("bs-enabled").checked = birthday.isEnabled !== false;
+                document.getElementById("bs-percentage").value = Number(birthday.discountPercentage);
                 document.getElementById("bs-validity-days").value = birthday.validityDays;
-                setSelectedValues("bs-eligible-branches", birthday.eligibleBranchIds);
-                setSelectedValues("bs-eligible-services", birthday.eligibleServiceIds);
+                document.querySelectorAll(".bs-scope").forEach(function (c) { c.checked = (birthday.couponScopes || []).indexOf(c.value) >= 0; });
+                document.getElementById("bs-subject").value = birthday.emailSubject || "";
+                if (!bsQuill && window.RichTextEditor) bsQuill = RichTextEditor.attach("bs-body", { minHeight: 220 });
+                document.getElementById("bs-body").value = birthday.emailBody || bsDefaultBody;
+                var fieldsEl = document.getElementById("bs-fields");
+                fieldsEl.innerHTML = "";
+                (help.fields || []).forEach(function (f) {
+                    var b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "btn btn-sm btn-outline-secondary";
+                    b.textContent = f.label;
+                    b.title = "{{" + f.key + "}}";
+                    b.addEventListener("click", function () {
+                        var text = "{{" + f.key + "}}";
+                        var subject = document.getElementById("bs-subject");
+                        if (document.activeElement === subject) {
+                            var at = subject.selectionStart || subject.value.length;
+                            subject.value = subject.value.slice(0, at) + text + subject.value.slice(subject.selectionEnd || at);
+                            return;
+                        }
+                        if (!bsQuill) return;
+                        var range = bsQuill.getSelection(true);
+                        var i = range ? range.index : bsQuill.getLength() - 1;
+                        bsQuill.insertText(i, text, "user");
+                        bsQuill.setSelection(i + text.length, 0, "user");
+                    });
+                    // Keep the subject's cursor when a field button is pressed.
+                    b.addEventListener("mousedown", function (e) { if (document.activeElement === document.getElementById("bs-subject")) e.preventDefault(); });
+                    fieldsEl.appendChild(b);
+                });
 
                 loadedSections.settings = true;
             } catch (err) {

@@ -220,6 +220,9 @@
                             <a class="nav-link active" href="#" data-section="discounts">Discount Codes</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="birthday">Birthday Coupons</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="#" data-section="influencer">Influencer Codes</a>
                         </li>
                         <li class="nav-item">
@@ -229,6 +232,9 @@
 
                     <!-- ========== DISCOUNTS SECTION ========== -->
                     <div id="section-discounts">
+                        <div class="alert alert-info d-none" id="birthday-note">Birthday coupons are made automatically on each
+                            customer's birthday and emailed to them: one use, for their account only. Set the discount, where it
+                            works and the email under <a href="rewards.html">Rewards</a> → Settings → Birthday Coupon.</div>
 
                         <!-- STATS CARDS -->
                         <div class="row row-deck row-cards mb-4">
@@ -671,6 +677,7 @@
                                     <label class="form-check-label" for="create-isActive">Active</label>
                                 </div>
                             </div>
+                            <div id="create-scopes" class="col-12"></div>
                         </div>
 
                         <hr class="my-3">
@@ -996,7 +1003,19 @@
         RBAC.applyPageGuard('discounts:read');
 
         // ── State ─────────────────────────────────────────────────────────────────
-        var state = { page: 1, limit: 20, isActive: "", search: "", totalPages: 1 };
+        var state = { page: 1, limit: 20, isActive: "", search: "", totalPages: 1, personal: false };
+        var SCOPE_LABELS = { SERVICES: "Services", SHOP: "Shop", ACADEMY: "Academy" };
+        function scopesHtml(scopes, prefix) {
+            var on = scopes || ["SERVICES", "ACADEMY"];
+            return '<div class="col-12 mt-0"><label class="form-label">Works on <span class="text-danger">*</span></label><div>' +
+                ["SERVICES", "SHOP", "ACADEMY"].map(function (k) {
+                    return '<label class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="scopes" value="' + k + '"' +
+                        (on.indexOf(k) >= 0 ? ' checked' : '') + '><span class="form-check-label">' + SCOPE_LABELS[k] + '</span></label>';
+                }).join("") + '</div><div class="form-text">Where customers can use this code at checkout.</div></div>';
+        }
+        function scopeBadges(scopes) {
+            return (scopes || []).map(function (k) { return '<span class="badge bg-secondary-lt me-1">' + (SCOPE_LABELS[k] || k) + '</span>'; }).join("");
+        }
         var infState = { page: 1, limit: 20, search: "", totalPages: 1 };
         var inflMgmtState = { page: 1, limit: 20, isActive: "", search: "", totalPages: 1 };
         var pendingDeleteId = null;
@@ -1004,6 +1023,7 @@
         var pendingInflDeleteId = null;
 
         document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("create-scopes").innerHTML = scopesHtml(["SERVICES", "ACADEMY"]);
             // ── RBAC: re-hydrate from server, apply guard + hide unauthorized UI ──
             RBAC.fetchMe().then(function () {
                 RBAC.applyPageGuard('discounts:read');
@@ -1030,6 +1050,11 @@
                 document.querySelectorAll("#section-tabs .nav-link").forEach(function (t) { t.classList.remove("active"); });
                 tab.classList.add("active");
                 var section = tab.dataset.section;
+                // Birthday coupons use the same list, showing only personal codes (one per customer).
+                var personal = section === "birthday";
+                if (personal) section = "discounts";
+                if (state.personal !== personal) { state.personal = personal; state.page = 1; loadDiscounts(); }
+                document.getElementById("birthday-note").classList.toggle("d-none", !personal);
                 document.getElementById("section-discounts").classList.toggle("d-none", section !== "discounts");
                 document.getElementById("section-influencer").classList.toggle("d-none", section !== "influencer");
                 document.getElementById("section-influencers-mgmt").classList.toggle("d-none", section !== "influencers-mgmt");
@@ -1511,6 +1536,7 @@
             document.getElementById("results-label").textContent = "Loading…";
             try {
                 var params = { page: state.page, limit: state.limit, search: state.search };
+                if (state.personal) params.personal = true;
                 if (state.isActive !== "") params.isActive = state.isActive;
                 var result = await Discounts.getAll(params);
                 var rows = result.data || result.discounts || (Array.isArray(result) ? result : []);
@@ -1540,8 +1566,10 @@
                 return '<tr>' +
                     '<td class="text-secondary small">' + ((state.page - 1) * state.limit + i + 1) + '</td>' +
                     '<td><code class="text-primary fw-semibold">' + (d.code || "-") + '</code></td>' +
-                    '<td>' + (d.name || "-") + '</td>' +
-                    '<td><span class="badge bg-blue-lt">' + (d.percentage || 0) + '%</span></td>' +
+                    '<td>' + (d.owner
+                        ? escHtml([d.owner.firstName, d.owner.lastName].filter(Boolean).join(" ") || "Customer") + '<div class="text-secondary small">' + escHtml(d.owner.email || "") + '</div>'
+                        : escHtml(d.name || "-")) + '</td>' +
+                    '<td><span class="badge bg-blue-lt">' + (d.percentage || 0) + '%</span><div class="mt-1">' + scopeBadges(d.scopes) + '</div></td>' +
                     '<td class="text-secondary">' + (d.usedCount ?? d.usageCount ?? d.uses ?? 0) + '</td>' +
                     '<td class="text-secondary">' + maxUses + '</td>' +
                     '<td class="text-secondary small">' + expires + '</td>' +
@@ -1723,7 +1751,8 @@
                 campaignOptionsHtml(selectedCampaign) +
                 '</select>' +
                 '<div class="form-text">Required: only customers actually sent this campaign message can redeem. Lifecycle stage and Value tier targeting are already set on the campaign itself.</div>' +
-                '</div>';
+                '</div>' +
+                scopesHtml(d.scopes);
         }
 
         // ── Open detail modal ─────────────────────────────────────────────────────
@@ -1887,8 +1916,10 @@
                 code: fd.get("code").trim(),
                 name: fd.get("name").trim(),
                 percentage: parseFloat(fd.get("percentage")),
-                isActive: document.getElementById("create-isActive").checked
+                isActive: document.getElementById("create-isActive").checked,
+                scopes: fd.getAll("scopes")
             };
+            if (!payload.scopes.length) throw new Error("Choose at least one place the code works.");
             var mu = fd.get("maxUses");
             if (mu) payload.maxUses = parseInt(mu, 10);
             var exp = fd.get("expiresAt");
@@ -1910,8 +1941,10 @@
                 code: fd.get("code").trim(),
                 name: fd.get("name").trim(),
                 percentage: parseFloat(fd.get("percentage")),
-                isActive: document.getElementById("edit-isActive").checked
+                isActive: document.getElementById("edit-isActive").checked,
+                scopes: fd.getAll("scopes")
             };
+            if (!payload.scopes.length) throw new Error("Choose at least one place the code works.");
             var mu = fd.get("maxUses");
             payload.maxUses = mu ? parseInt(mu, 10) : null;
             var exp = fd.get("expiresAt");
