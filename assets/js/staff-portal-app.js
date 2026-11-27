@@ -391,6 +391,7 @@ function renderDashboard() {
         '<div class="banner"><div class="tag">\uD83D\uDCE2 Management: ' +
         (topAnnouncement.target === 'ALL' ? 'All Staff' : topAnnouncement.target === 'BRANCH' ? 'Your Branch' : topAnnouncement.target === 'ROLE' ? 'Your Role' : 'You') +
         '</div><h3>' + escapeHtml(topAnnouncement.title) + '</h3>' + topVideoHtml + '<div class="ann-body">' + topAnnouncement.body + '</div>' +
+        docFilesHtml(topAnnouncement.documents, 'ann:' + topAnnouncement.id) +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(topAnnouncement.createdAt) + '</div></div>';
     }
     if (topDirective) {
@@ -417,6 +418,7 @@ function renderDashboard() {
     const tasksCardWrapper = previewCol.querySelector('.card');
     if (tasksCardWrapper) {
       tasksCardWrapper.insertAdjacentHTML('beforebegin', previewHtml);
+      bindDocFiles(previewCol);
     } else {
       console.warn('[staff-portal] dashboard tasks card not found to anchor announcement/directive preview');
     }
@@ -1636,11 +1638,13 @@ async function loadAnnouncements() {
         '<h3>' + escapeHtml(a.title) + '</h3>' +
         videoHtml +
         '<div class="ann-body">' + a.body + '</div>' +
+        docFilesHtml(a.documents, 'ann:' + a.id) +
         '<div class="meta">From: ' + escapeHtml(fromName) + ' \u00B7 ' + StaffSelf.timeAgo(a.createdAt) + '</div>' +
         '</div>'
       );
     })
     .join('');
+  bindDocFiles(screen);
 
   announcements.filter((a) => !a.isRead).forEach((a) => StaffSelf.markAnnouncementRead(a.id).catch(() => { }));
   renderNotifications();
@@ -1680,7 +1684,36 @@ async function loadDirectives() {
     '</div>' +
     '<div class="card"><div class="card-h"><h3>Tasks &amp; Directives</h3><span class="badge b-amber">' + pending.length + ' pending</span></div>' +
     '<div class="card-b">' + listHtml + '</div></div>';
+  bindDocFiles(screen);
   renderNotifications();
+}
+
+// -- Files on announcements and tasks (DocFiles, assets/js/doc-files.js) --
+
+/** Files list for an announcement or task; 'holder' finds the files again when binding View buttons. */
+function docFilesHtml(docs, holder, label) {
+  if (!docs || !docs.length || typeof DocFiles === 'undefined') return '';
+  return '<div class="doc-files" data-doc-holder="' + escapeHtml(holder) + '" style="margin:8px 0">' +
+    (label ? '<div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:2px">' + escapeHtml(label) + '</div>' : '') +
+    DocFiles.listHtml(docs) + '</div>';
+}
+
+function docsForHolder(holder) {
+  var parts = String(holder).split(':');
+  if (parts[0] === 'ann') {
+    var a = (currentAnnouncements || []).find(function (x) { return x.id === parts[1]; });
+    return (a && a.documents) || [];
+  }
+  var d = (currentDirectives || []).find(function (x) { return x.id === parts[1]; });
+  if (!d) return [];
+  return parts[0] === 'ev' ? (d.evidence || []) : (d.documents || []);
+}
+
+function bindDocFiles(root) {
+  if (!root || typeof DocFiles === 'undefined') return;
+  root.querySelectorAll('[data-doc-holder]').forEach(function (el) {
+    DocFiles.bind(el, docsForHolder(el.getAttribute('data-doc-holder')));
+  });
 }
 
 function directiveIsOverdue(d) {
@@ -1695,9 +1728,12 @@ function directiveRow(d) {
 
   if (d.status === 'COMPLETED') {
     return (
-      '<div class="task done"><div class="task-chk checked">\u2713</div><div style="flex:1">' +
+      '<div class="task done"><div class="task-chk checked">\u2713</div><div style="flex:1;min-width:0">' +
       '<div class="task-title" style="text-decoration:line-through;opacity:.5">' + escapeHtml(d.title) + '</div>' +
-      '<div class="task-due">Completed ' + StaffSelf.formatDate(d.respondedAt) + '</div></div></div>'
+      '<div class="task-due">Completed ' + StaffSelf.formatDate(d.respondedAt) + '</div>' +
+      docFilesHtml(d.documents, 'task:' + d.id, 'Task files') +
+      docFilesHtml(d.evidence, 'ev:' + d.id, 'Your evidence') +
+      '</div></div>'
     );
   }
   var isUrgent = d.status === 'PENDING' || directiveIsOverdue(d);
@@ -1706,8 +1742,10 @@ function directiveRow(d) {
     : '<button class="btn btn-gold btn-sm" onclick="openMarkCompleteModal(\'' + d.id + '\')">Mark Done</button>';
   return (
     '<div class="task' + (isUrgent ? ' urgent' : '') + '"><div class="task-chk">' + (d.status === 'PENDING' ? '!' : '\u2192') + '</div>' +
-    '<div style="flex:1"><div class="task-title">' + escapeHtml(d.title) + '</div>' +
+    '<div style="flex:1;min-width:0"><div class="task-title">' + escapeHtml(d.title) + '</div>' +
     '<div class="ann-body" style="font-size:12.5px;margin:2px 0">' + richTextHtml(d.body) + '</div>' +
+    docFilesHtml(d.documents, 'task:' + d.id, 'Task files') +
+    docFilesHtml(d.evidence, 'ev:' + d.id, 'Your evidence') +
     '<div class="task-due">From ' + escapeHtml(fromName) + dueLine + '</div></div>' +
     nextAction + '</div>'
   );
@@ -1724,58 +1762,59 @@ async function handleDirectiveStatus(directiveId, status) {
 }
 
 /**
- * "Mark Done" now opens this instead of firing the status update directly
- *: evidence is optional, so Skip goes straight to the same
- * handleDirectiveStatus path as before; attaching a file uploads it first,
- * then marks the task Completed right after.
+ * "Mark Done" opens this instead of firing the status update directly.
+ * Evidence is optional: each chosen file uploads straight away (with its
+ * own progress), then Mark Done marks the task Completed.
  */
+var _mcEvidence = null; // DocFiles picker in the Mark Complete modal
+
 function openMarkCompleteModal(directiveId) {
+  var d = (currentDirectives || []).find(function (x) { return x.id === directiveId; }) || {};
   document.getElementById('profile-modal-box').innerHTML =
     '<div class="oc-modal-error" id="mc-modal-error" style="display:none"></div>' +
     '<h3>Mark Task Complete</h3>' +
-    '<div class="oc-modal-sub">You can optionally attach a photo or PDF as proof of completion (up to 5MB).</div>' +
-    '<div class="oc-field"><label>Evidence (optional)</label><input type="file" id="mc-field-evidence" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf"></div>' +
+    '<div class="oc-modal-sub">You can attach proof of completion: PDF, photos (JPG, PNG), Word or Excel files, up to 10 MB each. Each file uploads as soon as you choose it.</div>' +
+    '<div class="oc-field"><label>Evidence (optional)</label><div id="mc-evidence"></div></div>' +
     '<div class="oc-modal-actions">' +
-    '<button class="btn btn-ghost btn-sm" id="mc-skip-btn" onclick="submitMarkComplete(\'' + directiveId + '\', true)">Skip &amp; Mark Done</button>' +
-    '<button class="btn btn-gold btn-sm" id="mc-modal-submit-btn" onclick="submitMarkComplete(\'' + directiveId + '\', false)">Attach &amp; Mark Done</button>' +
+    '<button class="btn btn-ghost btn-sm" onclick="closeMarkCompleteModal()">Cancel</button>' +
+    '<button class="btn btn-gold btn-sm" id="mc-modal-submit-btn" onclick="submitMarkComplete(\'' + directiveId + '\')">Mark Done</button>' +
     '</div>';
+  _mcEvidence = DocFiles.picker(document.getElementById('mc-evidence'), {
+    uploadPath: '/staff/me/directives/' + directiveId + '/evidence',
+    // Saved at once, so removing one removes it from the task straight away.
+    existing: (d.evidence || []).filter(function (f) { return !/^legacy-/.test(f.id); }),
+    deferRemoval: false,
+    onRemove: function (doc) { return StaffSelf.removeDirectiveEvidence(directiveId, doc.id); },
+    hint: 'Up to ' + DocFiles.MAX_FILES + ' files.',
+  });
   document.getElementById('profile-modal-overlay').style.display = 'flex';
 }
 
-async function submitMarkComplete(directiveId, skipEvidence) {
+/** Closing keeps any files already uploaded on the task; the list refreshes to show them. */
+async function closeMarkCompleteModal() {
+  closeProfileModal();
+  await loadDirectives();
+}
+
+async function submitMarkComplete(directiveId) {
   var errEl = document.getElementById('mc-modal-error');
-  var fileInput = document.getElementById('mc-field-evidence');
-  var file = !skipEvidence && fileInput.files && fileInput.files[0];
-
-  if (!skipEvidence && !file) {
-    // Neither button explicitly says "no file chosen" is an error: Skip
-    // exists for that. Attach & Mark Done with nothing selected just
-    // behaves like Skip rather than blocking the user.
-    skipEvidence = true;
-  }
-  // Some phones report PDFs with an empty type, so fall back to the file name.
-  var isPdf = file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name || ''));
-  if (file && !isPdf && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-    errEl.textContent = 'Attach a photo (JPEG, PNG or WebP) or a PDF.';
+  errEl.style.display = 'none';
+  if (_mcEvidence && _mcEvidence.busy()) {
+    errEl.textContent = 'Wait for your files to finish uploading.';
     errEl.style.display = 'block';
     return;
   }
-  if (file && file.size > 5 * 1024 * 1024) {
-    errEl.textContent = 'That file is larger than 5MB. Attach a smaller photo or PDF.';
+  if (_mcEvidence && _mcEvidence.failedCount()) {
+    errEl.textContent = 'Some files did not upload. Retry or remove them first.';
     errEl.style.display = 'block';
     return;
   }
 
-  var btn = skipEvidence ? document.getElementById('mc-skip-btn') : document.getElementById('mc-modal-submit-btn');
-  var otherBtn = skipEvidence ? document.getElementById('mc-modal-submit-btn') : document.getElementById('mc-skip-btn');
+  var btn = document.getElementById('mc-modal-submit-btn');
   btn.disabled = true;
-  otherBtn.disabled = true;
   var original = btn.textContent;
-  btn.textContent = file ? 'Uploading\u2026' : 'Saving\u2026';
+  btn.textContent = 'Saving\u2026';
   try {
-    if (file) {
-      await StaffSelf.submitDirectiveEvidence(directiveId, file);
-    }
     await StaffSelf.updateDirectiveStatus(directiveId, 'COMPLETED');
     closeProfileModal();
     await loadDirectives();
@@ -1784,7 +1823,6 @@ async function submitMarkComplete(directiveId, skipEvidence) {
     errEl.textContent = err.message || 'Could not complete this task.';
     errEl.style.display = 'block';
     btn.disabled = false;
-    otherBtn.disabled = false;
     btn.textContent = original;
   }
 }

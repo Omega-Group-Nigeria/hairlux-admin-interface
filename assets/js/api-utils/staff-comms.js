@@ -127,6 +127,11 @@ const StaffComms = (() => {
         return jsonFetch("/admin/directives/" + id, { method: "DELETE" });
     }
 
+    /** Discards an upload that was not attached (removed before saving). */
+    async function discardUpload(id) {
+        return jsonFetch("/admin/documents/uploads/" + id, { method: "DELETE" });
+    }
+
     async function getDirectiveEvidence(id) {
         return jsonFetch("/admin/directives/" + id + "/evidence");
     }
@@ -190,6 +195,7 @@ const StaffComms = (() => {
         updateDirective,
         deleteDirective,
         getDirectiveEvidence,
+        discardUpload,
         getAllDirectives,
         getStaffDirectives,
         directiveStatusBadge,

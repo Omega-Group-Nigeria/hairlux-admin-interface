@@ -90,6 +90,11 @@ const StaffSelf = (() => {
         return raw.data !== undefined ? raw.data : raw;
     }
 
+    /** Removes one of your own evidence files (only before the task is completed). */
+    async function removeDirectiveEvidence(directiveId, documentId) {
+        return jsonFetch("/staff/me/directives/" + directiveId + "/evidence/" + documentId, { method: "DELETE" });
+    }
+
     // -- Attendance -------------------------------------------------------------
     function getCurrentPosition() {
         function attempt(options) {
@@ -377,6 +382,7 @@ const StaffSelf = (() => {
         getDirectives,
         updateDirectiveStatus,
         submitDirectiveEvidence,
+        removeDirectiveEvidence,
         checkIn,
         checkOut,
         getAttendance,
